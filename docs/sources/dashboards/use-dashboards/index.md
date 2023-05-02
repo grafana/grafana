@@ -34,15 +34,15 @@ The following image and descriptions highlights all dashboards features.
 - (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel by link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
-- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts.
-- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. For more information about dashboard settings, refer to [Modify dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
+- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics]({{< relref "../assess-dashboard-usage/" >}}).
+- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
 - (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
   - Time settings are saved on a per-dashboard basis.
-- (9) **Zoom out time range**: Click to zoom out the time range. For more information about how to use time range controls, refer to [Common time range controls]({{< relref "#common-time-range-controls" >}}).
+- (9) **Zoom out time range**: Click to zoom out the time range. Learn more about how to use [common time range controls]({{< relref "#common-time-range-controls" >}}).
 - (10) **Refresh dashboard**: Click to immediately trigger queries and refresh dashboard data.
 - (11) **Refresh dashboard time interval**: Click to select a dashboard auto refresh time interval.
-- (12) **View mode**: Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. For more information about view mode, refer to [How to Create Kiosks to Display Dashboards on a TV](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
+- (12) **View mode**: Click to display the dashboard on a large screen such as a TV or a kiosk. View mode hides irrelevant information such as navigation menus. Learn more about view mode in our [How to Create Kiosks to Display Dashboards on a TV blog post](https://grafana.com/blog/2019/05/02/grafana-tutorial-how-to-create-kiosks-to-display-dashboards-on-a-tv/).
 - (13) **Dashboard panel**: The primary building block of a dashboard is the panel. To add a new panel, dashboard row, or library panel, click **Add panel**.
   - Library panels can be shared among many dashboards.
   - To move a panel, drag the panel header to another location.

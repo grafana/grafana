@@ -4,13 +4,13 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
-import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
-import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import { PromOptions } from '../../types';
-import { PromVisualQuery } from '../types';
+import { PrometheusDatasource } from '../../../datasource';
+import PromQlLanguageProvider from '../../../language_provider';
+import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
+import { PromOptions } from '../../../types';
+import { PromVisualQuery } from '../../types';
 
-import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
+import { MetricsModal, testIds } from './MetricsModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-describe('MetricEncyclopediaModal', () => {
+describe('MetricsModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
@@ -46,7 +46,7 @@ describe('MetricEncyclopediaModal', () => {
       operations: [],
     };
 
-    setup(query, listOfMetrics);
+    setup(query, ['with-labels'], true);
     await waitFor(() => {
       expect(screen.getByText('with-labels')).toBeInTheDocument();
     });
@@ -102,18 +102,9 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricStartingWithSomethingElse).toBeNull();
   });
 
-  it('allows a user to select a template variable', async () => {
-    setup(defaultQuery, listOfMetrics);
-
-    await waitFor(() => {
-      const selectType = screen.getByText('Select template variables');
-      expect(selectType).toBeInTheDocument();
-    });
-  });
-
   // Pagination
   it('shows metrics within a range by pagination', async () => {
-    // default resultsPerPage is 10
+    // default resultsPerPage is 100
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
@@ -146,9 +137,9 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricInsideRange).toBeInTheDocument();
   });
 
-  it('paginates millions of metrics and does not run out of memory', async () => {
-    const millionsOfMetrics: string[] = [...Array(1000000).keys()].map((i) => '' + i);
-    setup(defaultQuery, millionsOfMetrics);
+  it('paginates lots of metrics and does not run out of memory', async () => {
+    const lotsOfMetrics: string[] = [...Array(100000).keys()].map((i) => '' + i);
+    setup(defaultQuery, lotsOfMetrics);
     await waitFor(() => {
       // doesn't break on loading
       expect(screen.getByText('0')).toBeInTheDocument();
@@ -156,7 +147,7 @@ describe('MetricEncyclopediaModal', () => {
     const resultsPerPageInput = screen.getByTestId(testIds.resultsPerPage);
     // doesn't break on changing results per page
     await userEvent.type(resultsPerPageInput, '11');
-    const metricInsideRange = screen.getByText('10');
+    const metricInsideRange = screen.getByText('9');
     expect(metricInsideRange).toBeInTheDocument();
   });
 
@@ -174,11 +165,9 @@ describe('MetricEncyclopediaModal', () => {
     });
     const searchMetric = screen.getByTestId(testIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
-    await userEvent.type(searchMetric, 'a_b');
+    await userEvent.type(searchMetric, 'a_buck');
 
     await waitFor(() => {
-      metricABucket = screen.getByText('a_bucket');
-      expect(metricABucket).toBeInTheDocument();
       metricAll = screen.queryByText('all-metrics');
       expect(metricAll).toBeNull();
     });
@@ -193,6 +182,10 @@ describe('MetricEncyclopediaModal', () => {
       metricABucket = screen.getByText('a_bucket');
       expect(metricABucket).toBeInTheDocument();
     });
+
+    const showSettingsButton = screen.getByTestId(testIds.showAdditionalSettings);
+    expect(showSettingsButton).toBeInTheDocument();
+    await userEvent.click(showSettingsButton);
 
     const metadataSwitch = screen.getByTestId(testIds.searchWithMetadata);
     expect(metadataSwitch).toBeInTheDocument();
@@ -217,12 +210,11 @@ const defaultQuery: PromVisualQuery = {
 
 const listOfMetrics: string[] = ['all-metrics', 'a_bucket', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
 
-function createDatasource(metrics: string[], withLabels?: boolean) {
+function createDatasource(withLabels?: boolean) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
 
   // display different results if their are labels selected in the PromVisualQuery
   if (withLabels) {
-    languageProvider.getSeries = () => Promise.resolve({ __name__: ['with-labels'] });
     languageProvider.metricsMetadata = {
       'with-labels': {
         type: 'with-labels-type',
@@ -231,7 +223,6 @@ function createDatasource(metrics: string[], withLabels?: boolean) {
     };
   } else {
     // all metrics
-    languageProvider.getLabelValues = () => Promise.resolve(metrics);
     languageProvider.metricsMetadata = {
       'all-metrics': {
         type: 'all-metrics-type',
@@ -262,23 +253,24 @@ function createDatasource(metrics: string[], withLabels?: boolean) {
   return datasource;
 }
 
-function createProps(query: PromVisualQuery, datasource: PrometheusDatasource) {
+function createProps(query: PromVisualQuery, datasource: PrometheusDatasource, metrics: string[]) {
   return {
     datasource,
     isOpen: true,
     onChange: jest.fn(),
     onClose: jest.fn(),
     query: query,
+    initialMetrics: metrics,
   };
 }
 
 function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) {
   const withLabels: boolean = query.labels.length > 0;
-  const datasource = createDatasource(metrics, withLabels);
-  const props = createProps(query, datasource);
+  const datasource = createDatasource(withLabels);
+  const props = createProps(query, datasource, metrics);
 
   // render the modal only
-  const { container } = render(<MetricEncyclopediaModal {...props} />);
+  const { container } = render(<MetricsModal {...props} />);
 
   return container;
 }

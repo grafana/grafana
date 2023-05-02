@@ -27,7 +27,6 @@ import {
 
 import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
-import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -315,7 +314,7 @@ export function toDataFrame(data: any): DataFrame {
     }
 
     // This will convert the array values into Vectors
-    return new MutableDataFrame(data as DataFrameDTO);
+    return createDataFrame(data as DataFrameDTO);
   }
 
   // Handle legacy docs/json type
@@ -565,5 +564,37 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
     series: processedDataFrames,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
+}
+
+export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
+  fields: Array<Partial<Field>>;
+}
+
+export function createDataFrame(input: PartialDataFrame): DataFrame {
+  let length = 0;
+  const fields = input.fields.map((p, idx) => {
+    const { state, ...field } = p;
+    if (!field.name) {
+      field.name = `Field ${idx + 1}`;
+    }
+    if (!field.config) {
+      field.config = {};
+    }
+    if (!field.values) {
+      field.values = new Array(length);
+    } else if (field.values.length > length) {
+      length = field.values.length;
+    }
+    if (!field.type) {
+      field.type = guessFieldTypeForField(field as Field) ?? FieldType.other;
+    }
+    return field as Field;
+  });
+
+  return {
+    ...input,
+    fields,
+    length,
   };
 }

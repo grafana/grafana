@@ -363,9 +363,6 @@ type Cfg struct {
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
 
-	// Sentry config
-	Sentry Sentry
-
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
@@ -1187,7 +1184,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
-	cfg.readSentryConfig()
 	cfg.readGrafanaJavascriptAgentConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
@@ -1590,7 +1586,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")

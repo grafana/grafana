@@ -481,29 +481,22 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
-		// Connect data
+		// Add new connection
 		children = append(children, &navtree.NavLink{
-			Id:        "connections-connect-data",
-			Text:      "Connect data",
-			SubTitle:  "Browse and create new connections",
-			IsSection: true,
-			Url:       s.cfg.AppSubURL + "/connections/connect-data",
-			Children:  []*navtree.NavLink{},
+			Id:       "connections-add-new-connection",
+			Text:     "Add new connection",
+			SubTitle: "Browse and create new connections",
+			Url:      baseUrl + "/add-new-connection",
+			Children: []*navtree.NavLink{},
 		})
 
-		// Your connections
+		// Your data sources
 		children = append(children, &navtree.NavLink{
-			Id:       "connections-your-connections",
-			Text:     "Your connections",
-			SubTitle: "Manage your existing connections",
-			Url:      baseUrl + "/your-connections",
-			// Datasources
-			Children: []*navtree.NavLink{{
-				Id:       "connections-your-connections-datasources",
-				Text:     "Data sources",
-				SubTitle: "View and manage your connected data source connections",
-				Url:      baseUrl + "/your-connections/datasources",
-			}},
+			Id:       "connections-your-datasources",
+			Text:     "Your data sources",
+			SubTitle: "View and manage your connected data source connections",
+			Url:      baseUrl + "/your-datasources",
+			Children: []*navtree.NavLink{},
 		})
 	}
 

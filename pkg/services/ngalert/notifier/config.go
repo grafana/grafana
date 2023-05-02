@@ -92,18 +92,16 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 // AlertingConfiguration provides configuration for an Alertmanager.
 // It implements the notify.Configuration interface.
 type AlertingConfiguration struct {
-	AlertmanagerConfig    api.PostableApiAlertingConfig
-	RawAlertmanagerConfig []byte
+	alertmanagerConfig    api.PostableApiAlertingConfig
+	rawAlertmanagerConfig []byte
 
-	AlertmanagerTemplates *alertingTemplates.Template
-
-	IntegrationsFunc         func(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error)
-	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (*alertingNotify.Integration, error)
+	receivers                []*alertingNotify.APIReceiver
+	receiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (alertingNotify.Notifier, error) {
-	return func(next *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (alertingNotify.Notifier, error) {
-		return a.ReceiverIntegrationsFunc(next, tmpl)
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+	return func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+		return a.receiverIntegrationsFunc(next, tmpl)
 	}
 }
 
@@ -112,29 +110,29 @@ func (a AlertingConfiguration) DispatcherLimits() alertingNotify.DispatcherLimit
 }
 
 func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
-	return a.AlertmanagerConfig.InhibitRules
+	return a.alertmanagerConfig.InhibitRules
 }
 
 func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
-	return a.AlertmanagerConfig.MuteTimeIntervals
+	return a.alertmanagerConfig.MuteTimeIntervals
 }
 
-func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
-	return a.IntegrationsFunc(PostableApiAlertingConfigToApiReceivers(a.AlertmanagerConfig), a.AlertmanagerTemplates)
+func (a AlertingConfiguration) Receivers() []*alertingNotify.APIReceiver {
+	return a.receivers
 }
 
 func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
-	return a.AlertmanagerConfig.Route.AsAMRoute()
+	return a.alertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() *alertingTemplates.Template {
-	return a.AlertmanagerTemplates
+func (a AlertingConfiguration) Templates() []string {
+	return a.alertmanagerConfig.Templates
 }
 
 func (a AlertingConfiguration) Hash() [16]byte {
-	return md5.Sum(a.RawAlertmanagerConfig)
+	return md5.Sum(a.rawAlertmanagerConfig)
 }
 
 func (a AlertingConfiguration) Raw() []byte {
-	return a.RawAlertmanagerConfig
+	return a.rawAlertmanagerConfig
 }

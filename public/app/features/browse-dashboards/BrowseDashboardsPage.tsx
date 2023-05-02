@@ -17,6 +17,7 @@ import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { CreateNewButton } from './components/CreateNewButton';
 import { SearchView } from './components/SearchView';
+import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state';
 
 export interface BrowseDashboardsPageRouteParams {
@@ -52,8 +53,22 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
   const hasSelection = useHasSelection();
 
+  const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
+
   return (
-    <Page navId="dashboards/browse" pageNav={navModel} actions={<CreateNewButton inFolder={folderUID} />}>
+    <Page
+      navId="dashboards/browse"
+      pageNav={navModel}
+      actions={
+        (canCreateDashboards || canCreateFolder) && (
+          <CreateNewButton
+            inFolder={folderUID}
+            canCreateDashboard={canCreateDashboards}
+            canCreateFolder={canCreateFolder}
+          />
+        )
+      }
+    >
       <Page.Contents className={styles.pageContents}>
         <FilterInput
           placeholder={getSearchPlaceholder(searchState.includePanels)}
@@ -68,9 +83,15 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView key={rerender} width={width} height={height} />
+                <SearchView key={rerender} canSelect={canEditInFolder} width={width} height={height} />
               ) : (
-                <BrowseView key={rerender} width={width} height={height} folderUID={folderUID} />
+                <BrowseView
+                  key={rerender}
+                  canSelect={canEditInFolder}
+                  width={width}
+                  height={height}
+                  folderUID={folderUID}
+                />
               )
             }
           </AutoSizer>
