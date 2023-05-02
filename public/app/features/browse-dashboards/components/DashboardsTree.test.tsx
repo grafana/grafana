@@ -49,7 +49,7 @@ describe('browse-dashboards DashboardsTree', () => {
       <DashboardsTree
         canSelect={false}
         items={[dashboard]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}

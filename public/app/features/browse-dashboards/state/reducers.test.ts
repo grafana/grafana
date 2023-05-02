@@ -115,8 +115,10 @@ describe('browse-dashboards reducers', () => {
 
   describe('setItemSelectionState', () => {
     it('marks items as selected', () => {
+      const folder = wellFormedFolder(1).item;
+      const dashboard = wellFormedDashboard(2).item;
       const state = createInitialState();
-      const dashboard = wellFormedDashboard().item;
+      state.rootItems = [folder, dashboard];
 
       setItemSelectionState(state, { type: 'setItemSelectionState', payload: { item: dashboard, isSelected: true } });
 
@@ -133,11 +135,13 @@ describe('browse-dashboards reducers', () => {
     it('marks descendants as selected when the parent folder is selected', () => {
       const state = createInitialState();
 
-      const parentFolder = wellFormedFolder(1).item;
-      const childDashboard = wellFormedDashboard(2, {}, { parentUID: parentFolder.uid }).item;
-      const childFolder = wellFormedFolder(3, {}, { parentUID: parentFolder.uid }).item;
-      const grandchildDashboard = wellFormedDashboard(4, {}, { parentUID: childFolder.uid }).item;
+      const rootDashboard = wellFormedDashboard(1).item;
+      const parentFolder = wellFormedFolder(2).item;
+      const childDashboard = wellFormedDashboard(3, {}, { parentUID: parentFolder.uid }).item;
+      const childFolder = wellFormedFolder(4, {}, { parentUID: parentFolder.uid }).item;
+      const grandchildDashboard = wellFormedDashboard(5, {}, { parentUID: childFolder.uid }).item;
 
+      state.rootItems = [parentFolder, rootDashboard];
       state.childrenByParentUID[parentFolder.uid] = [childDashboard, childFolder];
       state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
 
@@ -200,12 +204,13 @@ describe('browse-dashboards reducers', () => {
     it('selects ancestors when all their children are now selected', () => {
       const state = createInitialState();
 
-      const parentFolder = wellFormedFolder(1).item;
-      const childDashboard = wellFormedDashboard(2, {}, { parentUID: parentFolder.uid }).item;
-      const childFolder = wellFormedFolder(3, {}, { parentUID: parentFolder.uid }).item;
-      const grandchildDashboard = wellFormedDashboard(4, {}, { parentUID: childFolder.uid }).item;
+      const rootDashboard = wellFormedDashboard(1).item;
+      const parentFolder = wellFormedFolder(2).item;
+      const childDashboard = wellFormedDashboard(3, {}, { parentUID: parentFolder.uid }).item;
+      const childFolder = wellFormedFolder(4, {}, { parentUID: parentFolder.uid }).item;
+      const grandchildDashboard = wellFormedDashboard(5, {}, { parentUID: childFolder.uid }).item;
 
-      state.rootItems = [parentFolder];
+      state.rootItems = [parentFolder, rootDashboard];
       state.childrenByParentUID[parentFolder.uid] = [childDashboard, childFolder];
       state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
 
