@@ -39,7 +39,7 @@ export type DataProvider = {
   getLabelValues: (labelName: string) => Promise<string[]>;
   getSeriesValues: (name: string, match: string) => Promise<string[]>;
   getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
-  referenceSrv: ReferenceSrv;
+  referenceSrv: ReferenceSrv | undefined;
   query: PromQuery | undefined;
 };
 
@@ -179,7 +179,7 @@ async function getLabelValues(
 }
 
 function getReferenceValues(text: string, dataProvider: DataProvider): Completion[] {
-  const queries = dataProvider.referenceSrv.getQueries();
+  const queries = dataProvider.referenceSrv?.getQueries();
   if (queries) {
     return queries
       .filter((query) => query.refId !== dataProvider.query?.refId)

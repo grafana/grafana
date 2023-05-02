@@ -538,9 +538,6 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
     };
   }
 
-  console.warn('getSituation', text, pos, text[pos - 1]);
-  console.log('dataProvider', dataProvider);
-
   // This char shouldn't be used for anything else as it's not valid in promQL
   if (text[pos - 1] === '@') {
     return {
@@ -549,57 +546,46 @@ export function getSituation(text: string, pos: number, dataProvider: DataProvid
   }
 
   const referenceRegex = new RegExp(/@[A-Z]/, 'g');
+  const referenceService = getReferenceSrv();
 
   // If there are multiple targets (queries with references), let's interpolate any references in this before parsing the syntax
-  if (referenceRegex.test(text) && dataProvider.query) {
-    const savedQuery = getReferenceSrv().getQuery(dataProvider.query);
+  if (referenceService && referenceRegex.test(text) && dataProvider.query) {
+    const savedQuery = referenceService.getQuery(dataProvider.query);
+
     if (savedQuery) {
       const query: QueryWithReference = { ...savedQuery, expr: text };
-      const thisTarget = dataProvider.referenceSrv.getQuery(query);
-      const allTargets = dataProvider.referenceSrv.getQueries();
+      const thisTarget = referenceService.getQuery(query);
+      const allTargets = referenceService.getQueries();
 
       if (thisTarget && savedQuery) {
         thisTarget.expr = text;
         const interpolatedTarget = interpolatePrometheusReferences(allTargets, thisTarget);
         // const thisTarget = clone(dataProvider.query);
 
-        // This is the problem for multiple references in a single query, if there is an interpolation before and after the cursor, we'll get the wrong values
-        // This will only work in the case where ALL references are before the cursor position
-        const lengthDelta = interpolatedTarget.expr.length - text.length;
-
-        // calculate the new cursor position after reference interpolation
-        // This isn't gonna work for multiple references?
+        // to calculate the new position of the cursor after reference interpolation, we need to grab the index of each replacement before the cursor
         const before: number[] = [];
-        const after: number[] = [];
 
-        // re-init otherwise the results from test will throw it off
         let match;
+        // re-init regex index otherwise the results from test will throw it off
         referenceRegex.lastIndex = 0;
         while ((match = referenceRegex.exec(text))) {
           if (Number.isInteger(match?.index)) {
-            if (match.index <= pos) {
+            if (match.index < pos) {
               before.push(match.index);
-              // newPos += lengthDelta;
-              console.log('cursor position is at or before @');
-            } else {
-              after.push(match.index);
-              console.log('cursor position is after @');
             }
           }
         }
 
-        console.log('oldpos', pos);
-        if (!after.length && before.length) {
-          pos += lengthDelta;
-        } else if (after.length && before.length) {
-          console.warn('Uhhh this wont work');
-        }
-
-        console.log('interpolatedTarget.expr', interpolatedTarget.expr);
-        console.log('rawText', text);
-        console.log('before', before);
-        console.log('after', after);
-        console.log('newpos', pos);
+        before.forEach((idx) => {
+          const interpolationMeta = interpolatedTarget?.interpolations?.find(
+            (interpolation) => interpolation.position === idx
+          );
+          if (interpolationMeta && interpolationMeta.length > 0) {
+            // If there was an interpolation, we're adding the length of it, but we also need to subtract the length of what we replaced
+            // Right now this is just hardcoded to 2, because we assume that the query reference is a single letter, and the reference char accounts for the other, i.e. @N
+            pos += interpolationMeta.length - 2;
+          }
+        });
 
         text = interpolatedTarget.expr;
       }

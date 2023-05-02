@@ -1,4 +1,30 @@
+import { DataProvider } from './completions';
 import { getSituation, Situation } from './situation';
+
+const getMockDataProvider = (): DataProvider => {
+  return {
+    getAllLabelNames(): Promise<string[]> {
+      return Promise.resolve([]);
+    },
+    getAllMetricNames() {
+      return Promise.resolve([]);
+    },
+    getHistory(): Promise<string[]> {
+      return Promise.resolve([]);
+    },
+    getLabelValues(labelName: string): Promise<string[]> {
+      return Promise.resolve([]);
+    },
+    getSeriesLabels(selector, otherLabels): Promise<string[]> {
+      return Promise.resolve([]);
+    },
+    getSeriesValues(name: string, match: string): Promise<string[]> {
+      return Promise.resolve([]);
+    },
+    query: undefined,
+    referenceSrv: undefined,
+  };
+};
 
 // we use the `^` character as the cursor-marker in the string.
 function assertSituation(situation: string, expectedSituation: Situation | null) {
@@ -16,7 +42,7 @@ function assertSituation(situation: string, expectedSituation: Situation | null)
     throw new Error('multiple cursors');
   }
 
-  const result = getSituation(text, pos);
+  const result = getSituation(text, pos, getMockDataProvider());
 
   if (expectedSituation === null) {
     expect(result).toStrictEqual(null);
@@ -45,6 +71,10 @@ describe('situation', () => {
 
     assertSituation('something{}[^]', {
       type: 'IN_DURATION',
+    });
+
+    assertSituation('@^', {
+      type: 'IN_REFERENCE',
     });
 
     assertSituation('something{label~^}', null);

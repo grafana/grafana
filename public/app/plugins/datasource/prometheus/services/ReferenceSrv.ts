@@ -6,6 +6,15 @@ export interface QueryWithReference {
   refCount?: number;
 }
 
+type InterpolationMetadata = {
+  length: number;
+  position: number;
+};
+
+export interface InterpolatedQuery extends QueryWithReference {
+  interpolations?: InterpolationMetadata[];
+}
+
 interface ReferenceSrvProps {
   initialQueries: QueryWithReference[];
 }
@@ -41,9 +50,10 @@ export class ReferenceSrv {
    *
    * @param staleTarget
    */
-  interpolatePrometheusReferences(staleTarget: QueryWithReference): QueryWithReference {
+  interpolatePrometheusReferences(staleTarget: QueryWithReference): InterpolatedQuery {
     const targets = this.getQueries();
     const target = clone(this.getQuery(staleTarget));
+    const interpolations: InterpolationMetadata[] = [];
 
     if (target) {
       // render nested query
@@ -54,6 +64,8 @@ export class ReferenceSrv {
 
       const nestedSeriesRefRegex = /@([A-Z])/g;
 
+      const regex = new RegExp(nestedSeriesRefRegex);
+
       // Use ref count to track circular references
       each(targetsByRefId, (t, id) => {
         const regex = RegExp(`\@(${id})`, 'g');
@@ -63,9 +75,11 @@ export class ReferenceSrv {
 
       // Shamelessly stolen from Graphite
       // Keep interpolating until there are no query references
-      // The reason for the loop is that the referenced query might contain another reference to another query
-      while (target.expr.match(nestedSeriesRefRegex)) {
-        const updated = target.expr.replace(nestedSeriesRefRegex, (match: string, g1: string) => {
+      // The reason for the loop is that the referenced query might contain another reference to another query;
+      let match = regex.exec(target.expr);
+      while (match) {
+        // let expressionLengthBeforeInterpolation = target.expr.length;
+        const updated = target.expr.replace(nestedSeriesRefRegex, (match: string, g1: string, offset: number) => {
           const t = targetsByRefId[g1];
           if (!t) {
             return match;
@@ -77,6 +91,11 @@ export class ReferenceSrv {
           }
           t.refCount ? t.refCount-- : (t.refCount = 0);
 
+          interpolations.push({
+            length: t.expr.length,
+            position: offset,
+          });
+
           return t.expr;
         });
 
@@ -85,13 +104,14 @@ export class ReferenceSrv {
         }
 
         target.expr = updated;
+        match = regex.exec(target.expr);
       }
 
       if (target.expr.match(nestedSeriesRefRegex)) {
         throw new Error('Unable to interpolate query reference, check for circular references');
       }
 
-      return target;
+      return { ...target, interpolations: interpolations };
     } else {
       throw new Error('Attempting to interpolate a target that has not been added to state!');
     }
@@ -100,7 +120,7 @@ export class ReferenceSrv {
 
 let singletonInstance: ReferenceSrv;
 
-export const getReferenceSrv = (props?: ReferenceSrvProps) => {
+export const getReferenceSrv = (props?: ReferenceSrvProps): ReferenceSrv | undefined => {
   if (!singletonInstance && props) {
     singletonInstance = new ReferenceSrv(props);
   }

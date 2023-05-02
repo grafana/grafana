@@ -11,7 +11,7 @@ import { PromQuery } from '../../types';
 import { addOperation } from '../shared/OperationList.testUtils';
 import { getOperationParamId } from '../shared/operationUtils';
 
-import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
+import { PromQueryBuilderContainer, Props } from './PromQueryBuilderContainer';
 
 describe('PromQueryBuilderContainer', () => {
   it('translates query between string and model', async () => {
@@ -48,7 +48,14 @@ function setup(queryOverrides: Partial<PromQuery> = {}) {
     languageProvider
   );
 
-  const props = {
+  const props: Props = {
+    queries: [
+      {
+        refId: 'A',
+        expr: '',
+        ...queryOverrides,
+      },
+    ],
     datasource,
     query: {
       refId: 'A',

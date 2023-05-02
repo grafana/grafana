@@ -66,6 +66,13 @@ describe('situation', () => {
       logQuery: '{level="info"} | json |',
     });
 
+    assertSituation('{level="info"} | json |^', {
+      type: 'AFTER_SELECTOR',
+      afterPipe: true,
+      hasSpace: false,
+      logQuery: '{level="info"} | json |',
+    });
+
     assertSituation('count_over_time({level="info"}^[10s])', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,

@@ -14,7 +14,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { getReferenceSrv } from './services/ReferenceSrv';
+import { getReferenceSrv, InterpolatedQuery } from './services/ReferenceSrv';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, PromQuery } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
@@ -425,6 +425,14 @@ export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
  * @param targets
  * @param target
  */
-export function interpolatePrometheusReferences(targets: PromQuery[], target: PromQuery) {
-  return getReferenceSrv({ initialQueries: targets }).interpolatePrometheusReferences(target);
+export function interpolatePrometheusReferences(targets: PromQuery[], target: PromQuery): InterpolatedQuery {
+  const service = getReferenceSrv({ initialQueries: targets });
+  return service ? service.interpolatePrometheusReferences(target) : target;
+}
+
+export function updatePrometheusQueryTarget(targets: PromQuery[], target: PromQuery): void {
+  const service = getReferenceSrv({ initialQueries: targets });
+  if (service) {
+    service.setQuery(target);
+  }
 }

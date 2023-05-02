@@ -137,10 +137,8 @@ const MonacoQueryField = (props: Props) => {
           ensurePromQL(monaco);
         }}
         onChange={(value, ev) => {
-          if (value && props.query) {
-            referenceSrv.setQuery({ ...props.query, expr: value });
-          } else {
-            console.warn('not updating values');
+          if (referenceSrv && props.query) {
+            referenceSrv.setQuery({ ...props.query, expr: value ?? '' });
           }
         }}
         onMount={(editor, monaco) => {
