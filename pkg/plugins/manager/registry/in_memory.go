@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 )
 
 type InMemory struct {
@@ -13,14 +14,16 @@ type InMemory struct {
 	mu    sync.RWMutex
 }
 
-func ProvideService() *InMemory {
-	return NewInMemory()
+func ProvideService(hooksRegistry hooks.Registry) *InMemory {
+	return NewInMemory(hooksRegistry)
 }
 
-func NewInMemory() *InMemory {
-	return &InMemory{
+func NewInMemory(hooksRegistry hooks.Registry) *InMemory {
+	reg := &InMemory{
 		store: make(map[string]*plugins.Plugin),
 	}
+	registerPluginHooks(reg, hooksRegistry)
+	return reg
 }
 
 func (i *InMemory) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {

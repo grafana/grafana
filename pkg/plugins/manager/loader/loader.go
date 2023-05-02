@@ -207,13 +207,6 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 
 	verifiedPlugins := l.hooksRunner.RunBeforeInitHooks(ctx, loadedPlugins)
 
-	// TODO: hooks: implement as hook and remove
-	for _, p := range verifiedPlugins {
-		if err := l.load(ctx, p); err != nil {
-			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
-		}
-	}
-
 	l.hooksRunner.RunAfterInitHooks(ctx, verifiedPlugins)
 	return verifiedPlugins, nil
 }
@@ -232,26 +225,8 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return err
 	}
 
-	// TODO: hooks: implement as hook and remove
-	if err := l.unload(ctx, plugin); err != nil {
-		return err
-	}
-
 	l.log.Debug("Plugin unregistered", "pluginId", plugin.ID)
 	return nil
-}
-
-func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
-	// TODO: hooks: implement as hook
-	if err := l.pluginRegistry.Add(ctx, p); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
-	// TODO: hooks: implement as hook
-	return l.pluginRegistry.Remove(ctx, p.ID)
 }
 
 func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) (*plugins.Plugin, error) {
