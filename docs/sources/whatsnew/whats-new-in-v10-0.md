@@ -107,7 +107,7 @@ Public dashboards allow you to share your Grafana dashboard with anyone without 
 With this update, we've made the following improvements:
 
 - The time picker and annotations can be toggled on or off from the configuration modal
-- You can see all the public dashboards from the Dashboards menu
+- You can see a list of all your public dashboards at **Dashboards > Public dashboards**
 - Improved UI: new modal design, paused and not found pages
 - Bug fixes! E.g collapsed rows, hidden queries, and zoom into panels
 
