@@ -7,11 +7,13 @@ title: Add authentication for data source plugins
 
 # Add authentication for data source plugins
 
-This guide explains how to work with authentication using encryption, data source proxies.
+Grafana plugins support authentication using encryption, data source proxies. Use this guide to learn how to work with authentication.
 
 ## Choose an authentication method
 
-Configure your data source plugin to authenticate against a third-party API in one of either of two ways. Use the [_data source proxy_](#authenticate-using-the-data-source-proxy) method, or  build a [_backend plugin_](#authenticate-using-a-backend-plugin). 
+Configure your data source plugin to authenticate against a third-party API in one of either of two ways:
+  - Use the [_data source proxy_](#authenticate-using-the-data-source-proxy) method, or
+  - Build a [_backend plugin_](#authenticate-using-a-backend-plugin). 
 
 | Case                                                           | Use                                                         |
 | ------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -26,44 +28,46 @@ Data source plugins have two ways of storing custom configuration: `jsonData` an
 
 ### Store configuration in `jsonData`
 
-Users with the Viewer role can access data source configuration—such as the contents of `jsonData`—in cleartext. If you've enabled anonymous access, anyone who can access Grafana in their browser can see the contents of `jsonData`. 
+Users with the Viewer role can access data source configuration such as the contents of `jsonData` in cleartext. If you've enabled anonymous access, anyone who can access Grafana in their browser can see the contents of `jsonData`. 
 
-** **Important:** Do not use `jsonData` with sensitive data such as password, tokens, and API keys. If you need to store sensitive information, use `secureJsonData` instead. 
+Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions).
+
+> **Important:** Do not use `jsonData` with sensitive data such as password, tokens, and API keys. If you need to store sensitive information, use `secureJsonData` instead. 
 
 > **Note:** You can see the settings that the current user has access to by entering `window.grafanaBootData` in the developer console of your browser.
-
-> **Note:** Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions).
 
 ### Store configuration in `secureJasonData`
 
 If you need to store sensitive information, use `secureJsonData` instead of `jsonData`. Whenever the user saves the data source configuration, the secrets in `secureJsonData` are sent to the Grafana server and encrypted before they're stored.
 
-Once the secure configuration has been encrypted, it can no longer be accessed from the browser. The only way to access secrets after they've been saved is by using the [_data source proxy_](#authenticate-using-the-data-source-proxy).
+Once you have encrypted the secure configuration, it can no longer be accessed from the browser. The only way to access secrets after they've been saved is by using the [_data source proxy_](#authenticate-using-the-data-source-proxy).
 
 ### Add secret configuration to your data source plugin
 
 To demonstrate how you can add secrets to a data source plugin, let's add support for configuring an API key.
 
-1. Create a new interface in `types.ts` to hold the API key.
+1. Create a new interface in `types.ts` to hold the API key:
     ```ts
     export interface MySecureJsonData {
       apiKey?: string;
     }
     ```
-1. Add type information to your `secureJsonData` object by updating the props for your `ConfigEditor` to accept the interface as a second type parameter.
+1. Add type information to your `secureJsonData` object by updating the props for your `ConfigEditor` to accept the interface as a second type parameter:
 
     ```ts
     interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
     ```
 
-1. You can access the value of the secret from the `options` prop inside your `ConfigEditor` until the user saves the configuration. When the user saves the configuration, Grafana clears the value. After that, you can use the `secureJsonFields` to determine whether the property has been configured.
+1. Access the value of the secret from the `options` prop inside your `ConfigEditor`:
 
     ```ts
     const { secureJsonData, secureJsonFields } = options;
     const { apiKey } = secureJsonData;
     ```
 
-1. To securely update the secret in your plugin's configuration editor, update the `secureJsonData` object using the `onOptionsChange` prop.
+    > **Note:** You can do this until the user saves the configuration; when the user saves the configuration, Grafana clears the value. After that, you can use `secureJsonFields` to determine whether the property has been configured.
+
+1. To securely update the secret in your plugin's configuration editor, update the `secureJsonData` object using the `onOptionsChange` prop:
 
     ```ts
     const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -76,7 +80,7 @@ To demonstrate how you can add secrets to a data source plugin, let's add suppor
     };
     ```
 
-1. Next, define a component that can accept user input.
+1. Define a component that can accept user input:
 
     ```ts
     <Input
@@ -87,7 +91,7 @@ To demonstrate how you can add secrets to a data source plugin, let's add suppor
     />
     ```
 
-1. Finally, if you want the user to be able to reset the API key, then you need to set the property to `false` in the `secureJsonFields` object.
+1. Optional: If you want the user to be able to reset the API key, then you need to set the property to `false` in the `secureJsonFields` object:
 
     ```ts
     const onResetAPIKey = () => {
@@ -113,15 +117,15 @@ Now that users can configure secrets, the next step is to see how we can add the
 
 Once the user has saved the configuration for a data source, the secret data source configuration will no longer be available in the browser. Encrypted secrets can only be accessed on the server. So how do you add them to your request?
 
-The Grafana server comes with a proxy that lets you define templates for your requests. We call them _proxy routes_. Grafana sends the proxy route to the server, decrypts the secrets along with other configuration, and adds them to the request before sending it off.
+The Grafana server comes with a proxy that lets you define templates for your requests: _proxy routes_. Grafana sends the proxy route to the server, decrypts the secrets along with other configuration, and adds them to the request before sending it.
 
-> **Note:** Be sure not to confuse the data source proxy with the [auth proxy]({{< relref "../../setup-grafana/configure-security/configure-authentication/auth-proxy/" >}}). The data source proxy is used to authenticate a _data source_, while the auth proxy is used to _log into Grafana itself_.
+> **Note:** Be sure not to confuse the data source proxy with the [auth proxy]({{< relref "../../setup-grafana/configure-security/configure-authentication/auth-proxy/" >}}). The data source proxy is used to authenticate a data source, while the auth proxy is used to log into Grafana itself.
 
 ### Add a proxy route to your plugin
 
 To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [`plugin.json`](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) file.
 
-1. Add the route to `plugin.json`. Note that you need to restart the Grafana server every time you make a change to your `plugin.json` file.
+1. Add the route to `plugin.json`:
 
    ```json
    "routes": [
@@ -132,7 +136,9 @@ To forward requests through the Grafana proxy, you need to configure one or more
    ]
    ```
 
-1. In the `DataSource`, extract the proxy URL from `instanceSettings` to a class property called `url`.
+    > **Note:** You need to restart the Grafana server every time you make a change to your `plugin.json` file.
+
+1. In the `DataSource`, extract the proxy URL from `instanceSettings` to a class property called `url`:
 
    ```ts
    export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
@@ -148,7 +154,7 @@ To forward requests through the Grafana proxy, you need to configure one or more
    }
    ```
 
-1. In the `query` method, make a request using `BackendSrv`. The first section of the URL path needs to match the `path` of your proxy route. The data source proxy replaces `this.url + routePath` with the `url` of the route. The following request is made to `https://api.example.com/v1/users`.
+1. In the `query` method, make a request using `BackendSrv`. The first section of the URL path needs to match the `path` of your proxy route. The data source proxy replaces `this.url + routePath` with the `url` of the route. The following request is made to `https://api.example.com/v1/users`:
 
    ```ts
    import { getBackendSrv } from '@grafana/runtime';
@@ -167,33 +173,33 @@ To forward requests through the Grafana proxy, you need to configure one or more
 
 Grafana sends the proxy route to the server, where the data source proxy decrypts any sensitive data and interpolates the template variables with the decrypted data before making the request.
 
-To add user-defined configuration to your routes, add `{{ .JsonData.projectId }}` to the route, where `projectId` is the name of a property in the `jsonData` object.
+1. To add user-defined configuration to your routes, add `{{ .JsonData.projectId }}` to the route, where `projectId` is the name of a property in the `jsonData` object:
 
-```json
-"routes": [
-  {
-    "path": "example",
-    "url": "https://api.example.com/projects/{{ .JsonData.projectId }}"
-  }
-]
-```
+    ```json
+    "routes": [
+      {
+        "path": "example",
+        "url": "https://api.example.com/projects/{{ .JsonData.projectId }}"
+      }
+    ]
+    ```
 
-You can also configure your route to use sensitive data by using `.SecureJsonData`.
+1. Optional: You can also configure your route to use sensitive data by using `.SecureJsonData`:
 
-```json
-"routes": [
-  {
-    "path": "example",
-    "url": "https://{{ .JsonData.username }}:{{ .SecureJsonData.password }}@api.example.com"
-  }
-]
-```
+    ```json
+    "routes": [
+      {
+        "path": "example",
+        "url": "https://{{ .JsonData.username }}:{{ .SecureJsonData.password }}@api.example.com"
+      }
+    ]
+    ```
 
-In addition to the URL, you can also add headers, URL parameters, and a request body, to a proxy route.
+In addition to adding the URL to the proxy route, you can also add headers, URL parameters, and a request body.
 
 #### Add HTTP headers to a proxy route
 
-Here's an example of an HTTP header added with `name` and `content`.
+Here's an example of an HTTP header added with `name` and `content`:
 
 ```json
 "routes": [
@@ -212,7 +218,7 @@ Here's an example of an HTTP header added with `name` and `content`.
 
 #### Add URL parameters to a proxy route
 
-Here's an example of URL parameters added with `name` and `content`.
+Here's an example of URL parameters added with `name` and `content`.:
 
 ```json
 "routes": [
@@ -231,7 +237,7 @@ Here's an example of URL parameters added with `name` and `content`.
 
 #### Add a request body to a proxy route
 
-Here's an example of a request body added with `username` and `password`.
+Here's an example of a request body added with `username` and `password`:
 
 ```json
 "routes": [
@@ -246,9 +252,9 @@ Here's an example of a request body added with `username` and `password`.
 ]
 ```
 
-### Add a OAuth 2.0 proxy route to your plugin
+### Add an OAuth 2.0 proxy route to your plugin
 
-Since the request to each route is made server-side with OAuth 2.0 authentication, only machine-to-machine requests are supported. In order words, if you need to use a different grant than client credentials, you need to implement it yourself.
+Since your request to each route is made server-side with OAuth 2.0 authentication, only machine-to-machine requests are supported. In order words, if you need to use a different grant than client credentials, you need to implement it yourself.
 
 To authenticate using OAuth 2.0, add a `tokenAuth` object to the proxy route definition. If necessary, Grafana performs a request to the URL defined in `tokenAuth` to retrieve a token before making the request to the URL in your proxy route. Grafana automatically renews the token when it expires.
 
@@ -280,7 +286,7 @@ While the data source proxy supports the most common authentication methods for 
 - Proxy routes only support HTTP or HTTPS.
 - Proxy routes don't support custom token authentication.
 
-If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "backend/" >}}). Since backend plugins run on the server they can access decrypted secrets, which makes it easier to implement custom authentication methods.
+If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "backend/" >}}). Because backend plugins run on the server, they can access decrypted secrets, which makes it easier to implement custom authentication methods.
 
 The decrypted secrets are available from the `DecryptedSecureJSONData` field in the instance settings.
 
@@ -300,7 +306,7 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 If your data source uses the same OAuth provider as Grafana itself, for example using [Generic OAuth Authentication]({{< relref "../../setup-grafana/configure-security/configure-authentication/generic-oauth/" >}}), then your data source plugin can reuse the access token for the logged-in Grafana user.
 
-To allow Grafana to pass the access token to the plugin, update the data source configuration and set the `jsonData.oauthPassThru` property to `true`. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) provides a toggle, the **Forward OAuth Identity** option, for this. You can also build an appropriate toggle to set `jsonData.oauthPassThru` in your data source configuration page UI.
+To allow Grafana to pass the access token to the plugin, update the data source configuration and set the `jsonData.oauthPassThru` property to `true`. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) settings provide a toggle, the **Forward OAuth Identity** option, for this. You can also build an appropriate toggle to set `jsonData.oauthPassThru` in your data source configuration page UI.
 
 When configured, Grafana can forward authorization HTTP headers such as `Authorization` or `X-ID-Token` to a backend data source. This information is available across the `QueryData`, `CallResource` and `CheckHealth` requests.
 
@@ -323,7 +329,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 }
 
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-    // Important to keep the Context, since the injected middleware is configured there
+    // Necessary to keep the Context, since the injected middleware is configured there
     req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://some-url", nil)
     if err != nil {
       return nil, fmt.Errorf("new request with context: %w", err)
@@ -334,7 +340,7 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 }
 ```
 
-You can see a full working example here: [datasource-http-backend](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-http-backend).
+You can see a full working plugin example here: [datasource-http-backend](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-http-backend).
 
 ### Extract a header from an HTTP request
 

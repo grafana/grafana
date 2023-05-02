@@ -4,11 +4,7 @@ title: Add support for annotations
 
 # Add support for annotations
 
-Plugin developers add support for annotations to insert supplemental information into Grafana alerts. This guide explains how to add support for [annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) to a data source plugin.
-
-## Before you begin
-
-This guide assumes that you're already familiar with how to [build a data source plugin](/tutorials/build-a-data-source-plugin/).
+You can add support to your plugin for annotations that will insert information into Grafana alerts. This guide explains how to add support for [annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) to a data source plugin.
 
 ## Support annotations in your data source plugin
 

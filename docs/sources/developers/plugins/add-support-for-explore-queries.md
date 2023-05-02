@@ -8,10 +8,6 @@ title: Add features to Explore queries
 
 Your data source supports Explore by default and uses the existing query editor for the data source. This guide explains how to extend functionality for Explore queries in a data source plugin.
 
-## Before you begin
-
-This guide assumes that you're already familiar with how to [build a data source plugin](/tutorials/build-a-data-source-plugin/).
-
 ## Add an Explore-specific query editor
 
 To extend Explore functionality for your data source, define an Explore-specific query editor.
@@ -56,7 +52,7 @@ To extend Explore functionality for your data source, define an Explore-specific
 
 ## Select a preferred visualization option
 
-By default, Explore should select a useful and effective visualization for your data. It can figure out whether the returned data is time series data or logs or something else, and create appropriate visualizations.
+By default, Explore should select an appropriate and useful visualization for your data. It can figure out whether the returned data is time series data or logs or something else, and creates the right type of visualization.
 
 However, if you want a custom visualization, you can add a hint to your returned data frame by setting the `meta' attribute to `preferredVisualisationType`.
 

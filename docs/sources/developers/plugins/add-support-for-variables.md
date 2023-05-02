@@ -4,7 +4,7 @@ title: Add support for variables in plugins
 
 # Add support for variables in plugins
 
-Variables are placeholders for values, and can be used in Grafana to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
+Variables are placeholders for values, and Grafana uses them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
 
 In this guide, you'll see how you can turn an `id` string like this:
 
@@ -38,13 +38,13 @@ export function SimplePanel({ options, data, width, height, replaceVariables }: 
 
 For data sources, you need to use the `getTemplateSrv`, which returns an instance of `TemplateSrv`.
 
-1. Import `getTemplateSrv` from the `runtime` package.
+1. Import `getTemplateSrv` from the `runtime` package:
 
    ```ts
    import { getTemplateSrv } from '@grafana/runtime';
    ```
 
-1. In your `query` method, call the `replace` method with a user-defined template string.
+1. In your `query` method, call the `replace` method with a user-defined template string:
 
    ```ts
    async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
@@ -82,7 +82,7 @@ Not only can you read the value of a variable, you can also update the variable 
 
 The following example shows how to update a variable called `service`.
 
-- `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
+- `query` contains the query parameters you want to update. The query parameters that control variables are prefixed with `var-`.
 - `replace: true` tells Grafana to update the current URL state rather than creating a new history entry.
 
 ```ts
@@ -99,7 +99,7 @@ locationService.partial({ 'var-service': 'billing' }, true);
 
 A [query variable]({{< relref "../../dashboards/variables/add-template-variables/#add-a-query-variable" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
 
-Let's start by defining a query model for the variable query.
+Let's start by defining a query model for the variable query:
 
 ```ts
 export interface MyVariableQuery {
@@ -108,7 +108,7 @@ export interface MyVariableQuery {
 }
 ```
 
-For a data source to support query variables, you must override the `metricFindQuery` in your `DataSourceApi` class. `metricFindQuery` returns an array of `MetricFindValue` which has a single property, `text`:
+For a data source to support query variables, override the `metricFindQuery` in your `DataSourceApi` class. The `metricFindQuery` function returns an array of `MetricFindValue` which has a single property, `text`:
 
 ```ts
 async metricFindQuery(query: MyVariableQuery, options?: any) {
@@ -122,15 +122,15 @@ async metricFindQuery(query: MyVariableQuery, options?: any) {
 }
 ```
 
-> **Note:** By default, Grafana provides a basic query model and editor for simple text queries. If that's all you need, then leave the query type as `string`.
->
-> ```ts
-> async metricFindQuery(query: string, options?: any)
-> ```
+> **Note:** By default, Grafana provides a basic query model and editor for simple text queries. If that's all you need, then leave the query type as `string`:
+
+```ts
+async metricFindQuery(query: string, options?: any)
+```
 
 Let's create a custom query editor to allow the user to edit the query model.
 
-1. Create a `VariableQueryEditor` component.
+1. Create a `VariableQueryEditor` component:
 
    ```ts
    import React, { useState } from 'react';
@@ -185,7 +185,7 @@ Let's create a custom query editor to allow the user to edit the query model.
 
    The second argument to `onChange` allows you to set a text representation of the query that will appear next to the name of the variable in the variables list.
 
-1. Finally, configure your plugin to use the query editor.
+1. Configure your plugin to use the query editor:
 
    ```ts
    import { VariableQueryEditor } from './VariableQueryEditor';

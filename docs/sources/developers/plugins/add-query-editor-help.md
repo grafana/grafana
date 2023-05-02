@@ -4,7 +4,7 @@ title: Add query editor help
 
 # Add query editor help
 
-Query editors support the addition of a help component for queries so that they display examples of potential queries. When the user clicks on one of the examples, the query editor is automatically updated.
+Query editors support the addition of a help component for queries so that they display examples of potential queries. When the user clicks on one of the examples, the query editor is automatically updated. This helps the user to make faster queries.
 
 1. In the `src` directory of your plugin, create a file `QueryEditorHelp.tsx` with the following content:
 
@@ -17,7 +17,7 @@ Query editors support the addition of a help component for queries so that they 
    };
    ```
 
-1. Configure the plugin to use `QueryEditorHelp`.
+1. Configure the plugin to use `QueryEditorHelp`:
 
    ```ts
    import QueryEditorHelp from './QueryEditorHelp';
@@ -30,7 +30,7 @@ Query editors support the addition of a help component for queries so that they 
      .setQueryEditorHelp(QueryEditorHelp);
    ```
 
-1. Create a few examples of potential queries.
+1. Create a few examples of potential queries:
 
    ```ts
    import React from 'react';
