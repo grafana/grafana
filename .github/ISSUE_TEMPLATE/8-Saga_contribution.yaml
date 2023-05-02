@@ -8,12 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        By using this template, you help expand our component and pattern
-        solutions within the design system and let others reuse your work! You
-        can contribute bug or design defect fixes, component, and pattern
-        enhancements, or even net-new components! This template brings
-        visibility to the great work everyone already does and in turn helps
-        reduce duplicate efforts.
+        By using this template, you help expand our component and pattern solutions within the design system and let others reuse your work! You can contribute bug or design defect fixes, component, and pattern enhancements, or even net-new components! This template brings visibility to the great work everyone already does and in turn helps reduce duplicate efforts.
         Thank you!
   - type: checkboxes
     attributes:
