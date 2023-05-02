@@ -1,5 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getFolderChildren } from 'app/features/search/service/folders';
 import { createAsyncThunk, DashboardDTO } from 'app/types';
 
@@ -22,7 +23,13 @@ export const deleteDashboard = createAsyncThunk(
 
     // refetch the parent folder children to update the tree
     const dashboard = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), dashboardUID);
-    dispatch(fetchChildren(dashboard?.parentUID));
+
+    // Need to handle the case where the dashboard is at the root
+    if (dashboard?.parentUID === GENERAL_FOLDER_UID) {
+      dispatch(fetchChildren());
+    } else {
+      dispatch(fetchChildren(dashboard?.parentUID));
+    }
 
     return result;
   }
@@ -37,7 +44,13 @@ export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', as
 
   // refetch the parent and destination folder children to update the tree
   const folder = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), folderUID);
-  dispatch(fetchChildren(folder?.parentUID));
+
+  // Need to handle the case where the folder is at the root
+  if (folder?.parentUID === GENERAL_FOLDER_UID) {
+    dispatch(fetchChildren());
+  } else {
+    dispatch(fetchChildren(folder?.parentUID));
+  }
 
   return result;
 });
@@ -62,8 +75,14 @@ export const moveDashboard = createAsyncThunk(
 
     // refetch the parent and destination folder children to update the tree
     const dashboard = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), dashboardUID);
-    dispatch(fetchChildren(dashboard?.parentUID));
-    dispatch(fetchChildren(destinationUID));
+
+    // Need to handle the case where the folder is at the root
+    if (dashboard?.parentUID === GENERAL_FOLDER_UID) {
+      dispatch(fetchChildren());
+    } else {
+      dispatch(fetchChildren(dashboard?.parentUID));
+    }
+    dispatch(fetchChildren(destinationUID || undefined));
 
     return result;
   }
@@ -78,8 +97,14 @@ export const moveFolder = createAsyncThunk(
 
     // refetch the parent and destination folder children to update the tree
     const folder = findItem(rootItemsSelector(state), childrenByParentUIDSelector(state), folderUID);
-    dispatch(fetchChildren(folder?.parentUID));
-    dispatch(fetchChildren(destinationUID));
+
+    // Need to handle the case where the folder is at the root
+    if (folder?.parentUID === GENERAL_FOLDER_UID) {
+      dispatch(fetchChildren());
+    } else {
+      dispatch(fetchChildren(folder?.parentUID));
+    }
+    dispatch(fetchChildren(destinationUID || undefined));
 
     return result;
   }
