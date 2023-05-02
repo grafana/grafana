@@ -40,9 +40,23 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           ?.filter((matcher) => matcher.name && matcher.value)
           .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${matcher.value}`);
 
+        const { silenced, inhibited, unprocessed, active } = filter || {};
+
+        const stateParams = Object.fromEntries(
+          Object.entries({ silenced, active, inhibited, unprocessed }).filter(([_, value]) => value !== undefined)
+        );
+
+        const params: Record<string, unknown> | undefined = { filter: filterMatchers };
+
+        if (stateParams) {
+          Object.keys(stateParams).forEach((key: string) => {
+            params[key] = stateParams[key];
+          });
+        }
+
         return {
           url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts`,
-          params: { filter: filterMatchers },
+          params,
         };
       },
     }),

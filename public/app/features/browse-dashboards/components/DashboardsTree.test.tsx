@@ -4,7 +4,10 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { assertIsDefined } from 'test/helpers/asserts';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { wellFormedDashboard, wellFormedEmptyFolder, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
+import { SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -20,37 +23,56 @@ describe('browse-dashboards DashboardsTree', () => {
   const emptyFolderIndicator = wellFormedEmptyFolder();
   const dashboard = wellFormedDashboard(2);
   const noop = () => {};
-  const selectedItems = {
-    folder: {},
-    dashboard: {},
-    panel: {},
-  };
+  const isSelected = () => SelectionState.Unselected;
 
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
+        canSelect
         items={[dashboard]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
     expect(screen.queryByText('Dashboard')).toBeInTheDocument();
     expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
+  });
+
+  it('does not render checkbox when disabled', () => {
+    render(
+      <DashboardsTree
+        canSelect={false}
+        items={[dashboard]}
+        isSelected={isSelected}
+        width={WIDTH}
+        height={HEIGHT}
+        onFolderClick={noop}
+        onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
+      />
+    );
+    expect(
+      screen.queryByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))
+    ).not.toBeInTheDocument();
   });
 
   it('renders a folder item', () => {
     render(
       <DashboardsTree
+        canSelect
         items={[folder]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText(folder.item.title)).toBeInTheDocument();
@@ -61,12 +83,14 @@ describe('browse-dashboards DashboardsTree', () => {
     const handler = jest.fn();
     render(
       <DashboardsTree
+        canSelect
         items={[folder]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={handler}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     const folderButton = screen.getByLabelText('Collapse folder');
@@ -78,12 +102,14 @@ describe('browse-dashboards DashboardsTree', () => {
   it('renders empty folder indicators', () => {
     render(
       <DashboardsTree
+        canSelect
         items={[emptyFolderIndicator]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
         onItemSelectionChange={noop}
+        onAllSelectionChange={noop}
       />
     );
     expect(screen.queryByText('Empty folder')).toBeInTheDocument();

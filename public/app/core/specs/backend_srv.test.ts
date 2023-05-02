@@ -125,15 +125,18 @@ describe('backendSrv', () => {
   });
 
   describe('request', () => {
+    const testMessage = 'Datasource updated';
+    const errorMessage = 'UnAuthorized';
+
     describe('when making a successful call and conditions for showSuccessAlert are not favorable', () => {
       it('then it should return correct result and not emit anything', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
-          data: { message: 'A message' },
+          data: { message: testMessage },
         });
         const url = '/api/dashboard/';
         const result = await backendSrv.request({ url, method: 'DELETE', showSuccessAlert: false });
 
-        expect(result).toEqual({ message: 'A message' });
+        expect(result).toEqual({ message: testMessage });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
         expectRequestCallChain({ url, method: 'DELETE', showSuccessAlert: false });
       });
@@ -142,14 +145,14 @@ describe('backendSrv', () => {
     describe('when making a successful call and conditions for showSuccessAlert are favorable', () => {
       it('then it should emit correct message', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
-          data: { message: 'A message' },
+          data: { message: testMessage },
         });
         const url = '/api/dashboard/';
         const result = await backendSrv.request({ url, method: 'DELETE', showSuccessAlert: true });
 
-        expect(result).toEqual({ message: 'A message' });
+        expect(result).toEqual({ message: testMessage });
         expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
-        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertSuccess, ['A message']);
+        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertSuccess, [testMessage]);
         expectRequestCallChain({ url, method: 'DELETE', showSuccessAlert: true });
       });
     });
@@ -161,8 +164,8 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
-          statusText: 'UnAuthorized',
-          data: { message: 'UnAuthorized' },
+          statusText: errorMessage,
+          data: { message: errorMessage },
           url,
         });
 
@@ -174,8 +177,8 @@ describe('backendSrv', () => {
           .request({ url, method: 'GET', retry: 0 })
           .catch((error) => {
             expect(error.status).toBe(401);
-            expect(error.statusText).toBe('UnAuthorized');
-            expect(error.data).toEqual({ message: 'UnAuthorized' });
+            expect(error.statusText).toBe(errorMessage);
+            expect(error.data).toEqual({ message: errorMessage });
             expect(appEventsMock.emit).not.toHaveBeenCalled();
             expect(logoutMock).not.toHaveBeenCalled();
             expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
@@ -183,9 +186,9 @@ describe('backendSrv', () => {
             jest.advanceTimersByTime(50);
           })
           .catch((error) => {
-            expect(error).toEqual({ message: 'UnAuthorized' });
+            expect(error).toEqual({ message: errorMessage });
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
-            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
+            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, [errorMessage, '']);
           });
       });
     });
@@ -196,7 +199,7 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
-          statusText: 'UnAuthorized',
+          statusText: errorMessage,
           data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
           url,
         });
@@ -226,8 +229,8 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
-          statusText: 'UnAuthorized',
-          data: { message: 'UnAuthorized' },
+          statusText: errorMessage,
+          data: { message: errorMessage },
         });
 
         backendSrv.loginPing = jest

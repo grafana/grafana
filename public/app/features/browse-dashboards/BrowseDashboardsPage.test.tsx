@@ -9,6 +9,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 
 import BrowseDashboardsPage, { Props } from './BrowseDashboardsPage';
 import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
+import * as permissions from './permissions';
 const [mockTree, { dashbdD }] = wellFormedTree();
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -57,6 +58,14 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     props = {
       ...getRouteComponentProps(),
     };
+
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        canEditInFolder: true,
+        canCreateDashboards: true,
+        canCreateFolder: true,
+      };
+    });
   });
 
   it('displays a search input', async () => {
@@ -66,9 +75,10 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   it('displays the filters and hides the actions initially', async () => {
     render(<BrowseDashboardsPage {...props} />);
+    await screen.findByPlaceholderText('Search for dashboards and folders');
 
-    expect(await screen.findByText('Sort')).toBeInTheDocument();
-    expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
+    expect(screen.queryByText('Sort')).toBeInTheDocument();
+    expect(screen.queryByText('Filter by tag')).toBeInTheDocument();
 
     expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();

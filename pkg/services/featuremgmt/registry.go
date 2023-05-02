@@ -22,12 +22,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "database_metrics",
-			Description: "Add Prometheus metrics for database tables",
-			State:       FeatureStateStable,
-			Owner:       hostedGrafanaTeam,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -109,13 +103,6 @@ var (
 			Description: "Correlations page",
 			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
-		},
-		{
-			Name:        "cloudWatchDynamicLabels",
-			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",

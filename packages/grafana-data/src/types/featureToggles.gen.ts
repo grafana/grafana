@@ -20,7 +20,6 @@
 export interface FeatureToggles {
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  database_metrics?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -34,7 +33,6 @@ export interface FeatureToggles {
   exploreMixedDatasource?: boolean;
   newTraceViewHeader?: boolean;
   correlations?: boolean;
-  cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;

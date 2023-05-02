@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagDatabaseMetrics
-	// Add Prometheus metrics for database tables
-	FlagDatabaseMetrics = "database_metrics"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -70,10 +66,6 @@ const (
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
-
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
