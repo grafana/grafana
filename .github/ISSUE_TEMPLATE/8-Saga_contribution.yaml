@@ -7,7 +7,7 @@ labels:
 body:
   - type: markdown
     attributes:
-    value: |
+      value: |
         By using this template, you help expand our component and pattern
         solutions within the design system and let others reuse your work! You
         can contribute bug or design defect fixes, component, and pattern
@@ -16,7 +16,7 @@ body:
         reduce duplicate efforts.
         Thank you!
   - type: checkboxes
-    attribute:
+    attributes:
       label: What type of contribution is this?
       description: null
       options:
