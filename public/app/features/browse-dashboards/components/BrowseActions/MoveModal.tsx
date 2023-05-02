@@ -1,8 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { Space, Stack } from '@grafana/experimental';
-import { Alert, Button, Field, Modal, Spinner } from '@grafana/ui';
-import { P } from '@grafana/ui/src/unstable';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Button, Field, Modal, Spinner, useStyles2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
@@ -19,6 +19,7 @@ export interface Props {
 
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
+  const styles = useStyles2(getStyles);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
   const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
 
@@ -32,19 +33,14 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   return (
     <Modal title="Move" onDismiss={onDismiss} {...props}>
       {selectedFolders.length > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
-
-      <Stack direction="column" gap={0.5}>
-        <P>This action will delete the following content:</P>
-        <P color="secondary">
-          <>
-            {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
-            {(isFetching || isLoading) && <Spinner size={12} />}
-            {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
-          </>
-        </P>
-      </Stack>
-      <Space v={2} />
-
+      This action will move the following content:
+      <div className={styles.breakdown}>
+        <>
+          {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
+          {(isFetching || isLoading) && <Spinner size={12} />}
+          {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
+        </>
+      </div>
       <Field label="Folder name">
         <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
       </Field>
@@ -59,3 +55,11 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
     </Modal>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  breakdown: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
+  }),
+});
