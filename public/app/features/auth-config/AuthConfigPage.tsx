@@ -11,7 +11,7 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { filterAuthSettings, getProviderUrl } from './utils';
+import { getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
 
@@ -20,9 +20,8 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  const { settings, isLoading, providerStatuses } = state.authConfig;
+  const { isLoading, providerStatuses } = state.authConfig;
   return {
-    settings,
     isLoading,
     providerStatuses,
   };
@@ -34,12 +33,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({
-  settings,
-  providerStatuses,
-  isLoading,
-  loadSettings,
-}: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSettings }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -54,7 +48,6 @@ export const AuthConfigPageUnconnected = ({
   const availableProviders = authProviders.filter(
     (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured
   );
-  const authSettings = filterAuthSettings(settings);
   const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
   return (
@@ -98,29 +91,6 @@ export const AuthConfigPageUnconnected = ({
                 configPath={provider.configPath}
               />
             ))}
-          </div>
-        )}
-        {!isEmpty(authSettings) && (
-          <div className={styles.settingsSection}>
-            <h3>Settings</h3>
-            <table className="filter-table">
-              <tbody>
-                {Object.entries(authSettings).map(([sectionName, sectionSettings], i) => (
-                  <React.Fragment key={`section-${i}`}>
-                    <tr>
-                      <td className="admin-settings-section">{sectionName}</td>
-                      <td />
-                    </tr>
-                    {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
-                      <tr key={`property-${j}`}>
-                        <td className={styles.settingName}>{settingName}</td>
-                        <td className={styles.settingName}>{settingValue}</td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
       </Page.Contents>
