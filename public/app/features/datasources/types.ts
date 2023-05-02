@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, DataSourceJsonData, DataSourcePlugin } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceJsonData, DataSourcePlugin, DataSourceSettings } from '@grafana/data';
 
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
 
@@ -16,3 +16,11 @@ export type DataSourcesRoutes = {
 };
 
 export type DataSourceTestStatus = 'success' | 'warning' | 'error';
+
+export type DataSourceInfo = {
+  dataSource: DataSourceSettings;
+  dataSourcePluginName: string;
+  isDefault: boolean;
+  alertingSupported: boolean;
+  onUpdate: (dataSource: DataSourceSettings) => Promise<DataSourceSettings>;
+};

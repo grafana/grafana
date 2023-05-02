@@ -22,6 +22,7 @@ export function EditDataSourceActions({ uid }: Props) {
       {hasExploreRights && (
         <Button
           type="button"
+          size="sm"
           variant="secondary"
           onClick={() => {
             trackExploreClicked({
@@ -38,6 +39,7 @@ export function EditDataSourceActions({ uid }: Props) {
       )}
       <Button
         type="button"
+        size="sm"
         variant="secondary"
         onClick={() => {
           trackCreateDashboardClicked({

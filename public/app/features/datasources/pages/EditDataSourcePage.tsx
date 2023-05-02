@@ -5,8 +5,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
-import { EditDataSourceSubtitle } from '../components/EditDataSourceSubtitle';
 import { EditDataSourceTitle } from '../components/EditDataSourceTitle';
+import { useDataSourceInfo } from '../components/useDataSourceInfo';
 import { useDataSourceSettingsNav } from '../state';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
@@ -16,6 +16,14 @@ export function EditDataSourcePage(props: Props) {
   const params = new URLSearchParams(props.location.search);
   const pageId = params.get('page');
   const nav = useDataSourceSettingsNav(uid, pageId);
+
+  const info = useDataSourceInfo({
+    dataSource: nav.dataSource,
+    dataSourcePluginName: nav.main.dataSourcePluginName,
+    isDefault: nav.dataSource.isDefault,
+    alertingSupported: nav.dataSourceHeader.alertingSupported,
+    onUpdate: nav.dataSourceHeader.onUpdate,
+  });
 
   return (
     <Page
@@ -29,15 +37,8 @@ export function EditDataSourcePage(props: Props) {
           onUpdate={nav.dataSourceHeader.onUpdate}
         />
       )}
-      subTitle={
-        <EditDataSourceSubtitle
-          dataSource={nav.dataSource}
-          dataSourcePluginName={nav.main.dataSourcePluginName}
-          isDefault={nav.dataSource.isDefault || false}
-          alertingSupported={nav.dataSourceHeader.alertingSupported}
-          onUpdate={nav.dataSourceHeader.onUpdate}
-        />
-      }
+      subTitle={<></>}
+      info={info}
       actions={<EditDataSourceActions uid={uid} />}
     >
       <Page.Contents>
