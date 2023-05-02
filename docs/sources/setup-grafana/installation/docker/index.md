@@ -32,10 +32,14 @@ docker run -d -p 3000:3000 --name=grafana grafana/grafana-enterprise
 
 Where:
 
-run = run directly from the command line\
-`d` = run in the background\
-`p` = assign the port number, which in this case is `3000`\
-`name` = assign a logical name to the container, for example, `grafana`\
+run = run directly from the command line
+
+`d` = run in the background
+
+`p` = assign the port number, which in this case is `3000`
+
+`name` = assign a logical name to the container, for example, `grafana`
+
 `grafana/grafana-enterprise` = the image to run in the container
 
 ### Stop the Grafana container
@@ -87,7 +91,7 @@ To use persistent storage, complete the following steps:
 
 #### Use bind mounts
 
-If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user that has the permission to access and write to the folder you map.
+If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user with permission to access and write to the folder you map.
 
 To use bind mounts, run the following command:
 
@@ -119,7 +123,7 @@ You can install plugins in Grafana from the official and community [plugins page
 
 Grafana currently supports three types of plugins: panel, data source, and app. For more information on managing plugins, refer to [Plugin Management]({{< relref "../../../administration/plugin-management/" >}}).
 
-To install plugins in the Docket container, complete the following steps:
+To install plugins in the Docker container, complete the following steps:
 
 1. Pass the plugins you want to be installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma-separated list. 
 
@@ -156,7 +160,7 @@ To install plugins in the Docket container, complete the following steps:
 
 ## Example
 
-The following example runs the latest stable version of Grafana, listening on port 3000, with the container named "grafana", persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) plugin installed.
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) plugin installed.
 
 ```bash
 # create a persistent volume for your data
@@ -221,7 +225,8 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
 
    Where:
 
-   d = detached mode \
+   d = detached mode
+   
    up = to bring the container up and running
 
 To determine that Grafana is running, open a browser window and type `IP_ADDRESS:3000`. The sign in screen should appear.
@@ -238,7 +243,7 @@ docker compose down
 
 ### Save your Grafana data
 
-When you use Docker containers, the data inside them is temporary by default. This means that if you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
 #### Use persistent storage (recommended)
 
@@ -297,7 +302,7 @@ To use bind mounts, complete the following steps:
 
 ### Example
 
-The following example runs the latest stable version of Grafana, listening on port 3000, with the container named "grafana", persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) plugin installed.
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) plugin installed.
 
 ```bash
 version: "3.8"

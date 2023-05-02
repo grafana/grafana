@@ -16,7 +16,11 @@ weight: 1800
 
 # Configure a Grafana Docker image
 
-Running Grafana on Docker may require some additional configuration which depends on the complexity of your environment. We will explain some of those e.g. using different images, changing logging levels, defining secrets on Cloud (e.g. AWS), configuring plugins etc.
+This topic explains how to run Grafana on Docker in complex environments that require you to: 
+- Use different images
+- Change logging levels
+- Define secrets on the Cloud
+- Configure plugins
 
 > **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana-oss`.
 
@@ -32,7 +36,7 @@ Each edition is available in two variants: Alpine and Ubuntu.
 
 ## Alpine image (recommended)
 
-[Alpine Linux](https://alpinelinux.org/about/) is an independent, non-commercial, general purpose Linux distribution designed for users users who appreciate security, simplicity and resource efficiency. Alpine Linux is much smaller than other distribution base images, allowing for slimmer and more secure images to be created.
+[Alpine Linux](https://alpinelinux.org/about/) is a Linux distribution not affiliated with any commercial entity. It is a versatile operating system that caters to users who prioritize security, efficiency, and user-friendliness. Alpine Linux is much smaller than other distribution base images, allowing for slimmer and more secure images to be created.
 
 By default, the images are built using the widely-used [Alpine Linux project](http://alpinelinux.org/) and can be accessed through the [Alpine official image](https://hub.docker.com/_/alpine).
 If you prioritize security and want to minimize the size of your image, it is recommended that you use the Alpine variant. However, it's important to note that the Alpine variant uses [musl libc](http://www.musl-libc.org/) instead of [glibc and others](http://www.etalabs.net/compare_libcs.html). As a result, some software might encounter problems depending on their libc requirements. Nonetheless, most software should not experience any issues, so the Alpine variant is generally reliable.
@@ -43,11 +47,11 @@ If you prioritize security and want to minimize the size of your image, it is re
 
 - **Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
 
-These images are based on [Ubuntu](https://ubuntu.com/), available in the [Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an Ubuntu-based image and/or are dependent on certain tooling not available for Alpine.
+The Grafana Enterprise and OSS images are based on [Ubuntu](https://ubuntu.com/) and can be accessed through the [Ubuntu official image](https://hub.docker.com/_/ubuntu). This is a good option for users who prefer an Ubuntu-based image or require specific tools unavailable on Alpine.
 
 ## Run a specific version of Grafana
 
-You can also run a specific version, or run a beta version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
+You can also run a specific version of Grafana or a beta version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
 
 > **Note:** If you use a Linux operating system such as Debian or Ubuntu and encounter permission errors when running Docker commands, you might need to prefix the command with `sudo` or add your user to the `docker` group. The official Docker documentation provides instructions on how to [run Docker without a non-root user](https://docs.docker.com/engine/install/linux-postinstall/).
 
@@ -76,9 +80,9 @@ For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.
 
 ## Default paths
 
-Grafana have some predefined default configuraiton parameters which are always same when a fresh Grafana server is installed and is independent of the operating systems or the environment (e.g. virtual machine, docker, kubernetes etc.). You can refer the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana) documentation to view all the default configuraiton settings.
+Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana) documentation to view all the default configuraiton settings.
 
-When starting the Grafana Docker container, the following configurations are set by default and cannot be changed by editing the `conf/grafana.ini` file. Instead, you can only modify these configurations using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
+The following configurations are set by default when you start the Grafana Docker container. You cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can only modify these configurations using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
 
 | Setting               | Default value             |
 | --------------------- | ------------------------- |
@@ -91,7 +95,7 @@ When starting the Grafana Docker container, the following configurations are set
 
 ## Install plugins in the Docker container
 
-You can install publicly available plugins and also plugins that are private or used internally in an organization.
+You can install publicly available plugins and plugins that are private or used internally in an organization.
 
 ### Install plugins from other sources
 
@@ -111,7 +115,7 @@ docker run -d \
 
 ## Build and run a Docker image with pre-installed plugins
 
-If you need to create multiple images with the same plugins, you can save time by building your own customized image that includes those plugins.
+To create multiple images with the same plugins, you can save time by building your own customized image that includes those plugins.
 
 
 In the Grafana GitHub repository, the `packaging/docker/custom/` folder includes a `Dockerfile` that you can use to build a custom Grafana image. The `Dockerfile` accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
@@ -134,7 +138,7 @@ docker build \
 # run the custom grafana container using docker run command
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
-## Build with pre-installed plugins
+## Build a Grafana Docker image with pre-installed plugins
 
 To save time, you can customize a Grafana image by including plugins available on the [Grafana Plugin download page](https://grafana.com/grafana/plugins). By doing so, you won't have to manually install the plugins each time, making the process more efficient.
 
@@ -142,7 +146,7 @@ To save time, you can customize a Grafana image by including plugins available o
 
 Example:
 
-The following explains as how to build a custom Grafana image and run it with plugins as pre-installed
+The following example shows how to build and run a custom Grafana image with pre-installed plugins.
 
 ```bash
 # go to the custom directory
@@ -159,11 +163,11 @@ docker build \
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
-## Build with pre-installed plugins from other sources
+## Build a Grafana Docker image with pre-installed plugins from other sources
 
-If a plugin is not publicly available and is only used within your organization, you can still build a Docker image with it by specifying the plugin's URL using the `GF_INSTALL_PLUGINS` build argument. You can do this by adding the URL and the plugin install folder name like this: `GF_INSTALL_PLUGINS=;`.
+You can create a Docker image containing a plugin that is exclusive to your organization, even if it is not accessible to the public. Simply use the `GF_INSTALL_PLUGINS` build argument to specify the plugin's URL and installation folder name, such as `GF_INSTALL_PLUGINS=;`.
 
-The following example demonstrates creating a customized Grafana Docker image that includes the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable
+The following example demonstrates creating a customized Grafana Docker image that includes the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable.
 
 ```bash
 #go to the folder
@@ -183,7 +187,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 > **Note:**  This feature is experimental.
 
-The Grafana Image Renderer plugin does not currently work (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301)) if it is installed in a Grafana Docker image. You can build a custom Docker image using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
+Currently, the Grafana Image Renderer plugin is not functional (as stated in [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301)) when installed in a Grafana Docker image. However, you can create a customized Docker image utilizing the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument as a solution. This will install the necessary dependencies for the Grafana Image Renderer plugin to run.
 
 Example:
 
@@ -205,11 +209,11 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ## Logging
 
-By default, Docker container logs are directed to `STDOUT`, which is a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "../../../configure-grafana/#mode" >}}) such as `console`, `file`, or `syslog`. You can choose to use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
+By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "../../../configure-grafana/#mode" >}}) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
 
 Example:
 
-The following example runs Grafana using the `console file` log mode that is set in the `GF_LOG_MODE` environment variable
+The following example runs Grafana using the `console file` log mode that is set in the `GF_LOG_MODE` environment variable.
 
 ```bash
 # Run Grafana while logging to both standard out 
@@ -219,7 +223,7 @@ docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana-enterprise
 ```
 # Configure Grafana with Docker Secrets
 
-Using configuration files, you can provide sensitive information such as secrets and login credentials to Grafana. This method works particularly well with Docker Secrets, as the secrets are automatically mapped to the `/run/secrets/` location within the container. 
+Using configuration files, you can input confidential data like login credentials and secrets into Grafana. This method works well with Docker Secrets, as the secrets are automatically mapped to the `/run/secrets/` location within the container. 
 
 You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information.
 
@@ -234,7 +238,7 @@ Grafana ships with built-in support for [Amazon CloudWatch datasource](https://g
 
 Example:
 
-The following example will define Docker Secrets to your AWS ID-Key and the secret access key, region and profie.
+The following example defines Docker Secrets for an AWS ID-Key, secret access key, region, and profile.
 
 ```bash
 docker run -d \
@@ -246,7 +250,7 @@ docker run -d \
 -e "GF_AWS_default_REGION=us-east-1" \
 grafana/grafana-enterprise
 ```
-You may also specify multiple profiles to `GF_AWS_PROFILES` (e.g. `GF_AWS_PROFILES=default another`).
+You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
 
 Supported variables:
 
