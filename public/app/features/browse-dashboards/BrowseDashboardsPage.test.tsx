@@ -9,6 +9,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 
 import BrowseDashboardsPage, { Props } from './BrowseDashboardsPage';
 import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
+import * as permissions from './permissions';
 const [mockTree, { dashbdD }] = wellFormedTree();
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -57,11 +58,19 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     props = {
       ...getRouteComponentProps(),
     };
+
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        canEditInFolder: true,
+        canCreateDashboards: true,
+        canCreateFolder: true,
+      };
+    });
   });
 
   it('displays a search input', async () => {
     render(<BrowseDashboardsPage {...props} />);
-    expect(await screen.findByPlaceholderText('Search box')).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
   });
 
   it('displays the filters and hides the actions initially', async () => {

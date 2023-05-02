@@ -3,6 +3,7 @@ import React, { RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
+  CoreApp,
   DataFrame,
   DataLink,
   DataSourceApi,
@@ -76,7 +77,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
 
   const {
     detailStates,
@@ -99,6 +100,7 @@ export function TraceView(props: Props) {
   );
   const [newTraceViewHeaderFocusedSpanIdForSearch, setNewTraceViewHeaderFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
+  const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const styles = useStyles2(getStyles);
@@ -158,16 +160,19 @@ export function TraceView(props: Props) {
             <>
               <NewTracePageHeader
                 trace={traceProp}
+                data={props.dataFrames[0]}
                 timeZone={timeZone}
                 search={newTraceViewHeaderSearch}
                 setSearch={setNewTraceViewHeaderSearch}
                 showSpanFilters={showSpanFilters}
                 setShowSpanFilters={setShowSpanFilters}
-                focusedSpanIdForSearch={newTraceViewHeaderFocusedSpanIdForSearch}
+                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+                setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
                 setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
                 spanFilterMatches={spanFilterMatches}
                 datasourceType={datasourceType}
                 setHeaderHeight={setHeaderHeight}
+                app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
               />
               <SpanGraph
                 trace={traceProp}
@@ -226,6 +231,7 @@ export function TraceView(props: Props) {
                 ? newTraceViewHeaderFocusedSpanIdForSearch
                 : props.focusedSpanIdForSearch!
             }
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}

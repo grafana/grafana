@@ -1,10 +1,10 @@
-import { Field, FieldType, MutableDataFrame } from '@grafana/data';
+import { Field, FieldType, createDataFrame } from '@grafana/data';
 
 import { getTooltipData } from './FlameGraphTooltip';
 import { FlameGraphDataContainer } from './dataTransform';
 
 function setupData(unit?: string) {
-  const flameGraphData = new MutableDataFrame({
+  const flameGraphData = createDataFrame({
     fields: [
       { name: 'level', values: [0] },
       unit ? makeField('value', unit, [8_624_078_250]) : { name: 'value', values: [8_624_078_250] },

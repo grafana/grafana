@@ -100,9 +100,9 @@ export const AuthConfigPageUnconnected = ({
             ))}
           </div>
         )}
-        <div className={styles.settingsSection}>
-          <h3>Settings</h3>
-          {authSettings && (
+        {!isEmpty(authSettings) && (
+          <div className={styles.settingsSection}>
+            <h3>Settings</h3>
             <table className="filter-table">
               <tbody>
                 {Object.entries(authSettings).map(([sectionName, sectionSettings], i) => (
@@ -121,8 +121,8 @@ export const AuthConfigPageUnconnected = ({
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+        )}
       </Page.Contents>
     </Page>
   );

@@ -1,12 +1,6 @@
 import { of } from 'rxjs';
 
-import {
-  DataQueryResponse,
-  FieldType,
-  LogRowContextQueryDirection,
-  LogRowModel,
-  MutableDataFrame,
-} from '@grafana/data';
+import { DataQueryResponse, FieldType, LogRowContextQueryDirection, LogRowModel, createDataFrame } from '@grafana/data';
 
 import LokiLanguageProvider from './LanguageProvider';
 import { LogContextProvider } from './LogContextProvider';
@@ -25,7 +19,7 @@ defaultDatasourceMock.languageProvider = defaultLanguageProviderMock;
 
 const defaultLogRow = {
   rowIndex: 0,
-  dataFrame: new MutableDataFrame({
+  dataFrame: createDataFrame({
     fields: [
       {
         name: 'ts',
