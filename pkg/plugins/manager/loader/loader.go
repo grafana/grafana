@@ -42,9 +42,10 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, pluginFinder finder.Finder, assetPath *assetpath.Service,
 	signatureCalculator plugins.SignatureCalculator, hooksRegistry hooks.Registry, hooksRunner hooks.Runner,
+	pluginInitializer initializer.Initializer,
 
 	// TODO: hooks: Provided just for hooks side-effects, find a better way
-	pluginInitializer initializer.Initializer, _ process.Service,
+	_ process.Service,
 ) *Loader {
 	return New(cfg, authorizer, pluginRegistry, assetPath, pluginFinder, signatureCalculator, pluginInitializer, hooksRegistry, hooksRunner)
 }
@@ -71,6 +72,9 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	})
 
 	// This hook MUST run AFTER all other before init hooks
+	// TODO: hooks: The hook is registered here in Loader rather than Initialize to enforce it as the last one to run.
+	//		Find a better way to handle those cases as unfortunately this hooks depends on the ones above
+	//		(for validation etc). Or maybe do not make the Initializer a hook at all...
 	hooksRegistry.RegisterBeforeLoadHook(pluginInitializer.Initialize)
 
 	hooksRegistry.RegisterLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
