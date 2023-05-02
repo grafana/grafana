@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { isTruthy } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { FolderDTO } from 'app/types';
+import { DescendantCount, FolderDTO } from 'app/types';
 
 import { DashboardTreeSelection } from '../types';
 
@@ -38,55 +38,32 @@ export const browseDashboardsAPI = createApi({
     getFolder: builder.query<FolderDTO, string>({
       query: (folderUID) => ({ url: `/folders/${folderUID}` }),
     }),
-    getAffectedItems: builder.query<
-      // TODO move to folder types file once structure is finalised
-      {
-        folder: number;
-        dashboard: number;
-        libraryPanel: number;
-        alertRule: number;
-      },
-      DashboardTreeSelection
-    >({
+    getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
         const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        // Mock descendant count
-        // TODO convert to real implementation
-        const mockDescendantCount = {
-          folder: 1,
-          dashboard: 1,
-          libraryPanel: 1,
-          alertRule: 1,
-        };
-        const promises = folderUIDs.map((id) => {
-          return new Promise<typeof mockDescendantCount>((resolve, reject) => {
-            // Artificial delay to simulate network request
-            setTimeout(() => {
-              resolve(mockDescendantCount);
-              // reject(new Error('Uh oh!'));
-            }, 1000);
-          });
+        const promises = folderUIDs.map((folderUID) => {
+          return getBackendSrv().get<DescendantCount>(`/api/folders/${folderUID}/counts`);
         });
 
         const results = await Promise.all(promises);
         const aggregatedResults = results.reduce(
-          (acc, val) => ({
-            folder: acc.folder + val.folder,
-            dashboard: acc.dashboard + val.dashboard,
-            libraryPanel: acc.libraryPanel + val.libraryPanel,
-            alertRule: acc.alertRule + val.alertRule,
-          }),
+          (acc, val) => {
+            acc.folder += val.folder;
+            acc.dashboard += val.dashboard;
+
+            // TODO enable these once the backend correctly returns them
+            // acc.libraryPanel += val.libraryPanel;
+            // acc.alertRule += val.alertRule;
+            return acc;
+          },
           {
-            folder: 0,
-            dashboard: 0,
+            folder: Object.values(selectedItems.folder).filter(isTruthy).length,
+            dashboard: Object.values(selectedItems.dashboard).filter(isTruthy).length,
             libraryPanel: 0,
             alertRule: 0,
           }
         );
 
-        // Add in the top level selected items
-        aggregatedResults.folder += Object.values(selectedItems.folder).filter(isTruthy).length;
-        aggregatedResults.dashboard += Object.values(selectedItems.dashboard).filter(isTruthy).length;
         return { data: aggregatedResults };
       },
     }),

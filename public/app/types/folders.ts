@@ -27,6 +27,13 @@ export interface FolderState {
   canViewFolderPermissions: boolean;
 }
 
+export interface DescendantCount {
+  folder: number;
+  dashboard: number;
+  libraryPanel: number;
+  alertRule: number;
+}
+
 export interface FolderInfo {
   /**
    * @deprecated use uid instead.
