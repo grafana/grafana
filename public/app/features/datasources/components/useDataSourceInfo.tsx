@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 
 import { DataSourceInfo } from '../types';
@@ -30,9 +30,7 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
   info.push({
     label: 'Alerting',
     value: (
-      <Button type="button" size="sm" variant={alertingEnabled ? 'success' : 'destructive'} fill="outline">
-        {alertingEnabled ? 'Supported' : 'Not supported'}
-      </Button>
+      <Badge color={alertingEnabled ? 'green' : 'red'} text={alertingEnabled ? 'Supported' : 'Not supported'}></Badge>
     ),
   });
 
