@@ -118,7 +118,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('shows indeterminate checkboxes when a descendant is selected', async () => {
-    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView canSelect={true} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item.uid);

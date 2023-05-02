@@ -45,6 +45,8 @@ export function setItemSelectionState(
 ) {
   const { item, isSelected } = action.payload;
 
+  // Selecting a folder selects all children, and unselecting a folder deselects all children
+  // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
     state.selectedItems[kind][uid] = isSelected;
 
@@ -60,11 +62,9 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // Then we need to reconcile the parents to make them in the correct state
-  // If all items in a folder are selected, then the folder itself should also be selected
-  // The inverse is partially true - if a child item is selected, then all its parents
-  // should be deselected
-
+  // If all children of a folder are selected, then the folder is also selected.
+  // If *any* child of a folder is unselelected, then the folder is alo unselected.
+  // Reconcile all ancestors to make sure they're in the correct state.
   let nextParentUID = item.parentUID;
 
   while (nextParentUID) {
@@ -90,6 +90,9 @@ export function setItemSelectionState(
 
     nextParentUID = parent.parentUID;
   }
+
+  // Check to see if we should mark the header checkbox selected if all root items are selected
+  state.selectedItems.$all = state.rootItems.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
 export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<{ isSelected: boolean }>) {
