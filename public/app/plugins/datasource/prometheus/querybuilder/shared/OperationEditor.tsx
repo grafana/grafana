@@ -24,7 +24,7 @@ import {
 export interface Props {
   operation: QueryBuilderOperation;
   index: number;
-  query: any
+  query: PromVisualQuery | LokiVisualQuery;
   datasource: DataSourceApi;
   queryModeller: VisualQueryModeller;
   onChange: (index: number, update: QueryBuilderOperation) => void;

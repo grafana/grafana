@@ -8,7 +8,7 @@ import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
 
 import { LokiVisualQuery } from '../../../loki/querybuilder/types';
 import { PromQuery } from '../../types';
-import {PromVisualQuery} from "../types";
+import { PromVisualQuery } from '../types';
 
 export interface QueryBuilderLabelFilter {
   label: string;
@@ -108,10 +108,7 @@ export enum QueryEditorMode {
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
-
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
-
   getCategories(): string[];
-
   getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }

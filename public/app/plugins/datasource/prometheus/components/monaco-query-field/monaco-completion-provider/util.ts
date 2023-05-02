@@ -20,6 +20,6 @@
 
 export class NeverCaseError extends Error {
   constructor(value: never) {
-    super(`should never happen ${JSON.stringify(value)}`);
+    super('should never happen');
   }
 }

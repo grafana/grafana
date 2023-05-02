@@ -154,7 +154,6 @@ async function getLabelNamesForSelectorCompletions(
 ): Promise<Completion[]> {
   return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider);
 }
-
 async function getLabelNamesForByCompletions(
   metric: string | undefined,
   otherLabels: Label[],
