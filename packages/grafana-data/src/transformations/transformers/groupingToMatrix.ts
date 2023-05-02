@@ -1,6 +1,5 @@
 import { map } from 'rxjs/operators';
 
-import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue } from '../../types';
 import { fieldMatchers } from '../matchers';
@@ -75,13 +74,14 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           matrixValues[columnName][rowName] = value;
         }
 
-        const resultFrame = new MutableDataFrame();
-
-        resultFrame.addField({
-          name: rowColumnField,
-          values: rowValues,
-          type: FieldType.string,
-        });
+        const fields: Field[] = [
+          {
+            name: rowColumnField,
+            values: rowValues,
+            type: FieldType.string,
+            config: {},
+          },
+        ];
 
         for (const columnName of columnValues) {
           let values = [];
@@ -98,7 +98,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
 
-          resultFrame.addField({
+          fields.push({
             name: columnName.toString(),
             values: values,
             config: valueField.config,
@@ -106,7 +106,12 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           });
         }
 
-        return [resultFrame];
+        return [
+          {
+            fields,
+            length: rowValues.length,
+          },
+        ];
       })
     ),
 };

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, MutableDataFrame } from '@grafana/data';
+import { CoreApp, createDataFrame } from '@grafana/data';
 
 import { SelectedView } from '../types';
 
@@ -27,7 +27,7 @@ describe('FlameGraph', () => {
     const [search] = useState('');
     const [selectedView, _] = useState(SelectedView.Both);
 
-    const flameGraphData = new MutableDataFrame(data);
+    const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData);
     const levels = nestedSetToLevels(container);
 
