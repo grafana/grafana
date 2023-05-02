@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 )
 
 type Initializer struct {
@@ -24,7 +23,7 @@ type Initializer struct {
 	log             log.Logger
 }
 
-func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, loaderHooks hooks.Registry) Initializer {
+func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
 	svc := Initializer{
 		cfg:             cfg,
 		license:         license,
@@ -34,8 +33,8 @@ func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, licens
 	return svc
 }
 
-func ProvideService(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing, loaderHooks hooks.Registry) Initializer {
-	return New(cfg, backendProvider, license, loaderHooks)
+func ProvideService(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
+	return New(cfg, backendProvider, license)
 }
 
 func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {

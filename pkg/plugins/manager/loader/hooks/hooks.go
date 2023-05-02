@@ -34,8 +34,12 @@ type Service struct {
 	unloadHooks     []Hook
 }
 
-func ProvideHooksService() *Service {
+func NewService() *Service {
 	return &Service{log: log.New("plugins.hooks")}
+}
+
+func ProvideHooksService() *Service {
+	return NewService()
 }
 
 // RegisterBeforeLoadHook appends a new before load hook.

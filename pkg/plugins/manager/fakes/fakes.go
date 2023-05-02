@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/hooks"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -168,10 +169,15 @@ type FakePluginRegistry struct {
 	Store map[string]*plugins.Plugin
 }
 
-func NewFakePluginRegistry() *FakePluginRegistry {
-	return &FakePluginRegistry{
+func NewFakePluginRegistry(pluginHooks hooks.Registry) *FakePluginRegistry {
+	reg := &FakePluginRegistry{
 		Store: make(map[string]*plugins.Plugin),
 	}
+	pluginHooks.RegisterLoadHook(reg.Add)
+	pluginHooks.RegisterUnloadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+		return reg.Remove(ctx, plugin.ID)
+	})
+	return reg
 }
 
 func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
@@ -253,11 +259,18 @@ type FakeProcessManager struct {
 	Stopped   map[string]int
 }
 
-func NewFakeProcessManager() *FakeProcessManager {
-	return &FakeProcessManager{
+func NewFakeProcessManager(pluginHooks hooks.Registry) *FakeProcessManager {
+	mgr := &FakeProcessManager{
 		Started: make(map[string]int),
 		Stopped: make(map[string]int),
 	}
+	pluginHooks.RegisterLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+		return mgr.Start(ctx, plugin.ID)
+	})
+	pluginHooks.RegisterUnloadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
+		return mgr.Stop(ctx, plugin.ID)
+	})
+	return mgr
 }
 
 func (m *FakeProcessManager) Start(ctx context.Context, pluginID string) error {

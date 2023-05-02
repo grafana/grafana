@@ -43,7 +43,7 @@ func ProvideService(
 		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 			return nil, err
 		}
-		loaderHooks.RegisterLoadHook(service.onPluginAfterInit)
+		loaderHooks.RegisterLoadHook(service.onPluginLoad)
 	}
 
 	return service, nil
@@ -80,7 +80,7 @@ type Service struct {
 	features      *featuremgmt.FeatureManager
 }
 
-func (s *Service) onPluginAfterInit(ctx context.Context, p *plugins.Plugin) error {
+func (s *Service) onPluginLoad(ctx context.Context, p *plugins.Plugin) error {
 	if err := s.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
 		s.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", err)
 	}

@@ -32,7 +32,7 @@ func NewManager(pluginRegistry registry.Service, loaderHooks hooks.Registry) *Ma
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugin.process.manager"),
 	}
-	loaderHooks.RegisterLoadHook(svc.onPluginAfterInit)
+	loaderHooks.RegisterLoadHook(svc.onPluginLoad)
 	loaderHooks.RegisterUnloadHook(svc.onPluginUnload)
 	return svc
 }
@@ -43,7 +43,7 @@ func (m *Manager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (m *Manager) onPluginAfterInit(ctx context.Context, plugin *plugins.Plugin) error {
+func (m *Manager) onPluginLoad(ctx context.Context, plugin *plugins.Plugin) error {
 	return m.Start(ctx, plugin.ID)
 }
 

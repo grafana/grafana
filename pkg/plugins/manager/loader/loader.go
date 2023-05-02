@@ -64,19 +64,14 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 		return nil
 	})
 	hooksRegistry.RegisterBeforeLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
-		if plugin.Parent != nil && !plugin.Parent.IsApp() {
+		if plugin.Parent != nil && plugin.Parent.IsApp() {
 			configureAppChildPlugin(plugin.Parent, plugin)
 		}
 		return nil
 	})
 
 	// This hook MUST run AFTER all other before init hooks
-	hooksRegistry.RegisterBeforeLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
-		if err := pluginInitializer.Initialize(ctx, plugin); err != nil {
-			logger.Error("Could not initialize plugin", "pluginId", plugin.ID, "err", err)
-		}
-		return nil
-	})
+	hooksRegistry.RegisterBeforeLoadHook(pluginInitializer.Initialize)
 
 	hooksRegistry.RegisterLoadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if !plugin.IsCorePlugin() && !plugin.IsBundledPlugin() {
@@ -197,18 +192,22 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 				"pluginID", plugin.ID, "status", signingError.SignatureStatus)
 			plugin.SignatureError = signingError
 			l.errs[plugin.ID] = signingError
-			// skip plugin so it will not be loaded any further
-			continue
+		} else {
+			// clear plugin error if a pre-existing error has since been resolved
+			delete(l.errs, plugin.ID)
 		}
-
-		// clear plugin error if a pre-existing error has since been resolved
-		delete(l.errs, plugin.ID)
 	}
 
 	// Run before load hooks. If a before load hooks fail to run for a plugin, filter it out.
 	verifiedPlugins := make([]*plugins.Plugin, 0, len(loadedPlugins))
 	for _, p := range loadedPlugins {
 		p := p
+
+		// Do not load plugins with signature errors any further
+		// TODO: hooks: implement as hook?
+		if p.SignatureError != nil {
+			continue
+		}
 		err := l.hooksRunner.RunBeforeLoadHooks(ctx, p)
 		if err != nil {
 			l.log.Error("Error running before init hooks", "pluginId", p.ID, "err", err)
