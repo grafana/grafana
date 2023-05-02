@@ -4,11 +4,9 @@ title: Add support for variables in plugins
 
 # Add support for variables in plugins
 
-Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
+Variables are placeholders for values, and can be used in Grafana to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
 
-This guide explains how to leverage template variables in your panel plugins and data source plugins.
-
-We'll see how you can turn a string like this:
+In this guide, you'll see how you can turn an `id` string like this:
 
 ```sql
 SELECT * FROM services WHERE id = "$service"
@@ -24,9 +22,9 @@ Grafana provides a couple of helper functions to interpolate variables in a stri
 
 ## Interpolate variables in panel plugins
 
-For panels, the `replaceVariables` function is available in the PanelProps.
+For panels, the `replaceVariables` function is available in the `PanelProps`.
 
-Add `replaceVariables` to the argument list, and pass it a user-defined template string.
+Add `replaceVariables` to the argument list, and pass a user-defined template string to it:
 
 ```ts
 export function SimplePanel({ options, data, width, height, replaceVariables }: Props) {
@@ -38,7 +36,7 @@ export function SimplePanel({ options, data, width, height, replaceVariables }: 
 
 ## Interpolate variables in data source plugins
 
-For data sources, you need to use the getTemplateSrv, which returns an instance of TemplateSrv.
+For data sources, you need to use the `getTemplateSrv`, which returns an instance of `TemplateSrv`.
 
 1. Import `getTemplateSrv` from the `runtime` package.
 
@@ -60,9 +58,9 @@ For data sources, you need to use the getTemplateSrv, which returns an instance 
 
 ## Format multi-value variables
 
-When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format]({{< relref "../../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}).
+When a user selects multiple values for a variable, the value of the interpolated variable depends on the [variable format]({{< relref "../../dashboards/variables/variable-syntax/#advanced-variable-format-options" >}}).
 
-A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
+A data source plugin can define the default format option when no format is specified by adding a third argument to the interpolation function.
 
 Let's change the SQL query to use CSV format by default:
 
@@ -85,7 +83,7 @@ Not only can you read the value of a variable, you can also update the variable 
 The following example shows how to update a variable called `service`.
 
 - `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
-- `replace: true` tells Grafana to update the current URL state, rather than creating a new history entry.
+- `replace: true` tells Grafana to update the current URL state rather than creating a new history entry.
 
 ```ts
 import { locationService } from '@grafana/runtime';
@@ -99,7 +97,7 @@ locationService.partial({ 'var-service': 'billing' }, true);
 
 ## Add support for query variables to your data source
 
-[Query variables]({{< relref "../../dashboards/variables/add-template-variables/#add-a-query-variable" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
+A [query variable]({{< relref "../../dashboards/variables/add-template-variables/#add-a-query-variable" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
 
 Let's start by defining a query model for the variable query.
 
@@ -124,7 +122,7 @@ async metricFindQuery(query: MyVariableQuery, options?: any) {
 }
 ```
 
-> **Note:** By default, Grafana provides a default query model and editor for simple text queries. If that's all you need, then you can leave the query type as `string`.
+> **Note:** By default, Grafana provides a basic query model and editor for simple text queries. If that's all you need, then leave the query type as `string`.
 >
 > ```ts
 > async metricFindQuery(query: string, options?: any)
@@ -185,7 +183,7 @@ Let's create a custom query editor to allow the user to edit the query model.
 
    Grafana saves the query model whenever one of the text fields loses focus (`onBlur`) and then previews the values returned by `metricFindQuery`.
 
-   The second argument to `onChange` allows you to set a text representation of the query which will appear next to the name of the variable in the variables list.
+   The second argument to `onChange` allows you to set a text representation of the query that will appear next to the name of the variable in the variables list.
 
 1. Finally, configure your plugin to use the query editor.
 
