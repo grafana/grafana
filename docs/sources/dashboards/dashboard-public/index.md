@@ -23,7 +23,7 @@ This can be mitigated by utilizing the enterprise [caching]({{< relref "../../ad
 
 Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
 
-You can view a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
+You can see a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
 
 ## Security implications of making your dashboard public
 
@@ -137,6 +137,16 @@ Immediately, the viewer no longer has access to the public dashboard, nor can th
 
 The viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
 
+### View public dashboard users
+
+To see a list of users who have accessed your dashboard by way of email sharing, take the following steps:
+
+1. In the main sidebar navigation, click **Administration**.
+1. Click **Users**.
+1. Click the **Public dashboard users** tab.
+
+From here, you can see the earliest time a user has been active in a dashboard, which public dashboards they have access to, and their role.
+
 ### Access limitations
 
 One-time use links use browser cookies, so when a viewer is granted access through one of these links, they will only have access on the browser they used to claim the link.
@@ -154,10 +164,6 @@ You can check usage analytics about your public dashboard by clicking the insigh
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
 Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage/#dashboard-insights" >}}).
-
-## Public dashboard users
-
-In **Admin > Users**, users who have only accessed your Grafana instance by way of public dashboards are listed with the Public dashboard tag. You can filter for these users by the tag name.
 
 ## Supported data sources
 
