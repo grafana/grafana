@@ -13,14 +13,11 @@ export const fetchChildren = createAsyncThunk(
   }
 );
 
-export const deleteDashboard = createAsyncThunk(
-  'browseDashboards/deleteDashboard',
-  async (dashboardUID: string, thunkApi) => {
-    return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${dashboardUID}`);
-  }
-);
+export const deleteDashboard = createAsyncThunk('browseDashboards/deleteDashboard', async (dashboardUID: string) => {
+  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${dashboardUID}`);
+});
 
-export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', async (folderUID: string, thunkApi) => {
+export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', async (folderUID: string) => {
   return getBackendSrv().delete(`/api/folders/${folderUID}`, undefined, {
     params: { forceDeleteRules: true },
   });
@@ -28,7 +25,7 @@ export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', as
 
 export const moveDashboard = createAsyncThunk(
   'browseDashboards/moveDashboard',
-  async ({ dashboardUID, destinationUID }: { dashboardUID: string; destinationUID: string }, thunkApi) => {
+  async ({ dashboardUID, destinationUID }: { dashboardUID: string; destinationUID: string }) => {
     const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUID}`);
 
     const options = {
@@ -46,7 +43,7 @@ export const moveDashboard = createAsyncThunk(
 
 export const moveFolder = createAsyncThunk(
   'browseDashboards/moveFolder',
-  async ({ folderUID, destinationUID }: { folderUID: string; destinationUID: string }, thunkApi) => {
+  async ({ folderUID, destinationUID }: { folderUID: string; destinationUID: string }) => {
     return getBackendSrv().post(`/api/folders/${folderUID}/move`, { parentUID: destinationUID });
   }
 );
