@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 
+import { Spinner } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
@@ -11,6 +13,7 @@ import {
   setItemSelectionState,
   useChildrenByParentUIDState,
   setAllSelection,
+  useBrowseLoadingStatus,
 } from '../state';
 import { DashboardTreeSelection, SelectionState } from '../types';
 
@@ -24,6 +27,7 @@ interface BrowseViewProps {
 }
 
 export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
+  const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
@@ -94,6 +98,27 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     },
     [selectedItems, childrenByParentUID]
   );
+
+  if (status === 'pending') {
+    return <Spinner />;
+  }
+
+  if (status === 'fulfilled' && flatTree.length === 0) {
+    return (
+      <div style={{ width }}>
+        <EmptyListCTA
+          title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
+          buttonIcon="plus"
+          buttonTitle="Create Dashboard"
+          buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+          proTip={folderUID && 'Add/move dashboards to your folder at ->'}
+          proTipLink={folderUID && 'dashboards'}
+          proTipLinkTitle={folderUID && 'Browse dashboards'}
+          proTipTarget=""
+        />
+      </div>
+    );
+  }
 
   return (
     <DashboardsTree

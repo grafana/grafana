@@ -68,7 +68,7 @@ export function setItemSelectionState(
   let nextParentUID = item.parentUID;
 
   while (nextParentUID) {
-    const parent = findItem(state.rootItems, state.childrenByParentUID, nextParentUID);
+    const parent = findItem(state.rootItems ?? [], state.childrenByParentUID, nextParentUID);
 
     // This case should not happen, but a find can theortically return undefined, and it
     // helps limit infinite loops
@@ -92,7 +92,7 @@ export function setItemSelectionState(
   }
 
   // Check to see if we should mark the header checkbox selected if all root items are selected
-  state.selectedItems.$all = state.rootItems.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
+  state.selectedItems.$all = state.rootItems?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
 export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<{ isSelected: boolean }>) {
@@ -115,7 +115,7 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
       }
     }
 
-    for (const child of state.rootItems) {
+    for (const child of state.rootItems ?? []) {
       state.selectedItems[child.kind][child.uid] = isSelected;
     }
   } else {

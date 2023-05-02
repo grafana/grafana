@@ -8,7 +8,7 @@ import * as allReducers from './reducers';
 const { extraReducerFetchChildrenFulfilled, ...baseReducers } = allReducers;
 
 const initialState: BrowseDashboardsState = {
-  rootItems: [],
+  rootItems: undefined,
   childrenByParentUID: {},
   openFolders: {},
   selectedItems: {
