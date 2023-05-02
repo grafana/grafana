@@ -32,7 +32,7 @@ body:
   - type: textarea
     id: use_case
     attributes:
-      label: Where is this or can be used?
+      label: Where is this or where can it be used?
       description: Explain the current/future use case, Be sure to include areas of impact.
       placeholder: null
     validations:
