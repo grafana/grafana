@@ -3,7 +3,7 @@ import { createSelector } from 'reselect';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState } from 'app/types';
 
-import { DashboardsTreeItem } from '../types';
+import { DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
 const flatTreeSelector = createSelector(
   (wholeState: StoreState) => wholeState.browseDashboards.rootItems,
@@ -11,7 +11,7 @@ const flatTreeSelector = createSelector(
   (wholeState: StoreState) => wholeState.browseDashboards.openFolders,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
+    return createFlatTree(folderUID, rootItems ?? [], childrenByParentUID, openFolders);
   }
 );
 
@@ -24,6 +24,24 @@ const hasSelectionSelector = createSelector(
   }
 );
 
+const selectedItemsForActionsSelector = createSelector(
+  (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
+  (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
+  (selectedItems, childrenByParentUID) => {
+    return getSelectedItemsForActions(selectedItems, childrenByParentUID);
+  }
+);
+
+export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending' | 'fulfilled' {
+  return useSelector((wholeState) => {
+    const children = folderUID
+      ? wholeState.browseDashboards.childrenByParentUID[folderUID]
+      : wholeState.browseDashboards.rootItems;
+
+    return children ? 'fulfilled' : 'pending';
+  });
+}
+
 export function useFlatTreeState(folderUID: string | undefined) {
   return useSelector((state) => flatTreeSelector(state, folderUID));
 }
@@ -32,8 +50,16 @@ export function useHasSelection() {
   return useSelector((state) => hasSelectionSelector(state));
 }
 
-export function useSelectedItemsState() {
+export function useCheckboxSelectionState() {
   return useSelector((wholeState: StoreState) => wholeState.browseDashboards.selectedItems);
+}
+
+export function useChildrenByParentUIDState() {
+  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
+}
+
+export function useActionSelectionState() {
+  return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
 /**
@@ -82,4 +108,44 @@ function createFlatTree(
     : rootItems;
 
   return items.flatMap((item) => mapItem(item, folderUID, level));
+}
+
+/**
+ * Returns a DashboardTreeSelection but unselects any selected folder's children.
+ * This is useful when making backend requests to move or delete items.
+ * In this case, we only need to move/delete the parent folder and it will cascade to the children.
+ * @param selectedItemsState Overall selection state
+ * @param childrenByParentUID Arrays of children keyed by their parent UID
+ */
+function getSelectedItemsForActions(
+  selectedItemsState: DashboardTreeSelection,
+  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>
+): Omit<DashboardTreeSelection, 'panel' | '$all'> {
+  // Take a copy of the selected items to work with
+  // We don't care about panels here, only dashboards and folders can be moved or deleted
+  const result = {
+    dashboard: { ...selectedItemsState.dashboard },
+    folder: { ...selectedItemsState.folder },
+  };
+
+  // Loop over selected folders in the input
+  for (const folderUID of Object.keys(selectedItemsState.folder)) {
+    const isSelected = selectedItemsState.folder[folderUID];
+    if (isSelected) {
+      // Unselect any children in the output
+      const children = childrenByParentUID[folderUID];
+      if (children) {
+        for (const child of children) {
+          if (child.kind === 'dashboard') {
+            result.dashboard[child.uid] = false;
+          }
+          if (child.kind === 'folder') {
+            result.folder[child.uid] = false;
+          }
+        }
+      }
+    }
+  }
+
+  return result;
 }

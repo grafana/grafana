@@ -66,10 +66,10 @@ import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backe
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
-import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
@@ -127,6 +127,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+      initGrafanaLive();
 
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
@@ -257,15 +258,6 @@ function initEchoSrv() {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
-  if (config.sentry.enabled) {
-    registerEchoBackend(
-      new SentryEchoBackend({
-        ...config.sentry,
-        user: config.bootData.user,
-        buildInfo: config.buildInfo,
-      })
-    );
-  }
   if (config.grafanaJavascriptAgent.enabled) {
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({

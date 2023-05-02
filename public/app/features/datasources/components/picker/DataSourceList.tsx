@@ -1,9 +1,12 @@
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useRef } from 'react';
+import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { useTheme2 } from '@grafana/ui';
 
-import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { DataSourceCard } from './DataSourceCard';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
@@ -30,13 +33,25 @@ export interface DataSourceListProps {
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
   width?: number;
+  keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  enableKeyboardNavigation?: boolean;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
-  const { className, current, onChange } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
+    keyboardEvents: props.keyboardEvents,
+    containerRef: containerRef,
+  });
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, selectedItemCssSelector);
+
+  const { className, current, onChange, enableKeyboardNavigation } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
   const dataSources = useDatasources({
     alerting: props.alerting,
@@ -54,7 +69,7 @@ export function DataSourceList(props: DataSourceListProps) {
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
 
   return (
-    <div className={className}>
+    <div ref={containerRef} className={cx(className, styles.container)}>
       {dataSources
         .filter((ds) => (props.filter ? props.filter(ds) : true))
         .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
@@ -67,6 +82,7 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={!!isDataSourceMatch(ds, current)}
+            {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
     </div>
@@ -80,4 +96,14 @@ function getDataSourceVariableIDs() {
     .getVariables()
     .filter((v) => v.type === 'datasource')
     .map((v) => `\${${v.id}}`);
+}
+
+function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
+  return {
+    container: css`
+      ${selectedItemCssSelector} {
+        background-color: ${theme.colors.background.secondary};
+      }
+    `,
+  };
 }

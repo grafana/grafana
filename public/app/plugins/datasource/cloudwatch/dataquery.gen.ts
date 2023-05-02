@@ -65,7 +65,8 @@ export type Dimensions = Record<string, (string | Array<string>)>;
  */
 export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   /**
-   * To be deprecated. Use label
+   * Deprecated: use label
+   * @deprecated use label
    */
   alias?: string;
   /**

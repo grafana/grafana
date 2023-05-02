@@ -695,6 +695,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('timeseries-formats', import '../dev-dashboards/panel-timeseries/timeseries-formats.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('timeseries-gradient-area', import '../dev-dashboards/panel-timeseries/timeseries-gradient-area.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

@@ -22,9 +22,9 @@ To identify the factors that are contributing to the latency, you must compare a
 
 Use exemplars to help isolate problems within your data distribution by pinpointing query traces exhibiting high latency within a time interval. Once you localize the latency problem to a few exemplar traces, you can combine it with additional system based information or location properties to perform a root cause analysis faster, leading to quick resolutions to performance issues.
 
-Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplars data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in Prometheus data source]({{< relref "../../datasources/prometheus/#configuring-exemplars" >}}).
+Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplar data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source]({{< relref "../../datasources/prometheus/#configuring-exemplars" >}}).
 
-Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique traceID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
+Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique trace ID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
 
 {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplars.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing the detail window of an exemplar" >}}
 
@@ -40,7 +40,7 @@ Explore visualizes exemplar traces as highlighted stars alongside metrics data. 
 
 To examine the details of an exemplar trace:
 
-1. Place your cursor over an exemplar (highlighted star). Depending on your backend trace data source, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo.
+1. Place your cursor over an exemplar (highlighted star). Depending on the trace data source you are using, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo.
 
    {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-details.png" class="docs-image--no-shadow" max-width= "350px" caption="Screenshot showing exemplar details" >}}
 
@@ -68,7 +68,7 @@ For more information on how to drill down and analyze the trace and span details
 
 This panel shows the details of the trace in different segments.
 
-- The top segment shows the Trace ID to indicate that the query results correspond to the specific trace.
+- The top segment displays the trace ID to indicate that the query results correspond to the specific trace.
 
   You can add more traces to the results using the `Add query` button.
 
@@ -78,7 +78,7 @@ This panel shows the details of the trace in different segments.
 
   1. In the magnified view, you can expand or collapse the various levels of the trace to drill down to the specific span of interest.
 
-     For example, if the strip view shows that most of the latency was within the app layer, you can expand the trace down the app layer to investigate the problem further. To expand a particular layer of span, click the icon on the left. The same button can collapse an expanded span.
+     For example, if the strip view shows that most of the latency was within the app layer, you can expand the trace down the app layer to investigate the problem further. To expand a particular layer of span, click the left icon. The same button can collapse an expanded span.
 
 - To see the details of the span at any level, click the span itself.
 

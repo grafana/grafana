@@ -20,7 +20,6 @@
 export interface FeatureToggles {
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  database_metrics?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -31,11 +30,9 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  k8s?: boolean;
   exploreMixedDatasource?: boolean;
   newTraceViewHeader?: boolean;
   correlations?: boolean;
-  cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
@@ -83,15 +80,15 @@ export interface FeatureToggles {
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
+  dataplaneFrontendFallback?: boolean;
+  disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
-  disableSSEDataplane?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
-  dataplaneFrontendFallback?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;

@@ -860,13 +860,14 @@ describe('ElasticDatasource', () => {
   describe('query', () => {
     it('should replace range as integer not string', async () => {
       const { ds } = getTestContext({ jsonData: { interval: 'Daily', timeField: '@time' } });
-      const postMock = jest.fn((url: string, data) => of(createFetchResponse({ responses: [] })));
-      ds['post'] = postMock;
+      const postMock = jest.fn((method: string, url: string, data, header: object) =>
+        of(createFetchResponse({ responses: [] }))
+      );
+      ds.legacyQueryRunner['request'] = postMock;
 
       await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
         expect(postMock).toHaveBeenCalledTimes(1);
-
-        const query = postMock.mock.calls[0][1];
+        const query = postMock.mock.calls[0][2];
         expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
       });
     });

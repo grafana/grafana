@@ -8,6 +8,7 @@ import {
   ThresholdsConfig,
   SplitOpen,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
@@ -82,6 +83,12 @@ export interface PanelContext {
    * Called when a panel is changing the sort order of the legends.
    */
   onToggleLegendSort?: (sortBy: string) => void;
+
+  /**
+   * Optional, only some contexts support this. This action can be cancelled by user which will result
+   * in a the Promise resolving to a false value.
+   */
+  onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

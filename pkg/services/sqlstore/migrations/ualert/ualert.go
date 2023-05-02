@@ -293,6 +293,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for _, da := range dashAlerts {
 		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
+		l.Debug("migrating alert rule to Unified Alerting")
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -376,7 +377,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
@@ -480,7 +481,7 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 				return err
 			}
 			var (
-				cfg = &alertingNotify.GrafanaReceiver{
+				cfg = &alertingNotify.GrafanaIntegrationConfig{
 					UID:                   gr.UID,
 					Name:                  gr.Name,
 					Type:                  gr.Type,
@@ -504,7 +505,7 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 				return fallback
 			}
 			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
-				GrafanaReceivers: alertingNotify.GrafanaReceivers{Receivers: []*alertingNotify.GrafanaReceiver{cfg}},
+				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
 			}, decryptFunc)
 			if err != nil {
 				return err
