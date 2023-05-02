@@ -7,7 +7,7 @@ export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string
 };
 
 export interface BrowseDashboardsState {
-  rootItems: DashboardViewItem[];
+  rootItems: DashboardViewItem[] | undefined;
   childrenByParentUID: Record<string, DashboardViewItem[] | undefined>;
   selectedItems: DashboardTreeSelection;
 
