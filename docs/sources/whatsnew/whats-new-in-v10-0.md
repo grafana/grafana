@@ -109,7 +109,7 @@ With this update, we've made the following improvements:
 - The time picker and annotations can be toggled on or off from the configuration modal
 - You can see a list of all your public dashboards at **Dashboards > Public dashboards**
 - Improved UI: new modal design, paused and not found pages
-- Bug fixes! E.g collapsed rows, hidden queries, and zoom into panels
+- Added support for collapsed rows, hidden queries, and zoom into panels
 
 To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
