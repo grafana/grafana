@@ -54,7 +54,28 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   const isSelected = useCallback(
     (item: DashboardViewItem | '$all'): SelectionState => {
       if (item === '$all') {
-        return selectedItems.$all ? SelectionState.Selected : SelectionState.Unselected;
+        // We keep the boolean $all state up to date in redux, so we can short-circut
+        // the logic if we know this has been selected
+        if (selectedItems.$all) {
+          return SelectionState.Selected;
+        }
+
+        // Otherwise, if we have any selected items, then it should be in 'mixed' state
+        for (const selection of Object.values(selectedItems)) {
+          if (typeof selection === 'boolean') {
+            continue;
+          }
+
+          for (const uid in selection) {
+            const isSelected = selection[uid];
+            if (isSelected) {
+              return SelectionState.Mixed;
+            }
+          }
+        }
+
+        // Otherwise otherwise, nothing is selected and header should be unselected
+        return SelectionState.Unselected;
       }
 
       const isSelected = selectedItems[item.kind][item.uid];

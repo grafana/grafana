@@ -10,6 +10,7 @@ export default function CheckboxHeaderCell({ isSelected, onAllSelectionChange }:
   return (
     <Checkbox
       value={state === SelectionState.Selected}
+      indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onAllSelectionChange?.(ev.currentTarget.checked)}
     />
   );
