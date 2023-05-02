@@ -82,7 +82,7 @@ export const moveDashboard = createAsyncThunk(
     } else {
       dispatch(fetchChildren(dashboard?.parentUID));
     }
-    dispatch(fetchChildren(destinationUID || undefined));
+    dispatch(fetchChildren(destinationUID));
 
     return result;
   }
@@ -104,7 +104,7 @@ export const moveFolder = createAsyncThunk(
     } else {
       dispatch(fetchChildren(folder?.parentUID));
     }
-    dispatch(fetchChildren(destinationUID || undefined));
+    dispatch(fetchChildren(destinationUID));
 
     return result;
   }
