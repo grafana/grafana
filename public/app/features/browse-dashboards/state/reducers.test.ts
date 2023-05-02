@@ -250,6 +250,55 @@ describe('browse-dashboards reducers', () => {
         panel: {},
       });
     });
+
+    it('selects the $all header checkbox when all descendants are now selected', () => {
+      const state = createInitialState();
+
+      const rootDashboard = wellFormedDashboard(1).item;
+      const rootFolder = wellFormedFolder(2).item;
+      const childDashboardA = wellFormedDashboard(3, {}, { parentUID: rootFolder.uid }).item;
+      const childDashboardB = wellFormedDashboard(4, {}, { parentUID: rootFolder.uid }).item;
+
+      state.rootItems = [rootFolder, rootDashboard];
+      state.childrenByParentUID[rootFolder.uid] = [childDashboardA, childDashboardB];
+
+      state.selectedItems.dashboard = { [rootDashboard.uid]: true, [childDashboardA.uid]: true };
+
+      // Selected the deepest grandchild dashboard
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: childDashboardB, isSelected: true },
+      });
+
+      expect(state.selectedItems.$all).toBeTruthy();
+    });
+
+    it('unselects the $all header checkbox a descendant is unselected', () => {
+      const state = createInitialState();
+
+      const rootDashboard = wellFormedDashboard(1).item;
+      const rootFolder = wellFormedFolder(2).item;
+      const childDashboardA = wellFormedDashboard(3, {}, { parentUID: rootFolder.uid }).item;
+      const childDashboardB = wellFormedDashboard(4, {}, { parentUID: rootFolder.uid }).item;
+
+      state.rootItems = [rootFolder, rootDashboard];
+      state.childrenByParentUID[rootFolder.uid] = [childDashboardA, childDashboardB];
+
+      state.selectedItems.dashboard = {
+        [rootDashboard.uid]: true,
+        [childDashboardA.uid]: true,
+        [childDashboardB.uid]: true,
+      };
+      state.selectedItems.folder = { [rootFolder.uid]: true };
+
+      // Selected the deepest grandchild dashboard
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: childDashboardB, isSelected: false },
+      });
+
+      expect(state.selectedItems.$all).toBeFalsy();
+    });
   });
 
   describe('setAllSelection', () => {
