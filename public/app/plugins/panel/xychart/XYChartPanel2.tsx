@@ -10,6 +10,7 @@ import {
   reduceField,
   ReducerID,
   getDisplayProcessor,
+  DataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
@@ -33,7 +34,19 @@ import { PanelOptions, ScatterHoverEvent, ScatterSeries } from './types';
 type Props = PanelProps<PanelOptions>;
 const TOOLTIP_OFFSET = 10;
 
+let prevPanelDataSeries: DataFrame[] | undefined;
+
 export const XYChartPanel2 = (props: Props) => {
+  console.log({
+    'props.data.state': props.data.state,
+    'props.data.series === prevPanelDataSeries': props.data.series === prevPanelDataSeries,
+  });
+  prevPanelDataSeries = props.data.series;
+
+  return <>Hello</>;
+};
+
+export const XYChartPanel3 = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
