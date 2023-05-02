@@ -57,34 +57,34 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	logger := log.New("plugin.loader")
 
 	// TODO: hooks: Move those to separate services
-	hooksRegistry.RegisterBeforeInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterBeforeInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if plugin.IsApp() {
 			setDefaultNavURL(plugin)
 		}
 		return nil
-	}))
-	hooksRegistry.RegisterBeforeInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	})
+	hooksRegistry.RegisterBeforeInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if plugin.Parent != nil && !plugin.Parent.IsApp() {
 			configureAppChildPlugin(plugin.Parent, plugin)
 		}
 		return nil
-	}))
+	})
 
 	// This hook MUST run AFTER all other before init hooks
-	hooksRegistry.RegisterBeforeInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterBeforeInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if err := pluginInitializer.Initialize(ctx, plugin); err != nil {
 			logger.Error("Could not initialize plugin", "pluginId", plugin.ID, "err", err)
 		}
 		return nil
-	}))
+	})
 
-	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterAfterInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if !plugin.IsCorePlugin() && !plugin.IsBundledPlugin() {
 			metrics.SetPluginBuildInformation(plugin.ID, string(plugin.Type), plugin.Info.Version, string(plugin.Signature))
 		}
 		return nil
-	}))
-	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	})
+	hooksRegistry.RegisterAfterInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		// verify module.js exists for SystemJS to load.
 		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if plugin.IsRenderer() || plugin.IsCorePlugin() {
@@ -102,20 +102,20 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 			}
 		}
 		return nil
-	}))
-	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	})
+	hooksRegistry.RegisterAfterInitHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if !plugin.IsCorePlugin() {
 			logger.Info("Plugin registered", "pluginID", plugin.ID)
 		}
 		return nil
-	}))
+	})
 
-	hooksRegistry.RegisterUnloadHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterUnloadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		if remover, ok := plugin.FS.(plugins.FSRemover); ok {
 			return remover.Remove()
 		}
 		return nil
-	}))
+	})
 
 	return &Loader{
 		pluginFinder:        pluginFinder,

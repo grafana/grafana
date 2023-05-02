@@ -8,8 +8,8 @@ import (
 )
 
 func registerPluginHooks(registry Service, hooksRegistry hooks.Registry) {
-	hooksRegistry.RegisterAfterInitHook(hooks.HookFunc(registry.Add))
-	hooksRegistry.RegisterUnloadHook(hooks.HookFunc(func(ctx context.Context, plugin *plugins.Plugin) error {
+	hooksRegistry.RegisterAfterInitHook(registry.Add)
+	hooksRegistry.RegisterUnloadHook(func(ctx context.Context, plugin *plugins.Plugin) error {
 		return registry.Remove(ctx, plugin.ID)
-	}))
+	})
 }

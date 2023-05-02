@@ -32,8 +32,8 @@ func NewManager(pluginRegistry registry.Service, loaderHooks hooks.Registry) *Ma
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugin.process.manager"),
 	}
-	loaderHooks.RegisterAfterInitHook(hooks.HookFunc(svc.onPluginAfterInit))
-	loaderHooks.RegisterUnloadHook(hooks.HookFunc(svc.onPluginUnload))
+	loaderHooks.RegisterAfterInitHook(svc.onPluginAfterInit)
+	loaderHooks.RegisterUnloadHook(svc.onPluginUnload)
 	return svc
 }
 

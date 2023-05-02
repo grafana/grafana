@@ -43,7 +43,7 @@ func ProvideService(
 		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 			return nil, err
 		}
-		loaderHooks.RegisterAfterInitHook(hooks.HookFunc(service.onPluginAfterInit))
+		loaderHooks.RegisterAfterInitHook(service.onPluginAfterInit)
 	}
 
 	return service, nil

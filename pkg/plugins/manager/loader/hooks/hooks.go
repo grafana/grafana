@@ -22,15 +22,7 @@ type Runner interface {
 	RunUnloadHooks(ctx context.Context, plugin *plugins.Plugin) error
 }
 
-type Hook interface {
-	Run(ctx context.Context, plugin *plugins.Plugin) error
-}
-
-type HookFunc func(ctx context.Context, plugin *plugins.Plugin) error
-
-func (f HookFunc) Run(ctx context.Context, plugin *plugins.Plugin) error {
-	return f(ctx, plugin)
-}
+type Hook func(ctx context.Context, plugin *plugins.Plugin) error
 
 type Service struct {
 	log log.Logger
@@ -67,7 +59,7 @@ func (h *Service) RunBeforeInitHooks(ctx context.Context, loadedPlugins []*plugi
 		p := p
 		var err error
 		for _, hook := range h.beforeInitHooks {
-			err = hook.Run(ctx, p)
+			err = hook(ctx, p)
 			if err != nil {
 				h.log.Error("Error running before init hook", "hook", hook, "pluginId", p.ID, "err", err)
 				break
@@ -86,7 +78,7 @@ func (h *Service) RunAfterInitHooks(ctx context.Context, verifiedPlugins []*plug
 	h.log.Debug("Running after init hooks")
 	for _, p := range verifiedPlugins {
 		for _, hook := range h.afterInitHooks {
-			if err := hook.Run(ctx, p); err != nil {
+			if err := hook(ctx, p); err != nil {
 				h.log.Error("Error running after init hook", "hook", hook, "pluginId", p.ID, "err", err)
 			}
 		}
@@ -96,7 +88,7 @@ func (h *Service) RunAfterInitHooks(ctx context.Context, verifiedPlugins []*plug
 func (h *Service) RunUnloadHooks(ctx context.Context, plugin *plugins.Plugin) error {
 	h.log.Debug("Running unload hooks", "pluginID", plugin.ID)
 	for _, hook := range h.unloadHooks {
-		if err := hook.Run(ctx, plugin); err != nil {
+		if err := hook(ctx, plugin); err != nil {
 			return fmt.Errorf("run unload hook %v: %w", hook, err)
 		}
 	}
