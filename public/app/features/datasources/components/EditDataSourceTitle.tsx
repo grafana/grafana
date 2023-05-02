@@ -52,6 +52,7 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: P
               name="pen"
               onClick={toggleEditMode}
               size="lg"
+              title="Change data source name"
               className={styles.editIcon}
               data-testid={selectors.pages.DataSource.nameEditIcon}
             />
