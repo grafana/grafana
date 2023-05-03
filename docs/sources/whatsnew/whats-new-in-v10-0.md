@@ -283,11 +283,7 @@ Use the improved State history view to get insight into how your alert instances
 
 ### Preview notification templates
 
-Preview how your notification templates will look before using them in your contact poitns.
-
-### OnCall contact point
-
-Use the on-call contact point to notify on-call teams on-call about firing alerts.
+Preview how your notification templates will look before using them in your contact points.
 
 ## Security
 
