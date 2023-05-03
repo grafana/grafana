@@ -200,7 +200,7 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 		},
 		Message: messageTmpl,
 		Subject: subjectTmpl,
-	}, receivers.Metadata{}, emailTmpl, ns, &images.UnavailableImageStore{}, &alertingLogging.FakeLogger{})
+	}, receivers.Metadata{}, emailTmpl, ns, &images.UnavailableProvider{}, &alertingLogging.FakeLogger{})
 }
 
 func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {
