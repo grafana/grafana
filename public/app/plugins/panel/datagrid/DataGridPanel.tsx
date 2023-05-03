@@ -175,7 +175,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
     dispatch({
       type: DatagridActionType.openHeaderDropdownMenu,
-      payload: { screenPosition, columnIndex: col, value: frame.fields[col].name },
+      payload: { screenPosition, columnIndex: col, value: state.columns[col].title },
     });
   };
 
@@ -210,7 +210,14 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
     const fields = frame.fields.map((f) => f);
-    fields[columnIdx].name = columnName;
+
+    if (fields[columnIdx].config.displayName) {
+      fields[columnIdx].config.displayName = columnName;
+    } else if (fields[columnIdx].config.displayNameFromDS) {
+      fields[columnIdx].config.displayNameFromDS = columnName;
+    } else {
+      fields[columnIdx].name = columnName;
+    }
 
     dispatch({ type: DatagridActionType.hideColumnRenameInput });
 
