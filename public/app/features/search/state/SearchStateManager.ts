@@ -1,6 +1,7 @@
 import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
+import { isTruthy } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -49,6 +50,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     stateManager.setState({
+      ...initialState,
       ...stateFromUrl,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
@@ -267,8 +269,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
     });
-
-    this.setState({ query: '' });
   };
 
   /**
