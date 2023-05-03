@@ -899,7 +899,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -916,7 +916,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -1942,7 +1942,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -1959,7 +1959,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -5202,7 +5202,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -5219,7 +5219,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -5954,7 +5954,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -5971,7 +5971,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -6458,7 +6458,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -6475,7 +6475,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -6661,7 +6661,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -6678,7 +6678,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client
+  - apt-get install -yq default-mysql-client libgnutls30
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -7018,6 +7018,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: f4add7421bca34f5cabbaf8847bdc5a315f5495616dfdcff35d57f57eb68061e
+hmac: d76c1cbfcd12ec70fc0c13f12d487b528d18642cd9907352e0d4b9259e40b69f
 
 ...
