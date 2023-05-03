@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { usePrevious } from 'react-use';
 
 import { Field, PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -38,7 +39,7 @@ export const TimeSeriesPanel = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
@@ -50,6 +51,11 @@ export const TimeSeriesPanel = ({
     }
     return undefined;
   }, [frames, id]);
+
+  const prevFrames = usePrevious(frames);
+  if (prevFrames === frames) {
+    console.log('same frames');
+  }
 
   if (!frames || suggestions) {
     return (

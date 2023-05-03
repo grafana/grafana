@@ -224,7 +224,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId, true);
       return;
     }
 
@@ -292,7 +292,7 @@ export class PanelQueryRunner {
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number, skipPreProcess = false) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -307,7 +307,7 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: (data) => {
-        this.lastResult = preProcessPanelData(data, this.lastResult);
+        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
