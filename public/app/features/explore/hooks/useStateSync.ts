@@ -40,7 +40,7 @@ export function useStateSync(params: ExploreQueryParams) {
     // ie. by clicking on the explore when explore is active.
     if (!params.left && !params.right) {
       initState.current = 'notstarted';
-      prevParams.current = {};
+      prevParams.current = params;
     }
   }, [params]);
 
@@ -73,7 +73,10 @@ export function useStateSync(params: ExploreQueryParams) {
 
             prevParams.current = panesQueryParams;
 
-            location.partial({ ...panesQueryParams, orgId: getState().user.orgId }, replace);
+            location.partial(
+              { left: panesQueryParams.left, right: panesQueryParams.right, orgId: getState().user.orgId },
+              replace
+            );
           }
         },
       })
