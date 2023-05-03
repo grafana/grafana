@@ -8,15 +8,6 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
-<<<<<<< HEAD
-
-load("scripts/drone/vault.star",
-     "from_secret",
-     "rgm_gcp_key_base64",
-     "rgm_destination",
-     "rgm_github_token",
-     )
-=======
 load(
     "scripts/drone/vault.star",
     "from_secret",
@@ -24,7 +15,6 @@ load(
     "rgm_gcp_key_base64",
     "rgm_github_token",
 )
->>>>>>> cbb6b8ff2f (make format-drone)
 
 rgm_env_secrets = {
     "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
@@ -32,12 +22,7 @@ rgm_env_secrets = {
     "GITHUB_TOKEN": from_secret(rgm_github_token),
 }
 
-<<<<<<< HEAD
-
-def rgm_build(script="drone_publish_main.sh"):
-=======
 def rgm_build(script = "drone_publish_main.sh"):
->>>>>>> cbb6b8ff2f (make format-drone)
     clone_step = {
         "name": "clone-rgm",
         "image": "alpine/git",
@@ -54,11 +39,7 @@ def rgm_build(script = "drone_publish_main.sh"):
             # the docker program is a requirement for running dagger programs
             "apk update && apk add docker",
             "export GRAFANA_DIR=$$(pwd)",
-<<<<<<< HEAD
-            "cd rgm && ./scripts/{}".format(script)
-=======
             "cd rgm && ./scripts/{}".format(script),
->>>>>>> cbb6b8ff2f (make format-drone)
         ],
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
@@ -66,14 +47,6 @@ def rgm_build(script = "drone_publish_main.sh"):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
         "failure": "ignore",
     }
-<<<<<<< HEAD
-
-    return [
-        clone_step,
-        rgm_build_step,
-    ]
-=======
->>>>>>> cbb6b8ff2f (make format-drone)
 
     return [
         clone_step,
@@ -87,16 +60,6 @@ def rgm_main():
         ],
         "branch": "main",
     }
-<<<<<<< HEAD
-
-    return pipeline(
-        name="[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging to main",
-        edition="all",
-        trigger=trigger,
-        steps=rgm_build(),
-    )
-
-=======
 
     return pipeline(
         name = "[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging to main",
@@ -104,7 +67,6 @@ def rgm_main():
         trigger = trigger,
         steps = rgm_build(),
     )
->>>>>>> cbb6b8ff2f (make format-drone)
 
 def rgm_tag():
     trigger = {
@@ -122,17 +84,6 @@ def rgm_tag():
             ],
         },
     }
-<<<<<<< HEAD
-
-    return pipeline(
-        name="[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging",
-        edition="all",
-        trigger=trigger,
-        steps=rgm_build(script="drone_publish_tag.sh"),
-        depends_on=["main-test-backend", "main-test-frontend"],
-    )
-
-=======
 
     return pipeline(
         name = "[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging",
@@ -141,7 +92,6 @@ def rgm_tag():
         steps = rgm_build(script = "drone_publish_tag.sh"),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
->>>>>>> cbb6b8ff2f (make format-drone)
 
 def rgm():
     return [
