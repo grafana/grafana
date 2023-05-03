@@ -107,16 +107,23 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "gateway",
+                    "fixed": "rgb(204, 204, 220)"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": 0
                   },
                   "target": {
-                    "x": -0.9595959595959596,
-                    "y": 0
+                    "x": -1.02020202020202,
+                    "y": 0.041666666666666664
                   },
                   "targetName": "Element 2"
                 }
@@ -157,9 +164,16 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "product-details",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": 1
@@ -171,9 +185,16 @@
                   "targetName": "Element 3"
                 },
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "product-reviews",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": -1
@@ -192,7 +213,7 @@
               "name": "Element 2",
               "placement": {
                 "height": 48,
-                "left": 330,
+                "left": 327,
                 "top": 168,
                 "width": 99
               },
@@ -221,9 +242,16 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "details-checkout",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": 0
@@ -243,7 +271,7 @@
               "placement": {
                 "height": 48,
                 "left": 548,
-                "top": 67,
+                "top": 69,
                 "width": 99
               },
               "type": "rectangle"
@@ -271,9 +299,16 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "reviews-ratings",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": 0
@@ -552,6 +587,44 @@
                 "width": 99
               },
               "type": "rectangle"
+            },
+            {
+              "background": {
+                "color": {
+                  "field": "details-checkout",
+                  "fixed": "#D9D9D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#000000"
+                },
+                "size": 20,
+                "text": {
+                  "field": "details-checkout",
+                  "fixed": "0",
+                  "mode": "field"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "Element 12",
+              "placement": {
+                "height": 36,
+                "left": 684,
+                "top": 47,
+                "width": 63.99609375
+              },
+              "type": "metric-value"
             }
           ],
           "name": "Element 1672955773575",
@@ -559,10 +632,10 @@
         },
         "showAdvancedTypes": false
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "10.1.0-pre",
       "targets": [
         {
-          "csvContent": "gateway, product-details, product-reviews, reviews-ratings\n100, 56, 44, 22",
+          "csvContent": "gateway, product-details, product-reviews, reviews-ratings, details-checkout\n100, 56, 44, 22, 28",
           "datasource": {
             "type": "testdata",
             "uid": "PD8C576611E62080A"
@@ -600,7 +673,7 @@
                 "value": null
               },
               {
-                "color": "#6ED0E0",
+                "color": "blue",
                 "value": 30
               },
               {
@@ -658,18 +731,25 @@
                   "fixed": 2
                 },
                 "bulbColor": {
-                  "field": "server_database2"
+                  "field": "server_database"
                 },
                 "statusColor": {
-                  "field": "server_database2"
+                  "field": "server_region"
                 },
                 "type": "Single"
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "server_database2",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": -1,
                     "y": -1
@@ -681,9 +761,16 @@
                   "targetName": "Element 11"
                 },
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "server_database",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": -1,
                     "y": -1
@@ -695,9 +782,16 @@
                   "targetName": "Element 12"
                 },
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "server_region",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": -1
@@ -718,7 +812,7 @@
                 "height": 114,
                 "left": 468,
                 "top": 11,
-                "width": 121
+                "width": 120.99609375
               },
               "type": "server"
             },
@@ -747,9 +841,16 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "database_server",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": 1
@@ -799,9 +900,16 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "region_server",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": -1,
                     "y": 1
@@ -895,9 +1003,16 @@
               },
               "connections": [
                 {
-                  "color": "white",
+                  "color": {
+                    "field": "database2_server",
+                    "fixed": "white"
+                  },
                   "path": "straight",
-                  "size": 10,
+                  "size": {
+                    "fixed": 2,
+                    "max": 10,
+                    "min": 1
+                  },
                   "source": {
                     "x": 1,
                     "y": 1
@@ -1249,7 +1364,7 @@
               "config": {
                 "align": "center",
                 "color": {
-                  "field": "server_database2",
+                  "field": "server_region",
                   "fixed": "#ffffff"
                 },
                 "size": 20,
@@ -1285,7 +1400,7 @@
         },
         "showAdvancedTypes": false
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "10.1.0-pre",
       "targets": [
         {
           "csvContent": "database_server, server_database, server_region, region_server, database2_server, server_database2\n10, 53, 35, 12, 22, 81",
@@ -1321,6 +1436,6 @@
   "timezone": "",
   "title": "Panel Tests - Canvas Connection Examples",
   "uid": "Pu8lwQAVz",
-  "version": 8,
+  "version": 3,
   "weekStart": ""
 }
