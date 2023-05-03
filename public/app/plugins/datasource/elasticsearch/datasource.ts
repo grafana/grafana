@@ -739,12 +739,9 @@ export class ElasticDatasource
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    let getDbVersionObservable;
-    if (config.featureToggles.enableElasticsearchBackendQuerying) {
-      getDbVersionObservable = from(this.getResource(''));
-    } else {
-      getDbVersionObservable = this.legacyQueryRunner.request('GET', '/');
-    }
+    const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
+      ? from(this.getResource(''))
+      : this.legacyQueryRunner.request('GET', '/');
 
     return lastValueFrom(getDbVersionObservable).then(
       (data) => {
