@@ -52,7 +52,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const { refreshInterval, loading, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
     (state: StoreState) => ({
       ...pick(
-        state.explore[exploreId]!,
+        state.explore.panes[exploreId]!,
         'refreshInterval',
         'loading',
         'datasourceInstance',
@@ -65,9 +65,9 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     shallowEqual
   );
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
-  const showSmallTimePicker = useSelector((state) => splitted || state.explore[exploreId]!.containerWidth < 1210);
+  const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallDataSourcePicker = useSelector(
-    (state) => state.explore[exploreId]!.containerWidth < (splitted ? 700 : 800)
+    (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
   const shouldRotateSplitIcon = useMemo(
