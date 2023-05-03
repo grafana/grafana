@@ -7,10 +7,6 @@ keywords:
   - query
   - queries
   - recorded
-labels:
-  products:
-    - cloud
-    - enterprise
 title: Recorded queries
 weight: 300
 ---
