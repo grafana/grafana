@@ -28,6 +28,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import * as DFImport from 'app/features/dataframe-import';
+import { getLoadingNav } from 'app/features/folders/state/navModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -525,7 +526,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 }
 
 function updateStatePageNavFromProps(props: Props, state: State): State {
-  const { dashboard } = props;
+  const { dashboard, navIndex } = props;
 
   if (!dashboard) {
     return state;
@@ -547,13 +548,13 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
+  const navModel = folderUid
+    ? getNavModel(navIndex, `folder-dashboards-${folderUid}`, getLoadingNav(1)).main
+    : undefined;
   if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
     pageNav = {
       ...pageNav,
-      parentItem: {
-        text: folderTitle,
-        url: `/dashboards/f/${dashboard.meta.folderUid}`,
-      },
+      parentItem: navModel,
     };
   }
 
