@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
@@ -11,13 +11,13 @@ interface VariableQueryFieldProps {
   allowCustomValue?: boolean;
 }
 
-export const VariableQueryField: FC<VariableQueryFieldProps> = ({
+export const VariableQueryField = ({
   label,
   onChange,
   value,
   options,
   allowCustomValue = false,
-}) => {
+}: VariableQueryFieldProps) => {
   return (
     <InlineField label={label} labelWidth={20}>
       <Select

@@ -22,6 +22,7 @@ import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
 import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
+import { isDuplicating } from './components/receivers/TemplateForm';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -62,7 +63,7 @@ const Receivers = () => {
   const { id, type } = useParams<{ id?: string; type?: PageType }>();
   const location = useLocation();
   const isRoot = location.pathname.endsWith('/alerting/notifications');
-
+  const isduplicatingTemplate = isDuplicating(location);
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const {
@@ -95,8 +96,7 @@ const Receivers = () => {
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
   const disableAmSelect = !isRoot;
-
-  let pageNav = getPageNavigationModel(type, id);
+  let pageNav = getPageNavigationModel(type, id ? decodeURIComponent(id) : undefined, isduplicatingTemplate);
 
   if (!alertManagerSourceName) {
     return isRoot ? (
@@ -181,8 +181,14 @@ const Receivers = () => {
   );
 };
 
-function getPageNavigationModel(type: PageType | undefined, id: string | undefined) {
+function getPageNavigationModel(type: PageType | undefined, id: string | undefined, isDuplicatingTemplates: boolean) {
   let pageNav: NavModelItem | undefined;
+  if (isDuplicatingTemplates) {
+    return {
+      text: `New template`,
+      subTitle: `Create a new template for your notifications`,
+    };
+  }
   if (type === 'receivers' || type === 'templates') {
     const objectText = type === 'receivers' ? 'contact point' : 'notification template';
     if (id) {

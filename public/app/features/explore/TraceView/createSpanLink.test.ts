@@ -863,6 +863,133 @@ describe('createSpanLinkFactory', () => {
       expect(links?.logLinks).toBeUndefined();
     });
   });
+
+  describe('should return falconLogScale link', () => {
+    const falconLogScaleUID = 'falconLogScaleUID';
+
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {
+            uid: falconLogScaleUID,
+            name: 'FalconLogScale',
+            type: 'grafana-falconlogscale-datasource',
+          } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('the `lsql` keyword is used in the link', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: falconLogScaleUID,
+      });
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toContain(`${encodeURIComponent('datasource":"falconLogScaleUID","queries":[{"lsql"')}`);
+    });
+
+    it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: falconLogScaleUID,
+        filterByTraceID: true,
+        filterBySpanID: true,
+      });
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"cluster=\\"cluster1\\" OR hostname=\\"hostname1\\" or \\"7946b05c2e2e4e5a\\" or \\"6605c7b08e715d6c\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('should format one tag correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'ip' }],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [{ key: 'ip', value: '192.168.0.1' }],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"ip=\\"192.168.0.1\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('should format multiple tags correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'ip' }, { key: 'hostname' }],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"hostname=\\"hostname1\\" OR ip=\\"192.168.0.1\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('handles renamed tags', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [
+          { key: 'service.name', value: 'service' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"service=\\"serviceName\\" OR pod=\\"podName\\"","refId":""}]}'
+        )}`
+      );
+    });
+  });
 });
 
 function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datasourceUid = 'lokiUid') {

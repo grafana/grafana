@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import React, { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -57,10 +57,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = ['simulation'];
+    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
-      hideAliasField: hideAlias.includes(v.id),
+      hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
     }));
   }, []);
 
@@ -114,6 +114,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.PredictableCSVWave:
         update.csvWave = defaultCSVWaveQuery;
         break;
+      case TestDataQueryType.Annotations:
+        update.lines = 10;
+        break;
       case TestDataQueryType.USA:
         update.usa = {
           mode: usaQueryModes[0].value,
@@ -138,8 +141,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, [name]: newValue });
   };
 
-  const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.currentTarget;
+  const onFieldChange = (field: string) => (e: { target: { name: string; value: string; type: string } }) => {
+    const { name, value, type } = e.target;
     let newValue: any = value;
 
     if (type === 'number') {
@@ -277,7 +280,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           </InlineField>
         </InlineFieldRow>
       )}
-
+      {scenarioId === TestDataQueryType.Annotations && (
+        <InlineFieldRow>
+          <InlineField label="Count" labelWidth={14}>
+            <Input
+              type="number"
+              name="lines"
+              value={query.lines}
+              width={32}
+              onChange={onInputChange}
+              placeholder="10"
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {scenarioId === TestDataQueryType.USA && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
       {scenarioId === TestDataQueryType.GrafanaAPI && (
         <InlineField labelWidth={14} label="Endpoint">

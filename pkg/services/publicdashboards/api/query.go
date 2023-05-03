@@ -21,7 +21,7 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
 	}
 
-	pubdash, dash, err := api.PublicDashboardService.FindPublicDashboardAndDashboardByAccessToken(
+	pubdash, dash, err := api.PublicDashboardService.FindEnabledPublicDashboardAndDashboardByAccessToken(
 		c.Req.Context(),
 		accessToken,
 	)
@@ -43,6 +43,7 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		IsFolder:                   false,
 		FolderId:                   dash.FolderID,
 		PublicDashboardAccessToken: pubdash.AccessToken,
+		PublicDashboardEnabled:     pubdash.IsEnabled,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
 
@@ -69,7 +70,7 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(ErrBadRequest.Errorf("QueryPublicDashboard: error parsing request: %v", err))
 	}
 
-	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, accessToken)
+	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipDSCache, reqDTO, panelId, accessToken)
 	if err != nil {
 		return response.Err(err)
 	}

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
@@ -40,9 +40,7 @@ describe('QueryHeader', () => {
         />
       );
       await waitFor(() => expect(screen.queryByText('us-east-1')).toBeInTheDocument());
-      await act(async () => {
-        await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
-      });
+      await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
       expect(onChange).toHaveBeenCalledWith({
         ...validMetricSearchBuilderQuery,
         region: 'us-east-2',
@@ -65,9 +63,7 @@ describe('QueryHeader', () => {
         />
       );
       await waitFor(() => expect(screen.queryByText('us-east-1')).toBeInTheDocument());
-      await act(async () => {
-        await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
-      });
+      await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
       expect(onChange).toHaveBeenCalledWith({
         ...validMetricSearchBuilderQuery,
         region: 'us-east-2',
@@ -90,9 +86,7 @@ describe('QueryHeader', () => {
         />
       );
       await waitFor(() => expect(screen.queryByText('us-east-1')).toBeInTheDocument());
-      await act(async () => {
-        await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
-      });
+      await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
       expect(datasource.resources.isMonitoringAccount).not.toHaveBeenCalledWith('us-east-2');
     });
 
@@ -111,9 +105,7 @@ describe('QueryHeader', () => {
         />
       );
       await waitFor(() => expect(screen.queryByText('us-east-1')).toBeInTheDocument());
-      await act(async () => {
-        await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
-      });
+      await selectEvent.select(screen.getByLabelText(/Region/), 'us-east-2', { container: document.body });
       expect(datasource.resources.isMonitoringAccount).not.toHaveBeenCalledWith();
     });
   });

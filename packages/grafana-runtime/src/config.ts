@@ -24,24 +24,11 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
 }
 
-export enum PluginExtensionTypes {
-  link = 'link',
-}
-
-export type PluginsExtensionLinkConfig = {
-  placement: string;
-  type: PluginExtensionTypes.link;
-  title: string;
-  description: string;
-  path: string;
-};
-
 export type AppPluginConfig = {
   id: string;
   path: string;
   version: string;
   preload: boolean;
-  extensions?: PluginsExtensionLinkConfig[];
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -80,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   azureAuthEnabled = false;
+  secureSocksDSProxyEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
@@ -93,11 +81,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  trustedTypesDefaultPolicyEnabled = false;
+  cspReportOnlyEnabled = false;
   liveEnabled = true;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   featureToggles: FeatureToggles = {};
+  anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   dashboardPreviews: {
@@ -112,12 +103,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  sentry = {
-    enabled: false,
-    dsn: '',
-    customEndpoint: '',
-    sampleRate: 1,
-  };
   grafanaJavascriptAgent = {
     enabled: false,
     customEndpoint: '',
@@ -144,7 +129,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = { minInterval: '' };
+  unifiedAlerting = { minInterval: '', alertStateHistoryBackend: undefined };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
@@ -163,6 +148,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
+  sqlConnectionLimits = {
+    maxOpenConns: 100,
+    maxIdleConns: 100,
+    connMaxLifetime: 14400,
+  };
 
   tokenExpirationDayLimit: undefined;
 
@@ -199,6 +189,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
     }
 
     overrideFeatureTogglesFromUrl(this);
+
+    if (this.featureToggles.disableAngular) {
+      this.angularSupportEnabled = false;
+    }
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = createTheme(getThemeCustomizations(this));
@@ -242,10 +236,11 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
-      const toggleState = value === 'true';
-      if (toggleState !== config.featureToggles[key]) {
-        config.featureToggles[featureName] = toggleState;
+      const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
+      if (toggleState !== featureToggles[key]) {
+        featureToggles[featureName] = toggleState;
         console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
       }
     }

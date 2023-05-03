@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import {
+  CoreApp,
   DataFrame,
   DataLink,
   DataSourceApi,
@@ -13,7 +15,7 @@ import {
   PanelData,
   SplitOpen,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -26,12 +28,21 @@ import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
-import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import {
+  SpanBarOptionsData,
+  Trace,
+  TracePageHeader,
+  NewTracePageHeader,
+  TraceTimelineViewer,
+  TTraceTimeline,
+} from './components';
+import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
+import { useSearchNewTraceViewHeader } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -54,6 +65,7 @@ type Props = {
   splitOpenFn?: SplitOpen;
   exploreId?: ExploreId;
   scrollElement?: Element;
+  scrollElementClass?: string;
   traceProp: Trace;
   spanFindMatches?: Set<string>;
   search: string;
@@ -65,7 +77,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
 
   const {
     detailStates,
@@ -83,6 +95,13 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const { newTraceViewHeaderSearch, setNewTraceViewHeaderSearch, spanFilterMatches } = useSearchNewTraceViewHeader(
+    traceProp?.spans
+  );
+  const [newTraceViewHeaderFocusedSpanIdForSearch, setNewTraceViewHeaderFocusedSpanIdForSearch] = useState('');
+  const [showSpanFilters, setShowSpanFilters] = useToggle(false);
+  const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const styles = useStyles2(getStyles);
 
@@ -90,10 +109,6 @@ export function TraceView(props: Props) {
    * Keeps state of resizable name column width
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.25);
-  /**
-   * State of the top minimap, slim means it is collapsed.
-   */
-  const [slim, setSlim] = useState(false);
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
@@ -131,31 +146,54 @@ export function TraceView(props: Props) {
       }),
     [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink, traceProp]
   );
-  const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
+  const scrollElement = props.scrollElement
+    ? props.scrollElement
+    : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
   return (
     <>
-      {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
+      {props.dataFrames?.length && traceProp ? (
         <>
-          <TracePageHeader
-            canCollapse={false}
-            hideMap={false}
-            hideSummary={false}
-            onSlimViewClicked={onSlimViewClicked}
-            onTraceGraphViewClicked={noop}
-            slimView={slim}
-            trace={traceProp}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            timeZone={timeZone}
-          />
+          {config.featureToggles.newTraceViewHeader ? (
+            <>
+              <NewTracePageHeader
+                trace={traceProp}
+                data={props.dataFrames[0]}
+                timeZone={timeZone}
+                search={newTraceViewHeaderSearch}
+                setSearch={setNewTraceViewHeaderSearch}
+                showSpanFilters={showSpanFilters}
+                setShowSpanFilters={setShowSpanFilters}
+                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+                setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+                setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
+                spanFilterMatches={spanFilterMatches}
+                datasourceType={datasourceType}
+                setHeaderHeight={setHeaderHeight}
+                app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+              />
+              <SpanGraph
+                trace={traceProp}
+                viewRange={viewRange}
+                updateNextViewRangeTime={updateNextViewRangeTime}
+                updateViewRangeTime={updateViewRangeTime}
+              />
+            </>
+          ) : (
+            <TracePageHeader
+              trace={traceProp}
+              updateNextViewRangeTime={updateNextViewRangeTime}
+              updateViewRangeTime={updateViewRangeTime}
+              viewRange={viewRange}
+              timeZone={timeZone}
+            />
+          )}
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}
-            findMatchesIDs={spanFindMatches}
+            findMatchesIDs={config.featureToggles.newTraceViewHeader ? spanFilterMatches : spanFindMatches}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
@@ -186,12 +224,18 @@ export function TraceView(props: Props) {
             linksGetter={() => []}
             uiFind={props.search}
             createSpanLink={createSpanLink}
-            scrollElement={props.scrollElement}
+            scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={props.focusedSpanIdForSearch!}
+            focusedSpanIdForSearch={
+              config.featureToggles.newTraceViewHeader
+                ? newTraceViewHeaderFocusedSpanIdForSearch
+                : props.focusedSpanIdForSearch!
+            }
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
+            headerHeight={headerHeight}
           />
         </>
       ) : (
@@ -212,7 +256,7 @@ function useFocusSpanLink(options: {
   refId?: string;
   datasource?: DataSourceApi;
 }): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
-  const panelState = useSelector((state) => state.explore[options.exploreId]?.panelsState.trace);
+  const panelState = useSelector((state) => state.explore.panes[options.exploreId]?.panelsState.trace);
   const focusedSpanId = panelState?.spanId;
 
   const dispatch = useDispatch();
@@ -225,7 +269,7 @@ function useFocusSpanLink(options: {
     );
 
   const query = useSelector((state) =>
-    state.explore[options.exploreId]?.queries.find((query) => query.refId === options.refId)
+    state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
@@ -250,7 +294,7 @@ function useFocusSpanLink(options: {
     // Check if the link is to a different trace or not.
     // If it's the same trace, only update panel state with setFocusedSpanId (no navigation).
     // If it's a different trace, use splitOpenFn to open a new explore panel
-    const sameTrace = query?.queryType === 'traceId' && (query as TempoQuery).query === traceId;
+    const sameTrace = query?.queryType === 'traceql' && (query as TempoQuery).query === traceId;
 
     return mapInternalLinkToExplore({
       link,

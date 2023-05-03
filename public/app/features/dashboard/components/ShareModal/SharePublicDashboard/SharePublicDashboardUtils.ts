@@ -1,24 +1,40 @@
 import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
-import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 import { PanelModel } from '../../../state';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
-export interface PublicDashboard {
-  accessToken?: string;
+export enum PublicDashboardShareType {
+  PUBLIC = 'public',
+  EMAIL = 'email',
+}
+
+export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
-  uid: string;
-  dashboardUid: string;
-  timeSettings?: object;
   timeSelectionEnabled: boolean;
 }
 
-export interface DashboardResponse {
-  dashboard: DashboardDataDTO;
-  meta: DashboardMeta;
+export interface PublicDashboard extends PublicDashboardSettings {
+  accessToken?: string;
+  uid: string;
+  dashboardUid: string;
+  timeSettings?: object;
+  share: PublicDashboardShareType;
+  recipients?: Array<{ uid: string; recipient: string }>;
+}
+
+export interface SessionDashboard {
+  dashboardTitle: string;
+  dashboardUid: string;
+  publicDashboardAccessToken: string;
+}
+
+export interface SessionUser {
+  email: string;
+  firstSeenAtAge: string;
+  totalDashboards: number;
 }
 
 // Instance methods
@@ -54,8 +70,10 @@ export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string
  *
  * All app urls from the Grafana boot config end with a slash.
  *
- * @param publicDashboard
+ * @param accessToken
  */
-export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
-  return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
+export const generatePublicDashboardUrl = (accessToken: string): string => {
+  return `${getConfig().appUrl}public-dashboards/${accessToken}`;
 };
+
+export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;

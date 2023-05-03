@@ -2,30 +2,52 @@ package loader
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"path/filepath"
 	"sort"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var compareOpts = cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log")
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), fsComparer}
+
+var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
+	fs1Files, err := fs1.Files()
+	if err != nil {
+		panic(err)
+	}
+	fs2Files, err := fs2.Files()
+	if err != nil {
+		panic(err)
+	}
+
+	sort.SliceStable(fs1Files, func(i, j int) bool {
+		return fs1Files[i] < fs1Files[j]
+	})
+
+	sort.SliceStable(fs2Files, func(i, j int) bool {
+		return fs2Files[i] < fs2Files[j]
+	})
+
+	return cmp.Equal(fs1Files, fs2Files) && fs1.Base() == fs2.Base()
+})
 
 func TestLoader_Load(t *testing.T) {
 	corePluginDir, err := filepath.Abs("./../../../../public")
@@ -87,9 +109,10 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:    "app/plugins/datasource/cloudwatch/module",
-					BaseURL:   "public/app/plugins/datasource/cloudwatch",
-					PluginDir: filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch"),
+					Module:  "app/plugins/datasource/cloudwatch/module",
+					BaseURL: "public/app/plugins/datasource/cloudwatch",
+
+					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureInternal,
 					Class:     plugins.Core,
 				},
@@ -128,7 +151,7 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:        "plugins/test-datasource/module",
 					BaseURL:       "public/plugins/test-datasource",
-					PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
 					Signature:     "valid",
 					SignatureType: plugins.GrafanaSignature,
 					SignatureOrg:  "Grafana Labs",
@@ -205,7 +228,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:         plugins.External,
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
-					PluginDir:     filepath.Join(parentDir, "testdata/includes-symlinks"),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/includes-symlinks")),
 					Signature:     "valid",
 					SignatureType: plugins.GrafanaSignature,
 					SignatureOrg:  "Grafana Labs",
@@ -245,7 +268,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:     plugins.External,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
-					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: "unsigned",
 				},
 			},
@@ -296,7 +319,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:     plugins.External,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
-					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
+					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: plugins.SignatureUnsigned,
 				},
 			},
@@ -400,126 +423,7 @@ func TestLoader_Load(t *testing.T) {
 					Backend: false,
 				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-includes"),
-					Class:         plugins.External,
-					Signature:     plugins.SignatureUnsigned,
-					Module:        "plugins/test-app/module",
-					BaseURL:       "public/plugins/test-app",
-				},
-			},
-		},
-		{
-			name:  "Load CDN plugin",
-			class: plugins.External,
-			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
-				PluginSettings: setting.PluginSettings{
-					"grafana-worldmap-panel": {"cdn": "true"},
-				},
-			},
-			pluginPaths: []string{"../testdata/cdn"},
-			want: []*plugins.Plugin{
-				{
-					JSONData: plugins.JSONData{
-						ID:   "grafana-worldmap-panel",
-						Type: "panel",
-						Name: "Worldmap Panel",
-						Info: plugins.Info{
-							Version: "0.3.3",
-							Links: []plugins.InfoLink{
-								{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
-								{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
-							},
-							Logos: plugins.Logos{
-								// Path substitution
-								Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-								Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
-							},
-							Screenshots: []plugins.Screenshots{
-								{
-									Name: "World",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
-								},
-								{
-									Name: "USA",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
-								},
-								{
-									Name: "Light Theme",
-									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
-								},
-							},
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "3.x.x",
-							Plugins:        []plugins.Dependency{},
-						},
-					},
-					PluginDir: filepath.Join(parentDir, "testdata/cdn/plugin"),
-					Class:     plugins.External,
-					Signature: plugins.SignatureValid,
-					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
-					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
-				},
-			},
-		},
-		{
-			name:  "Load an app with link extensions",
-			class: plugins.External,
-			cfg: &config.Cfg{
-				PluginsAllowUnsigned: []string{"test-app"},
-			},
-			pluginPaths: []string{"../testdata/test-app-with-link-extensions"},
-			want: []*plugins.Plugin{
-				{JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: "app",
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
-						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
-						},
-						Logos: plugins.Logos{
-							Small: "public/img/icn-app.svg",
-							Large: "public/img/icn-app.svg",
-						},
-						Updated: "2015-02-10",
-					},
-					Dependencies: plugins.Dependencies{
-						GrafanaDependency: ">=8.0.0",
-						GrafanaVersion:    "*",
-						Plugins:           []plugins.Dependency{},
-					},
-					Includes: []*plugins.Includes{
-						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
-					},
-					Extensions: []*plugindef.ExtensionsLink{
-						{
-							Placement:   "plugins/grafana-slo-app/slo-breach",
-							Title:       "Declare incident",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Description: "Declares a new incident",
-							Path:        "/incidents/declare",
-						},
-						{
-							Placement:   "plugins/grafana-slo-app/slo-breach",
-							Title:       "Declare incident",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Description: "Declares a new incident (path without backslash)",
-							Path:        "/incidents/declare",
-						},
-					},
-					Backend: false,
-				},
-					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-link-extensions"),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app-with-includes")),
 					Class:         plugins.External,
 					Signature:     plugins.SignatureUnsigned,
 					Module:        "plugins/test-app/module",
@@ -528,24 +432,21 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{})
 		})
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths)
+			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
 			require.NoError(t, err)
-			if !cmp.Equal(got, tt.want, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+			if !cmp.Equal(got, tt.want, compareOpts...) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 			}
 
 			pluginErrs := l.PluginErrors()
@@ -554,9 +455,90 @@ func TestLoader_Load(t *testing.T) {
 				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
 
-			verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+			verifyState(t, tt.want, reg, procPrvdr, procMgr)
 		})
 	}
+}
+
+func TestLoader_Load_CustomSource(t *testing.T) {
+	t.Run("Load a plugin", func(t *testing.T) {
+		parentDir, err := filepath.Abs("../")
+		if err != nil {
+			t.Errorf("could not construct absolute path of current dir")
+			return
+		}
+
+		cfg := &config.Cfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+			PluginSettings: setting.PluginSettings{
+				"grafana-worldmap-panel": {"cdn": "true"},
+			},
+		}
+
+		pluginPaths := []string{"../testdata/cdn"}
+		expected := []*plugins.Plugin{{
+			JSONData: plugins.JSONData{
+				ID:   "grafana-worldmap-panel",
+				Type: "panel",
+				Name: "Worldmap Panel",
+				Info: plugins.Info{
+					Version: "0.3.3",
+					Links: []plugins.InfoLink{
+						{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
+						{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
+					},
+					Logos: plugins.Logos{
+						// Path substitution
+						Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+						Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+					},
+					Screenshots: []plugins.Screenshots{
+						{
+							Name: "World",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
+						},
+						{
+							Name: "USA",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
+						},
+						{
+							Name: "Light Theme",
+							Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
+						},
+					},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "3.x.x",
+					Plugins:        []plugins.Dependency{},
+				},
+			},
+			FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/cdn/plugin")),
+			Class:     plugins.Bundled,
+			Signature: plugins.SignatureValid,
+			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
+		}}
+
+		l := newLoader(cfg)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.Bundled
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return pluginPaths
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{
+					Status: plugins.SignatureValid,
+				}, true
+			},
+		})
+
+		require.NoError(t, err)
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+	})
 }
 
 func TestLoader_setDefaultNavURL(t *testing.T) {
@@ -570,7 +552,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 				},
 			}},
 		}
-		logger := &logtest.Fake{}
+		logger := log.NewTestLogger()
 		pluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
@@ -669,7 +651,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Class:         plugins.External,
 						Module:        "plugins/test-datasource/module",
 						BaseURL:       "public/plugins/test-datasource",
-						PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"),
+						FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin")),
 						Signature:     "valid",
 						SignatureType: plugins.PrivateSignature,
 						SignatureOrg:  "Will Browne",
@@ -686,12 +668,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 
 		for _, tt := range tests {
 			reg := fakes.NewFakePluginRegistry()
-			storage := fakes.NewFakePluginStorage()
 			procPrvdr := fakes.NewFakeBackendProcessProvider()
 			procMgr := fakes.NewFakeProcessManager()
 			l := newLoader(tt.cfg, func(l *Loader) {
 				l.pluginRegistry = reg
-				l.pluginStorage = storage
 				l.processManager = procMgr
 				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 			})
@@ -702,20 +682,27 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+					PluginClassFunc: func(ctx context.Context) plugins.Class {
+						return plugins.External
+					},
+					PluginURIsFunc: func(ctx context.Context) []string {
+						return tt.pluginPaths
+					},
+				})
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
 				})
-				if !cmp.Equal(got, tt.want, compareOpts) {
-					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+				if !cmp.Equal(got, tt.want, compareOpts...) {
+					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 				}
 				pluginErrs := l.PluginErrors()
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 				for _, pluginErr := range pluginErrs {
 					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 				}
-				verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+				verifyState(t, tt.want, reg, procPrvdr, procMgr)
 			})
 		}
 	})
@@ -783,7 +770,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						},
 						Backend: false,
 					},
-					PluginDir:     pluginDir,
+					FS:            mustNewStaticFSForTests(t, pluginDir),
 					Class:         plugins.External,
 					Signature:     plugins.SignatureValid,
 					SignatureType: plugins.PrivateSignature,
@@ -802,26 +789,31 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		})
 		setting.AppUrl = "http://localhost:3000"
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return tt.pluginPaths
+			},
+		})
 		require.NoError(t, err)
 
-		if !cmp.Equal(got, tt.want, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
+		if !cmp.Equal(got, tt.want, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 		}
 		pluginErrs := l.PluginErrors()
 		require.Len(t, pluginErrs, 0)
 
-		verifyState(t, tt.want, reg, procPrvdr, storage, procMgr)
+		verifyState(t, tt.want, reg, procPrvdr, procMgr)
 	}
 }
 
@@ -865,7 +857,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					Backend:      true,
 					Executable:   "test",
 				},
-				PluginDir:     filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin"),
+				FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.PrivateSignature,
@@ -876,22 +868,27 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, paths)
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return paths
+			},
+		})
 		require.NoError(t, err)
 
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
@@ -944,7 +941,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				PluginDir:     pluginDir,
+				FS:            mustNewStaticFSForTests(t, pluginDir),
 				Class:         plugins.External,
 				Signature:     plugins.SignatureValid,
 				SignatureType: plugins.GrafanaSignature,
@@ -955,23 +952,127 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir, pluginDir}
+			},
+		})
 		require.NoError(t, err)
 
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
+	})
+}
+
+func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
+	t.Run("Load duplicate plugin folders", func(t *testing.T) {
+		pluginDir1, err := filepath.Abs("../testdata/test-app")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		pluginDir2, err := filepath.Abs("../testdata/valid-v2-signature")
+		if err != nil {
+			t.Errorf("could not construct absolute path of plugin dir")
+			return
+		}
+		expected := []*plugins.Plugin{
+			{
+				JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/plugins/test-app/img/logo_small.png",
+							Large: "public/plugins/test-app/img/logo_large.png",
+						},
+						Screenshots: []plugins.Screenshots{
+							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "3.x.x",
+						Plugins: []plugins.Dependency{
+							{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
+							{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+						},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+					},
+					Backend: false,
+				},
+				FS:            mustNewStaticFSForTests(t, pluginDir1),
+				Class:         plugins.External,
+				Signature:     plugins.SignatureValid,
+				SignatureType: plugins.GrafanaSignature,
+				SignatureOrg:  "Grafana Labs",
+				Module:        "plugins/test-app/module",
+				BaseURL:       "public/plugins/test-app",
+			},
+		}
+
+		reg := fakes.NewFakePluginRegistry()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		// Cause an initialization error
+		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
+			return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+				if pluginID == "test-datasource" {
+					return nil, fmt.Errorf("failed to initialize")
+				}
+				return &fakes.FakePluginClient{}, nil
+			}
+		}
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(&config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+		})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{pluginDir1, pluginDir2}
+			},
+		})
+		require.NoError(t, err)
+
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
 }
 
@@ -1007,7 +1108,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-datasource/module",
 		BaseURL:       "public/plugins/test-datasource",
-		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent"),
+		FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -1039,7 +1140,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-panel/module",
 		BaseURL:       "public/plugins/test-panel",
-		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent/nested"),
+		FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
 		Signature:     plugins.SignatureValid,
 		SignatureType: plugins.GrafanaSignature,
 		SignatureOrg:  "Grafana Labs",
@@ -1051,17 +1152,22 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"../testdata/nested-plugins"}
+			},
+		})
 		require.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -1070,14 +1176,21 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		})
 
 		expected := []*plugins.Plugin{parent, child}
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
-			got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
+			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return plugins.External
+				},
+				PluginURIsFunc: func(ctx context.Context) []string {
+					return []string{"../testdata/nested-plugins"}
+				},
+			})
 			require.NoError(t, err)
 
 			// to ensure we can compare with expected
@@ -1085,11 +1198,11 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				return got[i].ID < got[j].ID
 			})
 
-			if !cmp.Equal(got, []*plugins.Plugin{}, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+			if !cmp.Equal(got, []*plugins.Plugin{}, compareOpts...) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 			}
 
-			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
+			verifyState(t, expected, reg, procPrvdr, procMgr)
 		})
 	})
 
@@ -1166,7 +1279,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:        "plugins/myorgid-simple-app/module",
 			BaseURL:       "public/plugins/myorgid-simple-app",
-			PluginDir:     filepath.Join(rootDir, "testdata/app-with-child/dist"),
+			FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
 			Signature:     plugins.SignatureValid,
 			SignatureType: plugins.GrafanaSignature,
@@ -1204,7 +1317,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:          "plugins/myorgid-simple-app/child/module",
 			BaseURL:         "public/plugins/myorgid-simple-app",
-			PluginDir:       filepath.Join(rootDir, "testdata/app-with-child/dist/child"),
+			FS:              mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureValid,
 			SignatureType:   plugins.GrafanaSignature,
@@ -1217,16 +1330,21 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		expected := []*plugins.Plugin{parent, child}
 
 		reg := fakes.NewFakePluginRegistry()
-		storage := fakes.NewFakePluginStorage()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
-			l.pluginStorage = storage
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.External
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return []string{"../testdata/app-with-child"}
+			},
+		})
 		require.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -1234,205 +1352,27 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			return got[i].ID < got[j].ID
 		})
 
-		if !cmp.Equal(got, expected, compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-
-		t.Run("order of loaded parent and child plugins gives same output", func(t *testing.T) {
-			parentPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/plugin.json")
-			childPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/child/plugin.json")
-
-			reg = fakes.NewFakePluginRegistry()
-			storage = fakes.NewFakePluginStorage()
-			procPrvdr = fakes.NewFakeBackendProcessProvider()
-			procMgr = fakes.NewFakeProcessManager()
-			l = newLoader(&config.Cfg{}, func(l *Loader) {
-				l.pluginRegistry = reg
-				l.pluginStorage = storage
-				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
-			})
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
-			require.NoError(t, err)
-
-			// to ensure we can compare with expected
-			sort.SliceStable(got, func(i, j int) bool {
-				return got[i].ID < got[j].ID
-			})
-
-			if !cmp.Equal(got, expected, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
-			}
-
-			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-
-			reg = fakes.NewFakePluginRegistry()
-			storage = fakes.NewFakePluginStorage()
-			procPrvdr = fakes.NewFakeBackendProcessProvider()
-			procMgr = fakes.NewFakeProcessManager()
-			l = newLoader(&config.Cfg{}, func(l *Loader) {
-				l.pluginRegistry = reg
-				l.pluginStorage = storage
-				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
-			})
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
-			require.NoError(t, err)
-
-			// to ensure we can compare with expected
-			sort.SliceStable(got, func(i, j int) bool {
-				return got[i].ID < got[j].ID
-			})
-
-			if !cmp.Equal(got, expected, compareOpts) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
-			}
-
-			verifyState(t, expected, reg, procPrvdr, storage, procMgr)
-		})
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 	})
-}
-
-func TestLoader_readPluginJSON(t *testing.T) {
-	tests := []struct {
-		name       string
-		pluginPath string
-		expected   plugins.JSONData
-		failed     bool
-	}{
-		{
-			name:       "Valid plugin",
-			pluginPath: "../testdata/test-app/plugin.json",
-			expected: plugins.JSONData{
-				ID:   "test-app",
-				Type: "app",
-				Name: "Test App",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Test Inc.",
-						URL:  "http://test.com",
-					},
-					Description: "Official Grafana Test App & Dashboard bundle",
-					Version:     "1.0.0",
-					Links: []plugins.InfoLink{
-						{Name: "Project site", URL: "http://project.com"},
-						{Name: "License & Terms", URL: "http://license.com"},
-					},
-					Logos: plugins.Logos{
-						Small: "img/logo_small.png",
-						Large: "img/logo_large.png",
-					},
-					Screenshots: []plugins.Screenshots{
-						{Path: "img/screenshot1.png", Name: "img1"},
-						{Path: "img/screenshot2.png", Name: "img2"},
-					},
-					Updated: "2015-02-10",
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "3.x.x",
-					Plugins: []plugins.Dependency{
-						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
-					},
-				},
-				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
-				},
-				Backend: false,
-			},
-		},
-		{
-			name:       "Invalid plugin JSON",
-			pluginPath: "../testdata/invalid-plugin-json/plugin.json",
-			failed:     true,
-		},
-		{
-			name:       "Non-existing JSON file",
-			pluginPath: "nonExistingFile.json",
-			failed:     true,
-		},
-	}
-
-	l := newLoader(nil)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.readPluginJSON(tt.pluginPath)
-			if (err != nil) && !tt.failed {
-				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
-				return
-			}
-			if !cmp.Equal(got, tt.expected, compareOpts) {
-				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected, compareOpts))
-			}
-		})
-	}
-}
-
-func Test_validatePluginJSON(t *testing.T) {
-	type args struct {
-		data plugins.JSONData
-	}
-	tests := []struct {
-		name string
-		args args
-		err  error
-	}{
-		{
-			name: "Valid case",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: plugins.DataSource,
-				},
-			},
-		},
-		{
-			name: "Invalid plugin ID",
-			args: args{
-				data: plugins.JSONData{
-					Type: plugins.Panel,
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-		{
-			name: "Invalid plugin type",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: "test",
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := validatePluginJSON(tt.args.data); !errors.Is(err, tt.err) {
-				t.Errorf("validatePluginJSON() = %v, want %v", err, tt.err)
-			}
-		})
-	}
 }
 
 func Test_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		child := &plugins.Plugin{
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource",
+			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				Type: plugins.App,
 				ID:   "testdata-app",
 			},
-			Class:     plugins.Core,
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata-app",
-			BaseURL:   "public/app/plugins/app/testdata-app",
+			Class:   plugins.Core,
+			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
+			BaseURL: "public/app/plugins/app/testdata-app",
 		}
 
 		configureAppChildPlugin(parent, child)
@@ -1444,10 +1384,10 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
-		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
+		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
+		signature.ProvideService(cfg, statickey.New()))
 
 	for _, cb := range cbs {
 		cb(l)
@@ -1457,12 +1397,12 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegistry,
-	procPrvdr *fakes.FakeBackendProcessProvider, storage *fakes.FakePluginStorage, procMngr *fakes.FakeProcessManager) {
+	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager) {
 	t.Helper()
 
 	for _, p := range ps {
-		if !cmp.Equal(p, reg.Store[p.ID], compareOpts) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts))
+		if !cmp.Equal(p, reg.Store[p.ID], compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts...))
 		}
 
 		if p.Backend {
@@ -1473,14 +1413,13 @@ func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegist
 			require.Zero(t, procPrvdr.Invoked[p.ID])
 		}
 
-		_, exists := storage.Store[p.ID]
-		if p.IsExternalPlugin() {
-			require.True(t, exists)
-		} else {
-			require.False(t, exists)
-		}
-
 		require.Equal(t, 1, procMngr.Started[p.ID])
 		require.Zero(t, procMngr.Stopped[p.ID])
 	}
+}
+
+func mustNewStaticFSForTests(t *testing.T, dir string) plugins.FS {
+	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(dir))
+	require.NoError(t, err)
+	return sfs
 }

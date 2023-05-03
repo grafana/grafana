@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -46,6 +47,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+		if !prefs.Cookies("analytics") {
+			settings.GoogleAnalytics4Id = ""
+			settings.GoogleAnalyticsId = ""
+		}
 	}
 
 	// Locale is used for some number and date/time formatting, whereas language is used just for
@@ -105,15 +113,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
+			Analytics: dtos.AnalyticsSettings{
+				Identifier:         c.SignedInUser.Analytics.Identifier,
+				IntercomIdentifier: c.SignedInUser.Analytics.IntercomIdentifier,
+			},
 		},
 		Settings:                            settings,
 		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
-		GoogleTagManagerId:                  setting.GoogleTagManagerId,
+		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerID,
 		BuildVersion:                        setting.BuildVersion,
 		BuildCommit:                         setting.BuildCommit,
 		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),
@@ -124,10 +136,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
-		Sentry:                              &hs.Cfg.Sentry,
 		Nonce:                               c.RequestNonce,
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
+		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
+	}
+
+	if hs.Cfg.CSPEnabled {
+		data.CSPEnabled = true
+		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 
 	if !hs.AccessControl.IsDisabled() {
@@ -155,8 +172,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	// This will remove empty cfg or admin sections and move sections around if topnav is enabled
-	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture(hs.Features.IsEnabled(featuremgmt.FlagTopnav))
+	data.NavTree.ApplyAdminIA()
 	data.NavTree.Sort()
 
 	return &data, nil

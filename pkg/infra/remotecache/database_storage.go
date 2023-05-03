@@ -14,14 +14,12 @@ const databaseCacheType = "database"
 
 type databaseCache struct {
 	SQLStore db.DB
-	codec    codec
 	log      log.Logger
 }
 
-func newDatabaseCache(sqlstore db.DB, codec codec) *databaseCache {
+func newDatabaseCache(sqlstore db.DB) *databaseCache {
 	dc := &databaseCache{
 		SQLStore: sqlstore,
-		codec:    codec,
 		log:      log.New("remotecache.database"),
 	}
 
@@ -54,7 +52,7 @@ func (dc *databaseCache) internalRunGC() {
 	}
 }
 
-func (dc *databaseCache) GetByteArray(ctx context.Context, key string) ([]byte, error) {
+func (dc *databaseCache) Get(ctx context.Context, key string) ([]byte, error) {
 	cacheHit := CacheData{}
 
 	err := dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
@@ -85,21 +83,7 @@ func (dc *databaseCache) GetByteArray(ctx context.Context, key string) ([]byte, 
 	return cacheHit.Data, err
 }
 
-func (dc *databaseCache) Get(ctx context.Context, key string) (interface{}, error) {
-	bytes, err := dc.GetByteArray(ctx, key)
-	if err != nil {
-		return nil, err
-	}
-
-	item := &cachedItem{}
-	if err = dc.codec.Decode(ctx, bytes, item); err != nil {
-		return nil, err
-	}
-
-	return item.Val, err
-}
-
-func (dc *databaseCache) SetByteArray(ctx context.Context, key string, data []byte, expire time.Duration) error {
+func (dc *databaseCache) Set(ctx context.Context, key string, data []byte, expire time.Duration) error {
 	return dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		var expiresInSeconds int64
 		if expire != 0 {
@@ -129,16 +113,6 @@ func (dc *databaseCache) SetByteArray(ctx context.Context, key string, data []by
 	})
 }
 
-func (dc *databaseCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
-	item := &cachedItem{Val: value}
-	data, err := dc.codec.Encode(ctx, item)
-	if err != nil {
-		return err
-	}
-
-	return dc.SetByteArray(ctx, key, data, expire)
-}
-
 func (dc *databaseCache) Delete(ctx context.Context, key string) error {
 	return dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		sql := "DELETE FROM cache_data WHERE cache_key=?"
@@ -146,6 +120,22 @@ func (dc *databaseCache) Delete(ctx context.Context, key string) error {
 
 		return err
 	})
+}
+
+func (dc *databaseCache) Count(ctx context.Context, prefix string) (int64, error) {
+	res := int64(0)
+	err := dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		sql := "SELECT COUNT(*) FROM cache_data WHERE cache_key LIKE ?"
+
+		_, err := session.SQL(sql, prefix+"%").Get(&res)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return res, err
 }
 
 // CacheData is the struct representing the table in the database

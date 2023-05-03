@@ -9,6 +9,10 @@ azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
 
+rgm_gcp_key_base64 = "gcp_key_base64"
+rgm_destination = "destination"
+rgm_github_token = "github_token"
+
 def from_secret(secret):
     return {"from_secret": secret}
 
@@ -93,5 +97,45 @@ def secrets():
             "aws_secret_access_key",
             "secret/data/common/aws-marketplace",
             "aws_secret_access_key",
+        ),
+        vault_secret(
+            "security_dest_bucket",
+            "infra/data/ci/grafana-release-eng/security-bucket",
+            "bucket",
+        ),
+        vault_secret(
+            "static_asset_editions",
+            "infra/data/ci/grafana-release-eng/artifact-publishing",
+            "static_asset_editions",
+        ),
+        vault_secret(
+            "enterprise2_security_prefix",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "security_prefix",
+        ),
+        vault_secret(
+            "enterprise2-cdn-path",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "cdn_path",
+        ),
+        vault_secret(
+            "enterprise2_security_prefix",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "security_prefix",
+        ),
+        vault_secret(
+            rgm_gcp_key_base64,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "gcp_service_account_base64",
+        ),
+        vault_secret(
+            rgm_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "destination",
+        ),
+        vault_secret(
+            rgm_github_token,
+            "infra/data/ci/github/grafanabot",
+            "pat",
         ),
     ]

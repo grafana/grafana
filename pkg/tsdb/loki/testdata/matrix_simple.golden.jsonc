@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="error", location="moon"}
@@ -21,6 +25,10 @@
 //  
 //  Frame[1] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="info", location="mars"}
@@ -47,6 +55,10 @@
         "name": "{level=\"error\", location=\"moon\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [
@@ -98,6 +110,10 @@
         "name": "{level=\"info\", location=\"mars\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

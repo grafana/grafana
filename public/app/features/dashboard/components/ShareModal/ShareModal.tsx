@@ -95,7 +95,7 @@ export class ShareModal extends React.Component<Props, State> {
     reportInteraction('grafana_dashboards_share_modal_viewed');
   }
 
-  onSelectTab = (t: any) => {
+  onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
   };
 

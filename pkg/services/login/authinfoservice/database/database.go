@@ -34,33 +34,36 @@ func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userSe
 	return store
 }
 
-func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
+func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
 	usr, err := s.userService.GetByLogin(ctx, &userQuery)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.ID}
-	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
-		return err
+	authInfo, err := s.GetAuthInfo(ctx, authInfoQuery)
+	if err != nil {
+		return nil, err
 	}
 
-	query.Result = &login.ExternalUserInfo{
+	result := &login.ExternalUserInfo{
 		UserId:     usr.ID,
 		Login:      usr.Login,
 		Email:      usr.Email,
 		Name:       usr.Name,
 		IsDisabled: usr.IsDisabled,
-		AuthModule: authInfoQuery.Result.AuthModule,
-		AuthId:     authInfoQuery.Result.AuthId,
+		AuthModule: authInfo.AuthModule,
+		AuthId:     authInfo.AuthId,
 	}
-	return nil
+	return result, nil
 }
 
-func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
+// GetAuthInfo returns the auth info for a user
+// It will return the latest auth info for a user
+func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
 	if query.UserId == 0 && query.AuthId == "" {
-		return user.ErrUserNotFound
+		return nil, user.ErrUserNotFound
 	}
 
 	userAuth := &login.UserAuth{
@@ -77,36 +80,35 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInf
 		return err
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !has {
-		return user.ErrUserNotFound
+		return nil, user.ErrUserNotFound
 	}
 
 	secretAccessToken, err := s.decodeAndDecrypt(userAuth.OAuthAccessToken)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	secretRefreshToken, err := s.decodeAndDecrypt(userAuth.OAuthRefreshToken)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	secretTokenType, err := s.decodeAndDecrypt(userAuth.OAuthTokenType)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	secretIdToken, err := s.decodeAndDecrypt(userAuth.OAuthIdToken)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	userAuth.OAuthAccessToken = secretAccessToken
 	userAuth.OAuthRefreshToken = secretRefreshToken
 	userAuth.OAuthTokenType = secretTokenType
 	userAuth.OAuthIdToken = secretIdToken
 
-	query.Result = userAuth
-	return nil
+	return userAuth, nil
 }
 
 func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {

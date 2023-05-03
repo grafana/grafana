@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, FormEvent, MouseEvent, useState } from 'react';
+import React, { FormEvent, MouseEvent, useState } from 'react';
 
 import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,7 +35,7 @@ export interface TimeRangeInputProps {
 
 const noop = () => {};
 
-export const TimeRangeInput: FC<TimeRangeInputProps> = ({
+export const TimeRangeInput = ({
   value,
   onChange,
   onChangeTimeZone = noop,
@@ -46,7 +46,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   isReversed = true,
   hideQuickRanges = false,
   disabled = false,
-}) => {
+}: TimeRangeInputProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const theme = useTheme2();
   const styles = getStyles(theme, disabled);
@@ -127,6 +127,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
     `,
     content: css`
       margin-left: 0;
+      position: absolute;
+      top: 116%;
+      z-index: ${theme.zIndex.dropdown};
     `,
     pickerInput: cx(
       inputStyles.input,

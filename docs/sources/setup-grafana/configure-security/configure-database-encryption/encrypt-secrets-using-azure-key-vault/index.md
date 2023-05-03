@@ -25,7 +25,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 
 5. In the Key Permissions section, set encrypt and decrypt permissions, and click **Save**.
 
-6. From within Grafana, turn on [envelope encryption]({{< relref "/" >}}).
+6. From within Grafana, turn on [envelope encryption]({{< relref "./#envelope-encryption" >}}).
 
 7. Add your Azure Key Vault details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.azurekv.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
@@ -73,7 +73,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 
 10. (Optional) From the command line and the root directory of Grafana Enterprise, re-encrypt all of the secrets within the Grafana database with the new key using the following command:
 
-    `grafana-cli admin secrets-migration re-encrypt`
+    `grafana cli admin secrets-migration re-encrypt`
 
     If you do not re-encrypt existing secrets, then they will remain encrypted by the previous encryption key. Users will still be able to access them.
 

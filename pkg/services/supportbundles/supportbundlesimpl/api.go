@@ -99,6 +99,10 @@ func (s *Service) handleDownload(ctx *contextmodel.ReqContext) response.Response
 
 	ctx.Resp.Header().Set("Content-Type", "application/tar+gzip")
 	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", uid))
+	if len(s.encryptionPublicKeys) > 0 {
+		ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz.age", uid))
+	}
+
 	return response.CreateNormalResponse(ctx.Resp.Header(), bundle.TarBytes, http.StatusOK)
 }
 

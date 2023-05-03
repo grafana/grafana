@@ -12,39 +12,32 @@ package dataquery
 // Defines values for EditorMode.
 const (
 	EditorModeBuilder EditorMode = "builder"
-
-	EditorModeCode EditorMode = "code"
+	EditorModeCode    EditorMode = "code"
 )
 
 // Defines values for LokiQueryDirection.
 const (
 	LokiQueryDirectionBackward LokiQueryDirection = "backward"
-
-	LokiQueryDirectionForward LokiQueryDirection = "forward"
+	LokiQueryDirectionForward  LokiQueryDirection = "forward"
 )
 
 // Defines values for LokiQueryType.
 const (
 	LokiQueryTypeInstant LokiQueryType = "instant"
-
-	LokiQueryTypeRange LokiQueryType = "range"
-
-	LokiQueryTypeStream LokiQueryType = "stream"
+	LokiQueryTypeRange   LokiQueryType = "range"
+	LokiQueryTypeStream  LokiQueryType = "stream"
 )
 
 // Defines values for QueryEditorMode.
 const (
 	QueryEditorModeBuilder QueryEditorMode = "builder"
-
-	QueryEditorModeCode QueryEditorMode = "code"
+	QueryEditorModeCode    QueryEditorMode = "code"
 )
 
 // Defines values for SupportingQueryType.
 const (
 	SupportingQueryTypeDataSample SupportingQueryType = "dataSample"
-
 	SupportingQueryTypeLogsSample SupportingQueryType = "logsSample"
-
 	SupportingQueryTypeLogsVolume SupportingQueryType = "logsVolume"
 )
 
@@ -60,14 +53,13 @@ type LokiDataQuery struct {
 	// The LogQL query.
 	Expr string `json:"expr"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
 	// @deprecated, now use queryType.
 	Instant *bool `json:"instant,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// Used to override the name of the series.
 	LegendFormat *string `json:"legendFormat,omitempty"`
@@ -82,7 +74,9 @@ type LokiDataQuery struct {
 	// @deprecated, now use queryType.
 	Range *bool `json:"range,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
 	// Used to scale the interval value.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -28,7 +29,7 @@ func ptrInt64(i int64) *int64 {
 	return &i
 }
 
-func TestUserSync_SyncUser(t *testing.T) {
+func TestUserSync_SyncUserHook(t *testing.T) {
 	userProtection := &authinfoservice.OSSUserProtectionImpl{}
 
 	authFakeNil := &logintest.AuthInfoServiceFake{
@@ -266,12 +267,13 @@ func TestUserSync_SyncUser(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-
 				id: &authn.Identity{
-					ID:    "",
-					Login: "test",
-					Name:  "test",
-					Email: "test",
+					ID:         "",
+					AuthID:     "2032",
+					AuthModule: "oauth",
+					Login:      "test",
+					Name:       "test",
+					Email:      "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
@@ -285,6 +287,8 @@ func TestUserSync_SyncUser(t *testing.T) {
 			wantErr: false,
 			wantID: &authn.Identity{
 				ID:             "user:1",
+				AuthID:         "2032",
+				AuthModule:     "oauth",
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -427,7 +431,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService)
-			err := s.SyncUser(tt.args.ctx, tt.args.id, nil)
+			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -435,6 +439,99 @@ func TestUserSync_SyncUser(t *testing.T) {
 			require.NoError(t, err)
 
 			require.EqualValues(t, tt.wantID, tt.args.id)
+		})
+	}
+}
+
+func TestUserSync_FetchSyncedUserHook(t *testing.T) {
+	type testCase struct {
+		desc        string
+		req         *authn.Request
+		identity    *authn.Identity
+		expectedErr error
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should skip hook when flag is not enabled",
+			req:      &authn.Request{},
+			identity: &authn.Identity{ClientParams: authn.ClientParams{FetchSyncedUser: false}},
+		},
+		{
+			desc:     "should skip hook when identity is not a user",
+			req:      &authn.Request{},
+			identity: &authn.Identity{ID: "apikey:1", ClientParams: authn.ClientParams{FetchSyncedUser: true}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := UserSync{}
+			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
+			require.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
+
+func TestUserSync_EnableDisabledUserHook(t *testing.T) {
+	type testCase struct {
+		desc       string
+		identity   *authn.Identity
+		enableUser bool
+	}
+
+	tests := []testCase{
+		{
+			desc: "should skip if correct flag is not set",
+			identity: &authn.Identity{
+				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
+				IsDisabled:   true,
+				ClientParams: authn.ClientParams{EnableDisabledUsers: false},
+			},
+			enableUser: false,
+		},
+		{
+			desc: "should skip if identity is not disabled",
+			identity: &authn.Identity{
+				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
+				IsDisabled:   false,
+				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+			},
+			enableUser: false,
+		},
+		{
+			desc: "should skip if identity is not a user",
+			identity: &authn.Identity{
+				ID:           authn.NamespacedID(authn.NamespaceAPIKey, 1),
+				IsDisabled:   true,
+				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+			},
+			enableUser: false,
+		},
+		{
+			desc: "should enabled disabled user",
+			identity: &authn.Identity{
+				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
+				IsDisabled:   true,
+				ClientParams: authn.ClientParams{EnableDisabledUsers: true},
+			},
+			enableUser: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			userSvc := usertest.NewUserServiceFake()
+			called := false
+			userSvc.DisableFn = func(ctx context.Context, cmd *user.DisableUserCommand) error {
+				called = true
+				return nil
+			}
+
+			s := UserSync{userService: userSvc}
+			err := s.EnableDisabledUserHook(context.Background(), tt.identity, nil)
+			require.NoError(t, err)
+			assert.Equal(t, tt.enableUser, called)
 		})
 	}
 }

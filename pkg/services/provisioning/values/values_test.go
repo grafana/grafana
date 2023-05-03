@@ -168,6 +168,7 @@ func TestValues(t *testing.T) {
                      Some text with $STRING
                    anchor: &label $INT
                    anchored: *label
+                   boolval: $BOOL
                `
 				unmarshalingTest(t, doc, d)
 
@@ -191,12 +192,13 @@ func TestValues(t *testing.T) {
 					},
 					"four": stringMap{
 						"nested": stringMap{
-							"onemore": "1",
+							"onemore": int64(1),
 						},
 					},
 					"multiline": "Some text with test\n",
-					"anchor":    "1",
-					"anchored":  "1",
+					"anchor":    int64(1),
+					"anchored":  int64(1),
+					"boolval":   true,
 				})
 
 				require.Equal(t, d.Val.Raw, stringMap{
@@ -224,6 +226,7 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with $STRING\n",
 					"anchor":    "$INT",
 					"anchored":  "$INT",
+					"boolval":   "$BOOL",
 				})
 			})
 		})
@@ -251,12 +254,12 @@ func TestValues(t *testing.T) {
 				require.Equal(t, []stringMap{
 					{
 						"interpolatedString": "test",
-						"interpolatedInt":    "1",
+						"interpolatedInt":    int64(1),
 						"string":             "just a string",
 					},
 					{
 						"interpolatedString": "test",
-						"interpolatedInt":    "1",
+						"interpolatedInt":    int64(1),
 						"string":             "just a string",
 					},
 				}, d.Val.Value())

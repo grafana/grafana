@@ -7,12 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
+const (
+	AlertRuleActiveLabelValue = "active"
+	AlertRulePausedLabelValue = "paused"
+)
+
 type Scheduler struct {
 	Registerer                          prometheus.Registerer
 	BehindSeconds                       prometheus.Gauge
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
 	EvalDuration                        *prometheus.HistogramVec
+	GroupRules                          *prometheus.GaugeVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
@@ -61,6 +67,16 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 			},
 			[]string{"org"},
+		),
+		// TODO: partition on rule group as well as tenant, similar to loki|cortex.
+		GroupRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_group_rules",
+				Help:      "The number of alert rules that are scheduled, both active and paused.",
+			},
+			[]string{"org", "state"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{

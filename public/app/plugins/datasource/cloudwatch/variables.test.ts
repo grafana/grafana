@@ -23,9 +23,9 @@ const defaultQuery: VariableQuery = {
 const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable, fieldsVariable] });
 mock.datasource.resources.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
 mock.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
-mock.datasource.resources.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
-mock.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
 mock.datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
+const getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
+const getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
@@ -48,12 +48,26 @@ describe('variables', () => {
   });
 
   it('should run metrics', async () => {
-    const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.Metrics });
+    mock.datasource.resources.getMetrics = getMetrics;
+    const query = { ...defaultQuery, queryType: VariableQueryType.Metrics, accountId: '123' };
+    const result = await variables.execute(query);
+    expect(getMetrics).toBeCalledWith({
+      region: query.region,
+      namespace: 'foo',
+      accountId: query.accountId,
+    });
     expect(result).toEqual([{ text: 'c', value: 'c', expandable: true }]);
   });
 
   it('should run dimension keys', async () => {
-    const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.DimensionKeys });
+    mock.datasource.resources.getDimensionKeys = getDimensionKeys;
+    const query = { ...defaultQuery, queryType: VariableQueryType.DimensionKeys, accountId: '123' };
+    const result = await variables.execute(query);
+    expect(getDimensionKeys).toBeCalledWith({
+      region: query.region,
+      namespace: query.namespace,
+      accountId: query.accountId,
+    });
     expect(result).toEqual([{ text: 'd', value: 'd', expandable: true }]);
   });
 
@@ -86,6 +100,7 @@ describe('variables', () => {
       metricName: 'abc',
       dimensionKey: 'efg',
       dimensionFilters: { a: 'b' },
+      accountId: '123',
     };
     beforeEach(() => {
       mock.datasource.resources.getDimensionValues = getDimensionValues;
@@ -111,6 +126,7 @@ describe('variables', () => {
         metricName: query.metricName,
         dimensionKey: query.dimensionKey,
         dimensionFilters: query.dimensionFilters,
+        accountId: query.accountId,
       });
       expect(result).toEqual([{ text: 'e', value: 'e', expandable: true }]);
     });
@@ -218,12 +234,14 @@ describe('variables', () => {
         ...defaultQuery,
         queryType: VariableQueryType.LogGroups,
         logGroupPrefix: '$fields',
+        accountId: '123',
       };
       await variables.execute(query);
       expect(getLogGroups).toBeCalledWith({
         region: query.region,
         logGroupNamePrefix: 'templatedField',
         listAllLogGroups: true,
+        accountId: query.accountId,
       });
     });
   });

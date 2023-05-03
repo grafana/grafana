@@ -44,11 +44,11 @@ describe('Render', () => {
   it('should render component', async () => {
     setup({ isSortAscending: true });
 
-    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Data sources' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
+
+    // Should not show button in page header when the list is empty
+    expect(await screen.queryByRole('link', { name: 'Add new data source' })).toBeNull();
   });
 
   describe('when user has no permissions', () => {
@@ -59,10 +59,7 @@ describe('Render', () => {
     it('should disable the "Add data source" button if user has no permissions', async () => {
       setup({ isSortAscending: true });
 
-      expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Data sources' })).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: 'Add data source' })).toHaveStyle('pointer-events: none');
     });
 
@@ -112,6 +109,9 @@ describe('Render', () => {
     expect(await screen.findByRole('heading', { name: 'dataSource-3' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'dataSource-4' })).toBeInTheDocument();
     expect(await screen.findAllByRole('img')).toHaveLength(5);
+
+    // Should show button in page header when the list is not empty
+    expect(await screen.findByRole('link', { name: 'Add new data source' })).toBeInTheDocument();
   });
 
   describe('should render elements in sort order', () => {
@@ -123,7 +123,7 @@ describe('Render', () => {
       const dataSourceItems = await screen.findAllByRole('heading');
 
       expect(dataSourceItems).toHaveLength(6);
-      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[0]).toHaveTextContent('Data sources');
       expect(dataSourceItems[1]).toHaveTextContent('dataSource-0');
       expect(dataSourceItems[2]).toHaveTextContent('dataSource-1');
     });
@@ -135,7 +135,7 @@ describe('Render', () => {
       const dataSourceItems = await screen.findAllByRole('heading');
 
       expect(dataSourceItems).toHaveLength(6);
-      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[0]).toHaveTextContent('Data sources');
       expect(dataSourceItems[1]).toHaveTextContent('dataSource-4');
       expect(dataSourceItems[2]).toHaveTextContent('dataSource-3');
     });

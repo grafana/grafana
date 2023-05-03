@@ -1,10 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { LogRowModel } from '@grafana/data';
 
-import LokiLanguageProvider from '../LanguageProvider';
+import { LogContextProvider } from '../LogContextProvider';
+import { ContextFilter, LokiQuery } from '../types';
 
 import { LokiContextUi, LokiContextUiProps } from './LokiContextUi';
 
@@ -14,67 +16,88 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: () => null,
 }));
 
-describe('LokiContextUi', () => {
-  const setupProps = (): LokiContextUiProps => {
-    const mockLanguageProvider = {
-      start: jest.fn().mockImplementation(() => Promise.resolve()),
-      getLabelValues: (name: string) => {
-        switch (name) {
-          case 'label1':
-            return ['value1-1', 'value1-2'];
-          case 'label2':
-            return ['value2-1', 'value2-2'];
-          case 'label3':
-            return ['value3-1', 'value3-2'];
-        }
-        return [];
-      },
-      fetchSeriesLabels: (selector: string) => {
-        switch (selector) {
-          case '{label1="value1-1"}':
-            return { label1: ['value1-1'], label2: ['value2-1'], label3: ['value3-1'] };
-          case '{label1=~"value1-1|value1-2"}':
-            return { label1: ['value1-1', 'value1-2'], label2: ['value2-1'], label3: ['value3-1', 'value3-2'] };
-        }
-        // Allow full set by default
-        return {
-          label1: ['value1-1', 'value1-2'],
-          label2: ['value2-1', 'value2-2'],
-        };
-      },
-      getLabelKeys: () => ['label1', 'label2'],
-    };
+jest.mock('app/core/store', () => {
+  return {
+    set() {},
+    getBool() {
+      return true;
+    },
+  };
+});
 
-    const defaults: LokiContextUiProps = {
-      languageProvider: mockLanguageProvider as unknown as LokiLanguageProvider,
-      updateFilter: jest.fn(),
-      row: {
-        entry: 'WARN test 1.23 on [xxx]',
-        labels: {
-          label1: 'value1',
-          label3: 'value3',
-        },
-      } as unknown as LogRowModel,
-      onClose: jest.fn(),
-    };
-
-    return defaults;
+const setupProps = (): LokiContextUiProps => {
+  const defaults: LokiContextUiProps = {
+    logContextProvider: mockLogContextProvider as unknown as LogContextProvider,
+    updateFilter: jest.fn(),
+    row: {
+      entry: 'WARN test 1.23 on [xxx]',
+      labels: {
+        label1: 'value1',
+        label3: 'value3',
+      },
+    } as unknown as LogRowModel,
+    onClose: jest.fn(),
+    origQuery: {
+      expr: '{label1="value1"} | logfmt',
+      refId: 'A',
+    },
   };
 
-  it('renders and shows basic text', async () => {
-    const props = setupProps();
-    render(<LokiContextUi {...props} />);
+  return defaults;
+};
 
-    // Initial set of labels is available and not selected
-    expect(await screen.findByText(/Select labels to include in the context query/)).toBeInTheDocument();
+const mockLogContextProvider = {
+  getInitContextFiltersFromLabels: jest.fn().mockImplementation(() =>
+    Promise.resolve([
+      { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
+      { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
+    ])
+  ),
+  processContextFiltersToExpr: jest.fn().mockImplementation(
+    (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+      `{${contextFilters
+        .filter((filter) => filter.enabled)
+        .map((filter) => `${filter.label}="${filter.value}"`)
+        .join('` ')}}`
+  ),
+  getLogRowContext: jest.fn(),
+};
+
+describe('LokiContextUi', () => {
+  const savedGlobal = global;
+  beforeAll(() => {
+    // TODO: `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
+    if (!global.structuredClone) {
+      global.structuredClone = function structuredClone(objectToClone: unknown) {
+        const stringified = JSON.stringify(objectToClone);
+        const parsed = JSON.parse(stringified);
+        return parsed;
+      };
+    }
+  });
+  afterAll(() => {
+    global = savedGlobal;
   });
 
-  it('starts the languageProvider', async () => {
+  it('renders and shows executed query text', async () => {
+    const props = setupProps();
+    render(<LokiContextUi {...props} />);
+    await waitFor(() => {
+      // We should see the query text (it is split into multiple spans)
+      expect(screen.getByText('{')).toBeInTheDocument();
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('=')).toBeInTheDocument();
+      expect(screen.getByText('"value1"')).toBeInTheDocument();
+      expect(screen.getByText('}')).toBeInTheDocument();
+    });
+  });
+
+  it('initialize context filters', async () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
     });
   });
 
@@ -82,20 +105,20 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[0], 'label1');
+    await selectOptionInTest(select[0], 'label1="value1"');
   });
 
   it('finds label3 as a parsed label', async () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3');
+    await selectOptionInTest(select[1], 'label3="value3"');
   });
 
   it('calls updateFilter when selecting a label', async () => {
@@ -103,15 +126,14 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.languageProvider.start).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
-    const select = await screen.findAllByRole('combobox');
-    await selectOptionInTest(select[1], 'label3');
+    await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3="value3"');
     act(() => {
       jest.runAllTimers();
     });
     expect(props.updateFilter).toHaveBeenCalled();
-
     jest.useRealTimers();
   });
 
@@ -122,6 +144,66 @@ describe('LokiContextUi', () => {
 
     await waitFor(() => {
       expect(props.onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('displays executed query even if context ui closed', async () => {
+    const props = setupProps();
+    render(<LokiContextUi {...props} />);
+    // We start with the context ui open and click on it to close
+    await userEvent.click(screen.getAllByRole('button')[0]);
+    await waitFor(() => {
+      // We should see the query text (it is split into multiple spans)
+      expect(screen.getByText('{')).toBeInTheDocument();
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('=')).toBeInTheDocument();
+      expect(screen.getByText('"value1"')).toBeInTheDocument();
+      expect(screen.getByText('}')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show parsed labels section if origQuery has 0 parsers', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"}',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows parsed labels section if origQuery has 1 parser', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.getByText('Refine the search')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show parsed labels section if origQuery has 2 parsers', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt | json',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
     });
   });
 });

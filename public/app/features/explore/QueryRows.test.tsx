@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreState } from 'app/types';
@@ -46,22 +46,22 @@ function setup(queries: DataQuery[]) {
     get(uid?: string) {
       return Promise.resolve(uid ? datasources[uid] || defaultDs : defaultDs);
     },
-  } as any);
+  } as DataSourceSrv);
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
-    left: {
-      ...leftState,
-      richHistory: [],
-      datasourceInstance: datasources['someDs-uid'],
-      queries,
+    panes: {
+      left: {
+        ...leftState,
+        richHistory: [],
+        datasourceInstance: datasources['someDs-uid'],
+        queries,
+      },
     },
     syncedTimes: false,
     correlations: [],
-    right: undefined,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
-    richHistoryMigrationFailed: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 

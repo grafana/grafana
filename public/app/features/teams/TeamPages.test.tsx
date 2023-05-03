@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { match } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { createTheme } from '@grafana/data';
@@ -70,7 +71,7 @@ const setup = (propOverrides?: object) => {
           id: '1',
           page: null,
         },
-      } as any,
+      } as unknown as match,
     }),
     pageNav: { text: 'Cool team ' },
     teamId: 1,

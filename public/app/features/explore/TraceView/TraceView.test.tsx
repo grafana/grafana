@@ -4,7 +4,7 @@ import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
@@ -62,7 +62,7 @@ describe('TraceView', () => {
       getInstanceSettings() {
         return undefined;
       },
-    } as any);
+    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {

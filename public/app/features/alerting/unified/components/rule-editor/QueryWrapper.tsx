@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, FC, useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 
 import {
   CoreApp,
   DataQuery,
+  DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
   GrafanaTheme2,
@@ -23,12 +24,9 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { TABLE, TIMESERIES } from '../../utils/constants';
-import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
 
 import { VizWrapper } from './VizWrapper';
@@ -60,7 +58,7 @@ interface Props {
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
 }
 
-export const QueryWrapper: FC<Props> = ({
+export const QueryWrapper = ({
   data,
   error,
   dsSettings,
@@ -79,10 +77,10 @@ export const QueryWrapper: FC<Props> = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
-  const isExpression = isExpressionQuery(query.model);
-  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
+  const [dsInstance, setDsInstance] = useState<DataSourceApi>();
+  const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -117,67 +115,65 @@ export const QueryWrapper: FC<Props> = ({
       maxDataPoints: queryOptions.maxDataPoints,
     };
 
-    if (isExpressionQuery(query.model)) {
-      return null;
-    } else {
-      return (
-        <Stack direction="row" alignItems="baseline" gap={1}>
-          <SelectingDataSourceTooltip />
-          {onChangeTimeRange && (
-            <RelativeTimeRangePicker
-              timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-              onChange={(range) => onChangeTimeRange(range, index)}
-            />
-          )}
-          <div className={styles.queryOptions}>
-            <MaxDataPointsOption
-              options={alertQueryOptions}
-              onChange={(options) => onChangeQueryOptions(options, index)}
-            />
-          </div>
-          <AlertConditionIndicator
-            onSetCondition={() => onSetCondition(query.refId)}
-            enabled={condition === query.refId}
-            error={error}
+    return (
+      <Stack direction="row" alignItems="baseline" gap={1}>
+        <SelectingDataSourceTooltip />
+        {onChangeTimeRange && (
+          <RelativeTimeRangePicker
+            timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+            onChange={(range) => onChangeTimeRange(range, index)}
           />
-        </Stack>
-      );
-    }
+        )}
+        <div className={styles.queryOptions}>
+          <MaxDataPointsOption
+            options={alertQueryOptions}
+            onChange={(options) => onChangeQueryOptions(options, index)}
+          />
+        </div>
+        <AlertConditionIndicator
+          onSetCondition={() => onSetCondition(query.refId)}
+          enabled={condition === query.refId}
+          error={error}
+        />
+      </Stack>
+    );
   }
 
   return (
-    <div className={styles.wrapper}>
-      <QueryEditorRow<DataQuery>
-        alerting
-        dataSource={dsSettings}
-        onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
-        id={query.refId}
-        index={index}
-        key={query.refId}
-        data={data}
-        query={cloneDeep(query.model)}
-        onChange={(query) => onChangeQuery(query, index)}
-        onRemoveQuery={onRemoveQuery}
-        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
-        onRunQuery={onRunQueries}
-        queries={queries}
-        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
-        app={CoreApp.UnifiedAlerting}
-        visualization={
-          data.state !== LoadingState.NotStarted ? (
-            <VizWrapper
-              data={data}
-              changePanel={changePluginId}
-              currentPanel={pluginId}
-              thresholds={thresholds}
-              thresholdsType={thresholdsType}
-              onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-            />
-          ) : null
-        }
-        hideDisableQuery={true}
-      />
-    </div>
+    <Stack direction="column" gap={0.5}>
+      <div className={styles.wrapper}>
+        <QueryEditorRow<DataQuery>
+          alerting
+          dataSource={dsSettings}
+          onDataSourceLoaded={setDsInstance}
+          onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
+          id={query.refId}
+          index={index}
+          key={query.refId}
+          data={data}
+          query={{
+            ...defaults,
+            ...cloneDeep(query.model),
+          }}
+          onChange={(query) => onChangeQuery(query, index)}
+          onRemoveQuery={onRemoveQuery}
+          onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
+          onRunQuery={onRunQueries}
+          queries={queries}
+          renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+          app={CoreApp.UnifiedAlerting}
+          hideDisableQuery={true}
+        />
+      </div>
+      {data.state !== LoadingState.NotStarted && (
+        <VizWrapper
+          data={data}
+          thresholds={thresholds}
+          thresholdsType={thresholdsType}
+          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
+        />
+      )}
+    </Stack>
   );
 };
 

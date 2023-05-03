@@ -48,6 +48,12 @@ type CurrentUser struct {
 	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
+	Analytics                  AnalyticsSettings  `json:"analytics"`
+}
+
+type AnalyticsSettings struct {
+	Identifier         string `json:"identifier"`
+	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
 }
 
 type UserPermissionsMap map[string]bool

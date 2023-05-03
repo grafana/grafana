@@ -43,7 +43,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{}
+				a.service = &fakeServiceAccountService{}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d/tokens", tt.id))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
@@ -92,7 +92,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			body:         `{"name": "test"}`,
 			tokenTTL:     -1,
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
-			expectedErr:  serviceaccounts.ErrServiceAccountNotFound,
+			expectedErr:  serviceaccounts.ErrServiceAccountNotFound.Errorf(""),
 			expectedCode: http.StatusNotFound,
 		},
 		{
@@ -109,7 +109,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
 				a.cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
-				a.service = &fakeService{
+				a.service = &fakeServiceAccountService{
 					ExpectedErr:    tt.expectedErr,
 					ExpectedAPIKey: tt.expectedAPIKey,
 				}
@@ -155,7 +155,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			saID:         1,
 			apikeyID:     1,
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
-			expectedErr:  serviceaccounts.ErrServiceAccountNotFound,
+			expectedErr:  serviceaccounts.ErrServiceAccountNotFound.Errorf(""),
 			expectedCode: http.StatusNotFound,
 		},
 	}
@@ -163,7 +163,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedErr: tt.expectedErr}
+				a.service = &fakeServiceAccountService{ExpectedErr: tt.expectedErr}
 			})
 
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d/tokens/%d", tt.saID, tt.apikeyID), nil)

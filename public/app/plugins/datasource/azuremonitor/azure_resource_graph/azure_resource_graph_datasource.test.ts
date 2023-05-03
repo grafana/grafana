@@ -19,7 +19,7 @@ const templateSrv = new TemplateSrv({
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));
@@ -60,7 +60,7 @@ describe('AzureResourceGraphDatasource', () => {
       const templateVariables = createTemplateVariables(templateableProps);
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
-      const azureResourceGraph: { [index: string]: any } = {};
+      const azureResourceGraph = {};
       for (const [path, templateVariable] of templateVariables.entries()) {
         set(azureResourceGraph, path, `$${templateVariable.variableName}`);
       }

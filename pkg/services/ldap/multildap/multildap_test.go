@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/setting"
 
 	//TODO(sh0rez): remove once import cycle resolved
 	_ "github.com/grafana/grafana/pkg/api/response"
@@ -18,7 +19,7 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should return error for absent config list", func(t *testing.T) {
 			setup()
 
-			multi := New([]*ldap.ServerConfig{})
+			multi := New([]*ldap.ServerConfig{}, setting.NewCfg())
 			_, err := multi.Ping()
 
 			require.Error(t, err)
@@ -34,7 +35,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{Host: "10.0.0.1", Port: 361},
-			})
+			}, setting.NewCfg())
 
 			statuses, err := multi.Ping()
 
@@ -52,7 +53,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{Host: "10.0.0.1", Port: 361},
-			})
+			}, setting.NewCfg())
 
 			statuses, err := multi.Ping()
 
@@ -70,7 +71,7 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should return error for absent config list", func(t *testing.T) {
 			setup()
 
-			multi := New([]*ldap.ServerConfig{})
+			multi := New([]*ldap.ServerConfig{}, setting.NewCfg())
 			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Error(t, err)
@@ -87,7 +88,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 
 			_, err := multi.Login(&login.LoginUserQuery{})
 
@@ -103,7 +104,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -124,7 +125,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			result, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 1, mock.dialCalledTimes)
@@ -144,7 +145,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -163,7 +164,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -183,7 +184,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -201,7 +202,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 1, mock.dialCalledTimes)
@@ -218,7 +219,7 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should return error for absent config list", func(t *testing.T) {
 			setup()
 
-			multi := New([]*ldap.ServerConfig{})
+			multi := New([]*ldap.ServerConfig{}, setting.NewCfg())
 			_, _, err := multi.User("test")
 
 			require.Error(t, err)
@@ -235,7 +236,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 
 			_, _, err := multi.User("test")
 
@@ -250,7 +251,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, _, err := multi.User("test")
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -270,7 +271,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, _, err := multi.User("test")
 
 			require.Equal(t, 1, mock.dialCalledTimes)
@@ -297,7 +298,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			user, _, err := multi.User("test")
 
 			require.Equal(t, 1, mock.dialCalledTimes)
@@ -318,7 +319,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, _, err := multi.User("test")
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -337,7 +338,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Users([]string{"test"})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -348,7 +349,7 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should return error for absent config list", func(t *testing.T) {
 			setup()
 
-			multi := New([]*ldap.ServerConfig{})
+			multi := New([]*ldap.ServerConfig{}, setting.NewCfg())
 			_, err := multi.Users([]string{"test"})
 
 			require.Error(t, err)
@@ -365,7 +366,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 
 			_, err := multi.Users([]string{"test"})
 
@@ -380,7 +381,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Users([]string{"test"})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -400,7 +401,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			_, err := multi.Users([]string{"test"})
 
 			require.Equal(t, 1, mock.dialCalledTimes)
@@ -433,7 +434,7 @@ func TestMultiLDAP(t *testing.T) {
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
-			})
+			}, setting.NewCfg())
 			users, err := multi.Users([]string{"test"})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
@@ -511,7 +512,7 @@ func (mock *mockLDAP) Bind() error {
 func setup() *mockLDAP {
 	mock := &mockLDAP{}
 
-	newLDAP = func(config *ldap.ServerConfig) ldap.IServer {
+	newLDAP = func(config *ldap.ServerConfig, cfg *setting.Cfg) ldap.IServer {
 		return mock
 	}
 

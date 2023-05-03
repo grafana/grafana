@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -24,8 +23,8 @@ type sqlStore struct {
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
-func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) error {
-	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) (res []*apikey.APIKey, err error) {
+	err = ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var sess *xorm.Session
 
 		if query.IncludeExpired {
@@ -48,9 +47,10 @@ func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuer
 			sess.And(filter.Where, filter.Args...)
 		}
 
-		query.Result = make([]*apikey.APIKey, 0)
-		return sess.Find(&query.Result)
+		res = make([]*apikey.APIKey, 0)
+		return sess.Find(&res)
 	})
+	return res, err
 }
 
 func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
@@ -63,6 +63,25 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 		return sess.Find(&result)
 	})
 	return result, err
+}
+
+func (ss *sqlStore) CountAPIKeys(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+
+	r := result{}
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id = ? and service_account_id IS NULL"
+		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return r.Count, err
 }
 
 func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
@@ -82,8 +101,8 @@ func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand)
 	})
 }
 
-func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res *apikey.APIKey, err error) {
+	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		key := apikey.APIKey{OrgID: cmd.OrgID, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
@@ -113,15 +132,16 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
-			return errors.Wrap(err, "failed to insert token")
+			return fmt.Errorf("%s: %w", "failed to insert token", err)
 		}
-		cmd.Result = &t
+		res = &t
 		return nil
 	})
+	return res, err
 }
 
-func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) (res *apikey.APIKey, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
 		has, err := sess.ID(query.ApiKeyID).Get(&key)
 
@@ -131,13 +151,14 @@ func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuer
 			return apikey.ErrInvalid
 		}
 
-		query.Result = &key
+		res = &key
 		return nil
 	})
+	return res, err
 }
 
-func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) (res *apikey.APIKey, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
 		has, err := sess.Where("org_id=? AND name=?", query.OrgID, query.KeyName).Get(&key)
 
@@ -147,9 +168,10 @@ func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByName
 			return apikey.ErrInvalid
 		}
 
-		query.Result = &key
+		res = &key
 		return nil
 	})
+	return res, err
 }
 
 func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {

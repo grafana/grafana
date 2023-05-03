@@ -49,6 +49,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
         className={targetClassName}
         alignmentFactors={count > 1 ? alignmentFactors : undefined}
         showUnfilled={options.showUnfilled}
+        valueDisplayMode={options.valueMode}
       />
     );
   };

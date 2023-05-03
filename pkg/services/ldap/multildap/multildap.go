@@ -3,34 +3,29 @@ package multildap
 import (
 	"errors"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/setting"
 )
-
-// logger to log
-var logger = log.New("ldap")
 
 // GetConfig gets LDAP config
 var GetConfig = ldap.GetConfig
 
-// IsEnabled checks if LDAP is enabled
-var IsEnabled = ldap.IsEnabled
-
 // newLDAP return instance of the single LDAP server
 var newLDAP = ldap.New
 
-// ErrInvalidCredentials is returned if username and password do not match
-var ErrInvalidCredentials = ldap.ErrInvalidCredentials
-
-// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
-var ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
-
-// ErrNoLDAPServers is returned when there is no LDAP servers specified
-var ErrNoLDAPServers = errors.New("no LDAP servers are configured")
-
-// ErrDidNotFindUser if request for user is unsuccessful
-var ErrDidNotFindUser = errors.New("did not find a user")
+var (
+	// ErrInvalidCredentials is returned if username and password do not match
+	ErrInvalidCredentials = ldap.ErrInvalidCredentials
+	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
+	ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
+	// ErrNoLDAPServers is returned when there is no LDAP servers specified
+	ErrNoLDAPServers = errors.New("no LDAP servers are configured")
+	// ErrDidNotFindUser if request for user is unsuccessful
+	ErrDidNotFindUser = errors.New("did not find a user")
+)
 
 // ServerStatus holds the LDAP server status
 type ServerStatus struct {
@@ -59,12 +54,16 @@ type IMultiLDAP interface {
 // MultiLDAP is basic struct of LDAP authorization
 type MultiLDAP struct {
 	configs []*ldap.ServerConfig
+	cfg     *setting.Cfg
+	log     log.Logger
 }
 
 // New creates the new LDAP auth
-func New(configs []*ldap.ServerConfig) IMultiLDAP {
+func New(configs []*ldap.ServerConfig, cfg *setting.Cfg) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
+		cfg:     cfg,
+		log:     log.New("ldap"),
 	}
 }
 
@@ -81,7 +80,7 @@ func (multiples *MultiLDAP) Ping() ([]*ServerStatus, error) {
 		status.Host = config.Host
 		status.Port = config.Port
 
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 		err := server.Dial()
 
 		if err == nil {
@@ -109,7 +108,7 @@ func (multiples *MultiLDAP) Login(query *login.LoginUserQuery) (
 	ldapSilentErrors := []error{}
 
 	for index, config := range multiples.configs {
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 
 		if err := server.Dial(); err != nil {
 			logDialFailure(err, config)
@@ -127,7 +126,7 @@ func (multiples *MultiLDAP) Login(query *login.LoginUserQuery) (
 		if err != nil {
 			if isSilentError(err) {
 				ldapSilentErrors = append(ldapSilentErrors, err)
-				logger.Debug(
+				multiples.log.Debug(
 					"unable to login with LDAP - skipping server",
 					"host", config.Host,
 					"port", config.Port,
@@ -167,7 +166,7 @@ func (multiples *MultiLDAP) User(login string) (
 
 	search := []string{login}
 	for index, config := range multiples.configs {
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 
 		if err := server.Dial(); err != nil {
 			logDialFailure(err, config)
@@ -210,7 +209,7 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	for index, config := range multiples.configs {
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 
 		if err := server.Dial(); err != nil {
 			logDialFailure(err, config)

@@ -2,7 +2,6 @@ import { orderBy } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -55,7 +54,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
 
 export interface BarChartOptionsEX extends PanelOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
-  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   timeZone?: TimeZone;
   fillOpacity?: number;
 }
@@ -83,11 +82,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 }) => {
   const builder = new UPlotConfigBuilder();
 
-  const formatValue = (seriesIdx: number, value: any) => {
+  const formatValue = (seriesIdx: number, value: unknown) => {
     return formattedValueToString(frame.fields[seriesIdx].display!(value));
   };
 
-  const formatShortValue = (seriesIdx: number, value: any) => {
+  const formatShortValue = (seriesIdx: number, value: unknown) => {
     return shortenValue(formatValue(seriesIdx, value), xTickLabelMaxLength);
   };
 
@@ -316,13 +315,13 @@ function getRotationPadding(
 ): Padding {
   const values = frame.fields[0].values;
   const fontSize = UPLOT_AXIS_FONT_SIZE;
-  const displayProcessor = frame.fields[0].display ?? ((v) => v);
+  const displayProcessor = frame.fields[0].display;
+  const getProcessedValue = (i: number) => {
+    return displayProcessor ? displayProcessor(values[i]) : values[i];
+  };
   let maxLength = 0;
   for (let i = 0; i < values.length; i++) {
-    let size = measureText(
-      shortenValue(formattedValueToString(displayProcessor(values.get(i))), valueMaxLength),
-      fontSize
-    );
+    let size = measureText(shortenValue(formattedValueToString(getProcessedValue(i)), valueMaxLength), fontSize);
     maxLength = size.width > maxLength ? size.width : maxLength;
   }
 
@@ -331,7 +330,7 @@ function getRotationPadding(
     rotateLabel > 0
       ? Math.cos((rotateLabel * Math.PI) / 180) *
         measureText(
-          shortenValue(formattedValueToString(displayProcessor(values.get(values.length - 1))), valueMaxLength),
+          shortenValue(formattedValueToString(getProcessedValue(values.length - 1)), valueMaxLength),
           fontSize
         ).width
       : 0;
@@ -340,8 +339,7 @@ function getRotationPadding(
   const paddingLeft =
     rotateLabel < 0
       ? Math.cos((rotateLabel * -1 * Math.PI) / 180) *
-        measureText(shortenValue(formattedValueToString(displayProcessor(values.get(0))), valueMaxLength), fontSize)
-          .width
+        measureText(shortenValue(formattedValueToString(getProcessedValue(0)), valueMaxLength), fontSize).width
       : 0;
 
   // Add padding to the bottom to avoid clipping the rotated labels.
@@ -433,14 +431,12 @@ export function prepareBarChartDisplayValues(
               },
             },
           },
-          values: new ArrayVector(
-            field.values.toArray().map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            })
-          ),
+          values: field.values.map((v) => {
+            if (!(Number.isFinite(v) || v == null)) {
+              return null;
+            }
+            return v;
+          }),
         };
 
         if (options.stacking === StackingMode.Percent) {

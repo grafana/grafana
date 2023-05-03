@@ -77,6 +77,12 @@ export const ConfirmModal = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setDisabled(Boolean(confirmationText));
+    }
+  }, [isOpen, confirmationText]);
+
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
@@ -91,7 +97,7 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
+        <Button variant={dismissVariant} onClick={onDismiss}>
           {dismissText}
         </Button>
         <Button
@@ -99,7 +105,7 @@ export const ConfirmModal = ({
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}
-          aria-label={selectors.pages.ConfirmModal.delete}
+          data-testid={selectors.pages.ConfirmModal.delete}
         >
           {confirmText}
         </Button>

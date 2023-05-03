@@ -4,6 +4,7 @@ import {
   createRangeOperation,
   createRangeOperationWithGrouping,
   getLineFilterRenderer,
+  isConflictingFilter,
   labelFilterRenderer,
 } from './operationUtils';
 import { LokiVisualQueryOperationCategory } from './types';
@@ -182,5 +183,25 @@ describe('labelFilterRenderer', () => {
     expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
       `{job="grafana"} | label ${operator} ${expected}`
     );
+  });
+});
+
+describe('isConflictingFilter', () => {
+  it('should return true if the operation conflict with another label filter', () => {
+    const operation = { id: '__label_filter', params: ['abc', '!=', '123'] };
+    const queryOperations = [
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+      { id: '__label_filter', params: ['abc', '!=', '123'] },
+    ];
+    expect(isConflictingFilter(operation, queryOperations)).toBe(true);
+  });
+
+  it("should return false if the operation doesn't conflict with another label filter", () => {
+    const operation = { id: '__label_filter', params: ['abc', '=', '123'] };
+    const queryOperations = [
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+    ];
+    expect(isConflictingFilter(operation, queryOperations)).toBe(false);
   });
 });

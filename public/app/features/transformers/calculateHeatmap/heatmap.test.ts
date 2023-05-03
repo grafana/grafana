@@ -1,8 +1,8 @@
 import { FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
+import { HeatmapCalculationOptions } from '@grafana/schema';
 
 import { rowsToCellsHeatmap, calculateHeatmapFromData } from './heatmap';
-import { HeatmapCalculationOptions } from './models.gen';
 
 describe('Heatmap transformer', () => {
   it('calculate heatmap from input data', async () => {
@@ -95,7 +95,7 @@ describe('Heatmap transformer', () => {
         "type": "heatmap-cells",
       }
     `);
-    expect(heatmap.fields[1].values.toArray()).toMatchInlineSnapshot(`
+    expect(heatmap.fields[1].values).toMatchInlineSnapshot(`
       [
         0,
         1,

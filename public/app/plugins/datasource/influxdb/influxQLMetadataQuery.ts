@@ -1,4 +1,5 @@
 import InfluxDatasource from './datasource';
+import { replaceHardCodedRetentionPolicy } from './queryUtils';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQueryTag } from './types';
 
@@ -11,7 +12,7 @@ const runExploreQuery = (
 ): Promise<Array<{ text: string }>> => {
   const builder = new InfluxQueryBuilder(target, datasource.database);
   const q = builder.buildExploreQuery(type, withKey, withMeasurementFilter);
-  const options = { policy: target.policy };
+  const options = { policy: replaceHardCodedRetentionPolicy(target.policy, datasource.retentionPolicies) };
   return datasource.metricFindQuery(q, options);
 };
 
@@ -50,6 +51,11 @@ export async function getTagValues(
   datasource: InfluxDatasource
 ): Promise<string[]> {
   const target = { tags, measurement, policy };
+
+  if (tagKey.endsWith('::field')) {
+    return [];
+  }
+
   const data = await runExploreQuery('TAG_VALUES', tagKey, undefined, target, datasource);
   return data.map((item) => item.text);
 }

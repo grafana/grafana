@@ -1,22 +1,37 @@
 import { cloneDeep } from 'lodash';
 
-import { PanelModel, FieldConfigSource, FieldMatcherID } from '@grafana/data';
+import { PanelModel, FieldConfigSource, FieldMatcherID, ReducerID } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel, PanelModel as PanelModelState } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { graphPanelChangedHandler } from './migrations';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
+  let dashboard: DashboardModel;
 
   beforeEach(() => {
     prevFieldConfig = {
       defaults: {},
       overrides: [],
     };
+
+    dashboard = createDashboardModelFixture({
+      id: 74,
+      version: 7,
+      annotations: {},
+      links: [],
+      panels: [],
+    });
+
+    getDashboardSrv().setCurrent(dashboard);
   });
 
   it('simple bars', () => {
-    const old: any = {
+    const old = {
       angular: {
         bars: true,
       },
@@ -27,7 +42,7 @@ describe('Graph Migrations', () => {
   });
 
   it('stairscase', () => {
-    const old: any = {
+    const old = {
       angular: stairscase,
     };
     const panel = {} as PanelModel;
@@ -45,7 +60,7 @@ describe('Graph Migrations', () => {
   });
 
   it('twoYAxis', () => {
-    const old: any = {
+    const old = {
       angular: twoYAxis,
     };
     const panel = {} as PanelModel;
@@ -54,7 +69,7 @@ describe('Graph Migrations', () => {
   });
 
   it('stepped line', () => {
-    const old: any = {
+    const old = {
       angular: stepedColordLine,
     };
     const panel = {} as PanelModel;
@@ -63,7 +78,7 @@ describe('Graph Migrations', () => {
   });
 
   it('preserves colors from series overrides', () => {
-    const old: any = {
+    const old = {
       angular: customColor,
     };
     const panel = {} as PanelModel;
@@ -72,7 +87,7 @@ describe('Graph Migrations', () => {
   });
 
   it('preserves series overrides using a regex alias', () => {
-    const old: any = {
+    const old = {
       angular: customColorRegex,
     };
     const panel = {} as PanelModel;
@@ -82,9 +97,39 @@ describe('Graph Migrations', () => {
     expect(panel.fieldConfig.overrides[1].matcher.id).toBe(FieldMatcherID.byRegexp);
   });
 
+  describe('time regions', () => {
+    test('should migrate', () => {
+      const old = {
+        angular: {
+          timeRegions: [
+            {
+              colorMode: 'red',
+              fill: true,
+              fillColor: 'rgba(234, 112, 112, 0.12)',
+              fromDayOfWeek: 1,
+              line: true,
+              lineColor: 'rgba(237, 46, 24, 0.60)',
+              op: 'time',
+            },
+          ],
+        },
+      };
+
+      const panel = { datasource: { type: 'datasource', uid: 'gdev-testdata' } } as PanelModel;
+      dashboard.panels.push(new PanelModelState(panel));
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(dashboard.panels).toHaveLength(1);
+      expect(dashboard.annotations.list).toHaveLength(2); // built-in + time region
+      expect(
+        dashboard.annotations.list.filter((annotation) => annotation.target?.queryType === GrafanaQueryType.TimeRegions)
+      ).toHaveLength(1);
+      expect(panel).toMatchSnapshot();
+    });
+  });
+
   describe('legend', () => {
     test('without values', () => {
-      const old: any = {
+      const old = {
         angular: {
           legend: {
             show: true,
@@ -102,7 +147,7 @@ describe('Graph Migrations', () => {
       expect(panel).toMatchSnapshot();
     });
     test('with single value', () => {
-      const old: any = {
+      const old = {
         angular: {
           legend: {
             show: true,
@@ -120,7 +165,7 @@ describe('Graph Migrations', () => {
       expect(panel).toMatchSnapshot();
     });
     test('with multiple values', () => {
-      const old: any = {
+      const old = {
         angular: legend,
       };
       const panel = {} as PanelModel;
@@ -128,7 +173,7 @@ describe('Graph Migrations', () => {
       expect(panel).toMatchSnapshot();
     });
     test('with sideWidth', () => {
-      const old: any = {
+      const old = {
         angular: {
           legend: {
             alignAsTable: true,
@@ -144,11 +189,121 @@ describe('Graph Migrations', () => {
       panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.options.legend.width).toBe(200);
     });
+
+    test('hide allZeros', () => {
+      const old = {
+        angular: {
+          legend: {
+            show: true,
+            values: false,
+            min: false,
+            max: false,
+            current: false,
+            total: false,
+            avg: false,
+            hideZero: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.overrides).toHaveLength(1);
+      expect(panel.fieldConfig.overrides[0].matcher.options.reducer).toBe(ReducerID.allIsZero);
+      expect(panel.fieldConfig.overrides).toMatchInlineSnapshot(`
+        [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0,
+              },
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false,
+                },
+              },
+            ],
+          },
+        ]
+      `);
+    });
+
+    test('hide allZeros allNulls', () => {
+      const old = {
+        angular: {
+          legend: {
+            show: true,
+            values: false,
+            min: false,
+            max: false,
+            current: false,
+            total: false,
+            avg: false,
+            hideEmpty: true,
+            hideZero: true,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+      expect(panel.fieldConfig.overrides).toHaveLength(2);
+      expect(panel.fieldConfig.overrides).toMatchInlineSnapshot(`
+        [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0,
+              },
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false,
+                },
+              },
+            ],
+          },
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsNull",
+                "value": 0,
+              },
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false,
+                },
+              },
+            ],
+          },
+        ]
+      `);
+    });
   });
 
   describe('stacking', () => {
     test('simple', () => {
-      const old: any = {
+      const old = {
         angular: stacking,
       };
       const panel = {} as PanelModel;
@@ -156,7 +311,7 @@ describe('Graph Migrations', () => {
       expect(panel).toMatchSnapshot();
     });
     test('groups', () => {
-      const old: any = {
+      const old = {
         angular: stackingGroups,
       };
       const panel = {} as PanelModel;
@@ -167,7 +322,7 @@ describe('Graph Migrations', () => {
 
   describe('thresholds', () => {
     test('Only gt thresholds', () => {
-      const old: any = {
+      const old = {
         angular: {
           thresholds: [
             {
@@ -211,7 +366,7 @@ describe('Graph Migrations', () => {
     });
 
     test('gt & lt thresholds', () => {
-      const old: any = {
+      const old = {
         angular: {
           thresholds: [
             {
@@ -256,7 +411,7 @@ describe('Graph Migrations', () => {
     });
 
     test('Only lt thresholds', () => {
-      const old: any = {
+      const old = {
         angular: {
           thresholds: [
             {
@@ -333,14 +488,14 @@ describe('Graph Migrations', () => {
 
   describe('tooltip', () => {
     test('tooltip mode', () => {
-      const single: any = {
+      const single = {
         angular: {
           tooltip: {
             shared: false,
           },
         },
       };
-      const multi: any = {
+      const multi = {
         angular: {
           tooltip: {
             shared: true,
@@ -359,7 +514,7 @@ describe('Graph Migrations', () => {
     });
 
     test('sort order', () => {
-      const none: any = {
+      const none = {
         angular: {
           tooltip: {
             shared: true,
@@ -368,7 +523,7 @@ describe('Graph Migrations', () => {
         },
       };
 
-      const asc: any = {
+      const asc = {
         angular: {
           tooltip: {
             shared: true,
@@ -377,7 +532,7 @@ describe('Graph Migrations', () => {
         },
       };
 
-      const desc: any = {
+      const desc = {
         angular: {
           tooltip: {
             shared: true,
@@ -386,7 +541,7 @@ describe('Graph Migrations', () => {
         },
       };
 
-      const singleModeWithUnnecessaryOption: any = {
+      const singleModeWithUnnecessaryOption = {
         angular: {
           tooltip: {
             shared: false,
@@ -414,7 +569,7 @@ describe('Graph Migrations', () => {
 
   describe('x axis', () => {
     test('should hide x axis', () => {
-      const old: any = {
+      const old = {
         angular: {
           xaxis: {
             show: false,
@@ -430,7 +585,7 @@ describe('Graph Migrations', () => {
 
   describe('transforms', () => {
     test.each(['negative-Y', 'constant'])('should preserve %p transform', (transform) => {
-      const old: any = {
+      const old = {
         angular: {
           seriesOverrides: [
             {
@@ -448,7 +603,7 @@ describe('Graph Migrations', () => {
 
   describe('null values', () => {
     test('nullPointMode = null', () => {
-      const old: any = {
+      const old = {
         angular: {
           nullPointMode: 'null',
         },
@@ -458,7 +613,7 @@ describe('Graph Migrations', () => {
       expect(panel.fieldConfig.defaults.custom.spanNulls).toBeFalsy();
     });
     test('nullPointMode = connected', () => {
-      const old: any = {
+      const old = {
         angular: {
           nullPointMode: 'connected',
         },

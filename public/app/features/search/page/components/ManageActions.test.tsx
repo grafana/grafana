@@ -51,7 +51,7 @@ describe('ManageActions', () => {
 
       // open Move modal
       await userEvent.click(screen.getByRole('button', { name: 'Move', hidden: true }));
-      expect(screen.getByText(/Move the 2 selected dashboards to the following folder:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Move 2 dashboards to:/i)).toBeInTheDocument();
     });
 
     it('should show delete modal when user click the delete button', async () => {

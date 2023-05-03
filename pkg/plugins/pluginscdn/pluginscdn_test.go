@@ -9,7 +9,7 @@ import (
 
 func TestService(t *testing.T) {
 	svc := ProvideService(&config.Cfg{
-		PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
+		PluginsCDNURLTemplate: "https://cdn.example.com",
 		PluginSettings: map[string]map[string]string{
 			"one": {"cdn": "true"},
 			"two": {},
@@ -30,8 +30,8 @@ func TestService(t *testing.T) {
 		}{
 			{
 				name:       "valid",
-				cfgURL:     "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}",
-				expBaseURL: "https://grafana-assets.grafana.net",
+				cfgURL:     "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn",
+				expBaseURL: "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn",
 			},
 			{
 				name:       "empty",

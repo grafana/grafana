@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Expr holds a parsed math command expression.
@@ -25,6 +26,8 @@ type State struct {
 	//  - Unions (How many result A and many Result B in case A + B are joined)
 	//  - NaN/Null behavior
 	RefID string
+
+	tracer tracing.Tracer
 }
 
 // Vars holds the results of datasource queries or other expression commands.
@@ -44,11 +47,13 @@ func New(expr string, funcs ...map[string]parse.Func) (*Expr, error) {
 }
 
 // Execute applies a parse expression to the context and executes it
-func (e *Expr) Execute(refID string, vars Vars) (r Results, err error) {
+func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Results, err error) {
 	s := &State{
 		Expr:  e,
 		Vars:  vars,
 		RefID: refID,
+
+		tracer: tracer,
 	}
 	return e.executeState(s)
 }

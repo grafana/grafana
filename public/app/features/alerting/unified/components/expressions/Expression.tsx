@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { capitalize, uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
-import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
+import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -14,12 +13,13 @@ import { Threshold } from 'app/features/expressions/components/Threshold';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { usePagination } from '../../hooks/usePagination';
 import { HoverCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { AlertConditionIndicator } from './AlertConditionIndicator';
-import { formatLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -106,6 +106,7 @@ export const Expression: FC<ExpressionProps> = ({
         />
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
         {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
+
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
             <AlertConditionIndicator
@@ -132,30 +133,65 @@ interface ExpressionResultProps {
   series: DataFrame[];
   isAlertCondition?: boolean;
 }
-
+export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+  const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
-  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
+  const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
+
+  const shouldShowPagination = numberOfPages > 1;
 
   return (
     <div className={styles.expression.results}>
       {!emptyResults && isTimeSeriesResults && (
         <div>
-          {series.map((frame, index) => (
-            <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          {pageItems.map((frame, index) => (
+            <TimeseriesRow
+              key={uniqueId()}
+              frame={frame}
+              index={pageStart + index}
+              isAlertCondition={isAlertCondition}
+            />
           ))}
         </div>
       )}
       {!emptyResults &&
         !isTimeSeriesResults &&
-        series.map((frame, index) => (
+        pageItems.map((frame, index) => (
           // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-          <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          <FrameRow key={uniqueId()} frame={frame} index={pageStart + index} isAlertCondition={isAlertCondition} />
         ))}
       {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
+      {shouldShowPagination && (
+        <div className={styles.pagination.wrapper} data-testid="paginate-expression">
+          <Stack>
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={previousPage}
+              icon="angle-left"
+              size="sm"
+              aria-label="previous-page"
+            />
+            <Spacer />
+            <span className={styles.mutedText}>
+              {pageStart} - {pageEnd} of {series.length}
+            </span>
+            <Spacer />
+            <Button
+              variant="secondary"
+              fill="outline"
+              onClick={nextPage}
+              icon="angle-right"
+              size="sm"
+              aria-label="next-page"
+            />
+          </Stack>
+        </div>
+      )}
     </div>
   );
 };
@@ -175,6 +211,7 @@ interface HeaderProps {
 
 const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   /**
    * There are 3 edit modes:
    *
@@ -195,9 +232,9 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
       <Stack direction="row" gap={0.5} alignItems="center">
         <Stack direction="row" gap={1} alignItems="center" wrap={false}>
           {!editingRefId && (
-            <div className={styles.editable} onClick={() => setEditMode('refId')}>
+            <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>
-            </div>
+            </button>
           )}
           {editingRefId && (
             <AutoSizeInput
@@ -216,10 +253,14 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
             />
           )}
           {!editingType && (
-            <div className={styles.editable} onClick={() => setEditMode('expressionType')}>
+            <button
+              type="button"
+              className={cx(clearButton, styles.editable)}
+              onClick={() => setEditMode('expressionType')}
+            >
               <div className={styles.mutedText}>{capitalize(queryType)}</div>
               <Icon size="xs" name="pen" className={styles.mutedIcon} onClick={() => setEditMode('expressionType')} />
-            </div>
+            </button>
           )}
           {editingType && (
             <Select
@@ -261,16 +302,37 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 
   const name = getSeriesName(frame) || 'Series ' + index;
   const value = getSeriesValue(frame);
+  const labelsRecord = getSeriesLabels(frame);
+  const labels = Object.entries(labelsRecord);
+  const hasLabels = labels.length > 0;
 
   const showFiring = isAlertCondition && value !== 0;
   const showNormal = isAlertCondition && value === 0;
 
+  const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`;
+
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
-        <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
-          {name}
-        </span>
+        <div className={styles.expression.resultLabel} title={title}>
+          <span>{hasLabels ? '' : name}</span>
+          {hasLabels && (
+            <>
+              <span>{'{'}</span>
+              {labels.map(([key, value], index) => (
+                <span key={uniqueId()}>
+                  <span className={styles.expression.labelKey}>{key}</span>
+                  <span>=</span>
+                  <span>&quot;</span>
+                  <span className={styles.expression.labelValue}>{value}</span>
+                  <span>&quot;</span>
+                  {index < labels.length - 1 && <span>, </span>}
+                </span>
+              ))}
+              <span>{'}'}</span>
+            </>
+          )}
+        </div>
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
         {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
@@ -282,13 +344,16 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
-  const hasLabels = frame.fields[1].labels;
-  const name = hasLabels ? formatLabels(frame.fields[1].labels ?? {}) : 'Series ' + index;
+  const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
 
-  const timestamps = frame.fields[0].values.toArray();
+  const hasLabels = valueField.labels;
+  const displayNameFromDS = valueField.config?.displayNameFromDS;
+  const name = displayNameFromDS ?? (hasLabels ? formatLabels(valueField.labels ?? {}) : 'Series ' + index);
 
-  const getTimestampFromIndex = (index: number) => frame.fields[0].values.get(index);
-  const getValueFromIndex = (index: number) => frame.fields[1].values.get(index);
+  const timestamps = frame.fields[0].values;
+
+  const getTimestampFromIndex = (index: number) => frame.fields[0].values[index];
+  const getValueFromIndex = (index: number) => frame.fields[1].values[index];
 
   return (
     <div className={styles.expression.resultsRow}>
@@ -353,6 +418,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: ${theme.colors.primary.text};
     `,
     results: css`
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+
       border-top: solid 1px ${theme.colors.border.medium};
     `,
     noResults: css`
@@ -371,12 +440,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
         background-color: ${theme.colors.background.canvas};
       }
     `,
+    labelKey: css`
+      color: ${theme.isDark ? '#73bf69' : '#56a64b'};
+    `,
+    labelValue: css`
+      color: ${theme.isDark ? '#ce9178' : '#a31515'};
+    `,
     resultValue: css`
-      color: ${theme.colors.text.maxContrast};
       text-align: right;
     `,
     resultLabel: css`
       flex: 1;
+      overflow-x: auto;
+
+      display: inline-block;
+      white-space: nowrap;
     `,
     noData: css`
       display: flex;
@@ -425,11 +503,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   timeseriesTableWrapper: css`
     max-height: 500px;
-    max-width: 300px;
 
     overflow-y: scroll;
-
-    padding: 0 !important; // not sure why but style override doesn't work otherwise :( (Gilles)
   `,
   timeseriesTable: css`
     table-layout: auto;
@@ -458,4 +533,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       }
     }
   `,
+  pagination: {
+    wrapper: css`
+      border-top: 1px solid ${theme.colors.border.medium};
+      padding: ${theme.spacing()};
+    `,
+  },
 });

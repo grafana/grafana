@@ -4,17 +4,13 @@ title: Sign a plugin
 
 # Sign a plugin
 
-Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
-
-> **Important:** Future versions of Grafana will require all plugins to be signed.
+Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}). This gives users a way to make sure plugins haven't been tampered with. By [default]({{< relref "../../administration/plugin-management#allow-unsigned-plugins" >}}), Grafana **requires** all plugins to be signed in order for them to be loaded. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
 
 Before you can sign your plugin, you need to decide whether you want to sign it as a _public_ or a _private_ plugin.
 
 If you want to make your plugin publicly available outside of your organization, you need to sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from [grafana.com/plugins](https://grafana.com/plugins) and can be installed by anyone.
 
-For more information on how to install a public plugin, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management#install-a-plugin" >}}).
-
-If you intend to only use the plugin within your organization, you can to sign it under a _private_ [signature level](#plugin-signature-levels).
+If you intend to only use the plugin within your organization, you can sign it under a _private_ [signature level](#plugin-signature-levels).
 
 ## Generate an API key
 
@@ -38,7 +34,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin
+   npx @grafana/sign-plugin@latest
    ```
 
 ## Sign a private plugin
@@ -49,7 +45,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/sign-plugin --rootUrls https://example.com/grafana
+   npx @grafana/sign-plugin@latest --rootUrls https://example.com/grafana
    ```
 
 ## Plugin signature levels

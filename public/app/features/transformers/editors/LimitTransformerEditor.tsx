@@ -4,10 +4,7 @@ import { DataTransformerID, standardTransformers, TransformerRegistryItem, Trans
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
-export const LimitTransformerEditor: React.FC<TransformerUIProps<LimitTransformerOptions>> = ({
-  options,
-  onChange,
-}) => {
+export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps<LimitTransformerOptions>) => {
   const onSetLimit = useCallback(
     (value: FormEvent<HTMLInputElement>) => {
       onChange({

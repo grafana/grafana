@@ -1,6 +1,7 @@
 package oauthtoken
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -118,12 +119,11 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
 	authInfoQuery := &login.GetAuthInfoQuery{}
-	err = srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	resultUsr, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 
 	assert.Nil(t, err)
 
 	// User's token data had not been updated
-	resultUsr := authInfoQuery.Result
 	assert.Equal(t, resultUsr.OAuthAccessToken, token.AccessToken)
 	assert.Equal(t, resultUsr.OAuthExpiry, token.Expiry)
 	assert.Equal(t, resultUsr.OAuthRefreshToken, token.RefreshToken)
@@ -192,15 +192,15 @@ func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
 
 	authInfoQuery := &login.GetAuthInfoQuery{}
-	err = srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	authInfo, err := srv.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 
 	assert.Nil(t, err)
 
 	// newToken should be returned after the .Token() call, therefore the User had to be updated
-	assert.Equal(t, authInfoQuery.Result.OAuthAccessToken, newToken.AccessToken)
-	assert.Equal(t, authInfoQuery.Result.OAuthExpiry, newToken.Expiry)
-	assert.Equal(t, authInfoQuery.Result.OAuthRefreshToken, newToken.RefreshToken)
-	assert.Equal(t, authInfoQuery.Result.OAuthTokenType, newToken.TokenType)
+	assert.Equal(t, authInfo.OAuthAccessToken, newToken.AccessToken)
+	assert.Equal(t, authInfo.OAuthExpiry, newToken.Expiry)
+	assert.Equal(t, authInfo.OAuthRefreshToken, newToken.RefreshToken)
+	assert.Equal(t, authInfo.OAuthTokenType, newToken.TokenType)
 }
 
 func TestService_TryTokenRefresh_DifferentAuthModuleForUser(t *testing.T) {
@@ -303,6 +303,10 @@ func (m *MockSocialConnector) TokenSource(ctx context.Context, t *oauth2.Token) 
 	return args.Get(0).(oauth2.TokenSource)
 }
 
+func (m *MockSocialConnector) SupportBundleContent(bf *bytes.Buffer) error {
+	return nil
+}
+
 type FakeAuthInfoStore struct {
 	login.Store
 	ExpectedError                   error
@@ -313,13 +317,12 @@ type FakeAuthInfoStore struct {
 	ExpectedLoginStats              login.LoginStats
 }
 
-func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
-	return f.ExpectedError
+func (f *FakeAuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) (*login.ExternalUserInfo, error) {
+	return nil, f.ExpectedError
 }
 
-func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
-	query.Result = f.ExpectedOAuth
-	return f.ExpectedError
+func (f *FakeAuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) (*login.UserAuth, error) {
+	return f.ExpectedOAuth, f.ExpectedError
 }
 
 func (f *FakeAuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
