@@ -45,7 +45,7 @@ def integration_test_services():
                 "MYSQL_PASSWORD": "password",
             },
             "volumes": [{"name": "mysql80", "path": "/var/lib/mysql"}],
-            "commands": ["docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"]
+            "commands": ["docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"],
         },
         {
             "name": "redis",
