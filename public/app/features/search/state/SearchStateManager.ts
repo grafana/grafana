@@ -268,7 +268,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       includePanels: this.state.includePanels,
     });
 
-    this.setState(initialState);
+    this.setState({ query: '' });
   };
 
   /**
