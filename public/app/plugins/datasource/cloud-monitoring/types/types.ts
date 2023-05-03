@@ -1,6 +1,8 @@
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { DataSourceOptions, DataSourceSecureJsonData } from '@grafana/google-sdk';
 
+import { MetricKind } from './query';
+
 export enum MetricFindQueryTypes {
   Projects = 'projects',
   Services = 'services',
@@ -49,26 +51,6 @@ export interface Aggregation {
   groupBys?: string[];
 }
 
-export enum QueryType {
-  TIME_SERIES_LIST = 'timeSeriesList',
-  TIME_SERIES_QUERY = 'timeSeriesQuery',
-  SLO = 'slo',
-  ANNOTATION = 'annotation',
-}
-
-export enum PreprocessorType {
-  None = 'none',
-  Rate = 'rate',
-  Delta = 'delta',
-}
-
-export enum MetricKind {
-  METRIC_KIND_UNSPECIFIED = 'METRIC_KIND_UNSPECIFIED',
-  GAUGE = 'GAUGE',
-  DELTA = 'DELTA',
-  CUMULATIVE = 'CUMULATIVE',
-}
-
 export enum ValueTypes {
   VALUE_TYPE_UNSPECIFIED = 'VALUE_TYPE_UNSPECIFIED',
   BOOL = 'BOOL',
@@ -99,27 +81,6 @@ export enum AlignmentTypes {
   ALIGN_PERCENTILE_05 = 'ALIGN_PERCENTILE_05',
   ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
   ALIGN_NONE = 'ALIGN_NONE',
-}
-
-// deprecated: use TimeSeriesList instead
-// left here for migration purposes
-export interface MetricQuery {
-  projectName: string;
-  perSeriesAligner?: string;
-  alignmentPeriod?: string;
-  aliasBy?: string;
-  editorMode: string;
-  metricType: string;
-  crossSeriesReducer: string;
-  groupBys?: string[];
-  filters?: string[];
-  metricKind?: MetricKind;
-  valueType?: string;
-  view?: string;
-  query: string;
-  preprocessor?: PreprocessorType;
-  // To disable the graphPeriod, it should explictly be set to 'disabled'
-  graphPeriod?: 'disabled' | string;
 }
 
 export interface CloudMonitoringOptions extends DataSourceOptions {

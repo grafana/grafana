@@ -1,7 +1,15 @@
 import { CloudMonitoringQuery as CloudMonitoringQueryBase, QueryType } from '../dataquery.gen';
 
 export { QueryType };
-export { TimeSeriesList, PreprocessorType, AnnotationQuery, TimeSeriesQuery, SLOQuery } from '../dataquery.gen';
+export {
+  TimeSeriesList,
+  PreprocessorType,
+  AnnotationQuery,
+  TimeSeriesQuery,
+  SLOQuery,
+  MetricQuery,
+  MetricKind,
+} from '../dataquery.gen';
 
 /**
  * Represents the query as it moves through the frontend query editor and datasource files.

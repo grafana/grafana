@@ -1,5 +1,5 @@
-import { QueryType } from './types/query';
-import { MetricKind, ValueTypes } from './types/types';
+import { QueryType, MetricKind } from './types/query';
+import { ValueTypes } from './types/types';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;

@@ -194,4 +194,67 @@ export interface SLOQuery {
   sloName: string;
 }
 
+/**
+ * @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
+ */
+export interface MetricQuery {
+  /**
+   * Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
+   */
+  aliasBy?: string;
+  /**
+   * Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
+   */
+  alignmentPeriod?: string;
+  /**
+   * Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
+   */
+  crossSeriesReducer: string;
+  editorMode: string;
+  /**
+   * Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+   */
+  filters?: Array<string>;
+  /**
+   * To disable the graphPeriod, it should explictly be set to 'disabled'.
+   */
+  graphPeriod?: ('disabled' | string);
+  /**
+   * Array of labels to group data by.
+   */
+  groupBys?: Array<string>;
+  metricKind?: MetricKind;
+  metricType: string;
+  /**
+   * Alignment function to be used. Defaults to ALIGN_MEAN.
+   */
+  perSeriesAligner?: string;
+  /**
+   * Preprocessor is not part of the API, but is used to store the preprocessor and not affect the UI for the rest of parameters
+   */
+  preprocessor?: PreprocessorType;
+  /**
+   * GCP project to execute the query against.
+   */
+  projectName: string;
+  /**
+   * MQL query to be executed.
+   */
+  query: string;
+  valueType?: string;
+  view?: string;
+}
+
+export const defaultMetricQuery: Partial<MetricQuery> = {
+  filters: [],
+  groupBys: [],
+};
+
+export enum MetricKind {
+  CUMULATIVE = 'CUMULATIVE',
+  DELTA = 'DELTA',
+  GAUGE = 'GAUGE',
+  METRIC_KIND_UNSPECIFIED = 'METRIC_KIND_UNSPECIFIED',
+}
+
 export interface GoogleCloudMonitoring {}

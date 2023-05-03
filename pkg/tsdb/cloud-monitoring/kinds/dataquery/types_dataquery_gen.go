@@ -27,6 +27,29 @@ const (
 	CloudMonitoringQueryTimeSeriesListPreprocessorRate  CloudMonitoringQueryTimeSeriesListPreprocessor = "rate"
 )
 
+// Defines values for MetricKind.
+const (
+	MetricKindCUMULATIVE            MetricKind = "CUMULATIVE"
+	MetricKindDELTA                 MetricKind = "DELTA"
+	MetricKindGAUGE                 MetricKind = "GAUGE"
+	MetricKindMETRICKINDUNSPECIFIED MetricKind = "METRIC_KIND_UNSPECIFIED"
+)
+
+// Defines values for MetricQueryMetricKind.
+const (
+	MetricQueryMetricKindCUMULATIVE            MetricQueryMetricKind = "CUMULATIVE"
+	MetricQueryMetricKindDELTA                 MetricQueryMetricKind = "DELTA"
+	MetricQueryMetricKindGAUGE                 MetricQueryMetricKind = "GAUGE"
+	MetricQueryMetricKindMETRICKINDUNSPECIFIED MetricQueryMetricKind = "METRIC_KIND_UNSPECIFIED"
+)
+
+// Defines values for MetricQueryPreprocessor.
+const (
+	MetricQueryPreprocessorDelta MetricQueryPreprocessor = "delta"
+	MetricQueryPreprocessorNone  MetricQueryPreprocessor = "none"
+	MetricQueryPreprocessorRate  MetricQueryPreprocessor = "rate"
+)
+
 // Defines values for PreprocessorType.
 const (
 	PreprocessorTypeDelta PreprocessorType = "delta"
@@ -231,6 +254,53 @@ type CloudMonitoringQueryTimeSeriesList struct {
 
 // GoogleCloudMonitoringDataQuery defines model for GoogleCloudMonitoringDataQuery.
 type GoogleCloudMonitoringDataQuery = map[string]interface{}
+
+// MetricKind defines model for MetricKind.
+type MetricKind string
+
+// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
+type MetricQuery struct {
+	// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
+	AliasBy *string `json:"aliasBy,omitempty"`
+
+	// Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
+	AlignmentPeriod *string `json:"alignmentPeriod,omitempty"`
+
+	// Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
+	CrossSeriesReducer string `json:"crossSeriesReducer"`
+	EditorMode         string `json:"editorMode"`
+
+	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+	Filters []string `json:"filters,omitempty"`
+
+	// To disable the graphPeriod, it should explictly be set to 'disabled'.
+	GraphPeriod *string `json:"graphPeriod,omitempty"`
+
+	// Array of labels to group data by.
+	GroupBys   []string               `json:"groupBys,omitempty"`
+	MetricKind *MetricQueryMetricKind `json:"metricKind,omitempty"`
+	MetricType string                 `json:"metricType"`
+
+	// Alignment function to be used. Defaults to ALIGN_MEAN.
+	PerSeriesAligner *string `json:"perSeriesAligner,omitempty"`
+
+	// Preprocessor is not part of the API, but is used to store the preprocessor and not affect the UI for the rest of parameters
+	Preprocessor *MetricQueryPreprocessor `json:"preprocessor,omitempty"`
+
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+
+	// MQL query to be executed.
+	Query     string  `json:"query"`
+	ValueType *string `json:"valueType,omitempty"`
+	View      *string `json:"view,omitempty"`
+}
+
+// MetricQueryMetricKind defines model for MetricQuery.MetricKind.
+type MetricQueryMetricKind string
+
+// Preprocessor is not part of the API, but is used to store the preprocessor and not affect the UI for the rest of parameters
+type MetricQueryPreprocessor string
 
 // Types of pre-processor available. Defined by the metric.
 type PreprocessorType string

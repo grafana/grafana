@@ -17,15 +17,8 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
 import { getMetricType, setMetricType } from './functions';
-import { CloudMonitoringQuery, QueryType } from './types/query';
-import {
-  CloudMonitoringOptions,
-  Filter,
-  MetricDescriptor,
-  PostResponse,
-  Aggregation,
-  MetricQuery,
-} from './types/types';
+import { CloudMonitoringQuery, QueryType, MetricQuery } from './types/query';
+import { CloudMonitoringOptions, Filter, MetricDescriptor, PostResponse, Aggregation } from './types/types';
 import { CloudMonitoringVariableSupport } from './variables';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
