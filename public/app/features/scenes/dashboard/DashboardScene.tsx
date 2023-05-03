@@ -36,10 +36,10 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
       />
     );
   }
-  const pageToolbar = <AppChromeUpdate actions={toolbarActions} />;
 
   return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
+    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas}>
+      <AppChromeUpdate actions={toolbarActions} />
       {controls && (
         <div className={styles.controls}>
           {controls.map((control) => (
