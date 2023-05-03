@@ -92,8 +92,8 @@ export const generateColumns = (
         );
       },
       Cell: (p) => {
-        const uid = uidField.values.get(p.row.index);
-        const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
+        const uid = uidField.values[p.row.index];
+        const kind = kindField ? kindField.values[p.row.index] : 'dashboard'; // HACK for now
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
@@ -120,7 +120,7 @@ export const generateColumns = (
   columns.push({
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
-      let name = access.name.values.get(p.row.index);
+      let name = access.name.values[p.row.index];
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
         name = loading ? 'Loading...' : 'Missing title'; // normal for panels
@@ -166,7 +166,7 @@ export const generateColumns = (
     availableWidth -= width;
     columns.push({
       Cell: (p) => {
-        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+        const parts = (access.location?.values[p.row.index] ?? '').split('/');
         return (
           <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
             {parts.map((p) => {
@@ -226,8 +226,8 @@ export const generateColumns = (
         new ShowModalReactEvent({
           component: ExplainScorePopup,
           props: {
-            name: access.name.values.get(row),
-            explain: access.explain.values.get(row),
+            name: access.name.values[row],
+            explain: access.explain.values[row],
             frame: response.view.dataFrame,
             row: row,
           },
@@ -240,7 +240,7 @@ export const generateColumns = (
       Cell: (p) => {
         return (
           <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
-            {vals.get(p.row.index)}
+            {vals[p.row.index]}
           </div>
         );
       },
@@ -255,7 +255,7 @@ export const generateColumns = (
 
 function hasValue(f: Field): boolean {
   for (let i = 0; i < f.values.length; i++) {
-    if (f.values.get(i) != null) {
+    if (f.values[i] != null) {
       return true;
     }
   }
@@ -276,7 +276,7 @@ function makeDataSourceColumn(
     field,
     Header: t('search.results-table.datasource-header', 'Data source'),
     Cell: (p) => {
-      const dslist = field.values.get(p.row.index);
+      const dslist = field.values[p.row.index];
       if (!dslist?.length) {
         return null;
       }
@@ -325,7 +325,7 @@ function makeTypeColumn(
     Header: t('search.results-table.type-header', 'Type'),
     Cell: (p) => {
       const i = p.row.index;
-      const kind = kindField?.values.get(i) ?? 'dashboard';
+      const kind = kindField?.values[i] ?? 'dashboard';
       let icon: IconName = 'apps';
       let txt = 'Dashboard';
       if (kind) {
@@ -342,7 +342,7 @@ function makeTypeColumn(
 
           case 'panel':
             icon = `${PluginIconName.panel}`;
-            const type = typeField.values.get(i);
+            const type = typeField.values[i];
             if (type) {
               txt = type;
               const info = config.panels[txt];
@@ -384,7 +384,7 @@ function makeTagsColumn(
 ): TableColumn {
   return {
     Cell: (p) => {
-      const tags = field.values.get(p.row.index);
+      const tags = field.values[p.row.index];
       return tags ? (
         <div {...p.cellProps}>
           <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
@@ -409,8 +409,8 @@ function getDisplayValue({
   index: number;
   getDisplay: DisplayProcessor;
 }) {
-  const value = sortField.values.get(index);
-  if (['folder', 'panel'].includes(kind.values.get(index)) && value === 0) {
+  const value = sortField.values[index];
+  if (['folder', 'panel'].includes(kind.values[index]) && value === 0) {
     return '-';
   }
   return formattedValueToString(getDisplay(value));

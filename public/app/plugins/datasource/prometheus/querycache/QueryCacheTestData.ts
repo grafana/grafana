@@ -1,6 +1,6 @@
 import { clone } from 'lodash';
 
-import { ArrayVector, dateTime } from '@grafana/data/src';
+import { dateTime } from '@grafana/data/src';
 
 /**
  *
@@ -8,13 +8,13 @@ import { ArrayVector, dateTime } from '@grafana/data/src';
  * @param start - First timestamp (ms)
  * @param step - step duration (ms)
  */
-export const getMockTimeFrameArray = (length: number, start: number, step: number): ArrayVector => {
-  let timeValues = [];
+export const getMockTimeFrameArray = (length: number, start: number, step: number) => {
+  let timeValues: number[] = [];
   for (let i = 0; i < length; i++) {
     timeValues.push(start + i * step);
   }
 
-  return new ArrayVector(timeValues);
+  return timeValues;
 };
 
 /**
@@ -22,8 +22,8 @@ export const getMockTimeFrameArray = (length: number, start: number, step: numbe
  * @param values
  * @param high
  */
-export const getMockValueFrameArray = (length: number, values = 0): ArrayVector => {
-  return new ArrayVector(Array(length).fill(values));
+export const getMockValueFrameArray = (length: number, values = 0): number[] => {
+  return Array(length).fill(values);
 };
 
 const timeFrameWithMissingValuesInMiddle = getMockTimeFrameArray(721, 1675262550000, 30000);
@@ -31,9 +31,9 @@ const timeFrameWithMissingValuesAtStart = getMockTimeFrameArray(721, 16752625500
 const timeFrameWithMissingValuesAtEnd = getMockTimeFrameArray(721, 1675262550000, 30000);
 
 // Deleting some out the middle
-timeFrameWithMissingValuesInMiddle.toArray().splice(360, 721 - 684);
-timeFrameWithMissingValuesAtStart.toArray().splice(0, 721 - 684);
-timeFrameWithMissingValuesAtEnd.toArray().splice(721 - 684, 721 - 684);
+timeFrameWithMissingValuesInMiddle.splice(360, 721 - 684);
+timeFrameWithMissingValuesAtStart.splice(0, 721 - 684);
+timeFrameWithMissingValuesAtEnd.splice(721 - 684, 721 - 684);
 
 const mockLabels = {
   __name__: 'cortex_request_duration_seconds_bucket',
@@ -1038,7 +1038,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 interval: 1000,
               },
-              values: new ArrayVector([
+              values: [
                 1681130257000, 1681130258000, 1681130259000, 1681130260000, 1681130261000, 1681130262000, 1681130263000,
                 1681130264000, 1681130265000, 1681130266000, 1681130267000, 1681130268000, 1681130269000, 1681130270000,
                 1681130271000, 1681130272000, 1681130273000, 1681130274000, 1681130275000, 1681130276000, 1681130277000,
@@ -1168,7 +1168,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 1681131139000, 1681131140000, 1681131141000, 1681131142000, 1681131143000, 1681131144000, 1681131145000,
                 1681131146000, 1681131147000, 1681131148000, 1681131149000, 1681131150000, 1681131151000, 1681131152000,
                 1681131153000, 1681131154000, 1681131155000, 1681131156000,
-              ]),
+              ],
               entities: {},
             },
             {
@@ -1181,7 +1181,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 displayNameFromDS: 'cpu.mean',
               },
-              values: new ArrayVector([
+              values: [
                 null,
                 null,
                 null,
@@ -2082,7 +2082,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-              ]),
+              ],
               entities: {},
             },
           ],
@@ -2263,14 +2263,14 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 interval: 1000,
               },
-              values: new ArrayVector([
+              values: [
                 1681131120000, 1681131121000, 1681131122000, 1681131123000, 1681131124000, 1681131125000, 1681131126000,
                 1681131127000, 1681131128000, 1681131129000, 1681131130000, 1681131131000, 1681131132000, 1681131133000,
                 1681131134000, 1681131135000, 1681131136000, 1681131137000, 1681131138000, 1681131139000, 1681131140000,
                 1681131141000, 1681131142000, 1681131143000, 1681131144000, 1681131145000, 1681131146000, 1681131147000,
                 1681131148000, 1681131149000, 1681131150000, 1681131151000, 1681131152000, 1681131153000, 1681131154000,
                 1681131155000, 1681131156000,
-              ]),
+              ],
               entities: {},
             },
             {
@@ -2283,7 +2283,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 displayNameFromDS: 'cpu.mean',
               },
-              values: new ArrayVector([
+              values: [
                 null,
                 null,
                 null,
@@ -2321,7 +2321,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-              ]),
+              ],
               entities: {},
             },
           ],
@@ -2504,7 +2504,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 interval: 1000,
               },
-              values: new ArrayVector([
+              values: [
                 1681138112000, 1681138113000, 1681138114000, 1681138115000, 1681138116000, 1681138117000, 1681138118000,
                 1681138119000, 1681138120000, 1681138121000, 1681138122000, 1681138123000, 1681138124000, 1681138125000,
                 1681138126000, 1681138127000, 1681138128000, 1681138129000, 1681138130000, 1681138131000, 1681138132000,
@@ -2634,7 +2634,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 1681138994000, 1681138995000, 1681138996000, 1681138997000, 1681138998000, 1681138999000, 1681139000000,
                 1681139001000, 1681139002000, 1681139003000, 1681139004000, 1681139005000, 1681139006000, 1681139007000,
                 1681139008000, 1681139009000, 1681139010000, 1681139011000,
-              ]),
+              ],
               entities: {},
             },
             {
@@ -2647,7 +2647,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 displayNameFromDS: 'cpu.mean',
               },
-              values: new ArrayVector([
+              values: [
                 null,
                 null,
                 null,
@@ -3548,7 +3548,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-              ]),
+              ],
               entities: {},
             },
           ],
@@ -3730,13 +3730,13 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 interval: 1000,
               },
-              values: new ArrayVector([
+              values: [
                 1681138980000, 1681138981000, 1681138982000, 1681138983000, 1681138984000, 1681138985000, 1681138986000,
                 1681138987000, 1681138988000, 1681138989000, 1681138990000, 1681138991000, 1681138992000, 1681138993000,
                 1681138994000, 1681138995000, 1681138996000, 1681138997000, 1681138998000, 1681138999000, 1681139000000,
                 1681139001000, 1681139002000, 1681139003000, 1681139004000, 1681139005000, 1681139006000, 1681139007000,
                 1681139008000, 1681139009000, 1681139010000, 1681139011000,
-              ]),
+              ],
               entities: {},
             },
             {
@@ -3749,7 +3749,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 displayNameFromDS: 'cpu.mean',
               },
-              values: new ArrayVector([
+              values: [
                 null,
                 null,
                 null,
@@ -3782,7 +3782,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-              ]),
+              ],
               entities: {},
             },
           ],
@@ -4038,7 +4038,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 interval: 1000,
               },
-              values: new ArrayVector([
+              values: [
                 1681141350000, 1681141351000, 1681141352000, 1681141353000, 1681141354000, 1681141355000, 1681141356000,
                 1681141357000, 1681141358000, 1681141359000, 1681141360000, 1681141361000, 1681141362000, 1681141363000,
                 1681141364000, 1681141365000, 1681141366000, 1681141367000, 1681141368000, 1681141369000, 1681141370000,
@@ -4168,7 +4168,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 1681142232000, 1681142233000, 1681142234000, 1681142235000, 1681142236000, 1681142237000, 1681142238000,
                 1681142239000, 1681142240000, 1681142241000, 1681142242000, 1681142243000, 1681142244000, 1681142245000,
                 1681142246000, 1681142247000, 1681142248000, 1681142249000, 1681142250000,
-              ]),
+              ],
             },
             {
               name: 'value',
@@ -4176,7 +4176,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 displayNameFromDS: 'cpu.mean',
               },
-              values: new ArrayVector([
+              values: [
                 null,
                 null,
                 null,
@@ -5078,7 +5078,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-              ]),
+              ],
             },
           ],
           length: 901,
@@ -5329,13 +5329,13 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 interval: 1000,
               },
-              values: new ArrayVector([
+              values: [
                 1681142220000, 1681142221000, 1681142222000, 1681142223000, 1681142224000, 1681142225000, 1681142226000,
                 1681142227000, 1681142228000, 1681142229000, 1681142230000, 1681142231000, 1681142232000, 1681142233000,
                 1681142234000, 1681142235000, 1681142236000, 1681142237000, 1681142238000, 1681142239000, 1681142240000,
                 1681142241000, 1681142242000, 1681142243000, 1681142244000, 1681142245000, 1681142246000, 1681142247000,
                 1681142248000, 1681142249000, 1681142250000, 1681142251000,
-              ]),
+              ],
               entities: {},
             },
             {
@@ -5344,7 +5344,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
               config: {
                 displayNameFromDS: 'cpu.mean',
               },
-              values: new ArrayVector([
+              values: [
                 0.3655452101416886, // I'd expect this value to be 0.3655452101416886 instead of null?
                 null,
                 null,
@@ -5377,7 +5377,7 @@ export const IncrementalStorageDataFrameScenariosInflux = {
                 null,
                 null,
                 null,
-              ]),
+              ],
             },
           ],
           length: 32,

@@ -35,6 +35,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, t
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy},
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy},
+		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 	}
 
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
@@ -86,7 +87,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		jsonDataObj := map[string]interface{}{}
+		jsonDataObj := map[string]any{}
 		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -176,6 +177,9 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (typ
 		return types.DatasourceInfo{}, fmt.Errorf("unable to convert datasource from service instance")
 	}
 	dsInfo.OrgID = req.PluginContext.OrgID
+
+	dsInfo.DatasourceName = req.PluginContext.DataSourceInstanceSettings.Name
+	dsInfo.DatasourceUID = req.PluginContext.DataSourceInstanceSettings.UID
 	return dsInfo, nil
 }
 

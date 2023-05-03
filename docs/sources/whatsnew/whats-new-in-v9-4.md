@@ -7,7 +7,7 @@ keywords:
   - '9.4'
   - release notes
 title: What's new in Grafana v9.4
-weight: -33
+weight: -35
 ---
 
 # What’s new in Grafana v9.4

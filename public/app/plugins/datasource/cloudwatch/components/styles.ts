@@ -26,6 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     svg: {
       marginRight: theme.spacing(0.5),
     },
+    fontSize: 12,
   }),
 
   logGroupCountLabel: css({

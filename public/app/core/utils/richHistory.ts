@@ -4,17 +4,11 @@ import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } fr
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
-import {
-  createErrorNotification,
-  createSuccessNotification,
-  createWarningNotification,
-} from 'app/core/copy/appNotification';
+import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { config } from '../config';
-import RichHistoryLocalStorage from '../history/RichHistoryLocalStorage';
-import RichHistoryRemoteStorage from '../history/RichHistoryRemoteStorage';
 import {
   RichHistoryResults,
   RichHistoryServiceError,
@@ -131,43 +125,6 @@ export async function deleteQueryInRichHistory(id: string) {
       dispatch(notifyApp(createErrorNotification('Saving rich history failed', error.message)));
     }
     return undefined;
-  }
-}
-
-export enum LocalStorageMigrationStatus {
-  Successful = 'successful',
-  Failed = 'failed',
-  NotNeeded = 'not-needed',
-}
-
-export interface LocalStorageMigrationResult {
-  status: LocalStorageMigrationStatus;
-  error?: Error;
-}
-
-export async function migrateQueryHistoryFromLocalStorage(): Promise<LocalStorageMigrationResult> {
-  const richHistoryLocalStorage = new RichHistoryLocalStorage();
-  const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
-
-  try {
-    const { richHistory } = await richHistoryLocalStorage.getRichHistory({
-      datasourceFilters: [],
-      from: 0,
-      search: '',
-      sortOrder: SortOrder.Descending,
-      starred: false,
-      to: 14,
-    });
-    if (richHistory.length === 0) {
-      return { status: LocalStorageMigrationStatus.NotNeeded };
-    }
-    await richHistoryRemoteStorage.migrate(richHistory);
-    dispatch(notifyApp(createSuccessNotification('Query history successfully migrated from local storage')));
-    return { status: LocalStorageMigrationStatus.Successful };
-  } catch (error) {
-    const errorToThrow = error instanceof Error ? error : new Error('Uknown error occurred.');
-    dispatch(notifyApp(createWarningNotification(`Query history migration failed. ${errorToThrow.message}`)));
-    return { status: LocalStorageMigrationStatus.Failed, error: errorToThrow };
   }
 }
 

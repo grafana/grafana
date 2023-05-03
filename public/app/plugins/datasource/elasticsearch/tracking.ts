@@ -140,3 +140,25 @@ export function trackQuery(
     });
   }
 }
+
+export function trackAnnotationQuery(annotation: {
+  target: ElasticsearchQuery;
+  timeField?: string;
+  timeEndField?: string;
+  query?: string;
+  tagsField?: string;
+  textField?: string;
+  index?: string;
+  [key: string]: unknown;
+}): void {
+  reportInteraction('grafana_elasticsearch_annotation_query_executed', {
+    grafana_version: config.buildInfo.version,
+    has_target_query: !!annotation.target?.query,
+    has_query: !!annotation.query,
+    has_time_field: !!annotation.timeField,
+    has_time_end_field: !!annotation.timeEndField,
+    has_tags_field: !!annotation.tagsField,
+    has_text_field: !!annotation.textField,
+    has_index: !!annotation.index,
+  });
+}
