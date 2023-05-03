@@ -76,7 +76,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     return getGridCellKind(field, row, hasGridSelection(gridSelection));
   };
 
-  const onCellEdited = async (cell: Item, newValue: EditableGridCell) => {
+  const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
     // if there are rows selected, return early, we don't want to edit any cell
     if (hasGridSelection(gridSelection)) {
       return;
@@ -263,7 +263,6 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
         getCellsForSelection={isDatagridEnabled() ? true : undefined}
         showSearch={isDatagridEnabled() ? toggleSearch : false}
         onSearchClose={onSearchClose}
-        onPaste={isDatagridEnabled() ? true : undefined}
         gridSelection={gridSelection}
         onGridSelectionChange={isDatagridEnabled() ? onGridSelectionChange : undefined}
         onRowAppended={isDatagridEnabled() ? addNewRow : undefined}
