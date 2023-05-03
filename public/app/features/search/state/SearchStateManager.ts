@@ -267,6 +267,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
     });
+
+    this.setState(initialState);
   };
 
   /**
