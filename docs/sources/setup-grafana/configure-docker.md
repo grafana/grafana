@@ -225,7 +225,7 @@ docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana-enterprise
 
 Using configuration files, you can input confidential data like login credentials and secrets into Grafana. This method works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/), as the secrets are automatically mapped to the `/run/secrets/` location within the container. 
 
-You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information. Please check the official [docker secret command usage](https://docs.docker.com/engine/reference/commandline/secret/) for more refrence.
+You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information. For more information about Docker secret command usage, refer to [docker secret](https://docs.docker.com/engine/reference/commandline/secret/).
 
 The following example demonstrates how to set the admin password:
 
