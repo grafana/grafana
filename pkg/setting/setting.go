@@ -397,6 +397,7 @@ type Cfg struct {
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
+	AnalyticsIDAuthModules              []string
 
 	// Frontend analytics
 	GoogleAnalyticsID                   string
@@ -1060,6 +1061,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
+	if err := readTrustedAnalyticsIDAuthModules(cfg, iniFile); err != nil {
+		return err
+	}
+
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
 
@@ -1653,6 +1658,24 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
+
+	return nil
+}
+
+func readTrustedAnalyticsIDAuthModules(cfg *Cfg, iniFile *ini.File) error {
+	section := iniFile.Section("analytics.external_id_auth_modules")
+
+	for _, key := range section.Keys() {
+		value, err := strconv.ParseBool(key.Value())
+
+		if err != nil {
+			return err
+		}
+
+		if value {
+			cfg.AnalyticsIDAuthModules = append(cfg.AnalyticsIDAuthModules, key.Name())
+		}
+	}
 
 	return nil
 }

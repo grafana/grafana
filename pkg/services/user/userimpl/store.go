@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/exp/slices"
 )
 
 type store interface {
@@ -438,7 +439,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			signedInUser.OrgName = "Org missing"
 		}
 
-		if signedInUser.ExternalAuthModule != "oauth_grafana_com" {
+		useForAnalyticsID := slices.Contains(ss.cfg.AnalyticsIDAuthModules, signedInUser.ExternalAuthModule)
+		if !useForAnalyticsID {
 			signedInUser.ExternalAuthID = ""
 		}
 

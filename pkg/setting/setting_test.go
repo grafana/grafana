@@ -401,6 +401,25 @@ func TestGetCDNPathWithPreReleaseVersionAndSubPath(t *testing.T) {
 	require.Equal(t, "http://cdn.grafana.com/sub/grafana/v7.5.0-11124pre/", cfg.GetContentDeliveryURL("grafana"))
 }
 
+func TestAnalyticsIDAuthModules(t *testing.T) {
+	iniFile := ini.Empty()
+	cfg := NewCfg()
+
+	section, err := iniFile.NewSection("analytics.external_id_auth_modules")
+	require.NoError(t, err)
+
+	_, err = section.NewKey("oauth_provider_a", "true")
+	require.NoError(t, err)
+	_, err = section.NewKey("oauth_provider_b", "true")
+	require.NoError(t, err)
+	_, err = section.NewKey("oauth_provider_c", "false")
+	require.NoError(t, err)
+
+	err = readTrustedAnalyticsIDAuthModules(cfg, iniFile)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"oauth_provider_a", "oauth_provider_b"}, cfg.AnalyticsIDAuthModules)
+}
+
 // Adding a case for this in case we switch to proper semver version strings
 func TestGetCDNPathWithAlphaVersion(t *testing.T) {
 	var err error
