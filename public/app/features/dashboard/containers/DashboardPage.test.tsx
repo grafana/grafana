@@ -1,10 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { KBarProvider } from 'kbar';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { match, Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { createTheme } from '@grafana/data';
@@ -12,6 +14,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
+import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
@@ -58,6 +61,9 @@ jest.mock('app/core/core', () => ({
       return { unsubscribe: () => {} };
     },
   },
+  contextSrv: {
+    user: { orgId: 1 },
+  },
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -92,6 +98,10 @@ function setup(propOverrides?: Partial<Props>) {
   config.bootData.navTree = [
     { text: 'Dashboards', id: 'dashboards/browse' },
     { text: 'Home', id: HOME_NAV_ID },
+    {
+      text: 'Help',
+      id: 'help',
+    },
   ];
 
   const store = configureStore();
@@ -176,6 +186,45 @@ describe('DashboardPage', () => {
       await waitFor(() => {
         expect(document.title).toBe('My dashboard - Dashboards - Grafana');
       });
+    });
+
+    it('only calls initDashboard once when wrapped in AppChrome', async () => {
+      const props: Props = {
+        ...getRouteComponentProps({
+          match: { params: { slug: 'my-dash', uid: '11' } } as unknown as match,
+          route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
+        }),
+        navIndex: {
+          'dashboards/browse': {
+            text: 'Dashboards',
+            id: 'dashboards/browse',
+            parentItem: { text: 'Home', id: HOME_NAV_ID },
+          },
+          [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
+        },
+        initPhase: DashboardInitPhase.Completed,
+        initError: null,
+        initDashboard: mockInitDashboard,
+        notifyApp: mockToolkitActionCreator(notifyApp),
+        cleanUpDashboardAndVariables: mockCleanUpDashboardAndVariables,
+        cancelVariables: jest.fn(),
+        templateVarsChangedInUrl: jest.fn(),
+        dashboard: getTestDashboard(),
+        theme: createTheme(),
+      };
+
+      render(
+        <KBarProvider>
+          <TestProvider>
+            <AppChrome>
+              <UnthemedDashboardPage {...props} />
+            </AppChrome>
+          </TestProvider>
+        </KBarProvider>
+      );
+
+      await screen.findByText('My dashboard');
+      expect(mockInitDashboard).toHaveBeenCalledTimes(1);
     });
   });
 

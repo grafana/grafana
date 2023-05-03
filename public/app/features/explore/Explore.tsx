@@ -532,6 +532,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { syncedTimes } = explore;
   const item = explore.panes[exploreId];
+  // FIXME: this happens because mapStateToProps is called before ExplorePage rerenders.
+  // converting this to a function component should fix it.
   if (!item) {
     return null;
   }

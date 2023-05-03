@@ -16,11 +16,11 @@ import {
   formattedValueToString,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { Page } from 'app/core/components/Page/Page';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
@@ -165,6 +165,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           </ul>
         )
       );
+    });
+
+    reportInteraction('dashboards_dropped_files', {
+      number_of_files: fileRejections.length + acceptedFiles.length,
+      accepted_files: acceptedFiles.map((a) => {
+        return { type: a.type, size: a.size };
+      }),
+      rejected_files: fileRejections.map((r) => {
+        return { type: r.file.type, size: r.file.size };
+      }),
     });
   };
 
@@ -351,6 +361,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
+  // Todo: Remove this when we remove the emptyDashboardPage toggle
   onAddPanel = () => {
     const { dashboard } = this.props;
 
@@ -408,25 +419,20 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
-    const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-        <DashNav
-          dashboard={dashboard}
-          title={dashboard.title}
-          folderTitle={dashboard.meta.folderTitle}
-          isFullscreen={!!viewPanel}
-          onAddPanel={this.onAddPanel}
-          kioskMode={kioskMode}
-          hideTimePicker={dashboard.timepicker.hidden}
-          shareModalActiveTab={this.props.queryParams.shareView}
-        />
-      </header>
-    );
+    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
     const pageClassName = cx({
       'panel-in-fullscreen': Boolean(viewPanel),
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
+
+    if (dashboard.meta.dashboardNotFound) {
+      return (
+        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
+          <EntityNotFound entity="Dashboard" />
+        </Page>
+      );
+    }
 
     return (
       <>
@@ -434,60 +440,67 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           navModel={sectionNav}
           pageNav={pageNav}
           layout={PageLayoutType.Canvas}
-          toolbar={toolbar}
           className={pageClassName}
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
         >
+          {showToolbar && (
+            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+              <DashNav
+                dashboard={dashboard}
+                title={dashboard.title}
+                folderTitle={dashboard.meta.folderTitle}
+                isFullscreen={!!viewPanel}
+                onAddPanel={this.onAddPanel}
+                kioskMode={kioskMode}
+                hideTimePicker={dashboard.timepicker.hidden}
+                shareModalActiveTab={this.props.queryParams.shareView}
+              />
+            </header>
+          )}
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
-          {dashboard.meta.dashboardNotFound ? (
-            <ErrorPage />
-          ) : (
-            <>
-              {showSubMenu && (
-                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </section>
-              )}
-              {config.featureToggles.editPanelCSVDragAndDrop ? (
-                <DropZone
-                  onDrop={this.onFileDrop}
-                  accept={DFImport.acceptedFiles}
-                  maxSize={DFImport.maxFileSize}
-                  noClick={true}
-                >
-                  {({ getRootProps, isDragActive }) => {
-                    const styles = getStyles(this.props.theme, isDragActive);
-                    return (
-                      <div {...getRootProps({ className: styles.dropZone })}>
-                        <div className={styles.dropOverlay}>
-                          <div className={styles.dropHint}>
-                            <Icon name="upload" size="xxxl"></Icon>
-                            <h3>Create tables from spreadsheets</h3>
-                          </div>
-                        </div>
-                        <DashboardGrid
-                          dashboard={dashboard}
-                          isEditable={!!dashboard.meta.canEdit}
-                          viewPanel={viewPanel}
-                          editPanel={editPanel}
-                        />
-                      </div>
-                    );
-                  }}
-                </DropZone>
-              ) : (
-                <DashboardGrid
-                  dashboard={dashboard}
-                  isEditable={!!dashboard.meta.canEdit}
-                  viewPanel={viewPanel}
-                  editPanel={editPanel}
-                />
-              )}
-              {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-            </>
+          {showSubMenu && (
+            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+            </section>
           )}
+          {config.featureToggles.editPanelCSVDragAndDrop ? (
+            <DropZone
+              onDrop={this.onFileDrop}
+              accept={DFImport.acceptedFiles}
+              maxSize={DFImport.maxFileSize}
+              noClick={true}
+            >
+              {({ getRootProps, isDragActive }) => {
+                const styles = getStyles(this.props.theme, isDragActive);
+                return (
+                  <div {...getRootProps({ className: styles.dropZone })}>
+                    <div className={styles.dropOverlay}>
+                      <div className={styles.dropHint}>
+                        <Icon name="upload" size="xxxl"></Icon>
+                        <h3>Create tables from spreadsheets</h3>
+                      </div>
+                    </div>
+                    <DashboardGrid
+                      dashboard={dashboard}
+                      isEditable={!!dashboard.meta.canEdit}
+                      viewPanel={viewPanel}
+                      editPanel={editPanel}
+                    />
+                  </div>
+                );
+              }}
+            </DropZone>
+          ) : (
+            <DashboardGrid
+              dashboard={dashboard}
+              isEditable={!!dashboard.meta.canEdit}
+              viewPanel={viewPanel}
+              editPanel={editPanel}
+            />
+          )}
+          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
         {editPanel && (
           <PanelEditor

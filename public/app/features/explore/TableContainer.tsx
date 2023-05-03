@@ -45,7 +45,7 @@ export class TableContainer extends PureComponent<Props> {
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, mainFrame.length * 36) + 40 + 46);
+    return Math.min(600, Math.max(mainFrame.length * 36, 300) + 40 + 46);
   }
 
   render() {
@@ -102,7 +102,6 @@ export class TableContainer extends PureComponent<Props> {
                 subData={subFrames}
                 width={innerWidth}
                 height={innerHeight}
-                maxHeight={600}
                 onCellFilterAdded={onCellFilterAdded}
               />
             ) : (

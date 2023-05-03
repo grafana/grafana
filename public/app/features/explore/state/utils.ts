@@ -5,6 +5,7 @@ import {
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
   RawTimeRange,
   TimeFragment,
@@ -60,6 +61,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  clearedAtIndex: null,
   rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
@@ -188,3 +190,19 @@ function parseRawTime(value: string | DateTime): TimeFragment | null {
 
   return null;
 }
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};

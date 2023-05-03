@@ -96,7 +96,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		jBody, err := simplejson.NewJson(bodyBytes)
 		require.NoError(t, err)
 
-		assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
+		assert.Equal(t, []string{"metrics-2018.05.15"}, jHeader.Get("index").MustStringArray())
 		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
 		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
 		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))

@@ -62,7 +62,6 @@ function setup(queries: DataQuery[]) {
     correlations: [],
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
-    richHistoryMigrationFailed: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 

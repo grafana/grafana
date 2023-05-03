@@ -105,25 +105,23 @@ export const ActionRow = ({
         )}
       </HorizontalGroup>
 
-      <div className={styles.rowContainer}>
-        <HorizontalGroup spacing="md" width="auto">
-          {!hideLayout && (
-            <RadioButtonGroup
-              options={getLayoutOptions()}
-              disabledOptions={disabledOptions}
-              onChange={onLayoutChange}
-              value={layout}
-            />
-          )}
-          <SortPicker
-            onChange={(change) => onSortChange(change?.value)}
-            value={state.sort}
-            getSortOptions={getSortOptions}
-            placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
-            isClearable
+      <HorizontalGroup spacing="md" width="auto">
+        {!hideLayout && (
+          <RadioButtonGroup
+            options={getLayoutOptions()}
+            disabledOptions={disabledOptions}
+            onChange={onLayoutChange}
+            value={layout}
           />
-        </HorizontalGroup>
-      </div>
+        )}
+        <SortPicker
+          onChange={(change) => onSortChange(change?.value)}
+          value={state.sort}
+          getSortOptions={getSortOptions}
+          placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
+          isClearable
+        />
+      </HorizontalGroup>
     </div>
   );
 };
@@ -142,9 +140,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
-    `,
-    rowContainer: css`
-      margin-right: ${theme.v1.spacing.md};
     `,
     checkboxWrapper: css`
       label {
