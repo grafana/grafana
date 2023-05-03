@@ -1113,22 +1113,22 @@ def postgres_integration_tests_step():
         "commands": cmds,
     }
 
-def mysql_integration_tests_step():
+def mysql_integration_tests_step(hostname, version):
     cmds = [
         "apt-get update",
         "apt-get install -yq default-mysql-client",
-        "dockerize -wait tcp://mysql:3306 -timeout 120s",
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass",
+        "dockerize -wait tcp://{}:3306 -timeout 120s".format(hostname),
+        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
-        "name": "mysql-integration-tests",
+        "name": "mysql-{}-integration-tests".format(version),
         "image": build_image,
         "depends_on": ["wire-install"],
         "environment": {
             "GRAFANA_TEST_DB": "mysql",
-            "MYSQL_HOST": "mysql",
+            "MYSQL_HOST": hostname,
         },
         "commands": cmds,
     }

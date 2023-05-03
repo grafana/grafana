@@ -24,8 +24,19 @@ def integration_test_services():
             ],
         },
         {
-            "name": "mysql",
+            "name": "mysql57",
             "image": "mysql:5.7.39",
+            "environment": {
+                "MYSQL_ROOT_PASSWORD": "rootpass",
+                "MYSQL_DATABASE": "grafana_tests",
+                "MYSQL_USER": "grafana",
+                "MYSQL_PASSWORD": "password",
+            },
+            "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
+        },
+        {
+            "name": "mysql80",
+            "image": "mysql:8.0.32",
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
                 "MYSQL_DATABASE": "grafana_tests",

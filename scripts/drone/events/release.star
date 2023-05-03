@@ -202,7 +202,8 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -355,7 +356,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -738,7 +740,8 @@ def integration_test_pipelines():
     volumes = integration_test_services_volumes()
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
