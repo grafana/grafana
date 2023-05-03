@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/v3.1/
   - guides/reference/admin/
 cascade:
+  # Until a better mechanism for arrangement is thought of, the following sequence should be ordered alphabetically by the `_target.path` value.
   - _target: { path: /docs/grafana/** } # Default to every page having "Enterprise" and "Open source" labels.
     labels:
       products:
@@ -150,9 +151,7 @@ cascade:
         - enterprise
 
   - _target:
-      {
-        path: /docs/grafana/*/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/**,
-      }
+      path: /docs/grafana/*/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/**
     labels:
       products:
         - cloud
