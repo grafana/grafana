@@ -21,6 +21,10 @@ load(
     "verify_release_pipeline",
 )
 load(
+    "scripts/drone/rgm.star",
+    "rgm",
+)
+load(
     "scripts/drone/pipelines/publish_images.star",
     "publish_image_pipelines_public",
 )
@@ -58,6 +62,7 @@ def main(_ctx):
             "event": ["promote"],
             "target": ["test-windows"],
         }, "oss", "testing")] +
+        rgm() +
         version_branch_pipelines() +
         integration_test_pipelines() +
         publish_ci_windows_test_image_pipeline() +
