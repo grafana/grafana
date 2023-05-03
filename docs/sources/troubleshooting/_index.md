@@ -1,14 +1,6 @@
 ---
 aliases:
   - troubleshoot-dashboards/
-cascade:
-  - _target:
-      path: /docs/grafana/*/troubleshooting/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
 description: Guide to troubleshooting Grafana problems
 keywords:
   - grafana

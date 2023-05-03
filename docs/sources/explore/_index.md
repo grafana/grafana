@@ -1,14 +1,6 @@
 ---
 aliases:
   - features/explore/
-cascade:
-  - _target:
-      path: /docs/grafana/*/explore/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
 keywords:
   - explore
   - loki

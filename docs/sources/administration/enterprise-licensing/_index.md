@@ -8,12 +8,6 @@ aliases:
   - ../enterprise/license/license-expiration/
   - ../enterprise/license/license-restrictions/
   - license-restrictions/
-cascade:
-  - _target:
-      path: /docs/grafana/*/administration/enterprise-licensing/**
-    labels:
-      products:
-        - enterprise
 description: Activate and manage a Grafana Enterprise license
 keywords:
   - grafana

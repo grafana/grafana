@@ -1,14 +1,6 @@
 ---
 aliases:
   - basics/
-cascade:
-  - _target:
-      path: /docs/grafana/*/fundamentals/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
 title: Fundamentals
 weight: 8
 ---

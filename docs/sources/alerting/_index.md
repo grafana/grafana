@@ -2,14 +2,6 @@
 aliases:
   - about-alerting/
   - unified-alerting/alerting/
-cascade:
-  - _target:
-      path: /docs/grafana/*/alerting/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
 title: Alerting
 weight: 114
 ---

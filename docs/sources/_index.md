@@ -3,6 +3,101 @@ aliases:
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/
+cascade:
+  - _target:
+      path: /docs/grafana/*/administration/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/administration/enterprise-licensing/**
+    labels:
+      products:
+        - enterprise
+  - _target:
+      path: /docs/grafana/*/administration/roles-and-permissions/access-control/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+  - _target:
+      path: /docs/grafana/*/alerting/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/dashboards/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/datasources/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/explore/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/fundamentals/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/panels-visualizations/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/release-notes/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/search/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/troubleshooting/**
+    labels:
+      products:
+        - cloud
+        - enterprise
+        - oss
+  - _target:
+      path: /docs/grafana/*/whatsnew/**
+    labels:
+      products:
+        - cloud
+        - oss
 description: Guides, installation, and feature documentation
 keywords:
   - grafana
