@@ -23,12 +23,12 @@ export function useDataSourceSettingsNav(pageId?: string) {
     active: true,
     children: (nav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
-      url: navModelItem.url?.replace('datasources/edit/', '/connections/your-datasources/edit/'),
+      url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),
     })),
   };
 
   return {
-    navId: 'connections-your-datasources',
+    navId: 'connections-datasources',
     pageNav,
   };
 }
