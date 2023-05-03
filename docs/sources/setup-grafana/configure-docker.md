@@ -43,7 +43,7 @@ If you prioritize security and want to minimize the size of your image, it is re
 
 ## Ubuntu image
 
-The Ubuntu image are maintained by [Canonical](https://launchpad.net/cloud-images). The Grafana Enterprise and OSS images are based on [Ubuntu](https://ubuntu.com/) and can be accessed through the [Ubuntu official image](https://hub.docker.com/_/ubuntu). This is a good option for users who prefer an Ubuntu-based image or require specific tools unavailable on Alpine.
+The Ubuntu image is maintained by [Canonical](https://launchpad.net/cloud-images). The Grafana Enterprise and OSS images are based on [Ubuntu](https://ubuntu.com/) and can be accessed through the [Ubuntu official image](https://hub.docker.com/_/ubuntu). This is a good option for users who prefer an Ubuntu-based image or require certain tools unavailable on Alpine.
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
@@ -234,7 +234,7 @@ The following example demonstrates how to set the admin password:
 
 ### Configure Docker secrets credentials for AWS CloudWatch
 
-Grafana ships with built-in support for [Amazon CloudWatch datasource](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/), where need to provide information such as AWS ID-Key, secret access key, region etc. For which you can use the Docker secrets to achieve it.
+Grafana ships with built-in support for the [Amazon CloudWatch datasource]({{< relref "../datasources/aws-cloudwatch/" >}}). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
 
 Example:
 
