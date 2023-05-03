@@ -33,7 +33,7 @@ The following topics give you an idea of what to expect from this guide:
 - **[Create a Grafana plugin]({{< relref "./create-a-grafana-plugin" >}})** - If you're already familiar with plugin creation basics, then it's time to dive deeper into specific development scenarios. You'll find tutorials for creating panel plugins, data source plugins, and more.
 - **[Migrate a plugin]({{< relref "./migration-guide" >}})** - Learn how to upgrade from a previous version of a Grafana plugin, rewrite an old Angular plugin in React, or update to a newer version.
 - **[Publish a Grafana plugin]({{< relref "./publish-a-plugin" >}})** - Learn about publishing a plugin to the Grafana plugin catalog, including publishing criteria, packaging, and deployment.
-- **[Reference]({{< relref "./reference" >}})** - Description of the `plugin.json` schema and plugin metadata.
+- **[Reference]({{< relref "metadata.md" >}})** - Description of the `plugin.json` schema and plugin metadata.
 
 ## Go further
 
