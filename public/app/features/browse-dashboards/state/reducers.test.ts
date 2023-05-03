@@ -115,8 +115,10 @@ describe('browse-dashboards reducers', () => {
 
   describe('setItemSelectionState', () => {
     it('marks items as selected', () => {
+      const folder = wellFormedFolder(1).item;
+      const dashboard = wellFormedDashboard(2).item;
       const state = createInitialState();
-      const dashboard = wellFormedDashboard().item;
+      state.rootItems = [folder, dashboard];
 
       setItemSelectionState(state, { type: 'setItemSelectionState', payload: { item: dashboard, isSelected: true } });
 
@@ -133,11 +135,13 @@ describe('browse-dashboards reducers', () => {
     it('marks descendants as selected when the parent folder is selected', () => {
       const state = createInitialState();
 
-      const parentFolder = wellFormedFolder(1).item;
-      const childDashboard = wellFormedDashboard(2, {}, { parentUID: parentFolder.uid }).item;
-      const childFolder = wellFormedFolder(3, {}, { parentUID: parentFolder.uid }).item;
-      const grandchildDashboard = wellFormedDashboard(4, {}, { parentUID: childFolder.uid }).item;
+      const rootDashboard = wellFormedDashboard(1).item;
+      const parentFolder = wellFormedFolder(2).item;
+      const childDashboard = wellFormedDashboard(3, {}, { parentUID: parentFolder.uid }).item;
+      const childFolder = wellFormedFolder(4, {}, { parentUID: parentFolder.uid }).item;
+      const grandchildDashboard = wellFormedDashboard(5, {}, { parentUID: childFolder.uid }).item;
 
+      state.rootItems = [parentFolder, rootDashboard];
       state.childrenByParentUID[parentFolder.uid] = [childDashboard, childFolder];
       state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
 
@@ -195,6 +199,105 @@ describe('browse-dashboards reducers', () => {
         },
         panel: {},
       });
+    });
+
+    it('selects ancestors when all their children are now selected', () => {
+      const state = createInitialState();
+
+      const rootDashboard = wellFormedDashboard(1).item;
+      const parentFolder = wellFormedFolder(2).item;
+      const childDashboard = wellFormedDashboard(3, {}, { parentUID: parentFolder.uid }).item;
+      const childFolder = wellFormedFolder(4, {}, { parentUID: parentFolder.uid }).item;
+      const grandchildDashboard = wellFormedDashboard(5, {}, { parentUID: childFolder.uid }).item;
+
+      state.rootItems = [parentFolder, rootDashboard];
+      state.childrenByParentUID[parentFolder.uid] = [childDashboard, childFolder];
+      state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
+
+      // Selected the deepest grandchild dashboard
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: grandchildDashboard, isSelected: true },
+      });
+
+      expect(state.selectedItems).toEqual({
+        $all: false,
+        dashboard: {
+          [grandchildDashboard.uid]: true,
+        },
+        folder: {
+          [parentFolder.uid]: false,
+          [childFolder.uid]: true, // is selected because all it's children (grandchildDashboard) is selected
+        },
+        panel: {},
+      });
+
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: childDashboard, isSelected: true },
+      });
+
+      expect(state.selectedItems).toEqual({
+        $all: false,
+        dashboard: {
+          [childDashboard.uid]: true,
+          [grandchildDashboard.uid]: true,
+        },
+        folder: {
+          [parentFolder.uid]: true, // is now selected because we also selected its other child
+          [childFolder.uid]: true,
+        },
+        panel: {},
+      });
+    });
+
+    it('selects the $all header checkbox when all descendants are now selected', () => {
+      const state = createInitialState();
+
+      const rootDashboard = wellFormedDashboard(1).item;
+      const rootFolder = wellFormedFolder(2).item;
+      const childDashboardA = wellFormedDashboard(3, {}, { parentUID: rootFolder.uid }).item;
+      const childDashboardB = wellFormedDashboard(4, {}, { parentUID: rootFolder.uid }).item;
+
+      state.rootItems = [rootFolder, rootDashboard];
+      state.childrenByParentUID[rootFolder.uid] = [childDashboardA, childDashboardB];
+
+      state.selectedItems.dashboard = { [rootDashboard.uid]: true, [childDashboardA.uid]: true };
+
+      // Selected the deepest grandchild dashboard
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: childDashboardB, isSelected: true },
+      });
+
+      expect(state.selectedItems.$all).toBeTruthy();
+    });
+
+    it('unselects the $all header checkbox a descendant is unselected', () => {
+      const state = createInitialState();
+
+      const rootDashboard = wellFormedDashboard(1).item;
+      const rootFolder = wellFormedFolder(2).item;
+      const childDashboardA = wellFormedDashboard(3, {}, { parentUID: rootFolder.uid }).item;
+      const childDashboardB = wellFormedDashboard(4, {}, { parentUID: rootFolder.uid }).item;
+
+      state.rootItems = [rootFolder, rootDashboard];
+      state.childrenByParentUID[rootFolder.uid] = [childDashboardA, childDashboardB];
+
+      state.selectedItems.dashboard = {
+        [rootDashboard.uid]: true,
+        [childDashboardA.uid]: true,
+        [childDashboardB.uid]: true,
+      };
+      state.selectedItems.folder = { [rootFolder.uid]: true };
+
+      // Selected the deepest grandchild dashboard
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: childDashboardB, isSelected: false },
+      });
+
+      expect(state.selectedItems.$all).toBeFalsy();
     });
   });
 

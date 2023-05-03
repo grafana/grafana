@@ -95,6 +95,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tag: [],
       panel_type: undefined,
       starred: undefined,
+      sort: undefined,
     });
   };
 

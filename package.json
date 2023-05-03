@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "10.0.0-pre",
+  "version": "10.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
@@ -287,9 +287,6 @@
     "@react-stately/tree": "3.3.1",
     "@reduxjs/toolkit": "1.9.3",
     "@remix-run/router": "^1.5.0",
-    "@sentry/browser": "6.19.7",
-    "@sentry/types": "6.19.7",
-    "@sentry/utils": "6.19.7",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/react-resizable": "3.0.3",
     "@types/trusted-types": "2.0.3",

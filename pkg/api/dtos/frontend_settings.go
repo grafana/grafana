@@ -185,7 +185,6 @@ type FrontendSettingsDTO struct {
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
-	Sentry                           setting.Sentry                 `json:"sentry"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
 	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
