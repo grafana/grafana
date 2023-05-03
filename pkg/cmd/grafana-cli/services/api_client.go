@@ -14,9 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
-type GrafanaComClient struct {
-	retryCount int
-}
+type GrafanaComClient struct{}
 
 func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
