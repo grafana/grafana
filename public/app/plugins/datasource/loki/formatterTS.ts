@@ -3,31 +3,45 @@ import { trimEnd } from 'lodash';
 
 import {
   Eq,
-  JsonExpression,
-  JsonExpressionParser,
-  LabelFilter,
-  LabelFormatExpr,
-  LabelParser,
-  LineComment,
-  LineFilter,
-  LineFilters,
-  LineFormatExpr,
+  Identifier,
+  String,
   LogExpr,
   Matcher,
-  Neq,
-  Nre,
   parser,
   PipelineExpr,
-  PipelineStage,
-  Re,
   Selector,
-  String,
+  Nre,
+  Re,
+  Neq,
+  LabelParser,
+  LabelFilter,
+  JsonExpressionParser,
+  LineFormatExpr,
+  LabelFormatExpr,
+  LineComment,
+  LineFilter,
+  Filter,
+  Regexp,
+  Pattern,
+  JsonExpression,
+  IpLabelFilter,
+  UnitFilter,
+  NumberFilter,
+  DurationFilter,
+  BytesFilter,
+  Gtr,
+  Gte,
+  Lss,
+  Lte,
+  Eql,
+  Duration,
+  Bytes,
+  Number,
+  LabelFormatMatcher,
+  FilterOp,
 } from '@grafana/lezer-logql';
 
-// the way i currently reconstruct the query is temporary, i would like to find a better way to do this.
-// i have only focused on log queries, once i have a good idea of how to solution will look, i will add metric.
 export const formatLogQL = (query: string): string => {
-  query = query.replace(/\n/g, '').trim();
   const tree = parser.parse(query);
   let formatted = '';
 
@@ -39,6 +53,7 @@ export const formatLogQL = (query: string): string => {
         case Selector:
           formatted += formatSelector(node, query);
           break;
+
         case PipelineExpr:
           node.parent?.type.id === LogExpr && (formatted += formatPipelineExpr(node, query));
           break;
@@ -49,14 +64,13 @@ export const formatLogQL = (query: string): string => {
   return formatted;
 };
 
-// we could take this opportunity to order the labels, would this improve cache hits?
-// (maybe not, i don't have context around caching i just remember this was mentioned)
-function formatSelector(node: SyntaxNode, query: string): string {
+export function formatSelector(node: SyntaxNode, query: string): string {
   const selector = query.substring(node.from, node.to);
   const subtree = parser.parse(selector);
   const labelNodes: SyntaxNode[] = [];
-  let output = '';
+  let response = '';
 
+  // get all label nodes from the selector
   subtree.iterate({
     enter: (ref): void => {
       const node = ref.node;
@@ -66,198 +80,327 @@ function formatSelector(node: SyntaxNode, query: string): string {
     },
   });
 
-  labelNodes.forEach((labelNode) => {
-    const label = selector.substring(labelNode.from, labelNode.to);
-    output += `${label}, `;
+  // sort the label nodes in alphabetical order
+  labelNodes.sort((a, b) => {
+    const LabelNodeA = a.getChild(Identifier)!;
+    const LabelNodeB = b.getChild(Identifier)!;
+
+    const labelValueA = query.substring(LabelNodeA.from, LabelNodeA.to);
+    const labelValueB = query.substring(LabelNodeB.from, LabelNodeB.to);
+
+    if (labelValueA < labelValueB) {
+      return -1;
+    }
+    if (labelValueA > labelValueB) {
+      return 1;
+    }
+    return 0;
   });
 
-  return '{' + trimEnd(output, ', ') + '}';
+  // add the formatted label to the response
+  labelNodes.forEach((node) => {
+    const labelNode = node.getChild(Identifier)!;
+    const valueNode = node.getChild(String)!;
+    let operatorNode: SyntaxNode;
+
+    if (node.getChild(Eq)) {
+      operatorNode = node.getChild(Eq)!;
+    } else if (node.getChild(Neq)) {
+      operatorNode = node.getChild(Neq)!;
+    } else if (node.getChild(Re)) {
+      operatorNode = node.getChild(Re)!;
+    } else {
+      operatorNode = node.getChild(Nre)!;
+    }
+
+    const label = query.substring(labelNode.from, labelNode.to);
+    const operator = query.substring(operatorNode.from, operatorNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    response += `${label}${operator}${value}, `;
+  });
+
+  // remove the trailing comma and return the formatted selector
+  return '{' + trimEnd(response, ', ') + '}';
 }
 
-function formatPipelineExpr(node: SyntaxNode, query: string): string {
-  const pipelineExpr = query.substring(node.from, node.to);
-  const validQueryExpr = '{}' + pipelineExpr;
-  const subtree = parser.parse(validQueryExpr);
-
+export function formatPipelineExpr(node: SyntaxNode, query: string): string {
+  const pipelineExprNodes = [
+    LineFilter,
+    LabelParser,
+    LabelFilter,
+    JsonExpressionParser,
+    LineFormatExpr,
+    LabelFormatExpr,
+    LineComment,
+  ];
   let lastPipelineType: number;
   let response = '';
 
-  subtree.iterate({
-    enter: (ref): void => {
-      const node = ref.node;
-      const child = node.lastChild?.type.id;
+  iterateNode(node, pipelineExprNodes).forEach((node) => {
+    switch (node.type.id) {
+      case LineFilter:
+        response += buildResponse(LineFilter, lastPipelineType, formatLineFilter(node, query));
+        lastPipelineType = LineFilter;
+        break;
 
-      if (node.type.id === PipelineStage) {
-        switch (child) {
-          // |= "foo"
-          case LineFilters:
-            response += formatLineFilters(node.lastChild!, validQueryExpr);
-            lastPipelineType = LineFilters;
-            break;
+      case LabelParser:
+        response += buildResponse(LabelParser, lastPipelineType, formatLabelParser(node, query));
+        lastPipelineType = LabelParser;
+        break;
 
-          // | logfmt
-          case LabelParser:
-            const formattedLabelParser = formatLabelParser(node.lastChild!, validQueryExpr);
-            response += buildResponse(LabelParser, lastPipelineType, formattedLabelParser);
-            lastPipelineType = LabelParser;
-            break;
+      case JsonExpressionParser:
+        response += buildResponse(JsonExpressionParser, lastPipelineType, formatJsonExpressionParser(node, query));
+        lastPipelineType = JsonExpressionParser;
+        break;
 
-          // | foo = "bar"
-          case LabelFilter:
-            const formattedLabelFilter = formatLabelFilter(node.lastChild!, validQueryExpr);
-            response += buildResponse(LabelFilter, lastPipelineType, formattedLabelFilter);
-            lastPipelineType = LabelFilter;
-            break;
+      case LabelFilter:
+        response += buildResponse(LabelFilter, lastPipelineType, formatLabelFilter(node, query));
+        lastPipelineType = LabelFilter;
+        break;
 
-          // | json foo="bar"
-          case JsonExpressionParser:
-            const formattedJsonExpressionParser = formatJsonExpression(node.lastChild!, validQueryExpr);
-            response += buildResponse(JsonExpressionParser, lastPipelineType, formattedJsonExpressionParser);
-            lastPipelineType = JsonExpressionParser;
-            break;
+      case LineFormatExpr:
+        response += buildResponse(LineFormatExpr, lastPipelineType, formatLineFormatExpr(node, query));
+        lastPipelineType = LineFormatExpr;
+        break;
 
-          // | line_format "{{.log}}"
-          case LineFormatExpr:
-            const formattedLineFormatExpr = formatLineFormatExpr(node.lastChild!, validQueryExpr);
-            response += buildResponse(LineFormatExpr, lastPipelineType, formattedLineFormatExpr);
-            lastPipelineType = LineFormatExpr;
-            break;
+      case LabelFormatExpr:
+        response += buildResponse(LabelFormatExpr, lastPipelineType, formatLabelFormatExpr(node, query));
+        lastPipelineType = LabelFormatExpr;
+        break;
 
-          // | label_format bar=foo
-          case LabelFormatExpr:
-            break;
-
-          // # comment
-          case LineComment:
-            break;
-        }
-      }
-    },
+      case LineComment:
+        response += buildResponse(LineComment, lastPipelineType, formatLineComment(node, query));
+        lastPipelineType = LineComment;
+        break;
+    }
   });
 
   return response;
 }
 
-function buildResponse(pipelineType: number, lastPipelineType: number, formattedNode: string): string {
-  if (lastPipelineType === pipelineType) {
-    return ` ${formattedNode}`;
+export function formatLineFilter(node: SyntaxNode, query: string): string {
+  const filterNode = node.getChild(Filter)!;
+  const filterOperation = node.getChild(FilterOp);
+  const stringNode = node.getChild(String)!;
+
+  const filter = query.substring(filterNode.from, filterNode.to);
+  const string = query.substring(stringNode.from, stringNode.to);
+
+  if (filterOperation) {
+    return `${filter} ip(${string})`;
   }
-  return `\n  ${formattedNode}`;
-}
-
-export function formatLineFilters(node: SyntaxNode, query: string): string {
-  if (node.parent?.type.id !== PipelineStage) {
-    return '';
-  }
-
-  const lineFilters = query.substring(node.from, node.to);
-  const noErrorOnParse = '{} ' + lineFilters;
-  const subtree = parser.parse(noErrorOnParse);
-  const filterNodes: SyntaxNode[] = [];
-  let output = `\n  `;
-
-  subtree.iterate({
-    enter: (ref): void => {
-      const node = ref.node;
-
-      if (node.type.id === LineFilter) {
-        filterNodes.push(node);
-      }
-    },
-  });
-
-  filterNodes.forEach((filterNode) => {
-    let filter = noErrorOnParse.substring(filterNode.from, filterNode.to);
-
-    if (filter.startsWith('|=')) {
-      filter = filter.replace(/\|= */, '|= ');
-    } else if (filter.startsWith('!=')) {
-      filter = filter.replace(/\!= */, '!= ');
-    } else if (filter.startsWith('|~')) {
-      filter = filter.replace(/\|~ */, '|~ ');
-    } else if (filter.startsWith('!~')) {
-      filter = filter.replace(/\!~ */, '!~ ');
-    }
-
-    output += `${filter} `;
-  });
-
-  return output;
+  return `${filter} ${string}`;
 }
 
 export function formatLabelParser(node: SyntaxNode, query: string): string {
-  const labelParsers = query.substring(node.from, node.to);
-  return `| ${labelParsers}`;
+  const hasString = node.getChild(String);
+
+  if (hasString) {
+    const parserNode = (node.getChild(Regexp) || node.getChild(Pattern))!;
+    const stringNode = node.getChild(String)!;
+
+    const parser = query.substring(parserNode.from, parserNode.to);
+    const string = query.substring(stringNode.from, stringNode.to);
+
+    return `| ${parser}${string}`;
+  }
+
+  const labelParser = query.substring(node.from, node.to);
+  return `| ${labelParser}`;
+}
+
+export function formatJsonExpressionParser(node: SyntaxNode, query: string): string {
+  const jsonExpressionNodes = iterateNode(node, [JsonExpression]);
+  let response = '';
+
+  jsonExpressionNodes.forEach((node) => {
+    const identifierNode = node.getChild(Identifier)!;
+    const valueNode = node.getChild(String)!;
+
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    response += `${identifier}=${value}, `;
+  });
+
+  return `| json ${trimEnd(response, ', ')}`;
 }
 
 export function formatLabelFilter(node: SyntaxNode, query: string): string {
-  const labelFilter = query.substring(node.from, node.to);
-  const matcherNode = node.getChild(Matcher)!;
+  if (node.getChild(Matcher)) {
+    const matcherNode = node.getChild(Matcher)!;
 
-  if (matcherNode.getChild(Eq)) {
-    const items = labelFilter.split('=');
-    const key = items[0].trim();
-    const value = items[1].trim();
-    return `| ${key} = ${value}`;
+    const identifierNode = matcherNode.getChild(Identifier)!;
+    const valueNode = matcherNode.getChild(String)!;
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    if (matcherNode.getChild(Eq)) {
+      return `| ${identifier}=${value}`;
+    } else if (matcherNode.getChild(Neq)) {
+      return `| ${identifier}!=${value}`;
+    } else if (matcherNode.getChild(Re)) {
+      return `| ${identifier}=~${value}`;
+    } else if (matcherNode.getChild(Nre)) {
+      return `| ${identifier}!~${value}`;
+    }
   }
 
-  if (matcherNode.getChild(Neq)) {
-    const items = labelFilter.split('!=');
-    const key = items[0].trim();
-    const value = items[1].trim();
-    return `| ${key} != ${value}`;
+  if (node.getChild(IpLabelFilter)) {
+    const ipLabelFilterNode = node.getChild(IpLabelFilter)!;
+
+    const identifierNode = ipLabelFilterNode.getChild(Identifier)!;
+    const valueNode = ipLabelFilterNode.getChild(String)!;
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    if (ipLabelFilterNode.getChild(Eq)) {
+      return `| ${identifier}=ip(${value})`;
+    } else if (ipLabelFilterNode.getChild(Neq)) {
+      return `| ${identifier}!=ip(${value})`;
+    }
   }
 
-  if (matcherNode.getChild(Re)) {
-    const items = labelFilter.split('=~');
-    const key = items[0].trim();
-    const value = items[1].trim();
-    return `| ${key} =~ ${value}`;
+  if (node.getChild(UnitFilter) && node.getChild(UnitFilter)!.getChild(DurationFilter)) {
+    const subNode = node.getChild(UnitFilter)!;
+    const durationFilterNode = subNode.getChild(DurationFilter)!;
+
+    const identifierNode = durationFilterNode.getChild(Identifier)!;
+    const valueNode = durationFilterNode.getChild(Duration)!;
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    if (durationFilterNode.getChild(Gtr)) {
+      return `| ${identifier}>${value}`;
+    } else if (durationFilterNode.getChild(Gte)) {
+      return `| ${identifier}>=${value}`;
+    } else if (durationFilterNode.getChild(Lss)) {
+      return `| ${identifier}<${value}`;
+    } else if (durationFilterNode.getChild(Lte)) {
+      return `| ${identifier}<=${value}`;
+    } else if (durationFilterNode.getChild(Neq)) {
+      return `| ${identifier}!=${value}`;
+    } else if (durationFilterNode.getChild(Eq)) {
+      return `| ${identifier}=${value}`;
+    } else if (durationFilterNode.getChild(Eql)) {
+      return `| ${identifier}==${value}`;
+    }
   }
 
-  if (matcherNode.getChild(Nre)) {
-    const items = labelFilter.split('!~');
-    const key = items[0].trim();
-    const value = items[1].trim();
-    return `| ${key} !~ ${value}`;
+  if (node.getChild(UnitFilter) && node.getChild(UnitFilter)!.getChild(BytesFilter)) {
+    const subNode = node.getChild(UnitFilter)!;
+    const bytesFilterNode = subNode.getChild(BytesFilter)!;
+
+    const identifierNode = bytesFilterNode.getChild(Identifier)!;
+    const valueNode = bytesFilterNode.getChild(Bytes)!;
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    if (bytesFilterNode.getChild(Gtr)) {
+      return `| ${identifier}>${value}`;
+    } else if (bytesFilterNode.getChild(Gte)) {
+      return `| ${identifier}>=${value}`;
+    } else if (bytesFilterNode.getChild(Lss)) {
+      return `| ${identifier}<${value}`;
+    } else if (bytesFilterNode.getChild(Lte)) {
+      return `| ${identifier}<=${value}`;
+    } else if (bytesFilterNode.getChild(Neq)) {
+      return `| ${identifier}!=${value}`;
+    } else if (bytesFilterNode.getChild(Eq)) {
+      return `| ${identifier}=${value}`;
+    } else if (bytesFilterNode.getChild(Eql)) {
+      return `| ${identifier}==${value}`;
+    }
+  }
+
+  if (node.getChild(NumberFilter)) {
+    const numberFilterNode = node.getChild(NumberFilter)!;
+
+    const identifierNode = numberFilterNode.getChild(Identifier)!;
+    const valueNode = numberFilterNode.getChild(Number)!;
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+
+    if (numberFilterNode.getChild(Gtr)) {
+      return `| ${identifier}>${value}`;
+    } else if (numberFilterNode.getChild(Gte)) {
+      return `| ${identifier}>=${value}`;
+    } else if (numberFilterNode.getChild(Lss)) {
+      return `| ${identifier}<${value}`;
+    } else if (numberFilterNode.getChild(Lte)) {
+      return `| ${identifier}<=${value}`;
+    } else if (numberFilterNode.getChild(Neq)) {
+      return `| ${identifier}!=${value}`;
+    } else if (numberFilterNode.getChild(Eq)) {
+      return `| ${identifier}=${value}`;
+    } else if (numberFilterNode.getChild(Eql)) {
+      return `| ${identifier}==${value}`;
+    }
   }
 
   return '';
-}
-
-export function formatJsonExpression(node: SyntaxNode, query: string): string {
-  const jsonExpression = '{}|' + query.substring(node.from, node.to);
-  const subtree = parser.parse(jsonExpression);
-  const jsonExpressionNodes: SyntaxNode[] = [];
-  let output = '| json ';
-
-  subtree.iterate({
-    enter: (ref): void => {
-      const node = ref.node;
-      if (node.type.id === JsonExpression) {
-        jsonExpressionNodes.push(node);
-      }
-    },
-  });
-
-  jsonExpressionNodes.forEach((jsonExpressionNode) => {
-    const jsonExpressionn = jsonExpression.substring(jsonExpressionNode.from, jsonExpressionNode.to);
-    output += `${jsonExpressionn}, `;
-  });
-
-  return trimEnd(output, ', ');
 }
 
 export function formatLineFormatExpr(node: SyntaxNode, query: string): string {
-  const expressionString = node.getChild(String)!;
-  const expression = query.substring(expressionString.from, expressionString.to);
-  return `| line_format ${expression}`;
+  const stringNode = node.getChild(String)!;
+  const string = query.substring(stringNode.from, stringNode.to);
+  return `| line_format ${string}`;
 }
 
 export function formatLabelFormatExpr(node: SyntaxNode, query: string): string {
-  return '';
+  const labelFormatMatcherNodes = iterateNode(node, [LabelFormatMatcher]);
+  let response = '| label_format ';
+
+  labelFormatMatcherNodes.forEach((labelFormatMatcherNode) => {
+    if (labelFormatMatcherNode.getChildren(Identifier).length === 2) {
+      const [identifierNode, valueNode] = labelFormatMatcherNode.getChildren(Identifier);
+      const identifier = query.substring(identifierNode.from, identifierNode.to);
+      const value = query.substring(valueNode.from, valueNode.to);
+      response += `${identifier}=${value}, `;
+      return;
+    }
+
+    const identifierNode = labelFormatMatcherNode.getChild(Identifier)!;
+    const valueNode = labelFormatMatcherNode.getChild(String)!;
+    const identifier = query.substring(identifierNode.from, identifierNode.to);
+    const value = query.substring(valueNode.from, valueNode.to);
+    response += `${identifier}=${value}, `;
+    return;
+  });
+
+  return trimEnd(response, ', ');
 }
 
 export function formatLineComment(node: SyntaxNode, query: string): string {
-  return '';
+  let comment = query.substring(node.from, node.to);
+  return comment.replace(/^# */, '# ').trim();
+}
+
+function iterateNode(node: SyntaxNode, lookingFor: number[]): SyntaxNode[] {
+  const nodes: SyntaxNode[] = [];
+  let child = node.firstChild;
+
+  while (child) {
+    if (lookingFor.includes(child.type.id)) {
+      nodes.push(child);
+    }
+
+    nodes.push(...iterateNode(child, lookingFor));
+    child = child.nextSibling;
+  }
+
+  return nodes;
+}
+
+function buildResponse(pipelineType: number, lastPipelineType: number, formattedNode: string): string {
+  if (pipelineType === LineComment) {
+    return `\n  ${formattedNode}`;
+  }
+
+  if (lastPipelineType === pipelineType) {
+    return ` ${formattedNode}`;
+  }
+
+  return `\n  ${formattedNode}`;
 }
