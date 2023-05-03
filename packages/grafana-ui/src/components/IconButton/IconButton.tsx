@@ -3,9 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useTheme2, stylesFactory } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { stylesFactory } from '../../themes/stylesFactory';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { getSvgSize } from '../Icon/utils';
@@ -89,7 +88,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
         return 6; // TODO: ask Staton
 
       case 'xl':
-        return 12; // TODO: ask Staton
+        return 12;
 
       case 'md':
       default:
