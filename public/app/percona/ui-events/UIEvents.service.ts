@@ -6,8 +6,6 @@ import { FetchingEvent } from 'app/percona/ui-events/events/fetching';
 import { NotificationErrorEvent } from 'app/percona/ui-events/events/notification';
 import { UserFlowEvent } from 'app/percona/ui-events/events/userFlow';
 
-import { logger } from '../shared/helpers/logger';
-
 const api = new ApiRequest({ baseURL: '/v1/ui-events' });
 
 interface UIEventsStoreRequest {
@@ -19,10 +17,6 @@ interface UIEventsStoreRequest {
 
 export const UIEventsService = {
   async store(body: UIEventsStoreRequest): Promise<void> {
-    try {
-      await api.post('/Store', body, true);
-    } catch (e) {
-      logger.error(e);
-    }
+    await api.post('/Store', body, true);
   },
 };
