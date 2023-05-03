@@ -5,12 +5,12 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Configure Grafana secret scanning
+title: Configure Grafana secret scanning and notifications
 menuTitle: Configure secret scanning
 weight: 1000
 ---
 
-# Configure Grafana secret scanning
+# Configure Grafana secret scanning and notifications
 
 > **Note:** Available from Grafana 10.0.
 
@@ -47,10 +47,9 @@ Grafana has revoked this token",
 ## Before you begin
 
 - Ensure all your API keys have been migrated to service accounts.
-  If you need help with this step, follow [Migrate API keys to Grafana service accounts]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts" >}}).
-- Deployed Grafana 10.0 or later.
+  For more information about service account migration, refer to [Migrate API keys to Grafana service accounts]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-accounts" >}}).
 
-## Steps
+## Configure secret scanning
 
 1. Open the Grafana configuration file.
 
@@ -69,13 +68,13 @@ Save the configuration file and restart Grafana.
 
 ## Configure outgoing webhook notifications
 
-1. Create an oncall integration of the type **Webhook** and setup alerting. Copy the webhook URL.
-   You can learn how to create an oncall integration in [Webhook integrations for Grafana OnCall](https://grafana.com/docs/oncall/latest/integrations/available-integrations/configure-webhook/).
+1. Create an oncall integration of the type **Webhook** and set up alerts. Copy the webhook URL.
+   To learn how to create a Grafana OnCall integration, refer to [Webhook integrations for Grafana OnCall](/docs/oncall/latest/integrations/available-integrations/configure-webhook/).
 
-2. Open the Grafana configuration file.
+1. Open the Grafana configuration file.
 
-3. In the `[secretscan]` section, update the following parameters,
-   replacing the URL with the webhook URL you copied in step 1:
+1. In the `[secretscan]` section, update the following parameters,
+   replacing the URL with the webhook URL you copied in step 2.
 
 ```ini
 [secretscan]
