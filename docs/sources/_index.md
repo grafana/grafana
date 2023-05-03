@@ -9,123 +9,146 @@ cascade:
       products:
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/** }
     labels:
       products:
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/administration/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/administration/enterprise-licensing/** }
     labels:
       products:
         - enterprise
+
   - _target: { path: /docs/grafana/*/administration/organization-management/** }
     labels:
       products:
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/administration/provisioning/** }
     labels:
       products:
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/administration/recorded-queries/** }
     labels:
       products:
         - cloud
         - enterprise
+
   - _target: { path: /docs/grafana/*/administration/roles-and-permissions/access-control/** }
     labels:
       products:
         - cloud
         - enterprise
+
   - _target: { path: /docs/grafana/*/administration/stats-and-license/** }
     labels:
       products:
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/alerting/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/dashboards/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/datasources/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/explore/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/fundamentals/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/introduction/grafana-cloud/** }
     labels:
       products:
         - cloud
+
   - _target: { path: /docs/grafana/*/introduction/grafana-enterprise/** }
     labels:
       products:
         - enterprise
+
   - _target: { path: /docs/grafana/*/panels-visualizations/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/release-notes/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/search/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/audit-grafana/** }
     labels:
       products:
         - cloud
         - enterprise
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/enhanced-ldap/** }
     labels:
       products:
         - cloud
         - enterprise
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/saml/** }
     labels:
       products:
         - cloud
         - enterprise
+
   - _target:
       {
         path: /docs/grafana/*/setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/**,
@@ -134,28 +157,33 @@ cascade:
       products:
         - cloud
         - enterprise
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/configure-request-security/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/configure-team-sync/** }
     labels:
       products:
         - cloud
         - enterprise
+
   - _target: { path: /docs/grafana/*/setup-grafana/configure-security/export-logs/** }
     labels:
       products:
         - cloud
         - oss
+
   - _target: { path: /docs/grafana/*/troubleshooting/** }
     labels:
       products:
         - cloud
         - enterprise
         - oss
+
   - _target: { path: /docs/grafana/*/whatsnew/** }
     labels:
       products:
