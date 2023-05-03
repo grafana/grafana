@@ -9,17 +9,17 @@ import (
 
 type AuthInfoService interface {
 	LookupAndUpdate(ctx context.Context, query *GetUserByAuthInfoQuery) (*user.User, error)
-	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) error
+	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
 	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
-	GetExternalUserInfoByLogin(ctx context.Context, query *GetExternalUserInfoByLoginQuery) error
+	GetExternalUserInfoByLogin(ctx context.Context, query *GetExternalUserInfoByLoginQuery) (*ExternalUserInfo, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
 }
 
 type Store interface {
-	GetExternalUserInfoByLogin(ctx context.Context, query *GetExternalUserInfoByLoginQuery) error
-	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) error
+	GetExternalUserInfoByLogin(ctx context.Context, query *GetExternalUserInfoByLoginQuery) (*ExternalUserInfo, error)
+	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) (*UserAuth, error)
 	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
@@ -56,7 +56,7 @@ const (
 	LDAPLabel = "LDAP"
 	JWTLabel  = "JWT"
 	// OAuth provider labels
-	AuthProxtLabel    = "Auth Proxy"
+	AuthProxyLabel    = "Auth Proxy"
 	AzureADLabel      = "AzureAD"
 	GoogleLabel       = "Google"
 	GenericOAuthLabel = "Generic OAuth"
@@ -72,14 +72,18 @@ const (
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then IsExternallySynced will be true for this one provider and false for the others
-func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
+func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
+	// provider enabled in config
+	if !IsProviderEnabled(cfg, authModule) {
+		return false
+	}
 	// first check SAML, LDAP and JWT
-	switch autoProviderLabel {
-	case SAMLLabel:
+	switch authModule {
+	case SAMLAuthModule:
 		return !cfg.SAMLSkipOrgRoleSync
-	case LDAPLabel:
+	case LDAPAuthModule:
 		return !cfg.LDAPSkipOrgRoleSync
-	case JWTLabel:
+	case JWTModule:
 		return !cfg.JWTAuthSkipOrgRoleSync
 	}
 	// then check the rest of the oauth providers
@@ -88,25 +92,52 @@ func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 	if cfg.OAuthSkipOrgRoleUpdateSync {
 		return false
 	}
-	switch autoProviderLabel {
-	case GoogleLabel:
+	switch authModule {
+	case GoogleAuthModule:
 		return !cfg.GoogleSkipOrgRoleSync
-	case OktaLabel:
+	case OktaAuthModule:
 		return !cfg.OktaSkipOrgRoleSync
-	case AzureADLabel:
+	case AzureADAuthModule:
 		return !cfg.AzureADSkipOrgRoleSync
-	case GitLabLabel:
+	case GitLabAuthModule:
 		return !cfg.GitLabSkipOrgRoleSync
-	case GithubLabel:
-		return !cfg.GithubSkipOrgRoleSync
-	case GrafanaComLabel:
+	case GithubAuthModule:
+		return !cfg.GitHubSkipOrgRoleSync
+	case GrafanaComAuthModule:
 		return !cfg.GrafanaComSkipOrgRoleSync
-	case GenericOAuthLabel:
+	case GenericOAuthModule:
 		return !cfg.GenericOAuthSkipOrgRoleSync
 	}
 	return true
 }
 
+func IsProviderEnabled(cfg *setting.Cfg, authModule string) bool {
+	switch authModule {
+	case SAMLAuthModule:
+		return cfg.SAMLAuthEnabled
+	case LDAPAuthModule:
+		return cfg.LDAPAuthEnabled
+	case JWTModule:
+		return cfg.JWTAuthEnabled
+	case GoogleAuthModule:
+		return cfg.GoogleAuthEnabled
+	case OktaAuthModule:
+		return cfg.OktaAuthEnabled
+	case AzureADAuthModule:
+		return cfg.AzureADEnabled
+	case GitLabAuthModule:
+		return cfg.GitLabAuthEnabled
+	case GithubAuthModule:
+		return cfg.GitHubAuthEnabled
+	case GrafanaComAuthModule:
+		return cfg.GrafanaComAuthEnabled
+	case GenericOAuthModule:
+		return cfg.GenericOAuthAuthEnabled
+	}
+	return false
+}
+
+// used for frontend to display a more user friendly label
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
 	case GithubAuthModule:
@@ -128,7 +159,7 @@ func GetAuthProviderLabel(authModule string) string {
 	case JWTModule:
 		return JWTLabel
 	case AuthProxyAuthModule:
-		return AuthProxtLabel
+		return AuthProxyLabel
 	case GenericOAuthModule:
 		return GenericOAuthLabel
 	default:

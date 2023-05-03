@@ -1,4 +1,4 @@
-import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Props, ArgsTable } from '@storybook/addon-docs/blocks';
 import { Alert } from './Alert';
 
 <Meta title="MDX|Alert" component={Alert} />
@@ -6,12 +6,153 @@ import { Alert } from './Alert';
 # Alert
 
 An alert displays an important message in a way that attracts the user's attention without interrupting the user's task.
-`onRemove` handler can be used to enable manually dismissing the alert.
 
-# Usage
+---
+
+About Alert component:
+
+1. [Behaviors](#behaviors)
+2. [Types](#types)
+3. [Message type](#message-type)
+4. [Main elements](#main-elements)
+5. [Usage:](#usage)\
+   5.1. [Inline banner](#alert-inline)\
+   5.2. [Toast](#alert-toast)
+
+<br />
+<br />
+<br />
+## <a name="behaviors" /> Behaviors
+
+1. **Persistent**: They are usually urgent and intrusive, require immediate attention and require action to be dismissed.
+2. **Passive**: Are informational, report a system issue that does not require any action by users.
+   <br />
+
+## <a name="types"/>Types
+
+Within Grafana, we have two different types of alerts and they can be used depending on the context and content.
+
+1. **[Inline banner](#alert-inline)**:
+   - To notify users of the status of an action. They appear at the top or bottom of the main content area
+   - Passive or Persistent
+1. **[Toast](#alert-toast)**:
+   - These temporary window elements are used to display short messages; they appear at the top-right corner of the screen and can be dismissed by clicking the [x] or it will disappear after a few seconds
+   - Passive
+     <br />
+
+## <a name="message-type"/>Message Type
+
+1. **Informational**
+   - To provide information to users, and don’t interrupt any current actions
+   - Does not require immediate action and can be dismissed by a user clicking the [X] or passively display until the display timer expires
+   - Shows blue color on the background and uses the `info-circle` icon
+2. **Success**
+   - To confirm a task is completed as expected or an action is successful.
+   - Typically does not require further action and can be dismissed automatically or persist in a nonintrusive manner
+   - Shows green color on the background and uses the `check` icon
+3. **Warning**
+   - To inform users that an action is undesirable
+   - Often persists until users have taken action to dismiss the notification or taken steps to resolve the issue
+   - Shows yellow color on background and uses the `exclamation-triangle` icon
+4. **Error**
+   - To inform that an action hasn't happened as expected, usually something has failed and the user is expected to take action
+   - Always persists until the user has taken steps to remedy the issue that triggered the notification
+   - Shows red color on background and uses the `exclamation-triangle` icon
+     <br />
+
+## <a name="main-elements"/>Main elements
+
+- Icon status: represents the importance of the message through the color and icon for each status.
+
+- Alert title: should be explicit, clear and short, conveying the most important part of the information.
+
+- Details: precise description for the notification, telling users what they need to do.
+
+- Button and text links: only persistent notifications should contain text links or buttons.
+
+- Close icon: appears when the notification can be dismissed by the user.
+  <br />
+
+## <a name="usage"/>Usage
+
+<br />
+### <a name="alert-inline" /> Inline Banner
+
+Inline Banners are task-oriented alerts that notify users of the status of an action or system. These alerts are contextual — appearing above or below main content areas — allowing users to address issues or to read messages quickly.
+
+#### Do's
+
+    - Use the appropriate status for the message (info/success/warning/error).
+    - Use plain, simple language for the messages to ensure users understand them and know how to address them.
+    - Focus on notifications if they are relevant to the users' current workflow and should be addressed immediately.
+
+#### Don'ts
+
+    - Do not use Primary calls to actions.
+    - Do not hide other content with inline notifications.
+    - Do not repeat the alert copy/title on the details message.
+
+#### When to use
+
+    - To inform at that time how to continue a task in which users must perform an action.
+    - To provide some options for users to take action.
+    - To explain in detail the reasons why something can’t be done by users.
+
+#### Placement
+
+    - Should be placed immediately above or below the related element.
 
 ```jsx
-<Alert title="Some very important message" severity="info" />
+<Alert title={title} severity={severity} buttonContent={buttonContent} onRemove={onRemove}>
+  <VerticalGroup>
+    <div>Child content that includes some alert details, like maybe what actually happened.</div>
+  </VerticalGroup>
+</Alert>
 ```
 
-<Props of={Alert} />
+### <a name="alert-toast"/>Toast
+
+Toast notifications are short messages that appear in the top-right corner of the page and are automatically hidden after a certain amount of time – they provide live notifications, without interrupting the user experience or requiring an action to be taken.
+
+#### Do's
+
+    - Use this component using `AppEvents` and `getAppEvents()`.
+    - Show the `Toast` publishing the `appEvent` with the proper type and payload needed.
+
+```jsx
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
+
+const appEvents = getAppEvents();
+appEvents.publish({
+  type: AppEvents.alertSuccess.name,
+  payload: [text + ': ' + resp.status + ' (' + resp.statusText + ')'],
+});
+```
+
+#### Don'ts
+
+    - Do not use this component directly. Instead, emit the `appEvent` to trigger it's appearance.
+
+#### When to use
+
+    - To convey general confirmation or non-critical actions.
+    - Immediately after an event is taken, such as a permission is updated or some Dashboards are imported or deleted.
+    - Status according to use cases:
+        - *Success*: When any action is successful, it is confirmed when a task is completed as expected.
+        - *Warning*: It is used to report a current status that users should be aware of or that could have serious consequences.
+        - *Error*: Inform users of an error, and sometimes provide more information about how to fix the error.
+
+#### Placement
+
+    - Slide in and out from the top right corner of the page.
+
+```jsx
+<Alert title={title} severity={severity} onRemove={onRemove} elevated>
+  <VerticalGroup>
+    <div>Child content that includes some alert details, like maybe what actually happened.</div>
+  </VerticalGroup>
+</Alert>
+```
+
+<ArgsTable of={Alert} />

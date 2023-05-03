@@ -19,13 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ Service = (*RenderingService)(nil)
-
-const ServiceName = "RenderingService"
 
 type RenderingService struct {
 	log               log.Logger
@@ -42,11 +41,12 @@ type RenderingService struct {
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
+	features                    *featuremgmt.FeatureManager
 	RemoteCacheService          *remotecache.RemoteCache
 	RendererPluginManager       plugins.RendererManager
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remoteCache *remotecache.RemoteCache, rm plugins.RendererManager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -83,12 +83,23 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain = "localhost"
 	}
 
-	s := &RenderingService{
-		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
+	var renderKeyProvider renderKeyProvider
+	if features.IsEnabled(featuremgmt.FlagRenderAuthJWT) {
+		renderKeyProvider = &jwtRenderKeyProvider{
+			log:       logger,
+			authToken: []byte(cfg.RendererAuthToken),
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
+		}
+	} else {
+		renderKeyProvider = &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
 			keyExpiry: cfg.RendererRenderKeyLifeTime,
-		},
+		}
+	}
+
+	s := &RenderingService{
+		perRequestRenderKeyProvider: renderKeyProvider,
 		capabilities: []Capability{
 			{
 				name:             FullHeightImages,
@@ -104,6 +115,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 			},
 		},
 		Cfg:                   cfg,
+		features:              features,
 		RemoteCacheService:    remoteCache,
 		RendererPluginManager: rm,
 		log:                   logger,

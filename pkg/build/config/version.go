@@ -123,6 +123,7 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 func CheckSemverSuffix() (ReleaseMode, error) {
 	reBetaRls := regexp.MustCompile(`beta.*`)
 	reTestRls := regexp.MustCompile(`test.*`)
+	reCloudRls := regexp.MustCompile(`cloud.*`)
 	tagSuffix, ok := os.LookupEnv("DRONE_SEMVER_PRERELEASE")
 	if !ok || tagSuffix == "" {
 		fmt.Println("DRONE_SEMVER_PRERELEASE doesn't exist for a tag, this is a release event...")
@@ -133,6 +134,8 @@ func CheckSemverSuffix() (ReleaseMode, error) {
 		return ReleaseMode{Mode: TagMode, IsBeta: true}, nil
 	case reTestRls.MatchString(tagSuffix):
 		return ReleaseMode{Mode: TagMode, IsTest: true}, nil
+	case reCloudRls.MatchString(tagSuffix):
+		return ReleaseMode{Mode: CloudMode}, nil
 	default:
 		fmt.Printf("DRONE_SEMVER_PRERELEASE is custom string, release event with %s suffix\n", tagSuffix)
 		return ReleaseMode{Mode: TagMode}, nil

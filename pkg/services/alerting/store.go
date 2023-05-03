@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,17 +40,19 @@ type sqlStore struct {
 	log        *log.ConcreteLogger
 	cfg        *setting.Cfg
 	tagService tag.Service
+	features   featuremgmt.FeatureToggles
 }
 
 func ProvideAlertStore(
 	db db.DB,
-	cacheService *localcache.CacheService, cfg *setting.Cfg, tagService tag.Service) AlertStore {
+	cacheService *localcache.CacheService, cfg *setting.Cfg, tagService tag.Service, features featuremgmt.FeatureToggles) AlertStore {
 	return &sqlStore{
 		db:         db,
 		cache:      cacheService,
 		log:        log.New("alerting.store"),
 		cfg:        cfg,
 		tagService: tagService,
+		features:   features,
 	}
 }
 
@@ -107,8 +110,13 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session, log
 }
 
 func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.GetAlertsQuery) (res []*alertmodels.AlertListItemDTO, err error) {
+	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return res, err
+	}
+
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		builder := db.NewSqlBuilder(ss.cfg, ss.db.GetDialect())
+		builder := db.NewSqlBuilder(ss.cfg, ss.features, ss.db.GetDialect(), recursiveQueriesAreSupported)
 
 		builder.Write(`SELECT
 		alert.id,

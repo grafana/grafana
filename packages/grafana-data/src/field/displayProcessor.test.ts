@@ -3,7 +3,6 @@ import { createTheme } from '../themes';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
-import { ArrayVector } from '../vector';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
@@ -548,7 +547,7 @@ describe('Date display options', () => {
       field: {
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([Date.parse('2020-08-01T08:48:43.783337Z'), Date.parse('2020-08-01T08:49:15.123456Z')]),
+        values: [Date.parse('2020-08-01T08:48:43.783337Z'), Date.parse('2020-08-01T08:49:15.123456Z')],
       },
       theme: createTheme(),
     });
@@ -562,7 +561,7 @@ describe('Date display options', () => {
       field: {
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([Date.parse('2020-08-01T08:49:15.123456Z'), Date.parse('2020-08-01T08:43:43.783337Z')]),
+        values: [Date.parse('2020-08-01T08:49:15.123456Z'), Date.parse('2020-08-01T08:43:43.783337Z')],
       },
       theme: createTheme(),
     });
@@ -578,7 +577,7 @@ describe('Date display options', () => {
         config: {
           unit: 'time:YYYY-MM-DD HH:mm',
         },
-        values: new ArrayVector([Date.parse('2020-08-01T08:48:43.783337Z'), Date.parse('2020-08-01T08:49:15.123456Z')]),
+        values: [Date.parse('2020-08-01T08:48:43.783337Z'), Date.parse('2020-08-01T08:49:15.123456Z')],
       },
       theme: createTheme(),
     });

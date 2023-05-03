@@ -164,7 +164,7 @@ func (auth *AuthProxy) Login(reqCtx *contextmodel.ReqContext, ignoreCache bool) 
 		}
 	}
 
-	if auth.cfg.LDAPEnabled {
+	if auth.cfg.LDAPAuthEnabled {
 		id, err := auth.LoginViaLDAP(reqCtx)
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {
@@ -241,11 +241,12 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, err
 			UserID: nil,
 		},
 	}
-	if err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert); err != nil {
+	u, err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
+	if err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.ID, nil
+	return u.ID, nil
 }
 
 // loginViaHeader logs in user from the header only
@@ -304,12 +305,12 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, e
 		},
 	}
 
-	err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
+	result, err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.ID, nil
+	return result.ID, nil
 }
 
 // getDecodedHeader gets decoded value of a header with given headerName

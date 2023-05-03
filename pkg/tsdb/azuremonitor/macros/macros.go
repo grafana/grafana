@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 )
@@ -38,7 +39,7 @@ func KqlInterpolate(logger log.Logger, query backend.DataQuery, dsInfo types.Dat
 	engine := kqlMacroEngine{}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
-	if len(defaultTimeField) > 0 {
+	if len(defaultTimeField) > 0 && query.QueryType != string(dataquery.AzureQueryTypeAzureTraces) {
 		defaultTimeFieldForAllDatasources = defaultTimeField[0]
 	}
 	return engine.Interpolate(logger, query, dsInfo, kql, defaultTimeFieldForAllDatasources)

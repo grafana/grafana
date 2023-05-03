@@ -1,15 +1,8 @@
 import { map } from 'lodash';
-import { from, Observable } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
 
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  ScopedVars,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -43,11 +36,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   azureMonitorPath: string;
   firstWorkspace?: string;
-  cache: Map<string, any>;
+
+  readonly timeSrv: TimeSrv = getTimeSrv();
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
-    this.cache = new Map();
 
     this.resourcePath = `${routeNames.logAnalytics}`;
     this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
@@ -65,8 +58,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   filterQuery(item: AzureMonitorQuery): boolean {
     return (
       item.hide !== true &&
-      !!item.azureLogAnalytics?.query &&
-      (!!item.azureLogAnalytics.resources?.length || !!item.azureLogAnalytics.workspace)
+      ((!!item.azureLogAnalytics?.query &&
+        (!!item.azureLogAnalytics.resources?.length || !!item.azureLogAnalytics.workspace)) ||
+        !!item.azureTraces?.resources?.length)
     );
   }
 
@@ -118,106 +112,66 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
-    const item = target.azureLogAnalytics;
-    if (!item) {
-      return target;
-    }
+    let item;
+    if (target.queryType === AzureQueryType.LogAnalytics && target.azureLogAnalytics) {
+      item = target.azureLogAnalytics;
+      const templateSrv = getTemplateSrv();
+      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-    const templateSrv = getTemplateSrv();
-    const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
-    let workspace = templateSrv.replace(item.workspace, scopedVars);
-
-    if (!workspace && !resources && this.firstWorkspace) {
-      workspace = this.firstWorkspace;
-    }
-
-    const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
-
-    return {
-      ...target,
-      queryType: AzureQueryType.LogAnalytics,
-
-      azureLogAnalytics: {
-        resultFormat: item.resultFormat,
-        query,
-        resources,
-
-        // Workspace was removed in Grafana 8, but remains for backwards compat
-        workspace,
-      },
-    };
-  }
-
-  /**
-   * Augment the results with links back to the azure console
-   */
-  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    return super.query(request).pipe(
-      mergeMap((res: DataQueryResponse) => {
-        return from(this.processResponse(res));
-      })
-    );
-  }
-
-  async processResponse(res: DataQueryResponse): Promise<DataQueryResponse> {
-    if (res.data) {
-      for (const df of res.data) {
-        const encodedQuery = df.meta?.custom?.encodedQuery;
-        if (encodedQuery && encodedQuery.length > 0) {
-          const url = await this.buildDeepLink(df.meta.custom);
-          if (url?.length) {
-            for (const field of df.fields) {
-              field.config.links = [
-                {
-                  url: url,
-                  title: 'View in Azure Portal',
-                  targetBlank: true,
-                },
-              ];
-            }
-          }
-        }
+      if (!workspace && !resources && this.firstWorkspace) {
+        workspace = this.firstWorkspace;
       }
-    }
-    return res;
-  }
 
-  private async buildDeepLink(customMeta: Record<string, any>) {
-    const base64Enc = encodeURIComponent(customMeta.encodedQuery);
-    const resource = encodeURIComponent(customMeta.resource);
+      const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
 
-    const url =
-      `${this.azurePortalUrl}/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
-      `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
-      `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22${resource}` +
-      `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`;
-    return url;
-  }
+      return {
+        ...target,
+        queryType: target.queryType || AzureQueryType.LogAnalytics,
 
-  async getWorkspaceDetails(workspaceId: string) {
-    if (!this.defaultSubscriptionId) {
-      return {};
-    }
-    const response = await this.getWorkspaceList(this.defaultSubscriptionId);
-
-    const details = response.value.find((o: any) => {
-      return o.properties.customerId === workspaceId;
-    });
-
-    if (!details) {
-      return {};
+        azureLogAnalytics: {
+          resultFormat: item.resultFormat,
+          query,
+          resources,
+          // Workspace was removed in Grafana 8, but remains for backwards compat
+          workspace,
+        },
+      };
     }
 
-    const regex = /.*resourcegroups\/(.*)\/providers.*/;
-    const results = regex.exec(details.id);
-    if (!results || results.length < 2) {
-      return {};
+    if (target.queryType === AzureQueryType.AzureTraces && target.azureTraces) {
+      item = target.azureTraces;
+      const templateSrv = getTemplateSrv();
+      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
+      const traceTypes = item.traceTypes?.map((t) => templateSrv.replace(t, scopedVars));
+      const filters = (item.filters ?? [])
+        .filter((f) => !!f.property)
+        .map((f) => {
+          const filtersReplaced = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
+          return {
+            property: templateSrv.replace(f.property, scopedVars),
+            operation: f.operation || 'eq',
+            filters: filtersReplaced || [],
+          };
+        });
+
+      return {
+        ...target,
+        queryType: target.queryType || AzureQueryType.AzureTraces,
+
+        azureTraces: {
+          resultFormat: item.resultFormat,
+          query,
+          resources,
+          operationId: templateSrv.replace(target.azureTraces?.operationId, scopedVars),
+          filters,
+          traceTypes,
+        },
+      };
     }
 
-    return {
-      workspace: details.name,
-      resourceGroup: results[1],
-    };
+    return target;
   }
 
   /*

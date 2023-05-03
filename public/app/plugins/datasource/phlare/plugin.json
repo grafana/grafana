@@ -1,6 +1,6 @@
 {
   "type": "datasource",
-  "name": "Phlare",
+  "name": "Grafana Pyroscope",
   "id": "phlare",
   "category": "profiling",
 
@@ -13,15 +13,15 @@
   "backend": true,
 
   "info": {
-    "description": "Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.",
+    "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
     "author": {
       "name": "Grafana Labs",
       "url": "https://www.grafana.com"
     },
-    "keywords": ["grafana", "datasource", "phlare", "flamegraph"],
+    "keywords": ["grafana", "datasource", "phlare", "flamegraph", "profiling", "continuous profiling", "pyroscope"],
     "logos": {
-      "small": "img/phlare_icon_color.svg",
-      "large": "img/phlare_icon_color.svg"
+      "small": "img/grafana_pyroscope_icon.svg",
+      "large": "img/grafana_pyroscope_icon.svg"
     },
     "links": [
       {
