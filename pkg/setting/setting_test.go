@@ -158,20 +158,6 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "TLS1.3", cfg.MinTLSVersion)
 	})
 
-	t.Run("Should be able to override TLS Ciphers via command line", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args: []string{
-				"cfg:default.server.tls_ciphers=TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-			},
-			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
-		})
-		require.Nil(t, err)
-
-		require.Equal(t, "TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", cfg.TLSCiphers)
-	})
-
 	t.Run("Defaults can be overridden in specified config file", func(t *testing.T) {
 		if runtime.GOOS == windows {
 			cfg := NewCfg()

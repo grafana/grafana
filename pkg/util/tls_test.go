@@ -7,23 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTlsVersionToName(t *testing.T) {
-	tests := []struct {
-		tlsVer   uint16
-		expected string
-	}{
-		{tls.VersionTLS10, "TLS1.0"},
-		{tls.VersionTLS11, "TLS1.1"},
-		{tls.VersionTLS12, "TLS1.2"},
-		{tls.VersionTLS13, "TLS1.3"},
-		{uint16(0x100), "Wrong TLS Version"},
-	}
-
-	for _, testcase := range tests {
-		assert.EqualValues(t, testcase.expected, TlsVersionToName(testcase.tlsVer))
-	}
-}
-
 func TestTlsNameToVersion(t *testing.T) {
 	tests := []struct {
 		tlsVer   string

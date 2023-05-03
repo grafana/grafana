@@ -194,17 +194,6 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.
 If you do not specify a version, the system uses TLS1.2.
 
-### tls_ciphers
-
-This section refers to the values that are accepted for the TLS cipher. By default, this value is left empty. Example value: "TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
-For a list of supported ciphers and TLS versions, refer to [Source file src/crypto/tls/cipher_suites.go](https://go.dev/src/crypto/tls/cipher_suites.go).
-
-To support backward compatibility
-If the protocol is set to https and there are no ciphers configured, the system will apply the following ciphers to support backward compatibility for TLS 1.2: `TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,TLS_RSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA`
-
-If the protocol is set to h2 and there are no ciphers configured, the system will apply the following ciphers to support backward compatibility for TLS 1.2:
-`TLS_CHACHA20_POLY1305_SHA256,TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305`
-
 ### http_addr
 
 The host for the server to listen on. If your machine has more than one network interface, you can use this setting to expose the Grafana service on only one network interface and not have it available on others, such as the loopback interface. An empty value is equivalent to setting the value to `0.0.0.0`, which means the Grafana service binds to all interfaces.

@@ -507,13 +507,13 @@ func (hs *HTTPServer) configureHttps() error {
 		return err
 	}
 
-	tlsCiphers, err := hs.getTlsCiphers(string(setting.HTTPSScheme), minTlsVersion, hs.Cfg.TLSCiphers)
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTPSScheme))
 	if err != nil {
 		return err
 	}
 
 	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
-		"TLSCiphers", hs.Cfg.TLSCiphers, "configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
 		MinVersion:   minTlsVersion,
@@ -548,13 +548,10 @@ func (hs *HTTPServer) configureHttp2() error {
 		return err
 	}
 
-	tlsCiphers, err := hs.getTlsCiphers(string(setting.HTTPSScheme), minTlsVersion, hs.Cfg.TLSCiphers)
-	if err != nil {
-		return err
-	}
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTP2Scheme))
 
 	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
-		"TLSCiphers", hs.Cfg.TLSCiphers, "configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
 
 	tlsCfg := &tls.Config{
 		MinVersion:   minTlsVersion,
@@ -741,20 +738,6 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 
 func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
 	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
-}
-
-func (hs *HTTPServer) getTlsCiphers(protocolStr string, minTlsVersion uint16, ciphers string) ([]uint16, error) {
-	var tlsCiphers []uint16
-	var err error
-	if ciphers == "" {
-		tlsCiphers = hs.getDefaultCiphers(minTlsVersion, protocolStr)
-	} else {
-		tlsCiphers, err = util.TlsCiphersToIDs(strings.Split(ciphers, ","))
-		if err != nil {
-			return nil, err
-		}
-	}
-	return tlsCiphers, nil
 }
 
 func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []uint16 {

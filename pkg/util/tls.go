@@ -57,22 +57,6 @@ func TlsCiphersToIDs(names []string) ([]uint16, error) {
 }
 
 // tlsNameToVersion converts a tls version to a string
-func TlsVersionToName(tlsVersion uint16) string {
-	switch tlsVersion {
-	case tls.VersionTLS10:
-		return "TLS1.0"
-	case tls.VersionTLS11:
-		return "TLS1.1"
-	case tls.VersionTLS12:
-		return "TLS1.2"
-	case tls.VersionTLS13:
-		return "TLS1.3"
-	}
-
-	return "Wrong TLS Version"
-}
-
-// tlsNameToVersion converts a tls version to a string
 func TlsCipherIdsToString(ids []uint16) string {
 	var tlsCiphers []string
 	if len(ids) > 0 {
