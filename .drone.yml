@@ -4552,7 +4552,8 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-main-build
+name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging
+  to main'
 node:
   type: no-parallel
 platform:
@@ -4572,7 +4573,6 @@ steps:
   environment:
     DESTINATION:
       from_secret: destination
-    DISTROS: linux/amd64
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -4599,7 +4599,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-build
+name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging'
 node:
   type: no-parallel
 platform:
@@ -4619,7 +4619,6 @@ steps:
   environment:
     DESTINATION:
       from_secret: destination
-    DISTROS: linux/amd64
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -6940,6 +6939,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 1f20d3167163340bd1736e87a720e716d39bdda3740f53d381acd2ae4ca3454c
+hmac: 56c943e42ccc524e5688b291eaa3c3fea6cf5b91440b4357493044f1c4cb517d
 
 ...

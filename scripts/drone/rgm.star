@@ -23,7 +23,7 @@ rgm_env_secrets = {
   "GITHUB_TOKEN": from_secret(rgm_github_token),
 }
 
-def rgm_build(distros=["linux/amd64"], script="drone_publish_main.sh"):
+def rgm_build(script="drone_publish_main.sh"):
   clone_step = {
     "name": "clone-rgm",
     "image": "alpine/git",
@@ -32,14 +32,6 @@ def rgm_build(distros=["linux/amd64"], script="drone_publish_main.sh"):
     ],
     "failure": "ignore",
   }
-
-  distroStr = ",".join(distros)
-  env = {
-    "DISTROS": distroStr,
-  }
-
-  for key in rgm_env_secrets:
-    env[key] = rgm_env_secrets[key]
 
   rgm_build_step = {
     "name": "rgm-build",
@@ -50,7 +42,7 @@ def rgm_build(distros=["linux/amd64"], script="drone_publish_main.sh"):
       "export GRAFANA_DIR=$$(pwd)",
       "cd rgm && ./scripts/{}".format(script)
     ],
-    "environment": env,
+    "environment": rgm_env_secrets,
     # The docker socket is a requirement for running dagger programs
     # In the future we should find a way to use dagger without mounting the docker socket.
     "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
@@ -72,7 +64,7 @@ def rgm_main():
   }
 
   return pipeline(
-    name="rgm-main-build",
+    name="[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging to main",
     edition="all",
     trigger=trigger,
     steps=rgm_build(),
@@ -96,7 +88,7 @@ def rgm_tag():
   }
 
   return pipeline(
-    name="rgm-tag-build",
+    name="[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging",
     edition="all",
     trigger=trigger,
     steps=rgm_build(script="drone_publish_tag.sh"),
