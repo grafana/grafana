@@ -1,10 +1,10 @@
-import { MutableDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer, nestedSetToLevels } from './dataTransform';
 
 describe('nestedSetToLevels', () => {
   it('converts nested set data frame to levels', () => {
-    const frame = new MutableDataFrame({
+    const frame = createDataFrame({
       fields: [
         { name: 'level', values: [0, 1, 2, 3, 2, 1, 2, 3, 4] },
         { name: 'value', values: [10, 5, 3, 1, 1, 4, 3, 2, 1] },
@@ -33,7 +33,7 @@ describe('nestedSetToLevels', () => {
   });
 
   it('converts nested set data if multiple same level items', () => {
-    const frame = new MutableDataFrame({
+    const frame = createDataFrame({
       fields: [
         { name: 'level', values: [0, 1, 1, 1] },
         { name: 'value', values: [10, 5, 3, 1] },

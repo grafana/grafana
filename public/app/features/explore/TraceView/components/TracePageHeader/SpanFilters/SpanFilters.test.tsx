@@ -43,10 +43,11 @@ describe('SpanFilters', () => {
       trace: trace,
       showSpanFilters: true,
       setShowSpanFilters: jest.fn(),
-      search: search,
-      setSearch: setSearch,
+      showSpanFilterMatchesOnly: false,
+      setShowSpanFilterMatchesOnly: jest.fn(),
+      search,
+      setSearch,
       spanFilterMatches: undefined,
-      focusedSpanIdForSearch: '',
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: 'tempo',
     };
@@ -149,6 +150,23 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     expect(getElemText(tagValue)).toBe('Select value');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
+  });
+
+  it('should order tag filters', async () => {
+    render(<SpanFiltersWithProps />);
+    const tagKey = screen.getByLabelText('Select tag key');
+
+    await user.click(tagKey);
+    jest.advanceTimersByTime(1000);
+    await waitFor(() => {
+      const container = screen.getByText('TagKey0').parentElement?.parentElement?.parentElement;
+      expect(container?.childNodes[0].textContent).toBe('ProcessKey0');
+      expect(container?.childNodes[1].textContent).toBe('ProcessKey1');
+      expect(container?.childNodes[2].textContent).toBe('TagKey0');
+      expect(container?.childNodes[3].textContent).toBe('TagKey1');
+      expect(container?.childNodes[4].textContent).toBe('LogKey0');
+      expect(container?.childNodes[5].textContent).toBe('LogKey1');
+    });
   });
 
   it('should allow adding/removing tags', async () => {

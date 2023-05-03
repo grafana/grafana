@@ -3,6 +3,7 @@ import React, { RefObject, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
+  CoreApp,
   DataFrame,
   DataLink,
   DataSourceApi,
@@ -41,7 +42,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { useSearchNewTraceView } from './useSearch';
+import { useSearchNewTraceViewHeader } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -76,7 +77,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
+  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
 
   const {
     detailStates,
@@ -94,9 +95,12 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches } = useSearchNewTraceView(traceProp?.spans);
-  const [newTraceViewFocusedSpanIdForSearch, setNewTraceViewFocusedSpanIdForSearch] = useState('');
+  const { newTraceViewHeaderSearch, setNewTraceViewHeaderSearch, spanFilterMatches } = useSearchNewTraceViewHeader(
+    traceProp?.spans
+  );
+  const [newTraceViewHeaderFocusedSpanIdForSearch, setNewTraceViewHeaderFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
+  const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const styles = useStyles2(getStyles);
@@ -152,20 +156,23 @@ export function TraceView(props: Props) {
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
-          {config.featureToggles.newTraceView ? (
+          {config.featureToggles.newTraceViewHeader ? (
             <>
               <NewTracePageHeader
                 trace={traceProp}
+                data={props.dataFrames[0]}
                 timeZone={timeZone}
-                search={newTraceViewSearch}
-                setSearch={setNewTraceViewSearch}
+                search={newTraceViewHeaderSearch}
+                setSearch={setNewTraceViewHeaderSearch}
                 showSpanFilters={showSpanFilters}
                 setShowSpanFilters={setShowSpanFilters}
-                focusedSpanIdForSearch={newTraceViewFocusedSpanIdForSearch}
-                setFocusedSpanIdForSearch={setNewTraceViewFocusedSpanIdForSearch}
+                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+                setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+                setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
                 spanFilterMatches={spanFilterMatches}
                 datasourceType={datasourceType}
                 setHeaderHeight={setHeaderHeight}
+                app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
               />
               <SpanGraph
                 trace={traceProp}
@@ -186,7 +193,7 @@ export function TraceView(props: Props) {
           <TraceTimelineViewer
             registerAccessors={noop}
             scrollToFirstVisibleSpan={noop}
-            findMatchesIDs={config.featureToggles.newTraceView ? spanFilterMatches : spanFindMatches}
+            findMatchesIDs={config.featureToggles.newTraceViewHeader ? spanFilterMatches : spanFindMatches}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
@@ -220,8 +227,11 @@ export function TraceView(props: Props) {
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
             focusedSpanIdForSearch={
-              config.featureToggles.newTraceView ? newTraceViewFocusedSpanIdForSearch : props.focusedSpanIdForSearch!
+              config.featureToggles.newTraceViewHeader
+                ? newTraceViewHeaderFocusedSpanIdForSearch
+                : props.focusedSpanIdForSearch!
             }
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
