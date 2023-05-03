@@ -4584,7 +4584,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 trigger:
-  branch: add-rgm-to-drone
+  branch: main
   event:
   - push
 type: docker
@@ -4595,7 +4595,9 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
+depends_on:
+- main-test-backend
+- main-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -6939,6 +6941,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 56c943e42ccc524e5688b291eaa3c3fea6cf5b91440b4357493044f1c4cb517d
+hmac: d6bfbf6fa92bf3ed68b72ed6315e926aeec8b50e08a44cff1e40f0561007a0fd
 
 ...

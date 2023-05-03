@@ -59,7 +59,7 @@ def rgm_main():
       "event": [
           "push",
       ],
-      "branch": "add-rgm-to-drone",
+      "branch": "main",
   }
 
   return pipeline(
@@ -91,6 +91,7 @@ def rgm_tag():
     edition="all",
     trigger=trigger,
     steps=rgm_build(script="drone_publish_tag.sh"),
+    depends_on=["main-test-backend", "main-test-frontend"],
   )
 
 def rgm():
