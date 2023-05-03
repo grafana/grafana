@@ -47,6 +47,7 @@ func (r *BackgroundServiceRunner) run(ctx context.Context) error {
 				return childCtx.Err()
 			default:
 			}
+			r.log.Debug("Starting background service", "service", serviceName)
 			err := service.Run(childCtx)
 			// Do not return context.Canceled error since errgroup.Group only
 			// returns the first error to the caller - thus we can miss a more
