@@ -238,7 +238,7 @@ Grafana ships with built-in support for [Amazon CloudWatch datasource](https://g
 
 Example:
 
-The following example defines Docker Secrets for an AWS ID-Key, secret access key, region, and profile.
+The following example defines how to use Grafana environment variables via Docker Secrets for the AWS ID-Key, secret access key, region, and profile.
 
 ```bash
 docker run -d \
