@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import FEATURES from '../features';
 
 interface Props {
-  pageId: string;
+  pageId?: string;
   isLoading?: boolean;
   pageNav?: NavModelItem;
 }
