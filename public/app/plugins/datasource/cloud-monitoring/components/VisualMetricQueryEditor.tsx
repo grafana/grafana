@@ -253,7 +253,7 @@ export function Editor({
                 onChange={onMetricTypeChange}
                 value={[...metrics, ...variableOptionGroup.options].find((s) => s.value === metricType)}
                 loadOptions={debounceFilter}
-                defaultOptions={[]}
+                defaultOptions={metrics.slice(0, 100)}
                 placeholder="Select Metric"
                 inputId={`${refId}-select-metric`}
                 disabled={service === ''}
