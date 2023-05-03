@@ -4,8 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, QueryType, TimeSeriesList, TimeSeriesQuery } from '../types/query';
-import { AlignmentTypes, CustomMetaData } from '../types/types';
+import { AlignmentTypes, CloudMonitoringQuery, QueryType, TimeSeriesList, TimeSeriesQuery } from '../types/query';
+import { CustomMetaData } from '../types/types';
 
 import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';

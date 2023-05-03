@@ -1,5 +1,5 @@
-import { MetricKind } from '../types/query';
-import { MetricDescriptor, ValueTypes } from '../types/types';
+import { MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 export const createMockMetricDescriptor = (overrides?: Partial<MetricDescriptor>): MetricDescriptor => {
   return {

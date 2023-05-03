@@ -9,6 +9,11 @@ export {
   SLOQuery,
   MetricQuery,
   MetricKind,
+  LegacyCloudMonitoringAnnotationQuery,
+  Filter,
+  AlignmentTypes,
+  ValueTypes,
+  MetricFindQueryTypes,
 } from '../dataquery.gen';
 
 /**

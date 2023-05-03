@@ -153,6 +153,41 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						#MetricKind: "METRIC_KIND_UNSPECIFIED" | "GAUGE" | "DELTA" | "CUMULATIVE" @cuetsy(kind="enum")
+
+						#ValueTypes: "VALUE_TYPE_UNSPECIFIED" | "BOOL" | "INT64" | "DOUBLE" | "STRING" | "DISTRIBUTION" | "MONEY" @cuetsy(kind="enum")
+
+						#AlignmentTypes: "ALIGN_DELTA" | "ALIGN_RATE" | "ALIGN_INTERPOLATE" | "ALIGN_NEXT_OLDER" | "ALIGN_MIN" | "ALIGN_MAX" | "ALIGN_MEAN" | "ALIGN_COUNT" | "ALIGN_SUM" | "ALIGN_STDDEV" | "ALIGN_COUNT_TRUE" | "ALIGN_COUNT_FALSE" | "ALIGN_FRACTION_TRUE" | "ALIGN_PERCENTILE_99" | "ALIGN_PERCENTILE_95" | "ALIGN_PERCENTILE_50" | "ALIGN_PERCENTILE_05" | "ALIGN_PERCENT_CHANGE" | "ALIGN_NONE" @cuetsy(kind="enum")
+
+						// @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+						#LegacyCloudMonitoringAnnotationQuery: {
+							// GCP project to execute the query against.
+							projectName: string
+							metricType:  string
+							// Query refId.
+							refId: string
+							// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+							filters: [...string]
+							metricKind: #MetricKind
+							valueType:  string
+							// Annotation title.
+							title: string
+							// Annotation text.
+							text: string
+						} @cuetsy(kind="interface")
+
+						// Query filter representation.
+						#Filter: {
+							// Filter key.
+							key: string
+							// Filter operator.
+							operator: string
+							// Filter value.
+							value: string
+							// Filter condition.
+							condition?: string
+						} @cuetsy(kind="interface")
+
+						#MetricFindQueryTypes: "projects" | "services" | "defaultProject" | "metricTypes" | "labelKeys" | "labelValues" | "resourceTypes" | "aggregations" | "aligners" | "alignmentPeriods" | "selectors" | "sloServices" | "slo" @cuetsy(kind="enum", memberNames="Projects|Services|DefaultProject|MetricTypes|LabelKeys|LabelValues|ResourceTypes|Aggregations|Aligners|AlignmentPeriods|Selectors|SLOServices|SLO")
 					},
 
 				]

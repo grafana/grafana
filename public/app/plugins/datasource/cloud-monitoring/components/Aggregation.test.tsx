@@ -3,8 +3,8 @@ import React from 'react';
 import { openMenu } from 'react-select-event';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { MetricKind } from '../types/query';
-import { ValueTypes, MetricDescriptor } from '../types/types';
+import { MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 import { Aggregation, Props } from './Aggregation';
 

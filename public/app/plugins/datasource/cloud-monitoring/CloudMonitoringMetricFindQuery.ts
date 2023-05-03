@@ -11,8 +11,8 @@ import {
   getLabelKeys,
   getMetricTypesByService,
 } from './functions';
-import { MetricKind } from './types/query';
-import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, ValueTypes } from './types/types';
+import { MetricKind, ValueTypes, MetricFindQueryTypes } from './types/query';
+import { CloudMonitoringVariableQuery, MetricDescriptor } from './types/types';
 
 export default class CloudMonitoringMetricFindQuery {
   constructor(private datasource: CloudMonitoringDatasource) {}

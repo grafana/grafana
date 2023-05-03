@@ -13,6 +13,29 @@ import (
 	"encoding/json"
 )
 
+// Defines values for AlignmentTypes.
+const (
+	AlignmentTypesALIGNCOUNT         AlignmentTypes = "ALIGN_COUNT"
+	AlignmentTypesALIGNCOUNTFALSE    AlignmentTypes = "ALIGN_COUNT_FALSE"
+	AlignmentTypesALIGNCOUNTTRUE     AlignmentTypes = "ALIGN_COUNT_TRUE"
+	AlignmentTypesALIGNDELTA         AlignmentTypes = "ALIGN_DELTA"
+	AlignmentTypesALIGNFRACTIONTRUE  AlignmentTypes = "ALIGN_FRACTION_TRUE"
+	AlignmentTypesALIGNINTERPOLATE   AlignmentTypes = "ALIGN_INTERPOLATE"
+	AlignmentTypesALIGNMAX           AlignmentTypes = "ALIGN_MAX"
+	AlignmentTypesALIGNMEAN          AlignmentTypes = "ALIGN_MEAN"
+	AlignmentTypesALIGNMIN           AlignmentTypes = "ALIGN_MIN"
+	AlignmentTypesALIGNNEXTOLDER     AlignmentTypes = "ALIGN_NEXT_OLDER"
+	AlignmentTypesALIGNNONE          AlignmentTypes = "ALIGN_NONE"
+	AlignmentTypesALIGNPERCENTCHANGE AlignmentTypes = "ALIGN_PERCENT_CHANGE"
+	AlignmentTypesALIGNPERCENTILE05  AlignmentTypes = "ALIGN_PERCENTILE_05"
+	AlignmentTypesALIGNPERCENTILE50  AlignmentTypes = "ALIGN_PERCENTILE_50"
+	AlignmentTypesALIGNPERCENTILE95  AlignmentTypes = "ALIGN_PERCENTILE_95"
+	AlignmentTypesALIGNPERCENTILE99  AlignmentTypes = "ALIGN_PERCENTILE_99"
+	AlignmentTypesALIGNRATE          AlignmentTypes = "ALIGN_RATE"
+	AlignmentTypesALIGNSTDDEV        AlignmentTypes = "ALIGN_STDDEV"
+	AlignmentTypesALIGNSUM           AlignmentTypes = "ALIGN_SUM"
+)
+
 // Defines values for AnnotationQueryPreprocessor.
 const (
 	AnnotationQueryPreprocessorDelta AnnotationQueryPreprocessor = "delta"
@@ -25,6 +48,31 @@ const (
 	CloudMonitoringQueryTimeSeriesListPreprocessorDelta CloudMonitoringQueryTimeSeriesListPreprocessor = "delta"
 	CloudMonitoringQueryTimeSeriesListPreprocessorNone  CloudMonitoringQueryTimeSeriesListPreprocessor = "none"
 	CloudMonitoringQueryTimeSeriesListPreprocessorRate  CloudMonitoringQueryTimeSeriesListPreprocessor = "rate"
+)
+
+// Defines values for LegacyCloudMonitoringAnnotationQueryMetricKind.
+const (
+	LegacyCloudMonitoringAnnotationQueryMetricKindCUMULATIVE            LegacyCloudMonitoringAnnotationQueryMetricKind = "CUMULATIVE"
+	LegacyCloudMonitoringAnnotationQueryMetricKindDELTA                 LegacyCloudMonitoringAnnotationQueryMetricKind = "DELTA"
+	LegacyCloudMonitoringAnnotationQueryMetricKindGAUGE                 LegacyCloudMonitoringAnnotationQueryMetricKind = "GAUGE"
+	LegacyCloudMonitoringAnnotationQueryMetricKindMETRICKINDUNSPECIFIED LegacyCloudMonitoringAnnotationQueryMetricKind = "METRIC_KIND_UNSPECIFIED"
+)
+
+// Defines values for MetricFindQueryTypes.
+const (
+	MetricFindQueryTypesAggregations     MetricFindQueryTypes = "aggregations"
+	MetricFindQueryTypesAligners         MetricFindQueryTypes = "aligners"
+	MetricFindQueryTypesAlignmentPeriods MetricFindQueryTypes = "alignmentPeriods"
+	MetricFindQueryTypesDefaultProject   MetricFindQueryTypes = "defaultProject"
+	MetricFindQueryTypesLabelKeys        MetricFindQueryTypes = "labelKeys"
+	MetricFindQueryTypesLabelValues      MetricFindQueryTypes = "labelValues"
+	MetricFindQueryTypesMetricTypes      MetricFindQueryTypes = "metricTypes"
+	MetricFindQueryTypesProjects         MetricFindQueryTypes = "projects"
+	MetricFindQueryTypesResourceTypes    MetricFindQueryTypes = "resourceTypes"
+	MetricFindQueryTypesSelectors        MetricFindQueryTypes = "selectors"
+	MetricFindQueryTypesServices         MetricFindQueryTypes = "services"
+	MetricFindQueryTypesSlo              MetricFindQueryTypes = "slo"
+	MetricFindQueryTypesSloServices      MetricFindQueryTypes = "sloServices"
 )
 
 // Defines values for MetricKind.
@@ -71,6 +119,20 @@ const (
 	TimeSeriesListPreprocessorNone  TimeSeriesListPreprocessor = "none"
 	TimeSeriesListPreprocessorRate  TimeSeriesListPreprocessor = "rate"
 )
+
+// Defines values for ValueTypes.
+const (
+	ValueTypesBOOL                 ValueTypes = "BOOL"
+	ValueTypesDISTRIBUTION         ValueTypes = "DISTRIBUTION"
+	ValueTypesDOUBLE               ValueTypes = "DOUBLE"
+	ValueTypesINT64                ValueTypes = "INT64"
+	ValueTypesMONEY                ValueTypes = "MONEY"
+	ValueTypesSTRING               ValueTypes = "STRING"
+	ValueTypesVALUETYPEUNSPECIFIED ValueTypes = "VALUE_TYPE_UNSPECIFIED"
+)
+
+// AlignmentTypes defines model for AlignmentTypes.
+type AlignmentTypes string
 
 // Annotation sub-query properties.
 type AnnotationQuery struct {
@@ -252,8 +314,50 @@ type CloudMonitoringQueryTimeSeriesList struct {
 	union                json.RawMessage
 }
 
+// Query filter representation.
+type Filter struct {
+	// Filter condition.
+	Condition *string `json:"condition,omitempty"`
+
+	// Filter key.
+	Key string `json:"key"`
+
+	// Filter operator.
+	Operator string `json:"operator"`
+
+	// Filter value.
+	Value string `json:"value"`
+}
+
 // GoogleCloudMonitoringDataQuery defines model for GoogleCloudMonitoringDataQuery.
 type GoogleCloudMonitoringDataQuery = map[string]interface{}
+
+// @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+type LegacyCloudMonitoringAnnotationQuery struct {
+	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+	Filters    []string                                       `json:"filters"`
+	MetricKind LegacyCloudMonitoringAnnotationQueryMetricKind `json:"metricKind"`
+	MetricType string                                         `json:"metricType"`
+
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+
+	// Query refId.
+	RefId string `json:"refId"`
+
+	// Annotation text.
+	Text string `json:"text"`
+
+	// Annotation title.
+	Title     string `json:"title"`
+	ValueType string `json:"valueType"`
+}
+
+// LegacyCloudMonitoringAnnotationQueryMetricKind defines model for LegacyCloudMonitoringAnnotationQuery.MetricKind.
+type LegacyCloudMonitoringAnnotationQueryMetricKind string
+
+// MetricFindQueryTypes defines model for MetricFindQueryTypes.
+type MetricFindQueryTypes string
 
 // MetricKind defines model for MetricKind.
 type MetricKind string
@@ -395,3 +499,6 @@ type TimeSeriesQuery struct {
 	// MQL query to be executed.
 	Query string `json:"query"`
 }
+
+// ValueTypes defines model for ValueTypes.
+type ValueTypes string

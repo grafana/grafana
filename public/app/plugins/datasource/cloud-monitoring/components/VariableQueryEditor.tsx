@@ -5,12 +5,11 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import CloudMonitoringDatasource from '../datasource';
 import { extractServicesFromMetricDescriptors, getLabelKeys, getMetricTypes } from '../functions';
-import { CloudMonitoringQuery } from '../types/query';
+import { CloudMonitoringQuery, MetricFindQueryTypes } from '../types/query';
 import {
   CloudMonitoringOptions,
   CloudMonitoringVariableQuery,
   MetricDescriptor,
-  MetricFindQueryTypes,
   VariableQueryData,
 } from '../types/types';
 

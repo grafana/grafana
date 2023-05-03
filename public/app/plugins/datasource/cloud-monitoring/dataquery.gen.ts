@@ -257,4 +257,107 @@ export enum MetricKind {
   METRIC_KIND_UNSPECIFIED = 'METRIC_KIND_UNSPECIFIED',
 }
 
+export enum ValueTypes {
+  BOOL = 'BOOL',
+  DISTRIBUTION = 'DISTRIBUTION',
+  DOUBLE = 'DOUBLE',
+  INT64 = 'INT64',
+  MONEY = 'MONEY',
+  STRING = 'STRING',
+  VALUE_TYPE_UNSPECIFIED = 'VALUE_TYPE_UNSPECIFIED',
+}
+
+export enum AlignmentTypes {
+  ALIGN_COUNT = 'ALIGN_COUNT',
+  ALIGN_COUNT_FALSE = 'ALIGN_COUNT_FALSE',
+  ALIGN_COUNT_TRUE = 'ALIGN_COUNT_TRUE',
+  ALIGN_DELTA = 'ALIGN_DELTA',
+  ALIGN_FRACTION_TRUE = 'ALIGN_FRACTION_TRUE',
+  ALIGN_INTERPOLATE = 'ALIGN_INTERPOLATE',
+  ALIGN_MAX = 'ALIGN_MAX',
+  ALIGN_MEAN = 'ALIGN_MEAN',
+  ALIGN_MIN = 'ALIGN_MIN',
+  ALIGN_NEXT_OLDER = 'ALIGN_NEXT_OLDER',
+  ALIGN_NONE = 'ALIGN_NONE',
+  ALIGN_PERCENTILE_05 = 'ALIGN_PERCENTILE_05',
+  ALIGN_PERCENTILE_50 = 'ALIGN_PERCENTILE_50',
+  ALIGN_PERCENTILE_95 = 'ALIGN_PERCENTILE_95',
+  ALIGN_PERCENTILE_99 = 'ALIGN_PERCENTILE_99',
+  ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
+  ALIGN_RATE = 'ALIGN_RATE',
+  ALIGN_STDDEV = 'ALIGN_STDDEV',
+  ALIGN_SUM = 'ALIGN_SUM',
+}
+
+/**
+ * @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+ */
+export interface LegacyCloudMonitoringAnnotationQuery {
+  /**
+   * Array of filters to query data by. Labels that can be filtered on are defined by the metric.
+   */
+  filters: Array<string>;
+  metricKind: MetricKind;
+  metricType: string;
+  /**
+   * GCP project to execute the query against.
+   */
+  projectName: string;
+  /**
+   * Query refId.
+   */
+  refId: string;
+  /**
+   * Annotation text.
+   */
+  text: string;
+  /**
+   * Annotation title.
+   */
+  title: string;
+  valueType: string;
+}
+
+export const defaultLegacyCloudMonitoringAnnotationQuery: Partial<LegacyCloudMonitoringAnnotationQuery> = {
+  filters: [],
+};
+
+/**
+ * Query filter representation.
+ */
+export interface Filter {
+  /**
+   * Filter condition.
+   */
+  condition?: string;
+  /**
+   * Filter key.
+   */
+  key: string;
+  /**
+   * Filter operator.
+   */
+  operator: string;
+  /**
+   * Filter value.
+   */
+  value: string;
+}
+
+export enum MetricFindQueryTypes {
+  Aggregations = 'aggregations',
+  Aligners = 'aligners',
+  AlignmentPeriods = 'alignmentPeriods',
+  DefaultProject = 'defaultProject',
+  LabelKeys = 'labelKeys',
+  LabelValues = 'labelValues',
+  MetricTypes = 'metricTypes',
+  Projects = 'projects',
+  ResourceTypes = 'resourceTypes',
+  SLO = 'slo',
+  SLOServices = 'sloServices',
+  Selectors = 'selectors',
+  Services = 'services',
+}
+
 export interface GoogleCloudMonitoring {}

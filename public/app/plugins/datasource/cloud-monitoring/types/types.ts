@@ -3,22 +3,6 @@ import { DataSourceOptions, DataSourceSecureJsonData } from '@grafana/google-sdk
 
 import { MetricKind } from './query';
 
-export enum MetricFindQueryTypes {
-  Projects = 'projects',
-  Services = 'services',
-  DefaultProject = 'defaultProject',
-  MetricTypes = 'metricTypes',
-  LabelKeys = 'labelKeys',
-  LabelValues = 'labelValues',
-  ResourceTypes = 'resourceTypes',
-  Aggregations = 'aggregations',
-  Aligners = 'aligners',
-  AlignmentPeriods = 'alignmentPeriods',
-  Selectors = 'selectors',
-  SLOServices = 'sloServices',
-  SLO = 'slo',
-}
-
 export interface CloudMonitoringVariableQuery extends DataQuery {
   selectedQueryType: string;
   selectedService: string;
@@ -51,63 +35,11 @@ export interface Aggregation {
   groupBys?: string[];
 }
 
-export enum ValueTypes {
-  VALUE_TYPE_UNSPECIFIED = 'VALUE_TYPE_UNSPECIFIED',
-  BOOL = 'BOOL',
-  INT64 = 'INT64',
-  DOUBLE = 'DOUBLE',
-  STRING = 'STRING',
-  DISTRIBUTION = 'DISTRIBUTION',
-  MONEY = 'MONEY',
-}
-
-export enum AlignmentTypes {
-  ALIGN_DELTA = 'ALIGN_DELTA',
-  ALIGN_RATE = 'ALIGN_RATE',
-  ALIGN_INTERPOLATE = 'ALIGN_INTERPOLATE',
-  ALIGN_NEXT_OLDER = 'ALIGN_NEXT_OLDER',
-  ALIGN_MIN = 'ALIGN_MIN',
-  ALIGN_MAX = 'ALIGN_MAX',
-  ALIGN_MEAN = 'ALIGN_MEAN',
-  ALIGN_COUNT = 'ALIGN_COUNT',
-  ALIGN_SUM = 'ALIGN_SUM',
-  ALIGN_STDDEV = 'ALIGN_STDDEV',
-  ALIGN_COUNT_TRUE = 'ALIGN_COUNT_TRUE',
-  ALIGN_COUNT_FALSE = 'ALIGN_COUNT_FALSE',
-  ALIGN_FRACTION_TRUE = 'ALIGN_FRACTION_TRUE',
-  ALIGN_PERCENTILE_99 = 'ALIGN_PERCENTILE_99',
-  ALIGN_PERCENTILE_95 = 'ALIGN_PERCENTILE_95',
-  ALIGN_PERCENTILE_50 = 'ALIGN_PERCENTILE_50',
-  ALIGN_PERCENTILE_05 = 'ALIGN_PERCENTILE_05',
-  ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
-  ALIGN_NONE = 'ALIGN_NONE',
-}
-
 export interface CloudMonitoringOptions extends DataSourceOptions {
   gceDefaultProject?: string;
 }
 
 export interface CloudMonitoringSecureJsonData extends DataSourceSecureJsonData {}
-
-export interface LegacyCloudMonitoringAnnotationQuery {
-  projectName: string;
-  metricType: string;
-  refId: string;
-  filters: string[];
-  metricKind: MetricKind;
-  valueType: string;
-  title: string;
-  text: string;
-}
-
-export interface QueryMeta {
-  alignmentPeriod: string;
-  rawQuery: string;
-  rawQueryString: string;
-  metricLabels: { [key: string]: string[] };
-  resourceLabels: { [key: string]: string[] };
-  resourceTypes: string[];
-}
 
 export interface MetricDescriptor {
   valueType: string;
@@ -118,18 +50,6 @@ export interface MetricDescriptor {
   serviceShortName: string;
   displayName: string;
   description: string;
-}
-
-export interface Segment {
-  type: string;
-  value: string;
-}
-
-export interface Filter {
-  key: string;
-  operator: string;
-  value: string;
-  condition?: string;
 }
 
 export interface CustomMetaData {

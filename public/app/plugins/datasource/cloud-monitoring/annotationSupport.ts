@@ -2,8 +2,7 @@ import { AnnotationSupport, AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringQuery, QueryType } from './types/query';
-import { AlignmentTypes, LegacyCloudMonitoringAnnotationQuery } from './types/types';
+import { AlignmentTypes, CloudMonitoringQuery, QueryType, LegacyCloudMonitoringAnnotationQuery } from './types/query';
 
 // The legacy query format sets the title and text values to empty strings by default.
 // If the title or text is not undefined at the top-level of the annotation target,
