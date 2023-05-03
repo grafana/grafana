@@ -28,7 +28,7 @@ export async function getFolderChildren(
   const dashboardsResults = await searcher.search({
     kind: ['dashboard'],
     query: '*',
-    location: parentUid ?? 'general',
+    location: parentUid || 'general',
     limit: 1000,
   });
 

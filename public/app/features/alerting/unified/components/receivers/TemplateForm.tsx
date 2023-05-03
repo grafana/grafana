@@ -264,6 +264,7 @@ function TemplatingGuideline() {
             href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
             target="_blank"
             icon="external-link-alt"
+            variant="secondary"
           >
             Templating documentation
           </LinkButton>

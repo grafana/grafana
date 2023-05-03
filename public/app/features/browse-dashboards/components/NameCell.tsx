@@ -45,12 +45,13 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
         <span className={styles.folderButtonSpacer} />
       )}
 
-      <Link
-        href={item.kind === 'folder' ? `/nested-dashboards/f/${item.uid}` : `/d/${item.uid}`}
-        className={styles.link}
-      >
-        {item.title}
-      </Link>
+      {item.url ? (
+        <Link href={item.url} className={styles.link}>
+          {item.title}
+        </Link>
+      ) : (
+        item.title
+      )}
     </>
   );
 }
