@@ -246,7 +246,7 @@ export function Editor({
               inputId={`${refId}-service`}
             />
           </EditorField>
-          <EditorField label="Metric name" width="auto">
+          <EditorField label="Metric name" width="auto" htmlFor={`${refId}-select-metric`}>
             <span title={service === '' ? 'Select a service first' : 'Type to search metrics'}>
               <AsyncSelect
                 width="auto"
