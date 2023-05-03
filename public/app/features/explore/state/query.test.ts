@@ -952,24 +952,26 @@ describe('reducer', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          [ExploreId.left]: {
-            ...defaultInitialState.explore[ExploreId.left],
-            queryResponse: {
-              state: LoadingState.Streaming,
-            },
-            logsResult: {
-              hasUniqueLabels: false,
-              rows: logRows,
+          panes: {
+            [ExploreId.left]: {
+              ...defaultInitialState.explore.panes[ExploreId.left],
+              queryResponse: {
+                state: LoadingState.Streaming,
+              },
+              logsResult: {
+                hasUniqueLabels: false,
+                rows: logRows,
+              },
             },
           },
         },
       } as unknown as Partial<StoreState>);
-      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(logRows.length);
+      expect(getState().explore.panes[ExploreId.left]?.logsResult?.rows.length).toBe(logRows.length);
 
       await dispatch(clearLogs({ exploreId: ExploreId.left }));
 
-      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(0);
-      expect(getState().explore[ExploreId.left].clearedAtIndex).toBe(logRows.length - 1);
+      expect(getState().explore.panes[ExploreId.left]?.logsResult?.rows.length).toBe(0);
+      expect(getState().explore.panes[ExploreId.left]?.clearedAtIndex).toBe(logRows.length - 1);
     });
 
     it('should filter new log rows', async () => {
@@ -980,21 +982,23 @@ describe('reducer', () => {
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...defaultInitialState,
         explore: {
-          [ExploreId.left]: {
-            ...defaultInitialState.explore[ExploreId.left],
-            isLive: true,
-            queryResponse: {
-              state: LoadingState.Streaming,
-            },
-            logsResult: {
-              hasUniqueLabels: false,
-              rows: oldLogRows,
+          panes: {
+            [ExploreId.left]: {
+              ...defaultInitialState.explore.panes[ExploreId.left],
+              isLive: true,
+              queryResponse: {
+                state: LoadingState.Streaming,
+              },
+              logsResult: {
+                hasUniqueLabels: false,
+                rows: oldLogRows,
+              },
             },
           },
         },
       } as unknown as Partial<StoreState>);
 
-      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(oldLogRows.length);
+      expect(getState().explore.panes[ExploreId.left]?.logsResult?.rows.length).toBe(oldLogRows.length);
 
       await dispatch(clearLogs({ exploreId: ExploreId.left }));
       await dispatch(
@@ -1014,8 +1018,8 @@ describe('reducer', () => {
         } as unknown as QueryEndedPayload)
       );
 
-      expect(getState().explore[ExploreId.left].logsResult?.rows.length).toBe(newLogRows.length);
-      expect(getState().explore[ExploreId.left].clearedAtIndex).toBe(oldLogRows.length - 1);
+      expect(getState().explore.panes[ExploreId.left]?.logsResult?.rows.length).toBe(newLogRows.length);
+      expect(getState().explore.panes[ExploreId.left]?.clearedAtIndex).toBe(oldLogRows.length - 1);
     });
   });
 });
