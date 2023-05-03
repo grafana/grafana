@@ -133,61 +133,67 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField
-        label="Query Type"
-        labelWidth={20}
-        tooltip={
-          <div>The Prometheus data source plugin provides the following query types for template variables.</div>
-        }
-      >
-        <Select
-          placeholder="Select query type"
-          aria-label="Query type"
-          onChange={onQueryTypeChange}
-          onBlur={handleBlur}
-          value={qryType}
-          options={variableOptions}
-          width={25}
-        />
-      </InlineField>
+    <>
+      <InlineFieldRow>
+        <InlineField
+          label="Query Type"
+          labelWidth={20}
+          tooltip={
+            <div>The Prometheus data source plugin provides the following query types for template variables.</div>
+          }
+        >
+          <Select
+            placeholder="Select query type"
+            aria-label="Query type"
+            onChange={onQueryTypeChange}
+            onBlur={handleBlur}
+            value={qryType}
+            options={variableOptions}
+            width={25}
+          />
+        </InlineField>
+      </InlineFieldRow>
       {qryType === QueryType.LabelValues && (
         <>
-          <InlineField
-            label="Label"
-            labelWidth={20}
-            required
-            tooltip={
-              <div>
-                Returns a list of label values for the label name in all metrics unless the metric is specified.
-              </div>
-            }
-          >
-            <Select
-              aria-label="label-select"
-              onChange={onLabelChange}
-              onBlur={handleBlur}
-              value={label}
-              options={labelOptions}
-              width={25}
-              allowCustomValue
-            />
-          </InlineField>
-          <InlineField
-            label="Metric"
-            labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-          >
-            <Input
-              type="text"
-              aria-label="Metric selector"
-              placeholder="Optional metric selector"
-              value={metric}
-              onChange={onMetricChange}
-              onBlur={handleBlur}
-              width={25}
-            />
-          </InlineField>
+          <InlineFieldRow>
+            <InlineField
+              label="Label"
+              labelWidth={20}
+              required
+              tooltip={
+                <div>
+                  Returns a list of label values for the label name in all metrics unless the metric is specified.
+                </div>
+              }
+            >
+              <Select
+                aria-label="label-select"
+                onChange={onLabelChange}
+                onBlur={handleBlur}
+                value={label}
+                options={labelOptions}
+                width={25}
+                allowCustomValue
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField
+              label="Metric"
+              labelWidth={20}
+              tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+            >
+              <Input
+                type="text"
+                aria-label="Metric selector"
+                placeholder="Optional metric selector"
+                value={metric}
+                onChange={onMetricChange}
+                onBlur={handleBlur}
+                width={100}
+              />
+            </InlineField>
+          </InlineFieldRow>
         </>
       )}
       {qryType === QueryType.MetricNames && (
@@ -259,7 +265,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
           </InlineField>
         </>
       )}
-    </InlineFieldRow>
+    </>
   );
 };
 
