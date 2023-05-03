@@ -1,4 +1,5 @@
-import { formatRegistry, FormatRegistryID } from '@grafana/scenes';
+import { formatRegistry } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 
 import { isAdHoc } from '../variables/guard';
 
@@ -12,7 +13,7 @@ export function formatVariableValue(value: any, format?: any, variable?: any, te
     return '';
   }
 
-  if (isAdHoc(variable) && format !== FormatRegistryID.queryParam) {
+  if (isAdHoc(variable) && format !== VariableFormatID.QueryParam) {
     return '';
   }
 
@@ -26,7 +27,7 @@ export function formatVariableValue(value: any, format?: any, variable?: any, te
   }
 
   if (!format) {
-    format = FormatRegistryID.glob;
+    format = VariableFormatID.Glob;
   }
 
   // some formats have arguments that come after ':' character
@@ -42,7 +43,7 @@ export function formatVariableValue(value: any, format?: any, variable?: any, te
 
   if (!formatItem) {
     console.error(`Variable format ${format} not found. Using glob format as fallback.`);
-    formatItem = formatRegistry.get(FormatRegistryID.glob);
+    formatItem = formatRegistry.get(VariableFormatID.Glob);
   }
 
   const formatVariable = getVariableWrapper(variable, value, text ?? value);

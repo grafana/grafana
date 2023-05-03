@@ -30,27 +30,30 @@ Once you've added the Elasticsearch data source, you can [configure it]({{< relr
 
 This data source supports these versions of Elasticsearch:
 
-- v7.10+
+- v7.16+
 - v8.x
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Elasticsearch data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Elasticsearch` in the search bar.
+1. Click **Elasticsearch**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
 
-| Name        | Description                                                                |
-| ----------- | -------------------------------------------------------------------------- |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
-| **Default** | Sets the data source that's pre-selected for new panels.                   |
-| **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
-| **Access**  | Don't modify Access. Use "Server (default)" or the data source won't work. |
+1. Set the data source's basic configuration options:
 
-You must also configure settings specific to the Elasticsearch data source.
+   | Name        | Description                                                                |
+   | ----------- | -------------------------------------------------------------------------- |
+   | **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
+   | **Default** | Sets the data source that's pre-selected for new panels.                   |
+   | **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
+   | **Access**  | Don't modify Access. Use `Server (default)` or the data source won't work. |
+
+You must also configure settings specific to the Elasticsearch data source. These options are described in the sections below.
 
 ### Index settings
 
@@ -137,6 +140,10 @@ For more information about AWS authentication options, refer to [AWS authenticat
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
+> **Note:** The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+> You should now use the `index` field in `jsonData` to store the index name.
+> Please see the examples below.
+
 #### Provisioning examples
 
 **Basic provisioning:**
@@ -148,9 +155,9 @@ datasources:
   - name: Elastic
     type: elasticsearch
     access: proxy
-    database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      index: '[metrics-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
 ```
@@ -164,9 +171,9 @@ datasources:
   - name: elasticsearch-v7-filebeat
     type: elasticsearch
     access: proxy
-    database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      index: '[filebeat-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
       logMessageField: message

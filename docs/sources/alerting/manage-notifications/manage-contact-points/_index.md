@@ -23,7 +23,7 @@ Use contact points to define how your contacts are notified when an alert rule f
 
 Complete the following steps to add a contact point.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, **Grafana Alertmanager** is selected.
 1. Click **+ Add contact point**.
@@ -38,7 +38,7 @@ Complete the following steps to add a contact point.
 
 Complete the following steps to edit a contact point.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
 1. Find the contact point to edit, and then click **Edit** (pen icon).
 1. Make any changes and click **Save contact point**.
@@ -47,7 +47,7 @@ Complete the following steps to edit a contact point.
 
 Complete the following steps to delete a contact point.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
 1. Find the contact point to delete, and then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**.
@@ -58,7 +58,7 @@ Complete the following steps to delete a contact point.
 
 Complete the following steps to test a contact point.
 
-1. In the left-side menu, click **Alerts & incidents** and then **Alerting**.
+1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
 1. Find the contact point to test, then click **Edit** (pen icon). You can also create a new contact point if needed.
 1. Click **Test** to open the contact point testing modal.

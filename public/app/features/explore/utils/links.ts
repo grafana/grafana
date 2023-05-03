@@ -1,3 +1,4 @@
+import { uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -12,8 +13,12 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
+  DataLinkConfigOrigin,
+  CoreApp,
+  SplitOpenOptions,
 } from '@grafana/data';
-import { getTemplateSrv, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
@@ -42,6 +47,8 @@ export interface ExploreFieldLinkModel extends LinkModel<Field> {
   variables?: VariableInterpolation[];
 }
 
+const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
+
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
  * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
@@ -64,7 +71,7 @@ export const getFieldLinksForExplore = (options: {
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
-      raw: field.values.get(rowIndex),
+      raw: field.values[rowIndex],
     },
     text: 'Raw value',
   };
@@ -123,9 +130,9 @@ export const getFieldLinksForExplore = (options: {
             let fieldValue;
             if (transformation.field) {
               const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
-              fieldValue = transformField?.values.get(rowIndex);
+              fieldValue = transformField?.values[rowIndex];
             } else {
-              fieldValue = field.values.get(rowIndex);
+              fieldValue = field.values[rowIndex];
             }
 
             internalLinkSpecificVars = {
@@ -147,6 +154,16 @@ export const getFieldLinksForExplore = (options: {
           variables = variableData.variables;
         }
 
+        const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
+          reportInteraction(DATA_LINK_USAGE_KEY, {
+            origin: link.origin || DataLinkConfigOrigin.Datasource,
+            app: CoreApp.Explore,
+            internal: true,
+          });
+
+          splitOpenFn?.(options);
+        };
+
         if (variableData.allVariablesDefined) {
           const internalLink = mapInternalLinkToExplore({
             link,
@@ -154,7 +171,9 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: splitOpenFn,
+            // Don't track internal links without split view as they are used only in Dashboards
+            // TODO: It should be revisited in #66570
+            onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };
@@ -220,9 +239,10 @@ export function getVariableUsageInfo<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
-  const variables: VariableInterpolation[] = [];
+  let variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
+  variables = uniqBy(variables, 'variableName');
   return {
     variables: variables,
     allVariablesDefined: variables.every((variable) => variable.found),

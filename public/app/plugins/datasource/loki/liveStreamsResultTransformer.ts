@@ -38,9 +38,9 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      tsField.values.add(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
-      lineField.values.add(line);
-      idField.values.add(createUid(ts, allLabelsString, line, usedUids, data.refId));
+      tsField.values.push(new Date(parseInt(ts.slice(0, -6), 10)).toISOString());
+      lineField.values.push(line);
+      idField.values.push(createUid(ts, allLabelsString, line, usedUids, data.refId));
     }
   }
 }

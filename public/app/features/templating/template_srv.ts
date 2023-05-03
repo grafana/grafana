@@ -1,4 +1,4 @@
-import { escape, isString, property } from 'lodash';
+import { escape, isString } from 'lodash';
 
 import {
   deprecationWarning,
@@ -15,7 +15,8 @@ import {
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, FormatRegistryID, VariableCustomFormatterFn } from '@grafana/scenes';
+import { sceneGraph, VariableCustomFormatterFn } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
@@ -23,12 +24,9 @@ import { isAdHoc } from '../variables/guard';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 
+import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
 import { macroRegistry } from './macroRegistry';
-
-interface FieldAccessorCache {
-  [key: string]: (obj: any) => any;
-}
 
 /**
  * Internal regex replace function
@@ -53,7 +51,6 @@ export class TemplateSrv implements BaseTemplateSrv {
   private index: any = {};
   private grafanaVariables = new Map<string, any>();
   private timeRange?: TimeRange | null = null;
-  private fieldAccessorCache: FieldAccessorCache = {};
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
     this._variables = [];
@@ -205,18 +202,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     return values;
   }
 
-  private getFieldAccessor(fieldPath: string) {
-    const accessor = this.fieldAccessorCache[fieldPath];
-    if (accessor) {
-      return accessor;
-    }
-
-    return (this.fieldAccessorCache[fieldPath] = property(fieldPath));
-  }
-
   private getVariableValue(scopedVar: ScopedVar, fieldPath: string | undefined) {
     if (fieldPath) {
-      return this.getFieldAccessor(fieldPath)(scopedVar.value);
+      return getFieldAccessor(fieldPath)(scopedVar.value);
     }
 
     return scopedVar.value;
@@ -283,14 +271,15 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     if (!variable) {
-      if (macroRegistry[variableName]) {
-        return macroRegistry[variableName](match, fieldPath, scopedVars, format);
+      const macro = macroRegistry[variableName];
+      if (macro) {
+        return macro(match, fieldPath, scopedVars, format);
       }
 
       return match;
     }
 
-    if (format === FormatRegistryID.queryParam || isAdHoc(variable)) {
+    if (format === VariableFormatID.QueryParam || isAdHoc(variable)) {
       const value = variableAdapters.get(variable.type).getValueForUrl(variable);
       const text = isAdHoc(variable) ? variable.id : variable.current.text;
 
@@ -309,7 +298,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       value = this.getAllValue(variable);
       text = ALL_VARIABLE_TEXT;
       // skip formatting of custom all values unless format set to text or percentencode
-      if (variable.allValue && format !== FormatRegistryID.text && format !== FormatRegistryID.percentEncode) {
+      if (variable.allValue && format !== VariableFormatID.Text && format !== VariableFormatID.PercentEncode) {
         return this.replace(value);
       }
     }

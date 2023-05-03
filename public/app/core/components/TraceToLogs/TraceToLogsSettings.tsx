@@ -10,6 +10,8 @@ import {
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
 
+import { DocsLinkButton } from '../DocsLinkButton';
+
 import { TagMappingInput } from './TagMappingInput';
 
 // @deprecated use getTraceToLogsOptions to get the v2 version of this config from jsonData
@@ -107,7 +109,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Trace to logs</h3>
 
-      <div className={styles.infoText}>Navigate from a trace span to the selected data source&apos;s logs.</div>
+      <div className={styles.infoText}>
+        Navigate from a trace span to the selected data source&apos;s logs
+        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-logs`} />
+      </div>
 
       <InlineFieldRow>
         <InlineField
@@ -168,7 +173,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Use a custom query with possibility to interpolate variables from the trace or span"
+          tooltip="Use a custom query with the possibility to interpolate variables from the trace or span"
           label="Use custom query"
           labelWidth={26}
         >
@@ -241,11 +246,11 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
         label={`Span ${props.type} time shift`}
         labelWidth={26}
         grow
-        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, 1m, 3h)`}
+        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
       >
         <Input
           type="text"
-          placeholder="1h"
+          placeholder="0"
           width={40}
           onChange={(e) => props.onChange(e.currentTarget.value)}
           value={props.value}

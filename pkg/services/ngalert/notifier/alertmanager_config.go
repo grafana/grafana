@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -37,18 +39,81 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
-	cfg, err := Load([]byte(amConfig.AlertmanagerConfiguration))
+
+	return moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration)
+}
+
+// ActivateHistoricalConfiguration will set the current alertmanager configuration to a previous value based on the provided
+// alert_configuration_history id.
+func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error {
+	config, err := moa.configStore.GetHistoricalConfiguration(ctx, orgId, id)
+	if err != nil {
+		return fmt.Errorf("failed to get historical alertmanager configuration: %w", err)
+	}
+
+	cfg, err := Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal historical alertmanager configuration: %w", err)
+	}
+
+	am, err := moa.AlertmanagerFor(orgId)
+	if err != nil {
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(err, ErrAlertmanagerNotReady) {
+			return err
+		}
+	}
+
+	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
+		moa.logger.Error("unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
+		return AlertmanagerConfigRejectedError{err}
+	}
+	moa.logger.Info("applied historical alertmanager configuration", "org", orgId, "id", id)
+
+	return nil
+}
+
+// GetAppliedAlertmanagerConfigurations returns the last n configurations marked as applied for a given org.
+func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*definitions.GettableHistoricUserConfig, error) {
+	configs, err := moa.configStore.GetAppliedConfigurations(ctx, org, limit)
+	if err != nil {
+		return []*definitions.GettableHistoricUserConfig{}, fmt.Errorf("failed to get applied configurations: %w", err)
+	}
+
+	gettableHistoricConfigs := make([]*definitions.GettableHistoricUserConfig, 0, len(configs))
+	for _, config := range configs {
+		appliedAt := strfmt.DateTime(time.Unix(config.LastApplied, 0).UTC())
+		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
+		if err != nil {
+			// If there are invalid records, skip them and return the valid ones.
+			moa.logger.Warn("Invalid configuration found in alert configuration history table", "id", config.ID, "orgID", org)
+			continue
+		}
+
+		gettableHistoricConfig := definitions.GettableHistoricUserConfig{
+			ID:                      config.ID,
+			TemplateFiles:           gettableConfig.TemplateFiles,
+			TemplateFileProvenances: gettableConfig.TemplateFileProvenances,
+			AlertmanagerConfig:      gettableConfig.AlertmanagerConfig,
+			LastApplied:             &appliedAt,
+		}
+		gettableHistoricConfigs = append(gettableHistoricConfigs, &gettableHistoricConfig)
+	}
+
+	return gettableHistoricConfigs, nil
+}
+
+func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
+	cfg, err := Load([]byte(config))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
-
 	result := definitions.GettableUserConfig{
 		TemplateFiles: cfg.TemplateFiles,
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			Config: cfg.AlertmanagerConfig.Config,
 		},
 	}
-
 	for _, recv := range cfg.AlertmanagerConfig.Receivers {
 		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
 		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
@@ -82,7 +147,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
-	result, err = moa.mergeProvenance(ctx, result, org)
+	result, err = moa.mergeProvenance(ctx, result, orgID)
 	if err != nil {
 		return definitions.GettableUserConfig{}, err
 	}

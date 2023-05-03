@@ -152,38 +152,6 @@ describe('Table', () => {
     });
   });
 
-  describe('when `showRowNums` is toggled', () => {
-    const showRowNumsTestContext = {
-      data: toDataFrame({
-        name: 'A',
-        fields: [
-          {
-            name: 'number',
-            type: FieldType.number,
-            values: [1, 1, 1, 2, 2, 3, 4, 5],
-            config: {
-              custom: {
-                filterable: true,
-              },
-            },
-          },
-        ],
-      }),
-    };
-
-    it('should render the (fields.length) rows when `showRowNums` is untoggled', () => {
-      getTestContext({ ...showRowNumsTestContext, showRowNums: false });
-
-      expect(screen.getAllByRole('columnheader')).toHaveLength(1);
-    });
-
-    it('should render (fields.length + 1) rows row when `showRowNums` is toggled', () => {
-      getTestContext({ ...showRowNumsTestContext, showRowNums: true });
-
-      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
-    });
-  });
-
   describe('when mounted with footer', () => {
     it('then footer should be displayed', () => {
       const footerValues = ['a', 'b', 'c'];

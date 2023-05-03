@@ -2,6 +2,7 @@ import { ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { ComponentSize } from '../../types/size';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
@@ -14,6 +15,7 @@ const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
 export default {
   title: 'Buttons/Button',
   component: Button,
+  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -24,14 +26,7 @@ export default {
       options: sizes,
     },
     tooltip: {
-      table: {
-        disable: true,
-      },
-    },
-    tooltipPlacement: {
-      table: {
-        disable: true,
-      },
+      control: 'text',
     },
     className: {
       table: {

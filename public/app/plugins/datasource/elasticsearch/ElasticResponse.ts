@@ -604,7 +604,7 @@ export class ElasticResponse {
 
     for (let frame of dataFrame) {
       for (let field of frame.fields) {
-        if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+        if (field.type === FieldType.time && typeof field.values[0] !== 'number') {
           field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
         }
       }

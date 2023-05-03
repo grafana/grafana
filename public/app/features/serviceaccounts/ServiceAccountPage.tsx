@@ -6,7 +6,7 @@ import { Button, ConfirmModal, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
+import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -26,7 +26,6 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   serviceAccount?: ServiceAccountDTO;
   tokens: ApiKey[];
   isLoading: boolean;
-  roleOptions: Role[];
 }
 
 function mapStateToProps(state: StoreState) {
@@ -34,7 +33,6 @@ function mapStateToProps(state: StoreState) {
     serviceAccount: state.serviceAccountProfile.serviceAccount,
     tokens: state.serviceAccountProfile.tokens,
     isLoading: state.serviceAccountProfile.isLoading,
-    roleOptions: state.serviceAccounts.roleOptions,
     timezone: getTimeZone(state.user),
   };
 }
@@ -58,7 +56,6 @@ export const ServiceAccountPageUnconnected = ({
   tokens,
   timezone,
   isLoading,
-  roleOptions,
   createServiceAccountToken,
   deleteServiceAccount,
   deleteServiceAccountToken,
@@ -171,12 +168,7 @@ export const ServiceAccountPageUnconnected = ({
             </HorizontalGroup>
           )}
           {serviceAccount && (
-            <ServiceAccountProfile
-              serviceAccount={serviceAccount}
-              timeZone={timezone}
-              roleOptions={roleOptions}
-              onChange={onProfileChange}
-            />
+            <ServiceAccountProfile serviceAccount={serviceAccount} timeZone={timezone} onChange={onProfileChange} />
           )}
           <HorizontalGroup justify="space-between" height="auto">
             <h3>Tokens</h3>

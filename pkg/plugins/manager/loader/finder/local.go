@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -24,13 +25,19 @@ var (
 )
 
 type Local struct {
-	log log.Logger
+	log        log.Logger
+	production bool
 }
 
-func NewLocalFinder() *Local {
+func NewLocalFinder(cfg *config.Cfg) *Local {
 	return &Local{
-		log: log.New("local.finder"),
+		production: !cfg.DevMode,
+		log:        log.New("local.finder"),
 	}
+}
+
+func ProvideLocalFinder(cfg *config.Cfg) *Local {
+	return NewLocalFinder(cfg)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -81,15 +88,21 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 
 	var res = make(map[string]*plugins.FoundBundle)
 	for pluginDir, data := range foundPlugins {
-		files, err := collectFilesWithin(pluginDir)
-		if err != nil {
-			return nil, err
+		var pluginFs plugins.FS
+		pluginFs = plugins.NewLocalFS(pluginDir)
+		if l.production {
+			// In prod, tighten up security by allowing access only to the files present up to this point.
+			// Any new file "sneaked in" won't be allowed and will acts as if the file did not exist.
+			var err error
+			pluginFs, err = plugins.NewStaticFS(pluginFs)
+			if err != nil {
+				return nil, err
+			}
 		}
-
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{
 				JSONData: data,
-				FS:       plugins.NewLocalFS(files, pluginDir),
+				FS:       pluginFs,
 			},
 		}
 	}
@@ -188,61 +201,6 @@ func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 	}
 
 	return pluginJSONPaths, nil
-}
-
-func collectFilesWithin(dir string) (map[string]struct{}, error) {
-	files := map[string]struct{}{}
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			symlinkPath, err := filepath.EvalSymlinks(path)
-			if err != nil {
-				return err
-			}
-
-			symlink, err := os.Stat(symlinkPath)
-			if err != nil {
-				return err
-			}
-
-			// verify that symlinked file is within plugin directory
-			p, err := filepath.Rel(dir, symlinkPath)
-			if err != nil {
-				return err
-			}
-			if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("file '%s' not inside of plugin directory", p)
-			}
-
-			// skip adding symlinked directories
-			if symlink.IsDir() {
-				return nil
-			}
-		}
-
-		// skip directories
-		if info.IsDir() {
-			return nil
-		}
-
-		// verify that file is within plugin directory
-		file, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-		if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
-			return fmt.Errorf("file '%s' not inside of plugin directory", file)
-		}
-
-		files[path] = struct{}{}
-
-		return nil
-	})
-
-	return files, err
 }
 
 func (l *Local) readFile(pluginJSONPath string) (io.ReadCloser, error) {

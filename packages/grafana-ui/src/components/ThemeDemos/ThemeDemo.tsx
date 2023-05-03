@@ -121,6 +121,7 @@ export const ThemeDemo = () => {
                   <td>name</td>
                   <td>main</td>
                   <td>shade (used for hover)</td>
+                  <td>transparent</td>
                   <td>border & text</td>
                 </tr>
               </thead>
@@ -243,6 +244,17 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css`
             background: ${color.shade};
             color: ${color.contrastText};
+            border-radius: 4px;
+            padding: 8px;
+          `}
+        >
+          {color.shade}
+        </div>
+      </td>
+      <td>
+        <div
+          className={css`
+            background: ${color.transparent};
             border-radius: 4px;
             padding: 8px;
           `}

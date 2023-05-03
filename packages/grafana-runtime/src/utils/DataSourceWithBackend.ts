@@ -7,6 +7,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
@@ -77,7 +78,8 @@ enum PluginRequestHeaders {
   DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
   DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
   PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
-  QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query chunking
+  QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
+  FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
 }
 
 /**
@@ -197,14 +199,22 @@ class DataSourceWithBackend<
       });
     }
 
-    let url = '/api/ds/query';
-    if (hasExpr) {
-      url += '?expression=true';
-    }
-
     const headers: Record<string, string> = {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
+
+    let url = '/api/ds/query?ds_type=' + this.type;
+
+    if (hasExpr) {
+      headers[PluginRequestHeaders.FromExpression] = 'true';
+      url += '&expression=true';
+    }
+
+    // Appending request ID to url to facilitate client-side performance metrics. See #65244 for more context.
+    if (requestId) {
+      url += `&requestId=${requestId}`;
+    }
+
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
     }
@@ -333,7 +343,7 @@ class DataSourceWithBackend<
    * Checks the plugin health
    * see public/app/features/datasources/state/actions.ts for what needs to be returned here
    */
-  async testDatasource(): Promise<any> {
+  async testDatasource(): Promise<TestDataSourceResponse> {
     return this.callHealthCheck().then((res) => {
       if (res.status === HealthStatus.OK) {
         return {
@@ -342,7 +352,11 @@ class DataSourceWithBackend<
         };
       }
 
-      throw new HealthCheckError(res.message, res.details);
+      return Promise.reject({
+        status: 'error',
+        message: res.message,
+        error: new HealthCheckError(res.message, res.details),
+      });
     });
   }
 }

@@ -93,6 +93,7 @@ export function SelectBase<T>({
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
+  blurInputOnSelect,
   cacheOptions,
   className,
   closeMenuOnSelect = true,
@@ -144,6 +145,7 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
+  hideSelectedOptions,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -212,6 +214,7 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
+    blurInputOnSelect,
     captureMenuScroll: false,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
@@ -222,6 +225,7 @@ export function SelectBase<T>({
     filterOption,
     getOptionLabel,
     getOptionValue,
+    hideSelectedOptions,
     inputValue,
     invalid,
     isClearable,
@@ -353,7 +357,7 @@ export function SelectBase<T>({
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: MultiValueRemove,
+          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           ...components,
         }}
         styles={selectStyles}

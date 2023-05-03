@@ -14,9 +14,9 @@ weight: 300
 
 # What is Prometheus?
 
-Observability focuses on understanding the internal state of your systems based on the data they produce, which helps determine if your infrastructure is healthy. Prometheus is a core technology for system observability, but the term "Prometheus" can be confusing because it is used in different contexts. Understanding Prometheus basics, why it’s valuable for system observability, and how people use it in practice will both help you better understand it and help you use Grafana.
+Observability focuses on understanding the internal state of your systems based on the data they produce, which helps determine if your infrastructure is healthy. Prometheus is a core technology for monitoring and observability of systems, but the term "Prometheus" can be confusing because it is used in different contexts. Understanding Prometheus basics, why it’s valuable for system observability, and how users use it in practice will both help you better understand it and help you use Grafana.
 
-Prometheus began in 2012 at SoundCloud because existing technologies were insufficient for their observability needs. Prometheus offers both a robust data model and a query language, which are discussed on this page. Prometheus is also simple and scalable. In 2018, Prometheus graduated from Cloud Native Computing Foundation (CNCF) incubation, and today has a thriving community.
+Prometheus began in 2012 at SoundCloud because existing technologies were insufficient for their observability needs. Prometheus offers both a robust data model and a query language. Prometheus is also simple and scalable. In 2018, Prometheus graduated from Cloud Native Computing Foundation (CNCF) incubation, and today has a thriving community.
 
 ## Prometheus as data
 
@@ -31,7 +31,7 @@ Prometheus is a technology that collects and stores time series data. Time serie
 - _metrics_ that consist of a _timestamp_ and a _sample_, which is the numeric value, such as how many disk bytes have been read or a stock price
 - a set of labels called _dimensions_, for example, `job` and `device`
 
-You can store time series data in any relational database, but these kinds of systems are not developed to store and query large volumes of time series data. Prometheus and similar software provide tools to compact and optimize time series data.
+You can store time series data in any relational database, however, these systems are not developed to store and query large volumes of time series data. Prometheus and similar software provide tools to compact and optimize time series data.
 
 ### Simple dashboard using PromQL
 
@@ -106,5 +106,5 @@ The combination of Prometheus and Grafana Agent gives you control over the metri
 Now that you understand how Prometheus metrics work, what will you build?
 
 - One great next step is to [build a dashboard]({{< relref "../../dashboards/build-dashboards/" >}}) in Grafana and start turning that raw Prometheus telemetry data into insights about what’s going with your services and infrastructure.
-- Another great step is to learn about [Grafana Mimir](/oss/mimir/), which is essentially a database for Prometheus data. If you’re wondering how to make this work for a huge number of metrics with a lot of data and fast querying, check out Grafana Mimir.
+- Another great step is to learn about [Grafana Mimir](/oss/mimir/), which is essentially a database for Prometheus data. If you’re wondering how to make this work for a large volumes of metrics with a lot of data and fast querying, check out Grafana Mimir.
 - If you’re interested in working with Prometheus data in Grafana directly, check out the [Prometheus data source]({{< relref "../../datasources/prometheus/" >}}) documentation, or check out [PromQL basics](https://prometheus.io/docs/prometheus/latest/querying/basics/).

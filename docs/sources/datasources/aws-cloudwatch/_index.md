@@ -31,11 +31,12 @@ Once you've added the data source, you can [configure it]({{< relref "#configure
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `CloudWatch` in the search bar.
+1. Click **CloudWatch**.
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the CloudWatch data source.
+   The **Settings** tab of the data source is displayed.
 
 ### Configure AWS authentication
 
@@ -49,7 +50,7 @@ For authentication options and configuration details, refer to [AWS authenticati
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
 You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication/" >}}).
 
-**Metrics-only:**
+##### Metrics-only permissions
 
 ```json
 {
@@ -84,7 +85,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Logs-only:**
+##### Logs-only permissions
 
 ```json
 {
@@ -119,7 +120,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Metrics and Logs:**
+##### Metrics and logs permissions
 
 ```json
 {
@@ -167,7 +168,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Cross-account observability: (see below) **
+##### Cross-account observability permissions
 
 ```json
 {
@@ -234,7 +235,7 @@ For more information about provisioning, and for available configuration options
 
 #### Provisioning examples
 
-**Using AWS SDK (default):**
+##### Using AWS SDK (default)
 
 ```yaml
 apiVersion: 1
@@ -246,7 +247,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-**Using credentials' profile name (non-default):**
+##### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1
@@ -261,7 +262,7 @@ datasources:
       profile: secondary
 ```
 
-**Using accessKey and secretKey:**
+##### Using accessKey and secretKey
 
 ```yaml
 apiVersion: 1
@@ -277,7 +278,7 @@ datasources:
       secretKey: '<your secret key>'
 ```
 
-**Using AWS SDK Default and ARN of IAM Role to Assume:**
+##### Using AWS SDK Default and ARN of IAM Role to Assume
 
 ```yaml
 apiVersion: 1
@@ -375,3 +376,7 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
 To use this feature, configure in the [AWS console under Cloudwatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
+
+## CloudWatch Logs data protection
+
+CloudWatch Logs can safeguard data by using log group data protection policies. If you have data protection enabled for a log group, then any sensitive data that matches the data identifiers you've selected will be masked. In order to view masked data you will need to have the `logs:Unmask` IAM permission enabled. See the AWS documentation on how to [help protect sensitive log data with masking](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) to learn more about this.

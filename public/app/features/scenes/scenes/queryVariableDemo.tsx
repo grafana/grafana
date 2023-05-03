@@ -9,6 +9,8 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
+  SceneRefreshPicker,
+  SceneFlexItem,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -49,20 +51,18 @@ export function getQueryVariableDemo(): DashboardScene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          children: [
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'metric: ${metric}',
-              fontSize: 20,
-              align: 'center',
-            }),
-          ],
+        new SceneFlexItem({
+          width: '40%',
+          body: new SceneCanvasText({
+            text: 'metric: ${metric}',
+            fontSize: 20,
+            align: 'center',
+          }),
         }),
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
     controls: [new VariableValueSelectors({})],
   });
 }

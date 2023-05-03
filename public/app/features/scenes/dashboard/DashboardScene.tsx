@@ -2,19 +2,13 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
-import {
-  UrlSyncManager,
-  SceneObjectBase,
-  SceneComponentProps,
-  SceneObject,
-  SceneObjectStatePlain,
-} from '@grafana/scenes';
-import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectState } from '@grafana/scenes';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
-interface DashboardSceneState extends SceneObjectStatePlain {
+interface DashboardSceneState extends SceneObjectState {
   title: string;
   uid?: string;
   body: SceneObject;
@@ -24,18 +18,6 @@ interface DashboardSceneState extends SceneObjectStatePlain {
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public static Component = DashboardSceneRenderer;
-  private urlSyncManager?: UrlSyncManager;
-
-  /**
-   * It's better to do this before activate / mount to not trigger unnessary re-renders
-   */
-  public initUrlSync() {
-    if (!this.urlSyncManager) {
-      this.urlSyncManager = new UrlSyncManager(this);
-    }
-
-    this.urlSyncManager.initSync();
-  }
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
@@ -54,11 +36,7 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
       />
     );
   }
-  const pageToolbar = config.featureToggles.topnav ? (
-    <AppChromeUpdate actions={toolbarActions} />
-  ) : (
-    <PageToolbar title={title}>{toolbarActions}</PageToolbar>
-  );
+  const pageToolbar = <AppChromeUpdate actions={toolbarActions} />;
 
   return (
     <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>

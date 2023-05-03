@@ -184,6 +184,7 @@ describe('getCompletions', () => {
       unwrapLabelKeys,
       hasJSON: false,
       hasLogfmt: false,
+      hasPack: false,
     });
   });
 
@@ -317,6 +318,7 @@ describe('getCompletions', () => {
         unwrapLabelKeys,
         hasJSON: true,
         hasLogfmt: false,
+        hasPack: false,
       });
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '{job="grafana"}', afterPipe, hasSpace };
       const completions = await getCompletions(situation, completionProvider);
@@ -334,6 +336,7 @@ describe('getCompletions', () => {
         unwrapLabelKeys,
         hasJSON: false,
         hasLogfmt: true,
+        hasPack: false,
       });
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace: true };
       const completions = await getCompletions(situation, completionProvider);
@@ -392,6 +395,7 @@ describe('getAfterSelectorCompletions', () => {
       unwrapLabelKeys: [],
       hasJSON: true,
       hasLogfmt: false,
+      hasPack: false,
     });
   });
   it('should remove trailing pipeline from logQuery', () => {
@@ -405,6 +409,21 @@ describe('getAfterSelectorCompletions', () => {
       .filter((suggestion) => suggestion.type === 'PARSER')
       .map((parser) => parser.label);
     expect(parsersInSuggestions).toStrictEqual(['json (detected)', 'logfmt', 'pattern', 'regexp', 'unpack']);
+  });
+
+  it('should show detected unpack parser if query has no parser', async () => {
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys: ['abc', 'def'],
+      unwrapLabelKeys: [],
+      hasJSON: true,
+      hasLogfmt: false,
+      hasPack: true,
+    });
+    const suggestions = await getAfterSelectorCompletions(`{job="grafana"} |  `, true, true, completionProvider);
+    const parsersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'PARSER')
+      .map((parser) => parser.label);
+    expect(parsersInSuggestions).toStrictEqual(['unpack (detected)', 'json', 'logfmt', 'pattern', 'regexp']);
   });
 
   it('should not show detected parser if query already has parser', async () => {

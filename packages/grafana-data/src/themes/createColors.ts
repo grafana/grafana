@@ -280,7 +280,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
-      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
+      color.transparent = alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);

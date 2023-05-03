@@ -8,7 +8,7 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  requestSupporsChunking,
+  requestSupportsSplitting,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -294,7 +294,7 @@ describe('getParserFromQuery', () => {
   });
 });
 
-describe('requestSupporsChunking', () => {
+describe('requestSupportsSplitting', () => {
   it('hidden requests are not partitioned', () => {
     const requests: LokiQuery[] = [
       {
@@ -303,7 +303,7 @@ describe('requestSupporsChunking', () => {
         hide: true,
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(false);
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
   it('special requests are not partitioned', () => {
     const requests: LokiQuery[] = [
@@ -312,7 +312,7 @@ describe('requestSupporsChunking', () => {
         refId: 'do-not-chunk',
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(false);
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
   it('empty requests are not partitioned', () => {
     const requests: LokiQuery[] = [
@@ -321,7 +321,7 @@ describe('requestSupporsChunking', () => {
         refId: 'A',
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(false);
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
   it('all other requests are partitioned', () => {
     const requests: LokiQuery[] = [
@@ -334,6 +334,6 @@ describe('requestSupporsChunking', () => {
         refId: 'B',
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(true);
+    expect(requestSupportsSplitting(requests)).toBe(true);
   });
 });
