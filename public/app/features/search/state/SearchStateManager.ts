@@ -1,7 +1,6 @@
 import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
-import { isTruthy } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
