@@ -11,8 +11,8 @@ This section contains how-to topics for developing Grafana plugins.
     - [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
     - [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
     - [Build a data source backend plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/)
-    - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md">}})
-    - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md">}})
+    - [Build a logs data source plugin]({{< relref "../build-a-logs-data-source-plugin.md">}})
+    - [Build a streaming data source plugin]({{< relref "../build-a-streaming-data-source-plugin.md">}})
 - Extend a Grafana plugin
     - [Add annotations]({{< relref "add-support-for-annotations.md">}})
     - [Add anonymous usage reporting]({{< relref "add-anonymous-usage-reporting.md">}})
