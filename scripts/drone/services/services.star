@@ -5,7 +5,8 @@ This module has functions for Drone services to be used in pipelines.
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
-        {"name": "mysql", "temp": {"medium": "memory"}},
+        {"name": "mysql57", "temp": {"medium": "memory"}},
+        {"name": "mysql80", "temp": {"medium": "memory"}},
     ]
 
 def integration_test_services():
@@ -32,7 +33,7 @@ def integration_test_services():
                 "MYSQL_USER": "grafana",
                 "MYSQL_PASSWORD": "password",
             },
-            "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
+            "volumes": [{"name": "mysql57", "path": "/var/lib/mysql"}],
         },
         {
             "name": "mysql80",
@@ -43,7 +44,7 @@ def integration_test_services():
                 "MYSQL_USER": "grafana",
                 "MYSQL_PASSWORD": "password",
             },
-            "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
+            "volumes": [{"name": "mysql80", "path": "/var/lib/mysql"}],
         },
         {
             "name": "redis",

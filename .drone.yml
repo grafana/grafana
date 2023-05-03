@@ -799,7 +799,7 @@ services:
   image: mysql:5.7.39
   name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
     path: /var/lib/mysql
 - environment:
     MYSQL_DATABASE: grafana_tests
@@ -809,7 +809,7 @@ services:
   image: mysql:8.0.32
   name: mysql80
   volumes:
-  - name: mysql
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -974,7 +974,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -1861,7 +1864,7 @@ services:
   image: mysql:5.7.39
   name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
     path: /var/lib/mysql
 - environment:
     MYSQL_DATABASE: grafana_tests
@@ -1871,7 +1874,7 @@ services:
   image: mysql:8.0.32
   name: mysql80
   volumes:
-  - name: mysql
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -2008,7 +2011,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -3536,7 +3542,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -3784,7 +3793,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -4952,7 +4964,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -5116,7 +5131,7 @@ services:
   image: mysql:5.7.39
   name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
     path: /var/lib/mysql
 - environment:
     MYSQL_DATABASE: grafana_tests
@@ -5126,7 +5141,7 @@ services:
   image: mysql:8.0.32
   name: mysql80
   volumes:
-  - name: mysql
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -5250,7 +5265,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -5609,7 +5627,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -5835,7 +5856,7 @@ services:
   image: mysql:5.7.39
   name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
     path: /var/lib/mysql
 - environment:
     MYSQL_DATABASE: grafana_tests
@@ -5845,7 +5866,7 @@ services:
   image: mysql:8.0.32
   name: mysql80
   volumes:
-  - name: mysql
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -5996,7 +6017,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6323,7 +6347,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6360,7 +6387,7 @@ services:
   image: mysql:5.7.39
   name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
     path: /var/lib/mysql
 - environment:
     MYSQL_DATABASE: grafana_tests
@@ -6370,7 +6397,7 @@ services:
   image: mysql:8.0.32
   name: mysql80
   volumes:
-  - name: mysql
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -6495,7 +6522,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6532,7 +6562,7 @@ services:
   image: mysql:5.7.39
   name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
     path: /var/lib/mysql
 - environment:
     MYSQL_DATABASE: grafana_tests
@@ -6542,7 +6572,7 @@ services:
   image: mysql:8.0.32
   name: mysql80
   volumes:
-  - name: mysql
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -6695,7 +6725,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6985,6 +7018,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 0da672b9532d1e778a690bb416875faccc1911e267f5cc72be7d6d6fc5bad1ea
+hmac: f4add7421bca34f5cabbaf8847bdc5a315f5495616dfdcff35d57f57eb68061e
 
 ...
