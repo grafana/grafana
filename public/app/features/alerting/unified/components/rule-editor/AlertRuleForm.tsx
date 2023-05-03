@@ -126,7 +126,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               onClick={() => setShowEditYaml(true)}
               disabled={submitState.loading}
             >
-              Edit yaml
+              Edit YAML
             </Button>
           )}
           <Button
