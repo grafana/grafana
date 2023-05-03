@@ -43,11 +43,11 @@ If you prioritize security and want to minimize the size of your image, it is re
 
 ## Ubuntu image
 
+The Ubuntu image are maintained by [Canonical](https://launchpad.net/cloud-images). The Grafana Enterprise and OSS images are based on [Ubuntu](https://ubuntu.com/) and can be accessed through the [Ubuntu official image](https://hub.docker.com/_/ubuntu). This is a good option for users who prefer an Ubuntu-based image or require specific tools unavailable on Alpine.
+
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
 - **Grafana Open Source**: `grafana/grafana-oss:<version>-ubuntu`
-
-The Grafana Enterprise and OSS images are based on [Ubuntu](https://ubuntu.com/) and can be accessed through the [Ubuntu official image](https://hub.docker.com/_/ubuntu). This is a good option for users who prefer an Ubuntu-based image or require specific tools unavailable on Alpine.
 
 ## Run a specific version of Grafana
 
@@ -221,18 +221,18 @@ The following example runs Grafana using the `console file` log mode that is set
 
 docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana-enterprise
 ```
-# Configure Grafana with Docker Secrets
+## Configure Grafana with Docker Secrets
 
-Using configuration files, you can input confidential data like login credentials and secrets into Grafana. This method works well with Docker Secrets, as the secrets are automatically mapped to the `/run/secrets/` location within the container. 
+Using configuration files, you can input confidential data like login credentials and secrets into Grafana. This method works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/), as the secrets are automatically mapped to the `/run/secrets/` location within the container. 
 
-You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information.
+You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information. Please check the official [docker secret command usage](https://docs.docker.com/engine/reference/commandline/secret/) for more refrence.
 
 The following example demonstrates how to set the admin password:
 
 - Admin password secret: `/run/secrets/admin_password`
 - Environment variable: `GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/admin_password`
 
-## Configure Docker secrets credentials for AWS CloudWatch
+### Configure Docker secrets credentials for AWS CloudWatch
 
 Grafana ships with built-in support for [Amazon CloudWatch datasource](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/), where need to provide information such as AWS ID-Key, secret access key, region etc. For which you can use the Docker secrets to achieve it.
 

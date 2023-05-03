@@ -64,9 +64,12 @@ docker stop grafana
 
 When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
 
+> **Note:** Though both methods are similar, there is a slight difference. If you want your storage to be fully managed by Docker and accessed only through Docker containers and the Docker CLI, you should choose to use persistent storage. However, if you need full control of the storage and want to allow other processes besides Docker to access or modify the storage layer, then bind mounts is the right choice for your environment.
+
+
 #### Use persistent storage (recommended)
 
-It is recommended to use persistent storage because running without it, users will lose all the data once the container is shut down. Users should use this method if they are deploying in a production environment or where the data is critical.
+It is recommended to use persistent storage because running without it, users will lose all the data once the container is shut down. Users should use this method if they are deploying in a production environment or where the data is critical and only want Docker service to fully manage the stroage volume.
 
 
 To use persistent storage, complete the following steps:
