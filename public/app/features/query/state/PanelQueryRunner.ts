@@ -109,7 +109,7 @@ export class PanelQueryRunner {
       mergeMap((data: PanelData) => {
         if (data.series === lastRawFrames) {
           console.log('returning same series');
-          return of({ ...data, series: lastProcessedFrames });
+          return of({ ...data, structureRev, series: lastProcessedFrames });
         }
 
         lastRawFrames = data.series;
