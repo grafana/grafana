@@ -167,7 +167,7 @@ function legacyCreateSpanLinkFactory(
           query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'googlecloud-logging-datasource':
-          tags = getFormattedTags(span, tagsToUse);
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
           query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
       }
 
@@ -436,7 +436,7 @@ function getQueryForGoogleCloudLogging(
   }
 
   return {
-    queryText: queryArr.join(' AND '),
+    query: queryArr.join(' AND '),
     refId: '',
   };
 }
