@@ -178,7 +178,7 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	return &instance, nil
 }
 
-func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {	
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
