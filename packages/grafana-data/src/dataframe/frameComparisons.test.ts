@@ -1,4 +1,4 @@
-import { FieldType } from '../types/dataFrame';
+import { DataFrame, FieldType } from '../types/dataFrame';
 
 import { compareDataFrameStructures, compareArrayValues } from './frameComparisons';
 import { toDataFrame } from './processDataFrame';
@@ -32,12 +32,12 @@ describe('test comparisons', () => {
     expect(compareDataFrameStructures(frameA, frameA)).toBeTruthy();
     expect(compareDataFrameStructures(frameA, { ...frameA })).toBeTruthy();
     expect(compareDataFrameStructures(frameA, frameB)).toBeFalsy();
-    expect(compareDataFrameStructures(frameA, null as any)).toBeFalsy();
-    expect(compareDataFrameStructures(undefined as any, frameA)).toBeFalsy();
+    expect(compareDataFrameStructures(frameA, null as unknown as DataFrame)).toBeFalsy();
+    expect(compareDataFrameStructures(undefined as unknown as DataFrame, frameA)).toBeFalsy();
 
     expect(compareArrayValues([frameA], [frameA], compareDataFrameStructures)).toBeTruthy();
-    expect(compareArrayValues([frameA], null as any, compareDataFrameStructures)).toBeFalsy();
-    expect(compareArrayValues(null as any, [frameA], compareDataFrameStructures)).toBeFalsy();
+    expect(compareArrayValues([frameA], null as unknown as DataFrame[], compareDataFrameStructures)).toBeFalsy();
+    expect(compareArrayValues(null as unknown as DataFrame[], [frameA], compareDataFrameStructures)).toBeFalsy();
   });
 
   it('name change should be a structure change', () => {
@@ -183,7 +183,7 @@ describe('test comparisons', () => {
       expect(compareDataFrameStructures(a, b)).toBeFalsy();
     });
 
-    it('does not compare deeply', () => {
+    it('does deep comparison', () => {
       const a = {
         ...frameB,
         fields: [
@@ -218,7 +218,7 @@ describe('test comparisons', () => {
         ],
       };
 
-      expect(compareDataFrameStructures(a, b)).toBeFalsy();
+      expect(compareDataFrameStructures(a, b)).toBeTruthy();
     });
   });
 });

@@ -2,13 +2,14 @@ package notifier
 
 import (
 	"errors"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
-	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 func TestPersistTemplates(t *testing.T) {
@@ -71,7 +72,7 @@ func TestPersistTemplates(t *testing.T) {
 			dir := t.TempDir()
 			// Write "existing files"
 			for name, content := range tt.existingTemplates {
-				err := ioutil.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
+				err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
 				require.NoError(t, err)
 			}
 			c := &api.PostableUserConfig{TemplateFiles: tt.templates}
@@ -79,7 +80,7 @@ func TestPersistTemplates(t *testing.T) {
 			paths, changed, persistErr := PersistTemplates(c, dir)
 
 			files := map[string]string{}
-			readFiles, err := ioutil.ReadDir(dir)
+			readFiles, err := os.ReadDir(dir)
 			require.NoError(t, err)
 			for _, f := range readFiles {
 				if f.IsDir() || f.Name() == "" {
@@ -87,7 +88,7 @@ func TestPersistTemplates(t *testing.T) {
 				}
 				// Safe to disable, this is a test.
 				// nolint:gosec
-				content, err := ioutil.ReadFile(filepath.Join(dir, f.Name()))
+				content, err := os.ReadFile(filepath.Join(dir, f.Name()))
 				// nolint:gosec
 				require.NoError(t, err)
 				files[f.Name()] = string(content)

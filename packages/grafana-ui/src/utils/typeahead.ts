@@ -1,6 +1,6 @@
 import { default as calculateSize } from 'calculate-size';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { CompletionItemGroup, CompletionItem, CompletionItemKind } from '../types/completion';
 
@@ -23,10 +23,10 @@ export const calculateLongestLabel = (allItems: CompletionItem[]): string => {
   }, '');
 };
 
-export const calculateListSizes = (theme: GrafanaTheme, allItems: CompletionItem[], longestLabel: string) => {
+export const calculateListSizes = (theme: GrafanaTheme2, allItems: CompletionItem[], longestLabel: string) => {
   const size = calculateSize(longestLabel, {
-    font: theme.typography.fontFamily.monospace,
-    fontSize: theme.typography.size.sm,
+    font: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: 'normal',
   });
 
@@ -41,15 +41,15 @@ export const calculateListSizes = (theme: GrafanaTheme, allItems: CompletionItem
   };
 };
 
-export const calculateItemHeight = (longestLabelHeight: number, theme: GrafanaTheme) => {
-  const horizontalPadding = parseInt(theme.spacing.sm, 10) * 2;
+export const calculateItemHeight = (longestLabelHeight: number, theme: GrafanaTheme2) => {
+  const horizontalPadding = theme.spacing.gridSize * 2;
   const itemHeight = longestLabelHeight + horizontalPadding;
 
   return itemHeight;
 };
 
-export const calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme) => {
-  const verticalPadding = parseInt(theme.spacing.sm, 10) + parseInt(theme.spacing.md, 10);
+export const calculateListWidth = (longestLabelWidth: number, theme: GrafanaTheme2) => {
+  const verticalPadding = theme.spacing.gridSize * 3;
   const maxWidth = 800;
   const listWidth = Math.min(Math.max(longestLabelWidth + verticalPadding, 200), maxWidth);
 

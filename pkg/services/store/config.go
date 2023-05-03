@@ -3,7 +3,6 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -32,7 +31,7 @@ func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	if _, err := os.Stat(fpath); err == nil {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since the path is hardcoded above
-		body, err := ioutil.ReadFile(fpath)
+		body, err := os.ReadFile(fpath)
 		if err != nil {
 			return g, err
 		}
@@ -42,34 +41,6 @@ func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 		}
 	} else {
 		g.AddDevEnv = true
-		changed = true
-	}
-
-	if g.Roots == nil && features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
-		g.Roots = append(g.Roots, RootStorageConfig{
-			Type:   "git",
-			Prefix: "it-A",
-			Name:   "Repository that requires pull requests",
-			Git: &StorageGitConfig{
-				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-A",
-				Branch:             "main",
-				Root:               "dashboards", // the dashboard files
-				RequirePullRequest: true,
-				AccessToken:        "$GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN",
-			},
-		})
-		g.Roots = append(g.Roots, RootStorageConfig{
-			Type:   "git",
-			Prefix: "it-B",
-			Name:   "Another repo (can push to main)",
-			Git: &StorageGitConfig{
-				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-B",
-				Branch:             "main",
-				Root:               "dashboards", // the dashboard files
-				RequirePullRequest: false,
-				AccessToken:        "$GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN",
-			},
-		})
 		changed = true
 	}
 
@@ -96,15 +67,16 @@ func (c *GlobalStorageConfig) save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(c.filepath, out, 0600)
+	return os.WriteFile(c.filepath, out, 0600)
 }
 
 type RootStorageConfig struct {
-	Type        string `json:"type"`
-	Prefix      string `json:"prefix"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Disabled    bool   `json:"disabled,omitempty"`
+	Type             string `json:"type"`
+	Prefix           string `json:"prefix"`
+	UnderContentRoot bool   `json:"underContentRoot"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	Disabled         bool   `json:"disabled,omitempty"`
 
 	// Depending on type, these will be configured
 	Disk *StorageLocalDiskConfig `json:"disk,omitempty"`

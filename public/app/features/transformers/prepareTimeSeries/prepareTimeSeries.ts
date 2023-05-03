@@ -11,9 +11,10 @@ import {
   FieldMatcherID,
   Field,
   MutableDataFrame,
-  ArrayVector,
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
+
+import { partitionByValues } from '../partitionByValues/partitionByValues';
 
 /**
  * There is currently an effort to figure out consistent names
@@ -24,10 +25,14 @@ import { Labels } from 'app/types/unified-alerting-dto';
  *
  * @internal -- TBD
  */
+
 export enum timeSeriesFormat {
-  TimeSeriesWide = 'wide', // [time,...values]
-  TimeSeriesMany = 'many', // All frames have [time,number]
+  TimeSeriesWide = 'wide',
   TimeSeriesLong = 'long',
+  TimeSeriesMulti = 'multi',
+
+  /** @deprecated use multi */
+  TimeSeriesMany = 'many',
 }
 
 export type PrepareTimeSeriesOptions = {
@@ -37,7 +42,7 @@ export type PrepareTimeSeriesOptions = {
 /**
  * Convert to [][time,number]
  */
-export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
+export function toTimeSeriesMulti(data: DataFrame[]): DataFrame[] {
   if (!Array.isArray(data) || data.length === 0) {
     return data;
   }
@@ -73,13 +78,13 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
         };
         const builders = new Map<string, frameBuilder>();
         for (let i = 0; i < frame.length; i++) {
-          const time = timeField.values.get(i);
-          const value = field.values.get(i);
+          const time = timeField.values[i];
+          const value = field.values[i];
           if (value === undefined || time == null) {
             continue; // skip values left over from join
           }
 
-          const key = labelFields.map((f) => f.values.get(i)).join('/');
+          const key = labelFields.map((f) => f.values[i]).join('/');
           let builder = builders.get(key);
           if (!builder) {
             builder = {
@@ -89,7 +94,7 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
               labels: {},
             };
             for (const label of labelFields) {
-              builder.labels[label.name] = label.values.get(i);
+              builder.labels[label.name] = label.values[i];
             }
             builders.set(key, builder);
           }
@@ -104,16 +109,16 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
             refId: frame.refId,
             meta: {
               ...frame.meta,
-              type: DataFrameType.TimeSeriesMany,
+              type: DataFrameType.TimeSeriesMulti,
             },
             fields: [
               {
                 ...timeField,
-                values: new ArrayVector(b.time),
+                values: b.time,
               },
               {
                 ...field,
-                values: new ArrayVector(b.value),
+                values: b.value,
                 labels: b.labels,
               },
             ],
@@ -126,7 +131,7 @@ export function toTimeSeriesMany(data: DataFrame[]): DataFrame[] {
           refId: frame.refId,
           meta: {
             ...frame.meta,
-            type: DataFrameType.TimeSeriesMany,
+            type: DataFrameType.TimeSeriesMulti,
           },
           fields: [timeField, field],
           length: frame.length,
@@ -213,7 +218,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
     const uniqueFactorNamesWithWideIndices: string[] = [];
 
     for (let wideRowIndex = 0; wideRowIndex < frame.length; wideRowIndex++) {
-      sortedTimeRowIndices.push({ time: timeField.values.get(wideRowIndex), wideRowIndex: wideRowIndex });
+      sortedTimeRowIndices.push({ time: timeField.values[wideRowIndex], wideRowIndex: wideRowIndex });
     }
 
     for (const labelKeys in labelKeyToWideIndices) {
@@ -252,7 +257,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
         const rowValues: Record<string, any> = {};
 
         for (const name of uniqueFactorNamesWithWideIndices) {
-          rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values.get(wideRowIndex);
+          rowValues[name] = frame.fields[uniqueFactorNamesToWideIndex[name]].values[wideRowIndex];
         }
 
         let index = 0;
@@ -266,7 +271,7 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
             }
           }
 
-          rowValues[wideField.name] = wideField.values.get(wideRowIndex);
+          rowValues[wideField.name] = wideField.values[wideRowIndex];
         }
 
         rowValues[timeField.name] = time;
@@ -280,31 +285,68 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
+export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
+  // All the string fields
+  const matcher = (field: Field) => field.type === FieldType.string;
+
+  // transform one dataFrame at a time and concat into DataFrame[]
+  return partitionByValues(frame, matcher).map((frame) => {
+    if (!frame.meta) {
+      frame.meta = {};
+    }
+    frame.meta.type = DataFrameType.TimeSeriesMulti;
+    return frame;
+  });
+}
+
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
   description: `Will stretch data frames from the wide format into the long format. This is really helpful to be able to keep backwards compatibility for panels not supporting the new wide format.`,
   defaultOptions: {},
 
-  operator: (options) => (source) =>
-    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => prepareTimeSeriesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PrepareTimeSeriesOptions) => {
     const format = options?.format ?? timeSeriesFormat.TimeSeriesWide;
-    if (format === timeSeriesFormat.TimeSeriesMany) {
-      return toTimeSeriesMany;
+    if (format === timeSeriesFormat.TimeSeriesMany || format === timeSeriesFormat.TimeSeriesMulti) {
+      return toTimeSeriesMulti;
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
     }
+    const joinBy = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 
+    // Single TimeSeriesWide frame (joined by time)
     return (data: DataFrame[]) => {
+      if (!data.length) {
+        return [];
+      }
+
+      // Convert long to wide first
+      const join: DataFrame[] = [];
+      for (const df of data) {
+        if (df.meta?.type === DataFrameType.TimeSeriesLong) {
+          longToMultiTimeSeries(df).forEach((v) => join.push(v));
+        } else {
+          join.push(df);
+        }
+      }
+
       // Join by the first frame
       const frame = outerJoinDataFrames({
-        frames: data,
-        joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        frames: join,
+        joinBy,
         keepOriginIndices: true,
       });
-      return frame ? [frame] : [];
+      if (frame) {
+        if (!frame.meta) {
+          frame.meta = {};
+        }
+        frame.meta.type = DataFrameType.TimeSeriesWide;
+        return [frame];
+      }
+      return [];
     };
   },
 };

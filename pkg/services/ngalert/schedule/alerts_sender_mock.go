@@ -3,9 +3,9 @@
 package schedule
 
 import (
-	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	mock "github.com/stretchr/testify/mock"
 
+	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -33,8 +33,8 @@ type AlertsSenderMock_Send_Call struct {
 }
 
 // Send is a helper method to define mock.On call
-//  - key models.AlertRuleKey
-//  - alerts definitions.PostableAlerts
+//   - key models.AlertRuleKey
+//   - alerts definitions.PostableAlerts
 func (_e *AlertsSenderMock_Expecter) Send(key interface{}, alerts interface{}) *AlertsSenderMock_Send_Call {
 	return &AlertsSenderMock_Send_Call{Call: _e.mock.On("Send", key, alerts)}
 }

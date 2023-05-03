@@ -1,6 +1,14 @@
 import { IconName, IconSize } from '../../types/icon';
 
-const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'library-panel'];
+const alwaysMonoIcons: IconName[] = [
+  'grafana',
+  'favorite',
+  'heart-break',
+  'heart',
+  'panel-add',
+  'library-panel',
+  'circle-mono',
+];
 
 export function getIconSubDir(name: IconName, type: string): string {
   if (name?.startsWith('gf-')) {

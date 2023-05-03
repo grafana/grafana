@@ -1,4 +1,4 @@
-import { render, RenderResult } from '@testing-library/react';
+import { render, RenderResult, screen } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
 
@@ -6,7 +6,6 @@ import { CoreApp } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
 
-import { testIds as exploreTestIds } from './LokiExploreQueryEditor';
 import { testIds as regularTestIds } from './LokiQueryEditor';
 import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';
 import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
@@ -19,6 +18,10 @@ function setup(app: CoreApp): RenderResult {
       getLabelKeys: () => [],
       metrics: [],
     },
+    getQueryHints: () => [],
+    getDataSamples: () => [],
+    maxLines: 20,
+    getTimeRange: jest.fn(),
   } as unknown as LokiDatasource;
 
   return render(
@@ -33,31 +36,30 @@ function setup(app: CoreApp): RenderResult {
 }
 
 describe('LokiQueryEditorByApp', () => {
-  it('should render simplified query editor for cloud alerting', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.CloudAlerting);
+  it('should render simplified query editor for cloud alerting', async () => {
+    setup(CoreApp.CloudAlerting);
 
-    expect(getByTestId(alertingTestIds.editor)).toBeInTheDocument();
-    expect(queryByTestId(regularTestIds.editor)).toBeNull();
+    expect(await screen.findByTestId(alertingTestIds.editor)).toBeInTheDocument();
+    expect(screen.queryByTestId(regularTestIds.editor)).toBeNull();
   });
 
-  it('should render regular query editor for unkown apps', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Unknown);
-
-    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
-    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
+  it('should render regular query editor for unknown apps', async () => {
+    setup(CoreApp.Unknown);
+    expect(await screen.findByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
-  it('should render expore query editor for explore', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Explore);
+  it('should render regular query editor for explore', async () => {
+    setup(CoreApp.Explore);
 
-    expect(getByTestId(exploreTestIds.editor)).toBeInTheDocument();
-    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(await screen.findByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 
-  it('should render regular query editor for dashboard', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.Dashboard);
+  it('should render regular query editor for dashboard', async () => {
+    setup(CoreApp.Dashboard);
 
-    expect(getByTestId(regularTestIds.editor)).toBeInTheDocument();
-    expect(queryByTestId(alertingTestIds.editor)).toBeNull();
+    expect(await screen.findByTestId(regularTestIds.editor)).toBeInTheDocument();
+    expect(screen.queryByTestId(alertingTestIds.editor)).toBeNull();
   });
 });

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { FieldConfigEditorProps, StringFieldConfigSettings, GrafanaTheme } from '@grafana/data';
-import { stylesFactory, getTheme, Button, Icon, Input } from '@grafana/ui';
+import { FieldConfigEditorProps, StringFieldConfigSettings, GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { stylesFactory, Button, Icon, Input } from '@grafana/ui';
 
 type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;
 interface State {
@@ -21,20 +22,19 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
     onChange(copy);
   };
 
-  onValueChange = (e: React.SyntheticEvent, idx: number) => {
-    const evt = e as React.KeyboardEvent<HTMLInputElement>;
-    if (e.hasOwnProperty('key')) {
-      if (evt.key !== 'Enter') {
+  onValueChange = (e: React.KeyboardEvent<HTMLInputElement> | React.FocusEvent<HTMLInputElement>, idx: number) => {
+    if ('key' in e) {
+      if (e.key !== 'Enter') {
         return;
       }
     }
     const { value, onChange } = this.props;
 
     // Form event, or Enter
-    const v = evt.currentTarget.value.trim();
+    const v = e.currentTarget.value.trim();
     if (idx < 0) {
       if (v) {
-        evt.currentTarget.value = ''; // reset last value
+        e.currentTarget.value = ''; // reset last value
         onChange([...value, v]);
       }
       this.setState({ showAdd: false });
@@ -53,7 +53,7 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
   render() {
     const { value, item } = this.props;
     const { showAdd } = this.state;
-    const styles = getStyles(getTheme());
+    const styles = getStyles(config.theme2);
     const placeholder = item.settings?.placeholder || 'Add text';
     return (
       <div>
@@ -90,16 +90,16 @@ export class StringArrayEditor extends React.PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     textInput: css`
       margin-bottom: 5px;
       &:hover {
-        border: 1px solid ${theme.colors.formInputBorderHover};
+        border: 1px solid ${theme.components.input.borderHover};
       }
     `,
     trashIcon: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       cursor: pointer;
 
       &:hover {

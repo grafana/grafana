@@ -3,12 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
+	"github.com/grafana/grafana/pkg/util/cmd"
 )
 
-// Version is overridden by build flags
-var version = "main"
-
 func main() {
-	os.Exit(commands.RunCLI(version))
+	os.Exit(cmd.RunGrafanaCmd("cli"))
 }

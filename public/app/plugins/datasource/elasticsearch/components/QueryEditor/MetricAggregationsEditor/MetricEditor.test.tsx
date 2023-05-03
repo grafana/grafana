@@ -1,16 +1,16 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React, { ReactNode, PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticDatasource } from '../../../datasource';
-import { defaultBucketAgg, defaultMetricAgg } from '../../../query_def';
+import { defaultBucketAgg } from '../../../queryDef';
 import { ElasticsearchQuery } from '../../../types';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 
+import { Average, UniqueCount } from './../../../types';
 import { MetricEditor } from './MetricEditor';
-import { Average, UniqueCount } from './aggregations';
 
 describe('Metric Editor', () => {
   it('Should display a "None" option for "field" if the metric supports inline script', async () => {
@@ -84,51 +84,5 @@ describe('Metric Editor', () => {
 
     expect(await screen.findByText('No options found')).toBeInTheDocument();
     expect(screen.queryByText('None')).not.toBeInTheDocument();
-  });
-
-  describe('Top Metrics Aggregation', () => {
-    const setupTopMetricsScreen = (esVersion: string, xpack: boolean) => {
-      const query: ElasticsearchQuery = {
-        refId: 'A',
-        query: '',
-        metrics: [defaultMetricAgg('1')],
-        bucketAggs: [defaultBucketAgg('2')],
-      };
-
-      const getFields: ElasticDatasource['getFields'] = jest.fn(() => from([[]]));
-
-      const wrapper = ({ children }: { children?: ReactNode }) => (
-        <ElasticsearchProvider
-          datasource={{ getFields, esVersion, xpack } as ElasticDatasource}
-          query={query}
-          range={getDefaultTimeRange()}
-          onChange={() => {}}
-          onRunQuery={() => {}}
-        >
-          {children}
-        </ElasticsearchProvider>
-      );
-
-      render(<MetricEditor value={defaultMetricAgg('1')} />, { wrapper });
-
-      act(() => {
-        fireEvent.click(screen.getByText('Count'));
-      });
-    };
-
-    it('Should include top metrics aggregation when esVersion is 77 and X-Pack is enabled', () => {
-      setupTopMetricsScreen('7.7.0', true);
-      expect(screen.getByText('Top Metrics')).toBeInTheDocument();
-    });
-
-    it('Should NOT include top metrics aggregation where esVersion is 77 and X-Pack is disabled', () => {
-      setupTopMetricsScreen('7.7.0', false);
-      expect(screen.queryByText('Top Metrics')).toBe(null);
-    });
-
-    it('Should NOT include top metrics aggregation when esVersion is 70 and X-Pack is enabled', () => {
-      setupTopMetricsScreen('7.0.0', true);
-      expect(screen.queryByText('Top Metrics')).toBe(null);
-    });
   });
 });

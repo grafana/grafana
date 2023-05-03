@@ -195,4 +195,7 @@ export interface FieldNamePickerConfigSettings {
    * Placeholder text to display when nothing is selected.
    */
   placeholderText?: string;
+
+  /** When set to false, the value can not be removed */
+  isClearable?: boolean;
 }

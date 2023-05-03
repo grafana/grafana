@@ -3,15 +3,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
-import { applyFieldOverrides, DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../plugins/panel/nodeGraph/useCategorizeFrames';
 import { ExploreId, StoreState } from '../../types';
 
-import { splitOpen } from './state/main';
 import { useLinks } from './utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -29,13 +28,14 @@ interface OwnProps {
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
   datasourceType: string;
+  splitOpenFn: SplitOpen;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function UnconnectedNodeGraphContainer(props: Props) {
-  const { dataFrames, range, splitOpen, withTraceView, datasourceType } = props;
-  const getLinks = useLinks(range, splitOpen);
+  const { dataFrames, range, splitOpenFn, withTraceView, datasourceType } = props;
+  const getLinks = useLinks(range, splitOpenFn);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -59,7 +59,8 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     toggleOpen();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
-      expanded: !open,
+      grafana_version: config.buildInfo.version,
+      isExpanded: !open,
     });
   };
 
@@ -82,12 +83,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   return (
     <Collapse
-      label={
-        <span>
-          Node graph{countWarning}{' '}
-          <Badge text={'Beta'} color={'blue'} icon={'rocket'} tooltip={'This visualization is in beta'} />
-        </span>
-      }
+      label={<span>Node graph{countWarning} </span>}
       collapsible={withTraceView}
       // We allow collapsing this only when it is shown together with trace view.
       isOpen={withTraceView ? open : true}
@@ -112,13 +108,9 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
   return {
-    range: state.explore[exploreId]!.range,
+    range: state.explore.panes[exploreId]!.range,
   };
 }
 
-const mapDispatchToProps = {
-  splitOpen,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(mapStateToProps, {});
 export const NodeGraphContainer = connector(UnconnectedNodeGraphContainer);

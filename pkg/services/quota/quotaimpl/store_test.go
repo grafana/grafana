@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 func TestIntegrationQuotaDataAccess(t *testing.T) {
@@ -13,13 +15,14 @@ func TestIntegrationQuotaDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := sqlstore.InitTestDB(t)
+	ss := db.InitTestDB(t)
 	quotaStore := sqlStore{
 		db: ss,
 	}
 
 	t.Run("quota deleted", func(t *testing.T) {
-		err := quotaStore.DeleteByUser(context.Background(), 1)
+		ctx := quota.FromContext(context.Background(), &quota.TargetToSrv{})
+		err := quotaStore.DeleteByUser(ctx, 1)
 		require.NoError(t, err)
 	})
 }

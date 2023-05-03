@@ -14,7 +14,7 @@ export function getQueryOptions<TQuery extends DataQuery>(
     scopedVars: {},
     timezone: 'browser',
     panelId: 1,
-    dashboardId: 1,
+    dashboardUID: 'test-uid-1',
     interval: '60s',
     intervalMs: 60000,
     maxDataPoints: 500,

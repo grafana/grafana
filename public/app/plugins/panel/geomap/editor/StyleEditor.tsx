@@ -1,9 +1,9 @@
 import { capitalize } from 'lodash';
-import React, { FC } from 'react';
+import React from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
-import { StandardEditorProps } from '@grafana/data';
+import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import {
   ColorPicker,
   Field,
@@ -42,12 +42,9 @@ export interface StyleEditorOptions {
   displayRotation?: boolean;
 }
 
-export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions, any>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
+
+export const StyleEditor = ({ value, context, onChange, item }: Props) => {
   const settings = item.settings;
 
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
@@ -86,12 +83,12 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
     onChange({ ...value, textConfig: { ...value.textConfig, offsetY } });
   };
 
-  const onTextAlignChange = (textAlign: unknown) => {
-    onChange({ ...value, textConfig: { ...value.textConfig, textAlign: textAlign as TextAlignment } });
+  const onTextAlignChange = (textAlign: TextAlignment) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, textAlign: textAlign } });
   };
 
-  const onTextBaselineChange = (textBaseline: unknown) => {
-    onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline as TextBaseline } });
+  const onTextBaselineChange = (textBaseline: TextBaseline) => {
+    onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline } });
   };
 
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
@@ -119,7 +116,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
                       },
-                    } as any
+                    } as StandardEditorsRegistryItem
                   }
                 />
               </InlineField>
@@ -135,7 +132,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                       min: defaultStyleConfig.rotation.min,
                       max: defaultStyleConfig.rotation.max,
                     },
-                  } as any
+                  } as StandardEditorsRegistryItem
                 }
               />
             </Field>
@@ -166,7 +163,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                     max: 1,
                     step: 0.1,
                   },
-                } as any
+                } as FieldConfigPropertyItem
               }
             />
           </InlineField>
@@ -188,7 +185,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 min: 1,
                 max: 100,
               },
-            } as any
+            } as StandardEditorsRegistryItem
           }
         />
       </Field>
@@ -206,7 +203,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 placeholderValue: defaultStyleConfig.symbol.fixed,
                 showSourceRadio: false,
               },
-            } as any
+            } as StandardEditorsRegistryItem
           }
         />
       </Field>
@@ -215,7 +212,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           value={value?.color ?? defaultStyleConfig.color}
           context={context}
           onChange={onColorChange}
-          item={{} as any}
+          item={{} as StandardEditorsRegistryItem}
         />
       </Field>
       <Field label={'Fill opacity'}>
@@ -230,7 +227,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 max: 1,
                 step: 0.1,
               },
-            } as any
+            } as FieldConfigPropertyItem
           }
         />
       </Field>
@@ -246,7 +243,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                   min: defaultStyleConfig.rotation.min,
                   max: defaultStyleConfig.rotation.max,
                 },
-              } as any
+              } as StandardEditorsRegistryItem
             }
           />
         </Field>
@@ -256,7 +253,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
           value={value?.text ?? defaultTextConfig}
           context={context}
           onChange={onTextChange}
-          item={{} as any}
+          item={{} as StandardEditorsRegistryItem}
         />
       </Field>
 
@@ -268,7 +265,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 value={value?.textConfig?.fontSize ?? defaultStyleConfig.textConfig.fontSize}
                 context={context}
                 onChange={onTextFontSizeChange}
-                item={{} as any}
+                item={{} as FieldConfigPropertyItem}
               />
             </Field>
             <Field label={'X offset'}>
@@ -276,7 +273,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 value={value?.textConfig?.offsetX ?? defaultStyleConfig.textConfig.offsetX}
                 context={context}
                 onChange={onTextOffsetXChange}
-                item={{} as any}
+                item={{} as FieldConfigPropertyItem}
               />
             </Field>
             <Field label={'Y offset'}>
@@ -284,7 +281,7 @@ export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions
                 value={value?.textConfig?.offsetY ?? defaultStyleConfig.textConfig.offsetY}
                 context={context}
                 onChange={onTextOffsetYChange}
-                item={{} as any}
+                item={{} as FieldConfigPropertyItem}
               />
             </Field>
           </HorizontalGroup>

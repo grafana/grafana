@@ -1,0 +1,152 @@
+[run]
+timeout = "10m"
+
+[linters-settings.goconst]
+min-len = 5
+min-occurrences = 5
+
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
+[linters-settings.revive]
+ignore-generated-header = false
+severity = "warning"
+confidence = 3
+
+[linters-settings.depguard]
+list-type = "blacklist"
+include-go-root = true
+packages = ["io/ioutil"]
+[[linters-settings.depguard.packages-with-error-message]]
+"io/ioutil" = "Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details."
+"gopkg.in/yaml.v2" = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"
+"github.com/pkg/errors" = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library."
+"github.com/xorcare/pointer" = "Use pkg/util.Pointer instead, which is a generic one-liner alternative"
+"github.com/gofrs/uuid" = "Use github.com/google/uuid instead, which we already depend on."
+
+[linters-settings.gocritic]
+enabled-checks = ["ruleguard"]
+[linters-settings.gocritic.settings.ruleguard]
+rules = "pkg/ruleguard.rules.go"
+
+[linters]
+disable-all = true
+enable = [
+  "bodyclose",
+  "depguard",
+  "dogsled",
+  "errcheck",
+  # "gochecknoinits",
+  "goconst",
+  # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
+  "goimports",
+  "goprintffuncname",
+  "gosec",
+  "gosimple",
+  "govet",
+  "ineffassign",
+  "misspell",
+  "nakedret",
+  "rowserrcheck",
+  "exportloopref",
+  "staticcheck",
+  "stylecheck",
+  "typecheck",
+  "unconvert",
+  "unused",
+  "whitespace",
+  "gocyclo",
+  "exhaustive",
+  "typecheck",
+  "asciicheck",
+  "errorlint",
+  "revive",
+]
+
+# Disabled linters (might want them later)
+# "unparam"
+
+[issues]
+exclude-use-default = false
+
+# Enable when appropriate
+# Poorly chosen identifier
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1003"
+
+# Enable when appropriate
+# Dot imports that aren't in external test packages are discouraged.
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1001"
+
+# Enable when appropriate
+# strings.Title has been deprecated since Go 1.18 and an alternative has been available since Go 1.0: The rule Title uses for word boundaries does not handle Unicode punctuation properly.
+# Use golang.org/x/text/cases instead.
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019: strings.Title"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "use fake service and real access control evaluator instead"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G108"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G110"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G201"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G202"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G306"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "401"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "402"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "501"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "404"
+
+[[issues.exclude-rules]]
+linters = ["misspell"]
+text = "Unknwon` is a misspelling of `Unknown"
+
+[[issues.exclude-rules]]
+linters = ["errorlint"]
+text = "non-wrapping format verb for fmt.Errorf"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1000"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1020"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1021"

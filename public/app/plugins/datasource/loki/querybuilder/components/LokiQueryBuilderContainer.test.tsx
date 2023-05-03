@@ -25,13 +25,13 @@ describe('LokiQueryBuilderContainer', () => {
           url: '',
           jsonData: {},
           meta: {} as DataSourcePluginMeta,
+          readOnly: false,
         },
         undefined,
         undefined
       ),
       onChange: jest.fn(),
       onRunQuery: () => {},
-      showRawQuery: true,
       showExplain: false,
     };
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);

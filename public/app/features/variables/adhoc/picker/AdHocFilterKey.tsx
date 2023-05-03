@@ -1,4 +1,4 @@
-import React, { FC, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
 import { Icon, SegmentAsync } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const MIN_WIDTH = 90;
-export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, disabled, filterKey, getTagKeysOptions }) => {
+export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, getTagKeysOptions }: Props) => {
   const loadKeys = () => fetchFilterKeys(datasource, getTagKeysOptions);
   const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, getTagKeysOptions);
 
@@ -52,9 +52,9 @@ export const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 
 const plusSegment: ReactElement = (
-  <a className="gf-form-label query-part" aria-label="Add Filter">
+  <span className="gf-form-label query-part" aria-label="Add Filter">
     <Icon name="plus" />
-  </a>
+  </span>
 );
 
 const fetchFilterKeys = async (

@@ -1,10 +1,10 @@
 import {
-  ArrayVector,
   FieldColorModeId,
   FieldDTO,
   FieldType,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
+  DataFrame,
 } from '@grafana/data';
 
 import { nodes, edges } from './testData/serviceMapResponse';
@@ -13,7 +13,7 @@ export function generateRandomNodes(count = 10) {
   const nodes = [];
 
   const root = {
-    id: '0',
+    id: 'root',
     title: 'root',
     subTitle: 'client',
     success: 1,
@@ -44,45 +44,62 @@ export function generateRandomNodes(count = 10) {
   for (let i = 0; i <= additionalEdges; i++) {
     const sourceIndex = Math.floor(Math.random() * Math.floor(nodes.length - 1));
     const targetIndex = Math.floor(Math.random() * Math.floor(nodes.length - 1));
-    if (sourceIndex === targetIndex || nodes[sourceIndex].id === '0' || nodes[sourceIndex].id === '0') {
+    if (sourceIndex === targetIndex || nodes[sourceIndex].id === '0' || nodes[targetIndex].id === '0') {
       continue;
     }
 
-    nodes[sourceIndex].edges.push(nodes[sourceIndex].id);
+    nodes[sourceIndex].edges.push(nodes[targetIndex].id);
   }
 
-  const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: ArrayVector }> = {
+  const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: any[] }> = {
     [NodeGraphDataFrameFieldNames.id]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
+      config: {
+        links: [
+          {
+            title: 'test data link',
+            url: '',
+            internal: {
+              query: { scenarioId: 'logs', alias: 'from service graph', stringInput: 'tes' },
+              datasourceUid: 'gdev-testdata',
+              datasourceName: 'gdev-testdata',
+            },
+          },
+        ],
+      },
     },
     [NodeGraphDataFrameFieldNames.title]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.subTitle]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.string,
     },
     [NodeGraphDataFrameFieldNames.mainStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { displayName: 'Transactions per second' },
     },
     [NodeGraphDataFrameFieldNames.secondaryStat]: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { displayName: 'Average duration' },
     },
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { fixedColor: 'green', mode: FieldColorModeId.Fixed }, displayName: 'Success' },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
-      values: new ArrayVector(),
+      values: [],
       type: FieldType.number,
       config: { color: { fixedColor: 'red', mode: FieldColorModeId.Fixed }, displayName: 'Errors' },
+    },
+    [NodeGraphDataFrameFieldNames.icon]: {
+      values: [],
+      type: FieldType.string,
     },
   };
 
@@ -95,39 +112,29 @@ export function generateRandomNodes(count = 10) {
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
 
-  const edgeFields: any = {
-    [NodeGraphDataFrameFieldNames.id]: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    [NodeGraphDataFrameFieldNames.source]: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    [NodeGraphDataFrameFieldNames.target]: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-  };
-
-  const edgesFrame = new MutableDataFrame({
+  const edgesFrame: DataFrame = {
     name: 'edges',
-    fields: Object.keys(edgeFields).map((key) => ({
-      ...edgeFields[key],
-      name: key,
-    })),
+    fields: [
+      { name: NodeGraphDataFrameFieldNames.id, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
+    ],
     meta: { preferredVisualisationType: 'nodeGraph' },
-  });
+    length: 0,
+  };
 
   const edgesSet = new Set();
   for (const node of nodes) {
-    nodeFields.id.values.add(node.id);
-    nodeFields.title.values.add(node.title);
-    nodeFields.subTitle.values.add(node.subTitle);
-    nodeFields.mainStat.values.add(node.stat1);
-    nodeFields.secondaryStat.values.add(node.stat2);
-    nodeFields.arc__success.values.add(node.success);
-    nodeFields.arc__errors.values.add(node.error);
+    nodeFields.id.values.push(node.id);
+    nodeFields.title.values.push(node.title);
+    nodeFields[NodeGraphDataFrameFieldNames.subTitle].values.push(node.subTitle);
+    nodeFields[NodeGraphDataFrameFieldNames.mainStat].values.push(node.stat1);
+    nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.push(node.stat2);
+    nodeFields.arc__success.values.push(node.success);
+    nodeFields.arc__errors.values.push(node.error);
+    const rnd = Math.random();
+    nodeFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
       // We can have duplicate edges when we added some more by random
@@ -135,11 +142,13 @@ export function generateRandomNodes(count = 10) {
         continue;
       }
       edgesSet.add(id);
-      edgeFields.id.values.add(`${node.id}--${edge}`);
-      edgeFields.source.values.add(node.id);
-      edgeFields.target.values.add(edge);
+      edgesFrame.fields[0].values.push(`${node.id}--${edge}`);
+      edgesFrame.fields[1].values.push(node.id);
+      edgesFrame.fields[2].values.push(edge);
+      edgesFrame.fields[3].values.push(Math.random() * 100);
     }
   }
+  edgesFrame.length = edgesFrame.fields[0].values.length;
 
   return [nodeFrame, edgesFrame];
 }
@@ -148,7 +157,7 @@ function makeRandomNode(index: number) {
   const success = Math.random();
   const error = 1 - success;
   return {
-    id: index.toString(),
+    id: `service:${index}`,
     title: `service:${index}`,
     subTitle: 'service',
     success,
@@ -159,6 +168,11 @@ function makeRandomNode(index: number) {
   };
 }
 
-export function savedNodesResponse(): any {
+export function savedNodesResponse() {
   return [new MutableDataFrame(nodes), new MutableDataFrame(edges)];
+}
+
+// Generates node graph data but only returns the edges
+export function generateRandomEdges(count = 10) {
+  return generateRandomNodes(count)[1];
 }

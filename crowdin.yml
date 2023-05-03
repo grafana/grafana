@@ -1,7 +1,6 @@
 files:
-  - source: /public/locales/en-US/messages.po
+  - source: /public/locales/en-US/grafana.json
     translation: /public/locales/%locale%/%original_file_name%
-    export_only_approved: true
 
 pull_request_title: 'I18n: Crowdin sync'
 pull_request_labels:

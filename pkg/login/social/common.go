@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	errMissingGroupMembership = Error{"user not a member of one of the required groups"}
+	errMissingGroupMembership = &Error{"user not a member of one of the required groups"}
 )
 
 type httpGetResponse struct {
@@ -54,7 +54,7 @@ func (s *SocialBase) httpGet(client *http.Client, url string) (response httpGetR
 		}
 	}()
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return
 	}

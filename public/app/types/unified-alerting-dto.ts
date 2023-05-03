@@ -2,6 +2,8 @@
 
 import { DataQuery, RelativeTimeRange } from '@grafana/data';
 
+import { AlertGroupTotals } from './unified-alerting';
+
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;
 
@@ -22,6 +24,14 @@ export enum GrafanaAlertState {
 type GrafanaAlertStateReason = ` (${string})` | '';
 
 export type GrafanaAlertStateWithReason = `${GrafanaAlertState}${GrafanaAlertStateReason}`;
+
+export function isPromAlertingRuleState(state: string): state is PromAlertingRuleState {
+  return Object.values<string>(PromAlertingRuleState).includes(state);
+}
+
+export function isGrafanaAlertState(state: string): state is GrafanaAlertState {
+  return Object.values(GrafanaAlertState).some((promState) => promState === state);
+}
 
 /** We need this to disambiguate the union PromAlertingRuleState | GrafanaAlertStateWithReason
  */
@@ -50,10 +60,12 @@ export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
 }
+
 export enum PromApplication {
-  Lotex = 'Lotex',
+  Cortex = 'Cortex',
   Mimir = 'Mimir',
   Prometheus = 'Prometheus',
+  Thanos = 'Thanos',
 }
 
 export interface PromBuildInfoResponse {
@@ -76,6 +88,19 @@ export interface PromApiFeatures {
   features: {
     rulerApiEnabled: boolean;
   };
+}
+
+export interface AlertmanagerApiFeatures {
+  /**
+   * Some Alertmanager implementations (Mimir) are multi-tenant systems.
+   *
+   * To save on compute costs, tenants are not active until they have a configuration set.
+   * If there is no fallback_config_file set, Alertmanager endpoints will respond with HTTP 404
+   *
+   * Despite that, it is possible to create a configuration for such datasource
+   * by posting a new config to the `/api/v1/alerts` endpoint
+   */
+  lazyConfigInit: boolean;
 }
 
 interface PromRuleDTOBase {
@@ -130,7 +155,10 @@ export interface PromResponse<T> {
   warnings?: string[];
 }
 
-export type PromRulesResponse = PromResponse<{ groups: PromRuleGroupDTO[] }>;
+export type PromRulesResponse = PromResponse<{
+  groups: PromRuleGroupDTO[];
+  totals?: AlertGroupTotals;
+}>;
 
 // Ruler rule DTOs
 interface RulerRuleBaseDTO {
@@ -177,6 +205,7 @@ export interface PostableGrafanaRuleDefinition {
   no_data_state: GrafanaAlertStateDecision;
   exec_err_state: GrafanaAlertStateDecision;
   data: AlertQuery[];
+  is_paused?: boolean;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;

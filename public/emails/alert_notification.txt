@@ -1,4 +1,4 @@
-{{Subject .Subject "{{.Title}}"}}
+{{HiddenSubject .Subject "{{.Title}}"}}
 
 {{.Title}}
 ----------------
@@ -25,4 +25,5 @@ View your Alert rule:
 Go to the Alerts page:
 {{.AlertPageUrl}}
 
-Sent by Grafana v{{.BuildVersion}} (c) 2022 Grafana Labs
+
+Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
@@ -7,66 +7,57 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginOption,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { Input, InlineField } from '@grafana/ui';
+import { Input, InlineField, FieldProps, SecureSocksProxySettings } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
+import { config } from 'app/core/config';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../datasource';
+import { SelectableResourceValue } from '../resources/types';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 
-import { LogGroupSelector } from './LogGroupSelector';
+import { LogGroupsField } from './LogGroups/LogGroupsField';
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
 
-export const ConfigEditor: FC<Props> = (props: Props) => {
-  const { options } = props;
-  const { defaultLogGroups, logsTimeout, defaultRegion } = options.jsonData;
-  const [saved, setSaved] = useState(!!options.version && options.version > 1);
+type LogGroupFieldState = Pick<FieldProps, 'invalid'> & { error?: string | null };
 
-  const datasource = useDatasource(options.name, saved);
+export const ConfigEditor = (props: Props) => {
+  const { options, onOptionsChange } = props;
+  const { defaultLogGroups, logsTimeout, defaultRegion, logGroups } = options.jsonData;
+  const datasource = useDatasource(props);
   useAuthenticationWarning(options.jsonData);
   const logsTimeoutError = useTimoutValidation(logsTimeout);
-  useEffect(() => {
-    setSaved(false);
-  }, [
-    props.options.jsonData.assumeRoleArn,
-    props.options.jsonData.authType,
-    props.options.jsonData.defaultRegion,
-    props.options.jsonData.endpoint,
-    props.options.jsonData.externalId,
-    props.options.jsonData.profile,
-    props.options.secureJsonData?.accessKey,
-    props.options.secureJsonData?.secretKey,
-  ]);
-
-  const saveOptions = async (): Promise<void> => {
-    if (saved) {
-      return;
-    }
-    await getBackendSrv()
-      .put(`/api/datasources/${options.id}`, options)
-      .then((result: { datasource: any }) => {
-        updateDatasourcePluginOption(props, 'version', result.datasource.version);
-      });
-    setSaved(true);
-  };
+  const saved = useDataSourceSavedState(props);
+  const [logGroupFieldState, setLogGroupFieldState] = useState<LogGroupFieldState>({
+    invalid: false,
+  });
+  useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
 
   return (
     <>
       <ConnectionConfig
         {...props}
+        labelWidth={29}
         loadRegions={
           datasource &&
-          (() => datasource!.getRegions().then((r) => r.filter((r) => r.value !== 'default').map((v) => v.value)))
+          (async () => {
+            return datasource.resources
+              .getRegions()
+              .then((regions) =>
+                regions.reduce(
+                  (acc: string[], curr: SelectableResourceValue) => (curr.value ? [...acc, curr.value] : acc),
+                  []
+                )
+              );
+          })
         }
       >
-        <InlineField label="Namespaces of Custom Metrics" labelWidth={28} tooltip="Namespaces of Custom Metrics.">
+        <InlineField label="Namespaces of Custom Metrics" labelWidth={29} tooltip="Namespaces of Custom Metrics.">
           <Input
             width={60}
             placeholder="Namespace1,Namespace2"
@@ -76,17 +67,21 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         </InlineField>
       </ConnectionConfig>
 
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
+
       <h3 className="page-heading">CloudWatch Logs</h3>
       <div className="gf-form-group">
         <InlineField
-          label="Timeout"
+          label="Retry Timeout"
           labelWidth={28}
-          tooltip='Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
+          tooltip='Cloudwatch Logs allows for a maximum of 30 concurrent queries. If Grafana hits a concurrent max query error from Cloudwatch Logs it will auto-retry requesting a query for up to 30min. This retry timeout strategy is configurable. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
           invalid={Boolean(logsTimeoutError)}
         >
           <Input
             width={60}
-            placeholder="15m"
+            placeholder="30m"
             value={options.jsonData.logsTimeout || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
@@ -96,21 +91,44 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           label="Default Log Groups"
           labelWidth={28}
           tooltip="Optionally, specify default log groups for CloudWatch Logs queries."
+          shrink={true}
+          {...logGroupFieldState}
         >
-          <LogGroupSelector
+          <LogGroupsField
             region={defaultRegion ?? ''}
-            selectedLogGroups={defaultLogGroups ?? []}
             datasource={datasource}
-            onChange={(logGroups) => {
-              updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
+            onBeforeOpen={() => {
+              if (saved) {
+                return;
+              }
+
+              let error = 'You need to save the data source before adding log groups.';
+              if (props.options.version && props.options.version > 1) {
+                error =
+                  'You have unsaved connection detail changes. You need to save the data source before adding log groups.';
+              }
+              setLogGroupFieldState({
+                invalid: true,
+                error,
+              });
+              throw new Error(error);
             }}
-            onOpenMenu={saveOptions}
-            width={60}
-            saved={saved}
+            legacyLogGroupNames={defaultLogGroups}
+            logGroups={logGroups}
+            onChange={(updatedLogGroups) => {
+              onOptionsChange({
+                ...props.options,
+                jsonData: {
+                  ...props.options.jsonData,
+                  logGroups: updatedLogGroups,
+                  defaultLogGroups: undefined,
+                },
+              });
+            }}
+            maxNoOfVisibleLogGroups={2}
           />
         </InlineField>
       </div>
-
       <XrayLinkConfig
         onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
         datasourceUid={options.jsonData.tracingDatasourceUid}
@@ -137,22 +155,20 @@ function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
   }, [jsonData.authType, jsonData.database, jsonData.profile]);
 }
 
-function useDatasource(datasourceName: string, saved: boolean) {
+function useDatasource(props: Props) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
 
   useEffect(() => {
-    // reload the datasource when it's saved
-    if (!saved) {
-      return;
+    if (props.options.version) {
+      getDatasourceSrv()
+        .loadDatasource(props.options.name)
+        .then((datasource) => {
+          if (datasource instanceof CloudWatchDatasource) {
+            setDatasource(datasource);
+          }
+        });
     }
-    getDatasourceSrv()
-      .loadDatasource(datasourceName)
-      .then((datasource) => {
-        // It's really difficult to type .loadDatasource() because it's inherently untyped as it involves two JSON.parse()'s
-        // So a "as" type assertion here is a necessary evil.
-        setDatasource(datasource as CloudWatchDatasource);
-      });
-  }, [datasourceName, saved]);
+  }, [props.options.version, props.options.name]);
 
   return datasource;
 }
@@ -178,4 +194,26 @@ function useTimoutValidation(value: string | undefined) {
     [value]
   );
   return err;
+}
+
+function useDataSourceSavedState(props: Props) {
+  const [saved, setSaved] = useState(!!props.options.version && props.options.version > 1);
+  useEffect(() => {
+    setSaved(false);
+  }, [
+    props.options.jsonData.assumeRoleArn,
+    props.options.jsonData.authType,
+    props.options.jsonData.defaultRegion,
+    props.options.jsonData.endpoint,
+    props.options.jsonData.externalId,
+    props.options.jsonData.profile,
+    props.options.secureJsonData?.accessKey,
+    props.options.secureJsonData?.secretKey,
+  ]);
+
+  useEffect(() => {
+    props.options.version && setSaved(true);
+  }, [props.options.version]);
+
+  return saved;
 }

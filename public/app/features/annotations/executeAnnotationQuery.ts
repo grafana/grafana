@@ -23,7 +23,11 @@ export function executeAnnotationQuery(
     ...datasource.annotations,
   };
 
-  const annotation = processor.prepareAnnotation!(savedJsonAnno);
+  const annotationWithDefaults = {
+    ...processor.getDefaultQuery?.(),
+    ...savedJsonAnno,
+  };
+  const annotation = processor.prepareAnnotation!(annotationWithDefaults);
   if (!annotation) {
     return of({});
   }
@@ -53,6 +57,7 @@ export function executeAnnotationQuery(
     scopedVars,
     ...interval,
     app: CoreApp.Dashboard,
+    publicDashboardAccessToken: options.dashboard.meta.publicDashboardAccessToken,
 
     timezone: options.dashboard.timezone,
 
@@ -66,11 +71,12 @@ export function executeAnnotationQuery(
 
   return runRequest(datasource, queryRequest).pipe(
     mergeMap((panelData) => {
-      if (!panelData.series) {
+      // Some annotations set the topic already
+      const data = panelData?.series.length ? panelData.series : panelData.annotations;
+      if (!data?.length) {
         return of({ panelData, events: [] });
       }
-
-      return processor.processEvents!(annotation, panelData.series).pipe(map((events) => ({ panelData, events })));
+      return processor.processEvents!(annotation, data).pipe(map((events) => ({ panelData, events })));
     })
   );
 }

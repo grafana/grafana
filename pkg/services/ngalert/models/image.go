@@ -27,7 +27,7 @@ func (i *Image) ExtendDuration(d time.Duration) {
 
 // HasExpired returns true if the image has expired.
 func (i *Image) HasExpired() bool {
-	return time.Now().After(i.ExpiresAt)
+	return timeNow().After(i.ExpiresAt)
 }
 
 // HasPath returns true if the image has a path on disk.

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 
-import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
+import { Field, FieldType, LinkModel } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
 
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
@@ -62,8 +62,8 @@ const DebugFields = ({ fields }: DebugFieldItemProps) => {
       </thead>
       <tbody>
         {fields.map((field) => {
-          let value: any = field.value;
-          if (field.error) {
+          let value: ReactNode = field.value;
+          if (field.error && field.error instanceof Error) {
             value = field.error.message;
           } else if (field.href) {
             value = <a href={field.href}>{value}</a>;
@@ -83,7 +83,7 @@ const DebugFields = ({ fields }: DebugFieldItemProps) => {
 
 type DebugField = {
   name: string;
-  error?: any;
+  error?: unknown;
   value?: string;
   href?: string;
 };
@@ -102,7 +102,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
             field: {
               name: '',
               type: FieldType.string,
-              values: new ArrayVector([value]),
+              values: [value],
               config: {
                 links: [{ title: '', url: field.url }],
               },
@@ -112,16 +112,18 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
           })[0];
         }
 
-        return {
+        const result: DebugField = {
           name: field.name,
           value: value || '<no match>',
-          href: link && link.href,
-        } as DebugField;
+          href: link ? link.href : undefined,
+        };
+        return result;
       } catch (error) {
-        return {
+        const result: DebugField = {
           name: field.name,
           error,
-        } as DebugField;
+        };
+        return result;
       }
     });
 }

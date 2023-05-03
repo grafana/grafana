@@ -18,7 +18,13 @@ export interface UPlotThresholdOptions {
 }
 
 export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
-  function addLines(u: uPlot, steps: Threshold[], theme: GrafanaTheme2, xMin: number, xMax: number, yScaleKey: string) {
+  const dashSegments =
+    options.config.mode === GraphTresholdsStyleMode.Dashed ||
+    options.config.mode === GraphTresholdsStyleMode.DashedAndArea
+      ? [10, 10]
+      : null;
+
+  function addLines(u: uPlot, yScaleKey: string, steps: Threshold[], theme: GrafanaTheme2) {
     let ctx = u.ctx;
 
     // Thresholds below a transparent threshold is treated like "less than", and line drawn previous threshold
@@ -33,6 +39,10 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
 
     ctx.lineWidth = 2;
+
+    if (dashSegments) {
+      ctx.setLineDash(dashSegments);
+    }
 
     // Ignore the base -Infinity threshold by always starting on index 1
     for (let idx = 1; idx < steps.length; idx++) {
@@ -51,9 +61,9 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         color.setAlpha(0.7);
       }
 
-      let x0 = Math.round(u.valToPos(xMin!, 'x', true));
+      let x0 = Math.round(u.bbox.left);
       let y0 = Math.round(u.valToPos(step.value, yScaleKey, true));
-      let x1 = Math.round(u.valToPos(xMax!, 'x', true));
+      let x1 = Math.round(u.bbox.left + u.bbox.width);
       let y1 = Math.round(u.valToPos(step.value, yScaleKey, true));
 
       ctx.beginPath();
@@ -65,12 +75,12 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
     }
   }
 
-  function addAreas(u: uPlot, steps: Threshold[], theme: GrafanaTheme2) {
+  function addAreas(u: uPlot, yScaleKey: string, steps: Threshold[], theme: GrafanaTheme2) {
     let ctx = u.ctx;
 
     let grd = scaleGradient(
       u,
-      u.series[1].scale!,
+      yScaleKey,
       steps.map((step) => {
         let color = tinycolor(theme.visualization.getColorByName(step.color));
 
@@ -114,14 +124,16 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
 
     switch (config.mode) {
       case GraphTresholdsStyleMode.Line:
-        addLines(u, steps, theme, xMin, xMax, scaleKey);
+      case GraphTresholdsStyleMode.Dashed:
+        addLines(u, scaleKey, steps, theme);
         break;
       case GraphTresholdsStyleMode.Area:
-        addAreas(u, steps, theme);
+        addAreas(u, scaleKey, steps, theme);
         break;
       case GraphTresholdsStyleMode.LineAndArea:
-        addAreas(u, steps, theme);
-        addLines(u, steps, theme, xMin, xMax, scaleKey);
+      case GraphTresholdsStyleMode.DashedAndArea:
+        addAreas(u, scaleKey, steps, theme);
+        addLines(u, scaleKey, steps, theme);
     }
 
     ctx.restore();

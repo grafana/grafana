@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -23,6 +23,13 @@ describe('DataSourcePicker', () => {
       expect(() => {
         select.getByLabelText('select-clear-value');
       }).toThrowError();
+    });
+
+    it('should pass disabled prop', async () => {
+      render(<DataSourcePicker disabled={true} />);
+
+      const input = screen.getByLabelText('Select a data source');
+      expect(input).toHaveProperty('disabled', true);
     });
   });
 });

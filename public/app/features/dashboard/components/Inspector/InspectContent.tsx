@@ -1,9 +1,9 @@
-import { t } from '@lingui/macro';
 import React, { useState } from 'react';
 
 import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
@@ -31,7 +31,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const InspectContent: React.FC<Props> = ({
+export const InspectContent = ({
   panel,
   plugin,
   dashboard,
@@ -43,14 +43,17 @@ export const InspectContent: React.FC<Props> = ({
   defaultTab,
   onDataOptionsChange,
   onClose,
-}) => {
+}: Props) => {
   const [currentTab, setCurrentTab] = useState(defaultTab ?? InspectTab.Data);
 
   if (!plugin) {
     return null;
   }
 
-  const error = data?.error;
+  let errors = data?.errors;
+  if (!errors?.length && data?.error) {
+    errors = [data.error];
+  }
 
   // Validate that the active tab is actually valid and allowed
   let activeTab = currentTab;
@@ -59,10 +62,7 @@ export const InspectContent: React.FC<Props> = ({
   }
 
   const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
-  const title = t({
-    id: 'dashboard.inspect.title',
-    message: `Inspect: ${panelTitle}`,
-  });
+  const title = t('dashboard.inspect.title', 'Inspect: {{panelTitle}}', { panelTitle });
 
   return (
     <Drawer
@@ -74,13 +74,13 @@ export const InspectContent: React.FC<Props> = ({
       scrollableContent
       tabs={
         <TabsBar>
-          {tabs.map((t, index) => {
+          {tabs.map((tab, index) => {
             return (
               <Tab
-                key={`${t.value}-${index}`}
-                label={t.label}
-                active={t.value === activeTab}
-                onChangeTab={() => setCurrentTab(t.value || InspectTab.Data)}
+                key={`${tab.value}-${index}`}
+                label={tab.label}
+                active={tab.value === activeTab}
+                onChangeTab={() => setCurrentTab(tab.value || InspectTab.Data)}
               />
             );
           })}
@@ -105,7 +105,7 @@ export const InspectContent: React.FC<Props> = ({
       {activeTab === InspectTab.JSON && (
         <InspectJSONTab panel={panel} dashboard={dashboard} data={data} onClose={onClose} />
       )}
-      {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
+      {activeTab === InspectTab.Error && <InspectErrorTab errors={errors} />}
       {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
       {data && activeTab === InspectTab.Query && (
         <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
@@ -124,8 +124,9 @@ function formatStats(data: PanelData) {
   const requestTime = request.endTime ? request.endTime - request.startTime : 0;
   const formatted = formattedValueToString(getValueFormat('ms')(requestTime));
 
-  return t({
-    id: 'dashboard.inspect.subtitle',
-    message: `${queryCount} queries with total query time of ${formatted}`,
-  });
+  return (
+    <Trans i18nKey="dashboard.inspect.subtitle">
+      {{ queryCount }} queries with total query time of {{ formatted }}
+    </Trans>
+  );
 }

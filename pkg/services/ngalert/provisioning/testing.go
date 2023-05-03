@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	mock "github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -71,11 +72,11 @@ func newFakeAMConfigStore() *fakeAMConfigStore {
 	}
 }
 
-func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	query.Result = &f.config
-	query.Result.OrgID = query.OrgID
-	query.Result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
-	return nil
+func (f *fakeAMConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error) {
+	result := &f.config
+	result.OrgID = query.OrgID
+	result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.config.AlertmanagerConfiguration)))
+	return result, nil
 }
 
 func (f *fakeAMConfigStore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
@@ -147,16 +148,21 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 }
 
 func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *MockAMConfigStore_Expecter {
-	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-		Run(func(ctx context.Context, q *models.GetLatestAlertmanagerConfigurationQuery) {
-			q.Result = &ac
-		}).
-		Return(nil)
+	m.GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&ac, nil)
 	return m
 }
 
 func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
 	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Return(nil).
+		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
+			*intercepted = *cmd
+		})
 	return m
 }
 

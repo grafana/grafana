@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -47,7 +47,7 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  return frame.fields[1].values[0] - frame.fields[0].values[0];
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -153,7 +153,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'y',
     isTime: false,
     placement: AxisPlacement.Left,
-    formatValue: (v, decimals) => formattedValueToString(dispY!(v, countField.config.decimals ?? decimals)),
+    formatValue: (v, decimals) => formattedValueToString(dispY!(v, decimals)),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,
@@ -175,14 +175,14 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let seriesIndex = 0;
 
-  // assumes BucketMax is [1]
+  // assumes xMin is [0], xMax is [1]
   for (let i = 2; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig = { ...field.config.custom };
+    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);
@@ -199,7 +199,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       colorMode,
       pathBuilder,
       //pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.vis,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
@@ -209,10 +209,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      dataFrameFieldIndex: {
-        fieldIndex: 1,
-        frameIndex: i - 2,
-      },
+      dataFrameFieldIndex: field.state.origin,
     });
   }
 
@@ -224,7 +221,7 @@ const preparePlotData = (frame: DataFrame) => {
 
   for (const field of frame.fields) {
     if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values.toArray());
+      data.push(field.values);
     }
   }
 
@@ -272,11 +269,12 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.showLegend === false || !this.props.rawSeries) {
+
+    if (!config || legend.showLegend === false) {
       return null;
     }
 
-    return <PlotLegend data={this.props.rawSeries} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend data={this.props.rawSeries!} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {

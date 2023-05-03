@@ -67,27 +67,44 @@ export function Drawer({
   }, []);
 
   const content = <div className={drawerStyles.content}>{children}</div>;
+  const style: CSSProperties = {};
+  if (inline) {
+    style.position = 'absolute';
+  }
 
   return (
     <RcDrawer
-      level={null}
-      handler={false}
       open={isOpen}
       onClose={onClose}
-      maskClosable={closeOnMaskClick}
       placement="right"
       width={currentWidth}
       getContainer={inline ? undefined : 'body'}
-      style={{ position: `${inline && 'absolute'}` } as CSSProperties}
-      className={drawerStyles.drawer}
-      aria-label={
-        typeof title === 'string'
-          ? selectors.components.Drawer.General.title(title)
-          : selectors.components.Drawer.General.title('no title')
-      }
+      style={style}
+      className={drawerStyles.drawerContent}
+      rootClassName={drawerStyles.drawer}
+      motion={{
+        motionAppear: true,
+        motionName: drawerStyles.drawerMotion,
+      }}
+      maskClassName={drawerStyles.mask}
+      maskClosable={closeOnMaskClick}
+      maskMotion={{
+        motionAppear: true,
+        motionName: drawerStyles.maskMotion,
+      }}
     >
       <FocusScope restoreFocus contain autoFocus>
-        <div className={drawerStyles.container} {...overlayProps} {...dialogProps} ref={overlayRef}>
+        <div
+          aria-label={
+            typeof title === 'string'
+              ? selectors.components.Drawer.General.title(title)
+              : selectors.components.Drawer.General.title('no title')
+          }
+          className={drawerStyles.container}
+          {...overlayProps}
+          {...dialogProps}
+          ref={overlayRef}
+        >
           {typeof title === 'string' && (
             <div className={drawerStyles.header}>
               <div className={drawerStyles.actions}>
@@ -141,25 +158,45 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1 1 0;
     `,
     drawer: css`
-      .drawer-content {
-        background-color: ${theme.colors.background.primary};
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      &.drawer-open .drawer-mask {
-        background-color: ${theme.components.overlay.background};
-        backdrop-filter: blur(1px);
-        opacity: 1;
-      }
-      .drawer-mask {
-        background-color: ${theme.components.overlay.background};
-        backdrop-filter: blur(1px);
-      }
-      .drawer-open .drawer-content-wrapper {
+      .rc-drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
+
+        ${theme.breakpoints.down('sm')} {
+          width: 100% !important;
+        }
       }
+    `,
+    drawerContent: css`
+      background-color: ${theme.colors.background.primary} !important;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       z-index: ${theme.zIndex.dropdown};
+    `,
+    drawerMotion: css`
+      &-appear {
+        transform: translateX(100%);
+        transition: none !important;
+
+        &-active {
+          transition: ${theme.transitions.create('transform')} !important;
+          transform: translateX(0);
+        }
+      }
+    `,
+    mask: css`
+      background-color: ${theme.components.overlay.background} !important;
+      backdrop-filter: blur(1px);
+    `,
+    maskMotion: css`
+      &-appear {
+        opacity: 0;
+
+        &-active {
+          opacity: 1;
+          transition: ${theme.transitions.create('opacity')};
+        }
+      }
     `,
     header: css`
       background-color: ${theme.colors.background.canvas};

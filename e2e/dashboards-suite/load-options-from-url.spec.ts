@@ -9,7 +9,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .intercept({
         method: 'POST',
-        url: '/api/ds/query',
+        pathname: '/api/ds/query*',
       })
       .as('query');
 
@@ -20,7 +20,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -33,7 +33,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -46,7 +46,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -61,7 +61,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .intercept({
         method: 'POST',
-        url: '/api/ds/query',
+        pathname: '/api/ds/query',
       })
       .as('query');
 
@@ -72,7 +72,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -85,7 +85,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -98,7 +98,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -124,7 +124,7 @@ describe('Variables - Load options from Url', () => {
     e2e()
       .intercept({
         method: 'POST',
-        url: '/api/ds/query',
+        pathname: '/api/ds/query',
       })
       .as('query');
 
@@ -135,7 +135,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 4);
+        e2e.components.Variables.variableOption().should('have.length', 9);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -147,7 +147,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 10);
+        e2e.components.Variables.variableOption().should('have.length', 65);
       });
   });
 });

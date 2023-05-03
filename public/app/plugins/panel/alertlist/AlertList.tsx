@@ -3,9 +3,9 @@ import { sortBy } from 'lodash';
 import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { dateMath, dateTime, GrafanaTheme, PanelProps } from '@grafana/data';
+import { dateMath, dateTime, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
+import { Card, CustomScrollbar, Icon, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { AlertRuleDTO, AnnotationItemDTO } from 'app/types';
@@ -134,7 +134,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     props.options.sortOrder,
   ]);
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
@@ -211,10 +211,10 @@ function getStateFilter(stateFilter: Record<string, boolean>) {
     .map(([key, _]) => key);
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   cardContainer: css`
-    padding: ${theme.spacing.xs} 0 ${theme.spacing.xxs} 0;
-    line-height: ${theme.typography.lineHeight.md};
+    padding: ${theme.spacing(0.5)} 0 ${theme.spacing(0.25)} 0;
+    line-height: ${theme.typography.body.lineHeight};
     margin-bottom: 0px;
   `,
   container: css`
@@ -232,26 +232,26 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     align-items: center;
     width: 100%;
     height: 100%;
-    background: ${theme.colors.bg2};
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    border-radius: ${theme.border.radius.md};
-    margin-bottom: ${theme.spacing.xs};
+    background: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
+    border-radius: ${theme.shape.borderRadius()};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   alertRuleItemIcon: css`
     display: flex;
     justify-content: center;
     align-items: center;
-    width: ${theme.spacing.xl};
-    padding: 0 ${theme.spacing.xs} 0 ${theme.spacing.xxs};
+    width: ${theme.spacing(4)};
+    padding: 0 ${theme.spacing(0.5)} 0 ${theme.spacing(0.25)};
     margin-right: 0px;
   `,
   alertRuleItemText: css`
-    font-weight: ${theme.typography.weight.bold};
+    font-weight: ${theme.typography.fontWeightBold};
     font-size: ${theme.typography.size.sm};
     margin: 0;
   `,
   alertRuleItemTime: css`
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
     font-weight: normal;
     white-space: nowrap;
   `,
@@ -269,6 +269,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     height: 100%;
   `,
   alertIcon: css`
-    margin-right: ${theme.spacing.xs};
+    margin-right: ${theme.spacing(0.5)};
   `,
-}));
+});

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useEffectOnce } from 'react-use';
 
@@ -11,7 +11,7 @@ import { getUserOrganizations, setUserOrganization } from './state/actions';
 
 const navModel = {
   main: {
-    icon: 'grafana',
+    icon: 'grafana' as const,
     subTitle: 'Preferences',
     text: 'Select active organization',
   },
@@ -35,7 +35,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = ConnectedProps<typeof connector>;
 
-export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
+export const SelectOrgPage = ({ setUserOrganization, getUserOrganizations, userOrgs }: Props) => {
   const setUserOrg = async (org: UserOrg) => {
     await setUserOrganization(org.orgId);
     window.location.href = config.appSubUrl + '/';

@@ -4,16 +4,25 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, logInfo } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { mockCombinedRule, mockDataSource } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { RuleListGroupView } from './RuleListGroupView';
+
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    logInfo: jest.fn(),
+  };
+});
 
 const ui = {
   grafanaRulesHeading: byRole('heading', { name: 'Grafana' }),
@@ -74,6 +83,17 @@ describe('RuleListGroupView', () => {
       expect(ui.cloudRulesHeading.query()).not.toBeInTheDocument();
     });
   });
+
+  describe('Analytics', () => {
+    it('Sends log info when the list is loaded', () => {
+      const grafanaNamespace = getGrafanaNamespace();
+      const namespaces: CombinedRuleNamespace[] = [grafanaNamespace];
+
+      renderRuleList(namespaces);
+
+      expect(logInfo).toHaveBeenCalledWith(LogMessages.loadedList);
+    });
+  });
 });
 
 function renderRuleList(namespaces: CombinedRuleNamespace[]) {
@@ -96,6 +116,7 @@ function getGrafanaNamespace(): CombinedRuleNamespace {
       {
         name: 'default',
         rules: [mockCombinedRule()],
+        totals: {},
       },
     ],
   };
@@ -109,6 +130,7 @@ function getCloudNamespace(): CombinedRuleNamespace {
       {
         name: 'Prom group',
         rules: [mockCombinedRule()],
+        totals: {},
       },
     ],
   };

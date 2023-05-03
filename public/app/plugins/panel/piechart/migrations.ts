@@ -1,17 +1,17 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
-import { PieChartOptions, PieChartLabels, PieChartLegendValues, PieChartType } from './types';
+import { PanelOptions, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 export const PieChartPanelChangedHandler = (
-  panel: PanelModel<Partial<PieChartOptions>> | any,
+  panel: PanelModel<Partial<PanelOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
   if (prevPluginId === 'grafana-piechart-panel' && prevOptions.angular) {
     const angular = prevOptions.angular;
     const overrides = [];
-    let options: PieChartOptions = panel.options;
+    let options: PanelOptions = panel.options;
 
     // Migrate color overrides for series
     if (angular.aliasColors) {
@@ -101,10 +101,6 @@ export const PieChartPanelChangedHandler = (
       }
       if (angular.legend.percentage) {
         options.legend.values.push(PieChartLegendValues.Percent);
-      }
-      if (!angular.legend.percentage && !angular.legend.values) {
-        // If you deselect both value and percentage in the old pie chart plugin, the legend is hidden.
-        options.legend.showLegend = false;
       }
     }
 

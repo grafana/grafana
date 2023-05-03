@@ -1,10 +1,10 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
 import { Store } from 'redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { LayoutModes } from '@grafana/data';
-import { setAngularLoader } from '@grafana/runtime';
+import { setAngularLoader, config } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
@@ -21,10 +21,22 @@ jest.mock('app/core/services/context_srv', () => ({
     hasPermissionInMetadata: () => true,
   },
 }));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getDataSourceSrv: jest.fn(() => ({
+      getInstanceSettings: (uid: string) => ({
+        uid,
+        meta: getMockDataSourceMeta(),
+      }),
+    })),
+  };
+});
 
 const setup = (uid: string, store: Store) =>
   render(
-    <Provider store={store}>
+    <TestProvider store={store}>
       <EditDataSourcePage
         {...getRouteComponentProps({
           // @ts-ignore
@@ -35,7 +47,7 @@ const setup = (uid: string, store: Store) =>
           },
         })}
       />
-    </Provider>
+    </TestProvider>
   );
 
 describe('<EditDataSourcePage>', () => {
@@ -68,7 +80,7 @@ describe('<EditDataSourcePage>', () => {
         dataSource: dataSource,
         dataSourceMeta: dataSourceMeta,
         layoutMode: LayoutModes.Grid,
-        hasFetched: true,
+        isLoadingDataSources: false,
       },
       navIndex: {
         ...navIndex,
@@ -82,7 +94,7 @@ describe('<EditDataSourcePage>', () => {
     });
   });
 
-  it('should render the edit page without an issue', () => {
+  it('should render the edit page without an issue', async () => {
     setup(uid, store);
 
     expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
@@ -91,9 +103,22 @@ describe('<EditDataSourcePage>', () => {
     expect(screen.queryByText(name)).toBeVisible();
 
     // Buttons
-    expect(screen.queryByRole('button', { name: /Back/i })).toBeVisible();
-    expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
     expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
-    expect(screen.queryByText('Explore')).toBeVisible();
+
+    // wait for the rest of the async processes to finish
+    expect(await screen.findByText(name)).toBeVisible();
+  });
+
+  it('should show updated action buttons when topnav is on', async () => {
+    config.featureToggles.topnav = true;
+    setup(uid, store);
+
+    await waitFor(() => {
+      // Buttons
+      expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
+      expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
+      expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(1);
+    });
   });
 });

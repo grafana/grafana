@@ -5,19 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestSearchRequest(t *testing.T) {
 	timeField := "@timestamp"
 
 	setup := func() *SearchRequestBuilder {
-		version5, _ := semver.NewVersion("5.0.0")
-		return NewSearchRequestBuilder(version5, intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+		return NewSearchRequestBuilder(15 * time.Second)
 	}
 
 	t.Run("When building search request", func(t *testing.T) {
@@ -48,7 +45,7 @@ func TestSearchRequest(t *testing.T) {
 	t.Run("When adding size, sort, filters", func(t *testing.T) {
 		b := setup()
 		b.Size(200)
-		b.SortDesc(timeField, "boolean")
+		b.Sort(SortOrderDesc, timeField, "boolean")
 		filters := b.Query().Bool().Filter()
 		filters.AddDateRangeFilter(timeField, 10, 5, DateFormatEpochMS)
 		filters.AddQueryStringFilter("test", true)
@@ -398,66 +395,12 @@ func TestSearchRequest(t *testing.T) {
 			})
 		})
 	})
-
-	t.Run("Given new search request builder for es version 2", func(t *testing.T) {
-		version2, _ := semver.NewVersion("2.0.0")
-		b := NewSearchRequestBuilder(version2, intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
-
-		t.Run("When adding doc value field", func(t *testing.T) {
-			b.AddDocValueField(timeField)
-
-			t.Run("should set correct props", func(t *testing.T) {
-				fields, ok := b.customProps["fields"].([]string)
-				require.True(t, ok)
-				require.Equal(t, 2, len(fields))
-				require.Equal(t, "*", fields[0])
-				require.Equal(t, "_source", fields[1])
-
-				scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-				require.True(t, ok)
-				require.Equal(t, 0, len(scriptFields))
-
-				fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
-				require.True(t, ok)
-				require.Equal(t, 1, len(fieldDataFields))
-				require.Equal(t, timeField, fieldDataFields[0])
-			})
-
-			t.Run("When building search request", func(t *testing.T) {
-				sr, err := b.Build()
-				require.Nil(t, err)
-
-				t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
-					body, err := json.Marshal(sr)
-					require.Nil(t, err)
-					json, err := simplejson.NewJson(body)
-					require.Nil(t, err)
-
-					scriptFields, err := json.Get("script_fields").Map()
-					require.Nil(t, err)
-					require.Equal(t, 0, len(scriptFields))
-
-					fields, err := json.Get("fields").StringArray()
-					require.Nil(t, err)
-					require.Equal(t, 2, len(fields))
-					require.Equal(t, "*", fields[0])
-					require.Equal(t, "_source", fields[1])
-
-					fieldDataFields, err := json.Get("fielddata_fields").StringArray()
-					require.Nil(t, err)
-					require.Equal(t, 1, len(fieldDataFields))
-					require.Equal(t, timeField, fieldDataFields[0])
-				})
-			})
-		})
-	})
 }
 
 func TestMultiSearchRequest(t *testing.T) {
 	t.Run("When adding one search request", func(t *testing.T) {
-		version2, _ := semver.NewVersion("2.0.0")
-		b := NewMultiSearchRequestBuilder(version2)
-		b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewMultiSearchRequestBuilder()
+		b.Search(15 * time.Second)
 
 		t.Run("When building search request should contain one search request", func(t *testing.T) {
 			mr, err := b.Build()
@@ -467,10 +410,9 @@ func TestMultiSearchRequest(t *testing.T) {
 	})
 
 	t.Run("When adding two search requests", func(t *testing.T) {
-		version2, _ := semver.NewVersion("2.0.0")
-		b := NewMultiSearchRequestBuilder(version2)
-		b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
-		b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+		b := NewMultiSearchRequestBuilder()
+		b.Search(15 * time.Second)
+		b.Search(15 * time.Second)
 
 		t.Run("When building search request should contain two search requests", func(t *testing.T) {
 			mr, err := b.Build()

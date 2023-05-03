@@ -3,8 +3,9 @@ package queryhistory
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestIntegrationStarQueryInQueryHistory(t *testing.T) {

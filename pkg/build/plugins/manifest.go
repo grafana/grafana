@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -105,7 +104,7 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 		}
 	}()
 	if resp.StatusCode != 200 {
-		msg, err := ioutil.ReadAll(resp.Body)
+		msg, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("Failed to read response body: %s", err)
 			msg = []byte("")
@@ -114,6 +113,7 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	}
 
 	log.Printf("Successfully signed manifest via Grafana API, writing to %q", manifestPath)
+	//nolint:gosec
 	f, err := os.Create(manifestPath)
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", manifestPath, err)

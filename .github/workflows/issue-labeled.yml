@@ -23,14 +23,12 @@ jobs:
             # Check if we have a channel set to notify on comments.
             if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' teams.yml ) == true ]]; then
               CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' teams.yml)
+              echo "Ready to send issue to channel ID ${CHANNEL}"
             fi
           fi
 
           # set environment for next step
           echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
-
-          # Debug logging
-          echo "Ready to send issue to channel ID ${CHANNEL}"
 
       - name: "Prepare payload"
         uses: frabert/replace-string-action@v2.0
@@ -43,7 +41,8 @@ jobs:
           flags: 'g'
 
       - name: "Send Slack notification"
-        uses: slackapi/slack-github-action@v1.14.0
+        if: ${{ env.CHANNEL != 'null' }}
+        uses: slackapi/slack-github-action@v1.23.0
         with:
           payload: >
             {

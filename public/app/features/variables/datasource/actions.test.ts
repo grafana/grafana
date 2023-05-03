@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { variableAdapters } from '../adapters';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';

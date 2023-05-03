@@ -1,5 +1,5 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
-import { IconName } from '@grafana/ui';
+import { IconName, ButtonVariant } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -37,7 +37,9 @@ export interface ShowConfirmModalPayload {
   yesText?: string;
   noText?: string;
   icon?: IconName;
+  yesButtonVariant?: ButtonVariant;
 
+  onDismiss?: () => void;
   onConfirm?: () => void;
   onAltAction?: () => void;
 }
@@ -85,7 +87,6 @@ export interface PanelChangeViewPayload {}
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 
@@ -118,10 +119,14 @@ export class PanelOptionsChangedEvent extends BusEventBase {
 }
 
 /**
- * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
+ * Used internally by DashboardModel to communicate with DashboardGrid that it needs to re-render
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
+}
+
+export class DashboardMetaChangedEvent extends BusEventBase {
+  static type = 'dashboard-meta-changed';
 }
 
 export class PanelDirectiveReadyEvent extends BusEventBase {

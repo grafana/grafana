@@ -63,7 +63,6 @@ export enum AccessControlAction {
   ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
   ActionRolesList = 'roles:read',
-  ActionBuiltinRolesList = 'roles.builtin:list',
   ActionTeamsRolesList = 'teams.roles:read',
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',
@@ -77,6 +76,7 @@ export enum AccessControlAction {
   DashboardsCreate = 'dashboards:create',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
+  DashboardsPublicWrite = 'dashboards.public:write',
 
   FoldersRead = 'folders:read',
   FoldersWrite = 'folders:write',
@@ -84,6 +84,11 @@ export enum AccessControlAction {
   FoldersCreate = 'folders:create',
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:write',
+
+  // Support bundle actions
+  ActionSupportBundlesCreate = 'support.bundles:create',
+  ActionSupportBundlesRead = 'support.bundles:read',
+  ActionSupportBundlesDelete = 'support.bundles:delete',
 
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
@@ -112,9 +117,20 @@ export enum AccessControlAction {
   AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
 
+  // Alerting provisioning actions
+  AlertingProvisioningRead = 'alert.provisioning:read',
+  AlertingProvisioningWrite = 'alert.provisioning:write',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
+
+  PluginsInstall = 'plugins:install',
+  PluginsWrite = 'plugins:write',
+
+  // Settings
+  SettingsRead = 'settings:read',
+  SettingsWrite = 'settings:write',
 }
 
 export interface Role {

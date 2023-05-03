@@ -1,21 +1,25 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/usage-insights/export-logs/
+  - ../../enterprise/usage-insights/export-logs/
 description: Export logs of usage insights
 keywords:
   - grafana
   - export
   - usage-insights
   - enterprise
+labels:
+  products:
+    - cloud
+    - oss
 title: Export logs of usage insights
 weight: 900
 ---
 
 # Export logs of usage insights
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
-By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. This configuration is done for you in Grafana Cloud, with provisioned dashboards. Read about them in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
 
 ## Usage insights logs
 
@@ -44,6 +48,7 @@ Logs of usage insights contain the following fields, where the fields followed b
 | `panelName` | string | Name of the panel of the query. |
 | `error` | string | Error returned by the query. |
 | `duration` | number | Duration of the query. |
+| `source` | string | Source of the query. For example, `dashboard` or `explore`. |
 | `orgId`\* | number | ID of the user’s organization. |
 | `orgName`\* | string | Name of the user’s organization. |
 | `timestamp`\* | string | The date and time that the request was made, in Coordinated Universal Time (UTC) in [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format. |
@@ -80,6 +85,9 @@ type = grpc
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
+# Set the tenant ID for Loki communication, which is disabled by default.
+# The tenant ID is required to interact with Loki running in multi-tenant mode.
+tenant_id =
 ```
 
 Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../setup-grafana/configure-grafana/#log" >}}).

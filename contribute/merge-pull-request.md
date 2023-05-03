@@ -44,6 +44,8 @@ A milestone **should** be added to every pull request. Several things in the Gra
 
 This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through git commits which is not an efficient process.
 
+Always assign the milestone for the version that a PR is merged into. PRs targetting `main` should use the next minor (or major) version and backport PRs should use the same value than the target branch.
+
 ### Include in changelog and release notes?
 
 At Grafana we generate the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) and [release notes](https://grafana.com/docs/grafana/latest/release-notes/) based on merged pull requests. Including changes in the changelog/release notes is very important to provide a somewhat complete picture of what changes a Grafana release actually includes.
@@ -134,6 +136,14 @@ Some examples when backport is required:
 Some examples when backport is not required:
 
 - The change is supposed to be released in the next major/minor release, e.g. v8.0.0, but the release branch, e.g. v8.0.x, has not yet been created.
+
+#### Required labels
+
+To ensure that we don't backport pull requests that don't need to be backported, i.e. implement new features, and only backport pull requests that address bugs, have a product approval, or refer to docs changes, backport labels need to be followed by either:
+
+- `type/bug` label: Pull requests which address bugs,
+- `product-approved` label: Urgent fixes which need product approval, in order to get merged,
+- `type/docs` label: Docs changes`.
 
 > **Note:** You can still backport a pull request after it's been merged.
 

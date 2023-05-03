@@ -1,11 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import TestProvider from 'test/helpers/TestProvider';
 import { assertInstanceOf } from 'test/helpers/asserts';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { UserPreferencesDTO } from 'app/types';
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 
 import SharedPreferences from './SharedPreferences';
 
@@ -83,7 +82,7 @@ const mockPreferences: UserPreferencesDTO = {
   queryHistory: {
     homeTab: '',
   },
-  locale: '',
+  language: '',
 };
 
 const mockPrefsPatch = jest.fn();
@@ -102,6 +101,7 @@ jest.mock('app/core/services/PreferencesService', () => ({
 
 const props = {
   resourceUri: '/fake-api/user/1',
+  preferenceType: 'user' as const,
 };
 
 describe('SharedPreferences', () => {
@@ -123,11 +123,7 @@ describe('SharedPreferences', () => {
     mockReload.mockReset();
     mockPrefsUpdate.mockReset();
 
-    render(
-      <TestProvider>
-        <SharedPreferences {...props} />
-      </TestProvider>
-    );
+    render(<SharedPreferences {...props} />);
 
     await waitFor(() => expect(mockPrefsLoad).toHaveBeenCalled());
   });
@@ -137,9 +133,11 @@ describe('SharedPreferences', () => {
     expect(lightThemeRadio.checked).toBeTruthy();
   });
 
-  it('renders the home dashboard preference', () => {
+  it('renders the home dashboard preference', async () => {
     const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
-    expect(dashboardSelect).toHaveTextContent('My Dashboard');
+    await waitFor(() => {
+      expect(dashboardSelect).toHaveTextContent('My Dashboard');
+    });
   });
 
   it('renders the timezone preference', () => {
@@ -152,7 +150,7 @@ describe('SharedPreferences', () => {
     expect(weekSelect).toHaveTextContent('Monday');
   });
 
-  it('renders the locale preference', async () => {
+  it('renders the language preference', async () => {
     const weekSelect = getSelectParent(screen.getByLabelText(/language/i));
     expect(weekSelect).toHaveTextContent('Default');
   });
@@ -161,21 +159,20 @@ describe('SharedPreferences', () => {
     const darkThemeRadio = assertInstanceOf(screen.getByLabelText('Dark'), HTMLInputElement);
     await userEvent.click(darkThemeRadio);
 
-    await selectOptionInTest(screen.getByLabelText('Home Dashboard'), 'Another Dashboard');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Saturday');
-    await selectOptionInTest(screen.getByLabelText(/language/i), 'French');
+    await selectOptionInTest(screen.getByLabelText(/language/i), 'Français');
 
     await userEvent.click(screen.getByText('Save'));
     expect(mockPrefsUpdate).toHaveBeenCalledWith({
       timezone: 'Australia/Sydney',
       weekStart: 'saturday',
       theme: 'dark',
-      homeDashboardUID: 'anotherDash',
+      homeDashboardUID: 'myDash',
       queryHistory: {
         homeTab: '',
       },
-      locale: 'fr-FR',
+      language: 'fr-FR',
     });
   });
 
@@ -193,11 +190,11 @@ describe('SharedPreferences', () => {
       timezone: 'browser',
       weekStart: '',
       theme: '',
-      homeDashboardUID: undefined,
+      homeDashboardUID: 'myDash',
       queryHistory: {
         homeTab: '',
       },
-      locale: '',
+      language: '',
     });
   });
 

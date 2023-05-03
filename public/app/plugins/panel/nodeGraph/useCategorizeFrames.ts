@@ -9,7 +9,10 @@ import { DataFrame } from '@grafana/data';
  */
 export function useCategorizeFrames(series: DataFrame[]) {
   return useMemo(() => {
-    return series.reduce(
+    return series.reduce<{
+      nodes: DataFrame[];
+      edges: DataFrame[];
+    }>(
       (acc, frame) => {
         const sourceField = frame.fields.filter((f) => f.name === 'source');
         if (sourceField.length) {
@@ -19,7 +22,7 @@ export function useCategorizeFrames(series: DataFrame[]) {
         }
         return acc;
       },
-      { edges: [], nodes: [] } as { nodes: DataFrame[]; edges: DataFrame[] }
+      { edges: [], nodes: [] }
     );
   }, [series]);
 }

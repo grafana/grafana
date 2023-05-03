@@ -6,7 +6,6 @@ import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction,
 import {
   ContextMenu,
   GraphContextMenuHeader,
-  IconName,
   MenuItemProps,
   MenuItemsGroup,
   MenuGroup,
@@ -33,14 +32,14 @@ interface ContextMenuPluginProps {
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
+export const ContextMenuPlugin = ({
   data,
   config,
   onClose,
   timeZone,
   replaceVariables,
   ...otherProps
-}) => {
+}: ContextMenuPluginProps) => {
   const plotCanvas = useRef<HTMLDivElement>();
   const [coords, setCoords] = useState<ContextMenuSelectionCoords | null>(null);
   const [point, setPoint] = useState<ContextMenuSelectionPoint | null>(null);
@@ -120,9 +119,8 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
         }
         isClick = true;
 
-        if (e.target) {
-          const target = e.target as HTMLElement;
-          if (!target.classList.contains('u-cursor-pt')) {
+        if (e.target instanceof HTMLElement) {
+          if (!e.target.classList.contains('u-cursor-pt')) {
             pluginLog('ContextMenuPlugin', false, 'canvas click');
             setPoint({ seriesIdx: null, dataIdx: null });
           }
@@ -153,13 +151,12 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
             items: i.items.map((j) => {
               return {
                 ...j,
-                onClick: (e?: React.SyntheticEvent<HTMLElement>) => {
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
                   if (!coords) {
                     return;
                   }
-                  if (j.onClick) {
-                    j.onClick(e, { coords });
-                  }
+
+                  j.onClick?.(e, { coords });
                 },
               };
             }),
@@ -211,14 +208,14 @@ interface ContextMenuViewProps {
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
+export const ContextMenuView = ({
   selection,
   timeZone,
   defaultItems,
   replaceVariables,
   data,
   ...otherProps
-}) => {
+}: ContextMenuViewProps) => {
   const ref = useRef(null);
 
   const onClose = () => {
@@ -246,7 +243,7 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
     if (seriesIdx && dataIdx !== null) {
       const field = data.fields[seriesIdx];
 
-      const displayValue = field.display!(field.values.get(dataIdx));
+      const displayValue = field.display!(field.values[dataIdx]);
 
       const hasLinks = field.config.links && field.config.links.length > 0;
 
@@ -263,7 +260,7 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
                   ariaLabel: link.title,
                   url: link.href,
                   target: link.target,
-                  icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
+                  icon: link.target === '_self' ? 'link' : 'external-link-alt',
                   onClick: link.onClick,
                 };
               }),
@@ -274,7 +271,7 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
       // eslint-disable-next-line react/display-name
       renderHeader = () => (
         <GraphContextMenuHeader
-          timestamp={xFieldFmt(xField.values.get(dataIdx)).text}
+          timestamp={xFieldFmt(xField.values[dataIdx]).text}
           displayValue={displayValue}
           seriesColor={displayValue.color!}
           displayName={getFieldDisplayName(field, data, otherProps.frames)}

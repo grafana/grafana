@@ -11,14 +11,10 @@ const GUTTER_SIZE = 60;
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;
   fieldConfig: FieldConfigSource;
-  onThresholdsChange: (thresholds: ThresholdsConfig) => void;
+  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 
-export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = ({
-  config,
-  fieldConfig,
-  onThresholdsChange,
-}) => {
+export const ThresholdControlsPlugin = ({ config, fieldConfig, onThresholdsChange }: ThresholdControlsPluginProps) => {
   const plotInstance = useRef<uPlot>();
   const [renderToken, setRenderToken] = useState(0);
 
@@ -59,15 +55,10 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
 
       const height = plot.bbox.height / window.devicePixelRatio;
 
-      const handle = (
-        <ThresholdDragHandle
-          key={`${step.value}-${i}`}
-          step={step}
-          y={yPos}
-          dragBounds={{ top: 0, bottom: height }}
-          mapPositionToValue={(y) => plot.posToVal(y, scale)}
-          formatValue={(v) => getValueFormat(scale)(v, decimals).text}
-          onChange={(value) => {
+      const isEditable = typeof onThresholdsChange === 'function';
+
+      const onChange = isEditable
+        ? (value: number) => {
             const nextSteps = [
               ...thresholds.steps.slice(0, i),
               ...thresholds.steps.slice(i + 1),
@@ -78,7 +69,18 @@ export const ThresholdControlsPlugin: React.FC<ThresholdControlsPluginProps> = (
               ...thresholds,
               steps: nextSteps,
             });
-          }}
+          }
+        : undefined;
+
+      const handle = (
+        <ThresholdDragHandle
+          key={`${step.value}-${i}`}
+          step={step}
+          y={yPos}
+          dragBounds={{ top: 0, bottom: height }}
+          mapPositionToValue={(y) => plot.posToVal(y, scale)}
+          formatValue={(v) => getValueFormat(scale)(v, decimals).text}
+          onChange={onChange}
         />
       );
 

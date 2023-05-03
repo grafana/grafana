@@ -1,9 +1,7 @@
 package ldap
 
-import "github.com/grafana/grafana/pkg/models"
-
 type Groups interface {
-	GetTeams(groups []string) ([]models.TeamOrgGroupDTO, error)
+	GetTeams(groups []string, orgIDs []int64) ([]TeamOrgGroupDTO, error)
 }
 
 type OSSGroups struct{}
@@ -12,6 +10,6 @@ func ProvideGroupsService() *OSSGroups {
 	return &OSSGroups{}
 }
 
-func (*OSSGroups) GetTeams(_ []string) ([]models.TeamOrgGroupDTO, error) {
+func (*OSSGroups) GetTeams(_ []string, _ []int64) ([]TeamOrgGroupDTO, error) {
 	return nil, nil
 }

@@ -1,10 +1,10 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { Role } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { Role, AccessControlAction } from 'app/types';
 
 import { RolePicker } from './RolePicker';
-// @ts-ignore
 import { fetchTeamRoles, updateTeamRoles } from './api';
 
 export interface Props {
@@ -12,37 +12,75 @@ export interface Props {
   orgId?: number;
   roleOptions: Role[];
   disabled?: boolean;
-  builtinRolesDisabled?: boolean;
+  onApplyRoles?: (newRoles: Role[]) => void;
+  pendingRoles?: Role[];
+  /**
+   * Set whether the component should send a request with the new roles to the
+   * backend in TeamRolePicker.onRolesChange (apply=false), or call {@link onApplyRoles}
+   * with the updated list of roles (apply=true).
+   *
+   * Besides it sets the RolePickerMenu's Button title to
+   *   * `Update` in case apply equals false
+   *   * `Apply` in case apply equals true
+   *
+   * @default false
+   */
+  apply?: boolean;
+  maxWidth?: string | number;
 }
 
-export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled }) => {
+export const TeamRolePicker = ({
+  teamId,
+  roleOptions,
+  disabled,
+  onApplyRoles,
+  pendingRoles,
+  apply = false,
+  maxWidth,
+}: Props) => {
   const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
-      return await fetchTeamRoles(teamId, orgId);
+      if (apply && Boolean(pendingRoles?.length)) {
+        return pendingRoles;
+      }
+
+      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)) {
+        return await fetchTeamRoles(teamId);
+      }
     } catch (e) {
-      // TODO handle error
-      console.error('Error loading options');
+      console.error('Error loading options', e);
     }
     return [];
-  }, [orgId, teamId]);
+  }, [teamId, pendingRoles]);
 
   useEffect(() => {
     getTeamRoles();
-  }, [orgId, teamId, getTeamRoles]);
+  }, [teamId, getTeamRoles, pendingRoles]);
 
   const onRolesChange = async (roles: Role[]) => {
-    await updateTeamRoles(roles, teamId, orgId);
-    await getTeamRoles();
+    if (!apply) {
+      await updateTeamRoles(roles, teamId);
+      await getTeamRoles();
+    } else if (onApplyRoles) {
+      onApplyRoles(roles);
+    }
   };
+
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
 
   return (
     <RolePicker
+      apply={apply}
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
       isLoading={loading}
       disabled={disabled}
-      builtinRolesDisabled={builtinRolesDisabled}
+      basicRoleDisabled={true}
+      canUpdateRoles={canUpdateRoles}
+      maxWidth={maxWidth}
     />
   );
 };

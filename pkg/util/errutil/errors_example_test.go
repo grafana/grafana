@@ -15,8 +15,8 @@ var (
 	// same error message for the frontend statically within the
 	// package.
 
-	errAbsPath     = errutil.NewBase(errutil.StatusBadRequest, "shorturl.absolute-path")
-	errInvalidPath = errutil.NewBase(errutil.StatusBadRequest, "shorturl.invalid-path")
+	errAbsPath     = errutil.NewBase(errutil.StatusBadRequest, "shorturl.absolutePath")
+	errInvalidPath = errutil.NewBase(errutil.StatusBadRequest, "shorturl.invalidPath")
 	errUnexpected  = errutil.NewBase(errutil.StatusInternal, "shorturl.unexpected")
 )
 
@@ -29,8 +29,8 @@ func Example() {
 	fmt.Println(e.Error())
 
 	// Output:
-	// 400 shorturl.invalid-path
-	// [shorturl.invalid-path] path mustn't contain '..': 'abc/../def'
+	// 400 shorturl.invalidPath
+	// [shorturl.invalidPath] path mustn't contain '..': 'abc/../def'
 }
 
 // CreateShortURL runs a few validations and returns

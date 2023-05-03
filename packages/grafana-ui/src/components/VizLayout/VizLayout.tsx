@@ -40,9 +40,13 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   if (!legend) {
     return (
-      <div tabIndex={0} style={containerStyle} className={styles.viz}>
-        {children(width, height)}
-      </div>
+      <>
+        {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div tabIndex={0} style={containerStyle} className={styles.viz}>
+          {children(width, height)}
+        </div>
+      </>
     );
   }
 
@@ -57,7 +61,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       containerStyle.flexDirection = 'column';
       legendStyle.maxHeight = maxHeight;
 
-      if (legendMeasure) {
+      if (legendMeasure.height) {
         size = { width, height: height - legendMeasure.height };
       }
       break;
@@ -65,7 +69,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       containerStyle.flexDirection = 'row';
       legendStyle.maxWidth = maxWidth;
 
-      if (legendMeasure) {
+      if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
 
@@ -88,6 +92,8 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
+      {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div tabIndex={0} className={styles.viz}>
         {size && children(size.width, size.height)}
       </div>

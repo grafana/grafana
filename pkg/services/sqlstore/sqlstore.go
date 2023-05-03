@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,9 +12,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/VividCortex/mysqlerr"
+	"github.com/dlmiddlecote/sqlstats"
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
+	"xorm.io/core"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,22 +26,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-)
-
-var (
-	dialect migrator.Dialect
-
-	sqlog log.Logger = log.New("sqlstore")
 )
 
 // ContextSessionKey is used as key to save values in `context.Context`
@@ -44,27 +43,18 @@ type ContextSessionKey struct{}
 
 type SQLStore struct {
 	Cfg          *setting.Cfg
+	sqlxsession  *session.SessionDB
 	CacheService *localcache.CacheService
 
-	bus                         bus.Bus
-	dbCfg                       DatabaseConfig
-	engine                      *xorm.Engine
-	log                         log.Logger
-	Dialect                     migrator.Dialect
-	skipEnsureDefaultOrgAndUser bool
-	migrations                  registry.DatabaseMigrator
-	tracer                      tracing.Tracer
-	metrics                     struct {
-		maxOpenConnections prometheus.Gauge
-		openConnections    prometheus.Gauge
-		inUse              prometheus.Gauge
-		idle               prometheus.Gauge
-		waitCount          prometheus.Counter
-		waitDuration       prometheus.Counter
-		maxIdleClosed      prometheus.Counter
-		maxIdleTimeClosed  prometheus.Counter
-		maxLifetimeClosed  prometheus.Counter
-	}
+	bus                          bus.Bus
+	dbCfg                        DatabaseConfig
+	engine                       *xorm.Engine
+	log                          log.Logger
+	Dialect                      migrator.Dialect
+	skipEnsureDefaultOrgAndUser  bool
+	migrations                   registry.DatabaseMigrator
+	tracer                       tracing.Tracer
+	recursiveQueriesAreSupported *bool
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -86,15 +76,19 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	}
 	s.tracer = tracer
 
-	s.initMetrics()
+	// initialize and register metrics wrapper around the *sql.DB
+	db := s.engine.DB().DB
 
-	prometheus.MustRegister(s)
+	// register the go_sql_stats_connections_* metrics
+	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	// TODO: deprecate/remove these metrics
+	prometheus.MustRegister(newSQLStoreMetrics(db))
 
 	return s, nil
 }
 
-func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
@@ -119,12 +113,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 	}
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
-
-	dialect = ss.Dialect
-
-	// Init repo instances
-	annotations.SetRepository(&SQLAnnotationRepo{sql: ss})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner"), sqlstore: ss})
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -166,7 +154,19 @@ func (ss *SQLStore) Reset() error {
 		return nil
 	}
 
-	return ss.ensureMainOrgAndAdminUser()
+	return ss.ensureMainOrgAndAdminUser(false)
+}
+
+// TestReset resets database state. If default org and user creation is enabled,
+// it will be ensured they exist in the database. TestReset() is more permissive
+// than Reset in that it will create the user and org whether or not there are
+// already users in the database.
+func (ss *SQLStore) TestReset() error {
+	if ss.skipEnsureDefaultOrgAndUser {
+		return nil
+	}
+
+	return ss.ensureMainOrgAndAdminUser(true)
 }
 
 // Quote quotes the value in the used SQL dialect
@@ -179,28 +179,51 @@ func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
 }
 
-func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
+func (ss *SQLStore) GetDBType() core.DbType {
+	return ss.engine.Dialect().DBType()
+}
+
+func (ss *SQLStore) GetEngine() *xorm.Engine {
+	return ss.engine
+}
+
+func (ss *SQLStore) Bus() bus.Bus {
+	return ss.bus
+}
+
+func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
+	if ss.sqlxsession == nil {
+		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()))
+	}
+	return ss.sqlxsession
+}
+
+func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
-		var stats models.SystemUserCountStats
-		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
-			return fmt.Errorf("could not determine if admin user exists: %w", err)
-		}
 
-		if stats.Count > 0 {
-			return nil
+		// If this is a test database, don't exit early when any user is found.
+		if !test {
+			var stats stats.SystemUserCountStats
+			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")
+			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+				return fmt.Errorf("could not determine if admin user exists: %w", err)
+			}
+			if stats.Count > 0 {
+				return nil
+			}
 		}
 
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
+
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
-				Email:    ss.Cfg.AdminUser + "@localhost",
+				Email:    ss.Cfg.AdminEmail,
 				Password: ss.Cfg.AdminPassword,
 				IsAdmin:  true,
 			}); err != nil {
@@ -208,13 +231,10 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 			}
 
 			ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
-			// Why should we return and not create the default org in this case?
-			// Returning here breaks tests using anonymous access
-			// return nil
 		}
 
-		ss.log.Debug("Creating default org", "name", MainOrgName)
-		if _, err := ss.getOrCreateOrg(sess, MainOrgName); err != nil {
+		ss.log.Debug("Creating default org", "name", mainOrgName)
+		if _, err := ss.getOrCreateOrg(sess, mainOrgName); err != nil {
 			return fmt.Errorf("failed to create default organization: %w", err)
 		}
 
@@ -261,7 +281,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
 
 		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
@@ -281,8 +301,12 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
 		}
 
-		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") {
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
+		}
+
+		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
+			cnnstr += "&parseTime=true"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -313,6 +337,11 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+
+		if ss.dbCfg.WALEnabled {
+			cnnstr += "&_journal_mode=WAL"
+		}
+
 		cnnstr += ss.buildExtraConnectionString('&')
 	default:
 		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
@@ -324,7 +353,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 // initEngine initializes ss.engine.
 func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
-		sqlog.Debug("Already connected to database")
+		ss.log.Debug("Already connected to database")
 		return nil
 	}
 
@@ -333,11 +362,11 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
+	if ss.Cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
-	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
+	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
 	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
 		!strings.HasPrefix(connectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
@@ -441,121 +470,50 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
+
+	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
+	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
 }
 
-// initMetrics initializes the database connection metrics
-func (ss *SQLStore) initMetrics() {
-	namespace := "grafana"
-	subsystem := "database"
+func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
+	if ss.recursiveQueriesAreSupported != nil {
+		return *ss.recursiveQueriesAreSupported, nil
+	}
+	recursiveQueriesAreSupported := func() (bool, error) {
+		var result []int
+		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
+			recQry := `WITH RECURSIVE cte (n) AS
+			(
+			SELECT 1
+			UNION ALL
+			SELECT n + 1 FROM cte WHERE n < 2
+			)
+			SELECT * FROM cte;
+		`
+			err := sess.SQL(recQry).Find(&result)
+			return err
+		}); err != nil {
+			var driverErr *mysql.MySQLError
+			if errors.As(err, &driverErr) {
+				if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+					return false, nil
+				}
+			}
+			return false, err
+		}
+		return true, nil
+	}
 
-	ss.metrics.maxOpenConnections = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_open",
-		Help:      "Maximum number of open connections to the database",
-	})
-
-	ss.metrics.openConnections = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_open",
-		Help:      "The number of established connections both in use and idle",
-	})
-
-	ss.metrics.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_in_use",
-		Help:      "The number of connections currently in use",
-	})
-
-	ss.metrics.idle = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_idle",
-		Help:      "The number of idle connections",
-	})
-
-	ss.metrics.waitCount = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_wait_count_total",
-		Help:      "The total number of connections waited for",
-	})
-
-	ss.metrics.waitDuration = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_wait_duration_seconds",
-		Help:      "The total time blocked waiting for a new connection",
-	})
-
-	ss.metrics.maxIdleClosed = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_idle_closed_total",
-		Help:      "The total number of connections closed due to SetMaxIdleConns",
-	})
-
-	ss.metrics.maxIdleTimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_idle_closed_seconds",
-		Help:      "The total number of connections closed due to SetConnMaxIdleTime",
-	})
-
-	ss.metrics.maxLifetimeClosed = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: namespace,
-		Subsystem: subsystem,
-		Name:      "conn_max_lifetime_closed_total",
-		Help:      "The total number of connections closed due to SetConnMaxLifetime",
-	})
-}
-
-// collectDBStats instruments connections stats from the database.
-func (ss *SQLStore) collectDBstats() {
-	dbstats := ss.engine.DB().Stats()
-	ss.metrics.maxOpenConnections.Set(float64(dbstats.MaxOpenConnections))
-	ss.metrics.openConnections.Set(float64(dbstats.MaxOpenConnections))
-	ss.metrics.inUse.Set(float64(dbstats.InUse))
-	ss.metrics.idle.Set(float64(dbstats.Idle))
-
-	ss.metrics.waitCount.Add(float64(dbstats.WaitCount))
-	ss.metrics.waitDuration.Add(float64(dbstats.WaitDuration / time.Second))
-	ss.metrics.maxIdleClosed.Add(float64(dbstats.MaxIdleClosed))
-	ss.metrics.maxIdleTimeClosed.Add(float64(dbstats.MaxIdleTimeClosed))
-	ss.metrics.maxLifetimeClosed.Add(float64(dbstats.MaxLifetimeClosed))
-}
-
-// Collect implements Prometheus.Collector.
-func (ss *SQLStore) Collect(ch chan<- prometheus.Metric) {
-	ss.collectDBstats()
-
-	ss.metrics.maxOpenConnections.Collect(ch)
-	ss.metrics.openConnections.Collect(ch)
-	ss.metrics.inUse.Collect(ch)
-	ss.metrics.idle.Collect(ch)
-	ss.metrics.waitCount.Collect(ch)
-	ss.metrics.waitDuration.Collect(ch)
-	ss.metrics.maxIdleClosed.Collect(ch)
-	ss.metrics.maxIdleTimeClosed.Collect(ch)
-	ss.metrics.maxLifetimeClosed.Collect(ch)
-}
-
-// Describe implements Prometheus.Collector.
-func (ss *SQLStore) Describe(ch chan<- *prometheus.Desc) {
-	ss.metrics.maxOpenConnections.Describe(ch)
-	ss.metrics.openConnections.Describe(ch)
-	ss.metrics.inUse.Describe(ch)
-	ss.metrics.idle.Describe(ch)
-	ss.metrics.waitCount.Describe(ch)
-	ss.metrics.waitDuration.Describe(ch)
-	ss.metrics.maxIdleClosed.Describe(ch)
-	ss.metrics.maxIdleTimeClosed.Describe(ch)
-	ss.metrics.maxLifetimeClosed.Describe(ch)
+	areSupported, err := recursiveQueriesAreSupported()
+	if err != nil {
+		return false, err
+	}
+	ss.recursiveQueriesAreSupported = &areSupported
+	return *ss.recursiveQueriesAreSupported, nil
 }
 
 // ITestDB is an interface of arguments for testing db
@@ -577,15 +535,14 @@ type InitTestDBOpt struct {
 }
 
 var featuresEnabledDuringTests = []string{
-	featuremgmt.FlagDashboardPreviews,
-	featuremgmt.FlagDashboardComments,
 	featuremgmt.FlagPanelTitleSearch,
+	featuremgmt.FlagEntityStore,
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(migration, opts...)
+	store, err := initTestDB(setting.NewCfg(), migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -595,14 +552,20 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
+	store, err := initTestDB(setting.NewCfg(), &migrations.OSSMigrations{}, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
 }
 
-func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+	store := InitTestDB(t, opts...)
+	return store, store.Cfg
+}
+
+//nolint:gocyclo
+func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 
@@ -628,7 +591,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = true
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
 			for _, enabledFeature := range features {
 				if enabledFeature == key {
@@ -637,10 +599,12 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 			return false
 		}
+
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			return nil, err
 		}
+
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
@@ -667,6 +631,21 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 		}
 
+		if testCfg.Raw.HasSection("database") {
+			testSec, err := testCfg.Raw.GetSection("database")
+			if err == nil {
+				// copy from testCfg to the Cfg keys that do not exist
+				for _, k := range testSec.Keys() {
+					if sec.HasKey(k.Name()) {
+						continue
+					}
+					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+
 		// need to get engine to clean db before we init
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 		if err != nil {
@@ -687,7 +666,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			return nil, err
 		}
 
-		if err := dialect.TruncateDBTables(); err != nil {
+		if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
 			return nil, err
 		}
 
@@ -703,8 +682,6 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 			}
 		}
 
-		// temp global var until we get rid of global vars
-		dialect = testSQLStore.Dialect
 		return testSQLStore, nil
 	}
 
@@ -717,7 +694,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		return false
 	}
 
-	if err := dialect.TruncateDBTables(); err != nil {
+	if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {
@@ -769,7 +746,12 @@ type DatabaseConfig struct {
 	MaxIdleConn                 int
 	ConnMaxLifetime             int
 	CacheMode                   string
+	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
 	MigrationLockAttemptTimeout int
+	// SQLite only
+	QueryRetries int
+	// SQLite only
+	TransactionRetries int
 }

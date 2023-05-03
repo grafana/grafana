@@ -1,7 +1,0 @@
-# This will proxy all requests for http://localhost:10090 to
-# http://prometheus:9090 (Prometheus inside the docker compose)
-
-  nginxproxy:
-    build: docker/blocks/prometheus_basic_auth_proxy
-    ports:
-      - "10090:10090"

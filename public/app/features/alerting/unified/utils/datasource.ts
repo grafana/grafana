@@ -182,7 +182,7 @@ export function getDatasourceAPIUid(dataSourceName: string) {
 }
 
 export function getFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
-  return getRulesDataSources()[0];
+  return getDataSourceSrv().getList({ alerting: true })[0];
 }
 
 export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
@@ -190,4 +190,8 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
   const defaultIsCompatible = defaultDataSource?.meta.alerting ?? false;
 
   return defaultIsCompatible ? defaultDataSource : getFirstCompatibleDataSource();
+}
+
+export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+  return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
 }

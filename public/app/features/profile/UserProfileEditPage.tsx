@@ -62,7 +62,7 @@ export function UserProfileEditPage({
       <Page.Contents isLoading={!user}>
         <VerticalGroup spacing="md">
           <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
-          <SharedPreferences resourceUri="user" />
+          <SharedPreferences resourceUri="user" preferenceType="user" />
           <UserTeams isLoading={teamsAreLoading} teams={teams} />
           <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
           <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />

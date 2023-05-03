@@ -21,11 +21,11 @@
 //
 // Filters will be applied in order with the final result like such:
 //
-//     SELECT id FROM dashboard LEFT OUTER JOIN <FilterLeftJoin...>
-//     WHERE <FilterWhere[0]> AND ... AND <FilterWhere[n]>
-//     GROUP BY <FilterGroupBy...>
-//     ORDER BY <FilterOrderBy...>
-//     LIMIT <limit> OFFSET <(page-1)*limit>;
+//	SELECT id FROM dashboard LEFT OUTER JOIN <FilterLeftJoin...>
+//	WHERE <FilterWhere[0]> AND ... AND <FilterWhere[n]>
+//	GROUP BY <FilterGroupBy...>
+//	ORDER BY <FilterOrderBy...>
+//	LIMIT <limit> OFFSET <(page-1)*limit>;
 //
 // This structure is intended to isolate the filters from each other
 // and implementors are expected to add all the required joins, where

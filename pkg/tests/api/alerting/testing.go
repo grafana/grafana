@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -15,8 +14,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -55,7 +57,7 @@ func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 		require.NoError(t, resp.Body.Close())
 	})
 	if expStatusCode != resp.StatusCode {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		t.Fatal(string(b))
 	}
@@ -72,16 +74,17 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 		require.NoError(t, resp.Body.Close())
 	})
 	if expStatusCode != resp.StatusCode {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		t.Fatal(string(b))
+		t.Log(string(b))
+		require.Equal(t, expStatusCode, resp.StatusCode)
 	}
 	return resp
 }
 
 func getBody(t *testing.T, body io.ReadCloser) string {
 	t.Helper()
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	require.NoError(t, err)
 	return string(b)
 }
@@ -98,14 +101,14 @@ func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     fmt.Sprintf("rule-%s", util.GenerateShortUID()),
 				Condition: "A",
-				Data: []ngmodels.AlertQuery{
+				Data: []apimodels.AlertQuery{
 					{
 						RefID: "A",
-						RelativeTimeRange: ngmodels.RelativeTimeRange{
-							From: ngmodels.Duration(time.Duration(5) * time.Hour),
-							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: apimodels.RelativeTimeRange{
+							From: apimodels.Duration(time.Duration(5) * time.Hour),
+							To:   apimodels.Duration(time.Duration(3) * time.Hour),
 						},
-						DatasourceUID: "-100",
+						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -159,6 +162,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		UID:          gettable.UID,
 		NoDataState:  gettable.NoDataState,
 		ExecErrState: gettable.ExecErrState,
+		IsPaused:     &gettable.IsPaused,
 	}
 }
 
@@ -203,6 +207,60 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
 	a.ReloadCachedPermissions(t)
 }
 
+func (a apiClient) GetOrgQuotaLimits(t *testing.T, orgID int64) (int64, int64) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/orgs/%d/quotas", a.url, orgID)
+	// nolint:gosec
+	resp, err := http.Get(u)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	results := []quota.QuotaDTO{}
+	require.NoError(t, json.Unmarshal(b, &results))
+
+	var limit int64 = 0
+	var used int64 = 0
+	for _, q := range results {
+		if q.Target != string(ngmodels.QuotaTargetSrv) {
+			continue
+		}
+		limit = q.Limit
+		used = q.Used
+	}
+	return limit, used
+}
+
+func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int64) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(&quota.UpdateQuotaCmd{
+		Target: "alert_rule",
+		Limit:  limit,
+		OrgID:  orgID,
+	})
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/orgs/%d/quotas/alert_rule", a.url, orgID)
+	// nolint:gosec
+	client := &http.Client{}
+	req, err := http.NewRequest(http.MethodPut, u, &buf)
+	require.NoError(t, err)
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (int, string) {
 	t.Helper()
 	buf := bytes.Buffer{}
@@ -217,7 +275,7 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	return resp.StatusCode, string(b)
 }
@@ -231,7 +289,7 @@ func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apim
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusAccepted, resp.StatusCode)
 
@@ -249,11 +307,30 @@ func (a apiClient) GetAllRulesGroupInFolder(t *testing.T, folder string) apimode
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 	result := apimodels.NamespaceConfigResponse{}
 	require.NoError(t, json.Unmarshal(b, &result))
 	return result
+}
+
+func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.BacktestConfig) (int, string) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(config)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/v1/rule/backtest", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return resp.StatusCode, string(b)
 }

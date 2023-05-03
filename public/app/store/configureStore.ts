@@ -1,11 +1,12 @@
-import { configureStore as reduxConfigureStore, MiddlewareArray } from '@reduxjs/toolkit';
-import { AnyAction } from 'redux';
-import { ThunkMiddleware } from 'redux-thunk';
+import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
+import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
 import { setStore } from './store';
 
@@ -17,10 +18,14 @@ export function addRootReducer(reducers: any) {
 }
 
 export function configureStore(initialState?: Partial<StoreState>) {
-  const store = reduxConfigureStore<StoreState, AnyAction, MiddlewareArray<[ThunkMiddleware<StoreState, AnyAction>]>>({
+  const store = reduxConfigureStore({
     reducer: createRootReducer(),
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }),
+      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
+        alertingApi.middleware,
+        publicDashboardApi.middleware,
+        browseDashboardsAPI.middleware
+      ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
@@ -31,6 +36,9 @@ export function configureStore(initialState?: Partial<StoreState>) {
   setStore(store);
   return store;
 }
+
+export type RootState = ReturnType<ReturnType<typeof configureStore>['getState']>;
+export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];
 
 /*
 function getActionsToIgnoreSerializableCheckOn() {

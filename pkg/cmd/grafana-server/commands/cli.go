@@ -2,8 +2,6 @@ package commands
 
 import (
 	"context"
-	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -13,8 +11,11 @@ import (
 	"runtime/debug"
 	"runtime/trace"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
+
+	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -32,45 +33,99 @@ type ServerOptions struct {
 	Commit      string
 	BuildBranch string
 	BuildStamp  string
+	Context     *cli.Context
 }
 
-type exitWithCode struct {
-	reason string
-	code   int
+func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
+	return &cli.Command{
+		Name:  "server",
+		Usage: "run the grafana server",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "config",
+				Usage: "Path to config file",
+			},
+			&cli.StringFlag{
+				Name:  "homepath",
+				Usage: "Path to Grafana install/home path, defaults to working directory",
+			},
+			&cli.StringFlag{
+				Name:  "pidfile",
+				Usage: "Path to Grafana pid file",
+			},
+			&cli.StringFlag{
+				Name:  "packaging",
+				Value: "unknown",
+				Usage: "describes the way Grafana was installed",
+			},
+			&cli.StringFlag{
+				Name:  "configOverrides",
+				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+			},
+			cli.VersionFlag,
+			&cli.BoolFlag{
+				Name:  "vv",
+				Usage: "prints current version, all dependencies and exits",
+			},
+			&cli.BoolFlag{
+				Name:  "profile",
+				Value: false,
+				Usage: "Turn on pprof profiling",
+			},
+			&cli.StringFlag{
+				Name:  "profile-addr",
+				Value: "localhost",
+				Usage: "Define custom address for profiling",
+			},
+			&cli.Uint64Flag{
+				Name:  "profile-port",
+				Value: 6060,
+				Usage: "Define custom port for profiling",
+			},
+			&cli.BoolFlag{
+				Name:  "tracing",
+				Value: false,
+				Usage: "Turn on tracing",
+			},
+			&cli.StringFlag{
+				Name:  "tracing-file",
+				Value: "trace.out",
+				Usage: "Define tracing output file",
+			},
+		},
+		Action: func(context *cli.Context) error {
+			return RunServer(ServerOptions{
+				Version:     version,
+				Commit:      commit,
+				BuildBranch: buildBranch,
+				BuildStamp:  buildstamp,
+				Context:     context,
+			})
+		},
+	}
 }
 
-var serverFs = flag.NewFlagSet("server", flag.ContinueOnError)
-
-var clilog = log.New("cli")
-
-func (e exitWithCode) Error() string {
-	return e.reason
-}
-
-func RunServer(opt ServerOptions) int {
+func RunServer(opt ServerOptions) error {
 	var (
-		configFile = serverFs.String("config", "", "path to config file")
-		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
-		pidFile    = serverFs.String("pidfile", "", "path to pid file")
-		packaging  = serverFs.String("packaging", "unknown", "describes the way Grafana was installed")
+		configFile = opt.Context.String("config")
+		homePath   = opt.Context.String("homepath")
+		pidFile    = opt.Context.String("pidfile")
+		packaging  = opt.Context.String("packaging")
 
-		v           = serverFs.Bool("v", false, "prints current version and exits")
-		vv          = serverFs.Bool("vv", false, "prints current version, all dependencies and exits")
-		profile     = serverFs.Bool("profile", false, "Turn on pprof profiling")
-		profileAddr = serverFs.String("profile-addr", "localhost", "Define custom address for profiling")
-		profilePort = serverFs.Uint64("profile-port", 6060, "Define custom port for profiling")
-		tracing     = serverFs.Bool("tracing", false, "Turn on tracing")
-		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
+		configOverrides = opt.Context.String("configOverrides")
+
+		v           = opt.Context.Bool("version")
+		vv          = opt.Context.Bool("vv")
+		profile     = opt.Context.Bool("profile")
+		profileAddr = opt.Context.String("profile-addr")
+		profilePort = opt.Context.Uint64("profile-port")
+		tracing     = opt.Context.Bool("tracing")
+		tracingFile = opt.Context.String("tracing-file")
 	)
 
-	if err := serverFs.Parse(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
-	}
-
-	if *v || *vv {
+	if v || vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opt.Version, opt.Commit, opt.BuildBranch)
-		if *vv {
+		if vv {
 			fmt.Println("Dependencies:")
 			if info, ok := debug.ReadBuildInfo(); ok {
 				for _, dep := range info.Deps {
@@ -78,25 +133,27 @@ func RunServer(opt ServerOptions) int {
 				}
 			}
 		}
-		return 0
+		return nil
 	}
 
-	profileDiagnostics := newProfilingDiagnostics(*profile, *profileAddr, *profilePort)
+	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
+		return err
 	}
 
-	traceDiagnostics := newTracingDiagnostics(*tracing, *tracingFile)
+	traceDiagnostics := newTracingDiagnostics(tracing, tracingFile)
 	if err := traceDiagnostics.overrideWithEnv(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
+		return err
 	}
 
 	if profileDiagnostics.enabled {
 		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
+			// TODO: We should enable the linter and fix G114 here.
+			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
+			//
+			//nolint:gosec
 			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)
@@ -104,26 +161,25 @@ func RunServer(opt ServerOptions) int {
 		}()
 	}
 
-	if err := executeServer(*configFile, *homePath, *pidFile, *packaging, traceDiagnostics, opt); err != nil {
-		code := 1
-		var ewc exitWithCode
-		if errors.As(err, &ewc) {
-			code = ewc.code
-		}
-		if code != 0 {
-			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-		}
-
-		return code
-	}
-
-	return 0
-}
-
-func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnostics *tracingDiagnostics, opt ServerOptions) error {
 	defer func() {
 		if err := log.Close(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+		}
+	}()
+
+	clilog := log.New("cli")
+
+	defer func() {
+		// If we've managed to initialize them, this is the last place
+		// where we're able to log anything that'll end up in Grafana's
+		// log files.
+		// Since operators are not always looking at stderr, we'll try
+		// to log any and all panics that are about to crash Grafana to
+		// our regular log locations before exiting.
+		if r := recover(); r != nil {
+			reason := fmt.Sprintf("%v", r)
+			clilog.Error("Critical error", "reason", reason, "stackTrace", string(debug.Stack()))
+			panic(r)
 		}
 	}()
 
@@ -157,7 +213,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 	setting.IsEnterprise = extensions.IsEnterprise
 	setting.Packaging = validPackaging(packaging)
 
-	metrics.SetBuildInformation(opt.Version, opt.Commit, opt.BuildBranch)
+	metrics.SetBuildInformation(opt.Version, opt.Commit, opt.BuildBranch, buildstampInt64)
 
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
@@ -167,13 +223,24 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")
 	}
 
-	s, err := server.Initialize(setting.CommandLineArgs{
-		Config: configFile, HomePath: homePath, Args: serverFs.Args(),
-	}, server.Options{
-		PidFile: pidFile, Version: opt.Version, Commit: opt.Commit, BuildBranch: opt.BuildBranch,
-	}, api.ServerOptions{})
+	configOptions := strings.Split(configOverrides, " ")
+
+	s, err := server.Initialize(
+		setting.CommandLineArgs{
+			Config:   configFile,
+			HomePath: homePath,
+			// tailing arguments have precedence over the options string
+			Args: append(configOptions, opt.Context.Args().Slice()...),
+		},
+		server.Options{
+			PidFile:     pidFile,
+			Version:     opt.Version,
+			Commit:      opt.Commit,
+			BuildBranch: opt.BuildBranch,
+		},
+		api.ServerOptions{},
+	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		return err
 	}
 
@@ -181,15 +248,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 
 	go listenToSystemSignals(ctx, s)
 
-	if err := s.Run(); err != nil {
-		code := s.ExitCode(err)
-		return exitWithCode{
-			reason: err.Error(),
-			code:   code,
-		}
-	}
-
-	return nil
+	return s.Run()
 }
 
 func validPackaging(packaging string) string {

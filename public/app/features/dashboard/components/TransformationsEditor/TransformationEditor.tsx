@@ -5,12 +5,13 @@ import { mergeMap } from 'rxjs/operators';
 import {
   DataFrame,
   DataTransformerConfig,
-  GrafanaTheme,
+  GrafanaTheme2,
   transformDataFrame,
   TransformerRegistryItem,
+  getFrameMatchers,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
+import { Icon, JSONFormatter, useStyles2 } from '@grafana/ui';
 
 import { TransformationsEditorTransformation } from './types';
 
@@ -31,15 +32,22 @@ export const TransformationEditor = ({
   configs,
   onChange,
 }: TransformationEditorProps) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [input, setInput] = useState<DataFrame[]>([]);
   const [output, setOutput] = useState<DataFrame[]>([]);
   const config = useMemo(() => configs[index], [configs, index]);
 
   useEffect(() => {
+    const config = configs[index].transformation;
+    const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
     const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
-    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe(setInput);
+    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe((v) => {
+      if (matcher) {
+        v = data.filter((v) => matcher(v));
+      }
+      setInput(v);
+    });
     const outputSubscription = transformDataFrame(inputTransforms, data)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before)))
       .subscribe(setOutput);
@@ -55,19 +63,14 @@ export const TransformationEditor = ({
       React.createElement(uiConfig.editor, {
         options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
         input,
-        onChange: (opts: any) => {
-          onChange(index, { id: config.transformation.id, options: opts });
+        onChange: (opts) => {
+          onChange(index, {
+            ...config.transformation,
+            options: opts,
+          });
         },
       }),
-    [
-      uiConfig.editor,
-      uiConfig.transformation.defaultOptions,
-      config.transformation.options,
-      config.transformation.id,
-      input,
-      onChange,
-      index,
-    ]
+    [uiConfig.editor, uiConfig.transformation.defaultOptions, config.transformation, input, onChange, index]
   );
 
   return (
@@ -97,8 +100,8 @@ export const TransformationEditor = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
-  const debugBorder = theme.isLight ? theme.palette.gray85 : theme.palette.gray15;
+const getStyles = (theme: GrafanaTheme2) => {
+  const debugBorder = theme.isLight ? theme.v1.palette.gray85 : theme.v1.palette.gray15;
 
   return {
     title: css`
@@ -112,8 +115,8 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
     `,
     name: css`
-      font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.textBlue};
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.primary.text};
     `,
     iconRow: css`
       display: flex;
@@ -123,8 +126,8 @@ const getStyles = (theme: GrafanaTheme) => {
       border: none;
       box-shadow: none;
       cursor: pointer;
-      color: ${theme.colors.textWeak};
-      margin-left: ${theme.spacing.sm};
+      color: ${theme.colors.text.secondary};
+      margin-left: ${theme.spacing(1)};
       &:hover {
         color: ${theme.colors.text};
       }
@@ -141,13 +144,13 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
       align-self: stretch;
       justify-content: center;
-      margin: 0 ${theme.spacing.xs};
-      color: ${theme.colors.textBlue};
+      margin: 0 ${theme.spacing(0.5)};
+      color: ${theme.colors.primary.text};
     `,
     debugTitle: css`
-      padding: ${theme.spacing.sm} ${theme.spacing.xxs};
-      font-family: ${theme.typography.fontFamily.monospace};
-      font-size: ${theme.typography.size.sm};
+      padding: ${theme.spacing(1)} ${theme.spacing(0.25)};
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text};
       border-bottom: 1px solid ${debugBorder};
       flex-grow: 0;
@@ -155,11 +158,11 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
 
     debug: css`
-      margin-top: ${theme.spacing.sm};
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
+      margin-top: ${theme.spacing(1)};
+      padding: 0 ${theme.spacing(1, 1, 1)};
       border: 1px solid ${debugBorder};
-      background: ${theme.isLight ? theme.palette.white : theme.palette.gray05};
-      border-radius: ${theme.border.radius.sm};
+      background: ${theme.isLight ? theme.v1.palette.white : theme.v1.palette.gray05};
+      border-radius: ${theme.shape.borderRadius(1)};
       width: 100%;
       min-height: 300px;
       display: flex;
@@ -170,7 +173,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
       height: 100%;
       overflow: hidden;
-      padding: ${theme.spacing.xs};
+      padding: ${theme.spacing(0.5)};
     `,
   };
 };

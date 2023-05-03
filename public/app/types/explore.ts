@@ -9,14 +9,16 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+
+import { CorrelationData } from '../features/correlations/useCorrelations';
 
 export enum ExploreId {
   left = 'left',
@@ -36,14 +38,16 @@ export interface ExploreState {
    * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
-  /**
-   * Explore state of the left split (left is default in non-split view).
-   */
-  left: ExploreItemState;
-  /**
-   * Explore state of the right area in split view.
-   */
-  right?: ExploreItemState;
+
+  // This being optional wouldn't be needed with noUncheckedIndexedAccess set to true, but it cause more than 5k errors currently.
+  // In order to be safe, we declare each item as pssobly undefined to force existence checks.
+  // This will have the side effect of also forcing undefined checks when iterating over this object entries, but
+  // it's better to error on the safer side.
+  panes: {
+    [paneId in ExploreId]?: ExploreItemState;
+  };
+
+  correlations?: CorrelationData[];
 
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
@@ -62,13 +66,23 @@ export interface ExploreState {
   richHistoryLimitExceededWarningShown: boolean;
 
   /**
-   * True if a warning message about failed rich history has been shown already in this session.
+   * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
-  richHistoryMigrationFailed: boolean;
+  largerExploreId?: keyof ExploreState['panes'];
+
+  /**
+   * If a maximize pane button is pressed, this indicates which side was maximized. Will be undefined if not split or if it is manually resized
+   */
+  maxedExploreId?: keyof ExploreState['panes'];
+
+  /**
+   * If a minimize pane button is pressed, it will do an even split of panes. Will be undefined if split or on a manual resize
+   */
+  evenSplitPanes?: boolean;
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
 
 export interface ExploreItemState {
   /**
@@ -129,7 +143,12 @@ export interface ExploreItemState {
   /**
    * Table model that combines all query table results into a single table.
    */
-  tableResult: DataFrame | null;
+  tableResult: DataFrame[] | null;
+
+  /**
+   * Simple UI that emulates native prometheus UI
+   */
+  rawPrometheusResult: DataFrame | null;
 
   /**
    * React keys for rendering of QueryRows
@@ -151,6 +170,12 @@ export interface ExploreItemState {
    */
   isPaused: boolean;
 
+  /**
+   * Index of the last item in the list of logs
+   * when the live tailing views gets cleared.
+   */
+  clearedAtIndex: number | null;
+
   querySubscription?: Unsubscribable;
 
   queryResponse: ExplorePanelData;
@@ -158,8 +183,13 @@ export interface ExploreItemState {
   showLogs?: boolean;
   showMetrics?: boolean;
   showTable?: boolean;
+  /**
+   * If true, the default "raw" prometheus instant query UI will be displayed in addition to table view
+   */
+  showRawPrometheus?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  showFlameGraph?: boolean;
 
   /**
    * History of all queries
@@ -175,15 +205,14 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: ExplorePanelData }>;
 
-  // properties below should be more generic if we add more providers
-  // see also: DataSourceWithLogsVolumeSupport
-  logsVolumeDataProvider?: Observable<DataQueryResponse>;
-  logsVolumeDataSubscription?: SubscriptionLike;
-  logsVolumeData?: DataQueryResponse;
+  /**
+   * Supplementary queries are additional queries used in Explore, e.g. for logs volume
+   */
+  supplementaryQueries: SupplementaryQueries;
 
-  /* explore graph style */
-  graphStyle: ExploreGraphStyle;
   panelsState: ExplorePanelsState;
+
+  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -202,11 +231,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
@@ -226,7 +252,28 @@ export interface ExplorePanelData extends PanelData {
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
+  rawPrometheusFrames: DataFrame[];
+  flameGraphFrames: DataFrame[];
   graphResult: DataFrame[] | null;
-  tableResult: DataFrame | null;
+  tableResult: DataFrame[] | null;
   logsResult: LogsModel | null;
+  rawPrometheusResult: DataFrame | null;
 }
+
+export enum TABLE_RESULTS_STYLE {
+  table = 'table',
+  raw = 'raw',
+}
+export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
+export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
+
+export interface SupplementaryQuery {
+  enabled: boolean;
+  dataProvider?: Observable<DataQueryResponse>;
+  dataSubscription?: SubscriptionLike;
+  data?: DataQueryResponse;
+}
+
+export type SupplementaryQueries = {
+  [key in SupplementaryQueryType]: SupplementaryQuery;
+};

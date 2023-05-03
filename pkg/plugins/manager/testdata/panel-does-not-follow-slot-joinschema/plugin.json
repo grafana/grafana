@@ -1,0 +1,14 @@
+{
+  "type": "panel",
+  "name": "Slot impl testing",
+  "id": "panel-does-not-follow-slot-joinschema",
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

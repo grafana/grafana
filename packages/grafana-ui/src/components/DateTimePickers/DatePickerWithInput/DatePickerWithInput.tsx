@@ -11,11 +11,17 @@ export const formatDate = (date: Date | string) => dateTime(date).format('L');
 
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
+  /** Value selected by the DatePicker */
   value?: Date | string;
+  /** The minimum date the value can be set to */
   minDate?: Date;
+  /** The maximum date the value can be set to */
+  maxDate?: Date;
+  /** Handles changes when a new date is selected */
   onChange: (value: Date | string) => void;
   /** Hide the calendar when date is selected */
   closeOnSelect?: boolean;
+  /** Text that appears when the input has no text */
   placeholder?: string;
 }
 
@@ -23,6 +29,7 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'valu
 export const DatePickerWithInput = ({
   value,
   minDate,
+  maxDate,
   onChange,
   closeOnSelect,
   placeholder = 'Date',
@@ -52,6 +59,7 @@ export const DatePickerWithInput = ({
         isOpen={open}
         value={value && typeof value !== 'string' ? value : dateTime().toDate()}
         minDate={minDate}
+        maxDate={maxDate}
         onChange={(ev) => {
           onChange(ev);
           if (closeOnSelect) {

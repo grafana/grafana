@@ -1,20 +1,36 @@
-import classnames from 'classnames';
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
+import DropZone, { FileRejection, DropEvent, ErrorCode } from 'react-dropzone';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModelItem, TimeRange } from '@grafana/data';
+import {
+  NavModel,
+  NavModelItem,
+  TimeRange,
+  PageLayoutType,
+  locationUtil,
+  dataFrameToJSON,
+  DataFrameJSON,
+  GrafanaTheme2,
+  getValueFormat,
+  formattedValueToString,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLayoutType } from 'app/core/components/Page/types';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { PanelModel } from 'app/features/dashboard/state';
+import * as DFImport from 'app/features/dataframe-import';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -33,6 +49,7 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
+import { calculateNewPanelGridPos } from '../utils/panel';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -43,21 +60,24 @@ export interface DashboardPageRouteParams {
 
 export type DashboardPageRouteSearchParams = {
   tab?: string;
-  folderId?: string;
+  folderUid?: string;
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  shareView?: string;
   panelType?: string;
   inspect?: string;
   from?: string;
   to?: string;
   refresh?: string;
+  kiosk?: string | true;
 };
 
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel(),
+  navIndex: state.navIndex,
 });
 
 const mapDispatchToProps = {
@@ -70,12 +90,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type OwnProps = {
-  isPublic?: boolean;
-};
-
-export type Props = OwnProps &
-  Themeable2 &
+export type Props = Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
   ConnectedProps<typeof connector>;
 
@@ -83,24 +98,91 @@ export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   updateScrollTop?: number;
-  rememberScrollTop: number;
+  rememberScrollTop?: number;
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
   scrollElement?: HTMLDivElement;
+  pageNav?: NavModelItem;
+  sectionNav?: NavModel;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
+  declare context: GrafanaContextType;
+  static contextType = GrafanaContext;
+
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
-  pageNav?: NavModelItem;
+
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    const grafanaDS = {
+      type: 'grafana',
+      uid: 'grafana',
+    };
+    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      this.props.dashboard?.addPanel({
+        type: 'table',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        title: next.file.name,
+        datasource: grafanaDS,
+        targets: [
+          {
+            queryType: GrafanaQueryType.Snapshot,
+            snapshot,
+            file: { name: next.file.name, size: next.file.size },
+            datasource: grafanaDS,
+          },
+        ],
+      });
+    });
+
+    fileRejections.forEach((fileRejection) => {
+      const errors = fileRejection.errors.map((error) => {
+        switch (error.code) {
+          case ErrorCode.FileTooLarge:
+            const formattedSize = getValueFormat('decbytes')(DFImport.maxFileSize);
+            return `File size must be less than ${formattedValueToString(formattedSize)}.`;
+          case ErrorCode.FileInvalidType:
+            return `File type must be one of the following types ${DFImport.formatFileTypes(DFImport.acceptedFiles)}.`;
+          default:
+            return error.message;
+        }
+      });
+      this.props.notifyApp(
+        createErrorNotification(
+          `Failed to load ${fileRejection.file.name}`,
+          undefined,
+          undefined,
+          <ul>
+            {errors.map((err) => {
+              return <li key={err}>{err}</li>;
+            })}
+          </ul>
+        )
+      );
+    });
+
+    reportInteraction('dashboards_dropped_files', {
+      number_of_files: fileRejections.length + acceptedFiles.length,
+      accepted_files: acceptedFiles.map((a) => {
+        return { type: a.type, size: a.size };
+      }),
+      rejected_files: fileRejections.map((r) => {
+        return { type: r.file.type, size: r.file.size };
+      }),
+    });
+  };
 
   getCleanState(): State {
     return {
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
-      rememberScrollTop: 0,
       panelNotFound: false,
       editPanelAccessDenied: false,
     };
@@ -121,7 +203,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, isPublic, match, queryParams } = this.props;
+    const { dashboard, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -131,11 +213,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,
-      urlFolderId: queryParams.folderId,
+      urlFolderUid: queryParams.folderUid,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
-      fixUrl: !isPublic,
+      fixUrl: true,
       accessToken: match.params.accessToken,
+      keybindingSrv: this.context.keybindings,
     });
 
     // small delay to start live updates
@@ -149,8 +232,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     if (!dashboard) {
       return;
     }
-
-    this.updatePageNav(dashboard);
 
     if (
       prevProps.match.params.uid !== match.params.uid ||
@@ -226,54 +307,61 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return state;
     }
 
+    const updatedState = { ...state };
+
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
-      if (!panel) {
-        return { ...state, panelNotFound: true };
-      }
-
-      if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop };
+      if (panel) {
+        if (dashboard.canEditPanel(panel)) {
+          updatedState.editPanel = panel;
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        } else {
+          updatedState.editPanelAccessDenied = true;
+        }
       } else {
-        return { ...state, editPanelAccessDenied: true };
+        updatedState.panelNotFound = true;
       }
     }
     // Leaving edit mode
     else if (state.editPanel && !urlEditPanelId) {
-      return { ...state, editPanel: null, updateScrollTop: state.rememberScrollTop };
+      updatedState.editPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
     }
 
     // Entering view mode
     if (!state.viewPanel && urlViewPanelId) {
       const panel = dashboard.getPanelByUrlId(urlViewPanelId);
-      if (!panel) {
-        return { ...state, panelNotFound: urlEditPanelId };
+      if (panel) {
+        // This mutable state feels wrong to have in getDerivedStateFromProps
+        // Should move this state out of dashboard in the future
+        dashboard.initViewPanel(panel);
+        updatedState.viewPanel = panel;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.updateScrollTop = 0;
+      } else {
+        updatedState.panelNotFound = true;
       }
-
-      // This mutable state feels wrong to have in getDerivedStateFromProps
-      // Should move this state out of dashboard in the future
-      dashboard.initViewPanel(panel);
-
-      return { ...state, viewPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop, updateScrollTop: 0 };
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
       // This mutable state feels wrong to have in getDerivedStateFromProps
       // Should move this state out of dashboard in the future
       dashboard.exitViewPanel(state.viewPanel);
-
-      return { ...state, viewPanel: null, updateScrollTop: state.rememberScrollTop };
+      updatedState.viewPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
     }
 
     // if we removed url edit state, clear any panel not found state
     if (state.panelNotFound || (state.editPanelAccessDenied && !urlEditPanelId)) {
-      return { ...state, panelNotFound: false, editPanelAccessDenied: false };
+      updatedState.panelNotFound = false;
+      updatedState.editPanelAccessDenied = false;
     }
 
-    return state;
+    return updateStatePageNavFromProps(props, updatedState);
   }
 
+  // Todo: Remove this when we remove the emptyDashboardPage toggle
   onAddPanel = () => {
     const { dashboard } = this.props;
 
@@ -288,7 +376,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     dashboard.addPanel({
       type: 'add-panel',
-      gridPos: { x: 0, y: 0, w: 12, h: 8 },
+      gridPos: calculateNewPanelGridPos(dashboard),
       title: 'Panel Title',
     });
 
@@ -319,98 +407,210 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return inspectPanel;
   }
 
-  updatePageNav(dashboard: DashboardModel) {
-    if (!this.pageNav || dashboard.title !== this.pageNav.text) {
-      this.pageNav = {
-        text: dashboard.title,
-        url: locationUtil.getUrlForPartial(this.props.history.location, {
-          editview: null,
-          editPanel: null,
-          viewPanel: null,
-        }),
-      };
-    }
-
-    // Check if folder changed
-    if (
-      dashboard.meta.folderTitle &&
-      (!this.pageNav.parentItem || this.pageNav.parentItem.text !== dashboard.meta.folderTitle)
-    ) {
-      this.pageNav.parentItem = {
-        text: dashboard.meta.folderTitle,
-        url: `/dashboards/f/${dashboard.meta.folderUid}`,
-      };
-    }
-
-    if (this.props.route.routeName === DashboardRoutes.Path) {
-      const pageNav = getPageNavFromSlug(this.props.match.params.slug!);
-      if (pageNav?.parentItem) {
-        this.pageNav.parentItem = pageNav.parentItem;
-      }
-    }
-  }
-
-  getPageProps() {
-    if (this.props.route.routeName === DashboardRoutes.Path) {
-      return { navModel: getRootContentNavModel(), pageNav: this.pageNav };
-    } else {
-      return { navId: 'dashboards', pageNav: this.pageNav };
-    }
-  }
-
   render() {
-    const { dashboard, initError, queryParams, isPublic } = this.props;
-    const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
+    const { dashboard, initError, queryParams } = this.props;
+    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
+    const kioskMode = getKioskMode(this.props.queryParams);
 
-    if (!dashboard) {
+    if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();
-    const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
+    const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
-    const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
-    const toolbar = kioskMode !== KioskMode.Full && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-        <DashNav
-          dashboard={dashboard}
-          title={dashboard.title}
-          folderTitle={dashboard.meta.folderTitle}
-          isFullscreen={!!viewPanel}
-          onAddPanel={this.onAddPanel}
-          kioskMode={kioskMode}
-          hideTimePicker={dashboard.timepicker.hidden}
-        />
-      </header>
-    );
+    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
+
+    const pageClassName = cx({
+      'panel-in-fullscreen': Boolean(viewPanel),
+      'page-hidden': Boolean(queryParams.editview || editPanel),
+    });
+
+    if (dashboard.meta.dashboardNotFound) {
+      return (
+        <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: 'Not found' }}>
+          <EntityNotFound entity="Dashboard" />
+        </Page>
+      );
+    }
 
     return (
-      <Page
-        {...this.getPageProps()}
-        layout={PageLayoutType.Dashboard}
-        toolbar={toolbar}
-        className={containerClassNames}
-        scrollRef={this.setScrollRef}
-        scrollTop={updateScrollTop}
-      >
-        <DashboardPrompt dashboard={dashboard} />
-
-        {initError && <DashboardFailed />}
-        {showSubMenu && (
-          <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-            <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-          </section>
+      <>
+        <Page
+          navModel={sectionNav}
+          pageNav={pageNav}
+          layout={PageLayoutType.Canvas}
+          className={pageClassName}
+          scrollRef={this.setScrollRef}
+          scrollTop={updateScrollTop}
+        >
+          {showToolbar && (
+            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+              <DashNav
+                dashboard={dashboard}
+                title={dashboard.title}
+                folderTitle={dashboard.meta.folderTitle}
+                isFullscreen={!!viewPanel}
+                onAddPanel={this.onAddPanel}
+                kioskMode={kioskMode}
+                hideTimePicker={dashboard.timepicker.hidden}
+                shareModalActiveTab={this.props.queryParams.shareView}
+              />
+            </header>
+          )}
+          <DashboardPrompt dashboard={dashboard} />
+          {initError && <DashboardFailed />}
+          {showSubMenu && (
+            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+            </section>
+          )}
+          {config.featureToggles.editPanelCSVDragAndDrop ? (
+            <DropZone
+              onDrop={this.onFileDrop}
+              accept={DFImport.acceptedFiles}
+              maxSize={DFImport.maxFileSize}
+              noClick={true}
+            >
+              {({ getRootProps, isDragActive }) => {
+                const styles = getStyles(this.props.theme, isDragActive);
+                return (
+                  <div {...getRootProps({ className: styles.dropZone })}>
+                    <div className={styles.dropOverlay}>
+                      <div className={styles.dropHint}>
+                        <Icon name="upload" size="xxxl"></Icon>
+                        <h3>Create tables from spreadsheets</h3>
+                      </div>
+                    </div>
+                    <DashboardGrid
+                      dashboard={dashboard}
+                      isEditable={!!dashboard.meta.canEdit}
+                      viewPanel={viewPanel}
+                      editPanel={editPanel}
+                    />
+                  </div>
+                );
+              }}
+            </DropZone>
+          ) : (
+            <DashboardGrid
+              dashboard={dashboard}
+              isEditable={!!dashboard.meta.canEdit}
+              viewPanel={viewPanel}
+              editPanel={editPanel}
+            />
+          )}
+          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+        </Page>
+        {editPanel && (
+          <PanelEditor
+            dashboard={dashboard}
+            sourcePanel={editPanel}
+            tab={this.props.queryParams.tab}
+            sectionNav={sectionNav}
+            pageNav={pageNav}
+          />
         )}
-
-        <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
-
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
-        {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
-      </Page>
+        {queryParams.editview && (
+          <DashboardSettings
+            dashboard={dashboard}
+            editview={queryParams.editview}
+            pageNav={pageNav}
+            sectionNav={sectionNav}
+          />
+        )}
+      </>
     );
   }
+}
+
+function updateStatePageNavFromProps(props: Props, state: State): State {
+  const { dashboard } = props;
+
+  if (!dashboard) {
+    return state;
+  }
+
+  let pageNav = state.pageNav;
+  let sectionNav = state.sectionNav;
+
+  if (!pageNav || dashboard.title !== pageNav.text) {
+    pageNav = {
+      text: dashboard.title,
+      url: locationUtil.getUrlForPartial(props.history.location, {
+        editview: null,
+        editPanel: null,
+        viewPanel: null,
+      }),
+    };
+  }
+
+  // Check if folder changed
+  const { folderTitle, folderUid } = dashboard.meta;
+  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
+    pageNav = {
+      ...pageNav,
+      parentItem: {
+        text: folderTitle,
+        url: `/dashboards/f/${dashboard.meta.folderUid}`,
+      },
+    };
+  }
+
+  if (props.route.routeName === DashboardRoutes.Path) {
+    sectionNav = getRootContentNavModel();
+    const pageNav = getPageNavFromSlug(props.match.params.slug!);
+    if (pageNav?.parentItem) {
+      pageNav.parentItem = pageNav.parentItem;
+    }
+  } else {
+    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
+  }
+
+  if (state.editPanel || state.viewPanel) {
+    pageNav = {
+      ...pageNav,
+      text: `${state.editPanel ? 'Edit' : 'View'} panel`,
+      parentItem: pageNav,
+      url: undefined,
+    };
+  }
+
+  if (state.pageNav === pageNav && state.sectionNav === sectionNav) {
+    return state;
+  }
+
+  return {
+    ...state,
+    pageNav,
+    sectionNav,
+  };
+}
+
+function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
+  return {
+    dropZone: css`
+      height: 100%;
+    `,
+    dropOverlay: css`
+      background-color: ${isDragActive ? theme.colors.action.hover : `inherit`};
+      border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
+      position: absolute;
+      display: ${isDragActive ? 'flex' : 'none'};
+      z-index: ${theme.zIndex.modal};
+      top: 0px;
+      left: 0px;
+      height: 100%;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    `,
+    dropHint: css`
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+    `,
+  };
 }
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);

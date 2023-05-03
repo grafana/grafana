@@ -3,12 +3,12 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { UrlQueryMap } from '@grafana/data';
 
-export interface GrafanaRouteComponentProps<T = {}, Q = UrlQueryMap> extends RouteComponentProps<T> {
+export interface GrafanaRouteComponentProps<T extends {} = {}, Q = UrlQueryMap> extends RouteComponentProps<T> {
   route: RouteDescriptor;
   queryParams: Q;
 }
 
-export type GrafanaRouteComponent<T = any> = React.ComponentType<GrafanaRouteComponentProps<T>>;
+export type GrafanaRouteComponent<T extends {} = any> = React.ComponentType<GrafanaRouteComponentProps<T>>;
 
 export interface RouteDescriptor {
   path: string;
@@ -19,4 +19,5 @@ export interface RouteDescriptor {
   routeName?: string;
   chromeless?: boolean;
   exact?: boolean;
+  sensitive?: boolean;
 }

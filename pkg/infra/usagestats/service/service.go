@@ -2,13 +2,16 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -16,26 +19,42 @@ type UsageStats struct {
 	Cfg           *setting.Cfg
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
-	pluginStore   plugins.Store
+	accesscontrol ac.AccessControl
 
-	log log.Logger
+	log    log.Logger
+	tracer tracing.Tracer
 
 	externalMetrics     []usagestats.MetricsFunc
 	sendReportCallbacks []usagestats.SendReportCallbackFunc
 }
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store, kvStore kvstore.KVStore, routeRegister routing.RouteRegister) *UsageStats {
+func ProvideService(cfg *setting.Cfg,
+	kvStore kvstore.KVStore,
+	routeRegister routing.RouteRegister,
+	tracer tracing.Tracer,
+	accesscontrol ac.AccessControl,
+	accesscontrolService ac.Service,
+	bundleRegistry supportbundles.Service,
+) (*UsageStats, error) {
 	s := &UsageStats{
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
-		pluginStore:   pluginStore,
 		kvStore:       kvstore.WithNamespace(kvStore, 0, "infra.usagestats"),
 		log:           log.New("infra.usagestats"),
+		tracer:        tracer,
+		accesscontrol: accesscontrol,
+	}
+
+	if !accesscontrol.IsDisabled() {
+		if err := declareFixedRoles(accesscontrolService); err != nil {
+			return nil, err
+		}
 	}
 
 	s.registerAPIEndpoints()
+	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 
-	return s
+	return s, nil
 }
 
 func (uss *UsageStats) Run(ctx context.Context) error {
@@ -65,8 +84,8 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-sendReportTicker.C:
-			if err := uss.sendUsageStats(ctx); err != nil {
-				uss.log.Warn("Failed to send usage stats", "error", err)
+			if traceID, err := uss.sendUsageStats(ctx); err != nil {
+				uss.log.Warn("Failed to send usage stats", "error", err, "traceID", traceID)
 			}
 
 			lastSent = time.Now()
@@ -92,11 +111,27 @@ func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbac
 	uss.sendReportCallbacks = append(uss.sendReportCallbacks, c)
 }
 
-func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool {
-	ds, exists := uss.pluginStore.Plugin(ctx, dsType)
-	if !exists {
-		return false
-	}
+func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
+	return supportbundles.Collector{
+		UID:               "usage-stats",
+		DisplayName:       "Usage statistics",
+		Description:       "Usage statistics of the Grafana instance",
+		IncludedByDefault: false,
+		Default:           true,
+		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
+			report, err := uss.GetUsageReport(context.Background())
+			if err != nil {
+				return nil, err
+			}
 
-	return ds.Signature.IsValid() || ds.Signature.IsInternal()
+			data, err := json.MarshalIndent(report, "", " ")
+			if err != nil {
+				return nil, err
+			}
+			return &supportbundles.SupportItem{
+				Filename:  "usage-stats.json",
+				FileBytes: data,
+			}, nil
+		},
+	}
 }

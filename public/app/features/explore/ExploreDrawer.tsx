@@ -28,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       border-top: 1px solid ${theme.colors.border.weak};
       margin: ${theme.spacing(0, -2, 0, -2)};
       box-shadow: ${theme.shadows.z3};
-      z-index: ${theme.zIndex.sidemenu};
+      z-index: ${theme.zIndex.navbarFixed};
     `,
     drawerActive: css`
       opacity: 1;
@@ -43,7 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       left: calc(50% - 100px) !important;
       top: -4px !important;
       cursor: grab;
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.pill};
       &:hover {
         background: ${theme.colors.secondary.shade};
       }

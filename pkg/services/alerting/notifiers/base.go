@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -38,7 +38,7 @@ func NewNotifierBase(model *models.AlertNotification, notificationService notifi
 	}
 
 	return NotifierBase{
-		UID:                   model.Uid,
+		UID:                   model.UID,
 		Name:                  model.Name,
 		IsDefault:             model.IsDefault,
 		Type:                  model.Type,

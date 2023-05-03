@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
-import { EditorList } from '@grafana/ui';
+import { EditorList } from '@grafana/experimental';
 
 import { MultiFilters } from '../../types';
 
@@ -32,7 +32,7 @@ const filterConditionsToMultiFilters = (filters: MultiFilterCondition[]) => {
   return res;
 };
 
-export const MultiFilter: React.FC<Props> = ({ filters, onChange, keyPlaceholder }) => {
+export const MultiFilter = ({ filters, onChange, keyPlaceholder }: Props) => {
   const [items, setItems] = useState<MultiFilterCondition[]>([]);
   useEffect(() => setItems(filters ? multiFiltersToFilterConditions(filters) : []), [filters]);
   const onFiltersChange = (newItems: Array<Partial<MultiFilterCondition>>) => {

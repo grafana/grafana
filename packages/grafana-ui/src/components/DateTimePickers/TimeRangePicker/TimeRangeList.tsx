@@ -4,6 +4,7 @@ import React, { ReactNode } from 'react';
 import { TimeOption } from '@grafana/data';
 
 import { stylesFactory } from '../../../themes';
+import { t } from '../../../utils/i18n';
 
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';
@@ -36,7 +37,7 @@ interface Props {
   placeholderEmpty?: ReactNode;
 }
 
-export const TimeRangeList: React.FC<Props> = (props) => {
+export const TimeRangeList = (props: Props) => {
   const styles = getStyles();
   const { title, options, placeholderEmpty } = props;
 
@@ -60,19 +61,19 @@ export const TimeRangeList: React.FC<Props> = (props) => {
   );
 };
 
-const Options: React.FC<Props> = ({ options, value, onChange, title }) => {
+const Options = ({ options, value, onChange, title }: Props) => {
   const styles = getOptionsStyles();
 
   return (
     <>
-      <ul aria-roledescription="Time range selection">
+      <ul aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}>
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}
             value={option}
             selected={isEqual(option, value)}
             onSelect={onChange}
-            name={title ?? 'Time ranges'}
+            name={title ?? t('time-picker.time-range.default-title', 'Time ranges')}
           />
         ))}
       </ul>

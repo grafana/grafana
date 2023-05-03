@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-wide",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "vector"
 //      },
@@ -30,11 +34,16 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "meta": {
           "type": "timeseries-wide",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "vector"
           },

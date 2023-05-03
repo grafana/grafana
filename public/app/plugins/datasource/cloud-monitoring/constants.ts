@@ -1,5 +1,3 @@
-import { GoogleAuthType } from '@grafana/google-sdk';
-
 import { MetricKind, QueryType, ValueTypes } from './types';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
@@ -7,10 +5,6 @@ export const INPUT_WIDTH = 71;
 export const LABEL_WIDTH = 19;
 export const INNER_LABEL_WIDTH = 14;
 export const SELECT_WIDTH = 28;
-export const AUTH_TYPES = [
-  { value: 'Google JWT File', key: GoogleAuthType.JWT },
-  { value: 'GCE Default Service Account', key: GoogleAuthType.GCE },
-];
 
 export const ALIGNMENTS = [
   {
@@ -278,6 +272,21 @@ export const GRAPH_PERIODS: periodOption[] = [
   { text: '1w', value: '1w' },
 ];
 
+// Usable units: ns, us, ms, s, m, h
+// ref. https://cloud.google.com/stackdriver/docs/solutions/slo-monitoring/api/timeseries-selectors#tss-names-args
+export const LOOKBACK_PERIODS: periodOption[] = [
+  { text: '1m', value: '1m' },
+  { text: '2m', value: '2m' },
+  { text: '5m', value: '5m' },
+  { text: '10m', value: '10m' },
+  { text: '30m', value: '30m' },
+  { text: '1h', value: '1h' },
+  { text: '3h', value: '3h' },
+  { text: '6h', value: '6h' },
+  { text: '24h', value: '24h' },
+  { text: '72h', value: '72h' },
+];
+
 export const SYSTEM_LABELS = [
   'metadata.system_labels.cloud_account',
   'metadata.system_labels.name',
@@ -291,13 +300,17 @@ export const SYSTEM_LABELS = [
   'metadata.system_labels.container_image',
 ];
 
+export const SLO_BURN_RATE_SELECTOR_NAME = 'select_slo_burn_rate';
+
 export const SELECTORS = [
   { label: 'SLI Value', value: 'select_slo_health' },
   { label: 'SLO Compliance', value: 'select_slo_compliance' },
   { label: 'SLO Error Budget Remaining', value: 'select_slo_budget_fraction' },
+  { label: 'SLO Burn Rate', value: SLO_BURN_RATE_SELECTOR_NAME },
 ];
 
 export const QUERY_TYPES = [
-  { label: 'Metrics', value: QueryType.METRICS },
+  { label: 'Builder', value: QueryType.TIME_SERIES_LIST },
+  { label: 'MQL', value: QueryType.TIME_SERIES_QUERY },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];

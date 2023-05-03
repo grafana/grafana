@@ -1,6 +1,6 @@
 # Data requests
 
-[BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv) handles all outgoing HTTP requests from Grafana. This document explains the high-level concepts used by `BackendSrv`.
+[BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts) handles all outgoing HTTP requests from Grafana. This document explains the high-level concepts used by `BackendSrv`.
 
 ## Canceling requests
 
@@ -14,7 +14,7 @@ Grafana uses a concept called _request cancellation_ to cancel any ongoing reque
 
 #### Before Grafana 7.2
 
-Before Grafana can cancel any data request, it has to identify that request. Grafana identifies a request using the property `requestId` [passed as options](https://github.com/grafana/grafana/blob/main/docs/sources/packages_api/runtime/backendsrvrequest.md) when you use [BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv).
+Before Grafana can cancel any data request, it has to identify that request. Grafana identifies a request using the property `requestId` [passed as options](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts#L47) when you use [BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts).
 
 The cancellation logic is as follows:
 
@@ -23,7 +23,7 @@ The cancellation logic is as follows:
 
 #### After Grafana 7.2
 
-Grafana 7.2 introduced an additional way of canceling requests using [RxJs](https://github.com/ReactiveX/rxjs). To support the new cancellation functionality, the data source needs to use the new `fetch` function in [BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv).
+Grafana 7.2 introduced an additional way of canceling requests using [RxJs](https://github.com/ReactiveX/rxjs). To support the new cancellation functionality, the data source needs to use the new `fetch` function in [BackendSrv](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts).
 
 Migrating the core data sources to the new `fetch` function [is an ongoing process that you can read about in this issue.](https://github.com/grafana/grafana/issues/27222)
 

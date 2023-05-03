@@ -1,13 +1,28 @@
+import { SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
-import { LineComment, parser } from '@grafana/lezer-logql';
+import {
+  JsonExpressionParser,
+  LabelFilter,
+  LabelParser,
+  LineComment,
+  LineFilters,
+  LogExpr,
+  LogRangeExpr,
+  Matcher,
+  parser,
+  PipelineExpr,
+  Selector,
+  UnwrapExpr,
+} from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
+import { unescapeLabelValue } from './languageUtils';
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 
-type Position = { from: number; to: number };
+export type Position = { from: number; to: number };
 /**
  * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
  *
@@ -28,6 +43,13 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const streamSelectorPositions = getStreamSelectorPositions(query);
+  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
+    hasStreamSelectorMatchers.some(
+      (matcherPosition) =>
+        matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
+    )
+  );
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   if (!streamSelectorPositions.length) {
@@ -35,8 +57,9 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const filter = toLabelFilter(key, value, operator);
-  // If we have label filters or parser, we want to add new label filter after the last one
-  if (labelFilterPositions.length || parserPositions.length) {
+  // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
+  // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
+  if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {
@@ -105,10 +128,7 @@ export function removeCommentsFromQuery(query: string): string {
   let prev = 0;
 
   for (let lineCommentPosition of lineCommentPositions) {
-    const beforeComment = query.substring(prev, lineCommentPosition.from);
-    const afterComment = query.substring(lineCommentPosition.to);
-
-    newQuery += beforeComment + afterComment;
+    newQuery = newQuery + query.substring(prev, lineCommentPosition.from);
     prev = lineCommentPosition.to;
   }
   return newQuery;
@@ -119,14 +139,27 @@ export function removeCommentsFromQuery(query: string): string {
  * selector.
  * @param query
  */
-function getStreamSelectorPositions(query: string): Position[] {
+export function getStreamSelectorPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'Selector') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === Selector) {
         positions.push({ from, to });
         return false;
+      }
+    },
+  });
+  return positions;
+}
+
+function getMatcherInStreamPositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(query, node, Matcher));
       }
     },
   });
@@ -141,8 +174,8 @@ export function getParserPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelParser' || type.name === 'JsonExpressionParser') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === LabelParser || type.id === JsonExpressionParser) {
         positions.push({ from, to });
         return false;
       }
@@ -159,8 +192,8 @@ export function getLabelFilterPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelFilter') {
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === LabelFilter) {
         positions.push({ from, to });
         return false;
       }
@@ -177,9 +210,9 @@ function getLineFiltersPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LineFilters') {
-        positions.push({ from, to });
+    enter: ({ type, node }): false | void => {
+      if (type.id === LineFilters) {
+        positions.push({ from: node.from, to: node.to });
         return false;
       }
     },
@@ -195,28 +228,28 @@ function getLogQueryPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LogExpr') {
+    enter: ({ type, from, to, node }): false | void => {
+      if (type.id === LogExpr) {
         positions.push({ from, to });
         return false;
       }
 
       // This is a case in metrics query
-      if (type.name === 'LogRangeExpr') {
+      if (type.id === LogRangeExpr) {
         // Unfortunately, LogRangeExpr includes both log and non-log (e.g. Duration/Range/...) parts of query.
         // We get position of all log-parts within LogRangeExpr: Selector, PipelineExpr and UnwrapExpr.
         const logPartsPositions: Position[] = [];
-        const selector = get().getChild('Selector');
+        const selector = node.getChild(Selector);
         if (selector) {
           logPartsPositions.push({ from: selector.from, to: selector.to });
         }
 
-        const pipeline = get().getChild('PipelineExpr');
+        const pipeline = node.getChild(PipelineExpr);
         if (pipeline) {
           logPartsPositions.push({ from: pipeline.from, to: pipeline.to });
         }
 
-        const unwrap = get().getChild('UnwrapExpr');
+        const unwrap = node.getChild(UnwrapExpr);
         if (unwrap) {
           logPartsPositions.push({ from: unwrap.from, to: unwrap.to });
         }
@@ -231,7 +264,7 @@ function getLogQueryPositions(query: string): Position[] {
   return positions;
 }
 
-function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
+export function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
   return { label: key, op: operator, value };
 }
@@ -278,7 +311,7 @@ function addFilterToStreamSelector(
  * @param positionsToAddAfter
  * @param filter
  */
-function addFilterAsLabelFilter(
+export function addFilterAsLabelFilter(
   query: string,
   positionsToAddAfter: Position[],
   filter: QueryBuilderLabelFilter
@@ -294,7 +327,16 @@ function addFilterAsLabelFilter(
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
+    let labelFilter = '';
+    // For < and >, if the value is number, we don't add quotes around it and use it as number
+    if (!Number.isNaN(Number(filter.value)) && (filter.op === '<' || filter.op === '>')) {
+      labelFilter = ` | ${filter.label}${filter.op}${Number(filter.value)}`;
+    } else {
+      // we now unescape all escaped values again, because we are using backticks which can handle those cases.
+      // we also don't care about the operator here, because we need to unescape for both, regex and equal.
+      labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
+    }
+
     newQuery += start + labelFilter + end;
     prev = match.to;
   }
@@ -355,11 +397,19 @@ function addLabelFormat(
   return newQuery;
 }
 
+export function addLineFilter(query: string): string {
+  const streamSelectorPositions = getStreamSelectorPositions(query);
+  const streamSelectorEnd = streamSelectorPositions[0].to;
+
+  const newQueryExpr = query.slice(0, streamSelectorEnd) + ' |= ``' + query.slice(streamSelectorEnd);
+  return newQueryExpr;
+}
+
 function getLineCommentPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
+    enter: ({ type, from, to }): false | void => {
       if (type.id === LineComment) {
         positions.push({ from, to });
         return false;
@@ -382,6 +432,22 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  * Return the last position based on "to" property
  * @param positions
  */
-function findLastPosition(positions: Position[]): Position {
+export function findLastPosition(positions: Position[]): Position {
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
+}
+
+function getAllPositionsInNodeByType(query: string, node: SyntaxNode, type: number): Position[] {
+  if (node.type.id === type) {
+    return [{ from: node.from, to: node.to }];
+  }
+
+  const positions: Position[] = [];
+  let pos = 0;
+  let child = node.childAfter(pos);
+  while (child) {
+    positions.push(...getAllPositionsInNodeByType(query, child, type));
+    pos = child.to;
+    child = node.childAfter(pos);
+  }
+  return positions;
 }

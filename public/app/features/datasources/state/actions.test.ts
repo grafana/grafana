@@ -1,11 +1,13 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { DataSourceSettings } from '@grafana/data';
+import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
 import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
+import { DATASOURCES_ROUTES } from '../constants';
+import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';
 
 import {
@@ -14,6 +16,7 @@ import {
   TestDataSourceDependencies,
   initDataSourceSettings,
   loadDataSource,
+  addDataSource,
 } from './actions';
 import {
   initDataSourceSettingsSucceeded,
@@ -22,13 +25,20 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
   dataSourceLoaded,
+  dataSourcesLoaded,
 } from './reducers';
 
 jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
+jest.mock('app/core/core');
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-  getBackendSrv: jest.fn(),
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn().mockReturnValue({ reload: jest.fn() }),
+  getBackendSrv: jest.fn().mockReturnValue({ get: jest.fn() }),
+}));
+jest.mock('../tracking', () => ({
+  trackDataSourceCreated: jest.fn(),
+  trackDataSourceTested: jest.fn(),
 }));
 
 const getBackendSrvMock = () =>
@@ -62,7 +72,7 @@ const failDataSourceTest = async (error: object) => {
   };
   const dispatchedActions = await thunkTester(state)
     .givenThunk(testDataSource)
-    .whenThunkIsDispatched('Azure Monitor', dependencies);
+    .whenThunkIsDispatched('Azure Monitor', DATASOURCES_ROUTES.Edit, dependencies);
 
   return dispatchedActions;
 };
@@ -207,24 +217,34 @@ describe('testDataSource', () => {
           ({
             get: jest.fn().mockReturnValue({
               testDatasource: jest.fn().mockReturnValue({
-                status: '',
+                status: 'success',
                 message: '',
               }),
+              type: 'cloudwatch',
+              uid: 'CW1234',
             }),
           } as any),
         getBackendSrv: getBackendSrvMock,
       };
       const state = {
         testingStatus: {
-          status: '',
+          status: 'success',
           message: '',
+          details: {},
         },
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('Azure Monitor', dependencies);
+        .whenThunkIsDispatched('CloudWatch', DATASOURCES_ROUTES.Edit, dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
+      expect(trackDataSourceTested).toHaveBeenCalledWith({
+        plugin_id: 'cloudwatch',
+        datasource_uid: 'CW1234',
+        grafana_version: '1.0',
+        success: true,
+        path: '/datasources/edit/CloudWatch',
+      });
     });
 
     it('then testDataSourceFailed should be dispatched', async () => {
@@ -235,6 +255,8 @@ describe('testDataSource', () => {
               testDatasource: jest.fn().mockImplementation(() => {
                 throw new Error('Error testing datasource');
               }),
+              type: 'azure-monitor',
+              uid: 'azM0nit0R',
             }),
           } as any),
         getBackendSrv: getBackendSrvMock,
@@ -250,9 +272,16 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('Azure Monitor', dependencies);
+        .whenThunkIsDispatched('Azure Monitor', DATASOURCES_ROUTES.Edit, dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+      expect(trackDataSourceTested).toHaveBeenCalledWith({
+        plugin_id: 'azure-monitor',
+        datasource_uid: 'azM0nit0R',
+        grafana_version: '1.0',
+        success: false,
+        path: '/datasources/edit/Azure Monitor',
+      });
     });
 
     it('then testDataSourceFailed should be dispatched with response error message', async () => {
@@ -301,6 +330,38 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+    });
+  });
+});
+
+describe('addDataSource', () => {
+  it('it creates a datasource and calls trackDataSourceCreated ', async () => {
+    const meta: AppPluginMeta = {
+      id: 'azure-monitor',
+      module: '',
+      baseUrl: 'xxx',
+      info: { version: '1.2.3' } as PluginMetaInfo,
+      type: PluginType.datasource,
+      name: 'test DS',
+    };
+    const state = {
+      dataSources: {
+        dataSources: [],
+      },
+    };
+    const dataSourceMock = { datasource: { uid: 'azure23' }, meta };
+    (api.createDataSource as jest.Mock).mockResolvedValueOnce(dataSourceMock);
+    (api.getDataSources as jest.Mock).mockResolvedValueOnce([]);
+
+    const dispatchedActions = await thunkTester(state).givenThunk(addDataSource).whenThunkIsDispatched(meta);
+
+    expect(dispatchedActions).toEqual([dataSourcesLoaded([])]);
+    expect(trackDataSourceCreated).toHaveBeenCalledWith({
+      plugin_id: 'azure-monitor',
+      plugin_version: '1.2.3',
+      datasource_uid: 'azure23',
+      grafana_version: '1.0',
+      path: DATASOURCES_ROUTES.Edit.replace(':uid', 'azure23'),
     });
   });
 });

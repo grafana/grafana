@@ -26,6 +26,7 @@ type Dialect interface {
 	Default(col *Column) string
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
+	BatchSize() int
 
 	OrderBy(order string) string
 
@@ -313,7 +314,7 @@ func (b *BaseDialect) TruncateDBTables() error {
 	return nil
 }
 
-//UpsertSQL returns empty string
+// UpsertSQL returns empty string
 func (b *BaseDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
 	return ""
 }

@@ -9,7 +9,9 @@ import { filterByValueTransformer } from './transformers/filterByValue';
 import { groupByTransformer } from './transformers/groupBy';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
+import { joinByFieldTransformer } from './transformers/joinByField';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
+import { limitTransformer } from './transformers/limit';
 import { mergeTransformer } from './transformers/merge';
 import { noopTransformer } from './transformers/noop';
 import { orderFieldsTransformer } from './transformers/order';
@@ -17,7 +19,6 @@ import { organizeFieldsTransformer } from './transformers/organize';
 import { reduceTransformer } from './transformers/reduce';
 import { renameFieldsTransformer } from './transformers/rename';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
-import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
 import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { sortByTransformer } from './transformers/sortBy';
 
@@ -33,7 +34,9 @@ export const standardTransformers = {
   reduceTransformer,
   concatenateTransformer,
   calculateFieldTransformer,
-  seriesToColumnsTransformer,
+  joinByFieldTransformer,
+  /** @deprecated */
+  seriesToColumnsTransformer: joinByFieldTransformer,
   seriesToRowsTransformer,
   renameFieldsTransformer,
   labelsToFieldsTransformer,
@@ -45,4 +48,5 @@ export const standardTransformers = {
   histogramTransformer,
   convertFieldTypeTransformer,
   groupingToMatrixTransformer,
+  limitTransformer,
 };

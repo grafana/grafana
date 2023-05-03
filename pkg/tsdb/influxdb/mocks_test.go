@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -53,7 +54,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 		},
 		res: &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 		rt: f.fakeRoundTripper,
 	}
@@ -67,7 +68,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 		HTTPClient:    client,
 		Token:         "sometoken",
 		URL:           "https://awesome-influx.com",
-		Database:      "testdb",
+		DbName:        "testdb",
 		Version:       f.version,
 		HTTPMode:      "GET",
 		TimeInterval:  "10s",
@@ -90,17 +91,17 @@ func (rt *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	res := &http.Response{
 		StatusCode: http.StatusOK,
 		Status:     "200 OK",
-		Body:       ioutil.NopCloser(bytes.NewBufferString("{}")),
+		Body:       io.NopCloser(bytes.NewBufferString("{}")),
 	}
 	if rt.Body != "" {
-		res.Body = ioutil.NopCloser(bytes.NewBufferString(rt.Body))
+		res.Body = io.NopCloser(bytes.NewBufferString(rt.Body))
 	}
 	if rt.FileName != "" {
-		b, err := ioutil.ReadFile(rt.FileName)
+		b, err := os.ReadFile(rt.FileName)
 		if err != nil {
 			return res, fmt.Errorf("error reading testdata file %s", rt.FileName)
 		}
-		reader := ioutil.NopCloser(bytes.NewReader(b))
+		reader := io.NopCloser(bytes.NewReader(b))
 		res.Body = reader
 	}
 	if res.Body != nil {
@@ -113,7 +114,6 @@ func GetMockService(version string, rt RoundTripper) *Service {
 	return &Service{
 		queryParser:    &InfluxdbQueryParser{},
 		responseParser: &ResponseParser{},
-		glog:           log.New("tsdb.influxdb"),
 		im: &fakeInstance{
 			version:          version,
 			fakeRoundTripper: rt,

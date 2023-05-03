@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -16,10 +16,8 @@ interface DroneFrontConfig {
   rollAngle?: ScalarDimensionConfig;
 }
 
-const DroneFrontDisplay: FC<CanvasElementProps<DroneFrontConfig, DroneFrontData>> = (props) => {
+const DroneFrontDisplay = ({ data }: CanvasElementProps<DroneFrontConfig, DroneFrontData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const droneFrontTransformStyle = `rotate(${data?.rollAngle ? data.rollAngle : 0}deg)`;
 

@@ -1,5 +1,6 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import { dateTime } from '@grafana/data';
 import { Alert, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
@@ -18,7 +19,7 @@ interface Props {
 type AlertTableColumnProps = DynamicTableColumnProps<Alert>;
 type AlertTableItemProps = DynamicTableItemProps<Alert>;
 
-export const AlertInstancesTable: FC<Props> = ({ instances, pagination, footerRow }) => {
+export const AlertInstancesTable = ({ instances, pagination, footerRow }: Props) => {
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
@@ -59,7 +60,7 @@ const columns: AlertTableColumnProps[] = [
     label: 'Created',
     // eslint-disable-next-line react/display-name
     renderCell: ({ data: { activeAt } }) => (
-      <>{activeAt.startsWith('0001') ? '-' : activeAt.slice(0, 19).replace('T', ' ')}</>
+      <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>
     ),
     size: '150px',
   },

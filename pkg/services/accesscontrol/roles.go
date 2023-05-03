@@ -5,7 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Roles definition
@@ -69,6 +70,10 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionOrgUsersRead,
+				Scope:  ScopeUsersAll,
+			},
+			{
+				Action: ActionUsersPermissionsRead,
 				Scope:  ScopeUsersAll,
 			},
 		},
@@ -167,10 +172,27 @@ var (
 			},
 		}),
 	}
+
+	authenticationConfigWriterRole = RoleDTO{
+		Name:        "fixed:authentication.config:writer",
+		DisplayName: "Authentication config writer",
+		Description: "Read and update authentication configuration and access configuration UI.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSAML,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSAML,
+			},
+		},
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(ac AccessControl) error {
+func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -181,11 +203,11 @@ func DeclareFixedRoles(ac AccessControl) error {
 	}
 	orgUsersReader := RoleRegistration{
 		Role:   orgUsersReaderRole,
-		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
 	}
 	orgUsersWriter := RoleRegistration{
 		Role:   orgUsersWriterRole,
-		Grants: []string{RoleGrafanaAdmin, string(models.ROLE_ADMIN)},
+		Grants: []string{RoleGrafanaAdmin, string(org.RoleAdmin)},
 	}
 	settingsReader := RoleRegistration{
 		Role:   SettingsReaderRole,
@@ -204,8 +226,18 @@ func DeclareFixedRoles(ac AccessControl) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return ac.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter)
+	// TODO: Move to own service when implemented
+	authenticationConfigWriter := RoleRegistration{
+		Role:   authenticationConfigWriterRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+
+	if cfg.AuthConfigUIAdminAccess {
+		authenticationConfigWriter.Grants = append(authenticationConfigWriter.Grants, string(org.RoleAdmin))
+	}
+
+	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
+		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
@@ -232,7 +264,7 @@ func ValidateFixedRole(role RoleDTO) error {
 // ValidateBuiltInRoles errors when a built-in role does not match expected pattern
 func ValidateBuiltInRoles(builtInRoles []string) error {
 	for _, br := range builtInRoles {
-		if !models.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
+		if !org.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
 			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
 		}
 	}
@@ -262,34 +294,34 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 	return map[string]*RoleDTO{
-		string(models.ROLE_ADMIN): {
+		string(org.RoleAdmin): {
 			Name:        BasicRolePrefix + "admin",
 			UID:         BasicRoleUIDPrefix + "admin",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(models.ROLE_ADMIN),
+			DisplayName: string(org.RoleAdmin),
 			Description: "Admin role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,
 		},
-		string(models.ROLE_EDITOR): {
+		string(org.RoleEditor): {
 			Name:        BasicRolePrefix + "editor",
 			UID:         BasicRoleUIDPrefix + "editor",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(models.ROLE_EDITOR),
+			DisplayName: string(org.RoleEditor),
 			Description: "Editor role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,
 		},
-		string(models.ROLE_VIEWER): {
+		string(org.RoleViewer): {
 			Name:        BasicRolePrefix + "viewer",
 			UID:         BasicRoleUIDPrefix + "viewer",
 			OrgID:       GlobalOrgID,
 			Version:     1,
-			DisplayName: string(models.ROLE_VIEWER),
+			DisplayName: string(org.RoleViewer),
 			Description: "Viewer role",
 			Group:       "Basic",
 			Permissions: []Permission{},

@@ -8,7 +8,7 @@ describe('TagsInput', () => {
     const onChange = jest.fn();
     render(<TagsInput onChange={onChange} tags={['One', 'Two']} />);
 
-    fireEvent.click(await screen.findByRole('button', { name: /remove one/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Remove \"One\"/i }));
 
     expect(onChange).toHaveBeenCalledWith(['Two']);
   });
@@ -17,7 +17,7 @@ describe('TagsInput', () => {
     const onChange = jest.fn();
     render(<TagsInput onChange={onChange} tags={['One', 'Two']} disabled />);
 
-    fireEvent.click(await screen.findByRole('button', { name: /remove one/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /Remove \"One\"/i }));
 
     expect(onChange).not.toHaveBeenCalled();
   });

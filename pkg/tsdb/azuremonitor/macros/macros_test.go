@@ -7,8 +7,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func TestAzureLogAnalyticsMacros(t *testing.T) {
@@ -121,12 +123,22 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 			expected: "",
 			Err:      require.Error,
 		},
+		{
+			name: "traces time field should remain as timestamp",
+			query: backend.DataQuery{
+				QueryType: "Azure Traces",
+				TimeRange: timeRange,
+			},
+			kql:      `$__timeFilter()`,
+			expected: "['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')",
+			Err:      require.NoError,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defaultTimeField := "TimeGenerated"
-			rawQuery, err := KqlInterpolate(tt.query, types.DatasourceInfo{}, tt.kql, defaultTimeField)
+			rawQuery, err := KqlInterpolate(log.New("test"), tt.query, types.DatasourceInfo{}, tt.kql, defaultTimeField)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.expected, rawQuery, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

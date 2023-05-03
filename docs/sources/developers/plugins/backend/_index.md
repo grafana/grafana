@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/backend/
-  - /docs/grafana/latest/plugins/developing/backend-plugins-guide/
+  - ../../plugins/developing/backend-plugins-guide/
 keywords:
   - grafana
   - plugins
@@ -20,7 +19,7 @@ However, one limitation with these plugins are that they execute on the client-s
 
 We use the term _backend plugin_ to denote that a plugin has a backend component. Still, normally a backend plugin requires frontend components as well. This is for example true for backend data source plugins which normally need configuration and query editor components implemented for the frontend.
 
-Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as [notifiers for Grafana Alerting]({{< relref "../../../alerting/notifications/" >}}) and custom authentication to name a few.
+Data source plugins can be extended with a backend component. In the future we plan to support additional types and possibly new kinds of plugins, such as notifiers for Grafana Alerting and custom authentication to name a few.
 
 ## Use cases for implementing a backend plugin
 

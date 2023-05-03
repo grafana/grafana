@@ -47,7 +47,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
           // timescaledb is only available for 9.6+
           if (versionNumber >= 906 && !options.jsonData.timescaledb) {
             const timescaledbVersion = await datasource.getTimescaleDBVersion();
-            if (timescaledbVersion?.length) {
+            if (timescaledbVersion) {
               updateDatasourcePluginJsonDataOption({ options, onOptionsChange }, 'timescaledb', true);
             }
           }
@@ -76,7 +76,7 @@ export function useAutoDetectFeatures({ props, setVersionOptions }: Options) {
 function isValidConfig(options: DataSourceSettings<PostgresOptions, SecureJsonData>) {
   return (
     options.url &&
-    options.database &&
+    options.jsonData.database &&
     options.user &&
     (options.secureJsonData?.password || options.secureJsonFields?.password) &&
     (options.jsonData.sslmode === PostgresTLSModes.disable ||

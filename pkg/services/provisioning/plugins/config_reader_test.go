@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -33,7 +34,7 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Unknown app plugin should return error", func(t *testing.T) {
-		cfgProvider := newConfigReader(log.New("test logger"), fakePluginStore{})
+		cfgProvider := newConfigReader(log.New("test logger"), plugins.FakePluginStore{})
 		_, err := cfgProvider.readConfig(context.Background(), unknownApp)
 		require.Error(t, err)
 		require.Equal(t, "plugin not installed: \"nonexisting\"", err.Error())
@@ -47,10 +48,10 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		pm := fakePluginStore{
-			apps: map[string]plugins.PluginDTO{
-				"test-plugin":   {},
-				"test-plugin-2": {},
+		pm := plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				{JSONData: plugins.JSONData{ID: "test-plugin"}},
+				{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
 			},
 		}
 
@@ -86,16 +87,4 @@ func TestConfigReader(t *testing.T) {
 			require.Equal(t, tc.ExpectedEnabled, app.Enabled)
 		}
 	})
-}
-
-type fakePluginStore struct {
-	plugins.Store
-
-	apps map[string]plugins.PluginDTO
-}
-
-func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := pr.apps[pluginID]
-
-	return p, exists
 }

@@ -1,6 +1,6 @@
 import { get as lodashGet, isEqual } from 'lodash';
 
-import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/data';
+import { FrameGeometrySourceMode, getFrameMatchers, MapLayerOptions } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
@@ -27,13 +27,12 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         return { ...parent, options: opts.state.options, instanceState: opts.state };
       },
       getValue: (path: string) => lodashGet(opts.state.options, path),
-      onChange: (path: string, value: any) => {
+      onChange: (path: string, value: string) => {
         const { state } = opts;
         const { options } = state;
         if (path === 'type' && value) {
           const layer = geomapLayerRegistry.getIfExists(value);
           if (layer) {
-            console.log('Change layer type:', value, state);
             const opts = {
               ...options, // keep current shared options
               type: layer.id,
@@ -55,7 +54,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
     }),
     build: (builder, context) => {
       if (!opts.state) {
-        console.log('MISSING LAYER!!!', opts);
         return;
       }
 
@@ -98,7 +96,14 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       }
 
       if (layer.showLocation) {
-        addLocationFields('Location', 'location.', builder, options.location);
+        let data = context.data;
+        // If `filterData` exists filter data feeding into location editor
+        if (options.filterData) {
+          const matcherFunc = getFrameMatchers(options.filterData);
+          data = data.filter(matcherFunc);
+        }
+
+        addLocationFields('Location', 'location.', builder, options.location, data);
       }
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder);

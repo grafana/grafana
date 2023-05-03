@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { EditorRows, EditorRow, EditorField } from '@grafana/ui';
+import { EditorRows, EditorRow, EditorField } from '@grafana/experimental';
 
 import { DB, QueryEditorProps, QueryRowFilter } from '../../types';
 import { QueryToolbox } from '../query-editor-raw/QueryToolbox';
@@ -18,14 +18,7 @@ interface VisualEditorProps extends QueryEditorProps {
   onValidate: (isValid: boolean) => void;
 }
 
-export const VisualEditor: React.FC<VisualEditorProps> = ({
-  query,
-  db,
-  queryRowFilter,
-  onChange,
-  onValidate,
-  range,
-}) => {
+export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, range }: VisualEditorProps) => {
   const state = useAsync(async () => {
     const fields = await db.fields(query);
     return fields;

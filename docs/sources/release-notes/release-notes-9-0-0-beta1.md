@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/release-notes/release-notes-9-0-0-beta1/
 hide_menu: true
 title: Release notes for Grafana 9.0.0-beta1
 ---

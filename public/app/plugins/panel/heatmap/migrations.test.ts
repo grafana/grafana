@@ -23,21 +23,21 @@ describe('Heatmap Migrations', () => {
       prevFieldConfig
     );
     expect(panel).toMatchInlineSnapshot(`
-      Object {
-        "fieldConfig": Object {
-          "defaults": Object {},
-          "overrides": Array [],
+      {
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": [],
         },
-        "options": Object {
+        "options": {
           "calculate": true,
-          "calculation": Object {
-            "xBuckets": Object {
+          "calculation": {
+            "xBuckets": {
               "mode": "count",
               "value": "100",
             },
-            "yBuckets": Object {
+            "yBuckets": {
               "mode": "count",
-              "scale": Object {
+              "scale": {
                 "log": 2,
                 "type": "log",
               },
@@ -46,37 +46,38 @@ describe('Heatmap Migrations', () => {
           },
           "cellGap": 2,
           "cellRadius": 10,
-          "cellValues": Object {
+          "cellValues": {
             "decimals": undefined,
           },
-          "color": Object {
+          "color": {
             "exponent": 0.5,
             "fill": "#b4ff00",
             "max": 100,
             "min": 5,
             "mode": "scheme",
+            "reverse": true,
             "scale": "exponential",
             "scheme": "BuGn",
             "steps": 128,
           },
-          "exemplars": Object {
+          "exemplars": {
             "color": "rgba(255,0,255,0.7)",
           },
-          "filterValues": Object {
+          "filterValues": {
             "le": 1e-9,
           },
-          "legend": Object {
+          "legend": {
             "show": true,
           },
-          "rowsFrame": Object {
+          "rowsFrame": {
             "layout": "auto",
           },
           "showValue": "never",
-          "tooltip": Object {
+          "tooltip": {
             "show": true,
             "yHistogram": true,
           },
-          "yAxis": Object {
+          "yAxis": {
             "axisPlacement": "left",
             "axisWidth": 400,
             "decimals": 6,
@@ -155,8 +156,8 @@ const oldHeatmap = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateBuGn',
-    min: 5,
-    max: 100,
+    min: 100,
+    max: 5,
   },
   legend: {
     show: true,

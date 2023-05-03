@@ -2,21 +2,26 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/build/git"
 )
 
 type Metadata struct {
 	GrafanaVersion string      `json:"version,omitempty"`
-	ReleaseMode    VersionMode `json:"releaseMode,omitempty"`
+	ReleaseMode    ReleaseMode `json:"releaseMode,omitempty"`
 	GrabplVersion  string      `json:"grabplVersion,omitempty"`
+	CurrentCommit  string      `json:"currentCommit,omitempty"`
+}
+
+type ReleaseMode struct {
+	Mode   VersionMode `json:"mode,omitempty"`
+	IsBeta bool        `json:"isBeta,omitempty"`
+	IsTest bool        `json:"isTest,omitempty"`
 }
 
 type PluginSignature struct {
@@ -25,64 +30,40 @@ type PluginSignature struct {
 }
 
 type Docker struct {
-	ShouldSave    bool           `json:"shouldSave,omitempty"`
-	Architectures []Architecture `json:"archs,omitempty"`
+	ShouldSave       bool           `json:"shouldSave,omitempty"`
+	Distribution     []Distribution `json:"distribution,omitempty"`
+	Architectures    []Architecture `json:"archs,omitempty"`
+	PrereleaseBucket string         `json:"prereleaseBucket,omitempty"`
 }
 
-// Version represents the "version.json" that defines all of the different variables used to build Grafana
-type Version struct {
-	Variants                  []Variant       `json:"variants,omitempty"`
-	PluginSignature           PluginSignature `json:"pluginSignature,omitempty"`
-	Docker                    Docker          `json:"docker,omitempty"`
-	PackagesBucket            string          `json:"packagesBucket,omitempty"`
-	PackagesBucketEnterprise2 string          `json:"packagesBucketEnterprise2,omitempty"`
-	CDNAssetsBucket           string          `json:"CDNAssetsBucket,omitempty"`
-	CDNAssetsDir              string          `json:"CDNAssetsDir,omitempty"`
-	StorybookBucket           string          `json:"storybookBucket,omitempty"`
-	StorybookSrcDir           string          `json:"storybookSrcDir,omitempty"`
+type Buckets struct {
+	Artifacts            string `json:"artifacts,omitempty"`
+	ArtifactsEnterprise2 string `json:"artifactsEnterprise2,omitempty"`
+	CDNAssets            string `json:"CDNAssets,omitempty"`
+	CDNAssetsDir         string `json:"CDNAssetsDir,omitempty"`
+	Storybook            string `json:"storybook,omitempty"`
+	StorybookSrcDir      string `json:"storybookSrcDir,omitempty"`
 }
 
-// Versions is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
+// BuildConfig represents the struct that defines all of the different variables used to build Grafana
+type BuildConfig struct {
+	Variants        []Variant       `json:"variants,omitempty"`
+	PluginSignature PluginSignature `json:"pluginSignature,omitempty"`
+	Docker          Docker          `json:"docker,omitempty"`
+	Buckets         Buckets         `json:"buckets,omitempty"`
+}
+
+func (md *Metadata) GetReleaseMode() (ReleaseMode, error) {
+	return md.ReleaseMode, nil
+}
+
+// VersionMap is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
 // For example, the 'pull_request' key will have data in it that might cause Grafana to be built differently in a pull request,
 // than the way it will be built in 'main'
-type VersionMap map[VersionMode]Version
+type VersionMap map[VersionMode]BuildConfig
 
-// GetMetadata attempts to read the JSON file located at 'path' and decode it as a Metadata{} type.
-// If the provided path deos not exist, then an error is not returned. Instead, an empty metadata is returned with no error.
-func GetMetadata(path string) (*Metadata, error) {
-	if _, err := os.Stat(path); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return &Metadata{}, nil
-		}
-		return nil, err
-	}
-	// Ignore gosec G304 as this function is only used in the build process.
-	//nolint:gosec
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Printf("error closing file at '%s': %s", path, err.Error())
-		}
-	}()
-
-	return DecodeMetadata(file)
-}
-
-// DecodeMetadata decodes the data in the io.Reader 'r' as Metadata.
-func DecodeMetadata(r io.Reader) (*Metadata, error) {
-	m := &Metadata{}
-	if err := json.NewDecoder(r).Decode(m); err != nil {
-		return nil, err
-	}
-
-	return m, nil
-}
-
-// GetVersions reads the embedded config.json and decodes it.
-func GetVersion(mode VersionMode) (*Version, error) {
+// GetBuildConfig reads the embedded config.json and decodes it.
+func GetBuildConfig(mode VersionMode) (*BuildConfig, error) {
 	if v, ok := Versions[mode]; ok {
 		return &v, nil
 	}
@@ -90,20 +71,11 @@ func GetVersion(mode VersionMode) (*Version, error) {
 	return nil, fmt.Errorf("mode '%s' not found in version list", mode)
 }
 
-func shortenBuildID(buildID string) string {
-	buildID = strings.ReplaceAll(buildID, "-", "")
-	if len(buildID) < 9 {
-		return buildID
-	}
-
-	return buildID[0:8]
-}
-
 // GetGrafanaVersion gets the Grafana version from the package.json
 func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
 	//nolint:gosec
-	pkgJSONB, err := ioutil.ReadFile(pkgJSONPath)
+	pkgJSONB, err := os.ReadFile(pkgJSONPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", pkgJSONPath, err)
 	}
@@ -130,6 +102,7 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 }
 
 func CheckDroneTargetBranch() (VersionMode, error) {
+	rePRCheckBranch := git.PRCheckRegexp()
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
@@ -140,24 +113,48 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 	if reRlsBranch.MatchString(target) {
 		return ReleaseBranchMode, nil
 	}
-	return "", fmt.Errorf("unrecognized target branch: %s", target)
+	if rePRCheckBranch.MatchString(target) {
+		return PullRequestMode, nil
+	}
+	fmt.Printf("unrecognized target branch: %s, defaulting to %s", target, PullRequestMode)
+	return PullRequestMode, nil
 }
 
-func CheckSemverSuffix() (VersionMode, error) {
+func CheckSemverSuffix() (ReleaseMode, error) {
 	reBetaRls := regexp.MustCompile(`beta.*`)
 	reTestRls := regexp.MustCompile(`test.*`)
+	reCloudRls := regexp.MustCompile(`cloud.*`)
 	tagSuffix, ok := os.LookupEnv("DRONE_SEMVER_PRERELEASE")
 	if !ok || tagSuffix == "" {
 		fmt.Println("DRONE_SEMVER_PRERELEASE doesn't exist for a tag, this is a release event...")
-		return ReleaseMode, nil
+		return ReleaseMode{Mode: TagMode}, nil
 	}
 	switch {
 	case reBetaRls.MatchString(tagSuffix):
-		return BetaReleaseMode, nil
+		return ReleaseMode{Mode: TagMode, IsBeta: true}, nil
 	case reTestRls.MatchString(tagSuffix):
-		return TestReleaseMode, nil
+		return ReleaseMode{Mode: TagMode, IsTest: true}, nil
+	case reCloudRls.MatchString(tagSuffix):
+		return ReleaseMode{Mode: CloudMode}, nil
 	default:
 		fmt.Printf("DRONE_SEMVER_PRERELEASE is custom string, release event with %s suffix\n", tagSuffix)
-		return ReleaseMode, nil
+		return ReleaseMode{Mode: TagMode}, nil
 	}
+}
+
+func GetDroneCommit() (string, error) {
+	commit := strings.TrimSpace(os.Getenv("DRONE_COMMIT"))
+	if commit == "" {
+		return "", fmt.Errorf("the environment variable DRONE_COMMIT is missing")
+	}
+	return commit, nil
+}
+
+func shortenBuildID(buildID string) string {
+	buildID = strings.ReplaceAll(buildID, "-", "")
+	if len(buildID) < 9 {
+		return buildID
+	}
+
+	return buildID[0:8]
 }

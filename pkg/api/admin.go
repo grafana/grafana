@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,12 +25,25 @@ import (
 // 200: adminGetSettingsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
-func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Response {
 	settings, err := hs.getAuthorizedSettings(c.Req.Context(), c.SignedInUser, hs.SettingsProvider.Current())
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
 	}
 	return response.JSON(http.StatusOK, settings)
+}
+
+func (hs *HTTPServer) AdminGetVerboseSettings(c *contextmodel.ReqContext) response.Response {
+	bag := hs.SettingsProvider.CurrentVerbose()
+	if bag == nil {
+		return response.JSON(http.StatusNotImplemented, make(map[string]string))
+	}
+
+	verboseSettings, err := hs.getAuthorizedVerboseSettings(c.Req.Context(), c.SignedInUser, bag)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
+	}
+	return response.JSON(http.StatusOK, verboseSettings)
 }
 
 // swagger:route GET /admin/stats admin adminGetStats
@@ -43,17 +58,16 @@ func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminGetStats(c *models.ReqContext) response.Response {
-	statsQuery := models.GetAdminStatsQuery{}
-
-	if err := hs.SQLStore.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
+func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Response {
+	adminStats, err := hs.statsService.GetAdminStats(c.Req.Context(), &stats.GetAdminStatsQuery{})
+	if err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 
-	return response.JSON(http.StatusOK, statsQuery.Result)
+	return response.JSON(http.StatusOK, adminStats)
 }
 
-func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.SignedInUser, bag setting.SettingsBag) (setting.SettingsBag, error) {
+func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *user.SignedInUser, bag setting.SettingsBag) (setting.SettingsBag, error) {
 	if hs.AccessControl.IsDisabled() {
 		return bag, nil
 	}
@@ -98,6 +112,55 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	return authorizedBag, nil
 }
 
+func (hs *HTTPServer) getAuthorizedVerboseSettings(ctx context.Context, user *user.SignedInUser, bag setting.VerboseSettingsBag) (setting.VerboseSettingsBag, error) {
+	if hs.AccessControl.IsDisabled() {
+		return bag, nil
+	}
+
+	eval := func(scope string) (bool, error) {
+		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
+	}
+
+	ok, err := eval(ac.ScopeSettingsAll)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return bag, nil
+	}
+
+	authorizedBag := make(setting.VerboseSettingsBag)
+
+	for section, keys := range bag {
+		ok, err := eval(ac.Scope("settings", section, "*"))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			authorizedBag[section] = keys
+			continue
+		}
+
+		for key := range keys {
+			ok, err := eval(ac.Scope("settings", section, key))
+			if err != nil {
+				return nil, err
+			}
+
+			if !ok {
+				continue
+			}
+
+			if _, exists := authorizedBag[section]; !exists {
+				authorizedBag[section] = make(map[string]map[setting.VerboseSourceType]string)
+			}
+			authorizedBag[section][key] = bag[section][key]
+		}
+	}
+
+	return authorizedBag, nil
+}
+
 // swagger:response adminGetSettingsResponse
 type GetSettingsResponse struct {
 	// in:body
@@ -107,5 +170,5 @@ type GetSettingsResponse struct {
 // swagger:response adminGetStatsResponse
 type GetStatsResponse struct {
 	// in:body
-	Body models.AdminStats `json:"body"`
+	Body stats.AdminStats `json:"body"`
 }

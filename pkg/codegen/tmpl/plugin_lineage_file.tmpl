@@ -1,0 +1,59 @@
+{{ template "autogen_header.tmpl" .Header -}}
+package {{ .PackageName }}
+
+import (
+	"embed"
+	"fmt"
+	"path/filepath"
+	"sync"
+
+	"github.com/grafana/thema"
+
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
+)
+
+var parseOnce sync.Once
+var ptree *pfs.Tree
+
+//go:embed plugin.{{ if .RootCUE }}cue{{ else }}json{{ end }}{{ if .HasModels }} models.cue{{ end }}
+var plugFS embed.FS
+
+// PluginTree returns the plugin tree representing the statically analyzable contents of the {{ .PluginID }} plugin.
+func PluginTree(rt *thema.Runtime) *pfs.Tree {
+	var err error
+	if rt == nil || rt == cuectx.GrafanaThemaRuntime() {
+		parseOnce.Do(func() {
+			ptree, err = pfs.ParsePluginFS(plugFS, cuectx.GrafanaThemaRuntime())
+		})
+	} else {
+		ptree, err = pfs.ParsePluginFS(plugFS, rt)
+	}
+
+	if err != nil {
+		// Even the most rudimentary testing in CI ensures this is unreachable
+		panic(fmt.Errorf("error parsing plugin fs tree: %w", err))
+	}
+
+	return ptree
+}
+
+{{ $pluginfo := . }}{{ range $slot := .SlotImpls }}
+// {{ .SlotName }}Lineage returns the Thema lineage for the {{ $pluginfo.PluginID }} {{ $pluginfo.PluginType }} plugin's
+// {{ .SlotName }} ["github.com/grafana/grafana/pkg/framework/coremodel".Slot] implementation.
+func {{ .SlotName }}Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+  t := PluginTree(rt)
+  lin, has := t.RootPlugin().SlotImplementations()["{{ .SlotName }}"]
+  if !has {
+    panic("unreachable: lineage for {{ .SlotName }} does not exist, but code is only generated for existing lineages")
+  }
+  return lin, nil
+}
+
+// The current schema version of the {{ .SlotName }} slot implementation.
+//
+// Code generation ensures that this is always the version number for the latest schema
+// in the {{ .SlotName }} Thema lineage.
+var currentVersion{{ .SlotName }} = thema.SV({{ .LatestMajv }}, {{ .LatestMinv }})
+
+{{ end }}

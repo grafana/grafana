@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/getting-started/get-started-grafana-influxdb/
-  - /docs/grafana/latest/getting-started/getting-started-influxdb/
+  - getting-started-influxdb/
 description: Learn how to build your first InfluxDB dashboard in Grafana.
 title: Get started with Grafana and InfluxDB
 weight: 400
@@ -10,10 +9,6 @@ weight: 400
 # Get started with Grafana and InfluxDB
 
 {{< docs/shared "influxdb/intro.md" >}}
-
-> **Note:** You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help you get started.
-
-{{< docs/shared "getting-started/first-step.md" >}}
 
 #### Get InfluxDB
 
@@ -39,10 +34,11 @@ Windows users might need to make additional adjustments. Look for special instru
 
 You can have more than one InfluxDB data source defined in Grafana.
 
-1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source/" >}}).
+1. Follow the general instructions to [add a data source]({{< relref "../administration/data-source-management#add-a-data-source/" >}}).
 1. Decide if you will use InfluxQL or Flux as your query language.
-   - For InfluxQL, refer to [InfluxDB data source]({{< relref "../datasources/influxdb/" >}}) for information about specific data source fields.
-   - For Flux, refer to [Flux query language in Grafana]({{< relref "../datasources/influxdb/influxdb-flux/" >}}) for information about specific data source fields.
+   - [Configure the data source]({{< relref "../datasources/influxdb#configure-the-data-source" >}}) for your chosen query language.
+     Each query language has its own unique data source settings.
+   - For querying features specific to each language, see the data source's [query editor documentation]({{< relref "../datasources/influxdb/query-editor" >}}).
 
 ##### InfluxDB guides
 
@@ -75,8 +71,8 @@ Grafana displays a list of possible series. Click one to select it, and Grafana 
 
 Create a simple Flux query.
 
-1. [Add a panel](../panels/add-a-panel.md).
-1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries](../panels/queries.md).
+1. [Add a panel]({{< relref "../dashboards/build-dashboards/create-dashboard/" >}}).
+1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries]({{< relref "../panels-visualizations/query-transform-data/" >}}).
 1. Select the **Table** visualization.
 1. In the query editor text field, enter `buckets()` and then click outside of the query editor.
 
@@ -96,7 +92,7 @@ You can also create Flux queries in the InfluxDB Explore view.
 
    ![InfluxDB Explore Script Editor](/static/img/docs/influxdb/explore-query-text-7-5.png)
 
-1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
+1. In Grafana, [add a panel]({{< relref "../dashboards/build-dashboards/create-dashboard/" >}}) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
 #### Check InfluxDB metrics in Grafana Explore

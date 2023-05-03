@@ -1,11 +1,14 @@
 package commands
 
 import (
+	"context"
+
+	"github.com/hashicorp/go-version"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/hashicorp/go-version"
 )
 
 func shouldUpgrade(installed string, remote *models.Plugin) bool {
@@ -46,18 +49,23 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 		}
 	}
 
+	ctx := context.Background()
 	for _, p := range pluginsToUpgrade {
 		logger.Infof("Updating %v \n", p.ID)
 
-		err := services.RemoveInstalledPlugin(pluginsDir, p.ID)
+		err = uninstallPlugin(ctx, p.ID, c)
 		if err != nil {
 			return err
 		}
 
-		err = InstallPlugin(p.ID, "", c)
+		err = installPlugin(ctx, p.ID, "", c)
 		if err != nil {
 			return err
 		}
+	}
+
+	if len(pluginsToUpgrade) > 0 {
+		logRestartNotice()
 	}
 
 	return nil

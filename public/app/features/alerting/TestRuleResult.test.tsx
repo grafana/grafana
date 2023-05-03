@@ -1,50 +1,47 @@
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DashboardModel, PanelModel } from '../dashboard/state';
+import { PanelModel } from '../dashboard/state';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { TestRuleResult, Props } from './TestRuleResult';
+import { TestRuleResult } from './TestRuleResult';
+
+const backendSrv = {
+  post: jest.fn(),
+};
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
 
   return {
     ...original,
-    getBackendSrv: () => ({
-      post: jest.fn(),
-    }),
+    getBackendSrv: () => backendSrv,
   };
 });
 
-const setup = (propOverrides?: object) => {
-  const props: Props = {
-    panel: new PanelModel({ id: 1 }),
-    dashboard: new DashboardModel({ panels: [{ id: 1 }] }),
-  };
-
-  Object.assign(props, propOverrides);
-
-  const wrapper = shallow(<TestRuleResult {...props} />);
-
-  return { wrapper, instance: wrapper.instance() as TestRuleResult };
+const props: React.ComponentProps<typeof TestRuleResult> = {
+  panel: new PanelModel({ id: 1 }),
+  dashboard: createDashboardModelFixture({
+    panels: [createPanelJSONFixture({ id: 1 })],
+  }),
 };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
-
-    expect(wrapper).toMatchSnapshot();
+describe('TestRuleResult', () => {
+  it('should render without error', async () => {
+    render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
   });
-});
 
-describe('Life cycle', () => {
-  describe('component did mount', () => {
-    it('should call testRule', () => {
-      const { instance } = setup();
-      instance.testRule = jest.fn();
-      instance.componentDidMount();
+  it('should call testRule when mounting', async () => {
+    jest.spyOn(backendSrv, 'post');
+    render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
 
-      expect(instance.testRule).toHaveBeenCalled();
-    });
+    expect(backendSrv.post).toHaveBeenCalledWith(
+      '/api/alerts/test',
+      expect.objectContaining({
+        panelId: 1,
+      })
+    );
   });
 });

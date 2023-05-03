@@ -11,7 +11,7 @@ import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import {
   locationUtil,
@@ -31,9 +31,15 @@ import {
   setEchoSrv,
   setLocationSrv,
   setQueryRunnerFactory,
+  setRunRequest,
+  setPluginImportUtils,
+  setPluginExtensionGetter,
+  setAppEvents,
+  type GetPluginExtensions,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
 import config from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
@@ -42,9 +48,12 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
+import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
+import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -53,17 +62,23 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
-import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+import { KeybindingSrv } from './core/services/keybindingSrv';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
+import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
+import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
+import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -97,15 +112,29 @@ export class GrafanaApp {
 
   async init() {
     try {
+      // Let iframe container know grafana has started loading
+      parent.postMessage('GrafanaAppInit', '*');
+
+      const initI18nPromise = initializeI18n(config.bootData.user.language);
+
       setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+      initGrafanaLive();
+
+      // Expose the app-wide eventbus
+      setAppEvents(appEvents);
+
+      // We must wait for translations to load because some preloaded store state requires translating
+      await initI18nPromise;
+
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore();
@@ -129,6 +158,15 @@ export class GrafanaApp {
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
 
+      // Provide runRequest implementation to packages, @grafana/scenes in particular
+      setRunRequest(runRequest);
+
+      // Privide plugin import utils to packages, @grafana/scenes in particular
+      setPluginImportUtils({
+        importPanelPlugin,
+        getPanelPluginFromCache: syncGetPanelPlugin,
+      });
+
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -149,20 +187,34 @@ export class GrafanaApp {
       modalManager.init();
 
       // Preload selected app plugins
-      await preloadPlugins(config.pluginsToPreload);
+      const preloadResults = await preloadPlugins(config.apps);
+
+      // Create extension registry out of the preloaded plugins
+      const pluginExtensionGetter: GetPluginExtensions = (options) =>
+        getPluginExtensions({ ...options, registry: createPluginExtensionRegistry(preloadResults) });
+      setPluginExtensionGetter(pluginExtensionGetter);
+
+      // initialize chrome service
+      const queryParams = locationService.getSearchObject();
+      const chromeService = new AppChromeService();
+      const keybindingsService = new KeybindingSrv(locationService, chromeService);
+
+      // Read initial kiosk mode from url at app startup
+      chromeService.setKioskModeFromUrl(queryParams.kiosk);
 
       this.context = {
         backend: backendSrv,
         location: locationService,
-        chrome: new AppChromeService(),
+        chrome: chromeService,
+        keybindings: keybindingsService,
         config,
       };
 
-      ReactDOM.render(
+      const root = createRoot(document.getElementById('reactRoot')!);
+      root.render(
         React.createElement(AppWrapper, {
           app: this,
-        }),
-        document.getElementById('reactRoot')
+        })
       );
     } catch (error) {
       console.error('Failed to start Grafana', error);
@@ -206,15 +258,6 @@ function initEchoSrv() {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
-  if (config.sentry.enabled) {
-    registerEchoBackend(
-      new SentryEchoBackend({
-        ...config.sentry,
-        user: config.bootData.user,
-        buildInfo: config.buildInfo,
-      })
-    );
-  }
   if (config.grafanaJavascriptAgent.enabled) {
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
@@ -236,6 +279,15 @@ function initEchoSrv() {
     registerEchoBackend(
       new GAEchoBackend({
         googleAnalyticsId: config.googleAnalyticsId,
+      })
+    );
+  }
+
+  if (config.googleAnalytics4Id) {
+    registerEchoBackend(
+      new GA4EchoBackend({
+        googleAnalyticsId: config.googleAnalytics4Id,
+        googleAnalytics4SendManualPageViews: config.googleAnalytics4SendManualPageViews,
       })
     );
   }

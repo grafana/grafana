@@ -1,10 +1,11 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Field, Input, Button, HorizontalGroup, LinkButton, FormAPI } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 import { PasswordField } from '../PasswordField/PasswordField';
@@ -26,7 +27,7 @@ interface QueryParams {
 
 interface Props extends GrafanaRouteComponentProps<{}, QueryParams> {}
 
-export const SignupPage: FC<Props> = (props) => {
+export const SignupPage = (props: Props) => {
   const notifyApp = useAppNotification();
   const onSubmit = async (formData: SignupDTO) => {
     if (formData.name === '') {
@@ -74,7 +75,7 @@ export const SignupPage: FC<Props> = (props) => {
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /^\S+@\S+$/,
+                      value: w3cStandardEmailValidator,
                       message: 'Email is invalid',
                     },
                   })}

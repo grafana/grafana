@@ -3,8 +3,8 @@ package dtos
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // swagger:model
@@ -18,9 +18,10 @@ type NewApiKeyResult struct {
 }
 
 type ApiKeyDTO struct {
-	Id            int64                  `json:"id"`
+	ID            int64                  `json:"id"`
 	Name          string                 `json:"name"`
-	Role          models.RoleType        `json:"role"`
+	Role          org.RoleType           `json:"role"`
 	Expiration    *time.Time             `json:"expiration,omitempty"`
+	LastUsedAt    *time.Time             `json:"lastUsedAt,omitempty"`
 	AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 }

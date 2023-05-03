@@ -19,14 +19,14 @@ export interface Props {
   className?: string;
 }
 
-export const Pagination: React.FC<Props> = ({
+export const Pagination = ({
   currentPage,
   numberOfPages,
   onNavigate,
   hideWhenSinglePage,
   showSmallVersion,
   className,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
 

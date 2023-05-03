@@ -5,27 +5,29 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestPrometheusRules(t *testing.T) {
+func TestIntegrationPrometheusRules(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -37,7 +39,7 @@ func TestPrometheusRules(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -74,7 +76,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, `{"status": "success", "data": {"groups": []}}`, string(b))
@@ -96,14 +98,14 @@ func TestPrometheusRules(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -116,14 +118,14 @@ func TestPrometheusRules(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -149,7 +151,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
@@ -172,14 +174,14 @@ func TestPrometheusRules(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "NeverCreated",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -203,7 +205,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
@@ -222,7 +224,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -236,7 +238,7 @@ func TestPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -251,16 +253,22 @@ func TestPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, string(b))
 	}
@@ -275,7 +283,7 @@ func TestPrometheusRules(t *testing.T) {
 				err := resp.Body.Close()
 				require.NoError(t, err)
 			})
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.StatusCode)
 			require.JSONEq(t, `
@@ -288,7 +296,7 @@ func TestPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -303,16 +311,22 @@ func TestPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, string(b))
 			return true
@@ -320,7 +334,9 @@ func TestPrometheusRules(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesFilterByDashboard(t *testing.T) {
+func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -331,7 +347,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -361,14 +377,14 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -381,14 +397,14 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -414,7 +430,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
@@ -431,7 +447,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"__dashboardUid__": "%s",
@@ -444,16 +460,22 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, dashboardUID)
 	expectedFilteredByJSON := fmt.Sprintf(`
@@ -466,7 +488,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"__dashboardUid__": "%s",
@@ -477,10 +499,16 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 1
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 1
+		}
 	}
 }`, dashboardUID)
 	expectedNoneJSON := `
@@ -501,7 +529,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -518,7 +546,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -535,7 +563,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -552,7 +580,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -569,7 +597,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -587,7 +615,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			require.NoError(t, err)
 		})
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
@@ -605,7 +633,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			require.NoError(t, err)
 		})
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
@@ -613,7 +641,9 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesPermissions(t *testing.T) {
+func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -625,7 +655,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -633,7 +663,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := acdb.ProvideService(store)
+	permissionsStore := resourcepermissions.NewStore(store)
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")
@@ -657,7 +687,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -673,8 +703,8 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "folder2", body.Data.Groups[1].File)
 	}
 
-	// remove permissions from folder2
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
+	// remove permissions from folder2org.ROLE
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that folder2 is not included in the response
@@ -687,7 +717,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -698,8 +728,8 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "folder1", body.Data.Groups[0].File)
 	}
 
-	// remove permissions from folder1
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
+	// remove permissions from folder1org.ROLE
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that no folders are included in the response
@@ -712,7 +742,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -726,17 +756,17 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }
 
-func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string) {
+func removeFolderPermission(t *testing.T, store resourcepermissions.Store, orgID, userID int64, role org.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
-	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{
+	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, resourcepermissions.SetResourcePermissionCommand{
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
 	}, nil)
 
 	// remove org role permissions from folder
-	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), types.SetResourcePermissionCommand{
+	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), resourcepermissions.SetResourcePermissionCommand{
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
@@ -744,7 +774,7 @@ func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID,
 
 	// remove org role children permissions from folder
 	for _, c := range role.Children() {
-		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), types.SetResourcePermissionCommand{
+		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), resourcepermissions.SetResourcePermissionCommand{
 			Resource:          "folders",
 			ResourceID:        uid,
 			ResourceAttribute: "uid",

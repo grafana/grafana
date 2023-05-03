@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
@@ -29,41 +31,33 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
-func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroup, error) {
-	ruleGroup := AlertRuleGroup{}
-	ruleGroup.Name = ruleGroupV1.Name.Value()
-	if strings.TrimSpace(ruleGroup.Name) == "" {
-		return AlertRuleGroup{}, errors.New("rule group has no name set")
+func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderTitle, error) {
+	ruleGroup := models.AlertRuleGroupWithFolderTitle{AlertRuleGroup: &models.AlertRuleGroup{}}
+	ruleGroup.Title = ruleGroupV1.Name.Value()
+	if strings.TrimSpace(ruleGroup.Title) == "" {
+		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no name set")
 	}
 	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
 	if ruleGroup.OrgID < 1 {
 		ruleGroup.OrgID = 1
 	}
-	interval, err := time.ParseDuration(ruleGroupV1.Interval.Value())
+	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
-		return AlertRuleGroup{}, err
+		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
-	ruleGroup.Interval = interval
-	ruleGroup.Folder = ruleGroupV1.Folder.Value()
-	if strings.TrimSpace(ruleGroup.Folder) == "" {
-		return AlertRuleGroup{}, errors.New("rule group has no folder set")
+	ruleGroup.Interval = int64(time.Duration(interval).Seconds())
+	ruleGroup.FolderTitle = ruleGroupV1.Folder.Value()
+	if strings.TrimSpace(ruleGroup.FolderTitle) == "" {
+		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no folder set")
 	}
 	for _, ruleV1 := range ruleGroupV1.Rules {
 		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)
 		if err != nil {
-			return AlertRuleGroup{}, err
+			return models.AlertRuleGroupWithFolderTitle{}, err
 		}
 		ruleGroup.Rules = append(ruleGroup.Rules, rule)
 	}
 	return ruleGroup, nil
-}
-
-type AlertRuleGroup struct {
-	OrgID    int64
-	Name     string
-	Folder   string
-	Interval time.Duration
-	Rules    []models.AlertRule
 }
 
 type AlertRuleV1 struct {
@@ -78,6 +72,7 @@ type AlertRuleV1 struct {
 	For          values.StringValue    `json:"for" yaml:"for"`
 	Annotations  values.StringMapValue `json:"annotations" yaml:"annotations"`
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
+	IsPaused     values.BoolValue      `json:"isPaused" yaml:"isPaused"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -91,11 +86,11 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no UID set", alertRule.Title)
 	}
 	alertRule.OrgID = orgID
-	duration, err := time.ParseDuration(rule.For.Value())
+	duration, err := model.ParseDuration(rule.For.Value())
 	if err != nil {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
-	alertRule.For = duration
+	alertRule.For = time.Duration(duration)
 	dashboardUID := rule.DashboardUID.Value()
 	alertRule.DashboardUID = &dashboardUID
 	panelID := rule.PanelID.Value()
@@ -122,7 +117,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if alertRule.Condition == "" {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no condition set", alertRule.Title)
 	}
-	alertRule.Annotations = rule.Annotations.Value()
+	alertRule.Annotations = rule.Annotations.Raw
 	alertRule.Labels = rule.Labels.Value()
 	for _, queryV1 := range rule.Data {
 		query, err := queryV1.mapToModel()
@@ -134,6 +129,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if len(alertRule.Data) == 0 {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no data set", alertRule.Title)
 	}
+	alertRule.IsPaused = rule.IsPaused.Value()
 	return alertRule, nil
 }
 
@@ -151,7 +147,12 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 	// in json.RawMessage. We do this as we cannot use
 	// json.RawMessage with a yaml files and have to use
 	// JSONValue that supports both, json and yaml.
-	encoded, err := json.Marshal(queryV1.Model.Value())
+	//
+	// We have to use the Raw field here, as Value would
+	// try to interpolate macros like `$__timeFilter`, resulting
+	// in missing macros in the SQL queries as they would be
+	// replaced by an empty string.
+	encoded, err := json.Marshal(queryV1.Model.Raw)
 	if err != nil {
 		return models.AlertQuery{}, err
 	}

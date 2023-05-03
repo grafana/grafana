@@ -18,8 +18,8 @@ import {
 } from '@grafana/ui';
 
 import PromQlLanguageProvider from '../../prometheus/language_provider';
-import LokiLanguageProvider from '../language_provider';
-import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../language_utils';
+import LokiLanguageProvider from '../LanguageProvider';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 1000;
@@ -131,16 +131,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
   `,
   status: css`
-    padding: ${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
     color: ${theme.colors.text.secondary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* using absolute positioning because flex interferes with ellipsis */
-    position: absolute;
-    width: 50%;
-    right: 0;
-    text-align: right;
     transition: opacity 100ms linear;
     opacity: 0;
   `,
@@ -152,6 +147,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   valueList: css`
     margin-right: ${theme.spacing(1)};
+    resize: horizontal;
   `,
   valueListWrapper: css`
     border-left: 1px solid ${theme.colors.border.medium};
@@ -191,7 +187,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunLogsQuery = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
+    reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
       closeType: 'showLogsButton',
     });
@@ -200,7 +196,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickRunMetricsQuery = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
+    reportInteraction('grafana_loki_label_browser_closed', {
       app: this.props.app,
       closeType: 'showLogsRateButton',
     });
@@ -210,10 +206,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   onClickClear = () => {
-    reportInteraction('grafana_loki_log_browser_closed', {
-      app: this.props.app,
-      closeType: 'clearButton',
-    });
     this.setState((state) => {
       const labels: SelectableLabel[] = state.labels.map((label) => ({
         ...label,
@@ -366,7 +358,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   async fetchSeries(selector: string, lastFacetted?: string) {
     const { languageProvider } = this.props;
     if (lastFacetted) {
-      this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
+      this.updateLabelState(lastFacetted, { loading: true }, `Loading labels for ${selector}`);
     }
     try {
       const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
@@ -466,7 +458,12 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             2. Find values for the selected labels
           </Label>
           <div>
-            <Input onChange={this.onChangeSearch} aria-label="Filter expression for values" value={searchTerm} />
+            <Input
+              onChange={this.onChangeSearch}
+              aria-label="Filter expression for values"
+              value={searchTerm}
+              placeholder={'Enter a label value'}
+            />
           </div>
           <div className={styles.valueListArea}>
             {selectedLabels.map((label) => (
@@ -519,6 +516,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             {selector}
           </div>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
+          <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
+            <span className={error ? styles.error : ''}>{error || status}</span>
+          </div>
           <HorizontalGroup>
             <Button aria-label="Use selector as logs button" disabled={empty} onClick={this.onClickRunLogsQuery}>
               Show logs
@@ -542,9 +542,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             <Button aria-label="Selector clear button" variant="secondary" onClick={this.onClickClear}>
               Clear
             </Button>
-            <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
-              <span className={error ? styles.error : ''}>{error || status}</span>
-            </div>
           </HorizontalGroup>
         </div>
       </div>

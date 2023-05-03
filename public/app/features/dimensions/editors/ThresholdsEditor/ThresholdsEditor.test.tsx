@@ -1,34 +1,26 @@
-import { mount } from 'enzyme';
-import React, { ChangeEvent } from 'react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { createTheme, ThresholdsMode } from '@grafana/data';
-import { mockThemeContext, colors } from '@grafana/ui';
+import { createTheme, Threshold, ThresholdsMode } from '@grafana/data';
+import { mockThemeContext } from '@grafana/ui';
 
-import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
+import { ThresholdsEditor, Props } from './ThresholdsEditor';
+
+let props: Props;
 
 const setup = (propOverrides?: Partial<Props>) => {
-  const props: Props = {
+  props = {
     onChange: jest.fn(),
     thresholds: { mode: ThresholdsMode.Absolute, steps: [] },
   };
-
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<ThresholdsEditor {...props} />);
-  const instance = wrapper.instance() as ThresholdsEditor;
-
-  return {
-    instance,
-    wrapper,
-  };
+  render(<ThresholdsEditor {...props} />);
 };
 
-function getCurrentThresholds(editor: ThresholdsEditor) {
-  return thresholdsWithoutKey(editor.props.thresholds, editor.state.steps);
-}
-
 describe('ThresholdsEditor', () => {
-  let restoreThemeContext: any;
+  let restoreThemeContext: () => void;
 
   beforeAll(() => {
     restoreThemeContext = mockThemeContext(createTheme());
@@ -38,181 +30,164 @@ describe('ThresholdsEditor', () => {
     restoreThemeContext();
   });
 
-  it('should render with base threshold', () => {
-    const { wrapper } = setup();
-    expect(wrapper.find('input').length).toBe(3);
+  it('should render with an uneditable base threshold', () => {
+    setup();
+    const baseThreshold = screen.getByRole('textbox', { name: 'Threshold 1' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
   });
 
-  describe('Initialization', () => {
-    it('should add a base threshold if missing', () => {
-      const { instance } = setup();
-      expect(getCurrentThresholds(instance).steps).toEqual([{ value: -Infinity, color: 'green' }]);
-    });
+  it('should have an "Add threshold" button', () => {
+    setup();
+    const button = screen.getByRole('button', { name: 'Add threshold' });
+    expect(button).toBeInTheDocument();
   });
 
-  describe('Add threshold', () => {
-    it('should add threshold', () => {
-      const { instance } = setup();
+  it('can add thresholds', async () => {
+    setup();
 
-      instance.onAddThreshold();
+    expect(screen.queryAllByRole('spinbutton')).toHaveLength(0);
 
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: 'green' }, // 0
-        { value: 0, color: colors[1] }, // 1
-      ]);
-    });
+    let baseThreshold = screen.getByRole('textbox', { name: 'Threshold 1' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
 
-    it('should add another threshold above last', () => {
-      const { instance } = setup({
-        thresholds: {
-          mode: ThresholdsMode.Absolute,
-          steps: [
-            { value: -Infinity, color: colors[0] }, // 0
-            { value: 50, color: colors[2] }, // 1
-          ],
-        },
-      });
+    await userEvent.click(screen.getByRole('button', { name: 'Add threshold' }));
 
-      instance.onAddThreshold();
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(1);
 
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: colors[0] }, // 0
-        { value: 50, color: colors[2] }, // 1
-        { value: 60, color: colors[3] }, // 2
-      ]);
-    });
+    let customThreshold = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    expect(customThreshold).toBeInTheDocument();
+    expect(customThreshold).not.toBeDisabled();
+    expect(customThreshold).toHaveValue(0);
+
+    baseThreshold = screen.getByRole('textbox', { name: 'Threshold 2' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add threshold' }));
+
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(2);
+
+    let customThreshold2 = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    expect(customThreshold2).toBeInTheDocument();
+    expect(customThreshold2).not.toBeDisabled();
+    expect(customThreshold2).toHaveValue(10);
+
+    customThreshold = screen.getByRole('spinbutton', { name: 'Threshold 2' });
+    expect(customThreshold).toBeInTheDocument();
+    expect(customThreshold).not.toBeDisabled();
+    expect(customThreshold).toHaveValue(0);
+
+    baseThreshold = screen.getByRole('textbox', { name: 'Threshold 3' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
   });
 
-  describe('Remove threshold', () => {
-    it('should not remove threshold at index 0', () => {
-      const thresholds = {
+  it('can remove thresholds', async () => {
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, color: '#EAB839' },
+        { value: 75, color: '#6ED0E0' },
+      ],
+    };
+    setup({ thresholds });
+
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(2);
+
+    let customThreshold2 = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    expect(customThreshold2).toBeInTheDocument();
+    expect(customThreshold2).not.toBeDisabled();
+    expect(customThreshold2).toHaveValue(75);
+
+    let customThreshold = screen.getByRole('spinbutton', { name: 'Threshold 2' });
+    expect(customThreshold).toBeInTheDocument();
+    expect(customThreshold).not.toBeDisabled();
+    expect(customThreshold).toHaveValue(50);
+
+    let baseThreshold = screen.getByRole('textbox', { name: 'Threshold 3' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Threshold 1' }));
+
+    expect(screen.getAllByRole('spinbutton')).toHaveLength(1);
+
+    customThreshold = screen.getByRole('spinbutton', { name: 'Threshold 1' });
+    expect(customThreshold).toBeInTheDocument();
+    expect(customThreshold).not.toBeDisabled();
+    expect(customThreshold).toHaveValue(50);
+
+    baseThreshold = screen.getByRole('textbox', { name: 'Threshold 2' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Threshold 1' }));
+
+    expect(screen.queryAllByRole('spinbutton')).toHaveLength(0);
+
+    baseThreshold = screen.getByRole('textbox', { name: 'Threshold 1' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
+  });
+
+  it('can not remove the base threshold', () => {
+    setup();
+
+    const baseThreshold = screen.getByRole('textbox', { name: 'Threshold 1' });
+    expect(within(baseThreshold).queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
+  });
+
+  it('sorts thresholds when values change', async () => {
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, color: '#EAB839' },
+        { value: 75, color: '#6ED0E0' },
+      ],
+    };
+    setup({ thresholds });
+
+    expect(screen.getByRole('spinbutton', { name: 'Threshold 1' })).toHaveValue(75);
+    expect(screen.getByRole('spinbutton', { name: 'Threshold 2' })).toHaveValue(50);
+
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Threshold 2' }));
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Threshold 2' }), '100');
+
+    expect(screen.getByRole('spinbutton', { name: 'Threshold 1' })).toHaveValue(100);
+    expect(screen.getByRole('spinbutton', { name: 'Threshold 2' })).toHaveValue(75);
+  });
+
+  it('should exclude invalid steps and render a proper list', () => {
+    setup({
+      thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [
           { value: -Infinity, color: '#7EB26D' },
-          { value: 50, color: '#EAB839' },
           { value: 75, color: '#6ED0E0' },
+          { color: '#7EB26D' } as unknown as Threshold,
+          { value: 78, color: '#EAB839' },
+          { value: null, color: '#7EB26D' } as unknown as Threshold,
+          { value: null, color: '#7EB26D' } as unknown as Threshold,
         ],
-      };
-      const { instance } = setup({ thresholds });
-
-      instance.onRemoveThreshold(instance.state.steps[0]);
-
-      expect(getCurrentThresholds(instance)).toEqual(thresholds);
+      },
     });
 
-    it('should remove threshold', () => {
-      const thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: '#7EB26D' },
-          { value: 50, color: '#EAB839' },
-          { value: 75, color: '#6ED0E0' },
-        ],
-      };
-      const { instance } = setup({ thresholds });
-
-      instance.onRemoveThreshold(instance.state.steps[1]);
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-      ]);
-    });
-  });
-
-  describe('change threshold value', () => {
-    it('should not change threshold at index 0', () => {
-      const thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: '#7EB26D' },
-          { value: 50, color: '#EAB839' },
-          { value: 75, color: '#6ED0E0' },
-        ],
-      };
-      const { instance } = setup({ thresholds });
-
-      const mockEvent = { target: { value: '12' } } as any as ChangeEvent<HTMLInputElement>;
-
-      instance.onChangeThresholdValue(mockEvent, instance.state.steps[0]);
-
-      expect(getCurrentThresholds(instance)).toEqual(thresholds);
-    });
-
-    it('should update value', () => {
-      const { instance } = setup();
-      const thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: '#7EB26D', key: 1 },
-          { value: 50, color: '#EAB839', key: 2 },
-          { value: 75, color: '#6ED0E0', key: 3 },
-        ],
-      };
-
-      instance.state = {
-        steps: thresholds.steps,
-      };
-
-      const mockEvent = { target: { value: '78' } } as any as ChangeEvent<HTMLInputElement>;
-
-      instance.onChangeThresholdValue(mockEvent, thresholds.steps[1]);
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-        { value: 78, color: '#EAB839' },
-      ]);
-    });
-  });
-
-  describe('on blur threshold value', () => {
-    it('should resort rows and update indexes', () => {
-      const { instance } = setup();
-      const thresholds = {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: '#7EB26D', key: 1 },
-          { value: 78, color: '#EAB839', key: 2 },
-          { value: 75, color: '#6ED0E0', key: 3 },
-        ],
-      };
-
-      instance.setState({
-        steps: thresholds.steps,
-      });
-
-      instance.onBlur();
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-        { value: 78, color: '#EAB839' },
-      ]);
-    });
-  });
-
-  describe('on load with invalid steps', () => {
-    it('should exclude invalid steps and render a proper list', () => {
-      const { instance } = setup({
-        thresholds: {
-          mode: ThresholdsMode.Absolute,
-          steps: [
-            { value: -Infinity, color: '#7EB26D', key: 1 },
-            { value: 75, color: '#6ED0E0', key: 2 },
-            { color: '#7EB26D', key: 3 } as any,
-            { value: 78, color: '#EAB839', key: 4 },
-            { value: null, color: '#7EB26D', key: 5 } as any,
-            { value: null, color: '#7EB26D', key: 6 } as any,
-          ],
-        },
-      });
-
-      expect(getCurrentThresholds(instance).steps).toEqual([
-        { value: -Infinity, color: '#7EB26D' },
-        { value: 75, color: '#6ED0E0' },
-        { value: 78, color: '#EAB839' },
-      ]);
-    });
+    expect(screen.getByRole('spinbutton', { name: 'Threshold 1' })).toHaveValue(78);
+    expect(screen.getByRole('spinbutton', { name: 'Threshold 2' })).toHaveValue(75);
+    const baseThreshold = screen.getByRole('textbox', { name: 'Threshold 3' });
+    expect(baseThreshold).toBeInTheDocument();
+    expect(baseThreshold).toBeDisabled();
+    expect(baseThreshold).toHaveValue('Base');
   });
 });

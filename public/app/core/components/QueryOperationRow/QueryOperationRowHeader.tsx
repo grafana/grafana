@@ -1,23 +1,24 @@
 import { css, cx } from '@emotion/css';
 import React, { MouseEventHandler } from 'react';
-import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
+import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
   disabled?: boolean;
   draggable: boolean;
-  dragHandleProps?: DraggableProvidedDragHandleProps;
+  dragHandleProps?: DraggableProvided['dragHandleProps'];
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
   reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
-  titleElement?: React.ReactNode;
+  title?: string;
+  id: string;
 }
 
-export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = ({
+export const QueryOperationRowHeader = ({
   actionsElement,
   disabled,
   draggable,
@@ -26,21 +27,30 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   isContentVisible,
   onRowToggle,
   reportDragMousePosition,
-  titleElement,
+  title,
+  id,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.header}>
       <div className={styles.column}>
-        <Icon
+        <IconButton
           name={isContentVisible ? 'angle-down' : 'angle-right'}
+          title="toggle collapse and expand"
+          aria-label="toggle collapse and expand query row"
           className={styles.collapseIcon}
           onClick={onRowToggle}
+          type="button"
+          aria-expanded={isContentVisible}
+          aria-controls={id}
         />
-        {titleElement && (
+        {title && (
+          // disabling the a11y rules here as the IconButton above handles keyboard interactions
+          // this is just to provide a better experience for mouse users
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-            <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
+            <div className={cx(styles.title, disabled && styles.disabled)}>{title}</div>
           </div>
         )}
         {headerElement}
@@ -94,10 +104,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   collapseIcon: css`
+    margin-left: ${theme.spacing(0.5)};
     color: ${theme.colors.text.disabled};
-    cursor: pointer;
-    &:hover {
-      color: ${theme.colors.text};
     }
   `,
   titleWrapper: css`

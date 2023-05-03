@@ -1,67 +1,19 @@
-import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import React from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { RadioButtonGroup, LinkButton, FilterInput } from '@grafana/ui';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import { selectTotal } from '../invites/state/selectors';
 
-import { setUsersSearchQuery } from './state/reducers';
+import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
 
-export interface Props {
-  searchQuery: string;
-  setUsersSearchQuery: typeof setUsersSearchQuery;
-  onShowInvites: () => void;
-  pendingInvitesCount: number;
-  canInvite: boolean;
+export interface OwnProps {
   showInvites: boolean;
-  externalUserMngLinkUrl: string;
-  externalUserMngLinkName: string;
-}
-
-export class UsersActionBar extends PureComponent<Props> {
-  render() {
-    const {
-      canInvite,
-      externalUserMngLinkName,
-      externalUserMngLinkUrl,
-      searchQuery,
-      pendingInvitesCount,
-      setUsersSearchQuery,
-      onShowInvites,
-      showInvites,
-    } = this.props;
-    const options = [
-      { label: 'Users', value: 'users' },
-      { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
-    ];
-    const canAddToOrg: boolean = contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
-
-    return (
-      <div className="page-action-bar" data-testid="users-action-bar">
-        <div className="gf-form gf-form--grow">
-          <FilterInput
-            value={searchQuery}
-            onChange={setUsersSearchQuery}
-            placeholder="Search user by login, email or name"
-          />
-        </div>
-        {pendingInvitesCount > 0 && (
-          <div style={{ marginLeft: '1rem' }}>
-            <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
-          </div>
-        )}
-        {canAddToOrg && <LinkButton href="org/users/invite">Invite</LinkButton>}
-        {externalUserMngLinkUrl && (
-          <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
-            {externalUserMngLinkName}
-          </LinkButton>
-        )}
-      </div>
-    );
-  }
+  onShowInvites: () => void;
 }
 
 function mapStateToProps(state: StoreState) {
@@ -75,7 +27,53 @@ function mapStateToProps(state: StoreState) {
 }
 
 const mapDispatchToProps = {
-  setUsersSearchQuery,
+  changeSearchQuery,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(UsersActionBar);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = ConnectedProps<typeof connector> & OwnProps;
+
+export const UsersActionBarUnconnected = ({
+  canInvite,
+  externalUserMngLinkName,
+  externalUserMngLinkUrl,
+  searchQuery,
+  pendingInvitesCount,
+  changeSearchQuery,
+  onShowInvites,
+  showInvites,
+}: Props): JSX.Element => {
+  const options = [
+    { label: 'Users', value: 'users' },
+    { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
+  ];
+  const canAddToOrg: boolean = contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
+  // backend rejects invitations if the login form is disabled
+  const showInviteButton: boolean = canAddToOrg && !config.disableLoginForm;
+
+  return (
+    <div className="page-action-bar" data-testid="users-action-bar">
+      <div className="gf-form gf-form--grow">
+        <FilterInput
+          value={searchQuery}
+          onChange={changeSearchQuery}
+          placeholder="Search user by login, email or name"
+        />
+      </div>
+      {pendingInvitesCount > 0 && (
+        <div style={{ marginLeft: '1rem' }}>
+          <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />
+        </div>
+      )}
+      {showInviteButton && <LinkButton href="org/users/invite">Invite</LinkButton>}
+      {externalUserMngLinkUrl && (
+        <LinkButton href={externalUserMngLinkUrl} target="_blank" rel="noopener">
+          {externalUserMngLinkName}
+        </LinkButton>
+      )}
+    </div>
+  );
+};
+
+export const UsersActionBar = connector(UsersActionBarUnconnected);

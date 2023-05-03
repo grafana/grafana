@@ -166,9 +166,14 @@ type DeleteFolderOptions struct {
 	AccessFilter PathFilter
 }
 
+type GetFileOptions struct {
+	// WithContents if set to false, the `Get` operation will return just the file metadata. Default is `true`
+	WithContents bool
+}
+
 //go:generate mockery --name FileStorage --structname MockFileStorage --inpackage --filename file_storage_mock.go
 type FileStorage interface {
-	Get(ctx context.Context, path string) (*File, error)
+	Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error)
 	Delete(ctx context.Context, path string) error
 	Upsert(ctx context.Context, command *UpsertFileCommand) error
 

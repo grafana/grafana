@@ -1,6 +1,5 @@
 import { cx } from '@emotion/css';
 import React from 'react';
-import SVG from 'react-inlinesvg';
 
 import {
   DisplayProcessor,
@@ -13,10 +12,12 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
+import { getIconForKind } from '../../service/utils';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -64,7 +65,7 @@ export const generateColumns = (
         if (selection('*', '*')) {
           return (
             <div className={styles.checkboxHeader}>
-              <IconButton name={'check-square' as any} onClick={clearSelection} />
+              <IconButton name="check-square" onClick={clearSelection} />
             </div>
           );
         }
@@ -91,8 +92,8 @@ export const generateColumns = (
         );
       },
       Cell: (p) => {
-        const uid = uidField.values.get(p.row.index);
-        const kind = kindField ? kindField.values.get(p.row.index) : 'dashboard'; // HACK for now
+        const uid = uidField.values[p.row.index];
+        const kind = kindField ? kindField.values[p.row.index] : 'dashboard'; // HACK for now
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
@@ -119,7 +120,7 @@ export const generateColumns = (
   columns.push({
     Cell: (p) => {
       let classNames = cx(styles.nameCellStyle);
-      let name = access.name.values.get(p.row.index);
+      let name = access.name.values[p.row.index];
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
         name = loading ? 'Loading...' : 'Missing title'; // normal for panels
@@ -133,9 +134,7 @@ export const generateColumns = (
     },
     id: `column-name`,
     field: access.name!,
-    Header: () => {
-      return <div className={styles.headerNameStyle}>Name</div>;
-    },
+    Header: () => <div className={styles.headerNameStyle}>{t('search.results-table.name-header', 'Name')}</div>,
     width,
   });
   availableWidth -= width;
@@ -167,11 +166,14 @@ export const generateColumns = (
     availableWidth -= width;
     columns.push({
       Cell: (p) => {
-        const parts = (access.location?.values.get(p.row.index) ?? '').split('/');
+        const parts = (access.location?.values[p.row.index] ?? '').split('/');
         return (
           <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
             {parts.map((p) => {
-              const info = meta.locationInfo[p];
+              let info = meta.locationInfo[p];
+              if (!info && p === 'general') {
+                info = { kind: 'folder', url: '/dashboards', name: 'General' };
+              }
               return info ? (
                 <a key={p} href={info.url} className={styles.locationItem}>
                   <Icon name={getIconForKind(info.kind)} /> {info.name}
@@ -185,7 +187,7 @@ export const generateColumns = (
       },
       id: `column-location`,
       field: access.location ?? access.url,
-      Header: 'Location',
+      Header: t('search.results-table.location-header', 'Location'),
       width,
     });
   }
@@ -224,8 +226,8 @@ export const generateColumns = (
         new ShowModalReactEvent({
           component: ExplainScorePopup,
           props: {
-            name: access.name.values.get(row),
-            explain: access.explain.values.get(row),
+            name: access.name.values[row],
+            explain: access.explain.values[row],
             frame: response.view.dataFrame,
             row: row,
           },
@@ -238,7 +240,7 @@ export const generateColumns = (
       Cell: (p) => {
         return (
           <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
-            {vals.get(p.row.index)}
+            {vals[p.row.index]}
           </div>
         );
       },
@@ -251,19 +253,9 @@ export const generateColumns = (
   return columns;
 };
 
-function getIconForKind(v: string): IconName {
-  if (v === 'dashboard') {
-    return 'apps';
-  }
-  if (v === 'folder') {
-    return 'folder';
-  }
-  return 'question-circle';
-}
-
 function hasValue(f: Field): boolean {
   for (let i = 0; i < f.values.length; i++) {
-    if (f.values.get(i) != null) {
+    if (f.values[i] != null) {
       return true;
     }
   }
@@ -282,9 +274,9 @@ function makeDataSourceColumn(
   return {
     id: `column-datasource`,
     field,
-    Header: 'Data source',
+    Header: t('search.results-table.datasource-header', 'Data source'),
     Cell: (p) => {
-      const dslist = field.values.get(p.row.index);
+      const dslist = field.values[p.row.index];
       if (!dslist?.length) {
         return null;
       }
@@ -303,7 +295,7 @@ function makeDataSourceColumn(
                     onDatasourceChange(settings.uid);
                   }}
                 >
-                  <img src={icon} width={14} height={14} title={settings.type} className={iconClass} />
+                  <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
                   {settings.name}
                 </span>
               );
@@ -330,27 +322,27 @@ function makeTypeColumn(
   return {
     id: `column-type`,
     field: kindField ?? typeField,
-    Header: 'Type',
+    Header: t('search.results-table.type-header', 'Type'),
     Cell: (p) => {
       const i = p.row.index;
-      const kind = kindField?.values.get(i) ?? 'dashboard';
-      let icon = 'public/img/icons/unicons/apps.svg';
+      const kind = kindField?.values[i] ?? 'dashboard';
+      let icon: IconName = 'apps';
       let txt = 'Dashboard';
       if (kind) {
         txt = kind;
         switch (txt) {
           case 'dashboard':
-            txt = 'Dashboard';
+            txt = t('search.results-table.type-dashboard', 'Dashboard');
             break;
 
           case 'folder':
-            icon = 'public/img/icons/unicons/folder.svg';
-            txt = 'Folder';
+            icon = 'folder';
+            txt = t('search.results-table.type-folder', 'Folder');
             break;
 
           case 'panel':
-            icon = `public/img/icons/unicons/${PluginIconName.panel}.svg`;
-            const type = typeField.values.get(i);
+            icon = `${PluginIconName.panel}`;
+            const type = typeField.values[i];
             if (type) {
               txt = type;
               const info = config.panels[txt];
@@ -360,13 +352,13 @@ function makeTypeColumn(
                 switch (type) {
                   case 'row':
                     txt = 'Row';
-                    icon = `public/img/icons/unicons/bars.svg`;
+                    icon = `bars`;
                     break;
                   case 'singlestat': // auto-migration
                     txt = 'Singlestat';
                     break;
                   default:
-                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                    icon = `question-circle`; // plugin not found
                 }
               }
             }
@@ -375,7 +367,7 @@ function makeTypeColumn(
       }
       return (
         <div {...p.cellProps} className={styles.typeText}>
-          <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
+          <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
           {txt}
         </div>
       );
@@ -392,7 +384,7 @@ function makeTagsColumn(
 ): TableColumn {
   return {
     Cell: (p) => {
-      const tags = field.values.get(p.row.index);
+      const tags = field.values[p.row.index];
       return tags ? (
         <div {...p.cellProps}>
           <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
@@ -401,7 +393,7 @@ function makeTagsColumn(
     },
     id: `column-tags`,
     field: field,
-    Header: 'Tags',
+    Header: t('search.results-table.tags-header', 'Tags'),
     width,
   };
 }
@@ -417,8 +409,8 @@ function getDisplayValue({
   index: number;
   getDisplay: DisplayProcessor;
 }) {
-  const value = sortField.values.get(index);
-  if (['folder', 'panel'].includes(kind.values.get(index)) && value === 0) {
+  const value = sortField.values[index];
+  if (['folder', 'panel'].includes(kind.values[index]) && value === 0) {
     return '-';
   }
   return formattedValueToString(getDisplay(value));

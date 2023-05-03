@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,7 +23,7 @@ func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
 		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		f, err := ioutil.ReadFile(filepath.Clean(filePath))
+		f, err := os.ReadFile(filepath.Clean(filePath))
 		require.NoError(t, err)
 		require.Equal(t, "silence1,silence3", string(f))
 		require.NoError(t, os.Remove(filePath))
@@ -44,7 +43,7 @@ func TestFileStore_FilepathFor(t *testing.T) {
 		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		f, err := ioutil.ReadFile(filepath.Clean(filePath))
+		f, err := os.ReadFile(filepath.Clean(filePath))
 		require.NoError(t, err)
 		require.Equal(t, "silence1,silence2", string(f))
 		require.NoError(t, os.Remove(filePath))
@@ -56,7 +55,7 @@ func TestFileStore_FilepathFor(t *testing.T) {
 		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		f, err := ioutil.ReadFile(filepath.Clean(filePath))
+		f, err := os.ReadFile(filepath.Clean(filePath))
 		require.NoError(t, err)
 		require.Equal(t, "silence1,silence3", string(f))
 		require.NoError(t, os.Remove(filePath))
@@ -68,7 +67,7 @@ func TestFileStore_FilepathFor(t *testing.T) {
 		r, err := fs.FilepathFor(context.Background(), filekey)
 		require.NoError(t, err)
 		require.Equal(t, filePath, r)
-		_, err = ioutil.ReadFile(filepath.Clean(filePath))
+		_, err = os.ReadFile(filepath.Clean(filePath))
 		require.Error(t, err)
 	}
 }

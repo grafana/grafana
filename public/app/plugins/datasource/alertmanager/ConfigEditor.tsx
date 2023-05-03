@@ -13,7 +13,6 @@ export type Props = DataSourcePluginOptionsEditorProps<AlertManagerDataSourceJso
 const IMPL_OPTIONS: Array<SelectableValue<AlertManagerImplementation>> = [
   {
     value: AlertManagerImplementation.mimir,
-    icon: 'public/img/alerting/mimir_logo.svg',
     label: 'Mimir',
     description: `https://grafana.com/oss/mimir/. An open source, horizontally scalable, highly available, multi-tenant, long-term storage for Prometheus.`,
   },
@@ -82,6 +81,7 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+        secureSocksDSProxyEnabled={false} // the proxy is not implemented to work with the alertmanager
       />
     </>
   );

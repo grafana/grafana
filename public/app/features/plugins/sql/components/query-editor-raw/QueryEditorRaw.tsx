@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { SQLEditor } from '@grafana/experimental';
+import { LanguageDefinition, SQLEditor } from '@grafana/experimental';
 
-import { LanguageCompletionProvider, SQLQuery } from '../../types';
-import { formatSQL } from '../../utils/formatSQL';
+import { SQLQuery } from '../../types';
 
 type Props = {
   query: SQLQuery;
@@ -11,10 +10,10 @@ type Props = {
   children?: (props: { formatQuery: () => void }) => React.ReactNode;
   width?: number;
   height?: number;
-  completionProvider: LanguageCompletionProvider;
+  editorLanguageDefinition: LanguageDefinition;
 };
 
-export function QueryEditorRaw({ children, onChange, query, width, height, completionProvider }: Props) {
+export function QueryEditorRaw({ children, onChange, query, width, height, editorLanguageDefinition }: Props) {
   // We need to pass query via ref to SQLEditor as onChange is executed via monacoEditor.onDidChangeModelContent callback, not onChange property
   const queryRef = useRef<SQLQuery>(query);
   useEffect(() => {
@@ -39,7 +38,7 @@ export function QueryEditorRaw({ children, onChange, query, width, height, compl
       height={height}
       query={query.rawSql!}
       onChange={onRawQueryChange}
-      language={{ id: 'sql', completionProvider, formatter: formatSQL }}
+      language={editorLanguageDefinition}
     >
       {children}
     </SQLEditor>

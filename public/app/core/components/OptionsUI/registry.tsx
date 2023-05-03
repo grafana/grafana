@@ -25,6 +25,7 @@ import {
   StatsPickerConfigSettings,
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
+  booleanOverrideProcessor,
 } from '@grafana/data';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -32,7 +33,7 @@ import { ThresholdsValueEditor } from 'app/features/dimensions/editors/Threshold
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
 import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
-import { ColorValueEditor } from './color';
+import { ColorValueEditor, ColorValueEditorSettings } from './color';
 import { FieldColorEditor } from './fieldColor';
 import { DataLinksValueEditor } from './links';
 import { MultiSelectValueEditor } from './multiSelect';
@@ -81,7 +82,8 @@ export const getAllOptionEditors = () => {
     name: 'Boolean',
     description: 'Allows boolean values input',
     editor(props) {
-      return <Switch {...props} onChange={(e) => props.onChange(e.currentTarget.checked)} />;
+      const { id, ...rest } = props; // Remove id from properties passed into switch
+      return <Switch {...rest} onChange={(e) => props.onChange(e.currentTarget.checked)} />;
     },
   };
 
@@ -115,12 +117,14 @@ export const getAllOptionEditors = () => {
     editor: UnitValueEditor as any,
   };
 
-  const color: StandardEditorsRegistryItem<string> = {
+  const color: StandardEditorsRegistryItem<string, ColorValueEditorSettings> = {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',
     editor(props) {
-      return <ColorValueEditor value={props.value} onChange={props.onChange} />;
+      return (
+        <ColorValueEditor value={props.value} onChange={props.onChange} settings={props.item.settings} details={true} />
+      );
     },
   };
 
@@ -380,5 +384,18 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  return [unit, min, max, decimals, displayName, color, noValue, links, mappings, thresholds];
+  const filterable: FieldConfigPropertyItem<{}, boolean | undefined, {}> = {
+    id: 'filterable',
+    path: 'filterable',
+    name: 'Ad-hoc filterable',
+    hideFromDefaults: true,
+    editor: standardEditorsRegistry.get('boolean').editor as any,
+    override: standardEditorsRegistry.get('boolean').editor as any,
+    process: booleanOverrideProcessor,
+    shouldApply: () => true,
+    settings: {},
+    category,
+  };
+
+  return [unit, min, max, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
 };

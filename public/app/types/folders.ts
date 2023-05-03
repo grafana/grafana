@@ -27,8 +27,26 @@ export interface FolderState {
   canViewFolderPermissions: boolean;
 }
 
+export interface DescendantCountDTO {
+  folder: number;
+  dashboard: number;
+  libraryPanel: number;
+  alertrule?: number;
+}
+
+export interface DescendantCount {
+  folder: number;
+  dashboard: number;
+  libraryPanel: number;
+  alertRule: number;
+}
+
 export interface FolderInfo {
-  id?: number;
+  /**
+   * @deprecated use uid instead.
+   */
+  id?: number; // can't be totally removed as search and alerts api aren't supporting folderUids yet. It will break DashList and AlertList panel
+  uid?: string;
   title?: string;
   url?: string;
   canViewFolderPermissions?: boolean;

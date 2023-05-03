@@ -2,7 +2,7 @@ import React, { Component, createRef } from 'react';
 import uPlot, { AlignedData, Options } from 'uplot';
 
 import { PlotProps } from './types';
-import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
+import { pluginLog } from './utils';
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
@@ -65,10 +65,8 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
     });
 
     const config: Options = {
-      ...DEFAULT_PLOT_CONFIG,
-      width: this.props.width,
-      height: this.props.height,
-      ms: 1 as 1,
+      width: Math.floor(this.props.width),
+      height: Math.floor(this.props.height),
       ...this.props.config.getConfig(),
     };
 
@@ -95,8 +93,8 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
 
     if (!sameDims(prevProps, this.props)) {
       plot?.setSize({
-        width: this.props.width,
-        height: this.props.height,
+        width: Math.floor(this.props.width),
+        height: Math.floor(this.props.height),
       });
     } else if (!sameConfig(prevProps, this.props)) {
       this.reinitPlot();

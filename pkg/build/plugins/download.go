@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -54,7 +53,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 	var m pluginsManifest
 	manifestPath := filepath.Join(grafanaDir, "plugins-bundled", "external.json")
 	//nolint:gosec
-	manifestB, err := ioutil.ReadFile(manifestPath)
+	manifestB, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return fmt.Errorf("failed to open plugins manifest %q: %w", manifestPath, err)
 	}
@@ -66,6 +65,7 @@ func Download(ctx context.Context, grafanaDir string, p syncutil.WorkerPool) err
 		pm := m.Plugins[i]
 		p.Schedule(g.Wrap(func() error {
 			tgt := filepath.Join(grafanaDir, "plugins-bundled", fmt.Sprintf("%s-%s.zip", pm.Name, pm.Version))
+			//nolint:gosec
 			out, err := os.Create(tgt)
 			if err != nil {
 				return err

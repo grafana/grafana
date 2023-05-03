@@ -3,25 +3,27 @@ package notifiers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
 	encryptionService   encryption.Internal
 	notificationService *notifications.NotificationService
-	orgStore            utils.OrgStore
+	orgService          org.Service
 	log                 log.Logger
 }
 
@@ -29,7 +31,7 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*notific
 	var notifications []*notificationsAsConfig
 	cr.log.Debug("Looking for alert notification provisioning files", "path", path)
 
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		cr.log.Error("Can't read alert notification provisioning files from directory", "path", path, "error", err)
 		return notifications, nil
@@ -65,12 +67,12 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*notific
 	return notifications, nil
 }
 
-func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (*notificationsAsConfig, error) {
+func (cr *configReader) parseNotificationConfig(path string, file fs.DirEntry) (*notificationsAsConfig, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +96,7 @@ func (cr *configReader) checkOrgIDAndOrgName(ctx context.Context, notifications 
 					notification.OrgID = 0
 				}
 			} else {
-				if err := utils.CheckOrgExists(ctx, cr.orgStore, notification.OrgID); err != nil {
+				if err := utils.CheckOrgExists(ctx, cr.orgService, notification.OrgID); err != nil {
 					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}

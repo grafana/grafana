@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -68,7 +69,7 @@ type ReceiverV1 struct {
 	UID                   values.StringValue `json:"uid" yaml:"uid"`
 	Type                  values.StringValue `json:"type" yaml:"type"`
 	Settings              values.JSONValue   `json:"settings" yaml:"settings"`
-	DisableResolveMessage values.BoolValue   `json:"disableResolveMessage"`
+	DisableResolveMessage values.BoolValue   `json:"disableResolveMessage" yaml:"disableResolveMessage"`
 }
 
 func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPoint, error) {
@@ -83,7 +84,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	if len(config.Settings.Value()) == 0 {
 		return definitions.EmbeddedContactPoint{}, fmt.Errorf("no settings are set")
 	}
-	settings := simplejson.NewFromAny(config.Settings.Raw)
+	settings := simplejson.NewFromAny(config.Settings.Value())
 	cp := definitions.EmbeddedContactPoint{
 		UID:                   uid,
 		Name:                  name,
@@ -94,7 +95,7 @@ func (config *ReceiverV1) mapToModel(name string) (definitions.EmbeddedContactPo
 	}
 	// As the values are not encrypted when coming from disk files,
 	// we can simply return the fallback for validation.
-	err := cp.Valid(func(_ context.Context, _ map[string][]byte, _, fallback string) string {
+	err := provisioning.ValidateContactPoint(context.Background(), cp, func(_ context.Context, _ map[string][]byte, _, fallback string) string {
 		return fallback
 	})
 	if err != nil {

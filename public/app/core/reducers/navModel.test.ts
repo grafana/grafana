@@ -44,6 +44,7 @@ describe('navModelReducer', () => {
     it('then state should be correct', () => {
       const originalCfg = { id: 'cfg', subTitle: 'Organization: Org 1', text: 'Configuration' };
       const datasources = { id: 'datasources', text: 'Data Sources' };
+      const correlations = { id: 'correlations', text: 'Correlations' };
       const users = { id: 'users', text: 'Users' };
       const teams = { id: 'teams', text: 'Teams' };
       const plugins = { id: 'plugins', text: 'Plugins' };
@@ -53,6 +54,7 @@ describe('navModelReducer', () => {
       const initialState = {
         cfg: { ...originalCfg, children: [datasources, users, teams, plugins, orgsettings, apikeys] },
         datasources: { ...datasources, parentItem: originalCfg },
+        correlations: { ...correlations, parentItem: originalCfg },
         users: { ...users, parentItem: originalCfg },
         teams: { ...teams, parentItem: originalCfg },
         plugins: { ...plugins, parentItem: originalCfg },
@@ -66,6 +68,7 @@ describe('navModelReducer', () => {
       const expectedState = {
         cfg: { ...newCfg, children: [datasources, users, teams, plugins, orgsettings, apikeys] },
         datasources: { ...datasources, parentItem: newCfg },
+        correlations: { ...correlations, parentItem: newCfg },
         users: { ...users, parentItem: newCfg },
         teams: { ...teams, parentItem: newCfg },
         plugins: { ...plugins, parentItem: newCfg },

@@ -1,5 +1,6 @@
 import { Meta, Story } from '@storybook/react';
 import React from 'react';
+import { FieldValues } from 'react-hook-form';
 
 import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
 
@@ -28,7 +29,7 @@ export default {
 } as Meta;
 
 export const Simple: Story = (args) => {
-  const defaultValues: any = {
+  const defaultValues: FieldValues = {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };
   return (

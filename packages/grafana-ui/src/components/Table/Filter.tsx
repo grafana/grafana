@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { Field, GrafanaTheme } from '@grafana/data';
+import { Field, GrafanaTheme2 } from '@grafana/data';
 
 import { Popover } from '..';
-import { stylesFactory, useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 import { FilterPopup } from './FilterPopup';
@@ -16,10 +16,10 @@ interface Props {
   field?: Field;
 }
 
-export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
-  const ref = useRef<HTMLDivElement>(null);
+export const Filter = ({ column, field, tableStyles }: Props) => {
+  const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const filterEnabled = useMemo(() => Boolean(column.filterValue), [column.filterValue]);
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
@@ -27,12 +27,11 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   if (!field || !field.config.custom?.filterable) {
     return null;
   }
-
   return (
-    <span
+    <button
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
-      role="filterIcon"
+      type="button"
       onClick={onShowPopover}
     >
       <Icon name="filter" />
@@ -44,17 +43,17 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
           show
         />
       )}
-    </span>
+    </button>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   filterIconEnabled: css`
     label: filterIconEnabled;
-    color: ${theme.colors.textBlue};
+    color: ${theme.colors.primary.text};
   `,
   filterIconDisabled: css`
     label: filterIconDisabled;
-    color: ${theme.colors.textFaint};
+    color: ${theme.colors.text.disabled};
   `,
-}));
+});

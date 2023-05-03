@@ -4,7 +4,7 @@ import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 
 import { AnnoListPanel } from './AnnoListPanel';
-import { defaultPanelOptions, PanelOptions } from './models.gen';
+import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<PanelOptions>(AnnoListPanel)
   .setPanelOptions((builder) => {

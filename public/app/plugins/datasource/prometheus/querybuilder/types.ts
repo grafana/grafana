@@ -9,6 +9,11 @@ export interface PromVisualQuery {
   labels: QueryBuilderLabelFilter[];
   operations: QueryBuilderOperation[];
   binaryQueries?: PromVisualQueryBinary[];
+  // metrics modal additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  excludeNullMetadata?: boolean;
+  fullMetaSearch?: boolean;
 }
 
 export type PromVisualQueryBinary = VisualQueryBinary<PromVisualQuery>;
@@ -119,7 +124,15 @@ export enum PromOperationId {
   LessOrEqual = '__less_or_equal',
 }
 
+export enum PromQueryPatternType {
+  Rate = 'rate',
+  Histogram = 'histogram',
+  Binary = 'binary',
+}
+
 export interface PromQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: PromQueryPatternType;
+  binaryQueries?: PromVisualQueryBinary[];
 }

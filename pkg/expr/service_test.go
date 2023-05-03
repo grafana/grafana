@@ -12,8 +12,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,17 +34,24 @@ func TestService(t *testing.T) {
 		cfg:               cfg,
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
+		features:          &featuremgmt.FeatureManager{},
+		tracer:            tracing.InitializeTracerForTest(),
+		metrics:           newMetrics(nil),
 	}
 
 	queries := []Query{
 		{
 			RefID: "A",
 			DataSource: &datasources.DataSource{
-				OrgId: 1,
-				Uid:   "test",
+				OrgID: 1,
+				UID:   "test",
 				Type:  "test",
 			},
 			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{
+				From: time.Time{},
+				To:   time.Time{},
+			},
 		},
 		{
 			RefID:      "B",
@@ -56,13 +65,17 @@ func TestService(t *testing.T) {
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
-	res, err := s.ExecutePipeline(context.Background(), pl)
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 	require.NoError(t, err)
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
+	bDF.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
 
 	expect := &backend.QueryDataResponse{
 		Responses: backend.Responses{

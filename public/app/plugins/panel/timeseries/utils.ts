@@ -1,13 +1,16 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
   getDisplayProcessor,
+  getLinksSupplier,
   GrafanaTheme2,
+  InterpolateFunction,
   isBooleanUnit,
+  SortedVector,
   TimeRange,
 } from '@grafana/data';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
@@ -18,10 +21,35 @@ import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 export function prepareGraphableFields(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  timeRange?: TimeRange
+  timeRange?: TimeRange,
+  // numeric X requires a single frame where the first field is numeric
+  xNumFieldIdx?: number
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  let useNumericX = xNumFieldIdx != null;
+
+  // Make sure the numeric x field is first in the frame
+  if (xNumFieldIdx != null && xNumFieldIdx > 0) {
+    series = [
+      {
+        ...series[0],
+        fields: [series[0].fields[xNumFieldIdx], ...series[0].fields.filter((f, i) => i !== xNumFieldIdx)],
+      },
+    ];
+  }
+
+  // some datasources simply tag the field as time, but don't convert to milli epochs
+  // so we're stuck with doing the parsing here to avoid Moment slowness everywhere later
+  // this mutates (once)
+  for (let frame of series) {
+    for (let field of frame.fields) {
+      if (field.type === FieldType.time && typeof field.values[0] !== 'number') {
+        field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
+      }
+    }
   }
 
   let copy: Field;
@@ -34,30 +62,42 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
-    let nulledFrame = applyNullInsertThreshold({
-      frame,
-      refFieldPseudoMin: timeRange?.from.valueOf(),
-      refFieldPseudoMax: timeRange?.to.valueOf(),
-    });
+    let nulledFrame = useNumericX
+      ? frame
+      : applyNullInsertThreshold({
+          frame,
+          refFieldPseudoMin: timeRange?.from.valueOf(),
+          refFieldPseudoMax: timeRange?.to.valueOf(),
+        });
 
-    for (const field of nullToValue(nulledFrame).fields) {
+    const frameFields = nullToValue(nulledFrame).fields;
+
+    for (let fieldIdx = 0; fieldIdx < frameFields?.length ?? 0; fieldIdx++) {
+      const field = frameFields[fieldIdx];
+
       switch (field.type) {
         case FieldType.time:
           hasTimeField = true;
           fields.push(field);
           break;
         case FieldType.number:
-          hasValueField = true;
+          hasValueField = useNumericX ? fieldIdx > 0 : true;
           copy = {
             ...field,
-            values: new ArrayVector(
-              field.values.toArray().map((v) => {
-                if (!(Number.isFinite(v) || v == null)) {
-                  return null;
-                }
-                return v;
-              })
-            ),
+            values: field.values.map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            }),
+          };
+
+          fields.push(copy);
+          break; // ok
+        case FieldType.string:
+          copy = {
+            ...field,
+            values: field.values,
           };
 
           fields.push(copy);
@@ -81,14 +121,12 @@ export function prepareGraphableFields(
             ...field,
             config,
             type: FieldType.number,
-            values: new ArrayVector(
-              field.values.toArray().map((v) => {
-                if (v == null) {
-                  return v;
-                }
-                return Boolean(v) ? 1 : 0;
-              })
-            ),
+            values: field.values.map((v) => {
+              if (v == null) {
+                return v;
+              }
+              return Boolean(v) ? 1 : 0;
+            }),
           };
 
           if (!isBooleanUnit(config.unit)) {
@@ -101,7 +139,7 @@ export function prepareGraphableFields(
       }
     }
 
-    if (hasTimeField && hasValueField) {
+    if ((useNumericX || hasTimeField) && hasValueField) {
       frames.push({
         ...frame,
         length: nulledFrame.length,
@@ -111,15 +149,71 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
+    setClassicPaletteIdxs(frames, theme, 0);
     return frames;
   }
 
   return null;
 }
 
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
+  let seriesIndex = 0;
+  frames.forEach((frame) => {
+    frame.fields.forEach((field, fieldIdx) => {
+      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
+      if (fieldIdx !== skipFieldIdx && (field.type === FieldType.number || field.type === FieldType.boolean)) {
+        field.state = {
+          ...field.state,
+          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
+        };
+        field.display = getDisplayProcessor({ field, theme });
+      }
+    });
+  });
+};
+
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
   if (!timezones || !timezones.length) {
     return [defaultTimezone];
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
+}
+
+export function regenerateLinksSupplier(
+  alignedDataFrame: DataFrame,
+  frames: DataFrame[],
+  replaceVariables: InterpolateFunction,
+  timeZone: string
+): DataFrame {
+  alignedDataFrame.fields.forEach((field) => {
+    if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
+      return;
+    }
+
+    /* check if field has sortedVector values
+      if it does, sort all string fields in the original frame by the order array already used for the field
+      otherwise just attach the fields to the temporary frame used to get the links
+    */
+    const tempFields: Field[] = [];
+    for (const frameField of frames[field.state?.origin?.frameIndex].fields) {
+      if (frameField.type === FieldType.string) {
+        if (field.values instanceof SortedVector) {
+          const copiedField = { ...frameField };
+          copiedField.values = new SortedVector(frameField.values, field.values.getOrderArray());
+          tempFields.push(copiedField);
+        } else {
+          tempFields.push(frameField);
+        }
+      }
+    }
+
+    const tempFrame: DataFrame = {
+      fields: [...alignedDataFrame.fields, ...tempFields],
+      length: alignedDataFrame.fields.length + tempFields.length,
+    };
+
+    field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
+  });
+
+  return alignedDataFrame;
 }

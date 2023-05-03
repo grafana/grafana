@@ -5,7 +5,7 @@ import { statPanelChangedHandler } from './StatMigrations';
 
 describe('Stat Panel Migrations', () => {
   it('change from angular singlestat sparkline disabled', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -21,7 +21,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('change from angular singlestat sparkline enabled', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -37,7 +37,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('change from angular singlestat color background', () => {
-    const old: any = {
+    const old = {
       angular: {
         format: 'ms',
         decimals: 7,
@@ -51,7 +51,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('change from angular singlestat with name stat', () => {
-    const old: any = {
+    const old = {
       angular: {
         valueName: 'name',
       },
@@ -63,7 +63,7 @@ describe('Stat Panel Migrations', () => {
   });
 
   it('use no color unless one was configured', () => {
-    let old: any = {
+    const old = {
       angular: {
         valueName: 'name',
       },
@@ -73,7 +73,7 @@ describe('Stat Panel Migrations', () => {
     let options = statPanelChangedHandler(panel, 'singlestat', old);
     expect(options.colorMode).toBe(BigValueColorMode.None);
 
-    old = {
+    const oldWithColorBackground = {
       angular: {
         valueName: 'name',
         colorBackground: true,
@@ -81,7 +81,7 @@ describe('Stat Panel Migrations', () => {
     };
 
     panel = {} as PanelModel;
-    options = statPanelChangedHandler(panel, 'singlestat', old);
+    options = statPanelChangedHandler(panel, 'singlestat', oldWithColorBackground);
     expect(options.colorMode).toBe(BigValueColorMode.Background);
   });
 });

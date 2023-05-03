@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistory';
-
-import { ExploreId } from '../../../types/explore';
+import { ExploreId } from 'app/types';
 
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
 
@@ -23,7 +22,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const setup = (propOverrides?: Partial<RichHistoryProps>) => {
   const props: RichHistoryProps = {
-    theme: {} as GrafanaTheme,
+    theme: {} as GrafanaTheme2,
     exploreId: ExploreId.left,
     height: 100,
     activeDatasourceInstance: 'Test datasource',

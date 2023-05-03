@@ -2,6 +2,7 @@
 import {
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   MetricFindValue,
@@ -68,7 +69,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
     return Promise.resolve({ data: results });
   }
 
-  testDatasource() {
+  testDatasource(): Promise<TestDataSourceResponse> {
     return new Promise((resolve, reject) => {
       let rowCount = 0;
       let info = `${this.data.length} Series:`;

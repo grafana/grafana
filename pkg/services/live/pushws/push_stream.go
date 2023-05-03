@@ -3,13 +3,13 @@ package pushws
 import (
 	"net/http"
 
+	"github.com/gorilla/websocket"
+	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
+
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
-
-	"github.com/gorilla/websocket"
-	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 // Handler handles WebSocket client connections that push data to Live.
@@ -67,7 +67,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		stream, err := s.managedStreamRunner.GetOrCreateStream(user.OrgId, liveDto.ScopeStream, streamID)
+		stream, err := s.managedStreamRunner.GetOrCreateStream(user.OrgID, liveDto.ScopeStream, streamID)
 		if err != nil {
 			logger.Error("Error getting stream", "error", err)
 			continue

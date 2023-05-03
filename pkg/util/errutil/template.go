@@ -50,7 +50,7 @@ type TemplateOpt func(Template) (Template, error)
 
 // MustTemplate panics if the template for Template cannot be compiled.
 //
-// Only useful for global or package level initialization of Template:s.
+// Only useful for global or package level initialization of [Template].
 func (b Base) MustTemplate(pattern string, opts ...TemplateOpt) Template {
 	res, err := b.Template(pattern, opts...)
 	if err != nil {
@@ -63,7 +63,7 @@ func (b Base) MustTemplate(pattern string, opts ...TemplateOpt) Template {
 // WithPublic provides templating for the user facing error message based
 // on only the fields available in TemplateData.Public.
 //
-// Used as a functional option to Base.Template.
+// Used as a functional option to [Base.Template].
 func WithPublic(pattern string) TemplateOpt {
 	return func(t Template) (Template, error) {
 		var err error
@@ -77,7 +77,7 @@ func WithPublic(pattern string) TemplateOpt {
 // TemplateData.Error and TemplateData.Private will not be populated
 // when rendering the public message.
 //
-// Used as a functional option to Base.Template.
+// Used as a functional option to [Base.Template].
 func WithPublicFromLog() TemplateOpt {
 	return func(t Template) (Template, error) {
 		t.publicTemplate = t.logTemplate
@@ -85,8 +85,8 @@ func WithPublicFromLog() TemplateOpt {
 	}
 }
 
-// Build returns a new Error based on the base Template and the provided
-// TemplateData, wrapping the error in TemplateData.Error if set.
+// Build returns a new [Error] based on the base [Template] and the
+// provided [TemplateData], wrapping the error in TemplateData.Error.
 //
 // Build can fail and return an error that is not of type Error.
 func (t Template) Build(data TemplateData) error {
@@ -114,4 +114,8 @@ func (t Template) Build(data TemplateData) error {
 	e.Underlying = data.Error
 
 	return e
+}
+
+func (t Template) Error() string {
+	return t.Base.Error()
 }

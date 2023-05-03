@@ -3,8 +3,9 @@ package manager
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type TeamGuardianMock struct {
@@ -16,7 +17,7 @@ func NewTeamGuardianMock() *TeamGuardianMock {
 	return &TeamGuardianMock{}
 }
 
-func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error {
+func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *user.SignedInUser) error {
 	args := t.Called(ctx, orgId, teamId, user)
 	return args.Error(0)
 }

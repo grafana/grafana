@@ -3,11 +3,11 @@ package pushws
 import (
 	"net/http"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
-
-	"github.com/gorilla/websocket"
 )
 
 // PipelinePushHandler handles WebSocket client connections that push data to Live Pipeline.
@@ -71,7 +71,7 @@ func (s *PipelinePushHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 			"bodyLength", len(body),
 		)
 
-		ruleFound, err := s.pipeline.ProcessInput(r.Context(), user.OrgId, channelID, body)
+		ruleFound, err := s.pipeline.ProcessInput(r.Context(), user.OrgID, channelID, body)
 		if err != nil {
 			logger.Error("Pipeline input processing error", "error", err, "body", string(body))
 			return

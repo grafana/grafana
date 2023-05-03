@@ -2,12 +2,12 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"gocloud.dev/blob"
+
+	"github.com/grafana/grafana/pkg/infra/filestorage"
 )
 
 const rootStorageTypeDisk = "disk"
@@ -46,7 +46,8 @@ func newDiskStorage(meta RootStorageMeta, scfg RootStorageConfig) *rootStorageDi
 	}
 
 	if meta.Notice == nil {
-		path := fmt.Sprintf("file://%s", cfg.Path)
+		protocol := "file:///"
+		path := protocol + cfg.Path
 		bucket, err := blob.OpenBucket(context.Background(), path)
 		if err != nil {
 			grafanaStorageLogger.Warn("error loading storage", "prefix", scfg.Prefix, "err", err)

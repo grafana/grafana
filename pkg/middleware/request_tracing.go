@@ -27,9 +27,18 @@ var routeOperationNameKey = contextKey{}
 // Implements routing.RegisterNamedMiddleware.
 func ProvideRouteOperationName(name string) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		ctx := context.WithValue(c.Req.Context(), routeOperationNameKey, name)
-		c.Req = c.Req.WithContext(ctx)
+		c.Req = addRouteNameToContext(c.Req, name)
 	}
+}
+
+func addRouteNameToContext(req *http.Request, operationName string) *http.Request {
+	// don't set route name if it's set
+	if _, exists := RouteOperationName(req); exists {
+		return req
+	}
+
+	ctx := context.WithValue(req.Context(), routeOperationNameKey, operationName)
+	return req.WithContext(ctx)
 }
 
 var unnamedHandlers = []struct {
@@ -40,13 +49,14 @@ var unnamedHandlers = []struct {
 	{handler: "public-assets", pathPattern: regexp.MustCompile("^/public/")},
 	{handler: "/metrics", pathPattern: regexp.MustCompile("^/metrics")},
 	{handler: "/healthz", pathPattern: regexp.MustCompile("^/healthz")},
+	{handler: "/api/health", pathPattern: regexp.MustCompile("^/api/health")},
 	{handler: "/robots.txt", pathPattern: regexp.MustCompile("^/robots.txt$")},
 	// bundle all pprof endpoints under the same handler name
 	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},
 }
 
-// routeOperationName receives the route operation name from context, if set.
-func routeOperationName(req *http.Request) (string, bool) {
+// RouteOperationName receives the route operation name from context, if set.
+func RouteOperationName(req *http.Request) (string, bool) {
 	if val := req.Context().Value(routeOperationNameKey); val != nil {
 		op, ok := val.(string)
 		return op, ok
@@ -72,7 +82,7 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			rw := web.Rw(w, req)
 
 			wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-			ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+			ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
 			req = req.WithContext(ctx)
 			next.ServeHTTP(w, req)
@@ -80,7 +90,7 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			// Only call span.Finish when a route operation name have been set,
 			// meaning that not set the span would not be reported.
 			// TODO: do not depend on web.Context from the future
-			if routeOperation, exists := routeOperationName(web.FromContext(req.Context()).Req); exists {
+			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
 				defer span.End()
 				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 			}

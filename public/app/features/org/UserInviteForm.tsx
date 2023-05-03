@@ -1,19 +1,9 @@
 import React from 'react';
 
 import { locationUtil } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
-import {
-  Button,
-  LinkButton,
-  Input,
-  Switch,
-  RadioButtonGroup,
-  Form,
-  Field,
-  InputControl,
-  FieldSet,
-  Stack,
-} from '@grafana/ui';
+import { Button, LinkButton, Input, Switch, RadioButtonGroup, Form, Field, InputControl, FieldSet } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';
 

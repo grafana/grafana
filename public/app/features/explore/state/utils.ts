@@ -3,20 +3,22 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
-  DataSourceRef,
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
 } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
-import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
@@ -27,11 +29,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-const loadGraphStyle = (): ExploreGraphStyle => {
-  const data = store.get(GRAPH_STYLE_KEY);
-  return toGraphStyle(data);
 };
 
 /**
@@ -62,12 +59,12 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  clearedAtIndex: null,
+  rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  logsVolumeDataProvider: undefined,
-  logsVolumeData: undefined,
-  graphStyle: loadGraphStyle(),
+  supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
 });
 
@@ -79,7 +76,10 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
   tableFrames: [],
+  rawPrometheusFrames: [],
+  rawPrometheusResult: null,
   graphResult: null,
   logsResult: null,
   tableResult: null,
@@ -160,3 +160,19 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};

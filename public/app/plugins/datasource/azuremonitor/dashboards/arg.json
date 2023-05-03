@@ -1,0 +1,3042 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "8.2.0-pre"
+    },
+    {
+      "type": "datasource",
+      "id": "grafana-azure-monitor-datasource",
+      "name": "Azure Monitor",
+      "version": "0.3.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "editable": true,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Azure Resource Graph queries by Billy York",
+      "tooltip": "See more",
+      "type": "link",
+      "url": "https://github.com/scautomation/AzureResourceGraph-Examples"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "panels": [],
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "datasource": "${ds}",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 7,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "account": "",
+          "azureResourceGraph": {
+            "query": "Resources | summarize count(type)",
+            "resultFormat": "table"
+          },
+          "backends": [],
+          "dimension": "",
+          "environment": "prod",
+          "metric": "",
+          "namespace": "",
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "samplingType": "",
+          "service": "metric",
+          "subscriptions": ["$subscriptions"],
+          "useBackends": false,
+          "useCustomSeriesNaming": false
+        }
+      ],
+      "title": "Count of All Resources",
+      "type": "stat"
+    },
+    {
+      "datasource": "${ds}",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 386
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "properties"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 339
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 17,
+        "x": 7,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "account": "",
+          "azureResourceGraph": {
+            "query": "resourcecontainers \r\n| where type has \"microsoft.resources/subscriptions/resourcegroups\"\r\n| summarize Count=count(type) by type, subscriptionId | extend type = replace(@\"microsoft.resources/subscriptions/resourcegroups\", @\"Resource Groups\", type)",
+            "resultFormat": "table"
+          },
+          "backends": [],
+          "dimension": "",
+          "environment": "prod",
+          "metric": "",
+          "namespace": "",
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "samplingType": "",
+          "service": "metric",
+          "subscriptions": ["$subscriptions"],
+          "useBackends": false,
+          "useCustomSeriesNaming": false
+        }
+      ],
+      "title": "Subscriptions and Resource Groups",
+      "type": "table"
+    },
+    {
+      "datasource": "${ds}",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": true
+        },
+        "text": {
+          "titleSize": 18
+        },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "account": "",
+          "azureResourceGraph": {
+            "query": "Resources \r\n| extend type = case(\r\ntype contains 'microsoft.netapp/netappaccounts', 'NetApp Accounts',\r\ntype contains \"microsoft.compute\", \"Azure Compute\",\r\ntype contains \"microsoft.logic\", \"LogicApps\",\r\ntype contains 'microsoft.keyvault/vaults', \"Key Vaults\",\r\ntype contains 'microsoft.storage/storageaccounts', \"Storage Accounts\",\r\ntype contains 'microsoft.compute/availabilitysets', 'Availability Sets',\r\ntype contains 'microsoft.operationalinsights/workspaces', 'Azure Monitor Resources',\r\ntype contains 'microsoft.operationsmanagement', 'Operations Management Resources',\r\ntype contains 'microsoft.insights', 'Azure Monitor Resources',\r\ntype contains 'microsoft.desktopvirtualization/applicationgroups', 'WVD Application Groups',\r\ntype contains 'microsoft.desktopvirtualization/workspaces', 'WVD Workspaces',\r\ntype contains 'microsoft.desktopvirtualization/hostpools', 'WVD Hostpools',\r\ntype contains 'microsoft.recoveryservices/vaults', 'Backup Vaults',\r\ntype contains 'microsoft.web', 'App Services',\r\ntype contains 'microsoft.managedidentity/userassignedidentities','Managed Identities',\r\ntype contains 'microsoft.storagesync/storagesyncservices', 'Azure File Sync',\r\ntype contains 'microsoft.hybridcompute/machines', 'ARC Machines',\r\ntype contains 'Microsoft.EventHub', 'Event Hub',\r\ntype contains 'Microsoft.EventGrid', 'Event Grid',\r\ntype contains 'Microsoft.Sql', 'SQL Resources',\r\ntype contains 'Microsoft.HDInsight/clusters', 'HDInsight Clusters',\r\ntype contains 'microsoft.devtestlab', 'DevTest Labs Resources',\r\ntype contains 'microsoft.containerinstance', 'Container Instances Resources',\r\ntype contains 'microsoft.portal/dashboards', 'Azure Dashboards',\r\ntype contains 'microsoft.containerregistry/registries', 'Container Registry',\r\ntype contains 'microsoft.automation', 'Automation Resources',\r\ntype contains 'sendgrid.email/accounts', 'SendGrid Accounts',\r\ntype contains 'microsoft.datafactory/factories', 'Data Factory',\r\ntype contains 'microsoft.databricks/workspaces', 'Databricks Workspaces',\r\ntype contains 'microsoft.machinelearningservices/workspaces', 'Machine Learnings Workspaces',\r\ntype contains 'microsoft.alertsmanagement/smartdetectoralertrules', 'Azure Monitor Resources',\r\ntype contains 'microsoft.apimanagement/service', 'API Management Services',\r\ntype contains 'microsoft.dbforpostgresql', 'PostgreSQL Resources',\r\ntype contains 'microsoft.scheduler/jobcollections', 'Scheduler Job Collections',\r\ntype contains 'microsoft.visualstudio/account', 'Azure DevOps Organization',\r\ntype contains 'microsoft.network/', 'Network Resources',\r\ntype contains 'microsoft.migrate/' or type contains 'microsoft.offazure', 'Azure Migrate Resources',\r\ntype contains 'microsoft.servicebus/namespaces', 'Service Bus Namespaces',\r\ntype contains 'microsoft.classic', 'ASM Obsolete Resources',\r\ntype contains 'microsoft.resources/templatespecs', 'Template Spec Resources',\r\ntype contains 'microsoft.virtualmachineimages', 'VM Image Templates',\r\ntype contains 'microsoft.documentdb', 'CosmosDB DB Resources',\r\ntype contains 'microsoft.alertsmanagement/actionrules', 'Azure Monitor Resources',\r\ntype contains 'microsoft.kubernetes/connectedclusters', 'ARC Kubernetes Clusters',\r\ntype contains 'microsoft.purview', 'Purview Resources',\r\ntype contains 'microsoft.security', 'Security Resources',\r\ntype contains 'microsoft.cdn', 'CDN Resources',\r\ntype contains 'microsoft.devices','IoT Resources',\r\ntype contains 'microsoft.datamigration', 'Data Migraiton Services',\r\ntype contains 'microsoft.cognitiveservices', 'Congitive Services',\r\ntype contains 'microsoft.customproviders', 'Custom Providers',\r\ntype contains 'microsoft.appconfiguration', 'App Services',\r\ntype contains 'microsoft.search', 'Search Services',\r\ntype contains 'microsoft.maps', 'Maps',\r\ntype contains 'microsoft.containerservice/managedclusters', 'AKS',\r\ntype contains 'microsoft.signalrservice', 'SignalR',\r\ntype contains 'microsoft.resourcegraph/queries', 'Resource Graph Queries',\r\ntype contains 'microsoft.batch', 'MS Batch',\r\ntype contains 'microsoft.analysisservices', 'Analysis Services',\r\ntype contains 'microsoft.synapse/workspaces', 'Synapse Workspaces',\r\ntype contains 'microsoft.synapse/workspaces/sqlpools', 'Synapse SQL Pools',\r\ntype contains 'microsoft.kusto/clusters', 'ADX Clusters',\r\ntype contains 'microsoft.resources/deploymentscripts', 'Deployment Scripts',\r\ntype contains 'microsoft.aad/domainservices', 'AD Domain Services',\r\ntype contains 'microsoft.labservices/labaccounts', 'Lab Accounts',\r\ntype contains 'microsoft.automanage/accounts', 'Automanage Accounts',\r\nstrcat(\"Not Translated: \", type))\r\n| summarize count() by type",
+            "resultFormat": "table"
+          },
+          "backends": [],
+          "dimension": "",
+          "environment": "prod",
+          "metric": "",
+          "namespace": "",
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "samplingType": "",
+          "service": "metric",
+          "subscriptions": ["$subscriptions"],
+          "useBackends": false,
+          "useCustomSeriesNaming": false
+        }
+      ],
+      "title": "Resource Counts",
+      "type": "stat"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 10,
+      "panels": [
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 6,
+            "x": 0,
+            "y": 2
+          },
+          "id": 12,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources | where type == \"microsoft.compute/virtualmachines\"\r\n| extend vmState = tostring(properties.extended.instanceView.powerState.displayStatus)\r\n| extend vmState = iif(isempty(vmState), \"VM State Unknown\", (vmState))\r\n| summarize count() by vmState",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Current VM Status",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 18,
+            "x": 6,
+            "y": 2
+          },
+          "id": 13,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources | where type =~ \"microsoft.compute/virtualmachines\"\r\nor type =~ 'microsoft.compute/virtualmachinescalesets'\r\n| extend Size = case(\r\ntype contains 'microsoft.compute/virtualmachinescalesets', strcat(\"VMSS \", sku.name),\r\ntype contains 'microsoft.compute/virtualmachines', properties.hardwareProfile.vmSize,\r\n\"Size not found\")\r\n| summarize Count=count(Size) by vmSize=tostring(Size)",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Count of VMs by VM Size",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "OverProvision"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 141
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "location"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 90
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Size"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 154
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Capacity"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 118
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "OSType"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 115
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "UpgradeMode"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 157
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "resourceGroup"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 281
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 24,
+            "x": 0,
+            "y": 8
+          },
+          "id": 15,
+          "options": {
+            "showHeader": true,
+            "sortBy": []
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources \r\n| where type has 'microsoft.compute/virtualmachinescalesets'\r\n| extend Size = sku.name\r\n| extend Capacity = sku.capacity\r\n| extend UpgradeMode = properties.upgradePolicy.mode\r\n| extend OSType = properties.virtualMachineProfile.storageProfile.osDisk.osType\r\n| extend OS = properties.virtualMachineProfile.storageProfile.imageReference.offer\r\n| extend OSVersion = properties.virtualMachineProfile.storageProfile.imageReference.sku\r\n| extend OverProvision = properties.overprovision\r\n| extend ZoneBalance = properties.zoneBalance\r\n| extend Details = pack_all()\r\n| project VMSS = id, location, resourceGroup, subscriptionId, Size, Capacity, OSType, UpgradeMode, OverProvision, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "VM Scale Sets",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 12
+          },
+          "id": 17,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources \r\n| where type == \"microsoft.compute/virtualmachines\"\r\n| extend vmID = tolower(id)\r\n| extend osDiskId= tolower(tostring(properties.storageProfile.osDisk.managedDisk.id))\r\n        | join kind=leftouter(resources\r\n            | where type =~ 'microsoft.compute/disks'\r\n            | where properties !has 'Unattached'\r\n            | where properties has 'osType'\r\n            | project timeCreated = tostring(properties.timeCreated), OS = tostring(properties.osType), osSku = tostring(sku.name), osDiskSizeGB = toint(properties.diskSizeGB), osDiskId=tolower(tostring(id))) on osDiskId\r\n        | join kind=leftouter(resources\r\n\t\t\t| where type =~ 'microsoft.compute/availabilitysets'\r\n\t\t\t| extend VirtualMachines = array_length(properties.virtualMachines)\r\n\t\t\t| mv-expand VirtualMachine=properties.virtualMachines\r\n\t\t\t| extend FaultDomainCount = properties.platformFaultDomainCount\r\n\t\t\t| extend UpdateDomainCount = properties.platformUpdateDomainCount\r\n\t\t\t| extend vmID = tolower(VirtualMachine.id)\r\n\t\t\t| project AvailabilitySetID = id, vmID, FaultDomainCount, UpdateDomainCount ) on vmID\r\n\t\t| join kind=leftouter(resources\r\n\t\t\t| where type =~ 'microsoft.sqlvirtualmachine/sqlvirtualmachines'\r\n\t\t\t| extend SQLLicense = properties.sqlServerLicenseType\r\n\t\t\t| extend SQLImage = properties.sqlImageOffer\r\n\t\t\t| extend SQLSku = properties.sqlImageSku\r\n\t\t\t| extend SQLManagement = properties.sqlManagement\r\n\t\t\t| extend vmID = tostring(tolower(properties.virtualMachineResourceId))\r\n\t\t\t| project SQLId=id, SQLLicense, SQLImage, SQLSku, SQLManagement, vmID ) on vmID\r\n| project-away vmID1, vmID2, osDiskId1\r\n| extend Details = pack_all()\r\n| project vmID, SQLId, AvailabilitySetID, OS, resourceGroup, location, subscriptionId, SQLLicense, SQLImage,SQLSku, SQLManagement, FaultDomainCount, UpdateDomainCount, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "VM Overview",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 25
+          },
+          "id": 18,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources \r\n| where type == \"microsoft.compute/virtualmachines\"\r\n| extend osDiskId= tolower(tostring(properties.storageProfile.osDisk.managedDisk.id))\r\n        | join kind=leftouter(resources\r\n            | where type =~ 'microsoft.compute/disks'\r\n            | where properties !has 'Unattached'\r\n            | where properties has 'osType'\r\n            | project timeCreated = tostring(properties.timeCreated), OS = tostring(properties.osType), osSku = tostring(sku.name), osDiskSizeGB = toint(properties.diskSizeGB), osDiskId=tolower(tostring(id))) on osDiskId\r\n        | join kind=leftouter(Resources\r\n            | where type =~ 'microsoft.compute/disks'\r\n            | where properties !has \"osType\"\r\n            | where properties !has 'Unattached'\r\n            | project sku = tostring(sku.name), diskSizeGB = toint(properties.diskSizeGB), id = managedBy\r\n            | summarize sum(diskSizeGB), count(sku) by id, sku) on id\r\n| project vmId=id, OS, location, resourceGroup, timeCreated,subscriptionId, osDiskId, osSku, osDiskSizeGB, DataDisksGB=sum_diskSizeGB, diskSkuCount=count_sku\r\n| sort by diskSkuCount desc",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "VM Storage",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 38
+          },
+          "id": 19,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources\r\n| where type =~ 'microsoft.compute/virtualmachines'\r\n| extend nics=array_length(properties.networkProfile.networkInterfaces)\r\n| mv-expand nic=properties.networkProfile.networkInterfaces\r\n| where nics == 1 or nic.properties.primary =~ 'true' or isempty(nic)\r\n| project vmId = id, vmName = name, vmSize=tostring(properties.hardwareProfile.vmSize), nicId = tostring(nic.id)\r\n\t| join kind=leftouter (\r\n \t\tResources\r\n  \t\t| where type =~ 'microsoft.network/networkinterfaces'\r\n  \t\t| extend ipConfigsCount=array_length(properties.ipConfigurations)\r\n  \t\t| mv-expand ipconfig=properties.ipConfigurations\r\n  \t\t| where ipConfigsCount == 1 or ipconfig.properties.primary =~ 'true'\r\n  \t\t| project nicId = id, privateIP= tostring(ipconfig.properties.privateIPAddress), publicIpId = tostring(ipconfig.properties.publicIPAddress.id), subscriptionId) on nicId\r\n| project-away nicId1\r\n| summarize by vmId, vmSize, nicId, privateIP, publicIpId, subscriptionId\r\n\t| join kind=leftouter (\r\n  \t\tResources\r\n  \t\t| where type =~ 'microsoft.network/publicipaddresses'\r\n  \t\t| project publicIpId = id, publicIpAddress = tostring(properties.ipAddress)) on publicIpId\r\n| project-away publicIpId1\r\n| sort by publicIpAddress desc",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "VM Networking",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 51
+          },
+          "id": 21,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources  \r\n| where type contains \"microsoft.compute/disks\" \r\n| extend diskState = tostring(properties.diskState)\r\n| where managedBy == \"\"\r\n    or diskState == 'Unattached'\r\n| project id, diskState, resourceGroup, location, subscriptionId",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Orphaned Disks",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 64
+          },
+          "id": 20,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ \"microsoft.network/networkinterfaces\"\r\n| join kind=leftouter (resources\r\n| where type =~ 'microsoft.network/privateendpoints'\r\n| extend nic = todynamic(properties.networkInterfaces)\r\n| mv-expand nic\r\n| project id=tostring(nic.id) ) on id\r\n| where isempty(id1)\r\n| where properties !has 'virtualmachine'\r\n| project id, resourceGroup, location, subscriptionId",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Orphaned NICs",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 77
+          },
+          "id": 26,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "where type == \"microsoft.hybridcompute/machines\"\r\n| project MachineId=id, status = properties.status, \r\n\t\t\t  LastSeen = properties.lastStatusChange, \r\n\t\t\t  FQDN = properties.machineFqdn, \r\n\t\t\t  OS = properties.osName, \r\n\t\t\t  ServerVersion = properties.osVersion\r\n| extend ServerVersion = case(\r\n    ServerVersion has '10.0.17763', 'Server 2019',\r\n    ServerVersion has '10.0.16299', 'Server 2016',\r\n    ServerVersion has '10.0.14393', 'Server 2016',\r\n    ServerVersion has '6.3.9600', 'Server 2012 R2',\r\n\tServerVersion)",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Hybrid Compute",
+          "type": "table"
+        }
+      ],
+      "title": "Compute",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 23,
+      "panels": [
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 3
+          },
+          "id": 25,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.automation'\r\n\tor type has 'microsoft.logic'\r\n\tor type has 'microsoft.web/customapis'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.automation/automationaccounts', 'Automation Accounts',\r\n\ttype == 'microsoft.web/serverfarms', \"App Service Plans\",\r\n\tkind == 'functionapp', \"Azure Functions\", \r\n\tkind == \"api\", \"API Apps\", \r\n\ttype == 'microsoft.web/sites', \"App Services\",\r\n\ttype =~ 'microsoft.web/connections', 'LogicApp Connectors',\r\n\ttype =~ 'microsoft.web/customapis','LogicApp API Connectors',\r\n\ttype =~ 'microsoft.logic/workflows','LogicApps',\r\n    type =~ 'microsoft.logic/integrationaccounts', 'Integration Accounts',\r\n\ttype =~ 'microsoft.automation/automationaccounts/runbooks', 'Automation Runbooks',\r\n    type =~ 'microsoft.automation/automationaccounts/configurations', 'Automation Configurations',\r\nstrcat(\"Not Translated: \", type))\r\n| summarize count() by type\r\n| where type !has \"Not Translated\"",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Animation Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 3
+          },
+          "id": 27,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.automation'\r\n\t or type has 'microsoft.logic'\r\n\t or type has 'microsoft.web/customapis'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.automation/automationaccounts', 'Automation Accounts',\r\n\ttype =~ 'microsoft.web/connections', 'LogicApp Connectors',\r\n\ttype =~ 'microsoft.web/customapis','LogicApp API Connectors',\r\n\ttype =~ 'microsoft.logic/workflows','LogicApps',\r\n    type =~ 'microsoft.logic/integrationaccounts', 'Integration Accounts',\r\n\ttype =~ 'microsoft.automation/automationaccounts/runbooks', 'Automation Runbooks',\r\n\ttype =~ 'microsoft.automation/automationaccounts/configurations', 'Automation Configurations',\r\n\tstrcat(\"Not Translated: \", type))\r\n| extend RunbookType = tostring(properties.runbookType)\r\n| extend LogicAppTrigger = properties.definition.triggers\r\n| extend LogicAppTrigger = iif(type =~ 'LogicApps', case(\r\n\tLogicAppTrigger has 'manual', tostring(LogicAppTrigger.manual.type),\r\n\tLogicAppTrigger has 'Recurrence', tostring(LogicAppTrigger.Recurrence.type),\r\n    LogicAppTrigger has 'When_an_Azure_Security_Center_Alert', 'Azure Security Center Alert',\r\n    LogicAppTrigger has 'When_an_Azure_Security_Center_Recommendation', 'Azure Security Center Recommendation',\r\n    LogicAppTrigger has 'When_a_response_to_an_Azure_Sentinel_alert', 'Azure Sentinel Alert',\r\n    LogicAppTrigger has 'When_Azure_Sentinel_incident_creation', 'Azure Sentinel Incident',\r\n\tstrcat(\"Unknown Trigger type\", LogicAppTrigger)), LogicAppTrigger)\r\n| extend State = case(\r\n\ttype =~ 'Automation Runbooks', properties.state, \r\n\ttype =~ 'LogicApps', properties.state,\r\n\ttype =~ 'Automation Accounts', properties.state,\r\n\ttype =~ 'Automation Configurations', properties.state,\r\n\t' ')\r\n| extend CreatedDate = case(\r\n\ttype =~ 'Automation Runbooks', properties.creationTime, \r\n\ttype =~ 'LogicApps', properties.createdTime,\r\n\ttype =~ 'Automation Accounts', properties.creationTime,\r\n\ttype =~ 'Automation Configurations', properties.creationTime,\r\n\t' ')\r\n| extend LastModified = case(\r\n\ttype =~ 'Automation Runbooks', properties.lastModifiedTime, \r\n\ttype =~ 'LogicApps', properties.changedTime,\r\n\ttype =~ 'Automation Accounts', properties.lastModifiedTime,\r\n\ttype =~ 'Automation Configurations', properties.lastModifiedTime,\r\n\t' ')\r\n| extend Details = pack_all()\r\n| project Resource=id, subscriptionId, type, resourceGroup, RunbookType, LogicAppTrigger, State, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Automation Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 13
+          },
+          "id": 28,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.web'\r\n\t or type =~ 'microsoft.apimanagement/service'\r\n\t or type =~ 'microsoft.network/frontdoors'\r\n\t or type =~ 'microsoft.network/applicationgateways'\r\n\t or type =~ 'microsoft.appconfiguration/configurationstores'\r\n| extend type = case(\r\n\ttype == 'microsoft.web/serverfarms', \"App Service Plans\",\r\n\tkind == 'functionapp', \"Azure Functions\", \r\n\tkind == \"api\", \"API Apps\", \r\n\ttype == 'microsoft.web/sites', \"App Services\",\r\n\ttype =~ 'microsoft.network/applicationgateways', 'App Gateways',\r\n\ttype =~ 'microsoft.network/frontdoors', 'Front Door',\r\n\ttype =~ 'microsoft.apimanagement/service', 'API Management',\r\n\ttype =~ 'microsoft.web/certificates', 'App Certificates',\r\n\ttype =~ 'microsoft.appconfiguration/configurationstores', 'App Config Stores',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Apps Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 13
+          },
+          "id": 29,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.web'\r\n\t or type =~ 'microsoft.apimanagement/service'\r\n\t or type =~ 'microsoft.network/frontdoors'\r\n\t or type =~ 'microsoft.network/applicationgateways'\r\n\t or type =~ 'microsoft.appconfiguration/configurationstores'\r\n| extend type = case(\r\n\ttype == 'microsoft.web/serverfarms', \"App Service Plans\",\r\n\tkind == 'functionapp', \"Azure Functions\", \r\n\tkind == \"api\", \"API Apps\", \r\n\ttype == 'microsoft.web/sites', \"App Services\",\r\n\ttype =~ 'microsoft.network/applicationgateways', 'App Gateways',\r\n\ttype =~ 'microsoft.network/frontdoors', 'Front Door',\r\n\ttype =~ 'microsoft.apimanagement/service', 'API Management',\r\n\ttype =~ 'microsoft.web/certificates', 'App Certificates',\r\n\ttype =~ 'microsoft.appconfiguration/configurationstores', 'App Config Stores',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| extend Sku = case(\r\n\ttype =~ 'App Gateways', properties.sku.name, \r\n\ttype =~ 'Azure Functions', properties.sku,\r\n\ttype =~ 'API Management', sku.name,\r\n\ttype =~ 'App Service Plans', sku.name,\r\n\ttype =~ 'App Services', properties.sku,\r\n\ttype =~ 'App Config Stores', sku.name,\r\n\t' ')\r\n| extend State = case(\r\n\ttype =~ 'App Config Stores', properties.provisioningState,\r\n\ttype =~ 'App Service Plans', properties.status,\r\n\ttype =~ 'Azure Functions', properties.enabled,\r\n\ttype =~ 'App Services', properties.state,\r\n\ttype =~ 'API Management', properties.provisioningState,\r\n\ttype =~ 'App Gateways', properties.provisioningState,\r\n\ttype =~ 'Front Door', properties.provisioningState,\r\n\t' ')\r\n| mv-expand publicIpId=properties.frontendIPConfigurations\r\n| mv-expand publicIpId = publicIpId.properties.publicIPAddress.id\r\n| extend publicIpId = tostring(publicIpId)\r\n\t| join kind=leftouter(\r\n\t  \tResources\r\n  \t\t| where type =~ 'microsoft.network/publicipaddresses'\r\n  \t\t| project publicIpId = id, publicIpAddress = tostring(properties.ipAddress)) on publicIpId\r\n| extend PublicIP = case(\r\n\ttype =~ 'API Management', properties.publicIPAddresses,\r\n\ttype =~ 'App Gateways', publicIpAddress,\r\n\t' ')\r\n| extend Details = pack_all()\r\n| project Resource=id, type, subscriptionId, Sku, State, PublicIP, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Apps Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 23
+          },
+          "id": 30,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.servicebus'\r\n\tor type has 'microsoft.eventhub'\r\n\tor type has 'microsoft.eventgrid'\r\n\tor type has 'microsoft.relay'\r\n| extend type = case(\r\n\ttype == 'microsoft.eventgrid/systemtopics', \"EventGrid System Topics\",\r\n\ttype =~ \"microsoft.eventgrid/topics\", \"EventGrid Topics\",\r\n\ttype =~ 'microsoft.eventhub/namespaces', \"EventHub Namespaces\",\r\n\ttype =~ 'microsoft.servicebus/namespaces', 'ServiceBus Namespaces',\r\n\ttype =~ 'microsoft.relay/namespaces', 'Relays',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Events Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 23
+          },
+          "id": 31,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.servicebus'\r\n\tor type has 'microsoft.eventhub'\r\n\tor type has 'microsoft.eventgrid'\r\n\tor type has 'microsoft.relay'\r\n| extend type = case(\r\n\ttype == 'microsoft.eventgrid/systemtopics', \"EventGrid System Topics\",\r\n\ttype =~ \"microsoft.eventgrid/topics\", \"EventGrid Topics\",\r\n\ttype =~ 'microsoft.eventhub/namespaces', \"EventHub Namespaces\",\r\n\ttype =~ 'microsoft.servicebus/namespaces', 'ServiceBus Namespaces',\r\n\ttype =~ 'microsoft.relay/namespaces', 'Relays',\r\n\tstrcat(\"Not Translated: \", type))\r\n| extend Sku = case(\r\n\ttype =~ 'Relays', sku.name, \r\n\ttype =~ 'EventGrid System Topics', properties.sku,\r\n\ttype =~ 'EventGrid Topics', sku.name,\r\n\ttype =~ 'EventHub Namespaces', sku.name,\r\n\ttype =~ 'ServiceBus Namespaces', sku.sku,\r\n\t' ')\r\n| extend Endpoint = case(\r\n\ttype =~ 'Relays', properties.serviceBusEndpoint,\r\n\ttype =~ 'EventGrid Topics', properties.endpoint,\r\n\ttype =~ 'EventHub Namespaces', properties.serviceBusEndpoint,\r\n\ttype =~ 'ServiceBus Namespaces', properties.serviceBusEndpoint,\r\n\t' ')\r\n| extend Status = case(\r\n\ttype =~ 'Relays', properties.provisioningState,\r\n\ttype =~ 'EventGrid System Topics', properties.provisioningState,\r\n\ttype =~ 'EventGrid Topics', properties.publicNetworkAccess,\r\n\ttype =~ 'EventHub Namespaces', properties.status,\r\n\ttype =~ 'ServiceBus Namespaces', properties.status,\r\n\t' ')\r\n| extend Details = pack_all()\r\n| project Resource=id, type, subscriptionId, resourceGroup, Sku, Status, Endpoint, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Events Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 33
+          },
+          "id": 32,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources \r\n| where type has 'microsoft.documentdb'\r\n\tor type has 'microsoft.sql'\r\n\tor type has 'microsoft.dbformysql'\r\n\tor type has 'microsoft.sql'\r\n    or type has 'microsoft.purview'\r\n    or type has 'microsoft.datafactory'\r\n\tor type has 'microsoft.analysisservices'\r\n\tor type has 'microsoft.datamigration'\r\n\tor type has 'microsoft.synapse'\r\n\tor type has 'microsoft.datafactory'\r\n\tor type has 'microsoft.kusto'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.documentdb/databaseaccounts', 'CosmosDB',\r\n\ttype =~ 'microsoft.sql/servers/databases', 'SQL DBs',\r\n\ttype =~ 'microsoft.dbformysql/servers', 'MySQL',\r\n\ttype =~ 'microsoft.sql/servers', 'SQL Servers',\r\n    type =~ 'microsoft.purview/accounts', 'Purview Accounts',\r\n\ttype =~ 'microsoft.synapse/workspaces/sqlpools', 'Synapse SQL Pools',\r\n\ttype =~ 'microsoft.kusto/clusters', 'ADX Clusters',\r\n\ttype =~ 'microsoft.datafactory/factories', 'Data Factories',\r\n\ttype =~ 'microsoft.synapse/workspaces', 'Synapse Workspaces',\r\n\ttype =~ 'microsoft.analysisservices/servers', 'Analysis Services Servers',\r\n\ttype =~ 'microsoft.datamigration/services', 'DB Migration Service',\r\n\ttype =~ 'microsoft.sql/managedinstances/databases', 'Managed Instance DBs',\r\n\ttype =~ 'microsoft.sql/managedinstances', 'Managed Instnace',\r\n\ttype =~ 'microsoft.datamigration/services/projects', 'Data Migration Projects',\r\n\ttype =~ 'microsoft.sql/virtualclusters', 'SQL Virtual Clusters',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Data Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "left",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 33
+          },
+          "id": 33,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources \r\n| where type has 'microsoft.documentdb'\r\n\tor type has 'microsoft.sql'\r\n\tor type has 'microsoft.dbformysql'\r\n\tor type has 'microsoft.sql'\r\n    or type has 'microsoft.purview'\r\n    or type has 'microsoft.datafactory'\r\n\tor type has 'microsoft.analysisservices'\r\n\tor type has 'microsoft.datamigration'\r\n\tor type has 'microsoft.synapse'\r\n\tor type has 'microsoft.datafactory'\r\n\tor type has 'microsoft.kusto'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.documentdb/databaseaccounts', 'CosmosDB',\r\n\ttype =~ 'microsoft.sql/servers/databases', 'SQL DBs',\r\n\ttype =~ 'microsoft.dbformysql/servers', 'MySQL',\r\n\ttype =~ 'microsoft.sql/servers', 'SQL Servers',\r\n    type =~ 'microsoft.purview/accounts', 'Purview Accounts',\r\n\ttype =~ 'microsoft.synapse/workspaces/sqlpools', 'Synapse SQL Pools',\r\n\ttype =~ 'microsoft.kusto/clusters', 'ADX Clusters',\r\n\ttype =~ 'microsoft.datafactory/factories', 'Data Factories',\r\n\ttype =~ 'microsoft.synapse/workspaces', 'Synapse Workspaces',\r\n\ttype =~ 'microsoft.analysisservices/servers', 'Analysis Services Servers',\r\n\ttype =~ 'microsoft.datamigration/services', 'DB Migration Service',\r\n\ttype =~ 'microsoft.sql/managedinstances/databases', 'Managed Instance DBs',\r\n\ttype =~ 'microsoft.sql/managedinstances', 'Managed Instnace',\r\n\ttype =~ 'microsoft.datamigration/services/projects', 'Data Migration Projects',\r\n\ttype =~ 'microsoft.sql/virtualclusters', 'SQL Virtual Clusters',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| extend Sku = case(\r\n\ttype =~ 'CosmosDB', properties.databaseAccountOfferType,\r\n\ttype =~ 'SQL DBs', sku.name,\r\n\ttype =~ 'MySQL', sku.name,\r\n\ttype =~ 'ADX Clusters', sku.name,\r\n\ttype =~ 'Purview Accounts', sku.name,\r\n\t' ')\r\n| extend Status = case(\r\n\ttype =~ 'CosmosDB', properties.provisioningState,\r\n\ttype =~ 'SQL DBs', properties.status,\r\n\ttype =~ 'MySQL', properties.userVisibleState,\r\n\ttype =~ 'Managed Instance DBs', properties.status,\r\n\t' ')\r\n| extend Endpoint = case(\r\n\ttype =~ 'MySQL', properties.fullyQualifiedDomainName,\r\n\ttype =~ 'SQL Servers', properties.fullyQualifiedDomainName,\r\n\ttype =~ 'CosmosDB', properties.documentEndpoint,\r\n\ttype =~ 'ADX Clusters', properties.uri,\r\n\ttype =~ 'Purview Accounts', properties.endpoints,\r\n\ttype =~ 'Synapse Workspaces', properties.connectivityEndpoints,\r\n\ttype =~ 'Synapse SQL Pools', sku.name,\r\n\t' ')\r\n| extend Tier = sku.tier\r\n| extend License = properties.licenseType\r\n| extend maxSizeGB = todouble(case(\r\n\ttype =~ 'SQL DBs', properties.maxSizeBytes,\r\n\ttype =~ 'MySQL', properties.storageProfile.storageMB,\r\n\ttype =~ 'Synapse SQL Pools', properties.maxSizeBytes,\r\n\t' '))\r\n| extend maxSizeGB = case(\r\n\t\ttype has 'SQL DBs', maxSizeGB /1000 /1000 /1000,\r\n\t\ttype has 'Synapse SQL Pools', maxSizeGB /1000 /1000 /1000,\r\n\t\ttype has 'MySQL', maxSizeGB /1000,\r\n\t\tmaxSizeGB)\r\n| extend Details = pack_all()\r\n| project Resource=id, resourceGroup, subscriptionId, type, Sku, Tier, Status, Endpoint, maxSizeGB, Details\r\n",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Data Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 43
+          },
+          "id": 34,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources \r\n| where type =~ 'microsoft.storagesync/storagesyncservices'\r\n\tor type =~ 'microsoft.recoveryservices/vaults'\r\n\tor type =~ 'microsoft.storage/storageaccounts'\r\n\tor type =~ 'microsoft.keyvault/vaults'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.storagesync/storagesyncservices', 'Azure File Sync',\r\n\ttype =~ 'microsoft.recoveryservices/vaults', 'Azure Backup',\r\n\ttype =~ 'microsoft.storage/storageaccounts', 'Storage Accounts',\r\n\ttype =~ 'microsoft.keyvault/vaults', 'Key Vaults',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Storage and Backup Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 43
+          },
+          "id": 35,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources \r\n| where type =~ 'microsoft.storagesync/storagesyncservices'\r\n\tor type =~ 'microsoft.recoveryservices/vaults'\r\n\tor type =~ 'microsoft.storage/storageaccounts'\r\n\tor type =~ 'microsoft.keyvault/vaults'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.storagesync/storagesyncservices', 'Azure File Sync',\r\n\ttype =~ 'microsoft.recoveryservices/vaults', 'Azure Backup',\r\n\ttype =~ 'microsoft.storage/storageaccounts', 'Storage Accounts',\r\n\ttype =~ 'microsoft.keyvault/vaults', 'Key Vaults',\r\n\tstrcat(\"Not Translated: \", type))\r\n| extend Sku = case(\r\n\ttype !has 'Key Vaults', sku.name,\r\n\ttype =~ 'Key Vaults', properties.sku.name,\r\n\t' ')\r\n| extend Details = pack_all()\r\n| project Resource=id, type, kind, subscriptionId, resourceGroup, Sku, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Storage and Backup Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 53
+          },
+          "id": 36,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ 'microsoft.containerservice/managedclusters'\r\n\tor type =~ 'microsoft.containerregistry/registries'\r\n\tor type =~ 'microsoft.containerinstance/containergroups'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.containerservice/managedclusters', 'AKS',\r\n\ttype =~ 'microsoft.containerregistry/registries', 'Container Registry',\r\n\ttype =~ 'microsoft.containerinstance/containergroups', 'Container Instnaces',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type\t",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Containers Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 53
+          },
+          "id": 37,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ 'microsoft.containerservice/managedclusters'\r\n\tor type =~ 'microsoft.containerregistry/registries'\r\n\tor type =~ 'microsoft.containerinstance/containergroups'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.containerservice/managedclusters', 'AKS',\r\n\ttype =~ 'microsoft.containerregistry/registries', 'Container Registry',\r\n\ttype =~ 'microsoft.containerinstance/containergroups', 'Container Instnaces',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| extend Tier = sku.tier\r\n| extend sku = sku.name\r\n| extend State = case(\r\n\ttype =~ 'Container Registry', properties.provisioningState,\r\n\ttype =~ 'Container Instance', properties.instanceView.state,\r\n\tproperties.powerState.code)\r\n| extend Containers = properties.containers\r\n| mvexpand Containers\r\n| extend RestartCount = Containers.properties.instanceView.restartCount\r\n| extend Image = Containers.properties.image\r\n| extend RestartPolicy = properties.restartPolicy\r\n| extend IP = properties.ipAddress.ip\r\n| extend Version = properties.kubernetesVersion\r\n| extend AgentProfiles = properties.agentPoolProfiles\r\n| mvexpand AgentProfiles\r\n| extend NodeCount = AgentProfiles.[\"count\"]\r\n| extend Details = pack_all()\r\n| project id, type, location, resourceGroup, subscriptionId, sku, Tier, State, RestartCount, Version, NodeCount, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Containers Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 63
+          },
+          "id": 38,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ 'Microsoft.MachineLearningServices/workspaces'\r\n\tor type =~ 'microsoft.cognitiveservices/accounts'\r\n| extend type = case(\r\n\ttype =~ 'Microsoft.MachineLearningServices/workspaces', 'ML Workspaces',\r\n\ttype =~ 'microsoft.cognitiveservices/accounts', 'Cognitive Services',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type\t",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "ML/AI Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 63
+          },
+          "id": 39,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ 'Microsoft.MachineLearningServices/workspaces'\r\n\tor type =~ 'microsoft.cognitiveservices/accounts'\r\n| extend type = case(\r\n\ttype =~ 'Microsoft.MachineLearningServices/workspaces', 'ML Workspaces',\r\n\ttype =~ 'microsoft.cognitiveservices/accounts', 'Cognitive Services',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| extend Tier = sku.tier\r\n| extend sku = sku.name\r\n| extend Endpoint = case(\r\n\ttype =~ 'ML Workspaces', properties.discoveryUrl,\r\n\ttype =~ 'Cognitive Services', properties.endpoint,\r\n\t' ')\r\n| extend Capabilities = properties.capabilities\r\n| mvexpand Capabilities\r\n| extend Capabilities.value\r\n| extend Storage = properties.storageAccount\r\n| extend AppInsights = properties.applicationInsights\r\n| extend Details = pack_all()\r\n| project id, type, location, resourceGroup, subscriptionId, sku, Tier, Endpoint, Capabilities_value, Storage, AppInsights, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "ML/AI Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 73
+          },
+          "id": 40,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ 'microsoft.devices/iothubs'\r\n\tor type =~ 'microsoft.iotcentral/iotapps'\r\n\tor type =~ 'microsoft.security/iotsecuritysolutions'\r\n| extend type = case (\r\n\ttype =~ 'microsoft.devices/iothubs', 'IoT Hubs',\r\n\ttype =~ 'microsoft.iotcentral/iotapps', 'IoT Apps',\r\n\ttype =~ 'microsoft.security/iotsecuritysolutions', 'IoT Security',\r\n\tstrcat(\"Not Translated: \", type))\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "IoT Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 73
+          },
+          "id": 41,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type =~ 'microsoft.devices/iothubs'\r\n\tor type =~ 'microsoft.iotcentral/iotapps'\r\n\tor type =~ 'microsoft.security/iotsecuritysolutions'\r\n| extend type = case (\r\n\ttype =~ 'microsoft.devices/iothubs', 'IoT Hubs',\r\n\ttype =~ 'microsoft.iotcentral/iotapps', 'IoT Apps',\r\n\ttype =~ 'microsoft.security/iotsecuritysolutions', 'IoT Security',\r\n\tstrcat(\"Not Translated: \", type))\r\n| extend Tier = sku.tier\r\n| extend sku = sku.name\r\n| extend State = properties.state\r\n| extend HostName = properties.hostName\r\n| extend EventHubEndPoint = properties.eventHubEndpoints.events.endpoint\r\n| extend Details = pack_all()\r\n| project id, type, location, resourceGroup, subscriptionId, sku, Tier, State, HostName, EventHubEndPoint, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "IoT Detailed View",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 6,
+            "x": 0,
+            "y": 83
+          },
+          "id": 42,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.desktopvirtualization'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.desktopvirtualization/applicationgroups', 'WVD App Groups',\r\n\ttype =~ 'microsoft.desktopvirtualization/hostpools', 'WVD Host Pools',\r\n\ttype =~ 'microsoft.desktopvirtualization/workspaces', 'WVD Workspaces',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Windows Virtual Desktop Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 18,
+            "x": 6,
+            "y": 83
+          },
+          "id": 43,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.desktopvirtualization'\r\n| extend type = case(\r\n\ttype =~ 'microsoft.desktopvirtualization/applicationgroups', 'WVD App Groups',\r\n\ttype =~ 'microsoft.desktopvirtualization/hostpools', 'WVD Host Pools',\r\n\ttype =~ 'microsoft.desktopvirtualization/workspaces', 'WVD Workspaces',\r\n\tstrcat(\"Not Translated: \", type))\r\n| where type !has \"Not Translated\"\r\n| extend Details = pack_all()\r\n| project id, type, resourceGroup, subscriptionId, kind, location, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Windows Virtual Desktop Detailed View",
+          "type": "table"
+        }
+      ],
+      "title": "PaaS",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3
+      },
+      "id": 45,
+      "panels": [
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 4
+          },
+          "id": 47,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "where type has \"microsoft.network\"\r\n    or type has 'microsoft.cdn'\r\n| extend type = case(\r\n\ttype == 'microsoft.network/networkinterfaces', \"NICs\",\r\n\ttype == 'microsoft.network/networksecuritygroups', \"NSGs\", \r\n\ttype == \"microsoft.network/publicipaddresses\", \"Public IPs\", \r\n\ttype == 'microsoft.network/virtualnetworks', \"vNets\",\r\n\ttype == 'microsoft.network/networkwatchers/connectionmonitors', \"Connection Monitors\",\r\n\ttype == 'microsoft.network/privatednszones', \"Private DNS\",\r\n\ttype == 'microsoft.network/virtualnetworkgateways', @\"vNet Gateways\",\r\n\ttype == 'microsoft.network/connections', \"Connections\",\r\n\ttype == 'microsoft.network/networkwatchers', \"Network Watchers\",\r\n\ttype == 'microsoft.network/privateendpoints', \"Private Endpoints\",\r\n\ttype == 'microsoft.network/localnetworkgateways', \"Local Network Gateways\",\r\n\ttype == 'microsoft.network/privatednszones/virtualnetworklinks', \"vNet Links\",\r\n\ttype == 'microsoft.network/dnszones', 'DNS Zones',\r\n\ttype == 'microsoft.network/networkwatchers/flowlogs', 'Flow Logs',\r\n\ttype == 'microsoft.network/routetables', 'Route Tables',\r\n\ttype == 'microsoft.network/loadbalancers', 'Load Balancers',\r\n\ttype == 'microsoft.network/ddosprotectionplans', 'DDoS Protection Plans',\r\n\ttype == 'microsoft.network/applicationsecuritygroups', 'App Security Groups',\r\n\ttype == 'microsoft.network/azurefirewalls', 'Azure Firewalls',\r\n\ttype == 'microsoft.network/applicationgateways', 'App Gateways',\r\n\ttype == 'microsoft.network/frontdoors', 'Front Doors',\r\n\ttype == 'microsoft.network/applicationgatewaywebapplicationfirewallpolicies', 'AppGateway Policies',\r\n\ttype == 'microsoft.network/bastionhosts', 'Bastion Hosts',\r\n\ttype == 'microsoft.network/frontdoorwebapplicationfirewallpolicies', 'FrontDoor Policies',\r\n\ttype == 'microsoft.network/firewallpolicies', 'Firewall Policies',\r\n\ttype == 'microsoft.network/networkintentpolicies', 'Network Intent Policies',\r\n\ttype == 'microsoft.network/trafficmanagerprofiles', 'Traffic Manager Profiles',\r\n\ttype == 'microsoft.network/publicipprefixes', 'PublicIP Prefixes',\r\n\ttype == 'microsoft.network/privatelinkservices', 'Private Link',\r\n\ttype == 'microsoft.network/expressroutecircuits', 'Express Route Circuits',\r\n\ttype =~ 'microsoft.cdn/cdnwebapplicationfirewallpolicies', 'CDN Web App Firewall Policies',\r\n\ttype =~ 'microsoft.cdn/profiles', 'CDN Profiles',\r\n\ttype =~ 'microsoft.cdn/profiles/afdendpoints', 'CDN Front Door Endpoints',\r\n\ttype =~ 'microsoft.cdn/profiles/endpoints', 'CDN Endpoints',\r\n\tstrcat(\"Not Translated: \", type))\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Networking Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 4
+          },
+          "id": 48,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources\r\n| where type =~ 'microsoft.network/networksecuritygroups' and isnull(properties.networkInterfaces) and isnull(properties.subnets)\r\n| project Resource=id, resourceGroup, subscriptionId, location",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "NSG",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 12
+          },
+          "id": 49,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources\r\n| where type =~ 'microsoft.network/networksecuritygroups' and isnull(properties.networkInterfaces) and isnull(properties.subnets)\r\n| project Resource=id, resourceGroup, subscriptionId, location",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Unassociated NSGs",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 12
+          },
+          "id": 50,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "Resources\r\n    | where type =~ 'microsoft.network/networksecuritygroups'\r\n    | project id, nsgRules = parse_json(parse_json(properties).securityRules), networksecurityGroupName = name, subscriptionId, resourceGroup , location\r\n    | mvexpand nsgRule = nsgRules\r\n    | project id, location, access=nsgRule.properties.access,protocol=nsgRule.properties.protocol ,direction=nsgRule.properties.direction,provisioningState= nsgRule.properties.provisioningState ,priority=nsgRule.properties.priority, \r\n        sourceAddressPrefix = nsgRule.properties.sourceAddressPrefix, \r\n        sourceAddressPrefixes = nsgRule.properties.sourceAddressPrefixes,\r\n        destinationAddressPrefix = nsgRule.properties.destinationAddressPrefix, \r\n        destinationAddressPrefixes = nsgRule.properties.destinationAddressPrefixes, \r\n        networksecurityGroupName, networksecurityRuleName = tostring(nsgRule.name), \r\n        subscriptionId, resourceGroup,\r\n        destinationPortRanges = nsgRule.properties.destinationPortRanges,\r\n        destinationPortRange = nsgRule.properties.destinationPortRange,\r\n        sourcePortRanges = nsgRule.properties.sourcePortRanges,\r\n        sourcePortRange = nsgRule.properties.sourcePortRange\r\n| extend Details = pack_all()\r\n| project id, location, access, direction, subscriptionId, resourceGroup, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "NSG Rules",
+          "type": "table"
+        }
+      ],
+      "title": "Networking",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 52,
+      "panels": [
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 9,
+            "x": 0,
+            "y": 5
+          },
+          "id": 54,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources \r\n| where type =~ 'microsoft.operationalinsights/workspaces'\r\nor type =~ 'microsoft.insights/components'\r\n| summarize count() by type\r\n| extend type = case(\r\ntype == 'microsoft.insights/components', \"Application Insights\",\r\ntype == 'microsoft.operationalinsights/workspaces', \"Log Analytics workspaces\",\r\nstrcat(type, type))",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Workspaces Overview",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 15,
+            "x": 9,
+            "y": 5
+          },
+          "id": 55,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": ["lastNotNull"],
+              "fields": "",
+              "values": true
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.insights/'\r\n     or type has 'microsoft.alertsmanagement/smartdetectoralertrules'\r\n     or type has 'microsoft.portal/dashboards'\r\n| where type != 'microsoft.insights/components'\r\n| extend type = case(\r\n \ttype == 'microsoft.insights/workbooks', \"Workbooks\",\r\n\ttype == 'microsoft.insights/activitylogalerts', \"Activity Log Alerts\",\r\n\ttype == 'microsoft.insights/scheduledqueryrules', \"Log Search Alerts\",\r\n\ttype == 'microsoft.insights/actiongroups', \"Action Groups\",\r\n\ttype == 'microsoft.insights/metricalerts', \"Metric Alerts\",\r\n\ttype =~ 'microsoft.alertsmanagement/smartdetectoralertrules','Smart Detection Rules',\r\n    type =~ 'microsoft.insights/webtests', 'URL Web Tests',\r\n    type =~ 'microsoft.portal/dashboards', 'Portal Dashboards',\r\n    type =~ 'microsoft.insights/datacollectionrules', 'Data Collection Rules',\r\n    type =~ 'microsoft.insights/autoscalesettings', 'Auto Scale Settings',\r\n    type =~ 'microsoft.insights/alertrules', 'Alert Rules',\r\nstrcat(\"Not Translated: \", type))\r\n| summarize count() by type",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Azure Monitor Workbooks & Alerting Resources",
+          "type": "stat"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 13
+          },
+          "id": 57,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type has 'microsoft.insights/'\r\n     or type has 'microsoft.alertsmanagement/smartdetectoralertrules'\r\n    or type has 'microsoft.portal/dashboards'\r\n| where type != 'microsoft.insights/components'\r\n| extend type = case(\r\n \ttype == 'microsoft.insights/workbooks', \"Workbooks\",\r\n\ttype == 'microsoft.insights/activitylogalerts', \"Activity Log Alerts\",\r\n\ttype == 'microsoft.insights/scheduledqueryrules', \"Log Search Alerts\",\r\n\ttype == 'microsoft.insights/actiongroups', \"Action Groups\",\r\n\ttype == 'microsoft.insights/metricalerts', \"Metric Alerts\",\r\n\ttype =~ 'microsoft.alertsmanagement/smartdetectoralertrules','Smart Detection Rules',\r\n    type =~ 'microsoft.portal/dashboards', 'Portal Dashboards',\r\n\tstrcat(\"Not Translated: \", type))\r\n| extend Enabled = case(\r\n\ttype =~ 'Smart Detection Rules', properties.state,\r\n\ttype != 'Smart Detection Rules', properties.enabled,\r\n\tstrcat(\"Not Translated: \", type))\r\n| extend WorkbookType = iif(type =~ 'Workbooks', properties.category, ' ')\r\n| extend Details = pack_all()\r\n| project name, type, subscriptionId, location, resourceGroup, Enabled, WorkbookType, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Workbooks & Alerting Resources",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 13
+          },
+          "id": 59,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "where type =~ 'microsoft.operationalinsights/workspaces'\r\n| extend Sku = properties.sku.name\r\n| extend RetentionInDays = properties.retentionInDays\r\n| extend Details = pack_all()\r\n| project Workspace=id, resourceGroup, location, subscriptionId, Sku, RetentionInDays, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Log Analytics",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 21
+          },
+          "id": 56,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "AlertsManagementResources\r\n| extend AlertStatus = properties.essentials.monitorCondition\r\n| extend AlertState = properties.essentials.alertState\r\n| extend AlertTime = properties.essentials.startDateTime\r\n| extend AlertSuppressed = properties.essentials.actionStatus.isSuppressed\r\n| extend Severity = properties.essentials.severity\r\n| where AlertStatus == 'Fired'\r\n| extend Details = pack_all()\r\n| project id, name, subscriptionId, resourceGroup, AlertStatus, AlertState, AlertTime, AlertSuppressed, Severity, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Active Alerts",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "left",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 21
+          },
+          "id": 61,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "securityresources\r\n| where type == \"microsoft.security/securescores\"\r\n| extend subscriptionSecureScore = round(100 * bin((todouble(properties.score.current))/ todouble(properties.score.max), 0.001))\r\n| where subscriptionSecureScore > 0\r\n| project subscriptionSecureScore, subscriptionId\r\n| order by subscriptionSecureScore asc",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Azure Security Center Secure Store by Subscription",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 29
+          },
+          "id": 58,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "where type =~ 'microsoft.insights/components'\r\n| extend RetentionInDays = properties.RetentionInDays\r\n| extend IngestionMode = properties.IngestionMode\r\n| extend Details = pack_all()\r\n| project Resource=id, location, resourceGroup, subscriptionId, IngestionMode, RetentionInDays, Details",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "App Monitoring",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 37
+          },
+          "id": 60,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "resources\r\n| where type == \"microsoft.operationsmanagement/solutions\"\r\n| project Solution=plan.name, Workspace=tolower(tostring(properties.workspaceResourceId)), subscriptionId\r\n\t| join kind=leftouter(\r\n\t\tresources\r\n\t\t| where type =~ 'microsoft.operationalinsights/workspaces'\r\n\t\t| project Workspace=tolower(tostring(id)),subscriptionId) on Workspace\r\n| summarize Solutions = strcat_array(make_list(Solution), \",\") by Workspace, subscriptionId\r\n| extend AzureSecurityCenter = iif(Solutions has 'Security','Enabled','Not Enabled')\r\n| extend AzureSecurityCenterFree = iif(Solutions has 'SecurityCenterFree','Enabled','Not Enabled')\r\n| extend AzureSentinel = iif(Solutions has \"SecurityInsights\",'Enabled','Not Enabled')\r\n| extend AzureMonitorVMs = iif(Solutions has \"VMInsights\",'Enabled','Not Enabled')\r\n| extend ServiceDesk = iif(Solutions has \"ITSM Connector\",'Enabled','Not Enabled')\r\n| extend AzureAutomation = iif(Solutions has \"AzureAutomation\",'Enabled','Not Enabled')\r\n| extend ChangeTracking = iif(Solutions has 'ChangeTracking','Enabled','Not Enabled')\r\n| extend UpdateManagement = iif(Solutions has 'Updates','Enabled','Not Enabled')\r\n| extend UpdateCompliance = iif(Solutions has 'WaaSUpdateInsights','Enabled','Not Enabled')\r\n| extend AzureMonitorContainers = iif(Solutions has 'ContainerInsights','Enabled','Not Enabled')\r\n| extend KeyVaultAnalytics = iif(Solutions has 'KeyVaultAnalytics','Enabled','Not Enabled')\r\n| extend SQLHealthCheck = iif(Solutions has 'SQLAssessment','Enabled','Not Enabled')",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Log Analytics workspaces with enabled Solutions",
+          "type": "table"
+        },
+        {
+          "datasource": "${ds}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 45
+          },
+          "id": 62,
+          "options": {
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "account": "",
+              "azureResourceGraph": {
+                "query": "SecurityResources \r\n| where type == 'microsoft.security/securescores/securescorecontrols' \r\n| extend SecureControl = properties.displayName, unhealthy = properties.unhealthyResourceCount, currentscore = properties.score.current, maxscore = properties.score.max, subscriptionId\r\n| project SecureControl , unhealthy, currentscore, maxscore, subscriptionId",
+                "resultFormat": "table"
+              },
+              "backends": [],
+              "dimension": "",
+              "environment": "prod",
+              "metric": "",
+              "namespace": "",
+              "queryType": "Azure Resource Graph",
+              "refId": "A",
+              "samplingType": "",
+              "service": "metric",
+              "subscriptions": ["$subscriptions"],
+              "useBackends": false,
+              "useCustomSeriesNaming": false
+            }
+          ],
+          "title": "Azure Security Center Secure Controls Score by Controls",
+          "type": "table"
+        }
+      ],
+      "title": "Monitoring & Security",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 31,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "ds",
+        "options": [],
+        "query": "grafana-azure-monitor-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${ds}",
+        "definition": "Subscriptions()",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Subscription(s)",
+        "multi": true,
+        "name": "subscriptions",
+        "options": [],
+        "query": "Subscriptions()",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "title": "Azure / Resources Overview",
+  "uid": "Mtwt2BV7k",
+  "version": 3,
+  "description": "The dashboard provides insights of Azure Resource Graph Explorer overview, Compute, PaaS, Networking, Monitoring, and Security. Queries used in this Azure Monitor dashboard were sourced from the [Azure Inventory Workbook](https://github.com/scautomation/Azure-Inventory-Workbook) by Billy York. You can find more sample Azure Resource Graph queries by Billy at this [GitHub](https://github.com/scautomation/AzureResourceGraph-Examples) repository.",
+  "gnetId": 14986
+}

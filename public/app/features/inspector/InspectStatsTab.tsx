@@ -1,21 +1,23 @@
-import { t } from '@lingui/macro';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 
 import { InspectStatsTable } from './InspectStatsTable';
+import { InspectStatsTraceIdsTable } from './InspectStatsTraceIdsTable';
 
 interface InspectStatsTabProps {
   data: PanelData;
   timeZone: TimeZone;
 }
 
-export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone }) => {
+export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   if (!data.request) {
     return null;
   }
-
   let stats: QueryResultMetaStat[] = [];
 
   const requestTime = data.request.endTime ? data.request.endTime - data.request.startTime : -1;
@@ -28,24 +30,24 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone
 
   if (requestTime > 0) {
     stats.push({
-      displayName: t({ id: 'dashboard.inspect-stats.request-time', message: 'Total request time' }),
+      displayName: t('dashboard.inspect-stats.request-time', 'Total request time'),
       value: requestTime,
       unit: 'ms',
     });
   }
   if (processingTime > 0) {
     stats.push({
-      displayName: t({ id: 'dashboard.inspect-stats.processing-time', message: 'Data processing time' }),
+      displayName: t('dashboard.inspect-stats.processing-time', 'Data processing time'),
       value: processingTime,
       unit: 'ms',
     });
   }
   stats.push({
-    displayName: t({ id: 'dashboard.inspect-stats.queries', message: 'Number of queries' }),
+    displayName: t('dashboard.inspect-stats.queries', 'Number of queries'),
     value: data.request.targets.length,
   });
   stats.push({
-    displayName: t({ id: 'dashboard.inspect-stats.rows', message: 'Total number rows' }),
+    displayName: t('dashboard.inspect-stats.rows', 'Total number rows'),
     value: dataRows,
   });
 
@@ -57,13 +59,22 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone
     }
   }
 
-  const statsTableName = t({ id: 'dashboard.inspect-stats.table-title', message: 'Stats' });
-  const dataStatsTableName = t({ id: 'dashboard.inspect-stats.data-title', message: 'Data source stats' });
+  const statsTableName = t('dashboard.inspect-stats.table-title', 'Stats');
+  const dataStatsTableName = t('dashboard.inspect-stats.data-title', 'Data source stats');
+  const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace IDs');
 
   return (
-    <div aria-label={selectors.components.PanelInspector.Stats.content}>
+    <div aria-label={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
+      {config.featureToggles.showTraceId && (
+        <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
+      )}
     </div>
   );
 };
+
+const containerStyles = css`
+  height: 100%;
+  overflow-y: scroll;
+`;

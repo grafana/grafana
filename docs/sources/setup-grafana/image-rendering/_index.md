@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/image_rendering/
-  - /docs/grafana/latest/image-rendering/
-  - /docs/grafana/latest/setup-grafana/image-rendering/
+  - ../administration/image_rendering/
+  - ../image-rendering/
 description: Image rendering
 keywords:
   - grafana
@@ -15,7 +14,7 @@ weight: 1000
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../../alerting/notifications/" >}}), [PDF export]({{< relref "../../enterprise/export-pdf/" >}}), and [Reporting]({{< relref "../../enterprise/reporting/" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports/#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports/" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 > **Note:** Image rendering of dashboards is not supported at this time.
 
@@ -23,7 +22,7 @@ While an image is being rendered, the PNG image is temporarily written to the fi
 
 A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana/#temp_data_lifetime" >}}) setting.
 
-You can also render a PNG by clicking the dropdown arrow next to a panel title, then clicking **Share > Direct link rendered image**.
+You can also render a PNG by clicking hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
 
 ## Alerting and render limits
 
@@ -54,6 +53,34 @@ docker run -d --name=renderer --network=host -v /some/path/config.json:/usr/src/
 ```
 
 You can see a docker-compose example using a custom configuration file [here](https://github.com/grafana/grafana-image-renderer/tree/master/devenv/docker/custom-config).
+
+### Security
+
+> **Note:** This feature is available in Image Renderer v3.6.1 and later.
+
+You can restrict access to the rendering endpoint by specifying a secret token. The token should be configured in the Grafana configuration file and the renderer configuration file. This token is important when you run the plugin in remote rendering mode.
+
+Renderer versions v3.6.1 or later require a Grafana version with this feature. These include:
+
+- Grafana v9.1.2 or later
+- Grafana v9.0.8 or later patch releases
+- Grafana v8.5.11 or later patch releases
+- Grafana v8.4.11 or later patch releases
+- Grafana v8.3.11 or later patch releases
+
+```bash
+AUTH_TOKEN=-
+```
+
+```json
+{
+  "security": {
+    "authToken": "-"
+  }
+}
+```
+
+See the [Grafana configuration]({{< relref "../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
 
 ### Rendering mode
 
@@ -111,7 +138,7 @@ In `contextPerRenderKey` mode, the plugin will reuse the same [browser context](
 
 In the case of `contextPerRenderKey` mode, the `clustering.max_concurrency` option refers to the number of open contexts rather than the number of open pages. There is no way to limit the number of open pages in a context.
 
-`contextPerRenderKey` was designed to improve the performance of the [dashboard previews crawler]({{< relref "../../dashboards/previews/#about-the-dashboard-previews-crawler" >}}).
+`contextPerRenderKey` was designed to improve the performance of the [dashboard previews crawler]({{< relref "../../search/dashboard-previews/#about-the-dashboard-previews-crawler" >}}).
 
 ```json
 {
@@ -429,6 +456,22 @@ Limit the maximum device scale factor that can be requested. Default is `4`.
 {
   "rendering": {
     "maxDeviceScaleFactor": 4
+  }
+}
+```
+
+#### Page zoom level
+
+The following command sets a page zoom level. The default value is `1`. A value of `1.5` equals 150% zoom.
+
+```bash
+RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
+```
+
+```json
+{
+  "rendering": {
+    "pageZoomLevel": 1
   }
 }
 ```

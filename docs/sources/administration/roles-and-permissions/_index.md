@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/
-  - /docs/grafana/latest/manage-users/
-  - /docs/grafana/latest/permissions/
-  - /docs/grafana/latest/permissions/organization_roles/
-  - /docs/grafana/latest/permissions/overview/
+  - ../manage-users/
+  - ../permissions/
+  - ../permissions/organization_roles/
+  - ../permissions/overview/
+  - manage-users-and-permissions/about-users-and-permissions/
 description: Information about Grafana user, team, and organization roles and permissions
 title: Roles and permissions
 weight: 300
@@ -26,7 +26,7 @@ You can assign a user one of three types of permissions:
 
 A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
-> **Note:** The server administrator role does not mean that the user is also a Grafana [organization administrator]({{< ref "#organization-roles" >}}).
+> **Note:** The server administrator role does not mean that the user is also a Grafana [organization administrator]({{< relref "#organization-roles" >}}).
 
 A server administrator can perform the following tasks:
 
@@ -92,14 +92,14 @@ The following table lists permissions for each role.
 
 ## Dashboard permissions
 
-When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and dashboard folders. For example, you might want a certain viewer to be able to edit a dashboard. While that user can _see_ all dashboards, you can grant them access to _update_ only one of them.
+When you want to extend a viewer's ability to edit and save dashboard changes or limit an editor's permission to modify a dashboard, you can assign permissions to dashboards and folders. For example, you might want a certain viewer to be able to edit a dashboard. While that user can _see_ all dashboards, you can grant them access to _update_ only one of them.
 
 > Important: The dashboard permissions you specify override the organization permissions you assign to the user for the selected entity.
 
 You can specify the following permissions to dashboards and folders.
 
-- **Admin**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Administrators can also change dashboard and folder permissions.
-- **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder. Editors _cannot_ change folder or dashboard permissions.
+- **Admin**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Administrators can also change dashboard and folder permissions.
+- **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
 > Important: When a user creates a dashboard or a folder, he is set as **Admin** of it.
@@ -123,7 +123,7 @@ For more information about assigning administrator permissions to editors, refer
 If you have access to the Grafana server, you can modify the default viewer role so that viewers can:
 
 - Edit and preview dashboards, but cannot save their changes or create new dashboards.
-- Access and use [Explore]({{< ref "/explore" >}}).
+- Access and use [Explore]({{< relref "../../explore" >}}).
 
 Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
 
@@ -146,7 +146,7 @@ For details on managing teams, see [Team management]({{< relref "../team-managem
 
 While Grafana OSS includes a robust set of permissions and settings that you can use to manage user access to server and organization resources, you might find that you require additional capabilities.
 
-[Grafana Enterprise]({{< relref "../../enterprise/">}}) provides the following permissions-related features:
+[Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise">}}) provides the following permissions-related features:
 
 - Data source permissions
 - Role-based access control (RBAC)

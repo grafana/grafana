@@ -5,6 +5,7 @@ import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
@@ -48,7 +49,7 @@ export function PreviewRule(): React.ReactElement | null {
   );
 }
 
-function usePreview(): [PreviewRuleResponse | undefined, () => void] {
+export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
   const { getValues } = useFormContext<RuleFormValues>();
   const isMounted = useMountedState();
@@ -72,10 +73,15 @@ function usePreview(): [PreviewRuleResponse | undefined, () => void] {
 
 function createPreviewRequest(values: any[]): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
+  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
+  if (!dsSettings) {
+    throw new Error(`Cannot find data source settings for ${dataSourceName}`);
+  }
 
   switch (type) {
     case RuleFormType.cloudAlerting:
       return {
+        dataSourceUid: dsSettings.uid,
         dataSourceName,
         expr: expression,
       };

@@ -9,7 +9,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/experimental';
 
 import { QueryWithDefaults } from './defaults';
 import {
@@ -30,6 +30,7 @@ export interface SqlQueryForInterpolation {
 export interface SQLConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
+  maxIdleConnsAuto: boolean;
   connMaxLifetime: number;
 }
 
@@ -47,11 +48,6 @@ export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
 export enum QueryFormat {
   Timeseries = 'time_series',
   Table = 'table',
-}
-
-export enum EditorMode {
-  Builder = 'builder',
-  Code = 'code',
 }
 
 export interface SQLQuery extends DataQuery {
@@ -127,12 +123,6 @@ export interface SQLSelectableValue extends SelectableValue {
   raqbFieldType?: RAQBFieldTypes;
 }
 
-export interface Aggregate {
-  id: string;
-  name: string;
-  description?: string;
-}
-
 export interface DB {
   init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
@@ -141,10 +131,10 @@ export interface DB {
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dsID: () => number;
   dispose?: (dsID?: string) => void;
-  lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
-  getSqlCompletionProvider: () => LanguageCompletionProvider;
-  toRawSql?: (query: SQLQuery) => string;
-  functions: () => Promise<Aggregate[]>;
+  lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
+  getEditorLanguageDefinition: () => LanguageDefinition;
+  toRawSql: (query: SQLQuery) => string;
+  functions?: () => string[];
 }
 
 export interface QueryEditorProps {
@@ -166,7 +156,6 @@ export interface ValidationResults {
 }
 
 export interface SqlQueryModel {
-  interpolate: () => string;
   quoteLiteral: (v: string) => string;
 }
 
@@ -179,18 +168,3 @@ export interface MetaDefinition {
   completion?: string;
   kind: CompletionItemKind;
 }
-
-export {
-  CompletionItemKind,
-  LanguageCompletionProvider,
-  LinkedToken,
-  ColumnDefinition,
-  CompletionItemPriority,
-  StatementPlacementProvider,
-  SuggestionKindProvider,
-  TableDefinition,
-  TokenType,
-  OperatorType,
-  StatementPosition,
-  PositionContext,
-} from '@grafana/experimental';

@@ -10,7 +10,8 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	models "github.com/grafana/grafana/pkg/models"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // MockPluginContextGetter is a mock of PluginContextGetter interface.
@@ -37,7 +38,7 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *models.SignedInUser, arg1, arg2 string) (backend.PluginContext, bool, error) {
+func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *user.SignedInUser, arg1, arg2 string) (backend.PluginContext, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2)
 	ret0, _ := ret[0].(backend.PluginContext)

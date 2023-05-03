@@ -17,11 +17,16 @@ import {
   InlineFieldRow,
   InlineSwitch,
   Input,
+  Link,
   SecretInput,
   Select,
   useStyles2,
+  SecureSocksProxySettings,
 } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
+import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
@@ -29,6 +34,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const { options, onOptionsChange } = props;
   const styles = useStyles2(getStyles);
   const jsonData = options.jsonData;
+
+  useMigrateDatabaseFields(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -60,6 +67,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     });
   };
 
+  const onConnectionTimeoutChanged = (connectionTimeout?: number) => {
+    updateDatasourcePluginJsonDataOption(props, 'connectionTimeout', connectionTimeout ?? 0);
+  };
+
   const authenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
     { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
     { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
@@ -74,6 +85,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const shortWidth = 15;
   const longWidth = 46;
   const labelWidthSSL = 25;
+  const labelWidthDetails = 20;
 
   return (
     <>
@@ -92,9 +104,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           <Input
             width={longWidth}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineField
@@ -143,6 +155,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           </InlineFieldRow>
         )}
       </FieldSet>
+
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <FieldSet label="TLS/SSL Auth">
         <InlineField
@@ -216,13 +232,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </FieldSet>
 
-      <ConnectionLimits
-        labelWidth={shortWidth}
-        jsonData={jsonData}
-        onPropertyChanged={(property, value) => {
-          updateDatasourcePluginJsonDataOption(props, property, value);
-        }}
-      ></ConnectionLimits>
+      <ConnectionLimits labelWidth={shortWidth} options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MS SQL details">
         <InlineField
@@ -233,6 +243,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             </span>
           }
           label="Min time interval"
+          labelWidth={labelWidthDetails}
         >
           <Input
             placeholder="1m"
@@ -240,13 +251,35 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
           ></Input>
         </InlineField>
+        <InlineField
+          tooltip={
+            <span>
+              The number of seconds to wait before canceling the request when connecting to the database. The default is{' '}
+              <code>0</code>, meaning no timeout.
+            </span>
+          }
+          label="Connection timeout"
+          labelWidth={labelWidthDetails}
+        >
+          <NumberInput
+            placeholder="60"
+            min={0}
+            value={jsonData.connectionTimeout}
+            onChange={onConnectionTimeoutChanged}
+          ></NumberInput>
+        </InlineField>
       </FieldSet>
 
       <Alert title="User Permission" severity="info">
         The database user should only be granted SELECT permissions on the specified database and tables you want to
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <em>highly</em> recommmend you create a specific MS SQL user with restricted permissions.
+        against this we <em>highly</em> recommend you create a specific MS SQL user with restricted permissions. Check
+        out the{' '}
+        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mssql/">
+          Microsoft SQL Server Data Source Docs
+        </Link>{' '}
+        for more information.
       </Alert>
     </>
   );

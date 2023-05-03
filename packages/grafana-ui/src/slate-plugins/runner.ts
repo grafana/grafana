@@ -1,17 +1,14 @@
-import { Editor as CoreEditor } from 'slate';
+import React from 'react';
+import { Plugin } from 'slate-react';
 
-import { Plugin } from '@grafana/slate-react';
-
-export function RunnerPlugin({ handler }: any): Plugin {
+export function RunnerPlugin({ handler }: { handler?: (e: React.KeyboardEvent) => void }): Plugin {
   return {
-    onKeyDown(event: Event, editor: CoreEditor, next: Function) {
-      const keyEvent = event as KeyboardEvent;
-
+    onKeyDown(event, editor, next) {
       // Handle enter
-      if (handler && keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
+      if (handler && event.key === 'Enter' && (event.shiftKey || event.ctrlKey)) {
         // Submit on Enter
-        keyEvent.preventDefault();
-        handler(keyEvent);
+        event.preventDefault();
+        handler(event);
         return editor;
       }
 

@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
 
+import { t } from 'app/core/internationalization';
+
 import { NavigationKey } from '../types';
 
 export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange' | 'value'> {
@@ -10,7 +12,7 @@ export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange
 
 export class VariableInput extends PureComponent<Props> {
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (NavigationKey[event.keyCode]) {
+    if (NavigationKey[event.keyCode] && event.keyCode !== NavigationKey.select) {
       const clearOthers = event.ctrlKey || event.metaKey || event.shiftKey;
       this.props.onNavigate(event.keyCode as NavigationKey, clearOthers);
       event.preventDefault();
@@ -37,7 +39,7 @@ export class VariableInput extends PureComponent<Props> {
         value={value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
-        placeholder="Enter variable value"
+        placeholder={t('variable.dropdown.placeholder', 'Enter variable value')}
       />
     );
   }

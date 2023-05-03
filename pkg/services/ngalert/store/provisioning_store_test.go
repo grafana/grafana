@@ -4,17 +4,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
-	"github.com/stretchr/testify/require"
 )
 
 const testAlertingIntervalSeconds = 10
 
-func TestProvisioningStore(t *testing.T) {
+func TestIntegrationProvisioningStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
 
 	t.Run("Default provenance of a known type is None", func(t *testing.T) {

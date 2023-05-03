@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useCallback, useRef, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { changePanelPlugin } from '../../../panel/state/actions';
@@ -25,7 +25,7 @@ interface Props {
   data?: PanelData;
 }
 
-export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
+export const VisualizationSelectPane = ({ panel, data }: Props) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useLocalStorage(
@@ -34,7 +34,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
   );
 
   const dispatch = useDispatch();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
   const onVizChange = useCallback(
@@ -48,13 +48,6 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     },
     [dispatch, panel]
   );
-
-  // Give Search input focus when using radio button switch list mode
-  useEffect(() => {
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
-  }, [listMode]);
 
   const onCloseVizPicker = () => {
     dispatch(toggleVizPicker(false));
@@ -132,10 +125,10 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
-      color: ${theme.palette.gray33};
+      color: ${theme.v1.palette.gray33};
     `,
     wrapper: css`
       display: flex;
@@ -151,28 +144,28 @@ const getStyles = (theme: GrafanaTheme) => {
       min-height: 0;
     `,
     scrollContent: css`
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
     `,
     openWrapper: css`
       display: flex;
       flex-direction: column;
       flex: 1 1 100%;
       height: 100%;
-      background: ${theme.colors.bg1};
-      border: 1px solid ${theme.colors.border1};
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.weak};
     `,
     searchRow: css`
       display: flex;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     closeButton: css`
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(1)};
     `,
     customFieldMargin: css`
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     formBox: css`
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
       padding-bottom: 0;
     `,
   };

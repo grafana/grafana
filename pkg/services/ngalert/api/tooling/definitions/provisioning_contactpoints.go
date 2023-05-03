@@ -1,11 +1,7 @@
 package definitions
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 )
 
 // swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
@@ -96,57 +92,6 @@ type EmbeddedContactPoint struct {
 }
 
 const RedactedValue = "[REDACTED]"
-
-func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) error {
-	if e.Type == "" {
-		return fmt.Errorf("type should not be an empty string")
-	}
-	if e.Settings == nil {
-		return fmt.Errorf("settings should not be empty")
-	}
-	factory, exists := channels.Factory(e.Type)
-	if !exists {
-		return fmt.Errorf("unknown type '%s'", e.Type)
-	}
-	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
-		Settings: e.Settings,
-		Type:     e.Type,
-	}, nil, decryptFunc, nil, nil)
-	if _, err := factory(cfg); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
-	notifiers := channels_config.GetAvailableNotifiers()
-	for _, n := range notifiers {
-		if n.Type == e.Type {
-			secureFields := []string{}
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
-		}
-	}
-	return nil, fmt.Errorf("no secrets configured for type '%s'", e.Type)
-}
-
-func (e *EmbeddedContactPoint) ExtractSecrets() (map[string]string, error) {
-	secrets := map[string]string{}
-	secretKeys, err := e.SecretKeys()
-	if err != nil {
-		return nil, err
-	}
-	for _, secretKey := range secretKeys {
-		secretValue := e.Settings.Get(secretKey).MustString()
-		e.Settings.Del(secretKey)
-		secrets[secretKey] = secretValue
-	}
-	return secrets, nil
-}
 
 func (e *EmbeddedContactPoint) ResourceID() string {
 	return e.UID

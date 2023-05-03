@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -24,10 +24,8 @@ interface DroneTopConfig {
   yawAngle?: ScalarDimensionConfig;
 }
 
-const DroneTopDisplay: FC<CanvasElementProps<DroneTopConfig, DroneTopData>> = (props) => {
+const DroneTopDisplay = ({ data }: CanvasElementProps<DroneTopConfig, DroneTopData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const fRightRotorAnimation = `spin ${data?.fRightRotorRPM ? 60 / Math.abs(data.fRightRotorRPM) : 0}s linear infinite`;
 

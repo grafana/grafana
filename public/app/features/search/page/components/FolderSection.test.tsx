@@ -2,10 +2,10 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
-import { DashboardSearchItemType } from '../../types';
+import { DashboardSearchItemType, DashboardViewItem } from '../../types';
 
 import { FolderSection } from './FolderSection';
 
@@ -14,7 +14,7 @@ describe('FolderSection', () => {
   const mockOnTagSelected = jest.fn();
   const mockSelectionToggle = jest.fn();
   const mockSelection = jest.fn();
-  const mockSection = {
+  const mockSection: DashboardViewItem = {
     kind: 'folder',
     uid: 'my-folder',
     title: 'My folder',
@@ -26,15 +26,15 @@ describe('FolderSection', () => {
     window.localStorage.clear();
   });
 
-  describe('when where are no results', () => {
+  describe('when there are no results', () => {
     const emptySearchData: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([]) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'kind', type: FieldType.string, config: {}, values: [] },
+        { name: 'name', type: FieldType.string, config: {}, values: [] },
+        { name: 'uid', type: FieldType.string, config: {}, values: [] },
+        { name: 'url', type: FieldType.string, config: {}, values: [] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [] },
+        { name: 'location', type: FieldType.string, config: {}, values: [] },
       ],
       length: 0,
     };
@@ -95,13 +95,24 @@ describe('FolderSection', () => {
   describe('when there are results', () => {
     const searchData: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([DashboardSearchItemType.DashDB]) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My dashboard 1']) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-dashboard-1']) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([['foo', 'bar']]) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
+        { name: 'kind', type: FieldType.string, config: {}, values: [DashboardSearchItemType.DashDB] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
+        { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
+        { name: 'location', type: FieldType.string, config: {}, values: ['my-folder-1'] },
       ],
+      meta: {
+        custom: {
+          locationInfo: {
+            'my-folder-1': {
+              name: 'My folder 1',
+              kind: 'folder',
+              url: '/my-folder-1',
+            },
+          },
+        },
+      },
       length: 1,
     };
 
@@ -203,6 +214,24 @@ describe('FolderSection', () => {
         await userEvent.click(await screen.findByRole('checkbox', { name: 'Select folder' }));
         expect(mockSelectionToggle).toHaveBeenCalledWith('folder', 'my-folder');
         expect(mockSelectionToggle).toHaveBeenCalledWith('dashboard', 'my-dashboard-1');
+      });
+    });
+
+    describe('when in a pseudo-folder (i.e. Starred/Recent)', () => {
+      const mockRecentSection: DashboardViewItem = {
+        kind: 'folder',
+        uid: '__recent',
+        title: 'Recent',
+        itemsUIDs: ['my-dashboard-1'],
+      };
+
+      it('shows the correct folder name next to the dashboard', async () => {
+        render(<FolderSection section={mockRecentSection} onTagSelected={mockOnTagSelected} />);
+
+        await userEvent.click(await screen.findByRole('button', { name: mockRecentSection.title }));
+        expect(getGrafanaSearcher().search).toHaveBeenCalled();
+        expect(await screen.findByText('My dashboard 1')).toBeInTheDocument();
+        expect(await screen.findByText('My folder 1')).toBeInTheDocument();
       });
     });
   });

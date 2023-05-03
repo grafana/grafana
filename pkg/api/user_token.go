@@ -6,13 +6,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ua-parser/uap-go/uaparser"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/ua-parser/uap-go/uaparser"
 )
 
 // swagger:route GET /user/auth-tokens signed_in_user getUserAuthTokens
@@ -26,8 +30,8 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response {
-	return hs.getUserAuthTokensInternal(c, c.UserId)
+func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
+	return hs.getUserAuthTokensInternal(c, c.UserID)
 }
 
 // swagger:route POST /user/revoke-auth-token signed_in_user revokeUserAuthToken
@@ -42,12 +46,77 @@ func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response 
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Response {
-	cmd := models.RevokeAuthTokenCmd{}
+func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
+	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.revokeUserAuthTokenInternal(c, c.UserId, cmd)
+	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
+}
+
+func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
+	if err := hs.rotateToken(c); err != nil {
+		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
+		}
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
+	}
+
+	return response.Redirect(hs.GetRedirectURL(c))
+}
+
+// swagger:route POST /user/auth-tokens/rotate
+//
+// # Rotate the auth token of the caller
+//
+// Rotate the token of caller, if successful send a new session cookie.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
+	if err := hs.rotateToken(c); err != nil {
+		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
+			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
+		}
+
+		if errors.Is(err, auth.ErrUserTokenNotFound) {
+			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
+		}
+
+		return response.ErrOrFallback(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
+	}
+
+	return response.JSON(http.StatusOK, map[string]any{})
+}
+
+func (hs *HTTPServer) rotateToken(c *contextmodel.ReqContext) error {
+	token := c.GetCookie(hs.Cfg.LoginCookieName)
+	ip, err := network.GetIPFromAddress(c.RemoteAddr())
+	if err != nil {
+		hs.log.Debug("Failed to get IP from client address", "addr", c.RemoteAddr())
+	}
+
+	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
+		UnHashedToken: token,
+		IP:            ip,
+		UserAgent:     c.Req.UserAgent(),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if res.UnhashedToken != token {
+		authn.WriteSessionCookie(c.Resp, hs.Cfg, res)
+	}
+
+	return nil
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {
@@ -71,7 +140,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 	})
 }
 
-func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) response.Response {
+func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, userID int64) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
 
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
@@ -143,7 +212,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) response.Response {
+func (hs *HTTPServer) revokeUserAuthTokenInternal(c *contextmodel.ReqContext, userID int64, cmd auth.RevokeAuthTokenCmd) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
@@ -155,7 +224,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 
 	token, err := hs.AuthTokenService.GetUserToken(c.Req.Context(), userID, cmd.AuthTokenId)
 	if err != nil {
-		if errors.Is(err, models.ErrUserTokenNotFound) {
+		if errors.Is(err, auth.ErrUserTokenNotFound) {
 			return response.Error(404, "User auth token not found", err)
 		}
 		return response.Error(500, "Failed to get user auth token", err)
@@ -167,7 +236,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 
 	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token, false)
 	if err != nil {
-		if errors.Is(err, models.ErrUserTokenNotFound) {
+		if errors.Is(err, auth.ErrUserTokenNotFound) {
 			return response.Error(404, "User auth token not found", err)
 		}
 		return response.Error(500, "Failed to revoke user auth token", err)
@@ -182,11 +251,11 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 type RevokeUserAuthTokenParams struct {
 	// in:body
 	// required:true
-	Body models.RevokeAuthTokenCmd `json:"body"`
+	Body auth.RevokeAuthTokenCmd `json:"body"`
 }
 
 // swagger:response getUserAuthTokensResponse
 type GetUserAuthTokensResponse struct {
 	// in:body
-	Body []*models.UserToken `json:"body"`
+	Body []*auth.UserToken `json:"body"`
 }

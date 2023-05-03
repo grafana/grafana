@@ -26,11 +26,13 @@ interface State {
 }
 
 class PopoverController extends Component<Props, State> {
-  private hideTimeout: any;
+  private hideTimeout: ReturnType<typeof setTimeout> | null = null;
   state = { show: false };
 
   showPopper = () => {
-    clearTimeout(this.hideTimeout);
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+    }
     this.setState({ show: true });
   };
 

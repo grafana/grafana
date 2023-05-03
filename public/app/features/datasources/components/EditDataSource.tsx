@@ -1,10 +1,14 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import React from 'react';
-import { useDispatch } from 'react-redux';
 
-import { DataSourcePluginMeta, DataSourceSettings as DataSourceSettingsType } from '@grafana/data';
+import {
+  DataSourcePluginContextProvider,
+  DataSourcePluginMeta,
+  DataSourceSettings as DataSourceSettingsType,
+} from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState, ThunkResult } from 'app/types';
+import { DataSourceSettingsState, useDispatch } from 'app/types';
 
 import {
   dataSourceLoaded,
@@ -45,7 +49,7 @@ export function EditDataSource({ uid, pageId }: Props) {
 
   const dispatch = useDispatch();
   const dataSource = useDataSource(uid);
-  const dataSourceMeta = useDataSourceMeta(uid);
+  const dataSourceMeta = useDataSourceMeta(dataSource.type);
   const dataSourceSettings = useDataSourceSettings();
   const dataSourceRights = useDataSourceRights(uid);
   const exploreUrl = useDataSourceExploreUrl(uid);
@@ -85,8 +89,8 @@ export type ViewProps = {
   onDefaultChange: (isDefault: boolean) => AnyAction;
   onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
-  onTest: () => ThunkResult<void>;
-  onUpdate: (dataSource: DataSourceSettingsType) => ThunkResult<void>;
+  onTest: () => void;
+  onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
 };
 
 export function EditDataSourceView({
@@ -107,10 +111,19 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
-    await onUpdate({ ...dataSource });
+  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+
+  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await onUpdate({ ...dataSource });
+    } catch (err) {
+      return;
+    }
 
     onTest();
   };
@@ -124,12 +137,16 @@ export function EditDataSourceView({
   }
 
   // TODO - is this needed?
-  if (!hasDataSource) {
+  if (!hasDataSource || !dsi) {
     return null;
   }
 
   if (pageId) {
-    return <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />;
+    return (
+      <DataSourcePluginContextProvider instanceSettings={dsi}>
+        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />
+      </DataSourcePluginContextProvider>
+    );
   }
 
   return (
@@ -145,26 +162,29 @@ export function EditDataSourceView({
         isDefault={dataSource.isDefault}
         onDefaultChange={onDefaultChange}
         onNameChange={onNameChange}
+        alertingSupported={alertingSupported}
+        disabled={readOnly || !hasWriteRights}
       />
 
       {plugin && (
-        <DataSourcePluginSettings
-          plugin={plugin}
-          dataSource={dataSource}
-          dataSourceMeta={dataSourceMeta}
-          onModelChange={onOptionsChange}
-        />
+        <DataSourcePluginContextProvider instanceSettings={dsi}>
+          <DataSourcePluginSettings
+            plugin={plugin}
+            dataSource={dataSource}
+            dataSourceMeta={dataSourceMeta}
+            onModelChange={onOptionsChange}
+          />
+        </DataSourcePluginContextProvider>
       )}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} />
+      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
       <ButtonRow
         onSubmit={onSubmit}
-        onDelete={onDelete}
         onTest={onTest}
-        exploreUrl={exploreUrl}
-        canSave={!readOnly && hasWriteRights}
+        onDelete={onDelete}
         canDelete={!readOnly && hasDeleteRights}
+        canSave={!readOnly && hasWriteRights}
       />
     </form>
   );

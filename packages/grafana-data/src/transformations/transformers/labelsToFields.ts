@@ -2,7 +2,6 @@ import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../..';
 import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
-import { ArrayVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
 
@@ -28,7 +27,8 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
   description: 'Extract time series labels to fields (columns or rows)',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => labelsToFieldsTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => labelsToFieldsTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: LabelsToFieldsOptions) => (data: DataFrame[]) => {
     // Show each label as a field row
@@ -82,13 +82,14 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
           newFields.push({
             name: name,
             type: FieldType.string,
-            values: new ArrayVector(values),
+            values: values,
             config: {},
           });
         }
       }
 
       result.push({
+        ...frame,
         fields: newFields,
         length: frame.length,
       });
@@ -121,8 +122,8 @@ function convertLabelsToRows(data: DataFrame[], keepLabels?: string[]): DataFram
             ...frame,
             name: getFieldDisplayName(field, frame, data),
             fields: [
-              { name: 'label', type: FieldType.string, config: {}, values: new ArrayVector(keys) },
-              { name: 'value', type: FieldType.string, config: {}, values: new ArrayVector(vals) },
+              { name: 'label', type: FieldType.string, config: {}, values: keys },
+              { name: 'value', type: FieldType.string, config: {}, values: vals },
             ],
             length: vals.length,
           });

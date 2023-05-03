@@ -2,7 +2,7 @@ package httpclientprovider
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -18,7 +18,7 @@ func (c *testContext) createRoundTripper(name string) http.RoundTripper {
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Request:    req,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+			Body:       io.NopCloser(bytes.NewBufferString("")),
 		}, nil
 	})
 }

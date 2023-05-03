@@ -34,10 +34,23 @@ function aliasRenderer(part: { params: string[] }, innerExpr: string) {
 }
 
 function fieldRenderer(part: { params: string[] }, innerExpr: any) {
-  if (part.params[0] === '*') {
+  const param = part.params[0];
+
+  if (param === '*') {
     return '*';
   }
-  return '"' + part.params[0] + '"';
+
+  let escapedParam = `"${param}"`;
+
+  if (param.endsWith('::tag')) {
+    escapedParam = `"${param.slice(0, -5)}"::tag`;
+  }
+
+  if (param.endsWith('::field')) {
+    escapedParam = `"${param.slice(0, -7)}"::field`;
+  }
+
+  return escapedParam;
 }
 
 function replaceAggregationAddStrategy(selectParts: any[], partModel: { def: { type: string } }) {

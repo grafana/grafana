@@ -10,12 +10,14 @@ import {
   AnnotationSupport,
   DataFrame,
   DataSourceApi,
+  DataTransformContext,
   Field,
   FieldType,
   getFieldDisplayName,
   KeyValue,
   standardTransformers,
 } from '@grafana/data';
+import { config } from 'app/core/config';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -65,8 +67,12 @@ export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFr
           return of(data[0]);
         }
 
+        const ctx: DataTransformContext = {
+          interpolate: (v: string) => v,
+        };
+
         return of(data).pipe(
-          standardTransformers.mergeTransformer.operator({}),
+          standardTransformers.mergeTransformer.operator({}, ctx),
           map((d) => d[0])
         );
       })
@@ -112,9 +118,22 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   },
 ];
 
+export const publicDashboardEventNames: AnnotationFieldInfo[] = [
+  {
+    key: 'color',
+  },
+  {
+    key: 'isRegion',
+  },
+  {
+    key: 'source',
+  },
+];
+
 // Given legacy infrastructure, alert events are passed though the same annotation
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
+  ...(config.isPublicDashboardView ? publicDashboardEventNames : []),
   ...annotationEventNames,
   { key: 'userId' },
   { key: 'login' },
@@ -185,7 +204,8 @@ export function getAnnotationsFromData(
       }
 
       if (!hasTime || !hasText) {
-        return []; // throw an error?
+        console.error('Cannot process annotation fields. No time or text present.');
+        return [];
       }
 
       // Add each value to the string
@@ -203,7 +223,7 @@ export function getAnnotationsFromData(
           if (f.text) {
             v = f.text; // TODO support templates!
           } else if (f.field) {
-            v = f.field.values.get(i);
+            v = f.field.values[i];
             if (v !== undefined && f.regex) {
               const match = f.regex.exec(v);
               if (match) {
@@ -237,7 +257,6 @@ const legacyRunner = [
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external
-  'grafana-splunk-datasource', // external
 ];
 
 /**

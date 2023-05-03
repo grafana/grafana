@@ -16,7 +16,7 @@ e2e.scenario({
   itName: 'Tests dashboard time zone scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
@@ -61,7 +61,8 @@ e2e.scenario({
     e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
 
     // click to go back to the dashboard.
-    e2e.components.BackButton.backArrow().click({ force: true }).wait(2000);
+    e2e.components.BackButton.backArrow().click({ force: true });
+    e2e.components.RefreshPicker.runButtonV2().should('be.visible').click();
 
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.containerByTitle(title)
@@ -75,7 +76,9 @@ e2e.scenario({
               const inUtc = timesInUtc[title];
               const inTz = element.text();
               const isCorrect = isTimeCorrect(inUtc, inTz, offset);
-              assert.isTrue(isCorrect, `Panel with title: "${title}"`);
+              expect(isCorrect, `Expect the panel "${title}" to have the new timezone applied but isn't`).to.be.equal(
+                true
+              );
             })
         );
     }

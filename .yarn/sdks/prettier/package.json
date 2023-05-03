@@ -1,6 +1,6 @@
 {
   "name": "prettier",
-  "version": "2.7.1-sdk",
+  "version": "2.8.1-sdk",
   "main": "./index.js",
   "type": "commonjs"
 }

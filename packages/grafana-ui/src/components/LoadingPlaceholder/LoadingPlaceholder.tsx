@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, SFC } from 'react';
+import React, { HTMLAttributes } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -16,7 +16,7 @@ export interface LoadingPlaceholderProps extends HTMLAttributes<HTMLDivElement> 
 /**
  * @public
  */
-export const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text, className, ...rest }) => {
+export const LoadingPlaceholder = ({ text, className, ...rest }: LoadingPlaceholderProps) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.container, className)} {...rest}>

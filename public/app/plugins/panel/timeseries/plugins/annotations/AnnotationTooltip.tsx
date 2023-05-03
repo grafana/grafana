@@ -3,9 +3,9 @@ import React from 'react';
 
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { HorizontalGroup, IconButton, Tag, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
-import { CommentManager } from 'app/features/comments/CommentManager';
+
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 interface AnnotationTooltipProps {
   annotation: AnnotationsDataFrameViewDTO;
@@ -37,7 +37,7 @@ export const AnnotationTooltip = ({
   const ts = <span className={styles.time}>{Boolean(annotation.isRegion) ? `${time} - ${timeEnd}` : time}</span>;
 
   if (annotation.login && annotation.avatarUrl) {
-    avatar = <img className={styles.avatar} src={annotation.avatarUrl} />;
+    avatar = <img className={styles.avatar} alt="Annotation avatar" src={annotation.avatarUrl} />;
   }
 
   if (annotation.alertId !== undefined && annotation.newState) {
@@ -62,10 +62,8 @@ export const AnnotationTooltip = ({
     );
   }
 
-  const areAnnotationCommentsEnabled = config.featureToggles.annotationComments;
-
   return (
-    <div className={styles.wrapper} style={areAnnotationCommentsEnabled ? { minWidth: '300px' } : {}}>
+    <div className={styles.wrapper}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'} spacing={'md'}>
           <div className={styles.meta}>
@@ -89,11 +87,6 @@ export const AnnotationTooltip = ({
             ))}
           </HorizontalGroup>
         </>
-        {areAnnotationCommentsEnabled && (
-          <div className={styles.commentWrapper}>
-            <CommentManager objectType={'annotation'} objectId={annotation.id.toString()} />
-          </div>
-        )}
       </div>
     </div>
   );

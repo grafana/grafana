@@ -1,14 +1,13 @@
 package notifiers
 
 import (
-	"strconv"
-
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -114,7 +113,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	topicURL := kn.Endpoint + "/topics/" + kn.Topic
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        topicURL,
 		Body:       string(body),
 		HttpMethod: "POST",

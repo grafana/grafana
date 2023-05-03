@@ -146,7 +146,7 @@ func FormatDuration(inter time.Duration) string {
 	return "1ms"
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func roundInterval(interval time.Duration) time.Duration {
 	switch {
 	// 0.015s

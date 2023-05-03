@@ -6,10 +6,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -20,7 +20,7 @@ import (
 // 401: unauthorisedError
 // 422: unprocessableEntityError
 // 500: internalServerError
-func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
@@ -28,14 +28,14 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
-	permission := models.PERMISSION_VIEW
+	permission := dashboards.PERMISSION_VIEW
 
 	if limit > 5000 {
 		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = models.PERMISSION_EDIT
+		permission = dashboards.PERMISSION_EDIT
 	}
 
 	dbIDs := make([]int64, 0)
@@ -71,7 +71,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
-		OrgId:         c.OrgId,
+		OrgId:         c.OrgID,
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,
@@ -80,63 +80,24 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		Sort:          sort,
 	}
 
-	err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
+	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
 	if err != nil {
 		return response.Error(500, "Search failed", err)
 	}
 
 	defer c.TimeRequest(metrics.MApiDashboardSearch)
 
-	if !c.QueryBool("accesscontrol") {
-		return response.JSON(http.StatusOK, searchQuery.Result)
-	}
-
-	return hs.searchHitsWithMetadata(c, searchQuery.Result)
-}
-
-func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
-	folderUIDs := make(map[string]bool)
-	dashboardUIDs := make(map[string]bool)
-
-	for _, hit := range hits {
-		if hit.Type == models.DashHitFolder {
-			folderUIDs[hit.UID] = true
-		} else {
-			dashboardUIDs[hit.UID] = true
-			folderUIDs[hit.FolderUID] = true
-		}
-	}
-
-	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, folderUIDs)
-	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
-
-	// search hit with access control metadata attached
-	type hitWithMeta struct {
-		*models.Hit
-		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
-	}
-	hitsWithMeta := make([]hitWithMeta, 0, len(hits))
-	for _, hit := range hits {
-		var meta accesscontrol.Metadata
-		if hit.Type == models.DashHitFolder {
-			meta = folderMeta[hit.UID]
-		} else {
-			meta = accesscontrol.MergeMeta("dashboards", dashboardMeta[hit.UID], folderMeta[hit.FolderUID])
-		}
-		hitsWithMeta = append(hitsWithMeta, hitWithMeta{hit, meta})
-	}
-
-	return response.JSON(http.StatusOK, hitsWithMeta)
+	return response.JSON(http.StatusOK, hits)
 }
 
 // swagger:route GET /search/sorting search listSortOptions
 //
-// List search sorting options
+// List search sorting options.
 //
 // Responses:
 // 200: listSortOptionsResponse
 // 401: unauthorisedError
-func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ListSortOptions(c *contextmodel.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
 	res := []util.DynMap{}
@@ -215,7 +176,7 @@ type SearchParams struct {
 // swagger:response searchResponse
 type SearchResponse struct {
 	// in: body
-	Body models.HitList `json:"body"`
+	Body model.HitList `json:"body"`
 }
 
 // swagger:response listSortOptionsResponse

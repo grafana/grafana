@@ -8,8 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestReverseProxy(t *testing.T) {
@@ -18,6 +21,8 @@ func TestReverseProxy(t *testing.T) {
 		upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			actualReq = req
 			http.SetCookie(w, &http.Cookie{Name: "test"})
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+			w.Header().Set("X-Custom-Hdr", "Ok!")
 			w.WriteHeader(http.StatusOK)
 		}))
 		t.Cleanup(upstream.Close)
@@ -29,6 +34,9 @@ func TestReverseProxy(t *testing.T) {
 		req.Header.Set("Origin", "test.com")
 		req.Header.Set("Referer", "https://test.com/api")
 		req.RemoteAddr = "10.0.0.1"
+
+		req = req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
+		req.Header.Set("Authorization", "val")
 
 		rp := NewReverseProxy(log.New("test"), func(req *http.Request) {
 			req.Header.Set("X-KEY", "value")
@@ -44,10 +52,15 @@ func TestReverseProxy(t *testing.T) {
 		require.Equal(t, "10.0.0.1", actualReq.Header.Get("X-Forwarded-For"))
 		require.Empty(t, actualReq.Header.Get("Origin"))
 		require.Empty(t, actualReq.Header.Get("Referer"))
+		require.Equal(t, "https://test.com/api", actualReq.Header.Get("X-Grafana-Referer"))
 		require.Equal(t, "value", actualReq.Header.Get("X-KEY"))
+		require.Empty(t, actualReq.Header.Get("Authorization"))
 		resp := rec.Result()
 		require.Empty(t, resp.Cookies())
 		require.Equal(t, "sandbox", resp.Header.Get("Content-Security-Policy"))
+		require.Contains(t, resp.Header, "X-Custom-Hdr")
+		require.NotContains(t, resp.Header, "Strict-Transport-Security")
+		require.Contains(t, resp.Header.Get("Via"), "grafana")
 		require.NoError(t, resp.Body.Close())
 	})
 

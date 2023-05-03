@@ -18,7 +18,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
-
   const { folder, loading } = useFolder(folderUID);
 
   if (!rule) {

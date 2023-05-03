@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-
-	"github.com/grafana/grafana/pkg/models"
+	"strings"
 
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialGithub struct {
@@ -17,6 +18,7 @@ type SocialGithub struct {
 	allowedOrganizations []string
 	apiUrl               string
 	teamIds              []int
+	skipOrgRoleSync      bool
 }
 
 type GithubTeam struct {
@@ -32,10 +34,6 @@ var (
 	ErrMissingTeamMembership         = Error{"user not a member of one of the required teams"}
 	ErrMissingOrganizationMembership = Error{"user not a member of one of the required organizations"}
 )
-
-func (s *SocialGithub) Type() int {
-	return int(models.GITHUB)
-}
 
 func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	if len(s.teamIds) == 0 {
@@ -70,7 +68,7 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUr
 
 	for _, allowedOrganization := range s.allowedOrganizations {
 		for _, organization := range organizations {
-			if organization == allowedOrganization {
+			if strings.EqualFold(organization, allowedOrganization) {
 				return true
 			}
 		}
@@ -153,27 +151,33 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 }
 
 func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
+	url := organizationsUrl
+	hasMore := true
+	logins := make([]string, 0)
+
 	type Record struct {
 		Login string `json:"login"`
 	}
 
-	response, err := s.httpGet(client, organizationsUrl)
-	if err != nil {
-		return nil, fmt.Errorf("error getting organizations: %s", err)
+	for hasMore {
+		response, err := s.httpGet(client, url)
+		if err != nil {
+			return nil, fmt.Errorf("error getting organizations: %s", err)
+		}
+
+		var records []Record
+
+		err = json.Unmarshal(response.Body, &records)
+		if err != nil {
+			return nil, fmt.Errorf("error getting organizations: %s", err)
+		}
+
+		for _, record := range records {
+			logins = append(logins, record.Login)
+		}
+
+		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
-
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		return nil, fmt.Errorf("error getting organizations: %s", err)
-	}
-
-	var logins = make([]string, len(records))
-	for i, record := range records {
-		logins[i] = record.Login
-	}
-
 	return logins, nil
 }
 
@@ -201,27 +205,41 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	teams := convertToGroupList(teamMemberships)
 
-	role, err := s.extractRole(response.Body, teams)
-	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
+	var role roletype.RoleType
+	var isGrafanaAdmin *bool = nil
+
+	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
+		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, teams, true)
+
+		if s.roleAttributeStrict && !role.IsValid() {
+			return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
+		}
+
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
 	}
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, errors.New("invalid role")
+
+	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	userInfo := &BasicUserInfo{
-		Name:   data.Login,
-		Login:  data.Login,
-		Id:     fmt.Sprintf("%d", data.Id),
-		Email:  data.Email,
-		Role:   string(role),
-		Groups: teams,
+		Name:           data.Login,
+		Login:          data.Login,
+		Id:             fmt.Sprintf("%d", data.Id),
+		Email:          data.Email,
+		Role:           role,
+		Groups:         teams,
+		IsGrafanaAdmin: isGrafanaAdmin,
 	}
 	if data.Name != "" {
 		userInfo.Name = data.Name
 	}
 
-	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs?per_page=100")
 
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership

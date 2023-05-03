@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { countBy } from 'lodash';
+import { countBy, sum } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { LinkButton, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
   AlertInstanceStateFilter,
@@ -20,11 +20,13 @@ import { isAlertingRule } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
+import { getComponentsFromStats } from './RuleStats';
 
 interface Props {
   rule: CombinedRule;
   pagination?: PaginationProps;
   itemsDisplayLimit?: number;
+  enableFiltering?: boolean;
 }
 
 interface ShowMoreStats {
@@ -33,7 +35,7 @@ interface ShowMoreStats {
 }
 
 function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreStats }) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const { ruleViewPageLink, stats } = props;
 
   return (
@@ -52,9 +54,10 @@ function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreSta
 
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const {
-    rule: { promRule, namespace },
+    rule: { promRule, namespace, instanceTotals },
     itemsDisplayLimit = Number.POSITIVE_INFINITY,
     pagination,
+    enableFiltering = false,
   } = props;
 
   const [queryString, setQueryString] = useState<string>();
@@ -64,7 +67,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const [filterKey] = useState<number>(Math.floor(Math.random() * 100));
   const queryStringKey = `queryString-${filterKey}`;
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const stateFilterType = isGrafanaRulesSource(namespace.rulesSource) ? GRAFANA_RULES_SOURCE_NAME : 'prometheus';
 
@@ -82,40 +85,45 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   const visibleInstances = alerts.slice(0, itemsDisplayLimit);
 
+  // Count All By State is used only when filtering is enabled and we have access to all instances
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
-  const hiddenItemsCount = alerts.length - visibleInstances.length;
+  const totalInstancesCount = sum(Object.values(instanceTotals));
+  const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
 
   const stats: ShowMoreStats = {
-    totalItemsCount: alerts.length,
+    totalItemsCount: totalInstancesCount,
     visibleItemsCount: visibleInstances.length,
   };
 
   const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
+  const statsComponents = getComponentsFromStats(instanceTotals);
 
-  const footerRow = hiddenItemsCount ? (
+  const footerRow = hiddenInstancesCount ? (
     <ShowMoreInstances stats={stats} ruleViewPageLink={ruleViewPageLink} />
   ) : undefined;
 
   return (
     <DetailsField label="Matching instances" horizontal={true}>
-      <div className={cx(styles.flexRow, styles.spaceBetween)}>
-        <div className={styles.flexRow}>
-          <MatcherFilter
-            className={styles.rowChild}
-            key={queryStringKey}
-            defaultQueryString={queryString}
-            onFilterChange={(value) => setQueryString(value)}
-          />
-          <AlertInstanceStateFilter
-            className={styles.rowChild}
-            filterType={stateFilterType}
-            stateFilter={alertState}
-            onStateFilterChange={setAlertState}
-            itemPerStateStats={countAllByState}
-          />
+      {enableFiltering && (
+        <div className={cx(styles.flexRow, styles.spaceBetween)}>
+          <div className={styles.flexRow}>
+            <MatcherFilter
+              className={styles.rowChild}
+              key={queryStringKey}
+              defaultQueryString={queryString}
+              onFilterChange={(value) => setQueryString(value)}
+            />
+            <AlertInstanceStateFilter
+              className={styles.rowChild}
+              filterType={stateFilterType}
+              stateFilter={alertState}
+              onStateFilterChange={setAlertState}
+              itemPerStateStats={countAllByState}
+            />
+          </div>
         </div>
-      </div>
-
+      )}
+      {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
       <AlertInstancesTable instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
     </DetailsField>
   );
@@ -140,7 +148,7 @@ function filterAlerts(
   return filteredAlerts;
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     flexRow: css`
       display: flex;
@@ -148,21 +156,29 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: flex-end;
       width: 100%;
       flex-wrap: wrap;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     spaceBetween: css`
       justify-content: space-between;
     `,
     rowChild: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     `,
     footerRow: css`
       display: flex;
       flex-direction: column;
-      gap: ${theme.spacing.sm};
+      gap: ${theme.spacing(1)};
       justify-content: space-between;
       align-items: center;
       width: 100%;
+    `,
+    instancesContainer: css`
+      margin-bottom: ${theme.spacing(2)};
+    `,
+    stats: css`
+      display: flex;
+      gap: ${theme.spacing(1)};
+      padding: ${theme.spacing(1, 0)};
     `,
   };
 };

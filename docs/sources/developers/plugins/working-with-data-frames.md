@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/working-with-data-frames/
 title: Working with data frames
 ---
 
@@ -52,11 +50,11 @@ frame.name = 'http_requests_total';
 When you're building a panel plugin, the data frames returned by the data source are available from the `data` prop in your panel component.
 
 ```ts
-const SimplePanel: React.FC<Props> = ({ data }) => {
+function SimplePanel({ data: Props }) {
   const frame = data.series[0];
 
   // ...
-};
+}
 ```
 
 Before you start reading the data, think about what data you expect. For example, to visualize a time series we'd need at least one time field, and one number field.
@@ -74,7 +72,7 @@ const y = frame.fields.find((field) => field.name === yField);
 const size = frame.fields.find((field) => field.name === sizeField);
 
 for (let i = 0; i < frame.length; i++) {
-  const row = [x?.values.get(i), y?.values.get(i), size?.values.get(i)];
+  const row = [x?.values[i], y?.values[i], size?.values[i]];
 
   // ...
 }
@@ -102,7 +100,7 @@ const valueField = frame.fields.find((field) => field.type === FieldType.number)
 return (
   <div>
     {valueField
-      ? valueField.values.toArray().map((value) => {
+      ? valueField.values.map((value) => {
           const displayValue = valueField.display!(value);
           return (
             <p style={{ color: displayValue.color }}>

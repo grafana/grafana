@@ -24,7 +24,7 @@ const connector = connect(null, mapDispatchToProps);
 
 type Props = DeleteDashboardModalProps & ConnectedProps<typeof connector>;
 
-const DeleteDashboardModalUnconnected: React.FC<Props> = ({ hideModal, cleanUpDashboardAndVariables, dashboard }) => {
+const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariables, dashboard }: Props) => {
   const isProvisioned = dashboard.meta.provisioned;
   const { onDeleteDashboard } = useDashboardDelete(dashboard.uid, cleanUpDashboardAndVariables);
 

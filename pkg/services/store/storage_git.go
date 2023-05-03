@@ -11,12 +11,12 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"gocloud.dev/blob"
+
+	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const rootStorageTypeGit = "git"
@@ -339,15 +339,15 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 	if msg == "" {
 		msg = "changes from grafana ui"
 	}
-	user := cmd.User
-	if user == nil {
-		user = &models.SignedInUser{}
+	usr := cmd.User
+	if usr == nil {
+		usr = &user.SignedInUser{}
 	}
 
 	hash, err := w.Commit(msg, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  firstRealString(user.Name, user.Login, user.Email, "?"),
-			Email: firstRealString(user.Email, user.Login, user.Name, "?"),
+			Name:  firstRealString(usr.Name, usr.Login, usr.Email, "?"),
+			Email: firstRealString(usr.Email, usr.Login, usr.Name, "?"),
 			When:  time.Now(),
 		},
 	})

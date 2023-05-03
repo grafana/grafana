@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,16 +16,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestDashboardQuota(t *testing.T) {
+func TestIntegrationDashboardQuota(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
@@ -38,7 +47,7 @@ func TestDashboardQuota(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -61,7 +70,7 @@ func TestDashboardQuota(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		dashboardDTO := &plugindashboards.PluginDashboard{}
 		err = json.Unmarshal(b, dashboardDTO)
@@ -86,7 +95,7 @@ func TestDashboardQuota(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		require.JSONEq(t, `{"message":"Quota reached"}`, string(b))
@@ -99,12 +108,22 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = 1
 
-	u, err := store.CreateUser(context.Background(), cmd)
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u.ID
 }
 
-func TestUpdatingProvisionionedDashboards(t *testing.T) {
+func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -123,15 +142,15 @@ providers:
    path: %s`, provDashboardsDir))
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
-	input, err := ioutil.ReadFile(filepath.Join("./home.json"))
+	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
-	err = ioutil.WriteFile(provDashboardFile, input, 0644)
+	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -151,9 +170,9 @@ providers:
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		dashboardList := &models.HitList{}
+		dashboardList := &model.HitList{}
 		err = json.Unmarshal(b, dashboardList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, dashboardList.Len())
@@ -202,7 +221,7 @@ providers:
 				dashboardData, err := simplejson.NewJson([]byte(tc.dashboardData))
 				require.NoError(t, err)
 				buf := &bytes.Buffer{}
-				err = json.NewEncoder(buf).Encode(models.SaveDashboardCommand{
+				err = json.NewEncoder(buf).Encode(dashboards.SaveDashboardCommand{
 					Dashboard: dashboardData,
 				})
 				require.NoError(t, err)
@@ -218,7 +237,7 @@ providers:
 				if tc.expErrReason == "" {
 					return
 				}
-				b, err := ioutil.ReadAll(resp.Body)
+				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				dashboardErr := &errorResponseBody{}
 				err = json.Unmarshal(b, dashboardErr)
@@ -244,7 +263,7 @@ providers:
 			})
 			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			dashboardErr := &errorResponseBody{}
 			err = json.Unmarshal(b, dashboardErr)

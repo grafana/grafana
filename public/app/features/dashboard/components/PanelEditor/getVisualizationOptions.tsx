@@ -82,8 +82,8 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   };
 
   const access: NestedValueAccess = {
-    getValue: (path: string) => lodashGet(currentOptions, path),
-    onChange: (path: string, value: any) => {
+    getValue: (path) => lodashGet(currentOptions, path),
+    onChange: (path, value) => {
       const newOptions = setOptionImmutably(currentOptions, path, value);
       onPanelOptionsChanged(newOptions);
     },
@@ -196,7 +196,7 @@ export function fillOptionsPaneItems(
           return (
             <Editor
               value={access.getValue(pluginOption.path)}
-              onChange={(value: any) => {
+              onChange={(value) => {
                 access.onChange(pluginOption.path, value);
               }}
               item={pluginOption}

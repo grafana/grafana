@@ -1,8 +1,14 @@
 import { from, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
+import {
+  FieldType,
+  getFieldDisplayName,
+  getProcessedDataFrames,
+  isDataFrame,
+  MetricFindValue,
+  PanelData,
+} from '@grafana/data';
 
 import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
@@ -66,10 +72,10 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
 
         for (const frame of frames) {
           for (let index = 0; index < frame.length; index++) {
-            const expandable = expandableIndex !== -1 ? frame.fields[expandableIndex].values.get(index) : undefined;
-            const string = frame.fields[stringIndex].values.get(index);
-            const text = textIndex !== -1 ? frame.fields[textIndex].values.get(index) : null;
-            const value = valueIndex !== -1 ? frame.fields[valueIndex].values.get(index) : null;
+            const expandable = expandableIndex !== -1 ? frame.fields[expandableIndex].values[index] : undefined;
+            const string = frame.fields[stringIndex].values[index];
+            const text = textIndex !== -1 ? frame.fields[textIndex].values[index] : null;
+            const value = valueIndex !== -1 ? frame.fields[valueIndex].values[index] : null;
 
             if (valueIndex === -1 && textIndex === -1) {
               metrics.push({ text: string, value: string, expandable });

@@ -1,13 +1,15 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
+  AxisPlacement,
+  ScaleDistribution,
+  VisibilityMode,
   HeatmapCellLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
-} from 'app/features/transformers/calculateHeatmap/models.gen';
+} from '@grafana/schema';
 
-import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
@@ -144,6 +146,12 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   options.color.fill = color.cardColor;
   options.color.min = color.min;
   options.color.max = color.max;
+
+  if (typeof color.min === 'number' && typeof color.max === 'number' && color.min > color.max) {
+    options.color.min = color.max;
+    options.color.max = color.min;
+    options.color.reverse = true;
+  }
 
   return { fieldConfig, options };
 }

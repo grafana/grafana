@@ -37,12 +37,12 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
+	alertManagerConfig, err := nps.amStore.GetLatestAlertmanagerConfiguration(ctx, &q)
 	if err != nil {
 		return definitions.Route{}, err
 	}
 
-	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	cfg, err := deserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return definitions.Route{}, err
 	}
@@ -57,7 +57,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	}
 
 	result := *cfg.AlertmanagerConfig.Route
-	result.Provenance = provenance
+	result.Provenance = definitions.Provenance(provenance)
 
 	return result, nil
 }
@@ -74,6 +74,10 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	receivers, err := nps.receiversToMap(revision.cfg.AlertmanagerConfig.Receivers)
+	if err != nil {
+		return err
+	}
+
 	err = tree.ValidateReceivers(receivers)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
@@ -102,7 +106,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		OrgID:                     orgID,
 	}
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = nps.amStore.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, nps.amStore, &cmd)
 		if err != nil {
 			return err
 		}
@@ -132,6 +136,10 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, err
 	}
 	revision.cfg.AlertmanagerConfig.Config.Route = route
+	err = nps.ensureDefaultReceiverExists(revision.cfg, defaultCfg)
+	if err != nil {
+		return definitions.Route{}, err
+	}
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
@@ -145,7 +153,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		OrgID:                     orgID,
 	}
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := nps.amStore.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err := PersistConfig(ctx, nps.amStore, &cmd)
 		if err != nil {
 			return err
 		}
@@ -168,4 +176,24 @@ func (nps *NotificationPolicyService) receiversToMap(records []*definitions.Post
 		receivers[receiver.Name] = struct{}{}
 	}
 	return receivers, nil
+}
+
+func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) error {
+	defaultRcv := cfg.AlertmanagerConfig.Route.Receiver
+
+	for _, rcv := range cfg.AlertmanagerConfig.Receivers {
+		if rcv.Name == defaultRcv {
+			return nil
+		}
+	}
+
+	for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
+		if rcv.Name == defaultRcv {
+			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, rcv)
+			return nil
+		}
+	}
+
+	nps.log.Error("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
+	return fmt.Errorf("inconsistent default configuration")
 }

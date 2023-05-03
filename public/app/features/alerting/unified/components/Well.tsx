@@ -1,21 +1,21 @@
 import { cx, css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 type Props = React.HTMLAttributes<HTMLDivElement>;
 
-export const Well: FC<Props> = ({ children, className }) => {
-  const styles = useStyles(getStyles);
+export const Well = ({ children, className }: Props) => {
+  const styles = useStyles2(getStyles);
   return <div className={cx(styles.wrapper, className)}>{children}</div>;
 };
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    background-color: ${theme.colors.panelBg};
-    border: solid 1px ${theme.colors.formInputBorder};
-    border-radius: ${theme.border.radius.sm};
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    font-family: ${theme.typography.fontFamily.monospace};
+    background-color: ${theme.components.panel.background};
+    border: solid 1px ${theme.components.input.borderColor};
+    border-radius: ${theme.shape.borderRadius(1)};
+    padding: ${theme.spacing(0.5, 1)};
+    font-family: ${theme.typography.fontFamilyMonospace};
   `,
 });

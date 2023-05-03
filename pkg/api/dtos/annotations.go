@@ -15,19 +15,21 @@ type PostAnnotationsCmd struct {
 }
 
 type UpdateAnnotationsCmd struct {
-	Id      int64    `json:"id"`
-	Time    int64    `json:"time"`
-	TimeEnd int64    `json:"timeEnd,omitempty"` // Optional
-	Text    string   `json:"text"`
-	Tags    []string `json:"tags"`
+	Id      int64            `json:"id"`
+	Time    int64            `json:"time"`
+	TimeEnd int64            `json:"timeEnd,omitempty"` // Optional
+	Text    string           `json:"text"`
+	Tags    []string         `json:"tags"`
+	Data    *simplejson.Json `json:"data"`
 }
 
 type PatchAnnotationsCmd struct {
-	Id      int64    `json:"id"`
-	Time    int64    `json:"time"`
-	TimeEnd int64    `json:"timeEnd,omitempty"` // Optional
-	Text    string   `json:"text"`
-	Tags    []string `json:"tags"`
+	Id      int64            `json:"id"`
+	Time    int64            `json:"time"`
+	TimeEnd int64            `json:"timeEnd,omitempty"` // Optional
+	Text    string           `json:"text"`
+	Tags    []string         `json:"tags"`
+	Data    *simplejson.Json `json:"data"`
 }
 
 type MassDeleteAnnotationsCmd struct {

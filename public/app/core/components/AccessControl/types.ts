@@ -2,6 +2,7 @@ export type ResourcePermission = {
   id: number;
   resourceId: string;
   isManaged: boolean;
+  isInherited: boolean;
   userId?: number;
   userLogin?: string;
   userAvatarUrl?: string;

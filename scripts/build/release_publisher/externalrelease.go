@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -62,7 +62,7 @@ func (getHTTPContents) getContents(url string) (string, error) {
 	}
 
 	defer response.Body.Close()
-	all, err := ioutil.ReadAll(response.Body)
+	all, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err
 	}

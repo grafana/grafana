@@ -1,9 +1,10 @@
 import debounce from 'debounce-promise';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchHit } from 'app/features/search/types';
 
 /**
  * @deprecated prefer using dashboard uid rather than id
@@ -30,7 +31,7 @@ interface Props {
 /**
  * @deprecated prefer using dashboard uid rather than id
  */
-export const DashboardPickerByID: FC<Props> = ({
+export const DashboardPickerByID = ({
   onChange: propsOnChange,
   value,
   width,
@@ -40,7 +41,7 @@ export const DashboardPickerByID: FC<Props> = ({
   id,
   optionLabel = 'label',
   excludedDashboards,
-}) => {
+}: Props) => {
   const debouncedSearch = debounce((query: string) => getDashboards(query || '', optionLabel, excludedDashboards), 300);
   const option = value ? { value, [optionLabel]: value[optionLabel] } : undefined;
   const onChange = (item: SelectableValue<DashboardPickerItem>) => {
@@ -70,10 +71,12 @@ async function getDashboards(
   label: string,
   excludedDashboards?: string[]
 ): Promise<Array<SelectableValue<DashboardPickerItem>>> {
-  const result = await backendSrv.search({ type: 'dash-db', query, limit: 100 });
+  // FIXME: stop using id from search and use UID instead
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = (await backendSrv.search({ type: 'dash-db', query, limit: 100 })) as DashboardSearchHit[];
   const dashboards = result.map(({ id, uid = '', title, folderTitle }) => {
     const value: DashboardPickerItem = {
-      id,
+      id: id!,
       uid,
       [label]: `${folderTitle ?? 'General'}/${title}`,
     };
@@ -82,7 +85,7 @@ async function getDashboards(
   });
 
   if (excludedDashboards) {
-    return dashboards.filter(({ value }) => !excludedDashboards.includes(value.uid as string));
+    return dashboards.filter(({ value }) => !excludedDashboards.includes(value.uid));
   }
 
   return dashboards;

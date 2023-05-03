@@ -1,27 +1,38 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
-import { Portal, UPlotConfigBuilder, useTheme2, VizTooltipContainer, ZoomPlugin } from '@grafana/ui';
+import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import {
+  Portal,
+  TooltipDisplayMode,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useTheme2,
+  VizTooltipContainer,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
+import {
+  prepareTimelineFields,
+  prepareTimelineLegendItems,
+  TimelineMode,
+} from 'app/core/components/TimelineChart/utils';
 
-import { TimelineChart } from '../state-timeline/TimelineChart';
-import { TimelineMode } from '../state-timeline/types';
-import { prepareTimelineFields, prepareTimelineLegendItems } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { StatusPanelOptions } from './types';
+import { PanelOptions } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
+interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 
 /**
  * @alpha
  */
-export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
+export const StatusHistoryPanel = ({
   data,
   timeRange,
   timeZone,
@@ -29,7 +40,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   width,
   height,
   onChangeTimeRange,
-}) => {
+}: TimelinePanelProps) => {
   const theme = useTheme2();
 
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
@@ -39,7 +50,9 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  const { sync } = usePanelContext();
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -126,7 +139,31 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
     [timeZone, frames, shouldDisplayCloseButton]
   );
 
-  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
+  const renderTooltip = (alignedFrame: DataFrame) => {
+    if (options.tooltip.mode === TooltipDisplayMode.None) {
+      return null;
+    }
+
+    if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
+      return null;
+    }
+
+    return (
+      <Portal>
+        {hover && coords && focusedSeriesIdx && (
+          <VizTooltipContainer
+            position={{ x: coords.viewport.x, y: coords.viewport.y }}
+            offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+          </VizTooltipContainer>
+        )}
+      </Portal>
+    );
+  };
+
+  const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames || warn) {
     return (
@@ -154,12 +191,11 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZones={timezones}
+      timeZone={timezones}
       width={width}
       height={height}
       legendItems={legendItems}
       {...options}
-      // hardcoded
       mode={TimelineMode.Samples}
     >
       {(config, alignedFrame) => {
@@ -172,22 +208,15 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
             setCoords,
             setHover,
             isToolTipOpen,
+            isActive,
+            setIsActive,
           });
         }
+
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <Portal>
-              {hover && coords && (
-                <VizTooltipContainer
-                  position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                  allowPointerEvents={isToolTipOpen.current}
-                >
-                  {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
-                </VizTooltipContainer>
-              )}
-            </Portal>
+            {renderTooltip(alignedFrame)}
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );

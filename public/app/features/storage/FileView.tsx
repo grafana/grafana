@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import React, { useMemo } from 'react';
-import SVG from 'react-inlinesvg';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { CodeEditor, useStyles2 } from '@grafana/ui';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { getGrafanaStorage } from './storage';
 import { StorageView } from './types';
@@ -55,14 +55,14 @@ export function FileView({ listing, path, onPathChange, view }: Props) {
     case 'svg':
       return (
         <div>
-          <SVG src={src} className={styles.icon} />
+          <SanitizedSVG src={src} className={styles.icon} />
         </div>
       );
     case 'image':
       return (
         <div>
           <a target={'_self'} href={src}>
-            <img src={src} className={styles.img} />
+            <img src={src} alt="File preview" className={styles.img} />
           </a>
         </div>
       );

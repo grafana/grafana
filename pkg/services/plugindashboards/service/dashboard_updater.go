@@ -6,12 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
 func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
@@ -130,7 +131,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 	}
 }
 
-func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *models.PluginStateChangedEvent) error {
+func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
 	du.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
@@ -141,14 +142,15 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		du.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
-		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
-		if err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
+		query := dashboards.GetDashboardsByPluginIDQuery{PluginID: event.PluginId, OrgID: event.OrgId}
+		queryResult, err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query)
+		if err != nil {
 			return err
 		}
 
-		for _, dash := range query.Result {
+		for _, dash := range queryResult {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.Id, dash.OrgId); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.OrgID); err != nil {
 				return err
 			}
 		}
@@ -169,8 +171,11 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 	du.logger.Info("Auto updating App dashboard", "dashboard", resp.Dashboard.Title, "newRev",
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
-		PluginId:  pluginDashInfo.PluginId,
-		User:      &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN, OrgId: orgID},
+		PluginId: pluginDashInfo.PluginId,
+		User: accesscontrol.BackgroundUser("dashboard_updater", orgID, org.RoleAdmin, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+			{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+		}),
 		Path:      pluginDashInfo.Reference,
 		FolderId:  0,
 		Dashboard: resp.Dashboard.Data,

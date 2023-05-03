@@ -19,14 +19,14 @@ import {
   DataFrameDTO,
   TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
+  DataQueryResponseData,
+  PanelData,
+  LoadingState,
+  GraphSeriesValue,
 } from '../types/index';
-import { ArrayVector } from '../vector/ArrayVector';
-import { SortedVector } from '../vector/SortedVector';
-import { vectorToArray } from '../vector/vectorToArray';
 
-import { ArrayDataFrame } from './ArrayDataFrame';
+import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
-import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -35,7 +35,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: new ArrayVector(),
+      values: [] as unknown[],
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -46,7 +46,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
-      fields[i].values.buffer.push(row[i]);
+      fields[i].values.push(row[i]);
     }
   }
 
@@ -84,7 +84,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       name: TIME_SERIES_TIME_FIELD_NAME,
       type: FieldType.time,
       config: {},
-      values: new ArrayVector<number>(times),
+      values: times,
     },
     {
       name: TIME_SERIES_VALUE_FIELD_NAME,
@@ -92,7 +92,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       config: {
         unit: timeSeries.unit,
       },
-      values: new ArrayVector<TimeSeriesValue>(values),
+      values: values,
       labels: timeSeries.tags,
     },
   ];
@@ -115,13 +115,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
  * to DataFrame.  See: https://github.com/grafana/grafana/issues/18528
  */
 function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
-  const x = new ArrayVector();
-  const y = new ArrayVector();
+  const x: GraphSeriesValue[] = [];
+  const y: GraphSeriesValue[] = [];
 
   for (let i = 0; i < graphSeries.data.length; i++) {
     const row = graphSeries.data[i];
-    x.buffer.push(row[1]);
-    y.buffer.push(row[0]);
+    x.push(row[1]);
+    y.push(row[0]);
   }
 
   return {
@@ -142,7 +142,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
         values: y,
       },
     ],
-    length: x.buffer.length,
+    length: x.length,
   };
 }
 
@@ -156,12 +156,12 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
       },
-      values: new ArrayVector(),
+      values: [] as TimeSeriesValue[][],
     },
   ];
 
   for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point);
+    fields[0].values.push(point);
   }
 
   return {
@@ -180,7 +180,7 @@ const NUMBER = /^\s*(-?(\d*\.?\d+|\d+\.?\d*)(e[-+]?\d+)?|NAN)\s*$/i;
 /**
  * Given a name and value, this will pick a reasonable field type
  */
-export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType {
+export function guessFieldTypeFromNameAndValue(name: string, v: unknown): FieldType {
   if (name) {
     name = name.toLowerCase();
     if (name === 'date' || name === 'time') {
@@ -193,7 +193,7 @@ export function guessFieldTypeFromNameAndValue(name: string, v: any): FieldType 
 /**
  * Check the field type to see what the contents are
  */
-export function getFieldTypeFromValue(v: any): FieldType {
+export function getFieldTypeFromValue(v: unknown): FieldType {
   if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
@@ -218,7 +218,7 @@ export function getFieldTypeFromValue(v: any): FieldType {
  *
  * NOTE: this is will try to see if string values can be mapped to other types (like number)
  */
-export function guessFieldTypeFromValue(v: any): FieldType {
+export function guessFieldTypeFromValue(v: unknown): FieldType {
   if (v instanceof Date || isDateTime(v)) {
     return FieldType.time;
   }
@@ -260,7 +260,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
+    const v = field.values[i];
     if (v != null) {
       return guessFieldTypeFromValue(v);
     }
@@ -299,9 +299,9 @@ export const guessFieldTypes = (series: DataFrame, guessDefined = false): DataFr
   return series;
 };
 
-export const isTableData = (data: any): data is DataFrame => data && data.hasOwnProperty('columns');
+export const isTableData = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('columns'));
 
-export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
+export const isDataFrame = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('fields'));
 
 /**
  * Inspect any object and return the results as a DataFrame
@@ -314,7 +314,7 @@ export function toDataFrame(data: any): DataFrame {
     }
 
     // This will convert the array values into Vectors
-    return new MutableDataFrame(data as DataFrameDTO);
+    return createDataFrame(data as DataFrameDTO);
   }
 
   // Handle legacy docs/json type
@@ -338,7 +338,7 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (Array.isArray(data)) {
-    return new ArrayDataFrame(data);
+    return arrayToDataFrame(data);
   }
 
   console.warn('Can not convert', data);
@@ -349,7 +349,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   const { fields } = frame;
 
   const rowCount = frame.length;
-  const rows: any[][] = [];
+  const rows: unknown[][] = [];
 
   if (fields.length === 2) {
     const { timeField, timeIndex } = getTimeField(frame);
@@ -361,8 +361,8 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       // Make sure it is [value,time]
       for (let i = 0; i < rowCount; i++) {
         rows.push([
-          valueField.values.get(i), // value
-          timeField.values.get(i), // time
+          valueField.values[i], // value
+          timeField.values[i], // time
         ]);
       }
 
@@ -378,9 +378,9 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   for (let i = 0; i < rowCount; i++) {
-    const row: any[] = [];
+    const row: unknown[] = [];
     for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values.get(i));
+      row.push(fields[j].values[i]);
     }
     rows.push(row);
   }
@@ -389,7 +389,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
     return {
       alias: fields[0].name || frame.name,
       target: fields[0].name || frame.name,
-      datapoints: fields[0].values.toArray(),
+      datapoints: fields[0].values,
       filterable: fields[0].config ? fields[0].config.filterable : undefined,
       type: 'docs',
     } as TimeSeries;
@@ -433,7 +433,7 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     fields: data.fields.map((f) => {
       return {
         ...f,
-        values: new SortedVector(f.values, index),
+        values: f.values.map((v, i) => f.values[index[i]]),
       };
     }),
   };
@@ -446,11 +446,11 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
   return {
     ...data,
     fields: data.fields.map((f) => {
-      const copy = [...f.values.toArray()];
-      copy.reverse();
+      const values = [...f.values];
+      values.reverse();
       return {
         ...f,
-        values: new ArrayVector(copy),
+        values,
       };
     }),
   };
@@ -459,10 +459,10 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
 /**
  * Wrapper to get an array from each field value
  */
-export function getDataFrameRow(data: DataFrame, row: number): any[] {
-  const values: any[] = [];
+export function getDataFrameRow(data: DataFrame, row: number): unknown[] {
+  const values: unknown[] = [];
   for (const field of data.fields) {
-    values.push(field.values.get(row));
+    values.push(field.values[row]);
   }
   return values;
 }
@@ -477,11 +477,7 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
 export function toFilteredDataFrameDTO(data: DataFrame, fieldPredicate?: (f: Field) => boolean): DataFrameDTO {
   const filteredFields = fieldPredicate ? data.fields.filter(fieldPredicate) : data.fields;
   const fields: FieldDTO[] = filteredFields.map((f) => {
-    let values = f.values.toArray();
-    // The byte buffers serialize like objects
-    if (values instanceof Float64Array) {
-      values = vectorToArray(f.values);
-    }
+    let values = f.values;
     return {
       name: f.name,
       type: f.type,
@@ -510,3 +506,95 @@ export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?
   }
   return {};
 };
+
+function getProcessedDataFrame(data: DataQueryResponseData): DataFrame {
+  const dataFrame = guessFieldTypes(toDataFrame(data));
+
+  if (dataFrame.fields && dataFrame.fields.length) {
+    // clear out the cached info
+    for (const field of dataFrame.fields) {
+      field.state = null;
+    }
+  }
+
+  return dataFrame;
+}
+
+/**
+ * Given data request results, will return data frames with field types set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!results || !isArray(results)) {
+    return [];
+  }
+
+  return results.map((data) => getProcessedDataFrame(data));
+}
+
+/**
+ * Will process the panel data frames and in case of loading state with no data, will return the last result data but with loading state
+ * This is to have panels not flicker temporarily with "no data" while loading
+ */
+export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
+  const { series, annotations } = data;
+
+  //  for loading states with no data, use last result
+  if (data.state === LoadingState.Loading && series.length === 0) {
+    if (!lastResult) {
+      lastResult = data;
+    }
+
+    return {
+      ...lastResult,
+      state: LoadingState.Loading,
+      request: data.request,
+    };
+  }
+
+  // Make sure the data frames are properly formatted
+  const STARTTIME = performance.now();
+  const processedDataFrames = series.map((data) => getProcessedDataFrame(data));
+  const annotationsProcessed = getProcessedDataFrames(annotations);
+  const STOPTIME = performance.now();
+
+  return {
+    ...data,
+    series: processedDataFrames,
+    annotations: annotationsProcessed,
+    timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
+}
+
+export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
+  fields: Array<Partial<Field>>;
+}
+
+export function createDataFrame(input: PartialDataFrame): DataFrame {
+  let length = 0;
+  const fields = input.fields.map((p, idx) => {
+    const { state, ...field } = p;
+    if (!field.name) {
+      field.name = `Field ${idx + 1}`;
+    }
+    if (!field.config) {
+      field.config = {};
+    }
+    if (!field.values) {
+      field.values = new Array(length);
+    } else if (field.values.length > length) {
+      length = field.values.length;
+    }
+    if (!field.type) {
+      field.type = guessFieldTypeForField(field as Field) ?? FieldType.other;
+    }
+    return field as Field;
+  });
+
+  return {
+    ...input,
+    fields,
+    length,
+  };
+}

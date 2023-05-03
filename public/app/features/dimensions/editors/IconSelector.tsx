@@ -9,10 +9,10 @@ interface Props {
   onChange: (v: string) => void;
 }
 
-const IconSelector: React.FC<Props> = ({ value, onChange }) => {
+const IconSelector = ({ value, onChange }: Props) => {
   const [icons, setIcons] = useState<SelectableValue[]>(value ? [{ value, label: value }] : []);
   const [icon, setIcon] = useState<string>();
-  const iconRoot = (window as any).__grafana_public_path__ + 'img/icons/unicons/';
+  const iconRoot = window.__grafana_public_path__ + 'img/icons/unicons/';
   const onChangeIcon = (value: string) => {
     onChange(value);
     setIcon(value);

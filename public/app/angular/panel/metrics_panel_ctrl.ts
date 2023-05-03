@@ -194,14 +194,16 @@ class MetricsPanelCtrl extends PanelCtrl {
       datasource: panel.datasource,
       queries: panel.targets,
       panelId: panel.id,
-      dashboardId: this.dashboard.id,
+      dashboardUID: this.dashboard.uid,
       timezone: this.dashboard.getTimezone(),
       timeInfo: this.timeInfo,
       timeRange: this.range,
       maxDataPoints: panel.maxDataPoints || this.width,
       minInterval: panel.interval,
+      publicDashboardAccessToken: this.dashboard.meta.publicDashboardAccessToken,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
+      queryCachingTTL: panel.queryCachingTTL,
       transformations: panel.transformations,
     });
   }

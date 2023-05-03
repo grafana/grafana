@@ -1,3 +1,8 @@
+import { Permission } from '@grafana/schema';
+
+// Alias to an existing type to reduce the number of changes
+export { Permission as TeamPermissionLevel };
+
 export enum OrgRole {
   Viewer = 'Viewer',
   Editor = 'Editor',
@@ -69,6 +74,12 @@ export enum PermissionLevelString {
   Admin = 'Admin',
 }
 
+export enum SearchQueryType {
+  Folder = 'dash-folder',
+  Dashboard = 'dash-db',
+  AlertFolder = 'dash-folder-alerting',
+}
+
 export enum DataSourcePermissionLevel {
   Query = 1,
   Admin = 2,
@@ -111,21 +122,16 @@ export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
   },
 ];
 
-export enum TeamPermissionLevel {
-  Member = 0,
-  Admin = 4,
-}
-
 export interface TeamPermissionInfo {
-  value: TeamPermissionLevel;
+  value: Permission;
   label: string;
   description: string;
 }
 
 export const teamsPermissionLevels: TeamPermissionInfo[] = [
-  { value: TeamPermissionLevel.Member, label: 'Member', description: 'Is team member' },
+  { value: Permission.Member, label: 'Member', description: 'Is team member' },
   {
-    value: TeamPermissionLevel.Admin,
+    value: Permission.Admin,
     label: 'Admin',
     description: 'Can add/remove permissions, members and delete team.',
   },

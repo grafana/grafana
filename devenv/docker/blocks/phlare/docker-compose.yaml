@@ -1,0 +1,8 @@
+  phlare:
+    image: grafana/phlare:latest
+    command:
+      - --config.file=/etc/phlare.yaml
+    ports:
+      - 4100:4100
+    volumes:
+      - ./docker/blocks/phlare/phlare.yaml:/etc/phlare.yaml

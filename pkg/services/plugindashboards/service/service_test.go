@@ -1,18 +1,18 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/dashboards"
+	dashmodels "github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/plugindashboards"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
@@ -38,10 +38,10 @@ func TestGetPluginDashboards(t *testing.T) {
 		},
 	}
 	dashboardPluginService := &dashboardPluginServiceMock{
-		pluginDashboards: map[string][]*models.Dashboard{
+		pluginDashboards: map[string][]*dashmodels.Dashboard{
 			"test-app": {
-				models.NewDashboardFromJson(testDashboardOld),
-				models.NewDashboardFromJson(testDashboardDeleted),
+				dashmodels.NewDashboardFromJson(testDashboardOld),
+				dashmodels.NewDashboardFromJson(testDashboardDeleted),
 			},
 		},
 	}
@@ -169,7 +169,7 @@ type pluginDashboardStoreMock struct {
 	pluginDashboardFiles map[string]map[string][]byte
 }
 
-func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, args *plugins.ListPluginDashboardFilesArgs) (*plugins.ListPluginDashboardFilesResult, error) {
+func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, args *dashboards.ListPluginDashboardFilesArgs) (*dashboards.ListPluginDashboardFilesResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		references := []string{}
 
@@ -179,7 +179,7 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 
 		sort.Strings(references)
 
-		return &plugins.ListPluginDashboardFilesResult{
+		return &dashboards.ListPluginDashboardFilesResult{
 			FileReferences: references,
 		}, nil
 	}
@@ -187,12 +187,11 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 	return nil, plugins.NotFoundError{PluginID: args.PluginID}
 }
 
-func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Context, args *plugins.GetPluginDashboardFileContentsArgs) (*plugins.GetPluginDashboardFileContentsResult, error) {
+func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Context, args *dashboards.GetPluginDashboardFileContentsArgs) (*dashboards.GetPluginDashboardFileContentsResult, error) {
 	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
 		if content, exists := dashboardFiles[args.FileReference]; exists {
-			r := bytes.NewReader(content)
-			return &plugins.GetPluginDashboardFileContentsResult{
-				Content: io.NopCloser(r),
+			return &dashboards.GetPluginDashboardFileContentsResult{
+				Content: content,
 			}, nil
 		}
 	} else if !exists {
@@ -203,22 +202,22 @@ func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Con
 }
 
 type dashboardPluginServiceMock struct {
-	pluginDashboards map[string][]*models.Dashboard
-	args             []*models.GetDashboardsByPluginIdQuery
+	pluginDashboards map[string][]*dashmodels.Dashboard
+	args             []*dashmodels.GetDashboardsByPluginIDQuery
 }
 
-func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
-	query.Result = []*models.Dashboard{}
+func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *dashmodels.GetDashboardsByPluginIDQuery) ([]*dashmodels.Dashboard, error) {
+	queryResult := []*dashmodels.Dashboard{}
 
-	if dashboards, exists := d.pluginDashboards[query.PluginId]; exists {
-		query.Result = dashboards
+	if dashboards, exists := d.pluginDashboards[query.PluginID]; exists {
+		queryResult = dashboards
 	}
 
 	if d.args == nil {
-		d.args = []*models.GetDashboardsByPluginIdQuery{}
+		d.args = []*dashmodels.GetDashboardsByPluginIDQuery{}
 	}
 
 	d.args = append(d.args, query)
 
-	return nil
+	return queryResult, nil
 }

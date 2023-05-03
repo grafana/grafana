@@ -4,7 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -26,19 +27,24 @@ const (
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
+	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
+	// CustomHeaderName is the prefix that is used to store the name of a custom header.
+	CustomHeaderName = "httpHeaderName"
+	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
+	CustomHeaderValue = "httpHeaderValue"
 )
 
 type DsAccess string
 
 type DataSource struct {
-	Id      int64 `json:"id,omitempty"`
-	OrgId   int64 `json:"orgId,omitempty"`
+	ID      int64 `json:"id,omitempty" xorm:"pk autoincr 'id'"`
+	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
 	Version int   `json:"version,omitempty"`
 
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`
 	Access DsAccess `json:"access"`
-	Url    string   `json:"url"`
+	URL    string   `json:"url" xorm:"url"`
 	// swagger:ignore
 	Password      string `json:"-"`
 	User          string `json:"user"`
@@ -52,7 +58,7 @@ type DataSource struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
-	Uid               string            `json:"uid"`
+	UID               string            `json:"uid" xorm:"uid"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -87,7 +93,7 @@ type AddDataSourceCommand struct {
 	Name            string            `json:"name" binding:"Required"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
-	Url             string            `json:"url"`
+	URL             string            `json:"url"`
 	Database        string            `json:"database"`
 	User            string            `json:"user"`
 	BasicAuth       bool              `json:"basicAuth"`
@@ -96,15 +102,13 @@ type AddDataSourceCommand struct {
 	IsDefault       bool              `json:"isDefault"`
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
-	Uid             string            `json:"uid"`
+	UID             string            `json:"uid"`
 
-	OrgId                   int64             `json:"-"`
-	UserId                  int64             `json:"-"`
+	OrgID                   int64             `json:"-"`
+	UserID                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // Also acts as api DTO
@@ -112,7 +116,7 @@ type UpdateDataSourceCommand struct {
 	Name            string            `json:"name" binding:"Required"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
-	Url             string            `json:"url"`
+	URL             string            `json:"url"`
 	User            string            `json:"user"`
 	Database        string            `json:"database"`
 	BasicAuth       bool              `json:"basicAuth"`
@@ -122,15 +126,13 @@ type UpdateDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
-	Uid             string            `json:"uid"`
+	UID             string            `json:"uid"`
 
-	OrgId                   int64             `json:"-"`
-	Id                      int64             `json:"-"`
+	OrgID                   int64             `json:"-"`
+	ID                      int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
@@ -154,67 +156,39 @@ type UpdateSecretFn func() error
 // QUERIES
 
 type GetDataSourcesQuery struct {
-	OrgId           int64
+	OrgID           int64
 	DataSourceLimit int
-	User            *models.SignedInUser
-	Result          []*DataSource
+	User            *user.SignedInUser
 }
 
-type GetAllDataSourcesQuery struct {
-	Result []*DataSource
-}
+type GetAllDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
-	OrgId  int64 // optional: filter by org_id
-	Type   string
-	Result []*DataSource
+	OrgID int64 // optional: filter by org_id
+	Type  string
 }
 
 type GetDefaultDataSourceQuery struct {
-	OrgId  int64
-	User   *models.SignedInUser
-	Result *DataSource
+	OrgID int64
+	User  *user.SignedInUser
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type GetDataSourceQuery struct {
-	Id   int64
-	Uid  string
+	ID   int64
+	UID  string
 	Name string
 
-	OrgId int64
-
-	Result *DataSource
-}
-
-// ---------------------
-//  Permissions
-// ---------------------
-
-// Datasource permission
-// Description:
-// * `0` - No Access
-// * `1` - Query
-// Enum: 0,1
-// swagger:model
-type DsPermissionType int
-
-const (
-	DsPermissionNoAccess DsPermissionType = iota
-	DsPermissionQuery
-)
-
-func (p DsPermissionType) String() string {
-	names := map[int]string{
-		int(DsPermissionQuery):    "Query",
-		int(DsPermissionNoAccess): "No Access",
-	}
-	return names[int(p)]
+	OrgID int64
 }
 
 type DatasourcesPermissionFilterQuery struct {
-	User        *models.SignedInUser
+	User        *user.SignedInUser
 	Datasources []*DataSource
-	Result      []*DataSource
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "data_source"
+	QuotaTarget    quota.Target    = "data_source"
+)

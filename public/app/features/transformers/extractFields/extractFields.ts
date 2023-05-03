@@ -1,8 +1,7 @@
-import { isString } from 'lodash';
+import { isString, get } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   Field,
@@ -12,13 +11,8 @@ import {
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions';
 
-import { FieldExtractorID, fieldExtractors } from './fieldExtractors';
-
-export interface ExtractFieldsOptions {
-  source?: string;
-  format?: FieldExtractorID;
-  replace?: boolean;
-}
+import { fieldExtractors } from './fieldExtractors';
+import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
 export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFieldsOptions> = {
   id: DataTransformerID.extractFields,
@@ -26,7 +20,8 @@ export const extractFieldsTransformer: SynchronousDataTransformerInfo<ExtractFie
   description: 'Parse fields from the contends of another',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => extractFieldsTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => extractFieldsTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: ExtractFieldsOptions) => {
     return (data: DataFrame[]) => {
@@ -39,7 +34,9 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   if (!options.source) {
     return frame;
   }
+
   const source = findField(frame, options.source);
+
   if (!source) {
     // this case can happen when there are multiple queries
     return frame;
@@ -55,7 +52,8 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   const values = new Map<string, any[]>();
 
   for (let i = 0; i < count; i++) {
-    let obj = source.values.get(i);
+    let obj = source.values[i];
+
     if (isString(obj)) {
       try {
         obj = ext.parse(obj);
@@ -63,6 +61,22 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
         obj = {}; // empty
       }
     }
+
+    if (options.format === FieldExtractorID.JSON && options.jsonPaths && options.jsonPaths?.length > 0) {
+      const newObj: { [k: string]: unknown } = {};
+      // filter out empty paths
+      const filteredPaths = options.jsonPaths.filter((path: JSONPath) => path.path);
+
+      if (filteredPaths.length > 0) {
+        filteredPaths.forEach((path: JSONPath) => {
+          const key = path.alias && path.alias.length > 0 ? path.alias : path.path;
+          newObj[key] = get(obj, path.path) ?? 'Not Found';
+        });
+
+        obj = newObj;
+      }
+    }
+
     for (const [key, val] of Object.entries(obj)) {
       let buffer = values.get(key);
       if (buffer == null) {
@@ -78,15 +92,23 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
     const buffer = values.get(name);
     return {
       name,
-      values: new ArrayVector(buffer),
+      values: buffer,
       type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
     } as Field;
   });
 
+  if (options.keepTime) {
+    const sourceTime = findField(frame, 'Time') || findField(frame, 'time');
+    if (sourceTime) {
+      fields.unshift(sourceTime);
+    }
+  }
+
   if (!options.replace) {
     fields.unshift(...frame.fields);
   }
+
   return {
     ...frame,
     fields,

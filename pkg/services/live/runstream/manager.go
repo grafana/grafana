@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -25,7 +25,7 @@ type ChannelLocalPublisher interface {
 }
 
 type PluginContextGetter interface {
-	GetPluginContext(ctx context.Context, user *models.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
+	GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error)
 }
 
 type NumLocalSubscribersGetter interface {
@@ -75,7 +75,7 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 
 const (
 	defaultCheckInterval           = 5 * time.Second
-	defaultDatasourceCheckInterval = 60 * time.Second
+	defaultDatasourceCheckInterval = time.Minute
 	defaultMaxChecks               = 3
 )
 
@@ -373,7 +373,7 @@ func (s *Manager) Run(ctx context.Context) error {
 type streamRequest struct {
 	Channel       string
 	Path          string
-	user          *models.SignedInUser
+	user          *user.SignedInUser
 	PluginContext backend.PluginContext
 	StreamRunner  StreamRunner
 	Data          []byte
@@ -400,7 +400,7 @@ var errDatasourceNotFound = errors.New("datasource not found")
 
 // SubmitStream submits stream handler in Manager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, channel string, path string, data []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
+func (s *Manager) SubmitStream(ctx context.Context, user *user.SignedInUser, channel string, path string, data []byte, pCtx backend.PluginContext, streamRunner StreamRunner, isResubmit bool) (*submitResult, error) {
 	if isResubmit {
 		// Resolve new plugin context as it could be modified since last call.
 		var datasourceUID string

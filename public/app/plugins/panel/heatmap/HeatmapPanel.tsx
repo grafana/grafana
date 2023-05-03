@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, DataFrameType, Field, getLinksSupplier, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -14,19 +14,19 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
-import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
+import { PanelOptions } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
 
-export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
+export const HeatmapPanel = ({
   data,
   id,
   timeRange,
@@ -38,7 +38,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   eventBus,
   onChangeTimeRange,
   replaceVariables,
-}) => {
+}: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();
@@ -47,13 +47,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
+  const getFieldLinksSupplier = useCallback(
+    (exemplars: DataFrame, field: Field) => {
+      return getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+    },
+    [replaceVariables]
+  );
+
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data, options, theme);
+      return prepareHeatmapData(data, options, theme, getFieldLinksSupplier);
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data, options, theme]);
+  }, [data, options, theme, getFieldLinksSupplier]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field
@@ -61,22 +68,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
-      exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
+      exemplarsXFacet = info.exemplars?.fields[0].values;
 
       // ordinal/labeled heatmap-buckets?
       const hasLabeledY = meta.yOrdinalDisplay != null;
 
       if (hasLabeledY) {
-        let matchExemplarsBy = info.exemplars?.fields
-          .find((field) => field.name === meta.yMatchWithLabel)!
-          .values.toArray();
+        let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
         exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
       } else {
-        exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+        exemplarsyFacet = info.exemplars?.fields[1].values as number[]; // "Value" field
       }
     }
 
-    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
+    return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars]);
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
@@ -138,7 +143,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev]);
+  }, [options, timeZone, data.structureRev]);
 
   const renderLegend = () => {
     if (!info.heatmap || !options.legend.show) {
@@ -153,7 +158,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
     if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-      hoverValue = countField.values.get(hover.dataIdx);
+      hoverValue = countField.values[hover.dataIdx];
     }
 
     return (
@@ -199,26 +204,13 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
             offset={{ x: 10, y: 10 }}
             allowPointerEvents={isToolTipOpen.current}
           >
-            {shouldDisplayCloseButton && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                }}
-              >
-                <CloseButton
-                  onClick={onCloseToolTip}
-                  style={{
-                    position: 'relative',
-                    top: 'auto',
-                    right: 'auto',
-                    marginRight: 0,
-                  }}
-                />
-              </div>
-            )}
-            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
+            {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
+            <HeatmapHoverView
+              timeRange={timeRange}
+              data={info}
+              hover={hover}
+              showHistogram={options.tooltip.yHistogram}
+            />
           </VizTooltipContainer>
         )}
       </Portal>

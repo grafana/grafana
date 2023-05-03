@@ -1,0 +1,11 @@
+{
+  "type": "renderer",
+  "name": "Test",
+  "id": "test-renderer",
+  "backend": true,
+  "executable": "test",
+  "info": {
+    "version": "1.0.0",
+    "description": "Test"
+  }
+}

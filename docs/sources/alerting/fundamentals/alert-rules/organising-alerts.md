@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/fundamentals/alert-rules/organising-alerts/
 description: Learn how to organize alert rules
 keywords:
   - grafana

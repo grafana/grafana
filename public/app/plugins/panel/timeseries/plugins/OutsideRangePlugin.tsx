@@ -9,7 +9,7 @@ interface ThresholdControlsPluginProps {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ config, onChangeTimeRange }) => {
+export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
   const plotInstance = useRef<uPlot>();
   const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
@@ -34,10 +34,25 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
   }
 
   // Time values are always sorted for uPlot to work
-  const first = timevalues[0];
-  const last = timevalues[timevalues.length - 1];
+  let i = 0,
+    j = timevalues.length - 1;
+
+  while (i <= j && timevalues[i] == null) {
+    i++;
+  }
+
+  while (j >= 0 && timevalues[j] == null) {
+    j--;
+  }
+
+  const first = timevalues[i];
+  const last = timevalues[j];
   const fromX = timeRange.min;
   const toX = timeRange.max;
+
+  if (first == null || last == null) {
+    return null;
+  }
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= toX && last >= fromX) {
@@ -56,7 +71,11 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
     >
       <div>
         <div>Data outside time range</div>
-        <Button onClick={(v) => onChangeTimeRange({ from: first, to: last })} variant="secondary">
+        <Button
+          onClick={(v) => onChangeTimeRange({ from: first, to: last })}
+          variant="secondary"
+          data-testid="time-series-zoom-to-data"
+        >
           Zoom to data
         </Button>
       </div>

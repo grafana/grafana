@@ -1,23 +1,26 @@
 import { css } from '@emotion/css';
-import React, { FC, MouseEvent, useCallback } from 'react';
+import React, { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+
+import { ALL_VARIABLE_TEXT } from '../../constants';
 
 interface Props {
   onClick: () => void;
   text: string;
   loading: boolean;
   onCancel: () => void;
-  disabled: boolean; // todo: optional?
+  disabled?: boolean;
   /**
    *  htmlFor, needed for the label
    */
   id: string;
 }
 
-export const VariableLink: FC<Props> = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }) => {
+export const VariableLink = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }: Props) => {
   const styles = useStyles2(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -63,12 +66,16 @@ interface VariableLinkTextProps {
   text: string;
 }
 
-const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
+const VariableLinkText = ({ text }: VariableLinkTextProps) => {
   const styles = useStyles2(getStyles);
-  return <span className={styles.textAndTags}>{text}</span>;
+  return (
+    <span className={styles.textAndTags}>
+      {text === ALL_VARIABLE_TEXT ? t('variable.picker.link-all', 'All') : text}
+    </span>
+  );
 };
 
-const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
+const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
   const onClick = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();

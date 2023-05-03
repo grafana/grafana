@@ -1,6 +1,7 @@
 package rendering
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,7 +13,7 @@ import (
 
 type dummyPluginManager struct{}
 
-func (d *dummyPluginManager) Renderer() *plugins.Plugin {
+func (d *dummyPluginManager) Renderer(_ context.Context) *plugins.Plugin {
 	return nil
 }
 
@@ -123,7 +124,7 @@ func TestCapabilities(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rs.Cfg.RendererUrl = tt.rendererUrl
 			rs.version = tt.rendererVersion
-			res, err := rs.HasCapability(tt.capabilityName)
+			res, err := rs.HasCapability(context.Background(), tt.capabilityName)
 
 			if tt.expectedError == nil {
 				require.NoError(t, err)

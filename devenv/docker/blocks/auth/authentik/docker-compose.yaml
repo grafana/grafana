@@ -1,0 +1,91 @@
+  authentikdb:
+    image: docker.io/library/postgres:12-alpine
+    restart: unless-stopped
+    container_name: authentikdb
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: authentik
+    volumes:
+      - ./docker/blocks/auth/authentik/cloak.sql:/docker-entrypoint-initdb.d/cloak.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+
+  authentikredis:
+    image: docker.io/library/redis:alpine
+    restart: unless-stopped
+    command: --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+
+  authentik_ldap:
+    image: ghcr.io/goauthentik/ldap
+    ports:
+      - 3389:3389
+      - 6636:6636
+    environment:
+      AUTHENTIK_HOST: http://authentik:9000
+      AUTHENTIK_INSECURE: "true"
+      AUTHENTIK_TOKEN: 77vDKwFWqCAsD9ykbH6vsGuMHtloM6urfeglrR9KRhWFcABtwmGGiQWHQStw
+    links:
+      - "authentik:authentik"
+
+  authentik:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.2.3}
+    restart: unless-stopped
+    container_name: authentik
+    command: server
+    environment:
+      AUTHENTIK_SECRET_KEY: FA8GANUqMJwFg0drDlurF+ZQK2A6ohSjc4MGksUqN+A36yIA
+      AUTHENTIK_REDIS__HOST: authentikredis
+      AUTHENTIK_POSTGRESQL__HOST: authentikdb
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "true"
+    ports:
+      - 9000:9000
+    depends_on:
+      - authentikdb
+      - authentikredis
+    volumes:
+      - ./media:/media
+      - ./certs:/certs
+      - ./custom-templates:/templates
+      - ./geoip:/geoip
+    links:
+      - "authentikdb:authentikdb"
+      - "authentikredis:authentikredis"
+
+  authentik-worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.12.1}
+    restart: unless-stopped
+    container_name: authentik-worker
+    command: worker
+    environment:
+      AUTHENTIK_SECRET_KEY: FA8GANUqMJwFg0drDlurF+ZQK2A6ohSjc4MGksUqN+A36yIA
+      AUTHENTIK_REDIS__HOST: authentikredis
+      AUTHENTIK_POSTGRESQL__HOST: authentikdb
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "true"
+    depends_on:
+      - authentikdb
+      - authentikredis
+    volumes:
+      - ./media:/media
+      - ./certs:/certs
+      - ./custom-templates:/templates
+      - ./geoip:/geoip
+    links:
+      - "authentikdb:authentikdb"
+      - "authentikredis:authentikredis"

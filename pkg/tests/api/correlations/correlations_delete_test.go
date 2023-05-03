@@ -3,15 +3,16 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationDeleteCorrelation(t *testing.T) {
@@ -20,43 +21,36 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	}
 	ctx := NewTestEnv(t)
 
-	adminUser := User{
-		username: "admin",
-		password: "admin",
-	}
-	editorUser := User{
-		username: "editor",
-		password: "editor",
-	}
-
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
-		Password:       editorUser.password,
-		Login:          editorUser.username,
+	adminUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
 	})
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
-		Password:       adminUser.password,
-		Login:          adminUser.username,
+
+	editorUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+		OrgID:          adminUser.User.OrgID,
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgID:    adminUser.User.OrgID,
 	}
-	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.Uid
+	dataSource := ctx.createDs(createDsCommand)
+	readOnlyDS := dataSource.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: adminUser.User.OrgID,
 	}
-	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.Uid
-	writableDsOrgId := createDsCommand.Result.OrgId
+	dataSource = ctx.createDs(createDsCommand)
+	writableDs := dataSource.UID
+	writableDsOrgId := dataSource.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
 		res := ctx.Delete(DeleteParams{
@@ -64,7 +58,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -83,7 +77,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -103,7 +97,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -123,7 +117,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -143,7 +137,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -159,7 +153,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	t.Run("deleting a correlation pointing to a read-only data source should work", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: writableDs,
+			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
 		})
 
@@ -169,7 +163,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response correlations.CreateCorrelationResponseBody
@@ -191,7 +185,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	t.Run("should correctly delete a correlation", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: readOnlyDS,
+			TargetUID: &readOnlyDS,
 			OrgId:     writableDsOrgId,
 		})
 
@@ -201,7 +195,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response correlations.CreateCorrelationResponseBody

@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"log"
-	"path/filepath"
+
+	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/plugins"
 	"github.com/grafana/grafana/pkg/build/syncutil"
-	"github.com/urfave/cli/v2"
 )
 
 func BuildInternalPlugins(c *cli.Context) error {
@@ -18,11 +18,11 @@ func BuildInternalPlugins(c *cli.Context) error {
 	}
 
 	const grafanaDir = "."
-	metadata, err := config.GetMetadata(filepath.Join("dist", "version.json"))
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}
-	verMode, err := config.GetVersion(metadata.ReleaseMode)
+	buildConfig, err := config.GetBuildConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
 		return err
 	}
@@ -36,7 +36,7 @@ func BuildInternalPlugins(c *cli.Context) error {
 
 	var g *errutil.Group
 	g, ctx = errutil.GroupWithContext(ctx)
-	if err := plugins.Build(ctx, grafanaDir, p, g, verMode); err != nil {
+	if err := plugins.Build(ctx, grafanaDir, p, g, buildConfig); err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
 	if err := g.Wait(); err != nil {

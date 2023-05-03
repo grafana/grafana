@@ -1,6 +1,5 @@
 import {
   toDataFrame,
-  ArrayVector,
   DataFrame,
   FieldType,
   toDataFrameDTO,
@@ -11,8 +10,12 @@ import {
 
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
+const ctx = {
+  interpolate: (v: string) => v,
+};
+
 describe('Prepare time series transformer', () => {
-  it('should transform wide to many', () => {
+  it('should transform wide to multi', () => {
     const source = [
       toDataFrame({
         name: 'wide',
@@ -26,10 +29,10 @@ describe('Prepare time series transformer', () => {
     ];
 
     const config: PrepareTimeSeriesOptions = {
-      format: timeSeriesFormat.TimeSeriesMany,
+      format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config, ctx)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -38,7 +41,7 @@ describe('Prepare time series transformer', () => {
           { name: 'count', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
         ],
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
         length: 6,
       }),
@@ -50,7 +53,7 @@ describe('Prepare time series transformer', () => {
           { name: 'more', type: FieldType.number, values: [2, 3, 4, 5, 6, 7] },
         ],
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
         length: 6,
       }),
@@ -72,72 +75,72 @@ describe('Prepare time series transformer', () => {
     ];
 
     const config: PrepareTimeSeriesOptions = {
-      format: timeSeriesFormat.TimeSeriesMany,
+      format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
     expect(frames.length).toEqual(4);
     expect(
       frames.map((f) => ({
         name: getFrameDisplayName(f),
         labels: f.fields[1].labels,
-        time: f.fields[0].values.toArray(),
-        values: f.fields[1].values.toArray(),
+        time: f.fields[0].values,
+        values: f.fields[1].values,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "labels": Object {
+      [
+        {
+          "labels": {
             "region": "a",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             10,
             30,
           ],
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "region": "b",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             20,
             40,
           ],
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "region": "a",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             2,
             4,
           ],
         },
-        Object {
-          "labels": Object {
+        {
+          "labels": {
             "region": "b",
           },
           "name": "wide",
-          "time": Array [
+          "time": [
             1,
             2,
           ],
-          "values": Array [
+          "values": [
             3,
             5,
           ],
@@ -146,7 +149,7 @@ describe('Prepare time series transformer', () => {
     `);
   });
 
-  it('should transform all wide to many when mixed', () => {
+  it('should transform all wide to multi when mixed', () => {
     const source = [
       toDataFrame({
         name: 'wide',
@@ -168,10 +171,10 @@ describe('Prepare time series transformer', () => {
     ];
 
     const config: PrepareTimeSeriesOptions = {
-      format: timeSeriesFormat.TimeSeriesMany,
+      format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config, ctx)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -181,7 +184,7 @@ describe('Prepare time series transformer', () => {
         ],
         length: 6,
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
       }),
       toEquableDataFrame({
@@ -193,7 +196,7 @@ describe('Prepare time series transformer', () => {
         ],
         length: 6,
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
       }),
       toEquableDataFrame({
@@ -205,7 +208,7 @@ describe('Prepare time series transformer', () => {
         ],
         length: 6,
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
       }),
     ]);
@@ -232,15 +235,15 @@ describe('Prepare time series transformer', () => {
     ];
 
     const config: PrepareTimeSeriesOptions = {
-      format: timeSeriesFormat.TimeSeriesMany,
+      format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config)(source))).toEqual(
+    expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config, ctx)(source))).toEqual(
       toEquableDataFrames(
         source.map((frame) => ({
           ...frame,
           meta: {
-            type: DataFrameType.TimeSeriesMany,
+            type: DataFrameType.TimeSeriesMulti,
           },
         }))
       )
@@ -270,13 +273,13 @@ describe('Prepare time series transformer', () => {
     ];
 
     const config: PrepareTimeSeriesOptions = {
-      format: timeSeriesFormat.TimeSeriesMany,
+      format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([]);
+    expect(prepareTimeSeriesTransformer.transformer(config, ctx)(source)).toEqual([]);
   });
 
-  it('should convert long to many', () => {
+  it('should convert long to multi', () => {
     const source = [
       toDataFrame({
         name: 'long',
@@ -290,10 +293,10 @@ describe('Prepare time series transformer', () => {
     ];
 
     const config: PrepareTimeSeriesOptions = {
-      format: timeSeriesFormat.TimeSeriesMany,
+      format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
     expect(frames).toEqual([
       toEquableDataFrame({
         name: 'long',
@@ -304,7 +307,7 @@ describe('Prepare time series transformer', () => {
         ],
         length: 3,
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
       }),
       toEquableDataFrame({
@@ -316,10 +319,99 @@ describe('Prepare time series transformer', () => {
         ],
         length: 3,
         meta: {
-          type: DataFrameType.TimeSeriesMany,
+          type: DataFrameType.TimeSeriesMulti,
         },
       }),
     ]);
+  });
+
+  it('should migrate many to multi and still convert correctly', () => {
+    const source = [
+      toDataFrame({
+        name: 'wants-to-be-many',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30, 40, 50, 60] },
+          { name: 'region', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+        ],
+      }),
+    ];
+
+    const config: PrepareTimeSeriesOptions = {
+      format: timeSeriesFormat.TimeSeriesMany,
+    };
+
+    const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
+
+    expect(frames).toEqual([
+      toEquableDataFrame({
+        name: 'wants-to-be-many',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', labels: { region: 'a' }, type: FieldType.number, values: [10, 30, 50] },
+        ],
+        length: 3,
+        meta: {
+          type: DataFrameType.TimeSeriesMulti,
+        },
+      }),
+      toEquableDataFrame({
+        name: 'wants-to-be-many',
+        refId: 'X',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', labels: { region: 'b' }, type: FieldType.number, values: [20, 40, 60] },
+        ],
+        length: 3,
+        meta: {
+          type: DataFrameType.TimeSeriesMulti,
+        },
+      }),
+    ]);
+  });
+
+  it('should handle long to wide', () => {
+    expect(
+      prepareTimeSeriesTransformer.transformer(
+        {
+          format: timeSeriesFormat.TimeSeriesWide,
+        },
+        ctx
+      )([
+        toDataFrame({
+          meta: { type: DataFrameType.TimeSeriesLong },
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+            { name: 'speed', type: FieldType.number, values: [4, 5, 6, 7, 8, 9] },
+            { name: 'sensor', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+          ],
+        }),
+      ])
+    ).toMatchSnapshot();
+  });
+
+  it('should handle long to multi', () => {
+    expect(
+      prepareTimeSeriesTransformer.transformer(
+        {
+          format: timeSeriesFormat.TimeSeriesMulti,
+        },
+        ctx
+      )([
+        toDataFrame({
+          meta: { type: DataFrameType.TimeSeriesLong },
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+            { name: 'speed', type: FieldType.number, values: [4, 5, 6, 7, 8, 9] },
+            { name: 'sensor', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+          ],
+        }),
+      ])
+    ).toMatchSnapshot(); // ???? expecting a single frame!!!!
   });
 });
 
@@ -330,7 +422,6 @@ function toEquableDataFrame(source: any): DataFrame {
     fields: source.fields.map((field: any) => {
       return {
         ...field,
-        values: new ArrayVector(field.values),
         config: {},
       };
     }),

@@ -67,8 +67,8 @@ services:
     logging: *default-logging
 
   tempo:
-    image: grafana/tempo:latest
-    command: 
+    image: grafana/tempo:main-9a8474f
+    command:
       - --config.file=/etc/tempo.yaml
       - --search.enabled=true
     volumes:
@@ -81,7 +81,7 @@ services:
       - "4318:4318"  # otlp http
 
   prometheus:
-    image: prom/prometheus:main
+    image: prom/prometheus:latest
     command:
       - --config.file=/etc/prometheus.yaml
       - --web.enable-remote-write-receiver

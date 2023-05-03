@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { ComponentType } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { AutoSizeInput, Button, Checkbox, Select, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { AutoSizeInput, Button, Checkbox, Select, useStyles2 } from '@grafana/ui';
 
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from '../shared/types';
 
@@ -37,6 +38,7 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
       minWidth={props.paramDef.minWidth}
       placeholder={props.paramDef.placeholder}
       title={props.paramDef.description}
+      maxWidth={(props.paramDef.minWidth || 20) * 3}
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
         if (props.paramDef.runQueryOnEnter && evt.type === 'keydown') {
@@ -103,6 +105,7 @@ function SelectInputParamEditor({
         placeholder={paramDef.placeholder}
         allowCustomValue={true}
         onChange={(value) => onChange(index, value.value!)}
+        width={paramDef.minWidth || 'auto'}
       />
       {paramDef.optional && (
         <Button

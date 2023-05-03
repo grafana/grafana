@@ -7,8 +7,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/live/model"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestNewBroadcastRunner(t *testing.T) {
@@ -27,11 +29,11 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 
-	mockDispatcher.EXPECT().GetLiveMessage(&models.GetLiveMessageQuery{
-		OrgId:   1,
+	mockDispatcher.EXPECT().GetLiveMessage(&model.GetLiveMessageQuery{
+		OrgID:   1,
 		Channel: channel,
-	}).DoAndReturn(func(query *models.GetLiveMessageQuery) (models.LiveMessage, bool, error) {
-		return models.LiveMessage{
+	}).DoAndReturn(func(query *model.GetLiveMessageQuery) (model.LiveMessage, bool, error) {
+		return model.LiveMessage{
 			Data: data,
 		}, true, nil
 	}).Times(1)
@@ -42,8 +44,8 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	require.NoError(t, err)
 	reply, status, err := handler.OnSubscribe(
 		context.Background(),
-		&models.SignedInUser{OrgId: 1, UserId: 2},
-		models.SubscribeEvent{Channel: channel, Path: "test"},
+		&user.SignedInUser{OrgID: 1, UserID: 2},
+		model.SubscribeEvent{Channel: channel, Path: "test"},
 	)
 	require.NoError(t, err)
 	require.Equal(t, backend.SubscribeStreamStatusOK, status)
@@ -62,11 +64,11 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	data := json.RawMessage(`{}`)
 	var orgID int64 = 1
 
-	mockDispatcher.EXPECT().SaveLiveMessage(&models.SaveLiveMessageQuery{
-		OrgId:   orgID,
+	mockDispatcher.EXPECT().SaveLiveMessage(&model.SaveLiveMessageQuery{
+		OrgID:   orgID,
 		Channel: channel,
 		Data:    data,
-	}).DoAndReturn(func(query *models.SaveLiveMessageQuery) error {
+	}).DoAndReturn(func(query *model.SaveLiveMessageQuery) error {
 		return nil
 	}).Times(1)
 
@@ -76,8 +78,8 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	require.NoError(t, err)
 	reply, status, err := handler.OnPublish(
 		context.Background(),
-		&models.SignedInUser{OrgId: 1, UserId: 2},
-		models.PublishEvent{Channel: channel, Path: "test", Data: data},
+		&user.SignedInUser{OrgID: 1, UserID: 2},
+		model.PublishEvent{Channel: channel, Path: "test", Data: data},
 	)
 	require.NoError(t, err)
 	require.Equal(t, backend.PublishStreamStatusOK, status)

@@ -2,18 +2,59 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { MetricSelect } from './MetricSelect';
+import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data/src';
 
-const props = {
+import { PrometheusDatasource } from '../../datasource';
+import { PromOptions } from '../../types';
+
+import { MetricSelect, Props } from './MetricSelect';
+
+const instanceSettings = {
+  url: 'proxied',
+  id: 1,
+  directUrl: 'direct',
+  user: 'test',
+  password: 'mupp',
+  jsonData: { httpMethod: 'GET' },
+} as unknown as DataSourceInstanceSettings<PromOptions>;
+
+const dataSourceMock = new PrometheusDatasource(instanceSettings);
+const mockValues = [{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }];
+
+// Mock metricFindQuery which will call backend API
+//@ts-ignore
+dataSourceMock.metricFindQuery = jest.fn((query: string) => {
+  // Use the label values regex to get the values inside the label_values function call
+  const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+  const queryValueArray = query.match(labelValuesRegex) as RegExpMatchArray;
+  const queryValueRaw = queryValueArray[1] as string;
+
+  // Remove the wrapping regex
+  const queryValue = queryValueRaw.substring(queryValueRaw.indexOf('".*') + 3, queryValueRaw.indexOf('.*"'));
+
+  // Run the regex that we'd pass into prometheus API against the strings in the test
+  return Promise.resolve(
+    mockValues
+      .filter((value) => value.label.match(queryValue))
+      .map((result) => {
+        return {
+          text: result.label,
+        };
+      }) as MetricFindValue[]
+  );
+});
+
+const props: Props = {
+  labelsFilters: [],
+  datasource: dataSourceMock,
   query: {
     metric: '',
     labels: [],
     operations: [],
   },
   onChange: jest.fn(),
-  onGetMetrics: jest
-    .fn()
-    .mockResolvedValue([{ label: 'random_metric' }, { label: 'unique_metric' }, { label: 'more_unique_metric' }]),
+  onGetMetrics: jest.fn().mockResolvedValue(mockValues),
+  metricLookupDisabled: false,
 };
 
 describe('MetricSelect', () => {

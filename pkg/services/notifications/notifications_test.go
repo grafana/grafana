@@ -2,15 +2,16 @@ package notifications
 
 import (
 	"context"
+	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func newBus(t *testing.T) bus.Bus {
@@ -30,12 +31,20 @@ func TestProvideService(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("When template_patterns fails to parse", func(t *testing.T) {
+	t.Run("When all template_patterns fail to parse", func(t *testing.T) {
+		cfg := createSmtpConfig()
+		cfg.Smtp.TemplatesPatterns = []string{"/usr/not-a-dir/**", "/usr/also-not-a-dir/**"}
+		_, _, err := createSutWithConfig(t, bus, cfg)
+
+		require.Error(t, err)
+	})
+
+	t.Run("When some template_patterns fail to parse", func(t *testing.T) {
 		cfg := createSmtpConfig()
 		cfg.Smtp.TemplatesPatterns = append(cfg.Smtp.TemplatesPatterns, "/usr/not-a-dir/**")
 		_, _, err := createSutWithConfig(t, bus, cfg)
 
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -44,8 +53,8 @@ func TestSendEmailSync(t *testing.T) {
 
 	t.Run("When sending emails synchronously", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"asdf@grafana.com"},
 				SingleEmail: false,
@@ -63,8 +72,8 @@ func TestSendEmailSync(t *testing.T) {
 
 	t.Run("When using Single Email mode with multiple recipients", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 				SingleEmail: true,
@@ -80,8 +89,8 @@ func TestSendEmailSync(t *testing.T) {
 
 	t.Run("When using Multi Email mode with multiple recipients", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 				SingleEmail: false,
@@ -97,13 +106,13 @@ func TestSendEmailSync(t *testing.T) {
 
 	t.Run("When attaching files to emails", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"asdf@grafana.com"},
 				SingleEmail: true,
 				Template:    "welcome_on_signup",
-				AttachedFiles: []*models.SendEmailAttachFile{
+				AttachedFiles: []*SendEmailAttachFile{
 					{
 						Name:    "attachment.txt",
 						Content: []byte("text file content"),
@@ -128,8 +137,8 @@ func TestSendEmailSync(t *testing.T) {
 		cfg.Smtp.Enabled = false
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 				SingleEmail: true,
@@ -139,7 +148,7 @@ func TestSendEmailSync(t *testing.T) {
 
 		err = ns.SendEmailCommandHandlerSync(context.Background(), cmd)
 
-		require.ErrorIs(t, err, models.ErrSmtpNotEnabled)
+		require.ErrorIs(t, err, ErrSmtpNotEnabled)
 		require.Empty(t, mailer.Sent)
 	})
 
@@ -148,8 +157,8 @@ func TestSendEmailSync(t *testing.T) {
 		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 				SingleEmail: false,
@@ -165,8 +174,8 @@ func TestSendEmailSync(t *testing.T) {
 
 	t.Run("When SMTP dialer is disconnected", func(t *testing.T) {
 		ns := createDisconnectedSut(t, bus)
-		cmd := &models.SendEmailCommandSync{
-			SendEmailCommand: models.SendEmailCommand{
+		cmd := &SendEmailCommandSync{
+			SendEmailCommand: SendEmailCommand{
 				Subject:     "subject",
 				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 				SingleEmail: false,
@@ -185,7 +194,9 @@ func TestSendEmailAsync(t *testing.T) {
 
 	t.Run("When sending reset email password", func(t *testing.T) {
 		sut, _ := createSut(t, bus)
-		err := sut.SendResetPasswordEmail(context.Background(), &models.SendResetPasswordEmailCommand{User: &user.User{Email: "asd@asd.com"}})
+		testuser := user.User{Email: "asd@asd.com", Login: "asd@asd.com"}
+		err := sut.SendResetPasswordEmail(context.Background(), &SendResetPasswordEmailCommand{User: &testuser})
+
 		require.NoError(t, err)
 
 		sentMsg := <-sut.mailQueue
@@ -194,6 +205,19 @@ func TestSendEmailAsync(t *testing.T) {
 		assert.Equal(t, "Reset your Grafana password - asd@asd.com", sentMsg.Subject)
 		assert.NotContains(t, sentMsg.Body["text/html"], "Subject")
 		assert.NotContains(t, sentMsg.Body["text/plain"], "Subject")
+
+		// find code in mail
+		r, _ := regexp.Compile(`code=(\w+)`)
+		match := r.FindString(sentMsg.Body["text/plain"])
+		code := match[len("code="):]
+
+		// verify code
+		query := ValidateResetPasswordCodeQuery{Code: code}
+		getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
+			return &testuser, nil
+		}
+		_, err = sut.ValidateResetPasswordCode(context.Background(), &query, getUserByLogin)
+		require.NoError(t, err)
 	})
 
 	t.Run("When SMTP disabled in configuration", func(t *testing.T) {
@@ -201,7 +225,7 @@ func TestSendEmailAsync(t *testing.T) {
 		cfg.Smtp.Enabled = false
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
-		cmd := &models.SendEmailCommand{
+		cmd := &SendEmailCommand{
 			Subject:     "subject",
 			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 			SingleEmail: true,
@@ -210,7 +234,7 @@ func TestSendEmailAsync(t *testing.T) {
 
 		err = ns.SendEmailCommandHandler(context.Background(), cmd)
 
-		require.ErrorIs(t, err, models.ErrSmtpNotEnabled)
+		require.ErrorIs(t, err, ErrSmtpNotEnabled)
 		require.Empty(t, mailer.Sent)
 	})
 
@@ -219,7 +243,7 @@ func TestSendEmailAsync(t *testing.T) {
 		cfg.Smtp.ContentTypes = append(cfg.Smtp.ContentTypes, "multipart/form-data")
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
-		cmd := &models.SendEmailCommand{
+		cmd := &SendEmailCommand{
 			Subject:     "subject",
 			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 			SingleEmail: false,
@@ -234,7 +258,7 @@ func TestSendEmailAsync(t *testing.T) {
 
 	t.Run("When SMTP dialer is disconnected", func(t *testing.T) {
 		ns := createDisconnectedSut(t, bus)
-		cmd := &models.SendEmailCommand{
+		cmd := &SendEmailCommand{
 			Subject:     "subject",
 			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
 			SingleEmail: false,

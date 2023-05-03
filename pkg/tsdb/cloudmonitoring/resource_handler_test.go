@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -78,7 +78,7 @@ func Test_doRequest(t *testing.T) {
 		t.Errorf("Unexpected headers: %v", res.Header())
 	}
 	result := rw.Result()
-	body, err := ioutil.ReadAll(result.Body)
+	body, err := io.ReadAll(result.Body)
 	if err != nil {
 		t.Error(err)
 	}
@@ -300,7 +300,7 @@ func Test_getGCEDefaultProject(t *testing.T) {
 				},
 			},
 		},
-		gceDefaultProjectGetter: func(ctx context.Context) (string, error) {
+		gceDefaultProjectGetter: func(ctx context.Context, scope string) (string, error) {
 			return project, nil
 		},
 	}

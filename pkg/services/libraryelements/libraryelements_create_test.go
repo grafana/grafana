@@ -6,14 +6,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestCreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Text - Library Panel")
+			command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 400, resp.Status())
@@ -28,7 +29,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Text - Library Panel",
-					Kind:        int64(models.PanelElement),
+					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -39,21 +40,21 @@ func TestCreateLibraryElement(t *testing.T) {
 						"type":        "text",
 					},
 					Version: 1,
-					Meta: LibraryElementDTOMeta{
+					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "ScenarioFolder",
 						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
-						CreatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -65,7 +66,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	testScenario(t, "When an admin tries to create a library panel that does not exists using an nonexistent UID, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Nonexistent UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Nonexistent UID")
 			command.UID = util.GenerateShortUID()
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -77,7 +78,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         command.UID,
 					Name:        "Nonexistent UID",
-					Kind:        int64(models.PanelElement),
+					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -88,21 +89,21 @@ func TestCreateLibraryElement(t *testing.T) {
 						"type":        "text",
 					},
 					Version: 1,
-					Meta: LibraryElementDTOMeta{
+					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "ScenarioFolder",
 						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -114,7 +115,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an existent UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Existing UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Existing UID")
 			command.UID = sc.initialResult.Result.UID
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -123,7 +124,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an invalid UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Invalid UID")
 			command.UID = "Testing an invalid UID"
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -132,7 +133,7 @@ func TestCreateLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to create a library panel that does not exists using an UID that is too long, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.Id, "Invalid UID")
+			command := getCreatePanelCommand(sc.folder.ID, "Invalid UID")
 			command.UID = "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K"
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
@@ -152,7 +153,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         result.Result.UID,
 					Name:        "Library Panel Name",
-					Kind:        int64(models.PanelElement),
+					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -163,21 +164,21 @@ func TestCreateLibraryElement(t *testing.T) {
 						"type":        "text",
 					},
 					Version: 1,
-					Meta: LibraryElementDTOMeta{
+					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "ScenarioFolder",
 						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
-						UpdatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},

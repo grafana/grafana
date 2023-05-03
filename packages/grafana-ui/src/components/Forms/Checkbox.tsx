@@ -9,15 +9,20 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { getLabelStyles } from './Label';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+  /** Label to display next to checkbox */
   label?: string;
+  /** Description to display under the label */
   description?: string;
+  /** Current value of the checkbox */
   value?: boolean;
-  // htmlValue allows to specify the input "value" attribute
+  /** htmlValue allows to specify the input "value" attribute */
   htmlValue?: string | number;
+  /** Sets the checkbox into a "mixed" state. This is only a visual change and does not affect the value. */
+  indeterminate?: boolean;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, htmlValue, onChange, disabled, className, ...inputProps }, ref) => {
+  ({ label, description, value, htmlValue, onChange, disabled, className, indeterminate, ...inputProps }, ref) => {
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -28,19 +33,24 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     );
     const styles = useStyles2(getCheckboxStyles);
 
+    const ariaChecked = indeterminate ? 'mixed' : undefined;
+
     return (
       <label className={cx(styles.wrapper, className)}>
-        <input
-          type="checkbox"
-          className={styles.input}
-          checked={value}
-          disabled={disabled}
-          onChange={handleOnChange}
-          value={htmlValue}
-          {...inputProps}
-          ref={ref}
-        />
-        <span className={styles.checkmark} />
+        <div className={styles.checkboxWrapper}>
+          <input
+            type="checkbox"
+            className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
+            checked={value}
+            disabled={disabled}
+            onChange={handleOnChange}
+            value={htmlValue}
+            aria-checked={ariaChecked}
+            {...inputProps}
+            ref={ref}
+          />
+          <span className={styles.checkmark} />
+        </div>
         {label && <span className={styles.label}>{label}</span>}
         {description && <span className={styles.description}>{description}</span>}
       </label>
@@ -55,9 +65,13 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
   return {
     wrapper: css`
+      display: inline-grid;
+      align-items: center;
+      column-gap: ${theme.spacing(labelPadding)};
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
       position: relative;
       vertical-align: middle;
-      font-size: 0;
     `,
     input: css`
       position: absolute;
@@ -83,7 +97,6 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
        * for angular components styling
        * */
       &:checked + span {
-        background: blue;
         background: ${theme.colors.primary.main};
         border: none;
 
@@ -118,6 +131,45 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         }
       }
     `,
+
+    inputIndeterminate: css`
+      &[aria-checked='mixed'] + span {
+        border: none;
+        background: ${theme.colors.primary.main};
+
+        &:hover {
+          background: ${theme.colors.primary.shade};
+        }
+
+        &:after {
+          content: '';
+          position: absolute;
+          z-index: 2;
+          left: 3px;
+          right: 3px;
+          top: calc(50% - 1.5px);
+          height: 3px;
+          border: 1.5px solid ${theme.colors.primary.contrastText};
+          background-color: ${theme.colors.primary.contrastText};
+          width: auto;
+          transform: none;
+        }
+      }
+      &:disabled[aria-checked='mixed'] + span {
+        background-color: ${theme.colors.action.disabledBackground};
+
+        &:after {
+          border-color: ${theme.colors.action.disabledText};
+        }
+      }
+    `,
+
+    checkboxWrapper: css`
+      display: flex;
+      align-items: center;
+      grid-column-start: 1;
+      grid-row-start: 1;
+    `,
     checkmark: css`
       position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
       z-index: 2;
@@ -136,20 +188,22 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     label: cx(
       labelStyles.label,
       css`
+        grid-column-start: 2;
+        grid-row-start: 1;
         position: relative;
         z-index: 2;
-        padding-left: ${theme.spacing(labelPadding)};
-        white-space: nowrap;
         cursor: pointer;
-        position: relative;
-        top: -3px;
+        max-width: fit-content;
+        line-height: ${theme.typography.bodySmall.lineHeight};
+        margin-bottom: 0;
       `
     ),
     description: cx(
       labelStyles.description,
       css`
+        grid-column-start: 2;
+        grid-row-start: 2;
         line-height: ${theme.typography.bodySmall.lineHeight};
-        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),

@@ -1,8 +1,11 @@
+import intersect from 'fast_array_intersect';
+
 import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
-import { ArrayVector } from '../../vector';
+import { DataFrame, Field, FieldMatcher, FieldType } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
+
+import { JoinMode } from './joinByField';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -30,7 +33,7 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface JoinOptions {
   /**
@@ -52,6 +55,11 @@ export interface JoinOptions {
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
+
+  /**
+   * @internal -- Optionally specify a join mode (outer or inner)
+   */
+  mode?: JoinMode;
 }
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
@@ -77,7 +85,7 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
-export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
+export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
     return;
   }
@@ -199,10 +207,10 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     }
 
     nullModes.push(nullModesFrame);
-    const a: AlignedData = [join.values.toArray()]; //
+    const a: AlignedData = [join.values]; //
 
     for (const field of fields) {
-      a.push(field.values.toArray());
+      a.push(field.values);
       originalFields.push(field);
       // clear field displayName state
       delete field.state?.displayName;
@@ -211,14 +219,14 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes);
+  const joined = join(allData, nullModes, options.mode);
 
   return {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
     fields: originalFields.map((f, index) => ({
       ...f,
-      values: new ArrayVector(joined[index]),
+      values: joined[index],
     })),
   };
 }
@@ -272,16 +280,23 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][]) {
-  const xVals = new Set<number>();
+export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+  let xVals: Set<number>;
 
-  for (let ti = 0; ti < tables.length; ti++) {
-    let t = tables[ti];
-    let xs = t[0];
-    let len = xs.length;
+  if (mode === JoinMode.inner) {
+    // @ts-ignore
+    xVals = new Set(intersect(tables.map((t) => t[0])));
+  } else {
+    xVals = new Set();
 
-    for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
+    for (let ti = 0; ti < tables.length; ti++) {
+      let t = tables[ti];
+      let xs = t[0];
+      let len = xs.length;
+
+      for (let i = 0; i < len; i++) {
+        xVals.add(xs[i]);
+      }
     }
   }
 
@@ -336,7 +351,7 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector, samples = 50) {
+export function isLikelyAscendingVector(data: any[], samples = 50) {
   const len = data.length;
 
   // empty or single value
@@ -348,11 +363,11 @@ export function isLikelyAscendingVector(data: Vector, samples = 50) {
   let firstIdx = 0;
   let lastIdx = len - 1;
 
-  while (firstIdx <= lastIdx && data.get(firstIdx) == null) {
+  while (firstIdx <= lastIdx && data[firstIdx] == null) {
     firstIdx++;
   }
 
-  while (lastIdx >= firstIdx && data.get(lastIdx) == null) {
+  while (lastIdx >= firstIdx && data[lastIdx] == null) {
     lastIdx--;
   }
 
@@ -363,8 +378,8 @@ export function isLikelyAscendingVector(data: Vector, samples = 50) {
 
   const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
 
-  for (let prevVal = data.get(firstIdx), i = firstIdx + stride; i <= lastIdx; i += stride) {
-    const v = data.get(i);
+  for (let prevVal = data[firstIdx], i = firstIdx + stride; i <= lastIdx; i += stride) {
+    const v = data[i];
 
     if (v != null) {
       if (v <= prevVal) {

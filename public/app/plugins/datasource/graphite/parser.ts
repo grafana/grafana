@@ -68,7 +68,7 @@ export class Parser {
       return curly;
     }
 
-    if (this.match('identifier') || this.match('number')) {
+    if (this.match('identifier') || this.match('number') || this.match('bool')) {
       // hack to handle float numbers in metric segments
       const parts = this.consumeToken().value.split('.');
       if (parts.length === 2) {

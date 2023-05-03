@@ -13,6 +13,7 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 	tcs := []struct {
 		desc                 string
 		allowedCookies       []string
+		disallowedCookies    []string
 		expectedCookieHeader string
 	}{
 		{
@@ -30,6 +31,12 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 			allowedCookies:       []string{"c1", "c3"},
 			expectedCookieHeader: "c1=1; c3=3",
 		},
+		{
+			desc:                 "When provided with allowed and not allowed cookies should populate Cookie header",
+			allowedCookies:       []string{"c1", "c3"},
+			disallowedCookies:    []string{"c1"},
+			expectedCookieHeader: "c3=3",
+		},
 	}
 
 	for _, tc := range tcs {
@@ -41,7 +48,7 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 				{Name: "c2", Value: "2"},
 				{Name: "c3", Value: "3"},
 			}
-			mw := httpclientprovider.ForwardedCookiesMiddleware(forwarded, tc.allowedCookies)
+			mw := httpclientprovider.ForwardedCookiesMiddleware(forwarded, tc.allowedCookies, tc.disallowedCookies)
 			opts := httpclient.Options{}
 			rt := mw.CreateMiddleware(opts, finalRoundTripper)
 			require.NotNil(t, rt)
@@ -62,4 +69,17 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 			require.Equal(t, tc.expectedCookieHeader, ctx.req.Header.Get("Cookie"))
 		})
 	}
+}
+
+type testContext struct {
+	callChain []string
+	req       *http.Request
+}
+
+func (c *testContext) createRoundTripper() http.RoundTripper {
+	return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		c.callChain = append(c.callChain, "final")
+		c.req = req
+		return &http.Response{StatusCode: http.StatusOK}, nil
+	})
 }
