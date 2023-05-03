@@ -6,6 +6,7 @@ import { RadioButtonGroup } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../functions';
 import { PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };
 
