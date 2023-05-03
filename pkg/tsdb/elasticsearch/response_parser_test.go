@@ -201,8 +201,8 @@ func TestProcessLogsResponse(t *testing.T) {
 			for _, field := range logsFrame.Fields {
 				logsFieldMap[field.Name] = field
 			}
-			t0 := time.Time(time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC))
-			t1 := time.Time(time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC))
+			t0 := time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC)
+			t1 := time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC)
 			require.Contains(t, logsFieldMap, "testtime")
 			require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
 			require.Equal(t, &t0, logsFieldMap["testtime"].At(0))
