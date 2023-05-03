@@ -12,6 +12,6 @@ package publicdashboard
 // Resource is the wire representation of PublicDashboard. (TODO be better)
 type Resource struct {
 	Metadata Metadata `json:"metadata"`
-	Spec     Spec     `json:"spec"`
-	Status   Status   `json:"status"`
+	Spec Spec `json:"spec"`
+	Status Status `json:"status"`
 }
