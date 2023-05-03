@@ -108,6 +108,7 @@ RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
       apk info -vv | sort; \
     elif grep -i -q ubuntu /etc/issue; then \
+      sed -i "s|deb http://.*/ \(.*\)|\0\ndeb http://mirrors.mit.edu/ubuntu/ \1\ndeb http://mirrors.ocf.berkeley.edu/ubuntu/ \1|g" /etc/apt/sources.list && \
       DEBIAN_FRONTEND=noninteractive && \
       apt-get update && \
       apt-get install -y ca-certificates curl tzdata && \
