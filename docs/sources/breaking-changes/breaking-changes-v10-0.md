@@ -32,7 +32,7 @@ You create a new Grafana Cloud stack and intend to use any panel or data source 
 
 AngularJS is an old frontend framework that stopped active development many years ago. Because of that, it is a security risk. AngularJS also requires unsafe-eval in the [CSP (Content Security Policy)](https://developer.mozilla.org/en/Security/CSP) settings which also reduces the security level of how javascript is executed in the browser.
 
-Angular plugin support in Grafana is deprecated, meaning it will be removed in a future release. There are still some community and private plugins built using Angular. Starting with v9.0, Grafana has a server configuration option called [angular_support_enabled]({{< relref "../../setup-grafana/configure-grafana/#angular_support_enabled" >}}), that controls whether Angular plugin support is available.
+Angular plugin support in Grafana is deprecated, meaning it will be removed in a future release. There are still some community and private plugins built using Angular. Starting with v9.0, Grafana has a server configuration option called [angular_support_enabled]({{< relref "../setup-grafana/configure-grafana/#angular_support_enabled" >}}), that controls whether Angular plugin support is available.
 
 #### Change in Grafana v10
 
@@ -74,11 +74,11 @@ In Grafana 8.5 we introduced [Service Accounts](https://grafana.com/blog/2022/08
 
 This is a "breaking" change because if users are used to seeing and interacting with API keys, they will not see that page in nav anymore and will need to navigate to the Service Accounts page instead. However, your existing API tokens will remain fully functional and migrated to service accounts, so no automation will break. If you roll back to a previous version of Grafana, your API keys will remain intact.
 
-Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "../../developers/http_api/auth/#create-api-token" >}}) remain functional, but we recommend you begin using the [Service Account HTTP API]({{< relref "../../developers/http_api/serviceaccount/" >}}) to generate and manage machine authentication instead.
+Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "../developers/http_api/auth/#create-api-token" >}}) remain functional, but we recommend you begin using the [Service Account HTTP API]({{< relref "../developers/http_api/serviceaccount/" >}}) to generate and manage machine authentication instead.
 
 #### Migration path:
 
-While upgrading to Grafana 10, you do not need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to Service Accounts before upgrading to Grafana 10, follow our [migration documentation]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-account" >}}").
+While upgrading to Grafana 10, you do not need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to Service Accounts before upgrading to Grafana 10, follow our [migration documentation]({{< relref "../administration/api-keys/#migrate-api-keys-to-grafana-service-account" >}}").
 
 #### Learn more:
 
@@ -158,7 +158,7 @@ Open and save each dashboard that uses the Alias field. Alias is migrated to Lab
 
 #### Relevant links to learn more:
 
-[Grafana CloudWatch documentation about the change]({{< relref "../../datasources/aws-cloudwatch/query-editor/#label" >}})
+[Grafana CloudWatch documentation about the change]({{< relref "../datasources/aws-cloudwatch/query-editor/#label" >}})
 
 ## For Plugin Developers
 
