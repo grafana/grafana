@@ -2,9 +2,9 @@
 title: Build a logs data source plugin
 ---
 
-# Build a logs data source plugin 
+# Build a logs data source plugin
 
-Grafana data source plugins support metrics, logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences which we will explain in this guide. 
+Grafana data source plugins support metrics, logs, and other data types. The steps to build a logs data source plugin are largely the same as for a metrics data source, but there are a few differences which we will explain in this guide.
 
 ## Before you begin
 
