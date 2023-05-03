@@ -1116,7 +1116,7 @@ def postgres_integration_tests_step():
 def mysql_integration_tests_step(hostname, version):
     cmds = [
         "apt-get update",
-        "apt-get install -yq default-mysql-client libgnutls30",
+        "apt-get install -yq default-mysql-client",
         "dockerize -wait tcp://{}:3306 -timeout 120s".format(hostname),
         "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
         "go clean -testcache",

@@ -801,7 +801,9 @@ services:
   volumes:
   - name: mysql57
     path: /var/lib/mysql
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -899,7 +901,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -916,7 +918,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -1866,7 +1868,9 @@ services:
   volumes:
   - name: mysql57
     path: /var/lib/mysql
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -1942,7 +1946,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -1959,7 +1963,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -5133,7 +5137,9 @@ services:
   volumes:
   - name: mysql57
     path: /var/lib/mysql
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -5202,7 +5208,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -5219,7 +5225,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -5858,7 +5864,9 @@ services:
   volumes:
   - name: mysql57
     path: /var/lib/mysql
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -5954,7 +5962,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -5971,7 +5979,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -6389,7 +6397,9 @@ services:
   volumes:
   - name: mysql57
     path: /var/lib/mysql
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6458,7 +6468,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -6475,7 +6485,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -6564,7 +6574,9 @@ services:
   volumes:
   - name: mysql57
     path: /var/lib/mysql
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6661,7 +6673,7 @@ steps:
   name: postgres-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql57:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
@@ -6678,7 +6690,7 @@ steps:
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
-  - apt-get install -yq default-mysql-client libgnutls30
+  - apt-get install -yq default-mysql-client
   - dockerize -wait tcp://mysql80:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
     -prootpass
@@ -7018,6 +7030,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: d76c1cbfcd12ec70fc0c13f12d487b528d18642cd9907352e0d4b9259e40b69f
+hmac: 3c9bdc5a563cb497620e9e97e4bcef3345e3fe8f76a8804cd4116cc49d6ea09a
 
 ...
