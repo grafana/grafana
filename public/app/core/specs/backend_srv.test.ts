@@ -225,40 +225,6 @@ describe('backendSrv', () => {
           expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the loginPing/tokenRotation is mocked
         });
       });
-
-      // it('then it should retry old', async () => {
-      //   jest.useFakeTimers();
-      //   const url = '/api/dashboard/';
-      //   const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
-      //     ok: false,
-      //     status: 401,
-      //     statusText: errorMessage,
-      //     data: { message: errorMessage },
-      //     url,
-      //   });
-
-      //   backendSrv.loginPing = jest
-      //     .fn()
-      //     .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
-
-      //   await backendSrv
-      //     .request({ url, method: 'GET', retry: 0 })
-      //     .catch((error) => {
-      //       expect(error.status).toBe(401);
-      //       expect(error.statusText).toBe(errorMessage);
-      //       expect(error.data).toEqual({ message: errorMessage });
-      //       expect(appEventsMock.emit).not.toHaveBeenCalled();
-      //       expect(logoutMock).not.toHaveBeenCalled();
-      //       expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-      //       expectRequestCallChain({ url, method: 'GET', retry: 0 });
-      //       jest.advanceTimersByTime(50);
-      //     })
-      //     .catch((error) => {
-      //       expect(error).toEqual({ message: errorMessage });
-      //       expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
-      //       expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, [errorMessage, '']);
-      //     });
-      // });
     });
 
     describe('when making an unsuccessful call because of soft token revocation', () => {
@@ -618,35 +584,6 @@ describe('backendSrv', () => {
           expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the loginPing/tokenRotation is mocked
         });
       });
-
-      // it('then it should retry old', async () => {
-      //   const { backendSrv, logoutMock, expectRequestCallChain } = getTestContext({
-      //     ok: false,
-      //     status: 401,
-      //     statusText: 'UnAuthorized',
-      //     data: { message: 'UnAuthorized' },
-      //   });
-
-      //   backendSrv.loginPing = jest
-      //     .fn()
-      //     .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
-      //   const url = '/api/dashboard/';
-
-      //   let inspectorPacket: FetchResponse | FetchError;
-      //   backendSrv.getInspectorStream().subscribe({
-      //     next: (rsp) => (inspectorPacket = rsp),
-      //   });
-
-      //   await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
-      //     expect(error.status).toBe(401);
-      //     expect(error.statusText).toBe('UnAuthorized');
-      //     expect(error.data).toEqual({ message: 'UnAuthorized' });
-      //     expect(inspectorPacket).toBe(error);
-      //     expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-      //     expect(logoutMock).not.toHaveBeenCalled();
-      //     expectRequestCallChain({ url, method: 'GET', retry: 0 }, 2);
-      //   });
-      // });
     });
 
     describe('when making an unsuccessful call because of soft token revocation', () => {
