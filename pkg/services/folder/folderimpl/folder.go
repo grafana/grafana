@@ -484,7 +484,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return dashboards.ErrFolderAccessDenied
 			}
 
-			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
+			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.ForceDeleteRules); err != nil {
 				return err
 			}
 
@@ -499,8 +499,11 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, forceDeleteAlertRules bool) error {
 	for _, v := range s.registry {
+		if v.Kind() == folder.AlertRuleKind && !forceDeleteAlertRules {
+			return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
+		}
 		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
 			return err
 		}

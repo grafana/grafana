@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -542,7 +543,7 @@ func (service AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64,
 	return nil
 }
 
-func (service AlertRuleService) Kind() string { return "alertrule" }
+func (service AlertRuleService) Kind() string { return folder.AlertRuleKind }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
 func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.AlertRuleGroup {
