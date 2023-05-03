@@ -229,30 +229,22 @@ export const navIndex: NavIndex = {
     sortWeight: -1300,
     children: [
       {
-        id: 'connections-your-connections',
-        text: 'Your connections',
-        subTitle: 'Manage your existing connections',
-        url: '/connections/your-connections',
-        children: [
-          {
-            id: 'connections-your-connections-datasources',
-            text: 'Datasources',
-            subTitle: 'Manage your existing datasource connections',
-            url: '/connections/your-connections/datasources',
-          },
-          {
-            id: 'standalone-plugin-page-/connections/your-connections/infrastructure',
-            text: 'Infrastructure',
-            url: '/connections/your-connections/infrastructure',
-            pluginId: 'grafana-easystart-app',
-          },
-        ],
+        id: 'connections-add-new-connection',
+        text: 'Add new connection',
+        subTitle: 'Browse and create new connections',
+        url: '/connections/add-new-connection',
       },
       {
-        id: 'connections-connect-data',
-        text: 'Connect data',
-        subTitle: 'Browse and create new connections',
-        url: '/connections/connect-data',
+        id: 'connections-your-datasources',
+        text: 'Your data sources',
+        subTitle: 'Manage your existing datasource connections',
+        url: '/connections/your-datasources',
+      },
+      {
+        id: 'standalone-plugin-page-/connections/your-infrastructure',
+        text: 'Your infrastructure',
+        url: '/connections/your-infrastructure',
+        pluginId: 'grafana-easystart-app',
       },
     ],
     parentItem: {
@@ -263,43 +255,23 @@ export const navIndex: NavIndex = {
       sortWeight: -2000,
     },
   },
-  'connections-your-connections': {
-    id: 'connections-your-connections',
-    text: 'Your connections',
-    subTitle: 'Manage your existing connections',
-    url: '/connections/your-connections',
-    children: [
-      {
-        id: 'connections-your-connections-datasources',
-        text: 'Datasources',
-        subTitle: 'Manage your existing datasource connections',
-        url: '/connections/your-connections/datasources',
-      },
-      {
-        id: 'standalone-plugin-page-/connections/your-connections/infrastructure',
-        text: 'Infrastructure',
-        url: '/connections/your-connections/infrastructure',
-        pluginId: 'grafana-easystart-app',
-      },
-    ],
-  },
-  'connections-your-connections-datasources': {
-    id: 'connections-your-connections-datasources',
-    text: 'Datasources',
+  'connections-your-datasources': {
+    id: 'connections-your-datasources',
+    text: 'Your data sources',
     subTitle: 'Manage your existing datasource connections',
-    url: '/connections/your-connections/datasources',
+    url: '/connections/your-datasources',
   },
-  'standalone-plugin-page-/connections/your-connections/infrastructure': {
-    id: 'standalone-plugin-page-/connections/your-connections/infrastructure',
-    text: 'Infrastructure',
-    url: '/connections/your-connections/infrastructure',
+  'standalone-plugin-page-/connections/your-infrastructure': {
+    id: 'standalone-plugin-page-/connections/your-infrastructure',
+    text: 'Your infrastructure',
+    url: '/connections/your-infrastructure',
     pluginId: 'grafana-easystart-app',
   },
-  'connections-connect-data': {
-    id: 'connections-connect-data',
-    text: 'Connect data',
+  'connections-add-new-connection': {
+    id: 'connections-add-new-connection',
+    text: 'Add new connection',
     subTitle: 'Browse and create new connections',
-    url: '/connections/connect-data',
+    url: '/connections/add-new-connection',
   },
   cfg: {
     id: 'cfg',
