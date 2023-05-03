@@ -15,12 +15,11 @@ import (
 )
 
 var (
-	IoHelper            models.IoUtil = IoUtilImp{}
-	HttpClient          http.Client
-	HttpClientNoTimeout http.Client
-	GrafanaVersion      string
-	ErrNotFoundError    = errors.New("404 not found error")
-	Logger              *logger.CLILogger
+	IoHelper         models.IoUtil = IoUtilImp{}
+	HttpClient       http.Client
+	GrafanaVersion   string
+	ErrNotFoundError = errors.New("404 not found error")
+	Logger           *logger.CLILogger
 )
 
 type BadRequestError struct {
@@ -37,9 +36,7 @@ func (e *BadRequestError) Error() string {
 
 func Init(version string, skipTLSVerify bool, debugMode bool) {
 	GrafanaVersion = version
-
 	HttpClient = makeHttpClient(skipTLSVerify, 10*time.Second)
-	HttpClientNoTimeout = makeHttpClient(skipTLSVerify, 0)
 	Logger = logger.New(debugMode)
 }
 
@@ -73,7 +70,7 @@ func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
 		pluginDataPath := filepath.Join(pluginDir, pluginName, "plugin.json")
 		data, err = IoHelper.ReadFile(pluginDataPath)
 		if err != nil {
-			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
+			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json for " + pluginName + " in " + pluginDir)
 		}
 	}
 
@@ -104,17 +101,4 @@ func GetLocalPlugins(pluginDir string) []models.InstalledPlugin {
 	}
 
 	return result
-}
-
-func RemoveInstalledPlugin(pluginPath, pluginName string) error {
-	logger.Infof("Removing plugin: %v\n", pluginName)
-	pluginDir := filepath.Join(pluginPath, pluginName)
-
-	_, err := IoHelper.Stat(pluginDir)
-	if err != nil {
-		return err
-	}
-
-	logger.Debugf("Removing directory %v\n", pluginDir)
-	return IoHelper.RemoveAll(pluginDir)
 }
