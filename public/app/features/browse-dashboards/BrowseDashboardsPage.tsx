@@ -1,13 +1,16 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, useStyles2 } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState, useDispatch, useSelector } from 'app/types';
 
-import { buildNavModel } from '../folders/state/navModel';
+import { buildNavModel, getLoadingNav } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -35,6 +38,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
+  const dispatch = useDispatch();
 
   useEffect(() => stateManager.initStateFromUrl(folderUID), [folderUID, stateManager]);
 
@@ -47,7 +51,17 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
-  const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
+
+  useEffect(() => {
+    if (folderDTO) {
+      dispatch(updateNavIndex(buildNavModel(folderDTO)));
+    }
+  }, [dispatch, folderDTO]);
+
+  const navIndex = useSelector((state: StoreState) => state.navIndex);
+  const navModel = folderUID
+    ? getNavModel(navIndex, `folder-dashboards-${folderUID}`, getLoadingNav(1)).main
+    : undefined;
   const hasSelection = useHasSelection();
 
   const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);

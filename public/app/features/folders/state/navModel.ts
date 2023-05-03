@@ -3,12 +3,13 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
-export function buildNavModel(folder: FolderDTO): NavModelItem {
+export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavModelItem {
+  const url = `/dashboards/f/${folder.uid}`;
   const model: NavModelItem = {
     icon: 'folder',
     id: 'manage-folder',
     subTitle: 'Manage folder dashboards and permissions',
-    url: '',
+    url,
     text: folder.title,
     breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
     children: [
@@ -17,17 +18,25 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
         icon: 'apps',
         id: `folder-dashboards-${folder.uid}`,
         text: 'Dashboards',
-        url: folder.url,
+        url,
+        hideFromBreadcrumbs: true,
       },
     ],
   };
+
+  if (parents && parents.length > 0) {
+    const parent = parents[parents.length - 1];
+    const remainingParents = parents.slice(0, parents.length - 1);
+    model.parentItem = buildNavModel(parent, remainingParents);
+  }
 
   model.children!.push({
     active: false,
     icon: 'library-panel',
     id: `folder-library-panels-${folder.uid}`,
     text: 'Panels',
-    url: `${folder.url}/library-panels`,
+    url: `${url}/library-panels`,
+    hideFromBreadcrumbs: true,
   });
 
   if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
@@ -36,7 +45,8 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       icon: 'bell',
       id: `folder-alerting-${folder.uid}`,
       text: 'Alert rules',
-      url: `${folder.url}/alerting`,
+      url: `${url}/alerting`,
+      hideFromBreadcrumbs: true,
     });
   }
 
@@ -46,7 +56,8 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       icon: 'lock',
       id: `folder-permissions-${folder.uid}`,
       text: 'Permissions',
-      url: `${folder.url}/permissions`,
+      url: `${url}/permissions`,
+      hideFromBreadcrumbs: true,
     });
   }
 
@@ -56,7 +67,8 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       icon: 'cog',
       id: `folder-settings-${folder.uid}`,
       text: 'Settings',
-      url: `${folder.url}/settings`,
+      url: `${url}/settings`,
+      hideFromBreadcrumbs: true,
     });
   }
 
@@ -65,6 +77,11 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
 
 export function getLoadingNav(tabIndex: number): NavModel {
   const main = buildNavModel({
+    created: '',
+    createdBy: '',
+    hasAcl: false,
+    updated: '',
+    updatedBy: '',
     id: 1,
     uid: 'loading',
     title: 'Loading',

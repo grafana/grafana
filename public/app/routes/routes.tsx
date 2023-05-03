@@ -154,7 +154,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboards/f/:uid/:slug/permissions',
+      path: '/dashboards/f/:uid/permissions',
       component: config.rbacEnabled
         ? SafeDynamicImport(
             () =>
@@ -165,15 +165,9 @@ export function getAppRoutes(): RouteDescriptor[] {
           ),
     },
     {
-      path: '/dashboards/f/:uid/:slug/settings',
+      path: '/dashboards/f/:uid/settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage')
-      ),
-    },
-    {
-      path: '/dashboards/f/:uid/:slug',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/search/components/DashboardListPage')
       ),
     },
     {
@@ -475,13 +469,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboards/f/:uid/:slug/library-panels',
+      path: '/dashboards/f/:uid/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
       ),
     },
     {
-      path: '/dashboards/f/:uid/:slug/alerting',
+      path: '/dashboards/f/:uid/alerting',
       roles: () =>
         contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
