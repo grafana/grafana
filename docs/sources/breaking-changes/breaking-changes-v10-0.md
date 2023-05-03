@@ -32,7 +32,7 @@ You create a new Grafana Cloud stack and intend to use any panel or data source 
 
 AngularJS is an old frontend framework that stopped active development many years ago. Because of that, it is a security risk. AngularJS also requires unsafe-eval in the [CSP (Content Security Policy)](https://developer.mozilla.org/en/Security/CSP) settings which also reduces the security level of how javascript is executed in the browser.
 
-Angular plugin support in Grafana is deprecated, meaning it will be removed in a future release. There are still some community and private plugins built using Angular. Starting with v9.0, Grafana has a server configuration option called [angular_support_enabled](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#angular_support_enabled), that controls whether Angular plugin support is available.
+Angular plugin support in Grafana is deprecated, meaning it will be removed in a future release. There are still some community and private plugins built using Angular. Starting with v9.0, Grafana has a server configuration option called [angular_support_enabled]({{< relref "../../setup-grafana/configure-grafana/#angular_support_enabled" >}}), that controls whether Angular plugin support is available.
 
 #### Change in Grafana v10
 
@@ -46,7 +46,7 @@ If you are a developer maintaining a plugin that uses Angular, we recommend you 
 
 #### Learn more
 
-[Angular Support Deprecation docs](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/)
+[Angular Support Deprecation docs]({{< relref "../developers/angular_deprecation/" >}})
 
 ### Grafana legacy alerting is deprecated and no longer accepts internal or external contributions
 
@@ -60,7 +60,7 @@ Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana 9.0
 
 #### Migration path:
 
-The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Migrating Alerts doc](https://grafana.com/docs/grafana/latest/alerting/migrating-alerts/).
+The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Migrating Alerts doc]({{< relref "../alerting/migrating-alerts/" >}}).
 
 ### API keys are migrating to Service Accounts
 
@@ -74,15 +74,15 @@ In Grafana 8.5 we introduced [Service Accounts](https://grafana.com/blog/2022/08
 
 This is a "breaking" change because if users are used to seeing and interacting with API keys, they will not see that page in nav anymore and will need to navigate to the Service Accounts page instead. However, your existing API tokens will remain fully functional and migrated to service accounts, so no automation will break. If you roll back to a previous version of Grafana, your API keys will remain intact.
 
-Grafana's [HTTP API endpoints for generating and managing API Keys](https://grafana.com/docs/grafana/latest/developers/http_api/auth/#create-api-token) remain functional, but we recommend you begin using the [Service Account HTTP API](https://grafana.com/docs/grafana/latest/developers/http_api/serviceaccount/) to generate and manage machine authentication instead.
+Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "../../developers/http_api/auth/#create-api-token" >}}) remain functional, but we recommend you begin using the [Service Account HTTP API]({{< relref "../../developers/http_api/serviceaccount/" >}}) to generate and manage machine authentication instead.
 
 #### Migration path:
 
-While upgrading to Grafana 10, you do not need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to Service Accounts before upgrading to Grafana 10, follow our [migration documentation](https://grafana.com/docs/grafana/latest/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts).
+While upgrading to Grafana 10, you do not need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to Service Accounts before upgrading to Grafana 10, follow our [migration documentation]({{< relref "../../administration/api-keys/#migrate-api-keys-to-grafana-service-account" >}}").
 
 #### Learn more:
 
-- [Documentation](https://grafana.com/docs/grafana/latest/administration/api-keys/) from API keys to service accounts
+- [Documentation]({{< relref "../administration/api-keys/" >}}) from API keys to service accounts
 
 - [Blog post announcement](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/) with a video demo including how to migrate
 
@@ -102,7 +102,7 @@ The entire feature has been removed from Grafana. For users who enabled the dash
 
 #### Relevant links to learn more:
 
-- Docs page: <https://grafana.com/docs/grafana/latest/search/dashboard-previews/>
+- [Documentation]({{< relref "../search/dashboard-previews/" >}})
 
 ### RBAC is on by default in Grafana Enterprise and cannot be disabled
 
@@ -158,7 +158,7 @@ Open and save each dashboard that uses the Alias field. Alias is migrated to Lab
 
 #### Relevant links to learn more:
 
-[Grafana CloudWatch documentation about the change](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/query-editor/#label)
+[Grafana CloudWatch documentation about the change]({{< relref "../../datasources/aws-cloudwatch/query-editor/#label" >}})
 
 ## For Plugin Developers
 
