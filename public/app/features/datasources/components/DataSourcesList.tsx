@@ -78,7 +78,7 @@ export function DataSourcesListView({
         buttonLink={dataSourcesRoutes.New}
         buttonTitle="Add data source"
         proTip="You can also define data sources through configuration files."
-        proTipLink="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list"
+        proTipLink="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
         proTipLinkTitle="Learn more"
         proTipTarget="_blank"
       />
