@@ -69,7 +69,7 @@ When you use Docker containers, their data is temporary by default. If you don't
 
 #### Use persistent storage (recommended)
 
-Persistent storage is recommended because, without it, you will lose all the data when the container is shut down. Use this method when you deploy in a production environment or when the data is critical and you want the Docker service to fully manage the storage volume.
+It is recommended to have persistent storage because without it, all data will be lost once the container is shut down. Use this method when you deploy in a production environment or when the data is critical and want the Docker service to fully manage the storage volume.
 
 
 To use persistent storage, complete the following steps:
