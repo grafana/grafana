@@ -136,7 +136,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
-		Sentry:                              &hs.Cfg.Sentry,
 		Nonce:                               c.RequestNonce,
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",

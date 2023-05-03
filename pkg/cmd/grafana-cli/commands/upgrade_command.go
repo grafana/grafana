@@ -12,32 +12,32 @@ import (
 )
 
 func (cmd Command) upgradeCommand(c utils.CommandLine) error {
+	ctx := context.Background()
 	pluginsDir := c.PluginDirectory()
-	pluginName := c.Args().First()
+	pluginID := c.Args().First()
 
-	localPlugin, err := services.ReadPlugin(pluginsDir, pluginName)
-
+	localPlugin, err := services.ReadPlugin(pluginsDir, pluginID)
 	if err != nil {
 		return err
 	}
 
-	plugin, err2 := cmd.Client.GetPlugin(pluginName, c.PluginRepoURL())
-	if err2 != nil {
-		return err2
+	plugin, err := cmd.Client.GetPlugin(pluginID, c.PluginRepoURL())
+	if err != nil {
+		return err
 	}
 
 	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
-		if err := services.RemoveInstalledPlugin(pluginsDir, pluginName); err != nil {
-			return fmt.Errorf("failed to remove plugin '%s': %w", pluginName, err)
+		if err = uninstallPlugin(ctx, pluginID, c); err != nil {
+			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}
 
-		err := installPlugin(context.Background(), pluginName, "", c)
+		err = installPlugin(ctx, pluginID, "", c)
 		if err == nil {
 			logRestartNotice()
 		}
 		return err
 	}
 
-	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginName)
+	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginID)
 	return nil
 }

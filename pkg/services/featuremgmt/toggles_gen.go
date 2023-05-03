@@ -67,10 +67,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
-
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"

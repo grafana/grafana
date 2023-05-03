@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 220,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -44,8 +43,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -77,6 +75,7 @@
       },
       "id": 8,
       "options": {
+        "cellHeight": "sm",
         "footer": {
           "countRows": false,
           "fields": "",
@@ -90,7 +89,7 @@
         "showRowNums": false,
         "sortBy": []
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "10.0.0-pre",
       "targets": [
         {
           "datasource": {
@@ -760,8 +759,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -825,9 +823,98 @@
         "content": "The timeseries panel can not show timeseries-long directly, it must first be converted to `timeseries-wide` or `timeseries-multi` first.\n\nThe UI should show a button indicating this.",
         "mode": "markdown"
       },
-      "pluginVersion": "9.5.0-pre",
+      "pluginVersion": "10.0.0-pre",
       "title": "Timeseries-long info",
       "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 0
+        }
+      ],
+      "title": "Expected no-data message (empty series",
+      "type": "timeseries"
     }
   ],
   "refresh": "",
@@ -846,6 +933,6 @@
   "timezone": "",
   "title": "Panel Tests - Timeseries - Supported input formats",
   "uid": "f4ca24309dd4",
-  "version": 6,
+  "version": 1,
   "weekStart": ""
 }

@@ -80,12 +80,7 @@ export const Examples: ComponentStory<typeof Alert> = () => {
       <StoryExample name="Severities">
         <VerticalGroup>
           {severities.map((severity) => (
-            <Alert
-              title={`Severity: ${severity}`}
-              severity={severity}
-              key={severity}
-              onRemove={action('Remove button clicked')}
-            >
+            <Alert title={`Severity: ${severity}`} severity={severity} key={severity}>
               Child content
             </Alert>
           ))}

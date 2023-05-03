@@ -1,4 +1,4 @@
-import { ArrayDataFrame, MutableDataFrame, toDataFrame } from '../dataframe';
+import { ArrayDataFrame, createDataFrame, toDataFrame } from '../dataframe';
 import { rangeUtil } from '../datetime';
 import { createTheme } from '../themes';
 import { FieldMatcherID } from '../transformations';
@@ -177,11 +177,11 @@ describe('applyFieldOverrides', () => {
   };
 
   describe('given multiple data frames', () => {
-    const f0 = new MutableDataFrame({
+    const f0 = createDataFrame({
       name: 'A',
       fields: [{ name: 'message', type: FieldType.string, values: [10, 20] }],
     });
-    const f1 = new MutableDataFrame({
+    const f1 = createDataFrame({
       name: 'B',
       fields: [{ name: 'info', type: FieldType.string, values: [10, 20] }],
     });
@@ -676,7 +676,7 @@ describe('getLinksSupplier', () => {
       getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
     });
 
-    const f0 = new MutableDataFrame({
+    const f0 = createDataFrame({
       name: 'A',
       fields: [
         {
@@ -712,7 +712,7 @@ describe('getLinksSupplier', () => {
     });
 
     const datasourceUid = '1234';
-    const f0 = new MutableDataFrame({
+    const f0 = createDataFrame({
       name: 'A',
       fields: [
         {
@@ -766,7 +766,7 @@ describe('getLinksSupplier', () => {
 
     const datasourceUid = '1234';
     const range = rangeUtil.relativeToTimeRange({ from: 600, to: 0 });
-    const f0 = new MutableDataFrame({
+    const f0 = createDataFrame({
       name: 'A',
       fields: [
         {
@@ -827,7 +827,7 @@ describe('getLinksSupplier', () => {
     it('handles link click handlers', () => {
       const onClickSpy = jest.fn();
       const replaceSpy = jest.fn();
-      const f0 = new MutableDataFrame({
+      const f0 = createDataFrame({
         name: 'A',
         fields: [
           {
@@ -867,7 +867,7 @@ describe('getLinksSupplier', () => {
       const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
       const onBuildUrlSpy = jest.fn();
 
-      const f0 = new MutableDataFrame({
+      const f0 = createDataFrame({
         name: 'A',
         fields: [
           {
