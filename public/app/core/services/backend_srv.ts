@@ -366,9 +366,9 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = config.featureToggles.clientTokenRotation ? this._rotateToken() : this.loginPing();
+                let authChecker = config.featureToggles.clientTokenRotation ? this.rotateToken() : this.loginPing();
 
-                return authChecker.pipe(
+                return from(authChecker).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
                       this.dependencies.logout();
@@ -459,7 +459,7 @@ export class BackendSrv implements BackendService {
     });
   }
 
-  private _rotateToken() {
+  rotateToken() {
     if (this._tokenRotationInProgress) {
       return this._tokenRotationInProgress;
     }
