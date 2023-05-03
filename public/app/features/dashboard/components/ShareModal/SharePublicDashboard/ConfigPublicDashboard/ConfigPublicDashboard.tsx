@@ -41,7 +41,7 @@ import { EmailSharingConfiguration } from './EmailSharingConfiguration';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
-export interface ConfigPublicDashoardForm {
+export interface ConfigPublicDashboardForm {
   isAnnotationsEnabled: boolean;
   isTimeSelectionEnabled: boolean;
   isPaused: boolean;
@@ -64,7 +64,7 @@ const ConfigPublicDashboard = () => {
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
   const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
-  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
+  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
       isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
@@ -72,7 +72,7 @@ const ConfigPublicDashboard = () => {
     },
   });
 
-  const onUpdate = async (values: ConfigPublicDashoardForm) => {
+  const onUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
     const req = {
@@ -88,7 +88,7 @@ const ConfigPublicDashboard = () => {
     update(req);
   };
 
-  const onChange = async (name: keyof ConfigPublicDashoardForm, value: boolean) => {
+  const onChange = async (name: keyof ConfigPublicDashboardForm, value: boolean) => {
     setValue(name, value);
     await handleSubmit((data) => onUpdate(data))();
   };
@@ -120,7 +120,7 @@ const ConfigPublicDashboard = () => {
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
-          value={generatePublicDashboardUrl(publicDashboard!)}
+          value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
           disabled={!publicDashboard?.isEnabled}
           data-testid={selectors.CopyUrlInput}
@@ -129,7 +129,7 @@ const ConfigPublicDashboard = () => {
               data-testid={selectors.CopyUrlButton}
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
-              getText={() => generatePublicDashboardUrl(publicDashboard!)}
+              getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
             >
               Copy
             </ClipboardButton>

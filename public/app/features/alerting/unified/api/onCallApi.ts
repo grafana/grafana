@@ -16,7 +16,6 @@ export const onCallApi = alertingApi.injectEndpoints({
         const integrations = await fetchOnCallIntegrations();
         return { data: integrations };
       },
-      providesTags: ['AlertmanagerChoice'],
     }),
   }),
 });

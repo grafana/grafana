@@ -18,7 +18,7 @@ const templateSrv = {
     if (scopedVars) {
       // For testing variables replacement in link
       each(scopedVars, (val, key) => {
-        value = value.replace('$' + key, val.value);
+        value = value.replace('$' + key, val?.value);
       });
     }
     return value;

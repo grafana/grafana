@@ -197,7 +197,10 @@ describe('getExploreUrl', () => {
   const args = {
     panel: {
       getSavedId: () => 1,
-      targets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
+      targets: [
+        { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
+        { refId: 'B', expr: 'query2', datasource: { type: '__expr__', uid: '__expr__' } },
+      ],
     },
     datasourceSrv: {
       get() {
@@ -214,6 +217,9 @@ describe('getExploreUrl', () => {
 
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
+  });
+  it('should omit expression target in explore url', () => {
+    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/__expr__/g)));
   });
 });
 
@@ -482,5 +488,11 @@ describe('generateEmptyQuery', () => {
     expect(query.datasource?.uid).toBe('ds1');
     expect(query.datasource?.type).toBe('loki');
     expect(query.refId).toBe('B');
+  });
+
+  it('should generate a query with a unique refId', async () => {
+    const query = await generateEmptyQuery([{ refId: 'A' }], 2);
+
+    expect(query.refId).not.toBe('A');
   });
 });

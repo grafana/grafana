@@ -6,6 +6,7 @@ import { useTheme2 } from '..';
 import { getAgularPanelStyles } from './angularPanelStyles';
 import { getCardStyles } from './card';
 import { getElementStyles } from './elements';
+import { getExtraStyles } from './extra';
 import { getFormElementStyles } from './forms';
 import { getMarkdownStyles } from './markdownStyles';
 import { getPageStyles } from './page';
@@ -18,6 +19,7 @@ export function GlobalStyles() {
     <Global
       styles={[
         getElementStyles(theme),
+        getExtraStyles(theme),
         getFormElementStyles(theme),
         getPageStyles(theme),
         getCardStyles(theme),

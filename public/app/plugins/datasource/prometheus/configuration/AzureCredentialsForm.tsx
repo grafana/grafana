@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
+import React, { ChangeEvent, useEffect, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineFormLabel, Button } from '@grafana/ui/src/components';
@@ -27,7 +27,7 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
   },
 ];
 
-export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
+export const AzureCredentialsForm = (props: Props) => {
   const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions, disabled } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
 

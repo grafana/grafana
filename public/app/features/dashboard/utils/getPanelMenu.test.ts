@@ -1,16 +1,5 @@
-import {
-  PanelMenuItem,
-  PluginExtension,
-  PluginExtensionLink,
-  PluginExtensionTypes,
-  PluginExtensionPlacements,
-} from '@grafana/data';
-import {
-  PluginExtensionPanelContext,
-  PluginExtensionRegistryItem,
-  setPluginsExtensionRegistry,
-} from '@grafana/runtime';
-import { LoadingState } from '@grafana/schema';
+import { PanelMenuItem, PluginExtensionPanelContext, PluginExtensionTypes } from '@grafana/data';
+import { getPluginExtensions } from '@grafana/runtime';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
@@ -26,9 +15,16 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  setPluginExtensionGetter: jest.fn(),
+  getPluginExtensions: jest.fn(),
+}));
+
 describe('getPanelMenu()', () => {
   beforeEach(() => {
-    setPluginsExtensionRegistry({});
+    (getPluginExtensions as jest.Mock).mockRestore();
+    (getPluginExtensions as jest.Mock).mockReturnValue({ extensions: [] });
   });
 
   it('should return the correct panel menu items', () => {
@@ -110,56 +106,26 @@ describe('getPanelMenu()', () => {
     `);
   });
 
-  it('should return the correct panel menu items when data is streaming', () => {
-    const panel = new PanelModel({});
-    const dashboard = createDashboardModelFixture({});
-
-    const menuItems = getPanelMenu(dashboard, panel, LoadingState.Streaming);
-    expect(menuItems).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          iconClassName: 'circle',
-          text: 'Stop query',
-        }),
-      ])
-    );
-  });
-
-  it('should return the correct panel menu items when data is loading', () => {
-    const panel = new PanelModel({});
-    const dashboard = createDashboardModelFixture({});
-
-    const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-    expect(menuItems).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          iconClassName: 'circle',
-          text: 'Stop query',
-        }),
-      ])
-    );
-  });
-
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', () => {
-      setPluginsExtensionRegistry({
-        [PluginExtensionPlacements.DashboardPanelMenu]: [
-          createRegistryItem<PluginExtensionLink>({
+      (getPluginExtensions as jest.Mock).mockReturnValue({
+        extensions: [
+          {
+            pluginId: '...',
             type: PluginExtensionTypes.link,
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
-            key: 1,
-          }),
+          },
         ],
       });
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
-      expect(moreSubMenu).toEqual(
+      expect(extensionsSubMenu).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             text: 'Declare incident',
@@ -170,24 +136,24 @@ describe('getPanelMenu()', () => {
     });
 
     it('should truncate menu item title to 25 chars', () => {
-      setPluginsExtensionRegistry({
-        [PluginExtensionPlacements.DashboardPanelMenu]: [
-          createRegistryItem<PluginExtensionLink>({
+      (getPluginExtensions as jest.Mock).mockReturnValue({
+        extensions: [
+          {
+            pluginId: '...',
             type: PluginExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
-            key: 1,
-          }),
+          },
         ],
       });
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
-      expect(moreSubMenu).toEqual(
+      expect(extensionsSubMenu).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             text: 'Declare incident when...',
@@ -197,94 +163,32 @@ describe('getPanelMenu()', () => {
       );
     });
 
-    it('should use extension for panel menu returned by configure function', () => {
-      const configure: PluginExtensionRegistryItem<PluginExtensionLink> = () => ({
-        title: 'Wohoo',
-        type: PluginExtensionTypes.link,
-        description: 'Declaring an incident in the app',
-        path: '/a/grafana-basic-app/declare-incident',
-        key: 1,
-      });
+    it('should pass onClick from plugin extension link to menu item', () => {
+      const expectedOnClick = jest.fn();
 
-      setPluginsExtensionRegistry({
-        [PluginExtensionPlacements.DashboardPanelMenu]: [
-          createRegistryItem<PluginExtensionLink>(
-            {
-              type: PluginExtensionTypes.link,
-              title: 'Declare incident when pressing this amazing menu item',
-              description: 'Declaring an incident in the app',
-              path: '/a/grafana-basic-app/declare-incident',
-              key: 1,
-            },
-            configure
-          ),
+      (getPluginExtensions as jest.Mock).mockReturnValue({
+        extensions: [
+          {
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            onClick: expectedOnClick,
+          },
         ],
       });
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+      const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
 
-      expect(moreSubMenu).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Wohoo',
-            href: '/a/grafana-basic-app/declare-incident',
-          }),
-        ])
-      );
-    });
-
-    it('should hide menu item if configure function returns undefined', () => {
-      setPluginsExtensionRegistry({
-        [PluginExtensionPlacements.DashboardPanelMenu]: [
-          createRegistryItem<PluginExtensionLink>(
-            {
-              type: PluginExtensionTypes.link,
-              title: 'Declare incident when pressing this amazing menu item',
-              description: 'Declaring an incident in the app',
-              path: '/a/grafana-basic-app/declare-incident',
-              key: 1,
-            },
-            () => undefined
-          ),
-        ],
-      });
-
-      const panel = new PanelModel({});
-      const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
-
-      expect(moreSubMenu).toEqual(
-        expect.not.arrayContaining([
-          expect.objectContaining({
-            text: 'Declare incident when...',
-            href: '/a/grafana-basic-app/declare-incident',
-          }),
-        ])
-      );
+      menuItem?.onClick?.({} as React.MouseEvent);
+      expect(expectedOnClick).toBeCalledTimes(1);
     });
 
     it('should pass context with correct values when configuring extension', () => {
-      const configure = jest.fn();
-
-      setPluginsExtensionRegistry({
-        [PluginExtensionPlacements.DashboardPanelMenu]: [
-          createRegistryItem<PluginExtensionLink>(
-            {
-              type: PluginExtensionTypes.link,
-              title: 'Declare incident when pressing this amazing menu item',
-              description: 'Declaring an incident in the app',
-              path: '/a/grafana-basic-app/declare-incident',
-              key: 1,
-            },
-            configure
-          ),
-        ],
-      });
-
       const panel = new PanelModel({
         type: 'timeseries',
         id: 1,
@@ -310,7 +214,7 @@ describe('getPanelMenu()', () => {
         title: 'My dashboard',
       });
 
-      getPanelMenu(dashboard, panel, LoadingState.Loading);
+      getPanelMenu(dashboard, panel);
 
       const context: PluginExtensionPanelContext = {
         pluginId: 'timeseries',
@@ -324,7 +228,9 @@ describe('getPanelMenu()', () => {
         targets: [
           {
             refId: 'A',
-            pluginId: 'testdata',
+            datasource: {
+              type: 'testdata',
+            },
           },
         ],
         dashboard: {
@@ -334,65 +240,7 @@ describe('getPanelMenu()', () => {
         },
       };
 
-      expect(configure).toBeCalledWith(context);
-    });
-
-    it('should pass context that can not be edited in configure function', () => {
-      const configure: PluginExtensionRegistryItem<PluginExtensionLink> = (context) => {
-        // trying to change values in the context
-        // @ts-ignore
-        context.pluginId = 'changed';
-
-        return {
-          type: PluginExtensionTypes.link,
-          title: 'Declare incident when pressing this amazing menu item',
-          description: 'Declaring an incident in the app',
-          path: '/a/grafana-basic-app/declare-incident',
-          key: 1,
-        };
-      };
-
-      setPluginsExtensionRegistry({
-        [PluginExtensionPlacements.DashboardPanelMenu]: [
-          createRegistryItem<PluginExtensionLink>(
-            {
-              type: PluginExtensionTypes.link,
-              title: 'Declare incident when pressing this amazing menu item',
-              description: 'Declaring an incident in the app',
-              path: '/a/grafana-basic-app/declare-incident',
-              key: 1,
-            },
-            configure
-          ),
-        ],
-      });
-
-      const panel = new PanelModel({
-        type: 'timeseries',
-        id: 1,
-        title: 'My panel',
-        targets: [
-          {
-            refId: 'A',
-            datasource: {
-              type: 'testdata',
-            },
-          },
-        ],
-      });
-
-      const dashboard = createDashboardModelFixture({
-        timezone: 'utc',
-        time: {
-          from: 'now-5m',
-          to: 'now',
-        },
-        tags: ['database', 'panel'],
-        uid: '123',
-        title: 'My dashboard',
-      });
-
-      expect(() => getPanelMenu(dashboard, panel, LoadingState.Loading)).toThrowError(TypeError);
+      expect(getPluginExtensions).toBeCalledWith(expect.objectContaining({ context }));
     });
   });
 
@@ -405,7 +253,7 @@ describe('getPanelMenu()', () => {
       const panel = new PanelModel({ isViewing: true });
       const dashboard = createDashboardModelFixture({});
 
-      const menuItems = getPanelMenu(dashboard, panel, undefined, angularComponent);
+      const menuItems = getPanelMenu(dashboard, panel, angularComponent);
       expect(menuItems).toMatchInlineSnapshot(`
         [
           {
@@ -510,11 +358,3 @@ describe('getPanelMenu()', () => {
     });
   });
 });
-
-function createRegistryItem<T extends PluginExtension, C extends object = object>(
-  extension: T,
-  configure?: PluginExtensionRegistryItem<T, C>
-): PluginExtensionRegistryItem<T, C> {
-  const defaultConfigure = () => extension;
-  return configure || defaultConfigure;
-}

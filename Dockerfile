@@ -2,12 +2,13 @@
 
 ARG BASE_IMAGE=alpine:3.17
 ARG JS_IMAGE=node:18-alpine3.17
-ARG GO_IMAGE=golang:1.20.1-alpine3.17
+ARG JS_PLATFORM=linux/amd64
+ARG GO_IMAGE=golang:1.20.3-alpine3.17
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM ${JS_IMAGE} as js-builder
+FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -30,13 +31,15 @@ RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
 
+ARG COMMIT_SHA=""
+ARG BUILD_BRANCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make; \
+      apk add --no-cache gcc g++ make git; \
     fi
 
 WORKDIR /tmp/grafana
@@ -53,6 +56,7 @@ RUN if [[ "$BINGO" = "true" ]]; then \
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
@@ -60,6 +64,9 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
+
+ENV COMMIT_SHA=${COMMIT_SHA}
+ENV BUILD_BRANCH=${BUILD_BRANCH}
 
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
@@ -98,7 +105,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache ca-certificates bash tzdata musl-utils && \
+      apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
       apk info -vv | sort; \
     elif grep -i -q ubuntu /etc/issue; then \
       DEBIAN_FRONTEND=noninteractive && \

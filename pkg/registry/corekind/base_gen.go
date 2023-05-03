@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
 	"github.com/grafana/grafana/pkg/kinds/team"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 

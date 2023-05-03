@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
 import { Editor } from 'slate-react';
 
-import { CoreApp, isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
 import {
   BracesPlugin,
@@ -310,7 +310,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
                 <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
                   <MonacoQueryFieldWrapper
-                    runQueryOnBlur={this.props.app !== CoreApp.Explore}
                     languageProvider={languageProvider}
                     history={history}
                     onChange={this.onChangeQuery}

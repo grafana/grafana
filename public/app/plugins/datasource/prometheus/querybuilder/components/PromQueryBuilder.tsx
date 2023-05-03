@@ -1,10 +1,7 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
-import { DataSourceApi, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Button, Tag, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -22,7 +19,6 @@ import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types'
 import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
-import { MetricEncyclopediaModal } from './MetricEncyclopediaModal';
 import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
@@ -39,12 +35,10 @@ export interface Props {
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
-  const [metricEncyclopediaModalOpen, setMetricEncyclopediaModalOpen] = useState(false);
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
 
-  const styles = useStyles2(getStyles);
   /**
    * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
    */
@@ -208,52 +202,22 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   }, [datasource, query, withTemplateVariableOptions]);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
-  const MetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+
+  const initHints = datasource.getInitHints();
 
   return (
     <>
       <EditorRow>
-        {MetricEncyclopedia ? (
-          <>
-            <Button
-              className={styles.button}
-              variant="secondary"
-              size="sm"
-              onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
-            >
-              Metric Encyclopedia
-            </Button>
-            {query.metric && (
-              <Tag
-                name={query.metric}
-                color="#3D71D9"
-                onClick={() => {
-                  onChange({ ...query, metric: '' });
-                }}
-                title="Click to remove metric"
-                className={styles.metricTag}
-              />
-            )}
-            {metricEncyclopediaModalOpen && (
-              <MetricEncyclopediaModal
-                datasource={datasource}
-                isOpen={metricEncyclopediaModalOpen}
-                onClose={() => setMetricEncyclopediaModalOpen(false)}
-                query={query}
-                onChange={onChange}
-              />
-            )}
-          </>
-        ) : (
-          <MetricSelect
-            query={query}
-            onChange={onChange}
-            onGetMetrics={onGetMetrics}
-            datasource={datasource}
-            labelsFilters={query.labels}
-          />
-        )}
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
+          labelsFilters={query.labels}
+          metricLookupDisabled={datasource.lookupsDisabled}
+        />
         <LabelFilters
+          debounceDuration={datasource.getDebounceTimeInMilliseconds()}
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
           // eslint-ignore
@@ -262,6 +226,18 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
         />
       </EditorRow>
+      {initHints.length ? (
+        <div className="query-row-break">
+          <div className="prom-query-field-info text-warning">
+            {initHints[0].label}{' '}
+            {initHints[0].fix ? (
+              <button type="button" className={'text-warning'}>
+                {initHints[0].fix.label}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
@@ -348,15 +324,3 @@ async function getMetrics(
 }
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    button: css`
-      height: auto;
-    `,
-    metricTag: css`
-      margin: '10px 0 10px 0',
-      backgroundColor: '#3D71D9',
-    `,
-  };
-};

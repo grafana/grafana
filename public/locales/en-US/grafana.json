@@ -9,8 +9,7 @@
     "action": {
       "change-theme": "Change theme...",
       "dark-theme": "Dark",
-      "light-theme": "Light",
-      "search": "Search"
+      "light-theme": "Light"
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -31,8 +30,24 @@
     "save": "Save"
   },
   "dashboard": {
+    "add-menu": {
+      "import": "Import from library",
+      "paste-panel": "Paste panel",
+      "row": "Row",
+      "visualization": "Visualization"
+    },
+    "empty": {
+      "add-import-body": "Import visualizations that are shared with other dashboards.",
+      "add-import-button": "Import library panel",
+      "add-import-header": "Import panel",
+      "add-row-body": "Group your visualizations into expandable sections.",
+      "add-row-button": "Add row",
+      "add-row-header": "Add a row",
+      "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
+      "add-visualization-button": "Add visualization",
+      "add-visualization-header": "Start your new dashboard by adding a visualization"
+    },
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
@@ -77,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Data source stats",
+      "data-traceids": "Trace IDs",
       "processing-time": "Data processing time",
       "queries": "Number of queries",
       "request-time": "Total request time",
@@ -84,8 +100,8 @@
       "table-title": "Stats"
     },
     "toolbar": {
+      "add": "Add",
       "add-panel": "Add panel",
-      "comments-show": "Show dashboard comments",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -95,7 +111,6 @@
       "save": "Save dashboard",
       "settings": "Dashboard settings",
       "share": "Share dashboard or panel",
-      "tv-button": "Cycle view mode",
       "unmark-favorite": "Unmark as favorite"
     }
   },
@@ -126,6 +141,9 @@
       "folder": "Save in folder",
       "folder-description": "Library panel permissions are derived from the folder permissions",
       "name": "Library panel name"
+    },
+    "add-widget": {
+      "title": "Add panel from panel library"
     }
   },
   "library-panels": {
@@ -177,7 +195,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
-      "title": "Alerts & incidents"
+      "title": "Alerts & IRM"
     },
     "api-keys": {
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
@@ -188,8 +206,7 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Administration",
-      "titleBeforeTopnav": "Configuration"
+      "title": "Administration"
     },
     "correlations": {
       "subtitle": "Add and configure correlations",
@@ -208,7 +225,7 @@
       "title": "Folder"
     },
     "create-import": {
-      "title": "Import"
+      "title": "Import dashboard"
     },
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
@@ -227,8 +244,7 @@
     },
     "global-users": {
       "subtitle": "Manage users in Grafana",
-      "title": "Users",
-      "titleBeforeTopnav": "Users"
+      "title": "Users"
     },
     "help": {
       "title": "Help"
@@ -244,27 +260,12 @@
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
     },
-    "live": {
-      "title": "Event streaming"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Status"
-    },
-    "manage-dashboards": {
-      "title": "Browse"
-    },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
     },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
-      "title": "Monitoring"
+      "title": "Observability"
     },
     "new": {
       "title": "New"
@@ -277,8 +278,7 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Default preferences",
-      "titleBeforeTopnav": "Preferences"
+      "title": "Default preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -297,7 +297,6 @@
     "profile/settings": {
       "title": "Profile"
     },
-    "profile/switch-org": "Switch organization",
     "public": {
       "title": "Public dashboards"
     },
@@ -305,7 +304,6 @@
       "title": "Scenes"
     },
     "search": {
-      "placeholder": "Search Grafana",
       "placeholderCommandPalette": "Search or jump to..."
     },
     "search-dashboards": {
@@ -319,7 +317,6 @@
       "subtitle": "Use service accounts to run automated workloads in Grafana",
       "title": "Service accounts"
     },
-    "sign-in": "Sign in",
     "sign-out": {
       "title": "Sign out"
     },
@@ -415,7 +412,6 @@
       "sort-placeholder": "Sort",
       "starred": "Starred",
       "view-as-folders": "View by folders",
-      "view-as-grid": "Grid view",
       "view-as-list": "View as list"
     },
     "dashboard-actions": {
@@ -428,6 +424,11 @@
       "go-to-folder": "Go to folder",
       "select-folder": "Select folder"
     },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
+    },
     "results-table": {
       "datasource-header": "Data source",
       "location-header": "Location",
@@ -438,8 +439,8 @@
       "type-header": "Type"
     },
     "search-input": {
-      "include-panels-placeholder": "Search for dashboards and panels",
-      "placeholder": "Search for dashboards"
+      "include-panels-placeholder": "Search for dashboards, folders, and panels",
+      "placeholder": "Search for dashboards and folders"
     }
   },
   "share-modal": {

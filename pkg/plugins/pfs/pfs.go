@@ -15,13 +15,14 @@ import (
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
 	"cuelang.org/go/cue/token"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
+
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 // PackageName is the name of the CUE package that Grafana will load when

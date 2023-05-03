@@ -233,11 +233,25 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 // QUERIES
 //
 
+// GetDashboardQuery is used to query for a single dashboard matching
+// a unique constraint within the provided OrgID.
+//
+// Available constraints:
+//   - ID uses Grafana's internal numeric database identifier to get a
+//     dashboard.
+//   - UID use the unique identifier to get a dashboard.
+//   - Title + FolderID uses the combination of the dashboard's
+//     human-readable title and its parent folder's ID
+//     (or zero, for top level items). Both are required if no other
+//     constraint is set.
+//
+// Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	Slug  string // required if no ID or Uid is specified
-	ID    int64  // optional if slug is set
-	UID   string // optional if slug is set
-	OrgID int64
+	ID       int64
+	UID      string
+	Title    *string
+	FolderID *int64
+	OrgID    int64
 }
 
 type DashboardTagCloudItem struct {
@@ -326,6 +340,11 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 	}
 }
 
+type DeleteDashboardsInFolderRequest struct {
+	FolderUID string
+	OrgID     int64
+}
+
 //
 // DASHBOARD ACL
 //
@@ -405,7 +424,6 @@ type FindPersistedDashboardsQuery struct {
 	Title         string
 	OrgId         int64
 	SignedInUser  *user.SignedInUser
-	IsStarred     bool
 	DashboardIds  []int64
 	DashboardUIDs []string
 	Type          string
@@ -417,6 +435,4 @@ type FindPersistedDashboardsQuery struct {
 	Sort          model.SortOption
 
 	Filters []interface{}
-
-	Result model.HitList
 }

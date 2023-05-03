@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, PureComponent, useRef, useState } from 'react';
+import React, { PureComponent, useRef, useState } from 'react';
 
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -303,7 +303,7 @@ interface LockedRowProps {
   lockMessage?: string;
 }
 
-export const LockedRow: FC<LockedRowProps> = ({ label, value, lockMessage }) => {
+export const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
   const lockMessageClass = css`
     font-style: italic;
     margin-right: 0.6rem;

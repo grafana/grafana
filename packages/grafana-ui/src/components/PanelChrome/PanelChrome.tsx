@@ -5,6 +5,7 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Tooltip } from '../Tooltip';
@@ -45,14 +46,16 @@ export interface PanelChromeProps {
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
-   * @deprecated in favor of props
-   * statusMessage for error messages
-   * and loadingState for loading and streaming data
-   * which will serve the same purpose
-   * of showing/interacting with the panel's state
-   */
+   * @deprecated use `actions' instead
+   **/
   leftItems?: ReactNode[];
+  actions?: ReactNode;
   displayMode?: 'default' | 'transparent';
+  onCancelQuery?: () => void;
+  /**
+   * callback when opening the panel menu
+   */
+  onOpenMenu?: () => void;
 }
 
 /**
@@ -81,10 +84,17 @@ export function PanelChrome({
   statusMessage,
   statusMessageOnClick,
   leftItems,
+  actions,
+  onCancelQuery,
+  onOpenMenu,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
   const hasHeader = !hoverHeader;
+
+  // hover menu is only shown on hover when not on touch devices
+  const showOnHoverClass = 'show-on-hover';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -100,7 +110,12 @@ export function PanelChrome({
     containerStyles.border = 'none';
   }
 
-  const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+  /** Old property name now maps to actions */
+  if (leftItems) {
+    actions = leftItems;
+  }
+
+  const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const headerContent = (
     <>
@@ -116,28 +131,45 @@ export function PanelChrome({
       </div>
 
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content="Streaming">
-          <TitleItem className={dragClassCancel} data-testid="panel-streaming">
+        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+          <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
         </Tooltip>
       )}
+      {loadingState === LoadingState.Loading && onCancelQuery && (
+        <DelayRender delay={2000}>
+          <Tooltip content="Cancel query">
+            <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
+              <Icon name="sync-slash" size="md" />
+            </TitleItem>
+          </Tooltip>
+        </DelayRender>
+      )}
+      <div className={styles.rightAligned}>
+        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+      </div>
     </>
   );
 
   return (
-    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+    <div className={styles.container} style={containerStyles} data-testid={testid}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
       {hoverHeader && (
         <>
-          {menu && (
-            <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
-              {headerContent}
-            </HoverWidget>
-          )}
+          <HoverWidget
+            menu={menu}
+            title={title}
+            offset={hoverHeaderOffset}
+            dragClass={dragClass}
+            onOpenMenu={onOpenMenu}
+          >
+            {headerContent}
+          </HoverWidget>
+
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
@@ -156,18 +188,15 @@ export function PanelChrome({
 
           {headerContent}
 
-          <div className={styles.rightAligned}>
-            {menu && (
-              <PanelMenu
-                menu={menu}
-                title={title}
-                placement="bottom-end"
-                menuButtonClass={cx(styles.menuItem, dragClassCancel, 'show-on-hover')}
-              />
-            )}
-
-            {leftItems && <div className={styles.leftItems}>{itemsRenderer(leftItems, (item) => item)}</div>}
-          </div>
+          {menu && (
+            <PanelMenu
+              menu={menu}
+              title={title}
+              placement="bottom-end"
+              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
+              onOpenMenu={onOpenMenu}
+            />
+          )}
         </div>
       )}
 
@@ -178,7 +207,7 @@ export function PanelChrome({
   );
 }
 
-const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
+const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
   return toRender.length > 0 ? renderer(toRender) : null;
 };
@@ -226,7 +255,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      flex: '1 1 0',
 
       '.show-on-hover': {
         visibility: 'hidden',
@@ -296,9 +324,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       alignItems: 'center',
     }),
+    hiddenMenu: css({
+      visibility: 'hidden',
+    }),
     menuItem: css({
       label: 'panel-menu',
-      visibility: 'hidden',
       border: 'none',
       background: theme.colors.secondary.main,
       '&:hover': {
@@ -312,9 +342,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       zIndex: theme.zIndex.tooltip,
     }),
-    leftItems: css({
+    rightActions: css({
       display: 'flex',
-      paddingRight: theme.spacing(padding),
+      padding: theme.spacing(0, padding),
+      gap: theme.spacing(1),
     }),
     rightAligned: css({
       label: 'right-aligned-container',

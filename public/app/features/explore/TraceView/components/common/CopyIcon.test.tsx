@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import CopyIcon from './CopyIcon';
@@ -43,11 +44,11 @@ describe('<CopyIcon />', () => {
     expect(() => render(<CopyIcon {...props} />)).not.toThrow();
   });
 
-  it('copies when clicked', () => {
+  it('copies when clicked', async () => {
     render(<CopyIcon {...props} />);
 
     const button = screen.getByRole('button');
-    button.click();
+    await userEvent.click(button);
 
     expect(copySpy).toHaveBeenCalledWith(props.copyText);
   });

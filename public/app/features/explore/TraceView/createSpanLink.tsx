@@ -1,4 +1,3 @@
-import { property } from 'lodash';
 import React from 'react';
 
 import {
@@ -24,8 +23,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { variableRegex } from '../../variables/utils';
-import { getFieldLinksForExplore } from '../utils/links';
+import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';
@@ -192,7 +190,7 @@ function legacyCreateSpanLinkFactory(
 
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (dataLinkHasAllVariablesDefined(dataLink.internal!.query, scopedVars)) {
+        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
           const link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
@@ -575,66 +573,4 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
       },
     },
   };
-}
-
-type VarValue = string | number | boolean | undefined;
-
-/**
- * This function takes some code from  template service replace() function to figure out if all variables are
- * interpolated. This is so we don't show links that do not work. This cuts a lots of corners though and that is why
- * it's a local function. We sort of don't care about the dashboard template variables for example. Also we only link
- * to loki/splunk/elastic, so it should be less probable that user needs part of a query that looks like a variable but
- * is actually part of the query language.
- * @param query
- * @param scopedVars
- */
-function dataLinkHasAllVariablesDefined<T extends DataQuery>(query: T, scopedVars: ScopedVars): boolean {
-  const vars = getVariablesMapInTemplate(getStringsFromObject(query), scopedVars);
-  return Object.values(vars).every((val) => val !== undefined);
-}
-
-function getStringsFromObject<T extends Object>(obj: T): string {
-  let acc = '';
-  for (const k of Object.keys(obj)) {
-    // Honestly not sure how to type this to make TS happy.
-    // @ts-ignore
-    if (typeof obj[k] === 'string') {
-      // @ts-ignore
-      acc += ' ' + obj[k];
-      // @ts-ignore
-    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
-      // @ts-ignore
-      acc += ' ' + getStringsFromObject(obj[k]);
-    }
-  }
-  return acc;
-}
-
-function getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, VarValue> {
-  const regex = new RegExp(variableRegex);
-  const values: Record<string, VarValue> = {};
-
-  target.replace(regex, (match, var1, var2, fmt2, var3, fieldPath) => {
-    const variableName = var1 || var2 || var3;
-    values[variableName] = getVariableValue(variableName, fieldPath, scopedVars);
-
-    // Don't care about the result anyway
-    return '';
-  });
-
-  return values;
-}
-
-function getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars): VarValue {
-  const scopedVar = scopedVars[variableName];
-  if (!scopedVar) {
-    return undefined;
-  }
-
-  if (fieldPath) {
-    // @ts-ignore ScopedVars are typed in way that I don't think this is possible to type correctly.
-    return property(fieldPath)(scopedVar.value);
-  }
-
-  return scopedVar.value;
 }

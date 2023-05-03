@@ -9,7 +9,7 @@ keywords:
   - exemplars
   - prometheus
 title: Exemplars
-weight: 400
+weight: 750
 ---
 
 # Introduction to exemplars
@@ -22,11 +22,11 @@ To identify the factors that are contributing to the latency, you must compare a
 
 Use exemplars to help isolate problems within your data distribution by pinpointing query traces exhibiting high latency within a time interval. Once you localize the latency problem to a few exemplar traces, you can combine it with additional system based information or location properties to perform a root cause analysis faster, leading to quick resolutions to performance issues.
 
-Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplars data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in Prometheus data source]({{< relref "../../datasources/prometheus/#configuring-exemplars" >}}).
+Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplar data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source]({{< relref "../../datasources/prometheus/#configuring-exemplars" >}}).
 
-Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique traceID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
+Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique trace ID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
 
-{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing the detail window of an Exemplar" >}}
+{{< figure src="/media/docs/grafana/exemplars/screenshot-exemplars.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing the detail window of an exemplar" >}}
 
 Refer to [View exemplar data]({{< relref "#view-exemplar-data" >}}) for instructions on how to drill down and view exemplar trace details from metrics and logs. To know more about exemplars, refer to the blogpost [Intro to exemplars, which enable Grafana Tempo’s distributed tracing at massive scale](https://grafana.com/blog/2021/03/31/intro-to-exemplars-which-enable-grafana-tempos-distributed-tracing-at-massive-scale/).
 
@@ -40,13 +40,13 @@ Explore visualizes exemplar traces as highlighted stars alongside metrics data. 
 
 To examine the details of an exemplar trace:
 
-1. Place your cursor over an exemplar (highlighted star). Depending on your backend trace data source, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo.
+1. Place your cursor over an exemplar (highlighted star). Depending on the trace data source you are using, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo.
 
-   {{< figure src="/static/img/docs/basics/exemplar-details.png" class="docs-image--no-shadow" max-width= "275px" caption="Screenshot showing Exemplar details" >}}
+   {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-details.png" class="docs-image--no-shadow" max-width= "350px" caption="Screenshot showing exemplar details" >}}
 
 1. Click the **Query with Tempo** option next to the `traceID` property. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
-   {{< figure src="/static/img/docs/basics/exemplar-explore-view.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
+   {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-explore-view.png" class="docs-image--no-shadow" max-width= "900px" caption="Explorer view with panel showing trace details" >}}
 
 For more information on how to drill down and analyze the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
 
@@ -56,11 +56,11 @@ You can also view exemplar trace details from the Loki logs in Explore. Use rege
 
 To view the details of an exemplar trace:
 
-1. Expand a log line and scroll down to the `Detected fields` section. Depending on your backend trace data source, you will see a blue button with the label `<data source name>`.
+1. Expand a log line and scroll down to the `Fields` section. Depending on your backend trace data source, you will see a blue button with the label `<data source name>`.
 
 1. Click the blue button next to the `traceID` property. Typically, it will have the name of the backend data source. In the following example, the tracing data source is Tempo. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
-{{< figure src="/static/img/docs/basics/exemplar-loki-logs.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
+{{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-loki-logs.png" class="docs-image--no-shadow" max-width= "750px" caption="Explorer view with panel showing trace details" >}}
 
 For more information on how to drill down and analyze the trace and span details, refer to the [Analyze trace and span details](#analyze-trace-and-spans) section.
 
@@ -68,7 +68,7 @@ For more information on how to drill down and analyze the trace and span details
 
 This panel shows the details of the trace in different segments.
 
-- The top segment shows the Trace ID to indicate that the query results correspond to the specific trace.
+- The top segment displays the trace ID to indicate that the query results correspond to the specific trace.
 
   You can add more traces to the results using the `Add query` button.
 
@@ -78,10 +78,10 @@ This panel shows the details of the trace in different segments.
 
   1. In the magnified view, you can expand or collapse the various levels of the trace to drill down to the specific span of interest.
 
-     For example, if the strip view shows that most of the latency was within the app layer, you can expand the trace down the app layer to investigate the problem further. To expand a particular layer of span, click the icon on the left. The same button can collapse an expanded span.
+     For example, if the strip view shows that most of the latency was within the app layer, you can expand the trace down the app layer to investigate the problem further. To expand a particular layer of span, click the left icon. The same button can collapse an expanded span.
 
 - To see the details of the span at any level, click the span itself.
 
   This displays additional metadata associated with the span. The metadata itself is initially shown in a narrow strip but you can see more details by clicking the metadata strip.
 
-  {{< figure src="/static/img/docs/basics/exemplar-span-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Span details" >}}
+  {{< figure src="/media/docs/grafana/exemplars/screenshot-exemplar-span-details.png" class="docs-image--no-shadow" max-width= "600px" caption="Span details" >}}

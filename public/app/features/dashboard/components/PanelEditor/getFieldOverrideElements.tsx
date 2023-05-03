@@ -155,7 +155,7 @@ export function getFieldOverrideCategories(
         continue;
       }
 
-      const onPropertyChange = (value: any) => {
+      const onPropertyChange = (value: DynamicConfigValue) => {
         override.properties[propIdx].value = value;
         onOverrideChange(idx, override);
       };

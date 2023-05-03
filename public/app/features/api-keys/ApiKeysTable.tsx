@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Button, DeleteButton, HorizontalGroup, Icon, Tooltip, useTheme2 } from '@grafana/ui';
@@ -15,7 +15,7 @@ interface Props {
   onMigrate: (apiKey: ApiKey) => void;
 }
 
-export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate }) => {
+export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 

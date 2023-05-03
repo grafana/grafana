@@ -25,9 +25,9 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Requirements
 
-1. To use images in notifications, Grafana must be set up to use [image rendering](https://grafana.com/docs/grafana/next/setup-grafana/image-rendering/). You can either install the image rendering plugin or run it as a remote rendering service.
+1. To use images in notifications, Grafana must be set up to use [image rendering]({{< relref "/docs/grafana/latest/setup-grafana/image-rendering" >}}). You can either install the image rendering plugin or run it as a remote rendering service.
 
-2. When a screenshot is taken it is saved to the [data]({{< relref "../../setup-grafana/configure-grafana/#paths" >}}) folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt.
+2. When a screenshot is taken it is saved to the [data]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#paths" >}}) folder, even if Grafana is configured to upload screenshots to a cloud storage service. Grafana must have write-access to this folder otherwise screenshots cannot be saved to disk and an error will be logged for each failed screenshot attempt.
 
 3. You should use a cloud storage service unless sending alerts to Discord, Email, Pushover, Slack or Telegram. These integrations support either embedding screenshots in the email or attaching screenshots to the notification, while other integrations must link screenshots uploaded to a cloud storage bucket. If a cloud storage service has been configured then integrations that support both will link screenshots from the cloud storage bucket instead of embedding or attaching screenshots to the notification.
 
@@ -43,7 +43,7 @@ Refer to the table at the end of this page for a list of contact points and thei
 
 ## Configuration
 
-> **Note:** Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+> **Note:** Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 
@@ -59,9 +59,9 @@ If screenshots should be uploaded to cloud storage then `upload_external_image_s
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
-Please see [`[external_image_storage]`](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_image_storage) for instructions on how to configure cloud storage. Grafana will not start if `upload_external_image_storage` is `true` and `[external_image_storage]` contains missing or invalid configuration.
+Please see [`[external_image_storage]`]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#external_image_storage" >}}) for instructions on how to configure cloud storage. Grafana will not start if `upload_external_image_storage` is `true` and `[external_image_storage]` contains missing or invalid configuration.
 
-If Grafana is acting as its own cloud storage then `[upload_external_image_storage]` should be set to `true` and the `local` provider should be set in [`[external_image_storage]`](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#external_image_storage).
+If Grafana is acting as its own cloud storage then `[upload_external_image_storage]` should be set to `true` and the `local` provider should be set in [`[external_image_storage]`]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#external_image_storage" >}}).
 
 Restart Grafana for the changes to take effect.
 

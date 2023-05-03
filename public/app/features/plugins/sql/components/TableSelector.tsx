@@ -15,7 +15,7 @@ interface TableSelectorProps extends ResourceSelectorProps {
   forceFetch?: boolean;
 }
 
-export const TableSelector: React.FC<TableSelectorProps> = ({ db, query, value, className, onChange, forceFetch }) => {
+export const TableSelector = ({ db, query, value, className, onChange, forceFetch }: TableSelectorProps) => {
   const state = useAsync(async () => {
     if (!query.dataset && !forceFetch) {
       return [];

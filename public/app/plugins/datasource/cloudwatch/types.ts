@@ -3,28 +3,17 @@ import { DataFrame, DataSourceRef } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import * as raw from './dataquery.gen';
-import { QueryEditorArrayExpression } from './expressions';
 
 export * from './dataquery.gen';
 
-// QueryEditorArrayExpression has a recursive property, so cannot be defined in cue
-export interface SQLExpression extends raw.SQLExpression {
-  where?: QueryEditorArrayExpression;
-  groupBy?: QueryEditorArrayExpression;
-}
-
 export type CloudWatchQuery =
-  | CloudWatchMetricsQuery
+  | raw.CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
   | raw.CloudWatchAnnotationQuery
   | CloudWatchDefaultQuery;
 
-export interface CloudWatchMetricsQuery extends raw.CloudWatchMetricsQuery {
-  sql?: SQLExpression;
-}
-
 // We want to allow setting defaults for both Logs and Metrics queries
-export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
+export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> & raw.CloudWatchMetricsQuery;
 
 export interface MultiFilters {
   [key: string]: string[];

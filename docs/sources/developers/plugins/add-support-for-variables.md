@@ -143,7 +143,7 @@ Let's create a custom query editor to allow the user to edit the query model.
      onChange: (query: MyVariableQuery, definition: string) => void;
    }
 
-   export const VariableQueryEditor: React.FC<VariableQueryProps> = ({ onChange, query }) => {
+   export const VariableQueryEditor = ({ onChange, query }: VariableQueryProps) => {
      const [state, setState] = useState(query);
 
      const saveQuery = () => {

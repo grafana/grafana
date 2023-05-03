@@ -52,22 +52,26 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 
 	iuserstars, err := api.starService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(500, "Failed to get user stars", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user stars", err)
 	}
 
 	uids := []string{}
-	for dashboardId := range iuserstars.UserStars {
-		query := &dashboards.GetDashboardQuery{
-			ID:    dashboardId,
-			OrgID: c.OrgID,
+	if len(iuserstars.UserStars) > 0 {
+		var ids []int64
+		for id := range iuserstars.UserStars {
+			ids = append(ids, id)
 		}
-		queryResult, err := api.dashboardService.GetDashboard(c.Req.Context(), query)
+		starredDashboards, err := api.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardIDs: ids, OrgID: c.OrgID})
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch dashboards", err)
+		}
 
-		// Grafana admin users may have starred dashboards in multiple orgs.  This will avoid returning errors when the dashboard is in another org
-		if err == nil {
-			uids = append(uids, queryResult.UID)
+		uids = make([]string, len(starredDashboards))
+		for i, dash := range starredDashboards {
+			uids[i] = dash.UID
 		}
 	}
+
 	return response.JSON(200, uids)
 }
 

@@ -16,6 +16,26 @@ const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
 return <DateTimePicker label="Date" date={date} onChange={setDate} />;
 ```
 
+### With disbled hours, minutes or seconds
+
+```tsx
+import React, { useState } from 'react';
+import { DateTime, dateTime } from '@grafana/data';
+import { DateTimePicker } from '@grafana/ui';
+
+const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
+return (
+  <DateTimePicker
+    label="Date"
+    date={date}
+    onChange={setDate}
+    disabledHours={() => [0, 1, 2]}
+    disabledMinutes={() => [10, 15, 30]}
+    disabledSeconds={() => [5, 10, 15, 20]}
+  />
+);
+```
+
 ### Props
 
 <ArgsTable of={DateTimePicker} />

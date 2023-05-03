@@ -324,6 +324,7 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(2);
 
     await waitFor(() => expect(groups[0]).toHaveTextContent(/firing|pending|normal/));
+    await waitFor(() => expect(groups[1]).toHaveTextContent(/firing|pending|normal/));
 
     expect(groups[0]).toHaveTextContent('1 firing');
     expect(groups[1]).toHaveTextContent('1 firing');

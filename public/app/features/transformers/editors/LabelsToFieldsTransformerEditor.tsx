@@ -19,11 +19,11 @@ const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
   { value: LabelsToFieldsMode.Rows, label: 'Rows' },
 ];
 
-export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<LabelsToFieldsOptions>> = ({
+export const LabelsAsFieldsTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<LabelsToFieldsOptions>) => {
   const labelWidth = 20;
 
   const { labelNames, selected } = useMemo(() => {

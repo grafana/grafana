@@ -54,7 +54,6 @@ function NewDashboardsFolder({ createNewFolder }: Props) {
   return (
     <Page navId="dashboards/browse" pageNav={pageNav}>
       <Page.Contents>
-        {!config.featureToggles.topnav && <h3>New dashboard folder</h3>}
         <Form defaultValues={initialFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>

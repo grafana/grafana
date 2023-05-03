@@ -714,7 +714,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				UserID: 1,
 				Login:  "user1",
 			}
-			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			g, err := newDashboardGuardian(context.Background(), cfg, dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 			require.NoError(t, err)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
@@ -735,7 +735,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			qResult := &dashboards.Dashboard{}
 			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			}).Return(qResult, nil)
-			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			g, err := newDashboardGuardian(context.Background(), cfg, dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 			require.NoError(t, err)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
@@ -777,7 +777,7 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 				UserID: 1,
 				Login:  "user1",
 			}
-			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+			g, err := newDashboardGuardian(context.Background(), setting.NewCfg(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 			require.NoError(t, err)
 
 			acl, err := g.GetACLWithoutDuplicates()

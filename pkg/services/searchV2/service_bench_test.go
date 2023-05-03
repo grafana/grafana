@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/querylibrary/querylibraryimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,9 +36,8 @@ func setupBenchEnv(b *testing.B, folderCount, dashboardsPerFolder int) (*Standar
 	orgSvc := &orgtest.FakeOrgService{
 		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 	}
-	querySvc := querylibraryimpl.ProvideService(cfg, features)
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, querySvc, nil).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, nil).(*StandardSearchService)
 	require.True(b, ok)
 
 	err = runSearchService(searchService)

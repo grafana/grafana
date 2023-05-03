@@ -35,6 +35,7 @@ import {
 } from 'app/types/unified-alerting';
 import {
   AlertQuery,
+  GrafanaAlertState,
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
   PromAlertingRuleState,
@@ -169,6 +170,7 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
     },
     state: PromAlertingRuleState.Firing,
     health: 'OK',
+    totalsFiltered: { alerting: 1 },
     ...partial,
   };
 };
@@ -511,16 +513,19 @@ export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule 
   group: {
     name: 'mockCombinedRuleGroup',
     rules: [],
+    totals: {},
   },
   namespace: {
     name: 'mockCombinedNamespace',
-    groups: [{ name: 'mockCombinedRuleGroup', rules: [] }],
+    groups: [{ name: 'mockCombinedRuleGroup', rules: [], totals: {} }],
     rulesSource: 'grafana',
   },
   labels: {},
   annotations: {},
   promRule: mockPromAlertingRule(),
   rulerRule: mockRulerAlertingRule(),
+  instanceTotals: {},
+  filteredInstanceTotals: {},
   ...partial,
 });
 
@@ -595,7 +600,7 @@ export function mockAlertQuery(query: Partial<AlertQuery>): AlertQuery {
 }
 
 export function mockCombinedRuleGroup(name: string, rules: CombinedRule[]): CombinedRuleGroup {
-  return { name, rules };
+  return { name, rules, totals: {} };
 }
 
 export function mockCombinedRuleNamespace(namespace: Partial<CombinedRuleNamespace>): CombinedRuleNamespace {
@@ -629,4 +634,8 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
     rulerRule: mockRulerAlertingRule(),
     ...override,
   });
+}
+
+export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
+  return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }

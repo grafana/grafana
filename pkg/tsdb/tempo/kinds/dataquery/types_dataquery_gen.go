@@ -9,10 +9,11 @@
 
 package dataquery
 
-// Defines values for TempoQueryFiltersType.
+// Defines values for TempoQueryFiltersScope.
 const (
-	TempoQueryFiltersTypeDynamic TempoQueryFiltersType = "dynamic"
-	TempoQueryFiltersTypeStatic  TempoQueryFiltersType = "static"
+	TempoQueryFiltersScopeResource TempoQueryFiltersScope = "resource"
+	TempoQueryFiltersScopeSpan     TempoQueryFiltersScope = "span"
+	TempoQueryFiltersScopeUnscoped TempoQueryFiltersScope = "unscoped"
 )
 
 // Defines values for TempoQueryType.
@@ -26,16 +27,18 @@ const (
 	TempoQueryTypeUpload        TempoQueryType = "upload"
 )
 
-// Defines values for TraceqlFilterType.
+// Defines values for TraceqlFilterScope.
 const (
-	TraceqlFilterTypeDynamic TraceqlFilterType = "dynamic"
-	TraceqlFilterTypeStatic  TraceqlFilterType = "static"
+	TraceqlFilterScopeResource TraceqlFilterScope = "resource"
+	TraceqlFilterScopeSpan     TraceqlFilterScope = "span"
+	TraceqlFilterScopeUnscoped TraceqlFilterScope = "unscoped"
 )
 
-// Defines values for TraceqlSearchFilterType.
+// Defines values for TraceqlSearchScope.
 const (
-	TraceqlSearchFilterTypeDynamic TraceqlSearchFilterType = "dynamic"
-	TraceqlSearchFilterTypeStatic  TraceqlSearchFilterType = "static"
+	TraceqlSearchScopeResource TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan     TraceqlSearchScope = "span"
+	TraceqlSearchScopeUnscoped TraceqlSearchScope = "unscoped"
 )
 
 // TempoDataQuery defines model for TempoDataQuery.
@@ -55,11 +58,11 @@ type TempoQuery struct {
 		// The operator that connects the tag to the value, for example: =, >, !=, =~
 		Operator *string `json:"operator,omitempty"`
 
+		// The scope of the filter, can either be unscoped/all scopes, resource or span
+		Scope *TempoQueryFiltersScope `json:"scope,omitempty"`
+
 		// The tag for the search filter, for example: .http.status_code, .service.name, status
 		Tag *string `json:"tag,omitempty"`
-
-		// The type of the filter, can either be static (pre defined in the UI) or dynamic
-		Type TempoQueryFiltersType `json:"type"`
 
 		// The value for the search filter
 		Value *interface{} `json:"value,omitempty"`
@@ -107,8 +110,8 @@ type TempoQuery struct {
 	SpanName *string `json:"spanName,omitempty"`
 }
 
-// The type of the filter, can either be static (pre defined in the UI) or dynamic
-type TempoQueryFiltersType string
+// The scope of the filter, can either be unscoped/all scopes, resource or span
+type TempoQueryFiltersScope string
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string
@@ -121,11 +124,11 @@ type TraceqlFilter struct {
 	// The operator that connects the tag to the value, for example: =, >, !=, =~
 	Operator *string `json:"operator,omitempty"`
 
+	// The scope of the filter, can either be unscoped/all scopes, resource or span
+	Scope *TraceqlFilterScope `json:"scope,omitempty"`
+
 	// The tag for the search filter, for example: .http.status_code, .service.name, status
 	Tag *string `json:"tag,omitempty"`
-
-	// The type of the filter, can either be static (pre defined in the UI) or dynamic
-	Type TraceqlFilterType `json:"type"`
 
 	// The value for the search filter
 	Value *interface{} `json:"value,omitempty"`
@@ -134,8 +137,8 @@ type TraceqlFilter struct {
 	ValueType *string `json:"valueType,omitempty"`
 }
 
-// The type of the filter, can either be static (pre defined in the UI) or dynamic
-type TraceqlFilterType string
+// The scope of the filter, can either be unscoped/all scopes, resource or span
+type TraceqlFilterScope string
 
-// TraceqlSearchFilterType static fields are pre-set in the UI, dynamic fields are added by the user
-type TraceqlSearchFilterType string
+// TraceqlSearchScope static fields are pre-set in the UI, dynamic fields are added by the user
+type TraceqlSearchScope string

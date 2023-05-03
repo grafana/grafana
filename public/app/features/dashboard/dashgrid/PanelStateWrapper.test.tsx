@@ -1,10 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React, { FC } from 'react';
+import React from 'react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
-import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin, PanelProps } from '@grafana/data';
+import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
@@ -141,4 +141,4 @@ describe('PanelStateWrapper', () => {
   });
 });
 
-const TestPanelComponent: FC<PanelProps> = () => <div>Plugin Panel to Render</div>;
+const TestPanelComponent = () => <div>Plugin Panel to Render</div>;
