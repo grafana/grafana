@@ -12,7 +12,6 @@ weight: 1000
 
 # Configure Grafana secret scanning and notifications
 
-> **Note:** Available from Grafana 10.0.
 
 With Grafana, you can use the GitHub Secret Scanning service to determine if your [service account tokens]({{< relref "../../administration/service-accounts/" >}}) have been leaked on GitHub.
 
