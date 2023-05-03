@@ -178,7 +178,8 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	return &instance, nil
 }
 
-func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {	
+	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	if req.Path != "" {
@@ -213,6 +214,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
