@@ -3,6 +3,8 @@ description: Conceptual topics for plugin development
 title: Introduction to plugin development
 ---
 
+# Introduction to Grafana plugin development
+
 This section contains topics related to the key concepts for Grafana plugin development.
 
 - [Backend plugins]({{< relref "backend/">}})

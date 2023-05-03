@@ -3,6 +3,8 @@ description: Get started guide
 title: Get started with plugins
 ---
 
+# Get started with Grafana plugins
+
 This section contains helpful guidance for building your first plugin.
 
 - [Get started with creating a plugin](https://grafana.github.io/plugin-tools/docs/getting-started)

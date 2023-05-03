@@ -2,7 +2,7 @@
 aliases:
   - ../plugins/developing/
 description: Resources for creating Grafana plugins
-title: Grafana plugin developer's guide
+title: Plugin developer's guide
 weight: 200
 ---
 
@@ -10,7 +10,7 @@ weight: 200
 
 Grafana plugins extend its built-in functionality so that you can accomplish specialized tasks to make Grafana even more useful for them. By making a plugin for your organization, you can connect Grafana to other data sources, ticketing tools, and CI/CD tooling.
 
-You can create plugins for private use or contribute them to the open source community, such as by publishing to the [Grafana plugin catalog](/grafana/plugins/) alongside hundreds of other community and commercial plugins.
+You can create plugins for private use or contribute them to the open source community, such as by publishing to the [Grafana plugin catalog](https://grafana.com/grafana/plugins/) alongside hundreds of other community and commercial plugins.
 
 If you are a Grafana plugin developer or want to become one, this documentation is for you. Use it to get productive quickly, follow along with step-by-step tutorials, or you can refer back to it as you develop.
 
@@ -22,7 +22,7 @@ These are among the types of plugins you can create:
 - **Data source plugins** - Link to new databases or other sources of data.
 - **App plugins** - Create rich applications for custom out-of-the-box experiences.
 
-> **Note:** To learn more about the types of plugins you can build, refer to the [Plugin Overview]({{< relref "../../administration/plugin-management" >}}) documentation.
+> **Note:** To learn more about the types of plugins you can build, refer to the [Plugin management]({{< relref "../../administration/plugin-management" >}}) documentation.
 
 ## Contents of this developer's guide
 

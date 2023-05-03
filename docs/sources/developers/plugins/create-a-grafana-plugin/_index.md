@@ -1,7 +1,9 @@
 ---
 description: How-to topics for plugin development
-title: Create a Grafana plugin
+title: Create a plugin
 ---
+
+# Create a Grafana plugin
 
 This section contains how-to topics for developing Grafana plugins.
 

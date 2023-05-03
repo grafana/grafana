@@ -1,7 +1,9 @@
 ---
 description: Topics related to plugin publishing
-title: Publish a Grafana plugin
+title: Publish a plugin
 ---
+
+# Publish a Grafana plugin
 
 This section contains topics related to publishing Grafana plugins.
 
