@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-func (cmd Command) upgradeCommand(c utils.CommandLine) error {
+func upgradeCommand(c utils.CommandLine) error {
 	ctx := context.Background()
 	pluginsDir := c.PluginDirectory()
 	pluginID := c.Args().First()
@@ -21,7 +21,7 @@ func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	plugin, err := cmd.Client.GetPlugin(pluginID, c.PluginRepoURL())
+	plugin, err := services.GetPlugin(pluginID, c.PluginRepoURL())
 	if err != nil {
 		return err
 	}
