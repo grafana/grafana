@@ -66,6 +66,7 @@ def rgm_main():
         edition = "all",
         trigger = trigger,
         steps = rgm_build(),
+        depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
 def rgm_tag():
@@ -90,7 +91,7 @@ def rgm_tag():
         edition = "all",
         trigger = trigger,
         steps = rgm_build(script = "drone_publish_tag.sh"),
-        depends_on = ["main-test-backend", "main-test-frontend"],
+        depends_on = [],
     )
 
 def rgm():

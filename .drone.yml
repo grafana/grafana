@@ -4548,7 +4548,9 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
+depends_on:
+- main-test-backend
+- main-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4595,9 +4597,7 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on:
-- main-test-backend
-- main-test-frontend
+depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -6941,6 +6941,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: d6bfbf6fa92bf3ed68b72ed6315e926aeec8b50e08a44cff1e40f0561007a0fd
+hmac: e819db5b752a99280213ed98baa12c0c27c87521c826580a8067c957579db98f
 
 ...
