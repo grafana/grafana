@@ -11,7 +11,6 @@ load(
 
 load("scripts/drone/vault.star",
   "from_secret",
-  "vault_secret",
   "rgm_gcp_key_base64",
   "rgm_destination",
   "rgm_github_token",
