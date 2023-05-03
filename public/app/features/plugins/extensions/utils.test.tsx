@@ -1,6 +1,6 @@
 import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
-import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn } from './utils';
+import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, readOnlyProxy } from './utils';
 
 describe('Plugin Extensions / Utils', () => {
   describe('deepFreeze()', () => {
@@ -217,6 +217,31 @@ describe('Plugin Extensions / Utils', () => {
         // Logs the errors
         expect(console.warn).toHaveBeenCalledWith('Error: TEST');
       }).not.toThrow();
+    });
+  });
+
+  describe('readOnlyProxy()', () => {
+    test('testing', () => {
+      const value = {
+        a: 'a',
+        b: {
+          c: 'c',
+        },
+      };
+
+      const proxy = readOnlyProxy(value);
+      expect(proxy.a).toBe('a');
+      expect(proxy.b.c).toBe('c');
+
+      expect(() => {
+        proxy.a = 'b';
+      }).toThrowError(TypeError);
+
+      expect(() => {
+        proxy.b.c = 'd';
+      }).toThrowError(TypeError);
+
+      expect(proxy.b).toBe(proxy.b);
     });
   });
 });

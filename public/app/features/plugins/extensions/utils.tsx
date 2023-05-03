@@ -1,3 +1,4 @@
+import { isArray, isObject } from 'lodash';
 import React from 'react';
 
 import {
@@ -101,6 +102,41 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
   }
 
   return Object.freeze(clonedValue);
+}
+
+export function readOnlyProxy<T extends object>(value: T): T {
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const wm = new WeakMap();
+
+  return new Proxy(value, {
+    defineProperty(target, prop, attr) {
+      return false;
+    },
+    deleteProperty(target, prop) {
+      return false;
+    },
+    isExtensible(target) {
+      return false;
+    },
+    set(target, prop, value, receiver) {
+      return false;
+    },
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+
+      if (isObject(value) || isArray(value)) {
+        if (!wm.has(value)) {
+          wm.set(value, readOnlyProxy(value));
+        }
+        return wm.get(value);
+      }
+
+      return value;
+    },
+  });
 }
 
 export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
