@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -100,6 +102,21 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// uninstallPlugin removes the plugin directory
+func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
+	logger.Infof("Removing plugin: %v\n", pluginID)
+
+	pluginPath := filepath.Join(c.PluginDirectory(), pluginID)
+	fs := plugins.NewLocalFS(pluginPath)
+
+	logger.Debugf("Removing directory %v\n", pluginPath)
+	err := fs.Remove()
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -31,6 +31,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
 
+1. Click the Refresh dashboard icon to query the data source.
+
+   ![Refresh dashboard icon](/media/docs/grafana/dashboards/screenshot-refresh-dashboard-9.5.png)
+
 1. In the visualization list, select a visualization type.
 
    ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-9-5.png)
@@ -49,7 +53,10 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}})
    - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options/" >}})
 
-1. When you've finished editing your panel, click **Save** in the top right corner.
+1. When you've finished editing your panel, click **Save** to save the dashboard.
+
+   Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
+
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
 

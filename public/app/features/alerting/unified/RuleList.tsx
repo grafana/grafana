@@ -118,6 +118,7 @@ const RuleList = withErrorBoundary(
               <Stack direction="row" gap={0.5}>
                 {canReadProvisioning && (
                   <LinkButton
+                    variant="secondary"
                     href={createUrl('/api/v1/provisioning/alert-rules/export', {
                       download: 'true',
                       format: 'yaml',

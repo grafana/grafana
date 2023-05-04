@@ -1,31 +1,25 @@
 package commands
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-var removePlugin func(pluginPath, id string) error = services.RemoveInstalledPlugin
-
 func (cmd Command) removeCommand(c utils.CommandLine) error {
-	pluginPath := c.PluginDirectory()
-
-	plugin := c.Args().First()
-	if plugin == "" {
+	pluginID := c.Args().First()
+	if pluginID == "" {
 		return errors.New("missing plugin parameter")
 	}
 
-	err := removePlugin(pluginPath, plugin)
-
+	err := uninstallPlugin(context.Background(), pluginID, c)
 	if err != nil {
 		if strings.Contains(err.Error(), "no such file or directory") {
 			return fmt.Errorf("plugin does not exist")
 		}
-
 		return err
 	} else {
 		logRestartNotice()
