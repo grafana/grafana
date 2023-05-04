@@ -46,7 +46,7 @@ describe('SearchStateManager', () => {
       expect(stm.state.folderUid).toBe(undefined);
     });
 
-    it('should reset query  and keep filters if state is updated and no URL params are present', () => {
+    it('should reset filters if state is updated and no URL params are present', () => {
       const parseRouteParamsSpy = jest.spyOn(utils, 'parseRouteParams');
       // Set initial values
       parseRouteParamsSpy.mockImplementation(() => ({
@@ -55,16 +55,16 @@ describe('SearchStateManager', () => {
       }));
       const stm = getSearchStateManager();
       stm.initStateFromUrl();
-      // That they have been set
+      // Verify that they have been set
       expect(stm.state.query).toBe('hello');
       expect(stm.state.sort).toBe('alpha-asc');
 
-      // Changed to a view with no URL state. Stored values are fetched from localStorage
+      // Changed to a view with no URL state.
       parseRouteParamsSpy.mockImplementation(() => ({}));
       stm.initStateFromUrl();
 
       expect(stm.state.query).toBe('');
-      expect(stm.state.sort).toBe('alpha-asc');
+      expect(stm.state.sort).toBe(undefined);
     });
   });
 });

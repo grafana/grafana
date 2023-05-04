@@ -49,7 +49,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     stateManager.setState({
-      query: '',
+      ...initialState,
       ...stateFromUrl,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
