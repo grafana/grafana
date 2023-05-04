@@ -594,13 +594,13 @@ describe('Tempo service graph view', () => {
     const spanNames = [
       '/actuator/health/**',
       '$type + [test]|HTTP POST - post',
-      'server.cluster.local:9090^/config.grpc.?(.*)',
+      'server.cluster.local:9090^/sample.test(.*)?',
     ];
     let escaped = getEscapedSpanNanes(spanNames);
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
-      'server\\\\.cluster\\\\.local:9090\\\\^/config\\\\.grpc\\\\.\\\\?\\\\(\\\\.\\\\*\\\\)',
+      'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
     ]);
   });
 
