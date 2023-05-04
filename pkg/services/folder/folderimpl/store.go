@@ -14,8 +14,10 @@ type store interface {
 	// Delete deletes a folder from the folder store.
 	Delete(ctx context.Context, uid string, orgID int64) error
 
-	// Update updates the given folder's UID, Title, and Description.
-	// Use Move to change a dashboard's parent ID.
+	// Update updates the given folder's UID, Title, and Description (update mode).
+	// If the NewParentUID field is not nil, it updates also the parent UID (move mode).
+	// If it's a non empty string, it moves the folder under the folder with the specific UID
+	// otherwise, it moves the folder under the root folder (parent_uid column is set to NULL).
 	Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error)
 
 	// Get returns a folder.

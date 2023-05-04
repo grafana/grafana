@@ -12,7 +12,7 @@ import (
 
 // we adjust the dataframes to be the way frontend & alerting
 // wants them.
-func adjustFrame(frame *data.Frame, query *lokiQuery) error {
+func adjustFrame(frame *data.Frame, query *lokiQuery, setMetricFrameName bool) error {
 	fields := frame.Fields
 
 	if len(fields) < 2 {
@@ -25,13 +25,13 @@ func adjustFrame(frame *data.Frame, query *lokiQuery) error {
 	secondField := fields[1]
 
 	if secondField.Type() == data.FieldTypeFloat64 {
-		return adjustMetricFrame(frame, query)
+		return adjustMetricFrame(frame, query, setMetricFrameName)
 	} else {
 		return adjustLogsFrame(frame, query)
 	}
 }
 
-func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
+func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) error {
 	fields := frame.Fields
 	// we check if the fields are of correct type
 	if len(fields) != 2 {
@@ -50,7 +50,9 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery) error {
 	isMetricRange := query.QueryType == QueryTypeRange
 
 	name := formatName(labels, query)
-	frame.Name = name
+	if setFrameName {
+		frame.Name = name
+	}
 
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}

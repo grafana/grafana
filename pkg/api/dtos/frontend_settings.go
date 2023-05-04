@@ -61,17 +61,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval string `json:"minInterval"`
-}
-
-type DashboardPreviewsSystemRequirements struct {
-	Met                                bool   `json:"met"`
-	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
-}
-
-type DashboardPreviewsSetupConfig struct {
-	SystemRequirements DashboardPreviewsSystemRequirements `json:"systemRequirements"`
-	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
+	MinInterval              string `json:"minInterval"`
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
 }
 
 // Enterprise-only
@@ -119,6 +110,12 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
+}
+
+type FrontendSettingsSqlConnectionLimitsDTO struct {
+	MaxOpenConns    int `json:"maxOpenConns"`
+	MaxIdleConns    int `json:"maxIdleConns"`
+	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
 type FrontendSettingsDTO struct {
@@ -173,6 +170,8 @@ type FrontendSettingsDTO struct {
 	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool   `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool   `json:"cspReportOnlyEnabled"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
@@ -186,7 +185,6 @@ type FrontendSettingsDTO struct {
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
-	Sentry                           setting.Sentry                 `json:"sentry"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
 	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
@@ -197,6 +195,7 @@ type FrontendSettingsDTO struct {
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
+	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
@@ -210,8 +209,6 @@ type FrontendSettingsDTO struct {
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 
-	DashboardPreviews DashboardPreviewsSetupConfig `json:"dashboardPreviews,omitempty"`
-
 	GeomapDefaultBaseLayerConfig *map[string]interface{} `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool                    `json:"geomapDisableCustomBaseLayer"`
 
@@ -222,6 +219,8 @@ type FrontendSettingsDTO struct {
 	LoginError string `json:"loginError,omitempty"`
 
 	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitempty"`
+
+	SqlConnectionLimits FrontendSettingsSqlConnectionLimitsDTO `json:"sqlConnectionLimits"`
 
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`

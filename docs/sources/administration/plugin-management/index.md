@@ -72,18 +72,20 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
   </video>
 </div>
 
+_Video shows the Plugin catalog in a previous version of Grafana._
+
 In order to be able to install / uninstall / update plugins using plugin catalog, you must enable it via the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
 
-- Administrators can find the Plugin catalog at **Configuration > Plugins**.
+Administrators can find the Plugin catalog at **Administration > Plugins**.
 
 ### Browse plugins
 
 To browse for available plugins:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
@@ -91,7 +93,7 @@ To browse for available plugins:
 
 To install a plugin:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
 1. Click **Install**.
@@ -102,7 +104,7 @@ When the update is complete, you see a confirmation message that the installatio
 
 To update a plugin:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Update**.
 
@@ -112,7 +114,7 @@ When the update is complete, you see a confirmation message that the update was 
 
 To uninstall a plugin:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Uninstall**.
 

@@ -250,8 +250,8 @@ function mapDrawStyleToPathBuilder(
     builders = {
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
-      stepBefore: pathBuilders.stepped!({ align: -1, extend: true }),
-      stepAfter: pathBuilders.stepped!({ align: 1, extend: true }),
+      stepBefore: pathBuilders.stepped!({ align: -1 }),
+      stepAfter: pathBuilders.stepped!({ align: 1 }),
     };
   }
 

@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/alerting/logging"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -18,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -136,7 +133,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 
 func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID int64,
 	contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) (apimodels.EmbeddedContactPoint, error) {
-	if err := ValidateContactPoint(contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return apimodels.EmbeddedContactPoint{}, fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
@@ -257,17 +254,17 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	// validate merged values
-	if err := ValidateContactPoint(contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
+	if err := ValidateContactPoint(ctx, contactPoint, ecp.encryptionService.GetDecryptedValue); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	// check that provenance is not changed in a invalid way
+	// check that provenance is not changed in an invalid way
 	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, &contactPoint, orgID)
 	if err != nil {
 		return err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	// transform to internal model
 	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
@@ -453,7 +450,7 @@ groupLoop:
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
 				// Check to see whether a different group with the name we want already exists.
-				for i, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
+				for _, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
 					// If so, put our modified receiver into that group. Done!
 					if candidateExistingGroup.Name == target.Name {
 						// Drop it from the old group...
@@ -500,28 +497,23 @@ func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
 	}
 }
 
-func ValidateContactPoint(e apimodels.EmbeddedContactPoint, decryptFunc receivers.GetDecryptedValueFn) error {
+func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
 	if e.Type == "" {
 		return fmt.Errorf("type should not be an empty string")
 	}
 	if e.Settings == nil {
 		return fmt.Errorf("settings should not be empty")
 	}
-	factory, exists := alertingNotify.Factory(e.Type)
-	if !exists {
-		return fmt.Errorf("unknown type '%s'", e.Type)
-	}
-	jsonBytes, err := e.Settings.MarshalJSON()
+	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
 	}
-	cfg, _ := receivers.NewFactoryConfig(&receivers.NotificationChannelConfig{
-		Settings: jsonBytes,
-		Type:     e.Type,
-	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) logging.Logger {
-		return &logging.FakeLogger{}
-	}, setting.BuildVersion)
-	if _, err := factory(cfg); err != nil {
+	_, err = alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
+		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
+		},
+	}, decryptFunc)
+	if err != nil {
 		return err
 	}
 	return nil

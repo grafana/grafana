@@ -16,7 +16,7 @@ func InitializeTracerForTest() Tracer {
 	tp, _ := initTracerProvider(exp)
 	otel.SetTracerProvider(tp)
 
-	ots := &Opentelemetry{propagation: "jaeger,w3c", tracerProvider: tp}
+	ots := &Opentelemetry{Propagation: "jaeger,w3c", tracerProvider: tp}
 	_ = ots.initOpentelemetryTracer()
 	return ots
 }
@@ -90,6 +90,10 @@ func (t *FakeSpan) AddEvents(keys []string, values []EventValue) {
 	for i := 0; i < len(keys); i++ {
 		t.Events[keys[i]] = values[i]
 	}
+}
+
+func (t *FakeSpan) contextWithSpan(ctx context.Context) context.Context {
+	return ctx
 }
 
 type FakeTracer struct {

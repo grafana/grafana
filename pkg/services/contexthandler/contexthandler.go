@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -45,8 +45,6 @@ const (
 	/* #nosec */
 	InvalidAPIKey = "invalid API key"
 )
-
-const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtService jwt.JWTService,
 	remoteCache *remotecache.RemoteCache, renderService rendering.Service, sqlStore db.DB,
@@ -127,7 +125,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
-			SkipCache:      false,
+			SkipDSCache:    false,
 			Logger:         log.New("context"),
 		}
 
@@ -261,7 +259,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 
 func (h *ContextHandler) getPrefixedAPIKey(ctx context.Context, keyString string) (*apikey.APIKey, error) {
 	// prefixed decode key
-	decoded, err := apikeygenprefix.Decode(keyString)
+	decoded, err := satokengen.Decode(keyString)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +321,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 		apiKey *apikey.APIKey
 		errKey error
 	)
-	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
+	if strings.HasPrefix(keyString, satokengen.GrafanaPrefix) {
 		apiKey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
 	} else {
 		apiKey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
@@ -483,8 +481,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Warn("failed to look up session from cookie", "error", err)
-		if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
-			// Burn the cookie in case of invalid, expired or missing token
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			// Burn the cookie in case of invalid or revoked token
 			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		}
 

@@ -9,20 +9,22 @@ lineage: seqs: [
 		schemas: [
 			//0.0
 			{
-				// Unique playlist identifier. Generated on creation, either by the
-				// creator of the playlist of by the application.
-				uid: string
+				spec: {
+					// Unique playlist identifier. Generated on creation, either by the
+					// creator of the playlist of by the application.
+					uid: string
 
-				// Name of the playlist.
-				name: string
+					// Name of the playlist.
+					name: string
 
-				// Interval sets the time between switching views in a playlist.
-				// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
-				interval: string | *"5m"
+					// Interval sets the time between switching views in a playlist.
+					// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
+					interval: string | *"5m"
 
-				// The ordered list of items that the playlist will iterate over.
-				// FIXME! This should not be optional, but changing it makes the godegen awkward
-				items?: [...#PlaylistItem]
+					// The ordered list of items that the playlist will iterate over.
+					// FIXME! This should not be optional, but changing it makes the godegen awkward
+					items?: [...#PlaylistItem]
+				} @cuetsy(kind="interface")
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below

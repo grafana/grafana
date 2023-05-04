@@ -16,12 +16,6 @@ const (
 	TempoQueryFiltersScopeUnscoped TempoQueryFiltersScope = "unscoped"
 )
 
-// Defines values for TempoQueryFiltersType.
-const (
-	TempoQueryFiltersTypeDynamic TempoQueryFiltersType = "dynamic"
-	TempoQueryFiltersTypeStatic  TempoQueryFiltersType = "static"
-)
-
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
@@ -38,18 +32,6 @@ const (
 	TraceqlFilterScopeResource TraceqlFilterScope = "resource"
 	TraceqlFilterScopeSpan     TraceqlFilterScope = "span"
 	TraceqlFilterScopeUnscoped TraceqlFilterScope = "unscoped"
-)
-
-// Defines values for TraceqlFilterType.
-const (
-	TraceqlFilterTypeDynamic TraceqlFilterType = "dynamic"
-	TraceqlFilterTypeStatic  TraceqlFilterType = "static"
-)
-
-// Defines values for TraceqlSearchFilterType.
-const (
-	TraceqlSearchFilterTypeDynamic TraceqlSearchFilterType = "dynamic"
-	TraceqlSearchFilterTypeStatic  TraceqlSearchFilterType = "static"
 )
 
 // Defines values for TraceqlSearchScope.
@@ -81,9 +63,6 @@ type TempoQuery struct {
 
 		// The tag for the search filter, for example: .http.status_code, .service.name, status
 		Tag *string `json:"tag,omitempty"`
-
-		// The type of the filter, can either be static (pre defined in the UI) or dynamic
-		Type TempoQueryFiltersType `json:"type"`
 
 		// The value for the search filter
 		Value *interface{} `json:"value,omitempty"`
@@ -134,9 +113,6 @@ type TempoQuery struct {
 // The scope of the filter, can either be unscoped/all scopes, resource or span
 type TempoQueryFiltersScope string
 
-// The type of the filter, can either be static (pre defined in the UI) or dynamic
-type TempoQueryFiltersType string
-
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string
 
@@ -154,9 +130,6 @@ type TraceqlFilter struct {
 	// The tag for the search filter, for example: .http.status_code, .service.name, status
 	Tag *string `json:"tag,omitempty"`
 
-	// The type of the filter, can either be static (pre defined in the UI) or dynamic
-	Type TraceqlFilterType `json:"type"`
-
 	// The value for the search filter
 	Value *interface{} `json:"value,omitempty"`
 
@@ -167,11 +140,5 @@ type TraceqlFilter struct {
 // The scope of the filter, can either be unscoped/all scopes, resource or span
 type TraceqlFilterScope string
 
-// The type of the filter, can either be static (pre defined in the UI) or dynamic
-type TraceqlFilterType string
-
-// TraceqlSearchFilterType static fields are pre-set in the UI, dynamic fields are added by the user
-type TraceqlSearchFilterType string
-
-// TraceqlSearchScope defines model for TraceqlSearchScope.
+// TraceqlSearchScope static fields are pre-set in the UI, dynamic fields are added by the user
 type TraceqlSearchScope string

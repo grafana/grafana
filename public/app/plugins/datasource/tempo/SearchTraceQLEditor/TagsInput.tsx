@@ -32,26 +32,34 @@ interface Props {
   setError: (error: FetchError) => void;
   tags: string[];
   isTagsLoading: boolean;
+  hideValues?: boolean;
 }
-const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, tags, isTagsLoading }: Props) => {
+const TagsInput = ({
+  updateFilter,
+  deleteFilter,
+  filters,
+  datasource,
+  setError,
+  tags,
+  isTagsLoading,
+  hideValues,
+}: Props) => {
   const styles = useStyles2(getStyles);
   const generateId = () => uuidv4().slice(0, 8);
   const handleOnAdd = useCallback(
-    () => updateFilter({ id: generateId(), type: 'dynamic', operator: '=', scope: TraceqlSearchScope.Span }),
+    () => updateFilter({ id: generateId(), operator: '=', scope: TraceqlSearchScope.Span }),
     [updateFilter]
   );
 
   useEffect(() => {
-    if (!filters?.find((f) => f.type === 'dynamic')) {
+    if (!filters?.length) {
       handleOnAdd();
     }
   }, [filters, handleOnAdd]);
 
-  const dynamicFilters = filters?.filter((f) => f.type === 'dynamic');
-
   return (
     <div className={styles.vertical}>
-      {dynamicFilters?.map((f, i) => (
+      {filters?.map((f, i) => (
         <div className={styles.horizontal} key={f.id}>
           <SearchField
             filter={f}
@@ -61,8 +69,10 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
             tags={tags}
             isTagsLoading={isTagsLoading}
             deleteFilter={deleteFilter}
+            allowDelete={true}
+            hideValue={hideValues}
           />
-          {i === dynamicFilters.length - 1 && (
+          {i === filters.length - 1 && (
             <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} title={'Add tag'} />
           )}
         </div>

@@ -1,7 +1,11 @@
 package stats
 
+import "time"
+
 type SystemStats struct {
 	Dashboards                int64
+	DashboardBytesTotal       int64
+	DashboardBytesMax         int64
 	Datasources               int64
 	Users                     int64
 	ActiveUsers               int64
@@ -42,6 +46,11 @@ type SystemStats struct {
 	DataKeys                  int64
 	ActiveDataKeys            int64
 	PublicDashboards          int64
+	Correlations              int64
+	DatabaseCreatedTime       *time.Time
+
+	// name of the driver
+	DatabaseDriver string
 }
 
 type DataSourceStats struct {
@@ -49,13 +58,9 @@ type DataSourceStats struct {
 	Type  string
 }
 
-type GetSystemStatsQuery struct {
-	Result *SystemStats
-}
+type GetSystemStatsQuery struct{}
 
-type GetDataSourceStatsQuery struct {
-	Result []*DataSourceStats
-}
+type GetDataSourceStatsQuery struct{}
 
 type DataSourceAccessStats struct {
 	Type   string
@@ -63,18 +68,14 @@ type DataSourceAccessStats struct {
 	Count  int64
 }
 
-type GetDataSourceAccessStatsQuery struct {
-	Result []*DataSourceAccessStats
-}
+type GetDataSourceAccessStatsQuery struct{}
 
 type NotifierUsageStats struct {
 	Type  string
 	Count int64
 }
 
-type GetAlertNotifierUsageStatsQuery struct {
-	Result []*NotifierUsageStats
-}
+type GetAlertNotifierUsageStatsQuery struct{}
 
 type AdminStats struct {
 	Orgs                int64 `json:"orgs"`
@@ -102,17 +103,13 @@ type AdminStats struct {
 	MonthlyActiveUsers  int64 `json:"monthlyActiveUsers"`
 }
 
-type GetAdminStatsQuery struct {
-	Result *AdminStats
-}
+type GetAdminStatsQuery struct{}
 
 type SystemUserCountStats struct {
 	Count int64
 }
 
-type GetSystemUserCountStatsQuery struct {
-	Result *SystemUserCountStats
-}
+type GetSystemUserCountStatsQuery struct{}
 
 type UserStats struct {
 	Users   int64

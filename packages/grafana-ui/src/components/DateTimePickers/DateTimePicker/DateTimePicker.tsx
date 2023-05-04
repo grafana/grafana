@@ -25,9 +25,29 @@ export interface Props {
   label?: ReactNode;
   /** Set the latest selectable date */
   maxDate?: Date;
+  /** Set the minimum selectable date */
+  minDate?: Date;
+  /** Display seconds on the time picker */
+  showSeconds?: boolean;
+  /** Set the hours that can't be selected */
+  disabledHours?: () => number[];
+  /** Set the minutes that can't be selected */
+  disabledMinutes?: () => number[];
+  /** Set the seconds that can't be selected */
+  disabledSeconds?: () => number[];
 }
 
-export const DateTimePicker = ({ date, maxDate, label, onChange }: Props) => {
+export const DateTimePicker = ({
+  date,
+  maxDate,
+  minDate,
+  label,
+  onChange,
+  disabledHours,
+  disabledMinutes,
+  disabledSeconds,
+  showSeconds = true,
+}: Props) => {
   const [isOpen, setOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -82,6 +102,7 @@ export const DateTimePicker = ({ date, maxDate, label, onChange }: Props) => {
         onOpen={onOpen}
         label={label}
         ref={setMarkerElement}
+        showSeconds={showSeconds}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -94,8 +115,13 @@ export const DateTimePicker = ({ date, maxDate, label, onChange }: Props) => {
                   isFullscreen={true}
                   onClose={() => setOpen(false)}
                   maxDate={maxDate}
+                  minDate={minDate}
                   ref={setSelectorElement}
                   style={popper.styles.popper}
+                  showSeconds={showSeconds}
+                  disabledHours={disabledHours}
+                  disabledMinutes={disabledMinutes}
+                  disabledSeconds={disabledSeconds}
                 />
               </div>
             </FocusScope>
@@ -108,9 +134,15 @@ export const DateTimePicker = ({ date, maxDate, label, onChange }: Props) => {
                 <div className={styles.modal}>
                   <DateTimeCalendar
                     date={date}
+                    maxDate={maxDate}
+                    minDate={minDate}
                     onChange={onApply}
                     isFullscreen={false}
                     onClose={() => setOpen(false)}
+                    showSeconds={showSeconds}
+                    disabledHours={disabledHours}
+                    disabledMinutes={disabledMinutes}
+                    disabledSeconds={disabledSeconds}
                   />
                 </div>
               </div>
@@ -128,7 +160,12 @@ interface DateTimeCalendarProps {
   onClose: () => void;
   isFullscreen: boolean;
   maxDate?: Date;
+  minDate?: Date;
   style?: React.CSSProperties;
+  showSeconds?: boolean;
+  disabledHours?: () => number[];
+  disabledMinutes?: () => number[];
+  disabledSeconds?: () => number[];
 }
 
 interface InputProps {
@@ -137,6 +174,7 @@ interface InputProps {
   isFullscreen: boolean;
   onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
+  showSeconds?: boolean;
 }
 
 type InputState = {
@@ -145,7 +183,8 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, isFullscreen, onOpen }, ref) => {
+  ({ date, label, onChange, isFullscreen, onOpen, showSeconds = true }, ref) => {
+    const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
       return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
     });
@@ -153,11 +192,11 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     useEffect(() => {
       if (date) {
         setInternalDate({
-          invalid: !isValid(dateTimeFormat(date)),
-          value: isDateTime(date) ? dateTimeFormat(date) : date,
+          invalid: !isValid(dateTimeFormat(date, { format })),
+          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
         });
       }
-    }, [date]);
+    }, [date, format]);
 
     const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
       const isInvalid = !isValid(event.currentTarget.value);
@@ -199,7 +238,22 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 DateTimeInput.displayName = 'DateTimeInput';
 
 const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>(
-  ({ date, onClose, onChange, isFullscreen, maxDate, style }, ref) => {
+  (
+    {
+      date,
+      onClose,
+      onChange,
+      isFullscreen,
+      maxDate,
+      minDate,
+      style,
+      showSeconds = true,
+      disabledHours,
+      disabledMinutes,
+      disabledSeconds,
+    },
+    ref
+  ) => {
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
     const [internalDate, setInternalDate] = useState<Date>(() => {
@@ -243,9 +297,17 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           className={calendarStyles.body}
           tileClassName={calendarStyles.title}
           maxDate={maxDate}
+          minDate={minDate}
         />
         <div className={styles.time}>
-          <TimeOfDayPicker showSeconds={true} onChange={onChangeTime} value={dateTime(internalDate)} />
+          <TimeOfDayPicker
+            showSeconds={showSeconds}
+            onChange={onChangeTime}
+            value={dateTime(internalDate)}
+            disabledHours={disabledHours}
+            disabledMinutes={disabledMinutes}
+            disabledSeconds={disabledSeconds}
+          />
         </div>
         <HorizontalGroup>
           <Button type="button" onClick={() => onChange(dateTime(internalDate))}>

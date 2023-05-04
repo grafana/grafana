@@ -2,7 +2,7 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui';
 import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsSettings } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
@@ -18,11 +18,8 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         dataSourceConfig={options}
         showAccessOptions={false}
         onChange={onOptionsChange}
+        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
-
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
 
       <div className="gf-form-group">
         <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
