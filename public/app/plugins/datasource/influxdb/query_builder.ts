@@ -64,6 +64,7 @@ export class InfluxQueryBuilder {
       measurement = this.target.measurement;
       policy = this.target.policy;
 
+      // If there is a measurement and it is not empty string
       if (!measurement.match(/^\/.*\/|^$/)) {
         measurement = '"' + measurement + '"';
 
