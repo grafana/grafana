@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Alert, Badge, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import * as ruleId from '../../utils/rule-id';
-import { isAlertingRule } from '../../utils/rules';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { History } from './tabs/History';
@@ -30,6 +31,7 @@ enum Tabs {
 // @TODO
 // hook up tabs to query params
 // figure out why we needed <AlertingPageWrapper>
+// add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
@@ -51,6 +53,9 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     const isAlertType = isAlertingRule(promRule);
     const numberOfInstance = isAlertType ? promRule.alerts?.length : undefined;
+
+    const isFederatedRule = isFederatedRuleGroup(rule.group);
+    const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
     return (
       <>
@@ -74,6 +79,20 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
             </Stack>
             {description && <Summary description={description} />}
           </Stack>
+          {/* alerts and notifications and stuff */}
+          {isFederatedRule && (
+            <Alert severity="info" title="This rule is part of a federated rule group.">
+              <Stack direction="column">
+                Federated rule groups are currently an experimental feature.
+                <Button fill="text" icon="book">
+                  <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
+                    Read documentation
+                  </a>
+                </Button>
+              </Stack>
+            </Alert>
+          )}
+          {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
           {/* tabs and tab content */}
           <TabsBar>
             <Tab label="Instances" active counter={numberOfInstance} onChangeTab={() => setActiveTab(Tabs.Instances)} />
