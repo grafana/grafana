@@ -68,7 +68,7 @@ func (m *seedAssignmentPrimaryKeyMigrator) Exec(sess *xorm.Session, mig *migrato
 	// create temp table
 	_, err := sess.Exec(`
 		CREATE TABLE seed_assignment_temp (
-		    id INTEGER PRIMARY KEY AUTOINCREMENT,
+		    id INTEGER PRIMARY KEY AUTO_INCREMENT,
 			builtin_role TEXT,
 			action TEXT,
 			scope TEXT,
