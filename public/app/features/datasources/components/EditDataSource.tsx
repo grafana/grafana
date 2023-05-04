@@ -155,7 +155,6 @@ export function EditDataSourceView({
 
       <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
-
       <ButtonRow
         onSubmit={onSubmit}
         onTest={onTest}

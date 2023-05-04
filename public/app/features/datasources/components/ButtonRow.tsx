@@ -11,7 +11,6 @@ export interface Props {
   onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
-
 export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Props) {
   return (
     <div className="gf-form-button-row">
