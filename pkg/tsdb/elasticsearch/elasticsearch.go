@@ -182,7 +182,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	if req.Path != "" {
+	if req.Path != "" && req.Path != "_msearch" {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
