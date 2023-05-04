@@ -115,7 +115,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (config.grafanaJavascriptAgent.enabled) {
+    if (config.grafanaJavascriptAgent.enabled && options.profileFunction !== undefined) {
       this.profile();
       this.shouldProfile = true;
     } else {
