@@ -30,6 +30,12 @@ const (
 	GITHUB_REPO  = "kind-registry"
 )
 
+// main This script verifies that stable kinds are not updated once published (new schemas
+// can be added but existing ones cannot be updated).
+// If the env variable CODEGEN_VERIFY is not present, this also generates kind files into a
+// local "next" folder, ready to be published in the kind-registry repo.
+// If kind names are given as parameters, the script will make the above actions only for the
+// given kinds.
 func main() {
 	var kindArgs []string
 	if len(os.Args) > 1 {
@@ -39,6 +45,9 @@ func main() {
 	var corek []kindsys.Kind
 	var compok []kindsys.Composable
 
+	// This script will reach the GH API rate limit if ran for all kinds without token.
+	// If you don't have a GH token, run the script with kind names as parameters to run
+	// it only for a limited set of kinds.
 	var ts oauth2.TokenSource
 	token, ok := os.LookupEnv("GITHUB_TOKEN")
 	if ok {
@@ -51,6 +60,7 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
 
+	// Search for the latest version directory present in the kind-registry repo
 	latestRegistryDir, err := findLatestDir(ctx, client)
 	if err != nil {
 		die(fmt.Errorf("failed to get latest directory for published kinds: %s", err))
@@ -58,6 +68,7 @@ func main() {
 
 	errs := make([]error, 0)
 
+	// Kind verification
 	for _, kind := range corekind.NewBase(nil).All() {
 		if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
 			continue
@@ -101,29 +112,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, set := os.LookupEnv("CODEGEN_VERIFY"); !set {
-		jfs := codejen.NewFS()
-		registryPath := filepath.Join(".github", "workflows", "scripts", "kinds")
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		os.Exit(0)
+	}
 
-		coreJennies := codejen.JennyList[kindsys.Kind]{}
-		coreJennies.Append(
-			KindRegistryJenny(registryPath, kindArgs),
-		)
-		corefs, err := coreJennies.GenerateFS(corek...)
-		die(err)
-		die(jfs.Merge(corefs))
+	// File generation
+	jfs := codejen.NewFS()
+	registryPath := filepath.Join(".github", "workflows", "scripts", "kinds")
 
-		composableJennies := codejen.JennyList[kindsys.Composable]{}
-		composableJennies.Append(
-			ComposableKindRegistryJenny(registryPath, kindArgs),
-		)
-		composablefs, err := composableJennies.GenerateFS(compok...)
-		die(err)
-		die(jfs.Merge(composablefs))
+	coreJennies := codejen.JennyList[kindsys.Kind]{}
+	coreJennies.Append(
+		KindRegistryJenny(registryPath, kindArgs),
+	)
+	corefs, err := coreJennies.GenerateFS(corek...)
+	die(err)
+	die(jfs.Merge(corefs))
 
-		if err = jfs.Write(context.Background(), ""); err != nil {
-			die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
-		}
+	composableJennies := codejen.JennyList[kindsys.Composable]{}
+	composableJennies.Append(
+		ComposableKindRegistryJenny(registryPath, kindArgs),
+	)
+	composablefs, err := composableJennies.GenerateFS(compok...)
+	die(err)
+	die(jfs.Merge(composablefs))
+
+	if err = jfs.Write(context.Background(), ""); err != nil {
+		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
 	}
 }
 
@@ -135,6 +149,8 @@ func die(err error) {
 	}
 }
 
+// verifyKind verifies that stable kinds are not updated once published (new schemas
+// can be added but existing ones cannot be updated)
 func verifyKind(kind kindsys.Kind, name string, category string, latestRegistryDir string) error {
 	oldKindString, err := getPublishedKind(name, category, latestRegistryDir)
 	if err != nil {
@@ -179,7 +195,7 @@ func verifyKind(kind kindsys.Kind, name string, category string, latestRegistryD
 	return nil
 }
 
-// getPublishedKind retrieve the latest published kind from the kind registry
+// getPublishedKind retrieves the latest published kind from the kind registry
 func getPublishedKind(name string, category string, latestRegistryDir string) (string, error) {
 	var ts oauth2.TokenSource
 	token, ok := os.LookupEnv("GITHUB_TOKEN")
@@ -294,8 +310,7 @@ func loadComposableKind(name string, kind string) (kindsys.Kind, error) {
 	return kindsys.BindComposable(rt, def)
 }
 
-// KindRegistryJenny generates kind files into the "next" folder
-// of the local kind registry.
+// KindRegistryJenny generates kind files into the "next" folder of the local kind registry.
 func KindRegistryJenny(path string, kindSet []string) codegen.OneToOne {
 	return &kindregjenny{
 		path:    path,
@@ -345,6 +360,7 @@ func kindToBytes(kind cue.Value) ([]byte, error) {
 	return cueformat.Node(node)
 }
 
+// ComposableKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
 func ComposableKindRegistryJenny(path string, kindSet []string) codejen.OneToOne[kindsys.Composable] {
 	return &ckrJenny{
 		path:    path,
