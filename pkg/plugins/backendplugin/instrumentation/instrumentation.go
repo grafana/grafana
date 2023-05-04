@@ -39,12 +39,12 @@ var (
 		}, []string{"source", "plugin_id", "endpoint", "target"},
 	)
 
-	PluginRequestDurationSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	PluginRequestDurationSeconds = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
-	}, []string{"source", "plugin_id", "endpoint", "status", "target"})
+	}, []string{"source", "plugin_id", "endpoint", "status", "target", "errorSource"})
 )
 
 const (
@@ -58,29 +58,133 @@ const (
 	endpointQueryData      = "queryData"
 )
 
+type errorSource string
+
+const (
+	grafanaError           errorSource = "grafana"
+	noneError              errorSource = "none"
+	callerError            errorSource = "caller"
+	downstream3xxError     errorSource = "downstream-3xx"
+	downstream4xxError     errorSource = "downstream-4xx"
+	downstream5xxError     errorSource = "downstream-5xx"
+	downstreamUnknownError errorSource = "downstream-unknown"
+)
+
 var logger = plog.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
-	status := statusOK
-
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	err := fn()
+
+	elapsed := time.Since(start)
+	status := getStatus(err)
+
+	logger.Info("Plugin Request Completed")
+
+	updateMetrics(pluginCtx.PluginID, endpoint, string(cfg.Target), elapsed, status, "none")
+	logDatasourceRequests(ctx, cfg, pluginCtx, endpoint, status, elapsed, timeBeforePluginRequest, err)
+
+	return err
+}
+
+func InstrumentQueryDataRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, requestSize float64, fn func() (*backend.QueryDataResponse, error)) (*backend.QueryDataResponse, error) {
+	start := time.Now()
+	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
+
+	resp, err := fn()
+
+	elapsed := time.Since(start)
+	logger.Info("Plugin Request Completed")
+
+	status := getStatus(err)
+	errorSource := getErrorSource(status, resp)
+
+	updateMetrics(pluginCtx.PluginID, endpointQueryData, string(cfg.Target), elapsed, status, string(errorSource))
+	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpointQueryData, string(cfg.Target)).Observe(requestSize)
+	logDatasourceRequests(ctx, cfg, pluginCtx, endpointQueryData, status, elapsed, timeBeforePluginRequest, err)
+
+	return resp, err
+}
+
+func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource {
+	if status == statusError {
+		return grafanaError
+	}
+
+	if status == statusCancelled {
+		return callerError
+	}
+
+	highestStatusCode := 0
+	for _, res := range resp.Responses {
+		if res.Error != nil {
+			return grafanaError
+		}
+
+		if res.Status >= 300 && int(res.Status) > highestStatusCode {
+			highestStatusCode = int(res.Status)
+		}
+	}
+
+	if highestStatusCode != 0 {
+		switch getStatusCodeCategory(highestStatusCode) {
+		case "3xx":
+			return downstream3xxError
+		case "4xx":
+			return downstream4xxError
+		case "5xx":
+			return downstream5xxError
+		case "unknown":
+			return downstreamUnknownError
+		}
+	}
+
+	return noneError
+}
+
+func getStatusCodeCategory(statusCode int) string {
+	if statusCode >= 200 && statusCode < 300 {
+		return "2xx"
+	} else if statusCode >= 300 && statusCode < 400 {
+		return "3xx"
+	} else if statusCode >= 400 && statusCode < 500 {
+		return "4xx"
+	} else if statusCode >= 500 && statusCode < 600 {
+		return "5xx"
+	} else {
+		return "unknown"
+	}
+}
+
+func getStatus(err error) string {
+	status := statusOK
+
 	if err != nil {
 		status = statusError
 		if errors.Is(err, context.Canceled) {
 			status = statusCancelled
 		}
+
+		if errors.Is(err, context.Canceled) {
+			status = statusCancelled
+		}
+
+		logger.Info("Plugin Request Completed")
 	}
 
-	elapsed := time.Since(start)
-	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
-	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
+	return status
+}
 
-	PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, string(cfg.Target), status).Observe(elapsed.Seconds())
+func updateMetrics(pluginId string, endpoint string, target string, elapsed time.Duration, status string, errorSource string) {
+	pluginRequestDuration.WithLabelValues(pluginId, endpoint, target).Observe(float64(elapsed / time.Millisecond))
+	pluginRequestCounter.WithLabelValues(pluginId, endpoint, status, target).Inc()
+	PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginId, endpoint, status, target, errorSource).Observe(elapsed.Seconds())
+}
 
+func logDatasourceRequests(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, status string, elapsed time.Duration, timeBeforePluginRequest time.Duration, err error) {
 	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{
 			"status", status,
@@ -111,8 +215,6 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 
 		logger.Info("Plugin Request Completed", logParams...)
 	}
-
-	return err
 }
 
 type Cfg struct {
@@ -135,12 +237,4 @@ func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginConte
 	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, endpointCallResource,
 		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, endpointCallResource, fn)
-}
-
-// InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg,
-	requestSize float64, fn func() error) error {
-	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, endpointQueryData,
-		string(cfg.Target)).Observe(requestSize)
-	return instrumentPluginRequest(ctx, cfg, req, endpointQueryData, fn)
 }

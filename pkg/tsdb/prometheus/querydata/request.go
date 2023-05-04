@@ -120,12 +120,14 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	dr := &backend.DataResponse{
 		Frames: data.Frames{},
 		Error:  nil,
+		Status: 0,
 	}
 
 	if q.InstantQuery {
 		res := s.instantQuery(traceCtx, client, q, headers)
 		dr.Error = res.Error
 		dr.Frames = res.Frames
+		dr.Status = res.Status
 	}
 
 	if q.RangeQuery {
@@ -138,6 +140,9 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 			}
 		}
 		dr.Frames = append(dr.Frames, res.Frames...)
+		if res.Status > dr.Status {
+			dr.Status = res.Status
+		}
 	}
 
 	if q.ExemplarQuery {
@@ -148,6 +153,9 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 			logger.Error("Exemplar query failed", "query", q.Expr, "err", res.Error)
 		}
 		dr.Frames = append(dr.Frames, res.Frames...)
+		if res.Status > dr.Status {
+			dr.Status = res.Status
+		}
 	}
 
 	return dr

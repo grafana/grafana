@@ -52,11 +52,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		totalBytes += float64(len(v.JSON))
 	}
 
-	var resp *backend.QueryDataResponse
-	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
+	resp, err := instrumentation.InstrumentQueryDataRequest(ctx, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, totalBytes, func() (innerErr error) {
+	}, &req.PluginContext, totalBytes, func() (resp *backend.QueryDataResponse, innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
