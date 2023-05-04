@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-func (cmd Command) removeCommand(c utils.CommandLine) error {
+func removeCommand(c utils.CommandLine) error {
 	pluginID := c.Args().First()
 	if pluginID == "" {
 		return errors.New("missing plugin parameter")

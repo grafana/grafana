@@ -14,9 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
-type GrafanaComClient struct{}
-
-func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
+func GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 	if err != nil {
@@ -37,7 +35,7 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	return data, nil
 }
 
-func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRepo, error) {
+func ListAllPlugins(repoUrl string) (models.PluginRepo, error) {
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo")
 
 	if err != nil {

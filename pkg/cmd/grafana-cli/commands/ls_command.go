@@ -35,7 +35,7 @@ var validateLsCommand = func(pluginDir string) error {
 	return nil
 }
 
-func (cmd Command) lsCommand(c utils.CommandLine) error {
+func lsCommand(c utils.CommandLine) error {
 	pluginDir := c.PluginDirectory()
 	if err := validateLsCommand(pluginDir); err != nil {
 		return err
