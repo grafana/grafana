@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -180,8 +182,14 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
-		for _, r := range rules {
+
+		reorderedRules, err := st.reorderUpdates(sess, rules)
+		if err != nil {
+			return err
+		}
+
+		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(reorderedRules))
+		for _, r := range reorderedRules {
 			var parentVersion int64
 			r.New.ID = r.Existing.ID
 			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
@@ -229,6 +237,107 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 		}
 		return nil
 	})
+}
+
+// reorderUpdates returns a reordered slice of updates to avoid unique constraint violations. In case there are cycles,
+// without deferred constraints there is no possible order to execute without violations. To avoid this, a new intermediate
+// update is performed to temporarily break each cycle. Because of the possibility of intermediate updates, this method
+// should not be called outside a transaction.
+func (st DBstore) reorderUpdates(sess *db.Session, rules []ngmodels.UpdateRule) ([]ngmodels.UpdateRule, error) {
+	// If there are chains of updates, we need to make sure to update them in the right order.
+	// If we don't, there could be a situation where we try to update a rule to a title that already exists, this will cause
+	// a unique constraint violation.
+	// Ex. Assuming Rule A, B, and C exist, and we have an update chain of RuleA -> RuleB -> RuleC -> RuleNew. We need to update in reverse order.
+	reorderedRules := make([]ngmodels.UpdateRule, 0, len(rules))
+	processedUpdates := make(map[string]struct{}, len(rules))
+	chains := findTitleUpdateChains(rules)
+	for _, chain := range chains {
+
+		// If the chain is a cycle, we need to add an intermediate update to a fake value to break the cycle. Otherwise, there is
+		// no valid order to update the rules that won't violate the unique constraint.
+		// Ex. Assuming Rule A, B, and C exist, and we have an update chain of RuleA -> RuleB -> RuleC -> RuleA. We need to break the cycle
+		//     by adding a temporary update of RuleA -> RuleTemp, then we can update in reverse order.
+		if chain[0].Existing.Title == chain[len(chain)-1].New.Title {
+			r := chain[0].Existing
+			if updated, err := sess.ID(r.ID).Cols("title").Update(&ngmodels.AlertRule{Title: r.Title + uuid.New().String(), Version: r.Version}); err != nil || updated == 0 {
+				if err != nil {
+					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
+						return nil, ngmodels.ErrAlertRuleUniqueConstraintViolation
+					}
+					return nil, fmt.Errorf("failed to clear rule title [%s] %s: %w", r.UID, r.Title, err)
+				}
+				return nil, fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.UID, r.Version)
+			}
+
+			// Otherwise optimistic locking will conflict on the 2nd update.
+			chain[0].Existing.Version++
+		}
+
+		for i := len(chain) - 1; i >= 0; i-- {
+			reorderedRules = append(reorderedRules, chain[i])
+			processedUpdates[chain[i].Existing.Title] = struct{}{}
+		}
+	}
+
+	// Add the leftover updates that aren't part of a chain.
+	for _, update := range rules {
+		if _, ok := processedUpdates[update.Existing.Title]; ok {
+			// This update has already been processed as part of a chain.
+			continue
+		}
+
+		reorderedRules = append(reorderedRules, update)
+	}
+	return reorderedRules, nil
+}
+
+// findTitleUpdateChains returns a slice of title update chains of length greater than one. A chain of title updates is
+// a directed path where UpdateA is connected to UpdateB if UpdateA.New.Title == UpdateB.Existing.Title.
+func findTitleUpdateChains(updates []ngmodels.UpdateRule) [][]ngmodels.UpdateRule {
+	type fingerprint struct {
+		orgID        int64
+		namespaceUID string
+		title        string
+	}
+	fp := func(r ngmodels.AlertRule) fingerprint {
+		return fingerprint{orgID: r.OrgID, namespaceUID: r.NamespaceUID, title: r.Title}
+	}
+
+	adj := make(map[fingerprint]ngmodels.UpdateRule, len(updates))
+
+	for _, update := range updates {
+		adj[fp(*update.Existing)] = update
+	}
+
+	chains := make([][]ngmodels.UpdateRule, 0)
+	seen := make(map[fingerprint]struct{}, len(updates))
+	for _, update := range updates {
+		f := fp(*update.Existing)
+		if _, ok := seen[f]; ok {
+			continue
+		}
+		seen[f] = struct{}{}
+
+		chain := []ngmodels.UpdateRule{update}
+		nextFp := fp(update.New)
+		for {
+			nextUpdate, ok := adj[nextFp]
+			_, visited := seen[nextFp]
+			if !ok || visited {
+				// Chain has ended or cycled, stop here.
+				break
+			}
+			chain = append(chain, nextUpdate)
+			seen[fp(*nextUpdate.Existing)] = struct{}{}
+			nextFp = fp(nextUpdate.New)
+		}
+
+		if len(chain) > 1 {
+			chains = append(chains, chain)
+		}
+	}
+
+	return chains
 }
 
 // CountInFolder is a handler for retrieving the number of alert rules of

@@ -260,14 +260,19 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
-		if err != nil {
-			return fmt.Errorf("failed to insert alert rules: %w", err)
-		}
-		for uid := range uids {
-			if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
+		// Delete first as this could prevent future unique constraint violations.
+		for _, del := range delta.Delete {
+			// check that provenance is not changed in an invalid way
+			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, del, orgID)
+			if err != nil {
 				return err
 			}
+			if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			}
+		}
+		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
+			return err
 		}
 
 		updates := make([]models.UpdateRule, 0, len(delta.Update))
@@ -294,18 +299,14 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			}
 		}
 
-		for _, delete := range delta.Delete {
-			// check that provenance is not changed in an invalid way
-			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
-			if err != nil {
+		uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
+		if err != nil {
+			return fmt.Errorf("failed to insert alert rules: %w", err)
+		}
+		for uid := range uids {
+			if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
 				return err
 			}
-			if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
-				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
-			}
-		}
-		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
-			return err
 		}
 
 		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
