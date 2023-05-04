@@ -153,7 +153,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
               </Field>
               <MuteTimingTimeInterval />
               <Button type="submit" className={styles.submitButton}>
-                Save timing
+                Save mute timing
               </Button>
               <LinkButton
                 type="button"
