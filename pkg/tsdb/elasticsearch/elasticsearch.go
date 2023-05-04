@@ -184,7 +184,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - /?/_mapping for fetching index mapping
-	if (req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping")) {
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
