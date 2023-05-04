@@ -314,7 +314,8 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{}
+		frame.Fields = []*data.Field{}
+		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult
 		return
 	}
