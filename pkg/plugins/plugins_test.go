@@ -93,9 +93,6 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:   "grafana-piechart-panel",
 				Type: "panel",
 				Name: "Pie Chart (old)",
-				Info: Info{
-					Version: "0.0.0",
-				},
 				Dependencies: Dependencies{
 					GrafanaVersion: "*",
 					Plugins:        []Dependency{},

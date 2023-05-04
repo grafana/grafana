@@ -66,7 +66,7 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	}
 }
 
-func ReadPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
+func GetLocalPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
 	pluginPath := filepath.Join(pluginDir, pluginID)
 
 	ps := GetLocalPlugins(pluginPath)

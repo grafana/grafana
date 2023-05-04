@@ -12,7 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func shouldUpgrade(installedVer string, remote *models.Plugin) bool {
+func shouldUpgrade(installed plugins.FoundPlugin, remote models.Plugin) bool {
+	installedVer := installed.JSONData.Info.Version
+	if installedVer == "" {
+		installedVer = "0.0.0"
+	}
 	installedVersion, err := version.NewVersion(installedVer)
 	if err != nil {
 		return false
@@ -44,7 +48,7 @@ func upgradeAllCommand(c utils.CommandLine) error {
 			if localPlugin.Primary.JSONData.ID != remotePlugin.ID {
 				continue
 			}
-			if shouldUpgrade(localPlugin.Primary.JSONData.Info.Version, &remotePlugin) {
+			if shouldUpgrade(localPlugin.Primary, remotePlugin) {
 				pluginsToUpgrade = append(pluginsToUpgrade, localPlugin.Primary)
 			}
 		}

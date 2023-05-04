@@ -155,10 +155,6 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Name = "Pie Chart (old)"
 	}
 
-	if plugin.Info.Version == "" {
-		plugin.Info.Version = "0.0.0"
-	}
-
 	if len(plugin.Dependencies.Plugins) == 0 {
 		plugin.Dependencies.Plugins = []Dependency{}
 	}
