@@ -36,7 +36,6 @@ import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, 
 export interface ChangeSizePayload {
   exploreId: ExploreId;
   width: number;
-  height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
@@ -93,11 +92,8 @@ export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
-export function changeSize(
-  exploreId: ExploreId,
-  { height, width }: { height: number; width: number }
-): PayloadAction<ChangeSizePayload> {
-  return changeSizeAction({ exploreId, height, width });
+export function changeSize(exploreId: ExploreId, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
+  return changeSizeAction({ exploreId, width });
 }
 
 interface InitializeExploreOptions {

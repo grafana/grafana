@@ -34,7 +34,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
-import { ExploreId } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -528,64 +528,76 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
-  const explore = state.explore;
-  const { syncedTimes } = explore;
-  const item = explore.panes[exploreId];
-  // FIXME: this happens because mapStateToProps is called before ExplorePage rerenders.
-  // converting this to a function component should fix it.
-  if (!item) {
-    return null;
-  }
+/*
+  Connected components subscribe to the store before function components (using hooks) can react to store changes and thus this connector functions is called before the parent component (ExplorePage) is rerendered.
+  This means that mapStateToProps here will be executed with a zombie `exploreId` that is not present anymore in the store if the pane gets closed.
+  Given React batches updates this component won't actually be rerendered, but as described above, `mapStateToProps` will be called with the old props and a state object that doesn't contain `panes[exploreId]`.
+  By using a factory function here we can save the previous pane state and use that if the pane is not present in the store anymore when `mapStateToProps` is called. This will allow `mapStateToProps` to not crash.
+  This is definetely not the ideal solution and we should in the future invest more time in exploring other approaches to better handle this scenario, potentially by refacor panels to be function components 
+  (therefore immune to this behaviour), or by forbidding them to access the store directly and instead pass them all the data they need via props or context.
 
-  const timeZone = getTimeZone(state.user);
-  const {
-    datasourceInstance,
-    queryKeys,
-    queries,
-    isLive,
-    graphResult,
-    tableResult,
-    logsResult,
-    showLogs,
-    showMetrics,
-    showTable,
-    showTrace,
-    absoluteRange,
-    queryResponse,
-    showNodeGraph,
-    showFlameGraph,
-    loading,
-    showRawPrometheus,
-    supplementaryQueries,
-  } = item;
+  You can read more about this issue here: https://react-redux.js.org/api/hooks#stale-props-and-zombie-children
+*/
+function mapStateToPropsFactory() {
+  let prevPaneState: ExploreItemState;
 
-  const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
-  // We want to show logs sample only if there are no log results and if there is already graph or table result
-  const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
+  return (state: StoreState, { exploreId }: ExploreProps) => {
+    const explore = state.explore;
+    const { syncedTimes } = explore;
+    const item = explore.panes[exploreId] || prevPaneState;
+    if (item) {
+      prevPaneState = item;
+    }
 
-  return {
-    datasourceInstance,
-    queryKeys,
-    queries,
-    isLive,
-    graphResult,
-    logsResult: logsResult ?? undefined,
-    absoluteRange,
-    queryResponse,
-    syncedTimes,
-    timeZone,
-    showLogs,
-    showMetrics,
-    showTable,
-    showTrace,
-    showNodeGraph,
-    showRawPrometheus,
-    showFlameGraph,
-    splitted: isSplit(state),
-    loading,
-    logsSample,
-    showLogsSample,
+    const timeZone = getTimeZone(state.user);
+    const {
+      datasourceInstance,
+      queryKeys,
+      queries,
+      isLive,
+      graphResult,
+      tableResult,
+      logsResult,
+      showLogs,
+      showMetrics,
+      showTable,
+      showTrace,
+      absoluteRange,
+      queryResponse,
+      showNodeGraph,
+      showFlameGraph,
+      loading,
+      showRawPrometheus,
+      supplementaryQueries,
+    } = item;
+
+    const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
+    // We want to show logs sample only if there are no log results and if there is already graph or table result
+    const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
+
+    return {
+      datasourceInstance,
+      queryKeys,
+      queries,
+      isLive,
+      graphResult,
+      logsResult: logsResult ?? undefined,
+      absoluteRange,
+      queryResponse,
+      syncedTimes,
+      timeZone,
+      showLogs,
+      showMetrics,
+      showTable,
+      showTrace,
+      showNodeGraph,
+      showRawPrometheus,
+      showFlameGraph,
+      splitted: isSplit(state),
+      loading,
+      logsSample,
+      showLogsSample,
+    };
   };
 }
 
@@ -602,6 +614,6 @@ const mapDispatchToProps = {
   setSupplementaryQueryEnabled,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(mapStateToPropsFactory, mapDispatchToProps);
 
 export default withTheme2(connector(Explore));
