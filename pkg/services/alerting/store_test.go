@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -84,6 +85,29 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		// Get alert so we can use its ID in tests
 		signedInUser := &user.SignedInUser{
 			OrgRole: org.RoleAdmin,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					dashboards.ActionFoldersWrite:              {dashboards.ScopeFoldersAll},
+					dashboards.ActionFoldersRead:               {dashboards.ScopeFoldersAll},
+					dashboards.ActionDashboardsWrite:           {dashboards.ScopeDashboardsAll},
+					dashboards.ActionDashboardsRead:            {dashboards.ScopeDashboardsAll},
+					accesscontrol.ActionAlertingInstanceCreate: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					accesscontrol.ActionAlertingInstanceUpdate: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					accesscontrol.ActionAlertingInstanceRead:   {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					accesscontrol.ActionAlertingRuleCreate:     {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					accesscontrol.ActionAlertingRuleRead:       {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+				},
+			},
+			// Permissions: map[int64]map[string][]string{
+			// 	testDash.OrgID: {
+			// 		accesscontrol.ActionAlertingRuleCreate:            {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 		accesscontrol.ActionAlertingRuleUpdate:            {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 		accesscontrol.ActionAlertingNotificationsRead:     {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 		accesscontrol.ActionAlertingInstancesExternalRead: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 		accesscontrol.ActionAlertingInstanceCreate:        {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 		accesscontrol.ActionAlertingInstanceUpdate:        {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 		accesscontrol.ActionAlertingInstanceRead:          {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+			// 	},
 		}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: signedInUser}
 		result, err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)

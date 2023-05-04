@@ -12,7 +12,6 @@ import (
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -168,9 +167,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 			builder.Write(")")
 		}
 
-		if query.User.OrgRole != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
-		}
+		builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
 
 		builder.Write(" ORDER BY name ASC")
 
@@ -179,6 +176,10 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 		}
 
 		alerts := make([]*alertmodels.AlertListItemDTO, 0)
+		sql := builder.GetSQLString()
+		fmt.Printf("SQL: %s\n", sql)
+		params := builder.GetParams()
+		fmt.Printf("Params: %v\n", params)
 		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&alerts); err != nil {
 			return err
 		}
