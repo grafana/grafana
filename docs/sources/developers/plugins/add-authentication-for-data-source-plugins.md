@@ -7,7 +7,7 @@ title: Add authentication for data source plugins
 
 # Add authentication for data source plugins
 
-Grafana plugins support authentication using encryption, data source proxies. Use this guide to learn how to work with authentication.
+Grafana plugins support authentication using encryption, OAuth, and data source proxies. Use this guide to learn how to work with authentication.
 
 ## Choose an authentication method
 
