@@ -15,6 +15,7 @@ import {
   type Column,
   type CellProps,
   type SortByFn,
+  Pagination,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -40,6 +41,7 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
+  const [page, setPage] = useState(0);
 
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
@@ -54,7 +56,7 @@ export default function CorrelationsPage() {
   } = useCorrelations();
 
   useEffect(() => {
-    fetchCorrelations();
+    fetchCorrelations({ page });
     // we only want to fetch data on first render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -63,14 +65,14 @@ export default function CorrelationsPage() {
 
   const handleAdded = useCallback(() => {
     reportInteraction('grafana_correlations_added');
-    fetchCorrelations();
+    fetchCorrelations({ page });
     setIsAdding(false);
-  }, [fetchCorrelations]);
+  }, [fetchCorrelations, page]);
 
   const handleUpdated = useCallback(() => {
     reportInteraction('grafana_correlations_edited');
-    fetchCorrelations();
-  }, [fetchCorrelations]);
+    fetchCorrelations({ page });
+  }, [fetchCorrelations, page]);
 
   const handleDelete = useCallback(
     (params: RemoveCorrelationParams) => {
@@ -88,9 +90,9 @@ export default function CorrelationsPage() {
 
   useEffect(() => {
     if (!remove.error && !remove.loading && remove.value) {
-      fetchCorrelations();
+      fetchCorrelations({ page });
     }
-  }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
+  }, [remove.error, remove.loading, remove.value, fetchCorrelations, page]);
 
   const RowActions = useCallback(
     ({
@@ -143,8 +145,8 @@ export default function CorrelationsPage() {
   );
 
   const data = useMemo(() => get.value, [get.value]);
-  const showEmptyListCTA = data?.length === 0 && !isAdding && !get.error;
-  const addButton = canWriteCorrelations && data?.length !== 0 && data !== undefined && !isAdding && (
+  const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !get.error;
+  const addButton = canWriteCorrelations && data?.correlations?.length !== 0 && data !== undefined && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       Add new
     </Button>
@@ -180,19 +182,28 @@ export default function CorrelationsPage() {
 
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
-          {data && data.length >= 1 && (
-            <InteractiveTable
-              renderExpandedRow={(correlation) => (
-                <ExpendedRow
-                  correlation={correlation}
-                  onUpdated={handleUpdated}
-                  readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
-                />
-              )}
-              columns={columns}
-              data={data}
-              getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
-            />
+          {data && data.correlations.length >= 1 && (
+            <>
+              <InteractiveTable
+                renderExpandedRow={(correlation) => (
+                  <ExpendedRow
+                    correlation={correlation}
+                    onUpdated={handleUpdated}
+                    readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
+                  />
+                )}
+                columns={columns}
+                data={data.correlations}
+                getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
+              />
+              <Pagination
+                currentPage={1}
+                numberOfPages={Math.ceil(data.totalCount! / data.perPage!)}
+                onNavigate={(toPage: number) => {
+                  setPage(toPage);
+                }}
+              />
+            </>
           )}
         </div>
       </Page.Contents>

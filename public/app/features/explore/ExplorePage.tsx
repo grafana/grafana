@@ -37,7 +37,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const queryParams = props.queryParams;
   const { keybindings, chrome, config } = useGrafana();
   const navModel = useNavModel('explore');
-  const { get } = useCorrelations();
+  const { getAllFromSourceUIDInfo } = useCorrelations();
   const { warning } = useAppNotification();
   const panelCtx = usePanelContext();
   const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
@@ -60,22 +60,34 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     if (!config.featureToggles.correlations) {
       dispatch(saveCorrelationsAction([]));
     } else {
-      get.execute();
+      const leftDSUID = exploreState.panes[ExploreId.left]?.datasourceInstance?.uid;
+      const rightDSUID = exploreState.panes[ExploreId.right]?.datasourceInstance?.uid;
+
+      if (leftDSUID !== undefined) {
+        getAllFromSourceUIDInfo.execute({ sourceUID: leftDSUID });
+      }
+
+      if (rightDSUID !== undefined) {
+        getAllFromSourceUIDInfo.execute({ sourceUID: rightDSUID });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    exploreState.panes[ExploreId.left]?.datasourceInstance?.uid,
+    exploreState.panes[ExploreId.right]?.datasourceInstance?.uid,
+  ]);
 
   useEffect(() => {
-    if (get.value) {
-      dispatch(saveCorrelationsAction(get.value));
-    } else if (get.error) {
+    if (getAllFromSourceUIDInfo.value?.correlations) {
+      dispatch(saveCorrelationsAction(getAllFromSourceUIDInfo.value.correlations));
+    } else if (getAllFromSourceUIDInfo.error) {
       dispatch(saveCorrelationsAction([]));
       warning(
         'Could not load correlations.',
         'Correlations data could not be loaded, DataLinks may have partial data.'
       );
     }
-  }, [get.value, get.error, dispatch, warning]);
+  }, [getAllFromSourceUIDInfo.value, getAllFromSourceUIDInfo.error, dispatch, warning]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;

@@ -9,15 +9,31 @@ import {
   Correlation,
   CreateCorrelationParams,
   CreateCorrelationResponse,
+  GetAllCorrelationsBySourceUIDParams,
+  GetCorrelationsParams,
   RemoveCorrelationParams,
   RemoveCorrelationResponse,
   UpdateCorrelationParams,
   UpdateCorrelationResponse,
 } from './types';
 
+interface CorrelationsResponse {
+  correlations: Correlation[];
+  page: number;
+  perPage: number;
+  totalCount: number;
+}
+
 export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'targetUID'> {
   source: DataSourceInstanceSettings;
   target: DataSourceInstanceSettings;
+}
+
+interface CorrelationsData {
+  correlations: CorrelationData[];
+  page?: number;
+  perPage?: number;
+  totalCount?: number;
 }
 
 const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Correlation): CorrelationData => ({
@@ -26,7 +42,19 @@ const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Cor
   target: getDataSourceSrv().getInstanceSettings(targetUID)!,
 });
 
-const toEnrichedCorrelationsData = (correlations: Correlation[]) => correlations.map(toEnrichedCorrelationData);
+const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
+  return {
+    ...correlationsResponse,
+    correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData),
+  };
+};
+
+const toNonPagedEnrichedCorrelationsData = (correlationsResponse: Correlation[]): CorrelationsData => {
+  return {
+    correlations: correlationsResponse.map(toEnrichedCorrelationData),
+  };
+};
+
 function getData<T>(response: FetchResponse<T>) {
   return response.data;
 }
@@ -40,13 +68,34 @@ function getData<T>(response: FetchResponse<T>) {
 export const useCorrelations = () => {
   const { backend } = useGrafana();
 
-  const [getInfo, get] = useAsyncFn<() => Promise<CorrelationData[]>>(
-    () =>
+  const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
+    (params) =>
       lastValueFrom(
-        backend.fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
+        backend.fetch<CorrelationsResponse>({
+          url: '/api/datasources/correlations',
+          params: { page: params.page },
+          method: 'GET',
+          showErrorAlert: false,
+        })
       )
         .then(getData)
         .then(toEnrichedCorrelationsData),
+    [backend]
+  );
+
+  const [getAllFromSourceUIDInfo, getAllFromSourceUID] = useAsyncFn<
+    (params: GetAllCorrelationsBySourceUIDParams) => Promise<CorrelationsData>
+  >(
+    (params) =>
+      lastValueFrom(
+        backend.fetch<Correlation[]>({
+          url: `/api/datasources/uid/${params.sourceUID}/correlations`,
+          method: 'GET',
+          showErrorAlert: false,
+        })
+      )
+        .then(getData)
+        .then(toNonPagedEnrichedCorrelationsData),
     [backend]
   );
 
@@ -86,6 +135,10 @@ export const useCorrelations = () => {
     get: {
       execute: get,
       ...getInfo,
+    },
+    getAllFromSourceUIDInfo: {
+      execute: getAllFromSourceUID,
+      ...getAllFromSourceUIDInfo,
     },
     remove: {
       execute: remove,
