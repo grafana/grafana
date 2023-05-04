@@ -157,6 +157,6 @@ function isRecord(value: unknown): value is Record<string | number | symbol, unk
   return typeof value === 'object' && value !== null;
 }
 
-function isReadOnlyProxy(value: unknown): boolean {
+export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
 }
