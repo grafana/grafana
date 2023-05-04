@@ -8,7 +8,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   FieldType,
-  MutableDataFrame,
+  createDataFrame,
   ScopedVars,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -127,7 +127,7 @@ function responseToDataQueryResponse(response: { data: ZipkinSpan[] }, nodeGraph
 
 const emptyDataQueryResponse = {
   data: [
-    new MutableDataFrame({
+    createDataFrame({
       fields: [
         {
           name: 'trace',

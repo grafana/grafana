@@ -40,7 +40,6 @@ require (
 	github.com/crewjam/saml v0.4.12
 	github.com/fatih/color v1.15.0
 	github.com/gchaincl/sqlhooks v1.3.0
-	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-ldap/ldap/v3 v3.4.4
 	github.com/go-openapi/strfmt v0.21.7
@@ -57,7 +56,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230426193323-4f09f516596b
+	github.com/grafana/alerting v0.0.0-20230428095912-33c5aa68a5ba
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.160.0

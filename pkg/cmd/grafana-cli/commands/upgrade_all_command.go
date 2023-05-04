@@ -25,12 +25,12 @@ func shouldUpgrade(installed string, remote *models.Plugin) bool {
 	return installedVersion.LessThan(latestVersion)
 }
 
-func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
+func upgradeAllCommand(c utils.CommandLine) error {
 	pluginsDir := c.PluginDirectory()
 
 	localPlugins := services.GetLocalPlugins(pluginsDir)
 
-	remotePlugins, err := cmd.Client.ListAllPlugins(c.String("repo"))
+	remotePlugins, err := services.ListAllPlugins(c.String("repo"))
 	if err != nil {
 		return err
 	}
@@ -49,15 +49,16 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 		}
 	}
 
+	ctx := context.Background()
 	for _, p := range pluginsToUpgrade {
 		logger.Infof("Updating %v \n", p.ID)
 
-		err := services.RemoveInstalledPlugin(pluginsDir, p.ID)
+		err = uninstallPlugin(ctx, p.ID, c)
 		if err != nil {
 			return err
 		}
 
-		err = installPlugin(context.Background(), p.ID, "", c)
+		err = installPlugin(ctx, p.ID, "", c)
 		if err != nil {
 			return err
 		}

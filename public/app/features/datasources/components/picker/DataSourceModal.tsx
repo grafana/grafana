@@ -86,6 +86,7 @@ export function DataSourceModal({
     >
       <div className={styles.leftColumn}>
         <Input
+          autoFocus
           className={styles.searchInput}
           value={search}
           prefix={<Icon name="search" />}

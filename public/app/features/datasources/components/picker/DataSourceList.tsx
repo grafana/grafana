@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useRef } from 'react';
+import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
@@ -33,14 +34,26 @@ export interface DataSourceListProps {
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
   width?: number;
+  keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
+  enableKeyboardNavigation?: boolean;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
-  const { className, current, onChange, onClickEmptyStateCTA } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
+    keyboardEvents: props.keyboardEvents,
+    containerRef: containerRef,
+  });
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, selectedItemCssSelector);
+
+  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
   const dataSources = useDatasources({
     alerting: props.alerting,
@@ -57,10 +70,9 @@ export function DataSourceList(props: DataSourceListProps) {
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
-  const styles = useStyles2(getListStyles);
 
   return (
-    <div className={cx(className, styles.container)}>
+    <div ref={containerRef} className={cx(className, styles.container)}>
       {filteredDataSources.length === 0 && (
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
@@ -75,23 +87,11 @@ export function DataSourceList(props: DataSourceListProps) {
               onChange(ds);
             }}
             selected={!!isDataSourceMatch(ds, current)}
+            {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
     </div>
   );
-}
-
-function getListStyles(theme: GrafanaTheme2) {
-  return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    emptyState: css`
-      height: 100%;
-      flex: 1;
-    `,
-  };
 }
 
 function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {
@@ -125,4 +125,20 @@ function getDataSourceVariableIDs() {
     .getVariables()
     .filter((v) => v.type === 'datasource')
     .map((v) => `\${${v.id}}`);
+}
+
+function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
+  return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      ${selectedItemCssSelector} {
+        background-color: ${theme.colors.background.secondary};
+      }
+    `,
+    emptyState: css`
+      height: 100%;
+      flex: 1;
+    `,
+  };
 }

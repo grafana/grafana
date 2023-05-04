@@ -23,6 +23,8 @@ This can be mitigated by utilizing the enterprise [caching]({{< relref "../../ad
 
 Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
 
+You can see a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
+
 ## Security implications of making your dashboard public
 
 - Anyone with the URL can access the dashboard.
@@ -134,6 +136,16 @@ Immediately, the viewer no longer has access to the public dashboard, nor can th
 1. Click **Resend** on the viewer you'd like to re-share the public dashboard with.
 
 The viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
+
+### View public dashboard users
+
+To see a list of users who have accessed your dashboard by way of email sharing, take the following steps:
+
+1. In the main sidebar navigation, click **Administration**.
+1. Click **Users**.
+1. Click the **Public dashboard users** tab.
+
+From here, you can see the earliest time a user has been active in a dashboard, which public dashboards they have access to, and their role.
 
 ### Access limitations
 
