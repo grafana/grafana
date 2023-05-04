@@ -129,6 +129,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                 tags={[]}
                 hideScope={true}
                 hideTag={true}
+                query={traceQlQuery}
               />
             </InlineSearchField>
           ))}
@@ -172,6 +173,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               deleteFilter={deleteFilter}
               tags={filteredTags}
               isTagsLoading={isTagsLoading}
+              query={traceQlQuery}
             />
           </InlineSearchField>
         </div>

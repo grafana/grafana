@@ -97,6 +97,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           tags={[...intrinsics, ...(tags || [])]}
           isTagsLoading={loading}
           hideValues={true}
+          query={'{}'}
         />
       ) : (
         <div>Invalid data source, please create a valid data source and try again</div>

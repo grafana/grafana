@@ -95,13 +95,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
+  private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
 
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
     } else {
-      tagValues = await this.languageProvider.getOptionsV2(tagName);
+      tagValues = await this.languageProvider.getOptionsV2(tagName, query);
       this.cachedValues[tagName] = tagValues;
     }
     return tagValues;
@@ -144,7 +144,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(situation.tagName);
+          tagValues = await this.getTagValues(situation.tagName, situation.query);
         } catch (error) {
           if (isFetchError(error)) {
             dispatch(notifyApp(createErrorNotification(error.data.error, new Error(error.data.message))));
@@ -210,6 +210,10 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getSituationInSpanSet(textUntilCaret: string): Situation {
+    const situation: Situation = {
+      query: textUntilCaret,
+      type: 'EMPTY',
+    };
     const nameRegex = /(?<name>[\w./-]+)?/;
     const opRegex = /(?<op>[!=+\-<>]+)/;
     // only allow spaces in the value if it's enclosed by quotes
@@ -238,12 +242,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
       if (!nameFull) {
         return {
+          ...situation,
           type: 'SPANSET_EMPTY',
         };
       }
 
       if (nameFull === '.') {
         return {
+          ...situation,
           type: 'SPANSET_ONLY_DOT',
         };
       }
@@ -257,6 +263,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         // { resource.|
         if (scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
           return {
+            ...situation,
             type: 'SPANSET_IN_NAME_SCOPE',
           };
         }
@@ -264,6 +271,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         // In case there's a space we start autocompleting the operators { .http.method |
         // Otherwise we keep showing the tags/intrinsics/scopes list { .http.met|
         return {
+          ...situation,
           type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
         };
       }
@@ -273,6 +281,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       // { .http.method = "GET" |
       if (matched.groups?.space3 && matched.groups.open_quote === matched.groups.close_quote) {
         return {
+          ...situation,
           type: 'SPANSET_AFTER_VALUE',
         };
       }
@@ -280,15 +289,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
       // { .http.method = |
       return {
+        ...situation,
         type: 'SPANSET_IN_VALUE',
         tagName: nameFull,
         betweenQuotes: !!matched.groups?.open_quote,
       };
     }
 
-    return {
-      type: 'EMPTY',
-    };
+    return situation;
   }
 
   /**
@@ -299,6 +307,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   private getSituation(text: string, offset: number): Situation {
     if (text === '' || offset === 0) {
       return {
+        query: text,
         type: 'EMPTY',
       };
     }
@@ -313,6 +322,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     // Will happen only if user writes something that isn't really a tag selector
     return {
+      query: textUntilCaret,
       type: 'UNKNOWN',
     };
   }
@@ -352,7 +362,9 @@ export type Tag = {
   value: string;
 };
 
-export type Situation =
+export type Situation = { query: string } & SituationType;
+
+type SituationType =
   | {
       type: 'UNKNOWN';
     }
