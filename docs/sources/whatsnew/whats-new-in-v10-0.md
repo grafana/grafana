@@ -250,7 +250,7 @@ These improvements make working with log context in Grafana more intuitive and e
 
 ## Scenes
 
-<!--Dominik Prokop Natalia Bernarte -->
+<!--Dominik Prokop & Natalia Bernarte -->
 
 _This is an experimental library_
 
