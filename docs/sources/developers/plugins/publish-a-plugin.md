@@ -39,7 +39,10 @@ Follow these steps to publish your plugin for the first time.
 
 1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
-1. Click **Submit Plugin**.
+1. Click **Submit Plugin**. The Create Plugin Submission form appears.
+
+   {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
+
 1. Enter the information requested by the form.
    - **OS & Architecture:**
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
