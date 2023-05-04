@@ -219,6 +219,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"mixed":                            {},
 		"zipkin":                           {},
 		"phlare":                           {},
+		"grafana-pyroscope":                {},
 		"parca":                            {},
 	}
 

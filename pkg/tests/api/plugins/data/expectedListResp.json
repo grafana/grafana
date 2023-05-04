@@ -646,6 +646,47 @@
   {
     "name": "Grafana Pyroscope",
     "type": "datasource",
+    "id": "grafana-pyroscope",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+      "links": [
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/grafana/phlare"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/grafana-pyroscope/img/grafana_pyroscope_icon.svg",
+        "large": "public/app/plugins/datasource/grafana-pyroscope/img/grafana_pyroscope_icon.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/grafana-pyroscope/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
+  },
+  {
+    "name": "Grafana Pyroscope",
+    "type": "datasource",
     "id": "phlare",
     "enabled": true,
     "pinned": false,
