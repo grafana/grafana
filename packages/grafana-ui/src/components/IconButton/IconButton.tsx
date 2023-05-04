@@ -5,6 +5,7 @@ import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { useTheme2, stylesFactory } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ComponentSize } from '../../types';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { getSvgSize } from '../Icon/utils';
@@ -12,10 +13,12 @@ import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
+type LimitedIconSize = ComponentSize | 'xl';
+
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
   name: IconName;
-  /** Icon size */
+  /** Icon size - sizes xxl and xxxl are being decreased to xl*/
   size?: IconSize;
   /** Type of the icon - mono or default */
   iconType?: IconType;
@@ -45,11 +48,13 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    let limitedIconSize: IconSize = size;
+    let limitedIconSize: LimitedIconSize;
 
     // very large icons (xl to xxxl) are unified to size xl
     if (size === 'xxl' || size === 'xxxl') {
       limitedIconSize = 'xl';
+    } else {
+      limitedIconSize = size;
     }
 
     const styles = getStyles(theme, limitedIconSize, variant);

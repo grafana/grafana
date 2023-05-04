@@ -5,7 +5,6 @@ import React from 'react';
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Alert } from '../Alert/Alert';
 import { VerticalGroup } from '../Layout/Layout';
 
 import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
@@ -39,10 +38,6 @@ const meta: ComponentMeta<typeof IconButton> = {
 export const Examples = () => {
   return (
     <div>
-      <Alert severity="warning" title={'Please note:'}>
-        After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl).
-        Sizes xxl and xxxl are now shown in size xl as well and will be deprecated in the future.
-      </Alert>
       <RenderScenario background="canvas" />
       <RenderScenario background="primary" />
       <RenderScenario background="secondary" />

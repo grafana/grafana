@@ -3,7 +3,6 @@ import React from 'react';
 
 import { ComponentSize } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Alert } from '../Alert/Alert';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
@@ -40,10 +39,6 @@ export default {
 export const Examples: ComponentStory<typeof Button> = () => {
   return (
     <VerticalGroup>
-      <Alert severity="warning" title={'Please note:'}>
-        After reviewing this component we are asking you to use the IconButton when you require a button with only an
-        icon.
-      </Alert>
       {allButtonFills.map((buttonFill) => (
         <VerticalGroup key={buttonFill}>
           <HorizontalGroup spacing="lg">

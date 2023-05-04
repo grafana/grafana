@@ -5,8 +5,8 @@ import { colorManipulator, GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ComponentSize } from '../../types';
 import { IconName } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
