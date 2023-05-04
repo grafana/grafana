@@ -1,13 +1,12 @@
 import moment from 'moment';
 
-import { ArrayVector, DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
+import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
 
-import { InfluxQuery } from '../../influxdb/types';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { CacheRequestInfo, DatasourceProfileData, QueryCache } from './QueryCache';
-import { IncrementalStorageDataFrameScenarios, IncrementalStorageDataFrameScenariosInflux } from './QueryCacheTestData';
+import { DatasourceProfileData, QueryCache } from './QueryCache';
+import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
 
 // Will not interpolate vars!
 const interpolateStringTest = (query: PromQuery) => {
@@ -18,44 +17,6 @@ const getPrometheusTargetSignature = (request: DataQueryRequest<PromQuery>, targ
   return `${interpolateStringTest(targ)}|${targ.interval ?? request.interval}|${JSON.stringify(
     request.rangeRaw ?? ''
   )}|${targ.exemplar}`;
-};
-
-const getInfluxTargetSignature = (request: DataQueryRequest<InfluxQuery>, targ: InfluxQuery) => {
-  return `${request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.query}|${JSON.stringify(targ.select)}`;
-};
-
-const mockInfluxRequest = (request: Partial<DataQueryRequest<InfluxQuery>>): DataQueryRequest<InfluxQuery> => {
-  const defaultRequest: DataQueryRequest<InfluxQuery> = {
-    scopedVars: {
-      __interval: { text: '50s', value: '60s' },
-      __interval_ms: { text: '60000', value: 60000 },
-      // @todo user variable?
-    },
-    startTime: 0,
-    app: 'unknown',
-    requestId: '',
-    timezone: '',
-    range: {
-      from: moment('2023-01-30T19:33:01.332Z') as DateTime,
-      to: moment('2023-01-30T20:33:01.332Z') as DateTime,
-      raw: { from: 'now-5m', to: 'now' },
-    },
-    interval: '60ss',
-    intervalMs: 60000,
-    targets: [
-      {
-        rawQuery: true,
-        query: 'SELECT * FROM cpu',
-        datasource: { type: 'influx', uid: '8675309' },
-        refId: 'A',
-      },
-    ],
-  };
-
-  return {
-    ...defaultRequest,
-    ...request,
-  };
 };
 
 const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
@@ -106,22 +67,20 @@ const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): Datasou
   };
 };
 
-const getInfluxProfileData = (request: DataQueryRequest, targ: InfluxQuery): DatasourceProfileData => {
-  return {
-    expr: targ.rawQuery && targ.query ? targ.query : JSON.stringify(targ.select),
-    interval: request.interval,
-    datasource: 'influx',
-  };
-};
-
 describe('QueryCache: Generic', function () {
   it('instantiates', () => {
-    const storage = new QueryCache(() => '', '10m', getPromProfileData);
+    const storage = new QueryCache({
+      getTargetSignature: () => '',
+      overlapString: '10m',
+    });
     expect(storage).toBeInstanceOf(QueryCache);
   });
 
   it('will not modify or crash with empty response', () => {
-    const storage = new QueryCache(() => '', '10m', getPromProfileData);
+    const storage = new QueryCache({
+      getTargetSignature: () => '',
+      overlapString: '10m',
+    });
     const firstFrames: DataFrame[] = [];
     const secondFrames: DataFrame[] = [];
 
@@ -229,7 +188,11 @@ describe('QueryCache: Prometheus', function () {
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtStart(),
     ];
     scenarios.forEach((scenario, index) => {
-      const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
+      const storage = new QueryCache<PromQuery>({
+        getTargetSignature: getPrometheusTargetSignature,
+        overlapString: '10m',
+        profileFunction: getPromProfileData,
+      });
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
 
@@ -361,7 +324,11 @@ describe('QueryCache: Prometheus', function () {
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
 
     // Initial request with all data for time range
     const firstFrames = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.first
@@ -518,7 +485,11 @@ describe('QueryCache: Prometheus', function () {
       },
       rangeRaw: { from: '2023-01-30T19:33:01.332Z', to: '2023-01-30T20:33:01.332Z' },
     });
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(false);
@@ -526,7 +497,11 @@ describe('QueryCache: Prometheus', function () {
 
   it('mark request as shouldCache', () => {
     const request = mockPromRequest();
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
@@ -534,7 +509,11 @@ describe('QueryCache: Prometheus', function () {
 
   it('Should modify request', () => {
     const request = mockPromRequest();
-    const storage = new QueryCache<PromQuery>(getPrometheusTargetSignature, '10m', getPromProfileData);
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
