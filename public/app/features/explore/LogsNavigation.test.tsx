@@ -93,7 +93,7 @@ describe('LogsNavigation', () => {
     expect(onChangeTimeMock).toHaveBeenCalledWith({ from: 1637319338000, to: 1637322938000 });
   });
 
-  it('should reset the scroll when pagination is clic ked', async () => {
+  it('should reset the scroll when pagination is clicked', async () => {
     const scrollToTopLogsMock = jest.fn();
     setup({ scrollToTopLogs: scrollToTopLogsMock });
 

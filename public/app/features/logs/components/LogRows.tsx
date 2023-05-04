@@ -10,8 +10,8 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
-  DataSourceWithLogsContextSupport,
   DataQueryResponse,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
@@ -20,7 +20,6 @@ import { sortLogRows } from '../utils';
 //Components
 import { LogRow } from './LogRow';
 import { getLogRowStyles } from './getLogRowStyles';
-import { RowContextOptions } from './log-context/types';
 
 export const PREVIEW_LIMIT = 100;
 
@@ -39,21 +38,20 @@ export interface Props extends Themeable2 {
   forceEscape?: boolean;
   displayedFields?: string[];
   app?: CoreApp;
-  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
-  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
+  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
+  getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
+  onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
 }
 
 interface State {
   renderAll: boolean;
-  contextIsOpen: boolean;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -65,18 +63,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
-    contextIsOpen: false,
   };
 
   /**
    * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
    */
-  toggleContextIsOpen = (): void => {
-    this.setState((state) => {
-      return {
-        contextIsOpen: !state.contextIsOpen,
-      };
-    });
+  openContext = (row: LogRowModel, onClose: () => void): void => {
+    if (this.props.onOpenContext) {
+      this.props.onOpenContext(row, onClose);
+    }
   };
 
   componentDidMount() {
@@ -130,10 +125,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
       onLogRowHover,
       app,
-      scrollElement,
       getLogRowContextUi,
     } = this.props;
-    const { renderAll, contextIsOpen } = this.state;
+    const { renderAll } = this.state;
     const styles = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -163,7 +157,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getLogRowContextUi={getLogRowContextUi}
                 row={row}
                 showContextToggle={showContextToggle}
-                showRowMenu={!contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -179,10 +172,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
-                toggleContextIsOpen={this.toggleContextIsOpen}
+                onOpenContext={this.openContext}
                 onLogRowHover={onLogRowHover}
                 app={app}
-                scrollElement={scrollElement}
                 styles={styles}
               />
             ))}
@@ -196,7 +188,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getLogRowContextUi={getLogRowContextUi}
                 row={row}
                 showContextToggle={showContextToggle}
-                showRowMenu={!contextIsOpen}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
@@ -212,10 +203,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
-                toggleContextIsOpen={this.toggleContextIsOpen}
+                onOpenContext={this.openContext}
                 onLogRowHover={onLogRowHover}
                 app={app}
-                scrollElement={scrollElement}
                 styles={styles}
               />
             ))}

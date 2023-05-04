@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -47,7 +49,7 @@ func logRestartNotice() {
 	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 }
 
-func (cmd Command) installCommand(c utils.CommandLine) error {
+func installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -84,7 +86,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	}
 
 	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
-	extractedArchive, err := pluginFs.Add(ctx, pluginID, archive.File)
+	extractedArchive, err := pluginFs.Extract(ctx, pluginID, archive.File)
 	if err != nil {
 		return err
 	}
@@ -96,10 +98,25 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		_, err = pluginFs.Add(ctx, dep.ID, d.File)
+		_, err = pluginFs.Extract(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// uninstallPlugin removes the plugin directory
+func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
+	logger.Infof("Removing plugin: %v\n", pluginID)
+
+	pluginPath := filepath.Join(c.PluginDirectory(), pluginID)
+	fs := plugins.NewLocalFS(pluginPath)
+
+	logger.Debugf("Removing directory %v\n", pluginPath)
+	err := fs.Remove()
+	if err != nil {
+		return err
 	}
 	return nil
 }

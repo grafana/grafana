@@ -27,7 +27,7 @@ export class ConfigEditor extends PureComponent<Props> {
     return (
       <>
         <ConnectionConfig {...this.props} onOptionsChange={this.handleOnOptionsChange}></ConnectionConfig>
-        {config.featureToggles.secureSocksDatasourceProxy && (
+        {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
       </>

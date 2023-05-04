@@ -68,7 +68,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
 
   const mode = value?.mode ?? FieldColorModeId.Thresholds;
 
-  if (mode === FieldColorModeId.Fixed) {
+  if (mode === FieldColorModeId.Fixed || mode === FieldColorModeId.Shades) {
     return (
       <div className={styles.group}>
         <Select

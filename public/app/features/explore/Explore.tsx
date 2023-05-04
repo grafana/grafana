@@ -76,10 +76,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       // Is needed for some transition animations to work.
       position: relative;
       margin-top: 21px;
-    `,
-    button: css`
-      label: button;
-      margin: 1em 4px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
     `,
     queryContainer: css`
       label: queryContainer;
@@ -254,7 +253,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onSplitOpen = (panelType: string) => {
-    return async (options?: SplitOpenOptions<DataQuery>) => {
+    return async (options?: SplitOpenOptions) => {
       this.props.splitOpen(options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
@@ -359,7 +358,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
-        scrollElement={this.scrollElement}
         eventBus={this.logsEventBus}
         splitOpenFn={this.onSplitOpen('logs')}
       />
@@ -548,7 +546,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { syncedTimes } = explore;
-  const item: ExploreItemState = explore[exploreId]!;
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
     datasourceInstance,

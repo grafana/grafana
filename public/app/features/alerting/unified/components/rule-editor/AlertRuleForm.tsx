@@ -221,7 +221,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               onClick={() => setShowEditYaml(true)}
               disabled={submitState.loading}
             >
-              Edit yaml
+              Edit YAML
             </Button>
           )}
           <Button

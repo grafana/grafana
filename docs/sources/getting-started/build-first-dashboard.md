@@ -10,7 +10,7 @@ weight: 200
 
 # Build your first dashboard
 
-This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
+This topic helps you get started with Grafana and build your first dashboard using the built-in `Grafana` data source. To learn more about Grafana, refer to [Introduction to Grafana]({{< relref "../introduction/" >}}).
 
 > **Note:** Grafana also offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
 
@@ -37,7 +37,9 @@ To sign in to Grafana for the first time:
 
 #### Create a dashboard
 
-To create your first dashboard:
+If you've already set up a data source that you know how to query, refer to [Create a dashboard]({{< relref "../dashboards/build-dashboards/create-dashboard/" >}}) instead.
+
+To create your first dashboard using the built-in `Grafana` data source:
 
 1. Click **Dashboards** in the left-side menu.
 1. On the Dashboards page, click **New** and select **New Dashboard** from the dropdown menu.
@@ -47,7 +49,14 @@ To create your first dashboard:
 
    This generates the Random Walk dashboard.
 
-1. Click **Save** in the top right corner of your screen to save the dashboard.
+1. Click the Refresh dashboard icon to query the data source.
+
+   ![Refresh dashboard icon](/media/docs/grafana/dashboards/screenshot-refresh-dashboard-9.5.png)
+
+1. When you've finished editing your panel, click **Save** to save the dashboard.
+
+   Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
+
 1. Add a descriptive name for the dashboard, and then click **Save**.
 
 Congratulations, you have created your first dashboard and it is displaying results.

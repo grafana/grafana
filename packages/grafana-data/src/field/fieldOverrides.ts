@@ -421,7 +421,7 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.PercentEncode);
+        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
         href = locationUtil.processUrl(href);
       }
 

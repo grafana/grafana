@@ -2,7 +2,6 @@ import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 
 import {
-  ArrayVector,
   CoreApp,
   DataLink,
   DataQueryRequest,
@@ -19,7 +18,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, reportInteraction } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, reportInteraction, config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -31,6 +30,8 @@ import { createElasticDatasource } from './mocks';
 import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
+
+const originalConsoleError = console.error;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -236,13 +237,13 @@ describe('ElasticDatasource', () => {
                   name: 'Time',
                   type: FieldType.time,
                   config: {},
-                  values: new ArrayVector([1000]),
+                  values: [1000],
                 },
                 {
                   name: 'Value',
                   type: FieldType.number,
                   config: {},
-                  values: new ArrayVector([10]),
+                  values: [10],
                 },
               ],
               length: 1,
@@ -861,13 +862,14 @@ describe('ElasticDatasource', () => {
   describe('query', () => {
     it('should replace range as integer not string', async () => {
       const { ds } = getTestContext({ jsonData: { interval: 'Daily', timeField: '@time' } });
-      const postMock = jest.fn((url: string, data) => of(createFetchResponse({ responses: [] })));
-      ds['post'] = postMock;
+      const postMock = jest.fn((method: string, url: string, data, header: object) =>
+        of(createFetchResponse({ responses: [] }))
+      );
+      ds.legacyQueryRunner['request'] = postMock;
 
       await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
         expect(postMock).toHaveBeenCalledTimes(1);
-
-        const query = postMock.mock.calls[0][1];
+        const query = postMock.mock.calls[0][2];
         expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
       });
     });
@@ -928,22 +930,28 @@ describe('ElasticDatasource', () => {
 
     it('does not return logs volume query for metric query', () => {
       expect(
-        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-          refId: 'A',
-          metrics: [{ type: 'count', id: '1' }],
-          bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
-          query: 'foo="bar"',
-        })
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
+            query: 'foo="bar"',
+          }
+        )
       ).toEqual(undefined);
     });
 
     it('returns logs volume query for log query', () => {
       expect(
-        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
-          refId: 'A',
-          metrics: [{ type: 'logs', id: '1' }],
-          query: 'foo="bar"',
-        })
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: 'foo="bar"',
+          }
+        )
       ).toEqual({
         bucketAggs: [
           {
@@ -997,11 +1005,11 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'urlField',
-          values: new ArrayVector([]),
+          values: [],
         },
         {
           name: 'traceField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
@@ -1065,7 +1073,7 @@ describe('enhanceDataFrame', () => {
       fields: [
         {
           name: 'someField',
-          values: new ArrayVector([]),
+          values: [],
         },
       ],
     });
@@ -1205,7 +1213,6 @@ describe('addAdhocFilters', () => {
 const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
   return {
     requestId: '',
-    dashboardId: 0,
     interval: '',
     panelId: 0,
     intervalMs: 1,
@@ -1286,3 +1293,37 @@ const logsResponse = {
     ],
   },
 };
+
+describe('ElasticDatasource using backend', () => {
+  beforeEach(() => {
+    console.error = jest.fn();
+    config.featureToggles.enableElasticsearchBackendQuerying = true;
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
+    config.featureToggles.enableElasticsearchBackendQuerying = false;
+  });
+  describe('getDatabaseVersion', () => {
+    it('should correctly get db version', async () => {
+      const { ds } = getTestContext();
+      ds.getResource = jest.fn().mockResolvedValue({ version: { number: '8.0.0' } });
+      const version = await ds.getDatabaseVersion();
+      expect(version?.raw).toBe('8.0.0');
+    });
+
+    it('should correctly return null if invalid numeric version', async () => {
+      const { ds } = getTestContext();
+      ds.getResource = jest.fn().mockResolvedValue({ version: { number: 8 } });
+      const version = await ds.getDatabaseVersion();
+      expect(version).toBe(null);
+    });
+
+    it('should correctly return null if rejected request', async () => {
+      const { ds } = getTestContext();
+      ds.getResource = jest.fn().mockRejectedValue({});
+      const version = await ds.getDatabaseVersion();
+      expect(version).toBe(null);
+    });
+  });
+});
