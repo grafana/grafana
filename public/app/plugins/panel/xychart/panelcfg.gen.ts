@@ -39,9 +39,11 @@ export interface ScatterFieldConfig extends common.HideableFieldConfig, common.A
   lineColor?: common.ColorDimensionConfig;
   lineStyle?: common.LineStyle;
   lineWidth?: number;
+  opacity?: number; // TODO: 0-1, default to 0.5
   pointColor?: common.ColorDimensionConfig;
   pointSize?: common.ScaleDimensionConfig;
   show?: ScatterShow;
+  symbol?: common.ResourceDimensionConfig;
 }
 
 export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {

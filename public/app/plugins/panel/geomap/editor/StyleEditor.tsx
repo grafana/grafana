@@ -30,6 +30,7 @@ import {
   TextDimensionConfig,
   defaultTextConfig,
   ScalarDimensionConfig,
+  MediaType,
 } from 'app/features/dimensions/types';
 
 import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
@@ -197,7 +198,7 @@ export const StyleEditor = ({ value, context, onChange, item }: Props) => {
           item={
             {
               settings: {
-                resourceType: 'icon',
+                resourceType: MediaType.Icon,
                 folderName: ResourceFolderName.Marker,
                 placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                 placeholderValue: defaultStyleConfig.symbol.fixed,

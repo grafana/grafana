@@ -52,21 +52,34 @@ export interface DataQuery {
 }
 
 export interface BaseDimensionConfig {
+  /**
+   * fixed: T -- will be added by each element
+   */
   field?: string;
-  fixed: (string | number);
 }
 
 export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  fixed?: number;
   max: number;
   min: number;
 }
 
-/**
- * This is actually an empty interface used mainly for naming?
- */
-export interface ColorDimensionConfig extends BaseDimensionConfig {}
+export interface ColorDimensionConfig extends BaseDimensionConfig {
+  fixed?: string; // color value
+}
 
 export enum TextDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Template = 'template',
+}
+
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  fixed?: string;
+  mode: TextDimensionMode;
+}
+
+export enum ResourceDimensionMode {
   Field = 'field',
   Fixed = 'fixed',
   Template = 'template',
@@ -785,8 +798,12 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-export interface TextDimensionConfig extends BaseDimensionConfig {
-  mode: TextDimensionMode;
+/**
+ * Links to a resource (image/svg path)
+ */
+export interface ResourceDimensionConfig extends BaseDimensionConfig {
+  fixed?: string;
+  mode: ResourceDimensionMode;
 }
 
 export interface FrameGeometrySource {

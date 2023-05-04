@@ -27,6 +27,12 @@ export interface TextDimensionConfig extends BaseDimensionConfig<string>, Omit<r
 
 export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
 
+export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
+
+export interface ResourceDimensionConfig
+  extends BaseDimensionConfig<string>,
+    Omit<raw.ResourceDimensionConfig, 'fixed'> {}
+
 export * from '../common/common.gen';
 
 // TODO remove when https://github.com/grafana/cuetsy/issues/74 is fixed
