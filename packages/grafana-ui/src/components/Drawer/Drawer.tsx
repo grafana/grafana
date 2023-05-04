@@ -70,10 +70,9 @@ export function Drawer({
     setIsOpen(true);
   }, []);
 
-  // deprecated width width prop now defaults to empty string which make the size prop take over
+  // deprecated width prop now defaults to empty string which make the size prop take over
   const fixedWidth = isExpanded ? '100%' : width ?? '';
-  const useSizeWidth = !fixedWidth && !isExpanded;
-  const rootClass = cx(styles.drawer, useSizeWidth && styles.sizes[size]);
+  const rootClass = cx(styles.drawer, !fixedWidth && styles.sizes[size]);
   const content = <div className={styles.content}>{children}</div>;
 
   return (
