@@ -12,7 +12,7 @@ In this section, we show an example of tracking usage data from a query editor a
 
 ### Sample query editor
 
-Let's say you have a `QueryEditor` that looks similar to the example below. It has a `QueryEditor` field where you can write your query and a query type selector so you can select the kind of query result that you expect to return:
+Let's say you have a `QueryEditor` that looks similar to the example below. It has a `CodeEditor` field where you can write your query and a query type selector so you can select the kind of query result that you expect to return:
 
 ```ts
 import React, { ReactElement } from 'react';
@@ -21,11 +21,11 @@ import type { EditorProps } from './types';
 
 export function QueryEditor(props: EditorProps): ReactElement {
   const { datasource, query, onChange, onRunQuery } = props;
-  const queryType = { value: query.value ?? 'timeserie' };
+  const queryType = { value: query.value ?? 'timeseries' };
   const queryTypes = [
     {
-      label: 'Timeserie',
-      value: 'timeserie',
+      label: 'Timeseries',
+      value: 'timeseries',
     },
     {
       label: 'Table',
@@ -89,11 +89,11 @@ export function QueryEditor(props: EditorProps): ReactElement {
   const { datasource, query, onChange, onRunQuery } = props;
   const report = usePluginInteractionReporter();
 
-  const queryType = { value: query.value ?? 'timeserie' };
+  const queryType = { value: query.value ?? 'timeseries' };
   const queryTypes = [
     {
-      label: 'Timeserie',
-      value: 'timeserie',
+      label: 'Timeseries',
+      value: 'timeseries',
     },
     {
       label: 'Table',
@@ -160,7 +160,7 @@ In our example, the following information is sent to the analytics service confi
     plugin_id: 'grafana-example-datasource',
     plugin_name: 'Example',
     datasource_uid: 'qeSI8VV7z', // will only be added for datasources
-    query_type: 'timeserie'
+    query_type: 'timeseries'
   }
 }
 ```

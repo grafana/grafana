@@ -7,7 +7,7 @@ title: Add authentication for data source plugins
 
 # Add authentication for data source plugins
 
-Grafana plugins support authentication using encryption, OAuth, and data source proxies. Use this guide to learn how to work with authentication.
+Grafana plugins can perform authenticated requests against a third-party API by using the _data source proxy_ or through a custom a _backend plugin_.
 
 ## Choose an authentication method
 
@@ -16,16 +16,16 @@ Configure your data source plugin to authenticate against a third-party API in o
 - Use the [_data source proxy_](#authenticate-using-the-data-source-proxy) method, or
 - Build a [_backend plugin_](#authenticate-using-a-backend-plugin).
 
-| Case                                                                                            | Use                        |
-| ----------------------------------------------------------------------------------------------- | -------------------------- |
-| Do you need to authenticate your plugin using Basic Auth or API keys?                           | Use the data source proxy. |
-| Does your API support OAuth 2.0 using client credentials?                                       | Use the data source proxy. |
-| Does your API use a custom authentication method that isn't supported by the data source proxy? | Use a backend plugin.      |
-| Does your API communicate over a protocol other than HTTP?                                      | Use a backend plugin.      |
+| Case                                                                                            | Use                             |
+| ----------------------------------------------------------------------------------------------- | ------------------------------- |
+| Do you need to authenticate your plugin using Basic Auth or API keys?                           | Use the data source proxy.      |
+| Does your API support OAuth 2.0 using client credentials?                                       | Use the data source proxy.      |
+| Does your API use a custom authentication method that isn't supported by the data source proxy? | Use a backend plugin.           |
+| Does your API communicate over a protocol other than HTTP?                                      | Build and use a backend plugin. |
 
 ## Encrypt data source configuration
 
-Data source plugins have two ways of storing custom configuration: `jsonData` and `secureJsonData`. Stored data can be configured to support an API key.
+Data source plugins have two ways of storing custom configuration: `jsonData` and `secureJsonData`.
 
 ### Store configuration in `jsonData`
 
