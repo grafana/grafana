@@ -59,22 +59,19 @@ export function Drawer({
 }: Props) {
   const styles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
       isDismissable: false,
-      isOpen,
+      isOpen: true,
       onClose,
     },
     overlayRef
   );
 
-  // RcDrawer v4.x needs to be mounted in advance for animations to play.
-  useEffect(() => {
-    setIsOpen(true);
-  }, []);
+  // Adds body class while open so the toolbar nav can hide some actions while drawer is open
+  useBodyClassWhileOpen(inline);
 
   // deprecated width prop now defaults to empty string which make the size prop take over
   const fixedWidth = isExpanded ? '100%' : width ?? '';
@@ -83,7 +80,7 @@ export function Drawer({
 
   return (
     <RcDrawer
-      open={isOpen}
+      open={true}
       onClose={onClose}
       placement="right"
       width={fixedWidth}
@@ -157,6 +154,20 @@ export function Drawer({
       </FocusScope>
     </RcDrawer>
   );
+}
+
+function useBodyClassWhileOpen(inline?: boolean) {
+  useEffect(() => {
+    if (inline || !document.body) {
+      return;
+    }
+
+    document.body.classList.add('body-drawer-open');
+
+    return () => {
+      document.body.classList.remove('body-drawer-open');
+    };
+  }, [inline]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
