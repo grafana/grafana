@@ -209,9 +209,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }));
   }
 
-  private getSituationInSpanSet(textUntilCaret: string): Situation {
+  private getSituationInSpanSet(textUntilCaret: string, fullQuery: string): Situation {
     const situation: Situation = {
-      query: textUntilCaret,
+      query: fullQuery,
       type: 'EMPTY',
     };
     const nameRegex = /(?<name>[\w./-]+)?/;
@@ -317,7 +317,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     // Check if we're inside a span set
     let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
     if (isInSpanSet) {
-      return this.getSituationInSpanSet(textUntilCaret);
+      return this.getSituationInSpanSet(textUntilCaret, text);
     }
 
     // Will happen only if user writes something that isn't really a tag selector
