@@ -69,6 +69,9 @@ To submit an **update** for an already published plugin:
 1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update.
+
+   {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
+
 1. Enter the information requested by the form.
    - **OS & Architecture:**
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
@@ -117,8 +120,6 @@ To submit an **update** for an already published plugin:
 ### Do plugin signatures expire?
 
 - Plugin signatures do not currently expire.
-
-{{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
 ### What source code URL formats are supported?
 
