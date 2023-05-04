@@ -1,5 +1,5 @@
 import { cloneDeep, find, first as _first, isObject, isString, map as _map } from 'lodash';
-import { generate, lastValueFrom, Observable, of } from 'rxjs';
+import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
@@ -739,7 +739,11 @@ export class ElasticDatasource
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    return lastValueFrom(this.legacyQueryRunner.request('GET', '/')).then(
+    const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
+      ? from(this.getResource(''))
+      : this.legacyQueryRunner.request('GET', '/');
+
+    return lastValueFrom(getDbVersionObservable).then(
       (data) => {
         const versionNumber = data?.version?.number;
         if (typeof versionNumber !== 'string') {
