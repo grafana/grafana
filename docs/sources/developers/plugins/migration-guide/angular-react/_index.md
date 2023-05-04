@@ -18,7 +18,7 @@ If you want to migrate a plugin to Grafana's React-based plugin platform, then w
 While there's no standard migration path from an Angular plugin to the new React platform, we’ve learned that one of the easiest ways to migrate is to:
 
 1. Create a new branch called `migrate-to-react`.
-1. Start from scratch with one of the templates provided by the Grafana Toolkit. SHOULDN'T THIS BE THE CREATE PLUGIN TOOL?
+1. Start from scratch with one of the templates provided by the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool.
 1. Move the existing code into the new plugin incrementally, one component at a time.
 
 ## Migrate a panel plugin
