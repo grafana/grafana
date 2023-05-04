@@ -75,8 +75,9 @@ export function QueryEditor(props: EditorProps): ReactElement {
 Let's say that you want to track how the usage looks between time series and table queries.
 
 What you want to do is to add the `usePluginInteractionReporter` to fetch a report function that takes two arguments:
-- Required: An event name that begins with `grafana_plugin_`. It is used to identify the interaction being made. 
-- Optional: Attached contextual data. In our example, that is the query type. 
+
+- Required: An event name that begins with `grafana_plugin_`. It is used to identify the interaction being made.
+- Optional: Attached contextual data. In our example, that is the query type.
 
 ```ts
 import React, { ReactElement } from 'react';
@@ -142,9 +143,9 @@ export function QueryEditor(props: EditorProps): ReactElement {
 }
 ```
 
-### Data returned from the analytics service 
+### Data returned from the analytics service
 
-When you use `usePluginInteractionReporter`, the report function that is handed back to you automatically attaches contextual data about the plugin you are tracking to the events. 
+When you use `usePluginInteractionReporter`, the report function that is handed back to you automatically attaches contextual data about the plugin you are tracking to the events.
 
 In our example, the following information is sent to the analytics service configured by the Grafana server administrator:
 

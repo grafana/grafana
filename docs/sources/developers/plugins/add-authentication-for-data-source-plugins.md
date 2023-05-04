@@ -12,15 +12,16 @@ Grafana plugins support authentication using encryption, data source proxies. Us
 ## Choose an authentication method
 
 Configure your data source plugin to authenticate against a third-party API in one of either of two ways:
-  - Use the [_data source proxy_](#authenticate-using-the-data-source-proxy) method, or
-  - Build a [_backend plugin_](#authenticate-using-a-backend-plugin). 
 
-| Case                                                           | Use                                                         |
-| ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Do you need to authenticate your plugin using Basic Auth or API keys?               | Use the data source proxy.         |
-| Does your API support OAuth 2.0 using client credentials? | Use the data source proxy.
-| Does your API use a custom authentication method that isn't supported by the data source proxy?               | Use a backend plugin.      |
-| Does your API communicate over a protocol other than HTTP? | Use a backend plugin. 
+- Use the [_data source proxy_](#authenticate-using-the-data-source-proxy) method, or
+- Build a [_backend plugin_](#authenticate-using-a-backend-plugin).
+
+| Case                                                                                            | Use                        |
+| ----------------------------------------------------------------------------------------------- | -------------------------- |
+| Do you need to authenticate your plugin using Basic Auth or API keys?                           | Use the data source proxy. |
+| Does your API support OAuth 2.0 using client credentials?                                       | Use the data source proxy. |
+| Does your API use a custom authentication method that isn't supported by the data source proxy? | Use a backend plugin.      |
+| Does your API communicate over a protocol other than HTTP?                                      | Use a backend plugin.      |
 
 ## Encrypt data source configuration
 
@@ -28,11 +29,11 @@ Data source plugins have two ways of storing custom configuration: `jsonData` an
 
 ### Store configuration in `jsonData`
 
-Users with the Viewer role can access data source configuration such as the contents of `jsonData` in cleartext. If you've enabled anonymous access, anyone who can access Grafana in their browser can see the contents of `jsonData`. 
+Users with the Viewer role can access data source configuration such as the contents of `jsonData` in cleartext. If you've enabled anonymous access, anyone who can access Grafana in their browser can see the contents of `jsonData`.
 
 Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions).
 
-> **Important:** Do not use `jsonData` with sensitive data such as password, tokens, and API keys. If you need to store sensitive information, use `secureJsonData` instead. 
+> **Important:** Do not use `jsonData` with sensitive data such as password, tokens, and API keys. If you need to store sensitive information, use `secureJsonData` instead.
 
 > **Note:** You can see the settings that the current user has access to by entering `window.grafanaBootData` in the developer console of your browser.
 
@@ -47,67 +48,67 @@ Once you have encrypted the secure configuration, it can no longer be accessed f
 To demonstrate how you can add secrets to a data source plugin, let's add support for configuring an API key.
 
 1. Create a new interface in `types.ts` to hold the API key:
-    ```ts
-    export interface MySecureJsonData {
-      apiKey?: string;
-    }
-    ```
+   ```ts
+   export interface MySecureJsonData {
+     apiKey?: string;
+   }
+   ```
 1. Add type information to your `secureJsonData` object by updating the props for your `ConfigEditor` to accept the interface as a second type parameter:
 
-    ```ts
-    interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
-    ```
+   ```ts
+   interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
+   ```
 
 1. Access the value of the secret from the `options` prop inside your `ConfigEditor`:
 
-    ```ts
-    const { secureJsonData, secureJsonFields } = options;
-    const { apiKey } = secureJsonData;
-    ```
+   ```ts
+   const { secureJsonData, secureJsonFields } = options;
+   const { apiKey } = secureJsonData;
+   ```
 
-    > **Note:** You can do this until the user saves the configuration; when the user saves the configuration, Grafana clears the value. After that, you can use `secureJsonFields` to determine whether the property has been configured.
+   > **Note:** You can do this until the user saves the configuration; when the user saves the configuration, Grafana clears the value. After that, you can use `secureJsonFields` to determine whether the property has been configured.
 
 1. To securely update the secret in your plugin's configuration editor, update the `secureJsonData` object using the `onOptionsChange` prop:
 
-    ```ts
-    const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
-      onOptionsChange({
-        ...options,
-        secureJsonData: {
-          apiKey: event.target.value,
-        },
-      });
-    };
-    ```
+   ```ts
+   const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+     onOptionsChange({
+       ...options,
+       secureJsonData: {
+         apiKey: event.target.value,
+       },
+     });
+   };
+   ```
 
 1. Define a component that can accept user input:
 
-    ```ts
-    <Input
-      type="password"
-      placeholder={secureJsonFields?.apiKey ? 'configured' : ''}
-      value={secureJsonData.apiKey ?? ''}
-      onChange={onAPIKeyChange}
-    />
-    ```
+   ```ts
+   <Input
+     type="password"
+     placeholder={secureJsonFields?.apiKey ? 'configured' : ''}
+     value={secureJsonData.apiKey ?? ''}
+     onChange={onAPIKeyChange}
+   />
+   ```
 
 1. Optional: If you want the user to be able to reset the API key, then you need to set the property to `false` in the `secureJsonFields` object:
 
-    ```ts
-    const onResetAPIKey = () => {
-      onOptionsChange({
-        ...options,
-        secureJsonFields: {
-          ...options.secureJsonFields,
-          apiKey: false,
-        },
-        secureJsonData: {
-          ...options.secureJsonData,
-          apiKey: '',
-        },
-      });
-    };
-    ```
+   ```ts
+   const onResetAPIKey = () => {
+     onOptionsChange({
+       ...options,
+       secureJsonFields: {
+         ...options.secureJsonFields,
+         apiKey: false,
+       },
+       secureJsonData: {
+         ...options.secureJsonData,
+         apiKey: '',
+       },
+     });
+   };
+   ```
 
 Now that users can configure secrets, the next step is to see how we can add them to our requests.
 
@@ -136,7 +137,7 @@ To forward requests through the Grafana proxy, you need to configure one or more
    ]
    ```
 
-    > **Note:** You need to restart the Grafana server every time you make a change to your `plugin.json` file.
+   > **Note:** You need to restart the Grafana server every time you make a change to your `plugin.json` file.
 
 1. In the `DataSource`, extract the proxy URL from `instanceSettings` to a class property called `url`:
 
@@ -175,25 +176,25 @@ Grafana sends the proxy route to the server, where the data source proxy decrypt
 
 1. To add user-defined configuration to your routes, add `{{ .JsonData.projectId }}` to the route, where `projectId` is the name of a property in the `jsonData` object:
 
-    ```json
-    "routes": [
-      {
-        "path": "example",
-        "url": "https://api.example.com/projects/{{ .JsonData.projectId }}"
-      }
-    ]
-    ```
+   ```json
+   "routes": [
+     {
+       "path": "example",
+       "url": "https://api.example.com/projects/{{ .JsonData.projectId }}"
+     }
+   ]
+   ```
 
 1. Optional: You can also configure your route to use sensitive data by using `.SecureJsonData`:
 
-    ```json
-    "routes": [
-      {
-        "path": "example",
-        "url": "https://{{ .JsonData.username }}:{{ .SecureJsonData.password }}@api.example.com"
-      }
-    ]
-    ```
+   ```json
+   "routes": [
+     {
+       "path": "example",
+       "url": "https://{{ .JsonData.username }}:{{ .SecureJsonData.password }}@api.example.com"
+     }
+   ]
+   ```
 
 In addition to adding the URL to the proxy route, you can also add headers, URL parameters, and a request body.
 

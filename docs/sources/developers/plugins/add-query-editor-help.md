@@ -71,4 +71,3 @@ Query editors support the addition of a help component for queries so that they 
      );
    };
    ```
-

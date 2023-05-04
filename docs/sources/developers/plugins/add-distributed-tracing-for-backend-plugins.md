@@ -21,7 +21,7 @@ tracing = true
 
 ### OpenTelemetry configuration
 
-Grafana supports [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing), then tracing is disabled in the plugin. 
+Grafana supports [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing), then tracing is disabled in the plugin.
 
 > **Note:** Although Grafana doesn't support Jaeger, it supports [OpenTelemetry Jaeger propagator](https://www.npmjs.com/package/@opentelemetry/propagator-jaeger) for HTTP header propagation.
 
@@ -38,7 +38,7 @@ Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel)
 
 When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabled for a plugin, the OpenTelemetry endpoint address and propagation format is passed to the plugin during startup. These parameters are used to configure a global tracer.
 
-1. Use `datasource.Manage` or `app.Manage` to run your plugin to automatically configure the global tracer, and specify custom attributes for the default tracer: 
+1. Use `datasource.Manage` or `app.Manage` to run your plugin to automatically configure the global tracer, and specify custom attributes for the default tracer:
 
    ```go
    func main() {
