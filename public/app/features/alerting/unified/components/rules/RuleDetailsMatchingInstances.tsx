@@ -44,7 +44,7 @@ function ShowMoreInstances(props: { onClick: () => void; stats: ShowMoreStats })
       <div>
         Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances
       </div>
-      <Button size="sm" variant="secondary" onClick={onClick}>
+      <Button size="sm" variant="secondary" data-testid="show-all" onClick={onClick}>
         Show all {stats.totalItemsCount} alert instances
       </Button>
     </div>
