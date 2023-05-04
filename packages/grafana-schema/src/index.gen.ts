@@ -94,9 +94,6 @@ export {
 // Raw generated types from Folder kind.
 export type { Folder } from './raw/folder/x/folder_types.gen';
 
-// Raw generated enums and default consts from folder kind.
-export { defaultFolder } from './raw/folder/x/folder_types.gen';
-
 // Raw generated types from LibraryPanel kind.
 export type {
   LibraryElementDTOMetaUser,
@@ -114,17 +111,6 @@ export type {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type { LibraryPanel } from './veneer/librarypanel.types';
 
-// The following exported declarations correspond to types in the librarypanel@0.0 kind's
-// schema with attribute @grafana(TSVeneer="type").
-//
-// The handwritten file for these type and default veneers is expected to be at
-// packages/grafana-schema/src/veneer/librarypanel.types.ts.
-// This re-export declaration enforces that the handwritten veneer file exists,
-// and exports all the symbols in the list.
-//
-// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
-export { defaultLibraryPanel } from './veneer/librarypanel.types';
-
 // Raw generated types from Playlist kind.
 export type {
   Playlist,
@@ -140,14 +126,8 @@ export type {
   QueryHistoryPreference
 } from './raw/preferences/x/preferences_types.gen';
 
-// Raw generated enums and default consts from preferences kind.
-export { defaultPreferences } from './raw/preferences/x/preferences_types.gen';
-
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
-
-// Raw generated enums and default consts from publicdashboard kind.
-export { defaultPublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
 
 // Raw generated types from ServiceAccount kind.
 export type {
@@ -162,7 +142,4 @@ export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_typ
 export type { Team } from './raw/team/x/team_types.gen';
 
 // Raw generated enums and default consts from team kind.
-export {
-  defaultTeam,
-  Permission
-} from './raw/team/x/team_types.gen';
+export { Permission } from './raw/team/x/team_types.gen';
