@@ -30,21 +30,28 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   if (!data || rowIndex == null) {
     return null;
   }
-
+  const fields = data.fields.map((f, idx) => {
+    return { ...f, highlight: idx === columnIndex };
+  });
   // Put the traceID field in front.
-  const visibleFields = data.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  const traceIDField = visibleFields.find((field) => field.name === 'traceID') || data.fields[0];
+  const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
+  const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
   const orderedVisibleFields = [traceIDField, ...visibleFields.filter((field) => traceIDField !== field)];
 
   if (orderedVisibleFields.length === 0) {
     return null;
   }
 
-  const displayValues: Array<[string, unknown, string]> = [];
+  //TODO change this to an array of objects with structure
+  const displayValues: Array<[string, unknown, string, boolean]> = [];
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  for (const f of orderedVisibleFields) {
+  for (let i = 0; i < orderedVisibleFields.length; i++) {
+    const f = orderedVisibleFields[i];
+    if (mode === TooltipDisplayMode.Single && columnIndex != null && !f.highlight) {
+      continue;
+    }
     const v = f.values[rowIndex];
     const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
     if (f.getLinks) {
@@ -57,7 +64,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
-    displayValues.push([getFieldDisplayName(f, data), v, formattedValueToString(disp)]);
+    displayValues.push([getFieldDisplayName(f, data), v, formattedValueToString(disp), f.highlight]);
   }
 
   if (sortOrder && sortOrder !== SortOrder.None) {
@@ -96,19 +103,12 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       )}
       <table className={styles.infoWrap}>
         <tbody>
-          {(mode === TooltipDisplayMode.Multi || mode == null) &&
-            displayValues.map((v, i) => (
-              <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
-                <th>{v[0]}:</th>
-                <td>{renderValue(v[2])}</td>
-              </tr>
-            ))}
-          {mode === TooltipDisplayMode.Single && columnIndex && (
-            <tr key={`${columnIndex}/${rowIndex}`}>
-              <th>{displayValues[columnIndex][0]}:</th>
-              <td>{renderValue(displayValues[columnIndex][2])}</td>
+          {displayValues.map((v, i) => (
+            <tr key={`${i}/${rowIndex}`} className={v[3] ? styles.highlight : ''}>
+              <th>{v[0]}:</th>
+              <td>{renderValue(v[2])}</td>
             </tr>
-          )}
+          ))}
           {renderLinks()}
         </tbody>
       </table>
@@ -155,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     highlight: css`
-      background: ${theme.colors.action.hover};
+      background: ${theme.colors.action.hover}; //TODO investigate highlight styling
     `,
     link: css`
       color: #6e9fff;
