@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Card, useStyles2 } from '@grafana/ui';
+import { Badge, Card, useStyles2, Icon, Tooltip } from '@grafana/ui';
+import config from 'app/core/config';
 
 import { BASE_PATH } from '../constants';
 
@@ -21,9 +22,23 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
   const styles = useStyles2(getStyles);
   configPath = BASE_PATH + (configPath || providerId);
 
+  // TODO: make this auth agnostic
+  const isEnabledInIniFile = config.samlEnabled;
   return (
     <Card href={configPath} className={styles.container}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
+      {isEnabledInIniFile && (
+        <>
+          <span className={styles.initext}>
+            <Tooltip
+              content={`Note: Settings enabled in the .ini configuration file will overwritten by the current settings.`}
+            >
+              <Icon name="adjust-circle" />
+            </Tooltip>
+            Configuration found in .ini file
+          </span>
+        </>
+      )}
       <div className={styles.footer}>
         {authType && <Badge text={authType} color="blue" icon="info-circle" />}
         {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="red" />}
@@ -56,6 +71,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.h4.fontSize};
       color: ${theme.colors.text.primary};
       margin: 0;
+    `,
+    initext: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(1)} 0; // Add some padding
+      max-width: 90%; // Add a max-width to prevent text from stretching too wide
     `,
   };
 };
