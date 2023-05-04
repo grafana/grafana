@@ -16,13 +16,16 @@ Welcome to Grafana 10.0! Read on to learn about changes to search and navigation
 
 <!-- Template below
 ## Feature
-[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
+<!-- Name of contributor -->
+<!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
 ## Authentication and authorization
 
 ### No longer possible to disable Role-based access control
+
+<!-- Name of contributor -->
 
 _Generally available in all editions of Grafana._
 
@@ -33,6 +36,8 @@ We understand that this may affect some users who have relied on the ability to 
 If you have disabled RBAC for you Grafana instance, refer to our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}) to check if the change is impacting you and what you can do to mitigate any potential issues.
 
 ### SAML UI
+
+<!-- Name of contributor -->
 
 _Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
@@ -45,6 +50,8 @@ For more information on how to set up SAML using the Grafana UI, refer to [Confi
 
 ### Case-insensitive usernames and email addresses
 
+<!-- Name of contributor -->
+
 _Generally available in all editions of Grafana._
 
 Usernames and email addresses are now treated as case-insensitive, which means that you will no longer need to worry about capitalization when logging in or creating an account.
@@ -56,6 +63,8 @@ To help you with dealing with potential user identity conflicts, we have built a
 Note that if you are running Grafana with MySQL as a database, this change does not have any impact as MySQL users were already treated as case-insensitive.
 
 ## Creating subfolders
+
+<!-- Name of contributor -->
 
 _Available in preview in all editions of Grafana._
 
@@ -73,6 +82,8 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 ## Correlations
 
+<!-- Name of contributor -->
+
 _Available in preview in all editions of Grafana._
 
 You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality and now enables you to link from any data source, to any data source.
@@ -89,6 +100,8 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 ### Enhanced data source selection experience: simplifying querying for users
 
+<!-- Name of contributor -->
+
 _Available in preview in all editions of Grafana._
 
 Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
@@ -100,6 +113,8 @@ With this flow, selecting a data source has been greatly simplified, providing a
 To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ### Public dashboards
+
+<!-- Name of contributor -->
 
 _Available in preview in all editions of Grafana._
 Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
@@ -117,6 +132,8 @@ To learn more, check out our public dashboards [documentation]({{< relref "../..
 
 ### Public dashboards insights
 
+<!-- Name of contributor -->
+
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 The public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
@@ -124,6 +141,8 @@ The public dashboards insights provide valuable information about your public da
 To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ### Email sharing for public dashboards
+
+<!-- Name of contributor -->
 
 _Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
@@ -134,6 +153,8 @@ We've also added a **Public dashboard users** tab in **Administration > Users** 
 To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ### Datagrid
+
+<!-- Name of contributor -->
 
 We introduced a new panel, which allows users to edit their data within a Grafana dashboard: The Datagrid
 The Datagrid is a new beta panel that allows users to edit their data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a datasource or create your own dataset from scratch and use it within your dashboard to update your panels in real time.
@@ -157,6 +178,8 @@ The list of features is already growing and of course we will look into those. S
 
 ### Drag and Drop
 
+<!-- Name of contributor -->
+
 Finally connecting your local data is made easier! Welcome drag & drop in Grafana!
 The drag & drop functionality allows users to connect their csv, excel or numbers files by simply dragging and dropping them on a dashboard, or even into the editor directly.
 
@@ -178,11 +201,15 @@ The list of requests is already growing and of course we will look into those. S
 
 ### Canvas GA
 
+<!-- Name of contributor -->
+
 We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
 ### New Trend Panel
+
+<!-- Name of contributor -->
 
 _Available in **beta** in all editions of Grafana_
 
@@ -190,17 +217,23 @@ We are excited to introduce a new panel that allows you to display trends where 
 
 ### Time series time region support
 
+<!-- Name of contributor -->
+
 We have implemented support for adding time regions to the time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday-Friday to display work weeks right alongside your data. Time regions are a useful way to highlight specific parts of a day like night, work hours, or whatever you define for each day. They allow the viewer to quickly orient themselves in parts of the day and/or ignore highlighted parts of the time series.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
 ### Annotation filtering
 
+<!-- Name of contributor -->
+
 We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
 ### Redesigned and improved Log Context
+
+<!-- Name of contributor -->
 
 Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
 
@@ -217,6 +250,8 @@ These improvements make working with log context in Grafana more intuitive and e
 
 ## Scenes
 
+<!-- Name of contributor -->
+
 _This is an experimental library_
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
@@ -229,6 +264,8 @@ To try it out, please check [@grafana/scenes](https://github.com/grafana/scenes)
 
 ## Query multiple data sources in Explore
 
+<!-- Name of contributor -->
+
 _Available in preview in all editions of Grafana using the exploreMixedDatasource feature toggle in all editions of Grafana._
 
 You can now query multiple data sources in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
@@ -238,6 +275,8 @@ Mixed data source in Explore is gradually rolling out to all users on Grafana Cl
 ## Tracing
 
 ### Span filtering for traces
+
+<!-- Name of contributor -->
 
 _Available in preview in all editions of Grafana._
 
@@ -256,17 +295,23 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If you�
 
 ### OpenTelemetry replacing OpenTracing
 
+<!-- Name of contributor -->
+
 We have started our work to migrate to OpenTelemetry in Grafana 8.4 and now we are removing OpenTracing and replacing it, for those that still have it configured, with OpenTelemetry under the hood. The changes are made in backwards compatible way so that users of Grafana do not need to change anything and they will continue working in the same way as before.
 
 ## Datasources
 
 ### Azure Monitor data source
 
+<!-- Name of contributor -->
+
 The Azure Monitor datasource now supports visualizing Application Insights Traces. A new query type `Traces` has been added to the service list. This can be utilised against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
 This also includes support for a new Azure API that will correlate trace ID's against all Application Insights resources that are accessible to the principal that the datasource is configured with. To support this feature a new query builder has been added with support for querying the Application Insights resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
 
 ### Prometheus dashboard performance improvements
+
+<!-- Name of contributor -->
 
 _This is an experimental feature_
 
@@ -275,21 +320,29 @@ This will reduce network load, and speed up now-relative dashboards, especially 
 
 ### Phlare renamed to Grafana Pyroscope
 
+<!-- Name of contributor -->
+
 As a part of ongoing unification of Phlare and Pyroscope project we are renaming the Phlare data source to Grafana Pyroscope data source. This data source will support both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When creating new instance of the data source, backend type will be autodetected on the config page, or you can select it manually.
 
 ## Alerting
 
 ### State history view
 
+<!-- Name of contributor -->
+
 Use the improved State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
 
 ### Preview notification templates
+
+<!-- Name of contributor -->
 
 Preview how your notification templates will look before using them in your contact points.
 
 ## Security
 
 ### Trusted Types support
+
+<!-- Name of contributor -->
 
 _In development, available in all editions of Grafana._
 
