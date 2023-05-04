@@ -247,11 +247,7 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
             </Button>
           )}
           {!loading && <Button type="submit">Save silence</Button>}
-          <LinkButton
-            href={makeAMLink('alerting/silences', alertManagerSourceName)}
-            variant={'secondary'}
-            fill="outline"
-          >
+          <LinkButton href={makeAMLink('alerting/silences', alertManagerSourceName)} variant={'secondary'}>
             Cancel
           </LinkButton>
         </div>

@@ -217,13 +217,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
             Save rule and exit
           </Button>
           <Link to={returnTo}>
-            <Button
-              variant="secondary"
-              disabled={submitState.loading}
-              type="button"
-              fill="outline"
-              onClick={cancelRuleCreation}
-            >
+            <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation}>
               Cancel
             </Button>
           </Link>
