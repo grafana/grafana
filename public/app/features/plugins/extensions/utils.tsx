@@ -104,34 +104,48 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
   return Object.freeze(clonedValue);
 }
 
-export function readOnlyProxy<T extends object>(value: T): T {
-  if (!value || typeof value !== 'object') {
-    return value;
+export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
+  const str = `${pluginId}${extensionConfig.extensionPointId}${extensionConfig.title}`;
+
+  return Array.from(str)
+    .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
+    .toString();
+}
+
+const _isProxy = Symbol('isReadOnlyProxy');
+
+/**
+ * Returns a proxy that wraps the given object in a way that makes it read only.
+ * If you try to modify the object a TypeError exception will be thrown.
+ *
+ * @param obj The object to make read only
+ * @returns A new read only object, does not modify the original object
+ */
+export function toReadOnlyProxy<T extends object>(obj: T): T {
+  if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj)) {
+    return obj;
   }
 
-  const wm = new WeakMap();
+  const cache = new WeakMap();
+  const readonly = () => false;
 
-  return new Proxy(value, {
-    defineProperty(target, prop, attr) {
-      return false;
-    },
-    deleteProperty(target, prop) {
-      return false;
-    },
-    isExtensible(target) {
-      return false;
-    },
-    set(target, prop, value, receiver) {
-      return false;
-    },
+  return new Proxy(obj, {
+    defineProperty: readonly,
+    deleteProperty: readonly,
+    isExtensible: readonly,
+    set: readonly,
     get(target, prop, receiver) {
+      if (prop === _isProxy) {
+        return true;
+      }
+
       const value = Reflect.get(target, prop, receiver);
 
       if (isObject(value) || isArray(value)) {
-        if (!wm.has(value)) {
-          wm.set(value, readOnlyProxy(value));
+        if (!cache.has(value)) {
+          cache.set(value, toReadOnlyProxy(value));
         }
-        return wm.get(value);
+        return cache.get(value);
       }
 
       return value;
@@ -139,10 +153,6 @@ export function readOnlyProxy<T extends object>(value: T): T {
   });
 }
 
-export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
-  const str = `${pluginId}${extensionConfig.extensionPointId}${extensionConfig.title}`;
-
-  return Array.from(str)
-    .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
-    .toString();
+function isReadOnlyProxy(value: unknown): boolean {
+  return value instanceof Proxy && value[_isProxy] === true;
 }

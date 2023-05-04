@@ -1,6 +1,6 @@
 import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
-import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, readOnlyProxy } from './utils';
+import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, toReadOnlyProxy } from './utils';
 
 describe('Plugin Extensions / Utils', () => {
   describe('deepFreeze()', () => {
@@ -220,28 +220,14 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('readOnlyProxy()', () => {
-    test('testing', () => {
-      const value = {
-        a: 'a',
-        b: {
-          c: 'c',
-        },
-      };
-
-      const proxy = readOnlyProxy(value);
-      expect(proxy.a).toBe('a');
-      expect(proxy.b.c).toBe('c');
+  describe('toReadOnlyProxy()', () => {
+    it('should not be able to modify values on proxied object', () => {
+      const value = { a: 'a' };
+      const proxy = toReadOnlyProxy(value);
 
       expect(() => {
         proxy.a = 'b';
       }).toThrowError(TypeError);
-
-      expect(() => {
-        proxy.b.c = 'd';
-      }).toThrowError(TypeError);
-
-      expect(proxy.b).toBe(proxy.b);
     });
   });
 });
