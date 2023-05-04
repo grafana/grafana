@@ -68,7 +68,7 @@ To submit an **update** for an already published plugin:
 
 1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
-1. Click **Submit Update** for the plugin you want to update.
+1. Click **Submit Update** for the plugin you want to update. The Create Plugin Submission form appears.
 
    {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
