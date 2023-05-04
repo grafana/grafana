@@ -3,7 +3,7 @@ description: How to package a plugin
 title: Package a plugin
 ---
 
-By packaging a plugin, you can organize the plugin code and make it ready for use in your organization. 
+By packaging a plugin, you can organize the plugin code and make it ready for use in your organization.
 
 ## Package a plugin for distribution
 

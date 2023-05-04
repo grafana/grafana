@@ -8,7 +8,7 @@ Grafana supports a variety of different data sources, each with its own data mod
 
 ## The data frame
 
-Data frames have a columnar-oriented table structure, which means it stores data by column and not by row. 
+Data frames have a columnar-oriented table structure, which means it stores data by column and not by row.
 
 You can see what this means by looking at the TypeScript definition used by Grafana:
 

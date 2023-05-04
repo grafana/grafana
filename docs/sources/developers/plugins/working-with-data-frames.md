@@ -119,4 +119,3 @@ To apply field options to the name of a field, use `getFieldDisplayName`.
 const valueField = frame.fields.find((field) => field.type === FieldType.number);
 const valueFieldName = getFieldDisplayName(valueField, frame);
 ```
-
