@@ -101,12 +101,12 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
   cache = new Map<TargetIdent, TargetCache>();
 
-  constructor(
-    getTargetSignature: (request: DataQueryRequest<T>, target: T) => string,
-    overlapString: string,
-    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData
-  ) {
-    const unverifiedOverlap = overlapString;
+  constructor(options: {
+    getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+    overlapString: string;
+    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
+  }) {
+    const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
       this.overlapWindowMs = durationToMilliseconds(duration);
@@ -121,8 +121,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
     } else {
       this.shouldProfile = false;
     }
-    this.getProfileData = profileFunction;
-    this.getTargetSignature = getTargetSignature;
+    this.getProfileData = options.profileFunction;
+    this.getTargetSignature = options.getTargetSignature;
   }
 
   private profile() {

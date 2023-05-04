@@ -143,17 +143,12 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
-    this.cache = new QueryCache(
-      this.getPrometheusTargetSignature.bind(this),
-      instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
-      (request, targ) => {
-        return {
-          interval: targ.interval ?? request.interval,
-          expr: this.interpolateString(targ.expr),
-          datasource: 'Prometheus',
-        };
-      }
-    );
+
+    this.cache = new QueryCache({
+      getTargetSignature: this.getPrometheusTargetSignature.bind(this),
+      overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
+      profileFunction: this.getPrometheusProfileData.bind(this),
+    });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -171,6 +166,14 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  getPrometheusProfileData(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+    return {
+      interval: targ.interval ?? request.interval,
+      expr: this.interpolateString(targ.expr),
+      datasource: 'Prometheus',
+    };
   }
 
   /**
