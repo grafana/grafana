@@ -12,14 +12,14 @@ You've just built your plugin; now you want to share it with the world.
 
 In this guide, you'll learn how to package and share your plugin with others.
 
-The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog]({{< "/plugins" >}}).
+The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog]{{< relref "/plugins" >}}).
 By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 ## Before you begin
 
 When you build a plugin from source, a `dist` folder is created. This folder contains the production build or _plugin assets_ for your plugin.
 
-To package a plugin, refer to [Package a plugin]({{< "package-a-plugin.md" >}}).
+To package a plugin, refer to [Package a plugin]{{< relref "package-a-plugin.md" >}}).
 
 ### Follow our guidelines
 
