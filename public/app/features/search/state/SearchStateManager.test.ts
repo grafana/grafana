@@ -55,11 +55,11 @@ describe('SearchStateManager', () => {
       }));
       const stm = getSearchStateManager();
       stm.initStateFromUrl();
-      // That they ahve been set
+      // That they have been set
       expect(stm.state.query).toBe('hello');
       expect(stm.state.sort).toBe('alpha-asc');
 
-      // Changed to a view with no URL state. Values are fetched from localStorage
+      // Changed to a view with no URL state. Stored values are fetched from localStorage
       parseRouteParamsSpy.mockImplementation(() => ({}));
       stm.initStateFromUrl();
 
