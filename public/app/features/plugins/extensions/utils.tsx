@@ -153,6 +153,10 @@ export function toReadOnlyProxy<T extends object>(obj: T): T {
   });
 }
 
+function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 function isReadOnlyProxy(value: unknown): boolean {
-  return value instanceof Proxy && value[_isProxy] === true;
+  return isRecord(value) && value[_isProxy] === true;
 }
