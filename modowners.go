@@ -1,20 +1,33 @@
 package main
 
 import (
-	"flag"
+	"fmt"
+	"log"
+	"os"
 
-	modfile "github.com/grafana/grafana/go.mod"
+	"golang.org/x/mod/modfile"
 )
 
 func main() {
-	// Define command line flags.
-	check := flag.String("check", "", "Check if go.mod is valid")
-	owners := flag.String("owners", "", "List owners of a particular dependency")
-	modules := flag.String("modules", "", "List all dependencies of a particular owner")
-
-	// Parse flags.
-	flag.Parse()
+	// Turn go.mod into array of bytes
+	data, err := os.ReadFile("dummy/go.mod")
+	if err != nil {
+		log.Fatalf("failed to read file: %s", err)
+	}
+	fmt.Printf("Contents of go.mod file:\n%s\n", string(data))
 
 	// Parse modfile
-	modfile.Parse()
+	modFile, err := modfile.Parse("", data, nil)
+	if err != nil {
+		log.Fatalf("failed to parse modfile: %s", err)
+	}
+
+	// TODO: remove this
+	fmt.Println("MODFILE", modFile.Module.Mod.Path)
+
+	// Iterate through requires in modfile
+	for _, require := range modFile.Require {
+		// For each require, print the comment suffix
+		fmt.Println("Require: %s", string(require.Syntax.Comments.Suffix))
+	}
 }
