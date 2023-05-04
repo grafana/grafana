@@ -55,6 +55,7 @@ import { EventManager } from './event_manager';
 import GraphTooltip from './graph_tooltip';
 import { convertToHistogramData } from './histogram';
 import { GraphCtrl } from './module';
+import { requestIdleCallback } from './request-idle-callback';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { isLegacyGraphHoverEvent } from './utils';
