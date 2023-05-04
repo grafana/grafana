@@ -286,6 +286,7 @@ export class Parser {
   }
 }
 
+// Next steps, need to make this applicable to types in graphite_query.ts
 export type AstNode = {
   type: string;
   name?: string;
