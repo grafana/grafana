@@ -140,7 +140,8 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given a dashboard with a parent folder which does not have an ACL", func(t *testing.T) {
 		fakeDash := dashboards.NewDashboard("Child dash")
-		fakeDash.ID = 1
+		fakeDash.SetID(1)
+		fakeDash.SetUID("test-uid-one")
 		fakeDash.FolderID = 1
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
@@ -188,6 +189,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 					dash := getDashboardShouldReturn200WithConfig(t, sc, nil, nil, dashboardService, nil)
 
+					assert.Equal(t, fakeDash.UID, dash.Dashboard.Get("uid").MustString())
 					assert.False(t, dash.Meta.CanEdit)
 					assert.False(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)

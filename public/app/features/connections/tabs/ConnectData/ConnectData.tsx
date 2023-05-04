@@ -27,7 +27,7 @@ const getStyles = () => ({
   `,
 });
 
-export function ConnectData() {
+export function AddNewConnection() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);

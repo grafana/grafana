@@ -21,8 +21,11 @@ describe('generateQueryFromFilters generates the correct query for', () => {
 
   it('a field with tag, operator and tag', () => {
     expect(generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=' }])).toBe(
-      '{.footag="foovalue"}'
+      '{.footag=foovalue}'
     );
+    expect(
+      generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: 'foovalue', operator: '=', valueType: 'string' }])
+    ).toBe('{.footag="foovalue"}');
   });
 
   it('a field with valueType as integer', () => {

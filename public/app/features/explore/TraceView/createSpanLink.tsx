@@ -165,6 +165,10 @@ function legacyCreateSpanLinkFactory(
         case 'grafana-falconlogscale-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
           query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
+          break;
+        case 'googlecloud-logging-datasource':
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
+          query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -402,6 +406,37 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
 
   return {
     query: query,
+    refId: '',
+  };
+}
+
+function getQueryForGoogleCloudLogging(
+  span: TraceSpan,
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  if (customQuery) {
+    return { query: customQuery, refId: '' };
+  }
+
+  let queryArr = [];
+  if (filterBySpanID && span.spanID) {
+    queryArr.push('"${__span.spanId}"');
+  }
+
+  if (filterByTraceID && span.traceID) {
+    queryArr.push('"${__span.traceId}"');
+  }
+
+  if (tags) {
+    queryArr.push('${__tags}');
+  }
+
+  return {
+    query: queryArr.join(' AND '),
     refId: '',
   };
 }

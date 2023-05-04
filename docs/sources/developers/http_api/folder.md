@@ -135,9 +135,12 @@ Creates a new folder.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-| Action           | Scope |
-| ---------------- | ----- |
-| `folders:create` | n/a   |
+`folders:create` allows creating folders in the root level. To create a subfolder, `folders:write` scoped to the parent folder is required in addition to `folders:create`.
+
+| Action           | Scope       |
+| ---------------- | ----------- |
+| `folders:create` | n/a         |
+| `folders:write`  | `folders:*` |
 
 **Example Request**:
 

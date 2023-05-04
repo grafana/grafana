@@ -2,12 +2,13 @@ import { render, waitFor, screen, fireEvent, within, Matcher, getByRole } from '
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
+import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataSourcePluginMeta } from '@grafana/data';
+import { DataSourcePluginMeta, SupportedTransformationType } from '@grafana/data';
 import { BackendSrv, setDataSourceSrv, BackendSrvRequest, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -274,6 +275,14 @@ describe('CorrelationsPage', () => {
 
       await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
+
+      // add transformation
+      await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
+      const typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Regular expression'));
+      await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
+
       await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
@@ -342,7 +351,14 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '1',
             label: 'Some label',
-            config: { field: 'line', target: {}, type: 'query' },
+            config: {
+              field: 'line',
+              target: {},
+              type: 'query',
+              transformations: [
+                { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
+              ],
+            },
           },
           {
             sourceUID: 'prometheus',
@@ -472,10 +488,62 @@ describe('CorrelationsPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
       expect(await screen.findByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
 
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
+    });
+
+    it('correctly edits transformations', async () => {
+      // wait for table to appear
+      await screen.findByRole('table');
+
+      const tableRows = queryRowsByCellValue('Source', 'loki');
+
+      const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
+      await userEvent.click(rowExpanderButton);
+
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+
+      // select Logfmt, be sure expression field is disabled
+      let typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Logfmt'));
+
+      let expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toBeDisabled();
+
+      // select Regex, be sure expression field is not disabled and contains the former expression
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Regular expression', { selector: 'span' }));
+      expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toBeEnabled();
+      expect(expressionInput).toHaveAttribute('value', 'url=http[s]?://(S*)');
+
+      // select Logfmt, delete, then add a new one to be sure the value is blank
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Logfmt'));
+      await userEvent.click(screen.getByRole('button', { name: /remove transformation/i }));
+      expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
+      typeFilterSelect = screen.getAllByLabelText('Type');
+      openMenu(typeFilterSelect[0]);
+      await userEvent.click(screen.getByText('Regular expression'));
+      expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toBeEnabled();
+      expect(expressionInput).not.toHaveValue('url=http[s]?://(S*)');
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
+      expect(screen.getByText('Please define an expression')).toBeInTheDocument();
+      await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
     });
   });
@@ -487,7 +555,12 @@ describe('CorrelationsPage', () => {
         targetUID: 'loki',
         uid: '1',
         label: 'Some label',
-        config: { field: 'line', target: {}, type: 'query' },
+        config: {
+          field: 'line',
+          target: {},
+          type: 'query',
+          transformations: [{ type: SupportedTransformationType.Regex, expression: '(?:msg)=' }],
+        },
       },
     ];
 
@@ -531,6 +604,16 @@ describe('CorrelationsPage', () => {
       const descriptionInput = screen.getByRole('textbox', { name: /description/i });
       expect(descriptionInput).toBeInTheDocument();
       expect(descriptionInput).toHaveAttribute('readonly');
+
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
+
+      // expect the transformation to exist but be read only
+      const expressionInput = screen.queryByLabelText(/expression/i);
+      expect(expressionInput).toBeInTheDocument();
+      expect(expressionInput).toHaveAttribute('readonly');
+      expect(screen.queryByRole('button', { name: 'add transformation' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'remove transformation' })).not.toBeInTheDocument();
 
       // we don't expect the save button to be rendered
       expect(screen.queryByRole('button', { name: 'save' })).not.toBeInTheDocument();

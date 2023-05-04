@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
-import { useAsyncFn } from 'react-use';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useAsync, useAsyncFn } from 'react-use';
 
 import {
   DataQueryResponse,
@@ -12,14 +12,19 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   SelectableValue,
+  dateTime,
+  TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
-import { LoadingBar, Modal, useTheme2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery, TimeZone } from '@grafana/schema';
+import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { splitOpen } from 'app/features/explore/state/main';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
+import { useDispatch } from 'app/types';
 
+import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
 import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
@@ -90,6 +95,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     paddingBottom: css`
       padding-bottom: ${theme.spacing(1)};
     `,
+    link: css`
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      :hover {
+        color: ${theme.colors.text.link};
+      }
+    `,
   };
 };
 
@@ -104,6 +116,8 @@ interface LogRowContextModalProps {
   timeZone: TimeZone;
   onClose: () => void;
   getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
+
+  getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -113,20 +127,56 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   row,
   open,
   logsSortOrder,
+  timeZone,
   getLogRowContextUi,
+  getRowContextQuery,
   onClose,
   getRowContext,
-  timeZone,
 }) => {
   const scrollElement = React.createRef<HTMLDivElement>();
   const entryElement = React.createRef<HTMLTableRowElement>();
+  // We can not use `entryElement` to scroll to the right element because it's
+  // sticky. That's why we add another row and use this ref to scroll to that
+  // first.
+  const preEntryElement = React.createRef<HTMLTableRowElement>();
 
+  const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
-  const [limit, setLimit] = useState<number>(LoadMoreOptions[0].value!);
+  // LoadMoreOptions[2] refers to 50 lines
+  const defaultLimit = LoadMoreOptions[2];
+  const [limit, setLimit] = useState<number>(defaultLimit.value!);
   const [loadingWidth, setLoadingWidth] = useState(0);
-  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(LoadMoreOptions[0]);
+  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(defaultLimit);
+  const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
+  const [wrapLines, setWrapLines] = useState(
+    store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
+  );
+
+  const getFullTimeRange = useCallback(() => {
+    const { before, after } = context;
+    const allRows = sortLogRows([...before, row, ...after], LogsSortOrder.Ascending);
+    const fromMs = allRows[0].timeEpochMs;
+    let toMs = allRows[allRows.length - 1].timeEpochMs;
+    // In case we have a lot of logs and from and to have same millisecond
+    // we add 1 millisecond to toMs to make sure we have a range
+    if (fromMs === toMs) {
+      toMs += 1;
+    }
+    const from = dateTime(fromMs);
+    const to = dateTime(toMs);
+
+    const range: TimeRange = {
+      from,
+      to,
+      raw: {
+        from,
+        to,
+      },
+    };
+    return range;
+  }, [context, row]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
@@ -198,10 +248,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   };
 
   useLayoutEffect(() => {
-    if (entryElement.current) {
+    if (!loading && entryElement.current && preEntryElement.current) {
+      preEntryElement.current.scrollIntoView({ block: 'center' });
       entryElement.current.scrollIntoView({ block: 'center' });
     }
-  }, [entryElement, context]);
+  }, [entryElement, preEntryElement, context, loading]);
 
   useLayoutEffect(() => {
     const width = scrollElement?.current?.parentElement?.clientWidth;
@@ -209,6 +260,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       setLoadingWidth(width);
     }
   }, [scrollElement]);
+
+  useAsync(async () => {
+    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+    setContextQuery(contextQuery);
+  }, [getRowContextQuery, row]);
 
   return (
     <Modal
@@ -226,7 +282,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
-          <LogContextButtons onChangeOption={onChangeLimitOption} option={loadMoreOption} />
+          <LogContextButtons
+            position="top"
+            wrapLines={wrapLines}
+            onChangeWrapLines={setWrapLines}
+            onChangeOption={onChangeLimitOption}
+            option={loadMoreOption}
+          />
         </div>
       </div>
       <div className={loading ? '' : styles.hidden}>
@@ -242,7 +304,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -252,6 +314,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                 />
               </td>
             </tr>
+            <tr ref={preEntryElement}></tr>
             <tr ref={entryElement} className={styles.entry}>
               <td className={styles.noMarginBottom}>
                 <LogRows
@@ -259,7 +322,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -276,7 +339,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   dedupStrategy={LogsDedupStrategy.none}
                   showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
                   showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+                  wrapLogMessage={wrapLines}
                   prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
                   enableLogDetails={true}
                   timeZone={timeZone}
@@ -294,6 +357,45 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
         </div>
       </div>
+
+      <Modal.ButtonRow>
+        <a
+          href="https://forms.gle/Tsk4pN7vD95aBRbb7"
+          className={styles.link}
+          title="We recently reworked the Log Context UI, please let us know how we can further improve it."
+          target="_blank"
+          rel="noreferrer noopener"
+          onClick={() => {
+            reportInteraction('grafana_explore_logs_log_context_give_feedback_clicked', {
+              datasourceType: row.datasourceType,
+              logRowUid: row.uid,
+            });
+          }}
+        >
+          <Icon name="comment-alt-message" /> Give feedback
+        </a>
+        {contextQuery?.datasource?.uid && (
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              dispatch(
+                splitOpen({
+                  queries: [contextQuery],
+                  range: getFullTimeRange(),
+                  datasourceUid: contextQuery.datasource!.uid!,
+                })
+              );
+              onClose();
+              reportInteraction('grafana_explore_logs_log_context_open_split_view_clicked', {
+                datasourceType: row.datasourceType,
+                logRowUid: row.uid,
+              });
+            }}
+          >
+            Open in split view
+          </Button>
+        )}
+      </Modal.ButtonRow>
     </Modal>
   );
 };

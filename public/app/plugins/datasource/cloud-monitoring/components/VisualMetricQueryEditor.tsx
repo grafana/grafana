@@ -48,7 +48,11 @@ export function Editor({
   const [timeRange, setTimeRange] = useState<TimeRange>({ ...datasource.timeSrv.timeRange() });
 
   const useTime = (time: TimeRange) => {
-    if (timeRange !== null && (timeRange.raw.from !== time.raw.from || timeRange.raw.to !== time.raw.to)) {
+    if (
+      timeRange !== null &&
+      (timeRange.raw.from.toString() !== time.raw.from.toString() ||
+        timeRange.raw.to.toString() !== time.raw.to.toString())
+    ) {
       setTimeRange({ ...time });
     }
   };

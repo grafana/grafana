@@ -74,6 +74,12 @@ export enum PermissionLevelString {
   Admin = 'Admin',
 }
 
+export enum SearchQueryType {
+  Folder = 'dash-folder',
+  Dashboard = 'dash-db',
+  AlertFolder = 'dash-folder-alerting',
+}
+
 export enum DataSourcePermissionLevel {
   Query = 1,
   Admin = 2,
