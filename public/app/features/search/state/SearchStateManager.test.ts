@@ -3,6 +3,7 @@ import { locationService } from '@grafana/runtime';
 
 import { DashboardQueryResult, getGrafanaSearcher } from '../service';
 import { SearchLayout } from '../types';
+import * as utils from '../utils';
 
 import { getSearchStateManager } from './SearchStateManager';
 
@@ -43,6 +44,27 @@ describe('SearchStateManager', () => {
 
       stm.initStateFromUrl();
       expect(stm.state.folderUid).toBe(undefined);
+    });
+
+    it('should reset query  and keep filters if state is updated and no URL params are present', () => {
+      const parseRouteParamsSpy = jest.spyOn(utils, 'parseRouteParams');
+      // Set initial values
+      parseRouteParamsSpy.mockImplementation(() => ({
+        query: 'hello',
+        sort: 'alpha-asc',
+      }));
+      const stm = getSearchStateManager();
+      stm.initStateFromUrl();
+      // That they ahve been set
+      expect(stm.state.query).toBe('hello');
+      expect(stm.state.sort).toBe('alpha-asc');
+
+      // Changed to a view with no URL state. Values are fetched from localStorage
+      parseRouteParamsSpy.mockImplementation(() => ({}));
+      stm.initStateFromUrl();
+
+      expect(stm.state.query).toBe('');
+      expect(stm.state.sort).toBe('alpha-asc');
     });
   });
 });
