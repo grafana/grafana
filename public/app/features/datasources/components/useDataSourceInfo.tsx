@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 
 import { DataSourceInfo } from '../types';
@@ -20,7 +20,14 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
   });
 
   info.push({
-    label: 'Default',
+    label: (
+      <Tooltip content={'The default data source is preselected in new panels'}>
+        <>
+          Default
+          <Icon className={styles.tooltip} name="exclamation-circle" />
+        </>
+      </Tooltip>
+    ),
     value: (
       <DataSourceDefaultSwitch
         dataSource={dataSourceInfo.dataSource}
@@ -44,6 +51,9 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    tooltip: css({
+      marginLeft: '4px',
+    }),
     pageInfoValue: css({
       flexGrow: 1,
       display: 'flex',
