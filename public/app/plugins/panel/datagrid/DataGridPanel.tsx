@@ -210,14 +210,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const onRenameInputBlur = (columnName: string, columnIdx: number) => {
     const fields = frame.fields.map((f) => f);
-
-    if (fields[columnIdx].config.displayName) {
-      fields[columnIdx].config.displayName = columnName;
-    } else if (fields[columnIdx].config.displayNameFromDS) {
-      fields[columnIdx].config.displayNameFromDS = columnName;
-    } else {
-      fields[columnIdx].name = columnName;
-    }
+    fields[columnIdx].name = columnName;
 
     dispatch({ type: DatagridActionType.hideColumnRenameInput });
 

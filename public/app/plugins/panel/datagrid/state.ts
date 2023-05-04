@@ -8,7 +8,7 @@ import {
   SizedGridColumn,
 } from '@glideapps/glide-data-grid';
 
-import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 
 import { isDatagridEnabled } from './featureFlagUtils';
 import {
@@ -219,14 +219,12 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
 
       columns = [
         ...updateColumnsPayload.frame.fields.map((field: Field, index: number) => {
-          const displayName = getFieldDisplayName(field, updateColumnsPayload.frame);
-
           // find column by field name and update width in new set. We cannot use index because
           // if a column gets deleted we don't know the correct index anymore
-          const width = state.columns.find((column) => column.title === displayName)?.width;
+          const width = state.columns.find((column) => column.title === field.name)?.width;
 
           return {
-            title: displayName,
+            title: field.name,
             width: width ?? getCellWidth(field),
             icon: typeToIconMap.get(field.type),
             hasMenu: isDatagridEnabled(),
