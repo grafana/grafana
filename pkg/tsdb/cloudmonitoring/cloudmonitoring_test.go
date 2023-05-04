@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1103,7 +1104,7 @@ func baseTimeSeriesList() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: timeSeriesListQueryType,
+				QueryType: string(dataquery.QueryTypeTimeSeriesList),
 				JSON: json.RawMessage(`{
 					"timeSeriesList": {
 						"filters": ["metric.type=\"a/metric/type\""],
@@ -1127,7 +1128,7 @@ func baseTimeSeriesQuery() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: timeSeriesQueryQueryType,
+				QueryType: string(dataquery.QueryTypeTimeSeriesQuery),
 				JSON: json.RawMessage(`{
 					"queryType": "metrics",
 					"timeSeriesQuery": {

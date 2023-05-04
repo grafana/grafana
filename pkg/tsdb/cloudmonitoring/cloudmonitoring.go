@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
 var (
@@ -55,10 +56,10 @@ var (
 const (
 	gceAuthentication         = "gce"
 	jwtAuthentication         = "jwt"
-	annotationQueryType       = "annotation"
-	timeSeriesListQueryType   = "timeSeriesList"
-	timeSeriesQueryQueryType  = "timeSeriesQuery"
-	sloQueryType              = "slo"
+	annotationQueryType       = dataquery.QueryTypeAnnotation
+	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
+	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
+	sloQueryType              = dataquery.QueryTypeSlo
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -238,7 +239,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			if err != nil {
 				return err
 			}
-			q.QueryType = timeSeriesListQueryType
+			q.QueryType = string(dataquery.QueryTypeAnnotation)
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -259,7 +260,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 
 		// Migrate type to queryType, which is only used for annotations
 		if rawQuery["type"] != nil && rawQuery["type"].(string) == "annotationQuery" {
-			q.QueryType = annotationQueryType
+			q.QueryType = string(dataquery.QueryTypeAnnotation)
 		}
 		if rawQuery["queryType"] != nil {
 			q.QueryType = rawQuery["queryType"].(string)
@@ -275,7 +276,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					Query:       toString(metricQuery["query"]),
 					GraphPeriod: toString(metricQuery["graphPeriod"]),
 				}
-				q.QueryType = timeSeriesQueryQueryType
+				q.QueryType = string(dataquery.QueryTypeTimeSeriesQuery)
 			} else {
 				tslb, err := json.Marshal(metricQuery)
 				if err != nil {
@@ -291,7 +292,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 					tsl.Filters = migrateMetricTypeFilter(metricQuery["metricType"].(string), metricQuery["filters"])
 				}
 				rawQuery["timeSeriesList"] = tsl
-				q.QueryType = timeSeriesListQueryType
+				q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
 			}
 			// AliasBy is now a top level property
 			if metricQuery["aliasBy"] != nil {
@@ -304,7 +305,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			q.JSON = b
 		}
 
-		if rawQuery["sloQuery"] != nil && q.QueryType == sloQueryType {
+		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSlo) {
 			sloQuery := rawQuery["sloQuery"].(map[string]interface{})
 			// AliasBy is now a top level property
 			if sloQuery["aliasBy"] != nil {
@@ -347,7 +348,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	switch req.Queries[0].QueryType {
-	case annotationQueryType:
+	case string(dataquery.QueryTypeAnnotation):
 		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries)
 	default:
 		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries)
@@ -396,7 +397,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
-		case timeSeriesListQueryType, annotationQueryType:
+		case string(dataquery.QueryTypeTimeSeriesList), string(dataquery.QueryTypeAnnotation):
 			cmtsf := &cloudMonitoringTimeSeriesList{
 				refID:   query.RefID,
 				logger:  logger,
@@ -408,7 +409,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
-		case timeSeriesQueryQueryType:
+		case string(dataquery.QueryTypeTimeSeriesQuery):
 			queryInterface = &cloudMonitoringTimeSeriesQuery{
 				refID:      query.RefID,
 				aliasBy:    q.AliasBy,
@@ -417,7 +418,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				timeRange:  req.Queries[0].TimeRange,
 				logger:     logger,
 			}
-		case sloQueryType:
+		case string(dataquery.QueryTypeSlo):
 			cmslo := &cloudMonitoringSLO{
 				refID:      query.RefID,
 				logger:     logger,
