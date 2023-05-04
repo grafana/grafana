@@ -598,7 +598,7 @@ function errorAndDurationQuery(
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
   const spanNamesUnescaped = rateResponse.data[0][0]?.fields[1]?.values ?? [];
-  const spanNames = spanNamesUnescaped.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
+  const spanNames = spanNamesUnescaped.map((name: string) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
