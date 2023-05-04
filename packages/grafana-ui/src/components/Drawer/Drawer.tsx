@@ -247,7 +247,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     header: css({
       flexGrow: 0,
-      padding: theme.spacing(3),
+      padding: theme.spacing(3, 2),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     headerWithTabs: css({
