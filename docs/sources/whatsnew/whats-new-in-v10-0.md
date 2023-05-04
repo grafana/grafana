@@ -276,7 +276,7 @@ Mixed data source in Explore is gradually rolling out to all users on Grafana Cl
 
 ### Span filtering for traces
 
-<!-- Name of contributor -->
+<!-- Timur Olzhabayev -->
 
 _Available in preview in all editions of Grafana._
 
@@ -295,7 +295,7 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If youâ€
 
 ### OpenTelemetry replacing OpenTracing
 
-<!-- Name of contributor -->
+<!-- Timur Olzhabayev -->
 
 We have started our work to migrate to OpenTelemetry in Grafana 8.4 and now we are removing OpenTracing and replacing it, for those that still have it configured, with OpenTelemetry under the hood. The changes are made in backwards compatible way so that users of Grafana do not need to change anything and they will continue working in the same way as before.
 
