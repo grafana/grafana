@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -74,13 +74,7 @@ export function Drawer({
   const fixedWidth = isExpanded ? '100%' : width ?? '';
   const useSizeWidth = !fixedWidth && !isExpanded;
   const rootClass = cx(styles.drawer, useSizeWidth && styles.sizes[size]);
-
   const content = <div className={styles.content}>{children}</div>;
-
-  const style: CSSProperties = {};
-  if (inline) {
-    style.position = 'absolute';
-  }
 
   return (
     <RcDrawer
@@ -88,8 +82,7 @@ export function Drawer({
       onClose={onClose}
       placement="right"
       width={fixedWidth}
-      getContainer={inline ? undefined : 'body'}
-      style={style}
+      getContainer={inline ? false : '.main-view'}
       className={styles.drawerContent}
       rootClassName={rootClass}
       motion={{
@@ -189,7 +182,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.rc-drawer-content-wrapper': {
           label: 'drawer-md',
           width: '50vw',
-          minWidth: theme.spacing(60),
+          minWidth: theme.spacing(66),
         },
       }),
       lg: css({

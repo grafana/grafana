@@ -22,7 +22,6 @@ const meta: ComponentMeta<typeof Drawer> = {
   args: {
     closeOnMaskClick: true,
     scrollableContent: false,
-    width: '40%',
     expandable: false,
     subtitle: 'This is a subtitle.',
   },
@@ -176,6 +175,7 @@ export const InLine: ComponentStory<typeof Drawer> = (args) => {
 InLine.args = {
   title: 'Drawer title inline',
   inline: true,
+  size: 'sm',
 };
 
 export const WithTabs: ComponentStory<typeof Drawer> = (args) => {
@@ -206,6 +206,7 @@ export const WithTabs: ComponentStory<typeof Drawer> = (args) => {
     </>
   );
 };
+
 WithTabs.args = {
   title: 'Drawer title with tabs',
 };
