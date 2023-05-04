@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func shouldUseDataplane(frames data.Frames, logger *log.ConcreteLogger, disable bool) (dt data.FrameType, b bool, e error) {
@@ -55,8 +58,12 @@ func shouldUseDataplane(frames data.Frames, logger *log.ConcreteLogger, disable 
 	return dt, true, nil
 }
 
-func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Results, error) {
-	switch k {
+func handleDataplaneFrames(ctx context.Context, tracer tracing.Tracer, t data.FrameType, frames data.Frames) (mathexp.Results, error) {
+	_, span := tracer.Start(ctx, "SSE.HandleDataPlaneData")
+	defer span.End()
+	span.SetAttributes("dataplane.type", t, attribute.Key("dataplane.type").String(string(t)))
+
+	switch t.Kind() {
 	case data.KindUnknown:
 		return mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
 	case data.KindTimeSeries:
@@ -64,7 +71,7 @@ func handleDataplaneFrames(k data.FrameTypeKind, frames data.Frames) (mathexp.Re
 	case data.KindNumeric:
 		return handleDataplaneNumeric(frames)
 	default:
-		return mathexp.Results{}, fmt.Errorf("kind %s not supported by server side expressions", k)
+		return mathexp.Results{}, fmt.Errorf("kind %s (type %s) not supported by server side expressions", t.Kind(), t)
 	}
 }
 

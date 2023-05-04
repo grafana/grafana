@@ -56,7 +56,7 @@ export function getScaledDimensionForField(
   }
 
   const get = (i: number) => {
-    const value = field.values.get(i);
+    const value = field.values[i];
     let percent = 0;
     if (value !== -Infinity) {
       percent = (value - info.min!) / info.delta;

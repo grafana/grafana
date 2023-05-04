@@ -32,7 +32,7 @@ describe('align frames', () => {
       expect(
         out.fields.map((f) => ({
           name: f.name,
-          values: f.values.toArray(),
+          values: f.values,
         }))
       ).toMatchInlineSnapshot(`
         [
@@ -85,7 +85,7 @@ describe('align frames', () => {
       expect(
         out.fields.map((f) => ({
           name: f.name,
-          values: f.values.toArray(),
+          values: f.values,
         }))
       ).toMatchInlineSnapshot(`
         [
@@ -149,7 +149,7 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
@@ -242,7 +242,7 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchInlineSnapshot(`
       [
@@ -289,7 +289,7 @@ describe('align frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchInlineSnapshot(`
       [

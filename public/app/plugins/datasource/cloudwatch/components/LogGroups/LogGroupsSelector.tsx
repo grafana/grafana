@@ -139,11 +139,22 @@ export const LogGroupsSelector = ({
         <div>
           {!isLoading && selectableLogGroups.length >= 25 && (
             <>
-              <Label className={styles.limitLabel}>
+              <div className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
                 Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
                 search.
-              </Label>
+                <p>
+                  A{' '}
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html"
+                  >
+                    maximum{' '}
+                  </a>{' '}
+                  of 50 Cloudwatch log groups can be queried at one time.
+                </p>
+              </div>
               <Space layout="block" v={1} />
             </>
           )}

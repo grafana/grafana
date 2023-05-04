@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
+import { config } from 'app/core/config';
+
 import { Props, UsersActionBarUnconnected } from './UsersActionBar';
 import { searchQueryChanged } from './state/reducers';
 
@@ -61,5 +63,18 @@ describe('Render', () => {
     });
 
     expect(screen.getByRole('link', { name: 'someUrl' })).toHaveAttribute('href', 'some/url');
+  });
+
+  it('should not show invite button when disableLoginForm is set', () => {
+    const originalDisableLoginForm = config.disableLoginForm;
+    config.disableLoginForm = true;
+
+    setup({
+      canInvite: true,
+    });
+
+    expect(screen.queryByRole('link', { name: 'Invite' })).not.toBeInTheDocument();
+    // Reset the disableLoginForm mock to its original value
+    config.disableLoginForm = originalDisableLoginForm;
   });
 });

@@ -66,6 +66,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   getDisplayTitle: true,
   dataSupport: true,
   key: true,
+  isNew: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -189,6 +190,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
+  isNew?: boolean;
 
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -416,18 +418,22 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
       const wasAngular = autoMigrateAngular[this.autoMigrateFrom] != null;
-      this.callPanelTypeChangeHandler(
-        plugin,
-        this.autoMigrateFrom,
-        this.getOptionsToRemember(), // old options
-        wasAngular
-      );
+      const oldOptions = this.getOptionsToRemember();
+      const prevPluginId = this.autoMigrateFrom;
+      const newPluginId = this.type;
 
-      delete this.autoMigrateFrom;
+      this.clearPropertiesBeforePluginChange();
+
+      // Need to set these again as they get cleared by the above function
+      this.type = newPluginId;
+      this.plugin = plugin;
+
+      this.callPanelTypeChangeHandler(plugin, prevPluginId, oldOptions, wasAngular);
     }
 
     if (plugin.onPanelMigration) {
@@ -481,7 +487,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin();
+    const wasAngular = this.isAngularPlugin() || Boolean(autoMigrateAngular[oldPluginId]);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,

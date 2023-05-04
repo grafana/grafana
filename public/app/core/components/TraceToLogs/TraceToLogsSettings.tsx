@@ -78,6 +78,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     'grafana-splunk-datasource', // external
     'grafana-opensearch-datasource', // external
     'grafana-falconlogscale-datasource', // external
+    'googlecloud-logging-datasource', // external
   ];
 
   const traceToLogs = useMemo(

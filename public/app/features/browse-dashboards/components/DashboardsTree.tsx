@@ -1,55 +1,101 @@
 import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
-import { CellProps, Column, TableInstance, useTable } from 'react-table';
+import { TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useStyles2 } from '@grafana/ui';
+import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeItem, INDENT_AMOUNT_CSS_VAR } from '../types';
+import {
+  DashboardsTreeCellProps,
+  DashboardsTreeColumn,
+  DashboardsTreeItem,
+  INDENT_AMOUNT_CSS_VAR,
+  SelectionState,
+} from '../types';
 
+import CheckboxCell from './CheckboxCell';
+import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
+import { TagsCell } from './TagsCell';
 import { TypeCell } from './TypeCell';
+import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
+  isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
+  onAllSelectionChange: (newState: boolean) => void;
+  onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  canSelect: boolean;
 }
-
-type DashboardsTreeColumn = Column<DashboardsTreeItem>;
 
 const HEADER_HEIGHT = 35;
 const ROW_HEIGHT = 35;
 
-export function DashboardsTree({ items, width, height, onFolderClick }: DashboardsTreeProps) {
+export function DashboardsTree({
+  items,
+  width,
+  height,
+  isSelected,
+  onFolderClick,
+  onAllSelectionChange,
+  onItemSelectionChange,
+  canSelect = false,
+}: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
-      Header: () => <Checkbox value={false} />,
-      Cell: () => <Checkbox value={false} />,
+      width: 0,
+      Header: CheckboxHeaderCell,
+      Cell: CheckboxCell,
     };
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
+      width: 3,
       Header: <span style={{ paddingLeft: 20 }}>Name</span>,
-      Cell: (props: CellProps<DashboardsTreeItem, unknown>) => <NameCell {...props} onFolderClick={onFolderClick} />,
+      Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const typeColumn: DashboardsTreeColumn = {
       id: 'type',
+      width: 1,
       Header: 'Type',
       Cell: TypeCell,
     };
 
-    return [checkboxColumn, nameColumn, typeColumn];
-  }, [onFolderClick]);
+    const tagsColumns: DashboardsTreeColumn = {
+      id: 'tags',
+      width: 2,
+      Header: 'Tags',
+      Cell: TagsCell,
+    };
+    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
 
-  const table = useTable({ columns: tableColumns, data: items });
+    return columns;
+  }, [onFolderClick, canSelect]);
+
+  const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
+
+  const virtualData = useMemo(
+    () => ({
+      table,
+      isSelected,
+      onAllSelectionChange,
+      onItemSelectionChange,
+    }),
+    // we need this to rerender if items changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
+  );
 
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">
@@ -65,7 +111,7 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
 
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header')}
+                  {column.render('Header', { isSelected, onAllSelectionChange })}
                 </div>
               );
             })}
@@ -78,7 +124,7 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
           height={height - HEADER_HEIGHT}
           width={width}
           itemCount={items.length}
-          itemData={table}
+          itemData={virtualData}
           itemSize={ROW_HEIGHT}
         >
           {VirtualListRow}
@@ -91,24 +137,34 @@ export function DashboardsTree({ items, width, height, onFolderClick }: Dashboar
 interface VirtualListRowProps {
   index: number;
   style: React.CSSProperties;
-  data: TableInstance<DashboardsTreeItem>;
+  data: {
+    table: TableInstance<DashboardsTreeItem>;
+    isSelected: DashboardsTreeCellProps['isSelected'];
+    onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
+    onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
+  };
 }
 
-function VirtualListRow({ index, style, data: table }: VirtualListRowProps) {
+function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
+  const { table, isSelected, onItemSelectionChange } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
   prepareRow(row);
 
   return (
-    <div {...row.getRowProps({ style })} className={cx(styles.row, styles.bodyRow)}>
+    <div
+      {...row.getRowProps({ style })}
+      className={cx(styles.row, styles.bodyRow)}
+      data-testid={selectors.pages.BrowseDashbards.table.row(row.original.item.uid)}
+    >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell')}
+            {cell.render('Cell', { isSelected, onItemSelectionChange })}
           </div>
         );
       })}
@@ -117,12 +173,9 @@ function VirtualListRow({ index, style, data: table }: VirtualListRowProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const columnSizing = 'auto 2fr 1fr';
-
   return {
     tableRoot: css({
-      // The Indented component uses this css variable to indent items to their position
-      // in the tree
+      // Responsively
       [INDENT_AMOUNT_CSS_VAR]: theme.spacing(1),
 
       [theme.breakpoints.up('md')]: {
@@ -130,17 +183,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
 
-    cell: css({
-      padding: theme.spacing(1),
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    }),
+    // Column flex properties (cell sizing) are set by customFlexTableLayout.ts
 
     row: css({
-      display: 'grid',
-      gridTemplateColumns: columnSizing,
-      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
 
     headerRow: css({
@@ -154,6 +200,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       },
+    }),
+
+    cell: css({
+      padding: theme.spacing(1),
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
 
     link: css({

@@ -1,16 +1,7 @@
 // Libraries
 import React, { useMemo, useState } from 'react';
 
-import {
-  SceneCanvasText,
-  SceneFlexLayout,
-  SceneApp,
-  SceneAppPage,
-  SceneRouteMatch,
-  EmbeddedScene,
-  SceneAppPageLike,
-  SceneFlexItem,
-} from '@grafana/scenes';
+import { SceneApp, SceneAppPage, SceneRouteMatch, SceneAppPageLike } from '@grafana/scenes';
 import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
@@ -104,43 +95,8 @@ export function getHandlerDrilldownPage(
         routePath: '/scenes/grafana-monitoring/handlers/:handler/logs',
         getScene: () => getHandlerLogsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
-        drilldowns: [
-          {
-            routePath: '/scenes/grafana-monitoring/handlers/:handler/logs/:secondLevel',
-            getPage: getSecondLevelDrilldown,
-          },
-        ],
       }),
     ],
-  });
-}
-
-export function getSecondLevelDrilldown(
-  match: SceneRouteMatch<{ handler: string; secondLevel: string }>,
-  parent: SceneAppPageLike
-) {
-  const handler = decodeURIComponent(match.params.handler);
-  const secondLevel = decodeURIComponent(match.params.secondLevel);
-  const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/${secondLevel}`;
-
-  return new SceneAppPage({
-    title: secondLevel,
-    subTitle: 'Second level dynamic drilldown',
-    url: baseUrl,
-    getParentPage: () => parent,
-    getScene: () => {
-      return new EmbeddedScene({
-        body: new SceneFlexLayout({
-          children: [
-            new SceneFlexItem({
-              body: new SceneCanvasText({
-                text: 'Drilldown: ' + secondLevel,
-              }),
-            }),
-          ],
-        }),
-      });
-    },
   });
 }
 

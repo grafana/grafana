@@ -595,7 +595,5 @@ const createField = (
 };
 
 const unwrap = (fields: Field[]): Field[] => {
-  return fields.map((field) =>
-    createField(field.name, field.type, field.values.toArray(), field.config, field.display)
-  );
+  return fields.map((field) => createField(field.name, field.type, field.values, field.config, field.display));
 };
