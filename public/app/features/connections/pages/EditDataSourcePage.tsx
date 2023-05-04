@@ -9,5 +9,5 @@ export function EditDataSourcePage() {
   const params = new URLSearchParams(location.search);
   const pageId = params.get('page');
 
-  return <DataSourceTabPage uid={uid} pageId={pageId} navId="connections-your-connections-datasources" />;
+  return <DataSourceTabPage uid={uid} pageId={pageId} navId="connections-connections-datasources" />;
 }
