@@ -250,7 +250,7 @@ These improvements make working with log context in Grafana more intuitive and e
 
 ## Scenes
 
-<!-- Name of contributor -->
+<!-- Dominik Prokop -->
 
 _This is an experimental library_
 
