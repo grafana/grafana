@@ -522,8 +522,8 @@ var (
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
-    },
-    {
+		},
+		{
 			Name:         "enableDatagridEditing",
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,
