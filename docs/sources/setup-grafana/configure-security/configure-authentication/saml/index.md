@@ -205,6 +205,21 @@ The table below describes all SAML configuration options. Continue reading below
 
 The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests. If the `signature_algorithm` option is configured, Grafana will put a digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation will fail. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
+### Specify user's Name ID
+
+> **Note:** Available in Grafana version 9.1 and later.
+
+The `name_id_format` configuration field specifies the format of the NameID element in the SAML assertion.
+
+By default, this is set to `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` and does not need to be specified in the configuration file.
+
+These are the available values for this configuration field:
+
+- `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
+- `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`
+- `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
+- `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`
+
 ### IdP metadata
 
 You also need to define the public part of the IdP for message verification. The SAML IdP metadata XML defines where and how Grafana exchanges user information.
