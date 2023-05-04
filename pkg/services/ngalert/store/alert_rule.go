@@ -252,7 +252,6 @@ func (st DBstore) reorderUpdates(sess *db.Session, rules []ngmodels.UpdateRule) 
 	processedUpdates := make(map[string]struct{}, len(rules))
 	chains := findTitleUpdateChains(rules)
 	for _, chain := range chains {
-
 		// If the chain is a cycle, we need to add an intermediate update to a fake value to break the cycle. Otherwise, there is
 		// no valid order to update the rules that won't violate the unique constraint.
 		// Ex. Assuming Rule A, B, and C exist, and we have an update chain of RuleA -> RuleB -> RuleC -> RuleA. We need to break the cycle
