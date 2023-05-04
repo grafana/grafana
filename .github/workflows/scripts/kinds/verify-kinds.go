@@ -31,6 +31,11 @@ const (
 )
 
 func main() {
+	var kindArgs []string
+	if len(os.Args) > 1 {
+		kindArgs = os.Args[1:]
+	}
+
 	var corek []kindsys.Kind
 	var compok []kindsys.Composable
 
@@ -54,6 +59,10 @@ func main() {
 	errs := make([]error, 0)
 
 	for _, kind := range corekind.NewBase(nil).All() {
+		if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
+			continue
+		}
+
 		name := kind.Props().Common().MachineName
 		err := verifyKind(kind, name, "core", latestRegistryDir)
 		if err != nil {
@@ -65,6 +74,10 @@ func main() {
 
 	for _, pp := range corelist.New(nil) {
 		for _, kind := range pp.ComposableKinds {
+			if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
+				continue
+			}
+
 			si, err := kindsys.FindSchemaInterface(kind.Def().Properties.SchemaInterface)
 			if err != nil {
 				die(err)
@@ -84,6 +97,7 @@ func main() {
 		for _, err := range errs {
 			fmt.Fprint(os.Stderr, err, "\n")
 		}
+		fmt.Println("Run `go run verify-kinds.go <kind name> <kind name>` to run the script on a limited set of kinds.")
 		os.Exit(1)
 	}
 
@@ -93,7 +107,7 @@ func main() {
 
 		coreJennies := codejen.JennyList[kindsys.Kind]{}
 		coreJennies.Append(
-			KindRegistryJenny(registryPath),
+			KindRegistryJenny(registryPath, kindArgs),
 		)
 		corefs, err := coreJennies.GenerateFS(corek...)
 		die(err)
@@ -101,7 +115,7 @@ func main() {
 
 		composableJennies := codejen.JennyList[kindsys.Composable]{}
 		composableJennies.Append(
-			ComposableKindRegistryJenny(registryPath),
+			ComposableKindRegistryJenny(registryPath, kindArgs),
 		)
 		composablefs, err := composableJennies.GenerateFS(compok...)
 		die(err)
@@ -116,6 +130,7 @@ func main() {
 func die(err error) {
 	if err != nil {
 		fmt.Fprint(os.Stderr, err, "\n")
+		fmt.Println("Run `go run verify-kinds.go <kind name> <kind name>` to run the script on a limited set of kinds.")
 		os.Exit(1)
 	}
 }
@@ -151,7 +166,7 @@ func verifyKind(kind kindsys.Kind, name string, category string, latestRegistryD
 		return fmt.Errorf("kind maturity can't be downgraded once a kind is published")
 	}
 
-	if kind.Maturity().Less(kindsys.MaturityStable) {
+	if oldKind.Maturity().Less(kindsys.MaturityStable) {
 		return nil
 	}
 
@@ -281,14 +296,16 @@ func loadComposableKind(name string, kind string) (kindsys.Kind, error) {
 
 // KindRegistryJenny generates kind files into the "next" folder
 // of the local kind registry.
-func KindRegistryJenny(path string) codegen.OneToOne {
+func KindRegistryJenny(path string, kindSet []string) codegen.OneToOne {
 	return &kindregjenny{
-		path: path,
+		path:    path,
+		kindSet: kindSet,
 	}
 }
 
 type kindregjenny struct {
-	path string
+	path    string
+	kindSet []string
 }
 
 func (j *kindregjenny) JennyName() string {
@@ -296,6 +313,10 @@ func (j *kindregjenny) JennyName() string {
 }
 
 func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	if len(j.kindSet) > 0 && !contains(j.kindSet, kind.Name()) {
+		return nil, nil
+	}
+
 	name := kind.Props().Common().MachineName
 
 	core, ok := kind.(kindsys.Core)
@@ -324,14 +345,16 @@ func kindToBytes(kind cue.Value) ([]byte, error) {
 	return cueformat.Node(node)
 }
 
-func ComposableKindRegistryJenny(path string) codejen.OneToOne[kindsys.Composable] {
+func ComposableKindRegistryJenny(path string, kindSet []string) codejen.OneToOne[kindsys.Composable] {
 	return &ckrJenny{
-		path: path,
+		path:    path,
+		kindSet: kindSet,
 	}
 }
 
 type ckrJenny struct {
-	path string
+	path    string
+	kindSet []string
 }
 
 func (j *ckrJenny) JennyName() string {
@@ -339,6 +362,10 @@ func (j *ckrJenny) JennyName() string {
 }
 
 func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
+	if len(j.kindSet) > 0 && !contains(j.kindSet, k.Name()) {
+		return nil, nil
+	}
+
 	si, err := kindsys.FindSchemaInterface(k.Def().Properties.SchemaInterface)
 	if err != nil {
 		panic(err)
@@ -352,4 +379,14 @@ func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
 	}
 
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
+}
+
+func contains(array []string, value string) bool {
+	for _, v := range array {
+		if v == value {
+			return true
+		}
+	}
+
+	return false
 }
