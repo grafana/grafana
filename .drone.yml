@@ -1959,7 +1959,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.3
+  image: grafana/build-container:1.7.4
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -5321,7 +5321,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.3
+  image: grafana/build-container:1.7.4
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -6581,7 +6581,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.3
+  image: grafana/build-container:1.7.4
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -6786,7 +6786,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.3
+  image: grafana/build-container:1.7.4
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -7148,6 +7148,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: e7a06868456687331f07e34fec5eb6ec45d2b987564ba7ec11d7f29bfa6a98c9
+hmac: 1a5358f92b6ca848288fb7917e62b994430c89eaa43ac2e5c1de49df359886d5
 
 ...
