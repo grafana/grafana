@@ -40,7 +40,6 @@ require (
 	github.com/crewjam/saml v0.4.12
 	github.com/fatih/color v1.15.0
 	github.com/gchaincl/sqlhooks v1.3.0
-	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-ldap/ldap/v3 v3.4.4
 	github.com/go-openapi/strfmt v0.21.7

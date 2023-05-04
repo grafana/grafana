@@ -1,84 +1,59 @@
-import { captureMessage, captureException, Severity as LogLevel } from '@sentry/browser';
-
-import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
+import { faro, LogLevel } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 
 export { LogLevel };
 
-// a bit stricter than what Sentry allows
 type Contexts = Record<string, Record<string, number | string | Record<string, string | number>>>;
 
 /**
- * Log a message at INFO level. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
- *
+ * Log a message at INFO level
  * @public
  */
 export function logInfo(message: string, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
-      level: GrafanaLogLevel.INFO,
+      level: LogLevel.INFO,
       context: contexts,
-    });
-  }
-  if (config.sentry.enabled) {
-    captureMessage(message, {
-      level: LogLevel.Info,
-      contexts,
     });
   }
 }
 
 /**
- * Log a message at WARNING level. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
+ * Log a message at WARNING level
  *
  * @public
  */
 export function logWarning(message: string, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
-      level: GrafanaLogLevel.WARN,
+      level: LogLevel.WARN,
       context: contexts,
-    });
-  }
-  if (config.sentry.enabled) {
-    captureMessage(message, {
-      level: LogLevel.Warning,
-      contexts,
     });
   }
 }
 
 /**
- * Log a message at DEBUG level. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
+ * Log a message at DEBUG level
  *
  * @public
  */
 export function logDebug(message: string, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
-      level: GrafanaLogLevel.DEBUG,
+      level: LogLevel.DEBUG,
       context: contexts,
-    });
-  }
-  if (config.sentry.enabled) {
-    captureMessage(message, {
-      level: LogLevel.Debug,
-      contexts,
     });
   }
 }
 
 /**
- * Log an error. Depending on configuration might be forwarded to backend and logged to stdout or sent to Sentry
+ * Log an error
  *
  * @public
  */
 export function logError(err: Error, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushError(err);
-  }
-  if (config.sentry.enabled) {
-    captureException(err, { contexts });
   }
 }

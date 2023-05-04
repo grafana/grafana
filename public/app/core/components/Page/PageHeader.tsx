@@ -20,7 +20,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Pr
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
-  const titleElement = renderTitle ? renderTitle(navItem.text) : <h1 className={styles.pageTitle}>{navItem.text}</h1>;
+  const titleElement = renderTitle ? renderTitle(navItem.text) : <h1>{navItem.text}</h1>;
 
   return (
     <div className={styles.pageHeader}>
@@ -51,6 +51,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       display: 'flex',
       flexDirection: 'row',
+      h1: {
+        display: 'flex',
+        marginBottom: 0,
+      },
     }),
     actions: css({
       display: 'flex',
@@ -72,10 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       gap: theme.spacing(1),
       marginBottom: theme.spacing(2),
-    }),
-    pageTitle: css({
-      display: 'flex',
-      marginBottom: 0,
     }),
     subTitle: css({
       position: 'relative',

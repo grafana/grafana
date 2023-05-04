@@ -18,7 +18,6 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     id: 'datasource-' + dataSource.uid,
     url: '',
     text: dataSource.name,
-    breadcrumbs: [{ title: 'Data Sources', url: 'datasources' }],
     children: [
       {
         active: false,
