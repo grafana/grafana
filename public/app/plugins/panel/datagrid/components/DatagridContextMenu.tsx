@@ -228,6 +228,16 @@ export const DatagridContextMenu = ({
             dispatch({ type: DatagridActionType.gridSelectionCleared });
           }}
         />
+        <MenuItem
+          label="Clear column"
+          onClick={() => {
+            const field = data.fields[column];
+            field.values = field.values.map(() => null);
+            saveData({
+              ...data,
+            });
+          }}
+        />
       </>
     );
   };
