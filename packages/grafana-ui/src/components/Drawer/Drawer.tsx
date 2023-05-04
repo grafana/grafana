@@ -9,8 +9,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
+import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { IconButton } from '../IconButton/IconButton';
+//import { IconButton } from '../IconButton/IconButton';
+import { Text } from '../Text/Text';
 
 export interface Props {
   children: ReactNode;
@@ -112,9 +114,9 @@ export function Drawer({
           ref={overlayRef}
         >
           {typeof title === 'string' && (
-            <div className={styles.header}>
+            <div className={cx(styles.header, tabs && styles.headerWithTabs)}>
               <div className={styles.actions}>
-                {expandable && !isExpanded && (
+                {/* {expandable && !isExpanded && (
                   <IconButton
                     name="angle-left"
                     size="xl"
@@ -129,18 +131,20 @@ export function Drawer({
                     onClick={() => setIsExpanded(false)}
                     aria-label={selectors.components.Drawer.General.contract}
                   />
-                )}
-                <IconButton
-                  name="times"
-                  size="xl"
+                )} */}
+                <Button
+                  icon="times"
+                  variant="secondary"
+                  fill="text"
                   onClick={onClose}
                   aria-label={selectors.components.Drawer.General.close}
                 />
               </div>
               <div className={styles.titleWrapper}>
-                <h3 {...titleProps}>{title}</h3>
-                {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-                {typeof subtitle !== 'string' && subtitle}
+                <Text as="h3" {...titleProps}>
+                  {title}
+                </Text>
+                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
                 {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>
@@ -164,6 +168,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1 1 0;
     `,
     drawer: css`
+      .main-view & {
+        top: 81px;
+      }
+
+      .main-view--search-bar-hidden & {
+        top: 41px;
+      }
+
       .rc-drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
 
@@ -185,7 +197,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.rc-drawer-content-wrapper': {
           label: 'drawer-md',
           width: '50vw',
-          minWidth: theme.spacing(66),
+          minWidth: theme.spacing(60),
         },
       }),
       lg: css({
@@ -233,21 +245,26 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    header: css`
-      background-color: ${theme.colors.background.canvas};
-      flex-grow: 0;
-      padding-top: ${theme.spacing(0.5)};
-    `,
-    actions: css`
-      display: flex;
-      align-items: baseline;
-      justify-content: flex-end;
-    `,
+    header: css({
+      flexGrow: 0,
+      padding: theme.spacing(3),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    headerWithTabs: css({
+      borderbottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    actions: css({
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(1),
+    }),
     titleWrapper: css`
-      margin-bottom: ${theme.spacing(3)};
-      padding: ${theme.spacing(0, 1, 0, 3)};
       overflow-wrap: break-word;
     `,
+    subtitle: css({
+      color: theme.colors.text.secondary,
+      paddingTop: theme.spacing(1),
+    }),
     content: css({
       padding: theme.spacing(2),
       height: '100%',
@@ -259,7 +276,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     tabsWrapper: css({
       paddingLeft: theme.spacing(2),
-      margin: theme.spacing(3, -1, -3, -3),
+      margin: theme.spacing(2, -1, -3, -3),
     }),
   };
 };
