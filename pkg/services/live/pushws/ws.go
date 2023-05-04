@@ -88,20 +88,23 @@ func setupWSConn(ctx context.Context, conn *websocket.Conn, config Config) {
 	if pingInterval > 0 {
 		pongWait := pingInterval * 10 / 9
 		_ = conn.SetReadDeadline(time.Now().Add(pongWait))
-		conn.SetPongHandler(func(string) error {
+		conn.SetPongHandler(func(v string) error {
+			fmt.Printf("PONG %s\n", v)
 			_ = conn.SetReadDeadline(time.Now().Add(pongWait))
 			return nil
 		})
 	}
 
 	go func() {
-		ticker := time.NewTicker(25 * time.Second)
+		// hardcoded 25s ping request
+		ticker := time.NewTicker(2 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
+				fmt.Printf("PING %v\n", time.Now())
 				deadline := time.Now().Add(pingInterval / 2)
 				err := conn.WriteControl(websocket.PingMessage, nil, deadline)
 				if err != nil {

@@ -212,7 +212,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                         href={makeAMLink('alerting/notifications', alertManagerSourceName)}
                         variant="secondary"
                         type="button"
-                        fill="outline"
                       >
                         Cancel
                       </LinkButton>

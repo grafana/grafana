@@ -166,11 +166,11 @@ describe('Rules group tests', () => {
 
       await userEvent.click(ui.editGroupButton.get());
 
-      expect(screen.getByText('Close')).toBeInTheDocument();
+      expect(screen.getByText('Cancel')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByText('Close'));
+      await userEvent.click(screen.getByText('Cancel'));
 
-      expect(screen.queryByText('Close')).not.toBeInTheDocument();
+      expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
       expect(logInfo).toHaveBeenCalledWith(LogMessages.leavingRuleGroupEdit);
     });
   });
