@@ -256,7 +256,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       position: 'absolute',
       right: theme.spacing(1),
-      top: theme.spacing(1),
+      top: theme.spacing(2),
     }),
     titleWrapper: css`
       overflow-wrap: break-word;
