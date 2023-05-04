@@ -26,7 +26,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
           title={t('news.title', 'Latest from the blog')}
           scrollableContent
           onClose={onToggleShowNewsDrawer}
-          size="sm"
+          size="md"
         >
           <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
         </Drawer>
