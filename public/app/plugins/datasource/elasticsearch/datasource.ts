@@ -179,9 +179,12 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.legacyQueryRunner
-          .request('GET', indexUrlList[listLen - index - 1])
-          .pipe(catchError((err) => of({ err })));
+        const path = indexUrlList[listLen - index - 1];
+        const requestObservable = config.featureToggles.enableElasticsearchBackendQuerying
+          ? from(this.getResource(path))
+          : this.legacyQueryRunner.request('GET', path);
+
+        return requestObservable.pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -462,7 +465,7 @@ export class ElasticDatasource
             return true;
           }
 
-          // equal query type filter, or via typemap translation
+          // equal query type filter, or via type map translation
           return type.includes(obj.type) || type.includes(typeMap[obj.type]);
         };
 
