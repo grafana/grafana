@@ -8,8 +8,9 @@ type: docs
 
 # Publish or update a plugin
 
-You've [just built]({{< relref "/create-a-grafana-plugin/" >}}) your first plugin and [packaged it]({{< relref "package-a-plugin.md" >}}), and now you want to share it with the world.
-In this guide, you'll learn how to share your plugin with others.
+You've just built your plugin; now you want to share it with the world.
+
+In this guide, you'll learn how to package and share your plugin with others.
 
 The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog]({{< "/plugins" >}}).
 By having your plugin published on Grafana.com, more users will be able to discover your plugin.
