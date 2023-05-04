@@ -172,7 +172,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         box-shadow: ${theme.shadows.z3};
 
         ${theme.breakpoints.down('sm')} {
-          width: 100% !important;
+          width: calc(100% - ${theme.spacing(2)}) !important;
+          min-width: 0 !important;
         }
       }
     `,
@@ -188,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.rc-drawer-content-wrapper': {
           label: 'drawer-md',
           width: '50vw',
-          minWidth: theme.spacing(53),
+          minWidth: theme.spacing(60),
         },
       }),
       lg: css({
@@ -196,6 +197,11 @@ const getStyles = (theme: GrafanaTheme2) => {
           label: 'drawer-lg',
           width: '70vw',
           minWidth: theme.spacing(83),
+
+          [theme.breakpoints.down('md')]: {
+            width: `calc(100% - ${theme.spacing(2)}) !important`,
+            minWidth: 0,
+          },
         },
       }),
     },
