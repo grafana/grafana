@@ -9,10 +9,9 @@ import {
   parseDuration,
 } from '@grafana/data/src';
 import { faro } from '@grafana/faro-web-sdk';
+import { config } from '@grafana/runtime/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
-import { config } from '../../../../core/config';
-import { InfluxQuery } from '../../influxdb/types';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
@@ -27,7 +26,7 @@ type TargetSig = string;
 
 type TimestampMs = number;
 
-type SupportedQueryTypes = PromQuery | InfluxQuery;
+type SupportedQueryTypes = PromQuery;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
