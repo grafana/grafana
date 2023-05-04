@@ -195,7 +195,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       lg: css({
         '.rc-drawer-content-wrapper': {
           label: 'drawer-lg',
-          width: '70vw',
+          width: '75vw',
           minWidth: theme.spacing(83),
 
           [theme.breakpoints.down('md')]: {
