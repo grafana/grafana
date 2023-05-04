@@ -529,11 +529,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 }
 
 /*
-  Connected components subscribe to the store before function components (using hooks) can react to store changes and thus this connector functions is called before the parent component (ExplorePage) is rerendered.
+  Connected components subscribe to the store before function components (using hooks) and can react to store changes. Thus, this connector function is called before the parent component (ExplorePage) is rerendered.
   This means that mapStateToProps here will be executed with a zombie `exploreId` that is not present anymore in the store if the pane gets closed.
-  Given React batches updates this component won't actually be rerendered, but as described above, `mapStateToProps` will be called with the old props and a state object that doesn't contain `panes[exploreId]`.
-  By using a factory function here we can save the previous pane state and use that if the pane is not present in the store anymore when `mapStateToProps` is called. This will allow `mapStateToProps` to not crash.
-  This is definetely not the ideal solution and we should in the future invest more time in exploring other approaches to better handle this scenario, potentially by refacor panels to be function components 
+  Given React batches updates, this component won't actually be rerendered, but, as described above, `mapStateToProps` will be called with the old props and a state object that doesn't contain `panes[exploreId]`.
+  By using a factory function here, we can save the previous pane state and use that if the pane is not present in the store anymore when `mapStateToProps` is called. This will allow `mapStateToProps` to not crash.
+  This is definitely not the ideal solution and we should in the future invest more time in exploring other approaches to better handle this scenario, potentially by refactoring panels to be function components 
   (therefore immune to this behaviour), or by forbidding them to access the store directly and instead pass them all the data they need via props or context.
 
   You can read more about this issue here: https://react-redux.js.org/api/hooks#stale-props-and-zombie-children
