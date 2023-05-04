@@ -872,7 +872,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		if !cmp.Equal(req.Header, expectedHeaders) {
 			t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, expectedHeaders))
 		}
-		expectedBody := `{"query":"Perf"}`
+		expectedBody := `{"query":"Perf","timespan":"PT1M"}`
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
@@ -887,7 +887,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			Query:     "Perf",
 		})
 		require.NoError(t, err)
-		expectedBody := `{"query":"Perf","resources":["r1","r2"]}`
+		expectedBody := `{"query":"Perf","timespan":"PT1M","workspaces":["r1","r2"]}`
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
