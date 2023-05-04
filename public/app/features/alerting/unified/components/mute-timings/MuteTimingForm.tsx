@@ -60,7 +60,6 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'sitemap',
-  breadcrumbs: [{ title: 'Notification Policies', url: 'alerting/routes' }],
 };
 
 const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
