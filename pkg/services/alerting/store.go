@@ -176,10 +176,6 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 		}
 
 		alerts := make([]*alertmodels.AlertListItemDTO, 0)
-		sql := builder.GetSQLString()
-		fmt.Printf("SQL: %s\n", sql)
-		params := builder.GetParams()
-		fmt.Printf("Params: %v\n", params)
 		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&alerts); err != nil {
 			return err
 		}
