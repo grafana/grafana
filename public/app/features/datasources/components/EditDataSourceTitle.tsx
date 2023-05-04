@@ -61,7 +61,7 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: P
       ) : (
         <div className={styles.datasourceNameInput}>
           <AutoSizeInput
-            id="basic-settings-name"
+            id="edit-data-source-name"
             type="text"
             defaultValue={name}
             placeholder="Name"

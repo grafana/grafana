@@ -32,9 +32,9 @@ describe('<EditDataSourceTitle>', () => {
     setup();
     const editButton = screen.getByTestId(selectors.pages.DataSource.nameEditIcon);
     await userEvent.click(editButton);
+    const nameInput = screen.getByRole('textbox');
 
-    const nameInput = await screen.findByTestId(selectors.pages.DataSource.name);
     expect(nameInput).toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.pages.DataSource.nameEditIcon)).not.toBeInTheDocument();
+    expect(editButton).not.toBeInTheDocument();
   });
 });
