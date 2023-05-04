@@ -121,7 +121,7 @@ const _isProxy = Symbol('isReadOnlyProxy');
  * @param obj The object to make read only
  * @returns A new read only object, does not modify the original object
  */
-export function toReadOnlyProxy<T extends object>(obj: T): T {
+export function readOnlyProxy<T extends object>(obj: T): T {
   if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj)) {
     return obj;
   }
@@ -143,7 +143,7 @@ export function toReadOnlyProxy<T extends object>(obj: T): T {
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
-          cache.set(value, toReadOnlyProxy(value));
+          cache.set(value, readOnlyProxy(value));
         }
         return cache.get(value);
       }
