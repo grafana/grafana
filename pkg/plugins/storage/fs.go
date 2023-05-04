@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 )
 
 var _ ZipExtractor = (*FS)(nil)
@@ -237,7 +236,7 @@ func readPluginJSON(pluginID, pluginDir string) (plugins.JSONData, error) {
 		}
 	}
 
-	pJSON, err := finder.ReadPluginJSON(bytes.NewReader(data))
+	pJSON, err := plugins.ReadPluginJSON(bytes.NewReader(data))
 	if err != nil {
 		return plugins.JSONData{}, err
 	}
