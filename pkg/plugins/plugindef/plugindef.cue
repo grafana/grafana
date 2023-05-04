@@ -31,6 +31,10 @@ seqs: [
 				// set of Grafana plugin types.
 				type: or(_types)
 
+				// if hidden is true then the plugin will not be shown in the create new data source page. Useful when
+				// migrating ID and want to keep the old one functionning but not let people create new instances.
+				hidden: bool
+
 				// IncludeType is a string identifier of a plugin include type, which is
 				// a superset of plugin types.
 				#IncludeType: type | "dashboard" | "page"

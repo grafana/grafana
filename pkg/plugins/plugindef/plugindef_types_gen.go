@@ -290,6 +290,10 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
+	// Hidden if hidden is true then the plugin will not be shown in the create new data source page. Useful when
+	// migrating ID and want to keep the old one functionning but not let people create new instances.
+	Hidden bool `json:"hidden"`
+
 	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
 	// allowed for `builtIn` plugins.
 	HideFromList bool `json:"hideFromList"`

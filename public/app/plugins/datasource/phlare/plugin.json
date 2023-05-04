@@ -11,6 +11,7 @@
   "streaming": false,
   "tracing": false,
   "backend": true,
+  "hidden": true,
 
   "info": {
     "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",

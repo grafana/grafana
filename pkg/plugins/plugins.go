@@ -137,6 +137,9 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+
+	// Hides plugin from the plugins list but still allows data sources of that type to function
+	Hidden bool `json:"hidden,omitempty"`
 }
 
 func (d JSONData) DashboardIncludes() []*Includes {

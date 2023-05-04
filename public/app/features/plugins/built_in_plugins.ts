@@ -37,6 +37,8 @@ const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
+const grafanaPyroscopePlugin = async () =>
+  await import(/* webpackChunkName: "phlarePlugin" */ 'app/plugins/datasource/grafana-pyroscope/module');
 const phlarePlugin = async () =>
   await import(/* webpackChunkName: "phlarePlugin" */ 'app/plugins/datasource/phlare/module');
 const parcaPlugin = async () =>
@@ -103,6 +105,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/azuremonitor/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
+  'app/plugins/datasource/grafana-pyroscope/module': grafanaPyroscopePlugin,
   'app/plugins/datasource/phlare/module': phlarePlugin,
   'app/plugins/datasource/parca/module': parcaPlugin,
 
