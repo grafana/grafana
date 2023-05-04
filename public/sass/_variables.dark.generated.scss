@@ -64,10 +64,10 @@ $layer0: #111217;
 $layer1: #181b1f;
 $layer2: #22252b;
 
-$divider: rgba(204, 204, 220, 0.07);
+$divider: rgba(204, 204, 220, 0.12);
 
-$border0: rgba(204, 204, 220, 0.07);
-$border1: rgba(204, 204, 220, 0.15);
+$border0: rgba(204, 204, 220, 0.12);
+$border1: rgba(204, 204, 220, 0.20);
 
 // Accent colors
 // -------------------------
@@ -133,7 +133,7 @@ $hr-border-color: $dark-9;
 // Panel
 // -------------------------
 $panel-bg: #181b1f;
-$panel-border: 1px solid rgba(204, 204, 220, 0.07);
+$panel-border: 1px solid rgba(204, 204, 220, 0.12);
 $panel-header-hover-bg: rgba(204, 204, 220, 0.16);
 $panel-box-shadow: none;
 $panel-corner: $panel-bg;
@@ -173,7 +173,7 @@ $scrollbarBorder: black;
 // Tables
 // -------------------------
 $table-bg-accent: #22252b;
-$table-border: rgba(204, 204, 220, 0.15);
+$table-border: rgba(204, 204, 220, 0.20);
 $table-bg-odd: rgb(28, 31, 35);
 $table-bg-hover: rgb(35, 38, 42);
 
@@ -215,7 +215,7 @@ $input-bg: #111217;
 $input-bg-disabled: rgba(204, 204, 220, 0.04);
 
 $input-color: rgb(204, 204, 220);
-$input-border-color: rgba(204, 204, 220, 0.15);
+$input-border-color: rgba(204, 204, 220, 0.20);
 $input-box-shadow: none;
 $input-border-focus: #6E9FFF;
 $input-box-shadow-focus: #6E9FFF !default;
@@ -234,9 +234,9 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: #181b1f;
-$dropdownBorder: rgba(204, 204, 220, 0.07);
-$dropdownDividerTop: rgba(204, 204, 220, 0.07);
-$dropdownDividerBottom: rgba(204, 204, 220, 0.07);
+$dropdownBorder: rgba(204, 204, 220, 0.12);
+$dropdownDividerTop: rgba(204, 204, 220, 0.12);
+$dropdownDividerBottom: rgba(204, 204, 220, 0.12);
 $dropdownShadow: 0px 8px 24px rgb(1,4,9);
 
 $dropdownLinkColor: $link-color;
@@ -299,7 +299,7 @@ $tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.75);
 
 $popover-bg: #181b1f;
 $popover-color: rgb(204, 204, 220);
-$popover-border-color: rgba(204, 204, 220, 0.07);
+$popover-border-color: rgba(204, 204, 220, 0.12);
 $popover-header-bg: #22252b;
 $popover-shadow: 0px 8px 24px rgb(1,4,9);
 
