@@ -26,7 +26,7 @@ func upgradeCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
+	if shouldUpgrade(localPlugin.JSONData.Info.Version, &plugin) {
 		if err = uninstallPlugin(ctx, pluginID, c); err != nil {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}
