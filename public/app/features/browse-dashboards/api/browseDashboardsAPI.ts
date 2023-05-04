@@ -36,7 +36,7 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     getFolder: builder.query<FolderDTO, string>({
-      query: (folderUID) => ({ url: `/folders/${folderUID}` }),
+      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
     }),
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
