@@ -18,7 +18,7 @@ type LimitedIconSize = ComponentSize | 'xl';
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
   name: IconName;
-  /** Icon size - sizes xxl and xxxl are being decreased to xl*/
+  /** Icon size - sizes xxl and xxxl are deprecated and when used being decreased to xl*/
   size?: IconSize;
   /** Type of the icon - mono or default */
   iconType?: IconType;
