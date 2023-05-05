@@ -348,6 +348,6 @@ func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 	return 0, nil
 }
 
-func (f *RuleStore) CountAlertRulesInFolder(ctx context.Context, query *models.CountAlertRulesQuery) (int64, error) {
+func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	return 0, nil
 }

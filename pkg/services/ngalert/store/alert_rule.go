@@ -234,11 +234,11 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 
 // CountAlertRulesInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountAlertRulesInFolder(ctx context.Context, query *ngmodels.CountAlertRulesQuery) (int64, error) {
+func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", query.OrgID).Where("namespace_uid = ?", query.NamespaceUID)
+		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID)
 		count, err = q.Count()
 		return err
 	})
@@ -508,14 +508,6 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			}
 		}
 		return nil
-	})
-}
-
-// CountInFolder returns the number of alert rules in a given folder.
-func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
-	return st.CountAlertRulesInFolder(ctx, &foldermodels.CountAlertRulesQuery{
-		OrgID:        orgID,
-		NamespaceUID: folderUID,
 	})
 }
 

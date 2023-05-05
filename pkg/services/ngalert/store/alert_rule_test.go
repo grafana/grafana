@@ -211,21 +211,13 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			count, err := store.CountAlertRulesInFolder(context.Background(), test.query)
-			if test.expectErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, test.expected, count)
-			}
-
-			c, err := store.CountInFolder(context.Background(),
+			count, err := store.CountInFolder(context.Background(),
 				test.query.OrgID, test.query.NamespaceUID, nil)
 			if test.expectErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, test.expected, c)
+				require.Equal(t, test.expected, count)
 			}
 		})
 	}
