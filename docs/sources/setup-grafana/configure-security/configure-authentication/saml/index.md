@@ -207,8 +207,6 @@ The SAML standard recommends using a digital signature for some types of message
 
 ### Specify user's Name ID
 
-> **Note:** Available in Grafana version 9.1 and later.
-
 The `name_id_format` configuration field specifies the format of the NameID element in the SAML assertion.
 
 By default, this is set to `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` and does not need to be specified in the configuration file.
