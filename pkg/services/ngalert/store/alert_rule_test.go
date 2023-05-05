@@ -275,7 +275,7 @@ func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := SetupDashboardService(t, sqlStore, folderStore, cfg)
+	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)
+	return testutil.SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)
 }
