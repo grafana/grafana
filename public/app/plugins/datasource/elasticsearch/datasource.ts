@@ -542,7 +542,8 @@ export class ElasticDatasource
     const url = this.getMultiSearchUrl();
 
     const termsObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? from(this.postResourceRequest(url, esQuery))
+      ? // TODO: This is run trough resource call, but maybe should run trough query
+        from(this.postResourceRequest(url, esQuery))
       : this.legacyQueryRunner.request('POST', url, esQuery);
 
     return termsObservable.pipe(
