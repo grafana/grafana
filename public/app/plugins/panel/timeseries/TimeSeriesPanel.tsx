@@ -52,11 +52,6 @@ export const TimeSeriesPanel = ({
     return undefined;
   }, [frames, id]);
 
-  const prevFrames = usePrevious(frames);
-  if (prevFrames === frames) {
-    console.log('same frames');
-  }
-
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView

@@ -112,7 +112,6 @@ export class PanelQueryRunner {
         let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
         if (data.series === lastRawFrames && lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig) {
-          console.log('returning same series');
           return of({ ...data, structureRev, series: lastProcessedFrames });
         }
 
