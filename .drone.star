@@ -14,10 +14,15 @@ load(
     "artifacts_page_pipeline",
     "enterprise2_pipelines",
     "enterprise_pipelines",
+    "integration_test_pipelines",
     "oss_pipelines",
     "publish_artifacts_pipelines",
     "publish_npm_pipelines",
     "publish_packages_pipeline",
+)
+load(
+    "scripts/drone/rgm.star",
+    "rgm",
 )
 load(
     "scripts/drone/pipelines/publish_images.star",
@@ -50,8 +55,10 @@ def main(_ctx):
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
+        rgm() +
         artifacts_page_pipeline() +
         version_branch_pipelines() +
+        integration_test_pipelines() +
         cronjobs() +
         secrets()
     )

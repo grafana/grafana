@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +36,6 @@ type RulerSrv struct {
 	provenanceStore    provisioning.ProvisioningStore
 	store              RuleStore
 	QuotaService       quota.Service
-	scheduleService    schedule.ScheduleService
 	log                log.Logger
 	cfg                *setting.UnifiedAlertingSettings
 	ac                 accesscontrol.AccessControl
@@ -85,21 +83,22 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 			NamespaceUIDs: []string{namespace.UID},
 			RuleGroup:     ruleGroup,
 		}
-		if err = srv.store.ListAlertRules(ctx, &q); err != nil {
+		ruleList, err := srv.store.ListAlertRules(ctx, &q)
+		if err != nil {
 			return err
 		}
 
-		if len(q.Result) == 0 {
+		if len(ruleList) == 0 {
 			logger.Debug("no alert rules to delete from namespace/group")
 			return nil
 		}
 
 		var deletionCandidates = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
-		for _, rule := range q.Result {
+		for _, rule := range ruleList {
 			key := rule.GetGroupKey()
 			deletionCandidates[key] = append(deletionCandidates[key], rule)
 		}
-		rulesToDelete := make([]string, 0, len(q.Result))
+		rulesToDelete := make([]string, 0, len(ruleList))
 		for groupKey, rules := range deletionCandidates {
 			if !authorizeAccessToRuleGroup(rules, hasAccess) {
 				unauthz = true
@@ -144,12 +143,6 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
-
-	logger.Debug("rules have been deleted from the store. updating scheduler")
-	for _, ruleKeys := range deletedGroups {
-		srv.scheduleService.DeleteAlertRule(ruleKeys...)
-	}
-
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
 }
 
@@ -164,7 +157,8 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 		OrgID:         c.SignedInUser.OrgID,
 		NamespaceUIDs: []string{namespace.UID},
 	}
-	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &q)
+	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
@@ -180,7 +174,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	}
 
 	ruleGroups := make(map[string]ngmodels.RulesGroup)
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		ruleGroups[r.RuleGroup] = append(ruleGroups[r.RuleGroup], r)
 	}
 
@@ -207,7 +201,8 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		NamespaceUIDs: []string{namespace.UID},
 		RuleGroup:     ruleGroup,
 	}
-	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &q)
+	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
@@ -220,12 +215,12 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
-	if !authorizeAccessToRuleGroup(q.Result, hasAccess) {
+	if !authorizeAccessToRuleGroup(ruleList, hasAccess) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to access the group because it does not have access to one or many data sources one or many rules in the group use", ErrAuthorization), "")
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, q.Result, namespace.ID, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, ruleList, namespace.ID, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
@@ -264,7 +259,8 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		PanelID:       panelID,
 	}
 
-	if err := srv.store.ListAlertRules(c.Req.Context(), &q); err != nil {
+	ruleList, err := srv.store.ListAlertRules(c.Req.Context(), &q)
+	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
 	}
 
@@ -278,7 +274,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	}
 
 	configs := make(map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup)
-	for _, r := range q.Result {
+	for _, r := range ruleList {
 		groupKey := r.GetGroupKey()
 		group := configs[groupKey]
 		group = append(group, r)
@@ -307,7 +303,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	}
 
 	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
-		return srv.conditionValidator.Validate(eval.Context(c.Req.Context(), c.SignedInUser), condition)
+		return srv.conditionValidator.Validate(eval.NewContext(c.Req.Context(), c.SignedInUser), condition)
 	}, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -421,21 +417,6 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	for _, rule := range finalChanges.Update {
-		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
-			OrgID: c.SignedInUser.OrgID,
-			UID:   rule.Existing.UID,
-		}, rule.Existing.Version+1, rule.New.IsPaused)
-	}
-
-	if len(finalChanges.Delete) > 0 {
-		keys := make([]ngmodels.AlertRuleKey, 0, len(finalChanges.Delete))
-		for _, rule := range finalChanges.Delete {
-			keys = append(keys, rule.GetKey())
-		}
-		srv.scheduleService.DeleteAlertRule(keys...)
-	}
-
 	if finalChanges.IsEmpty() {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "no changes detected in the rule group"})
 	}
@@ -471,7 +452,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			OrgID:           r.OrgID,
 			Title:           r.Title,
 			Condition:       r.Condition,
-			Data:            r.Data,
+			Data:            ApiAlertQueriesFromAlertQueries(r.Data),
 			Updated:         r.Updated,
 			IntervalSeconds: r.IntervalSeconds,
 			Version:         r.Version,

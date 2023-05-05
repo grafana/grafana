@@ -73,7 +73,6 @@ type redirectCase struct {
 	desc        string
 	url         string
 	status      int
-	err         error
 	appURL      string
 	appSubURL   string
 	redirectURL string
@@ -103,6 +102,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
 		SecretsService:   secretsService,
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -150,6 +150,8 @@ func TestLoginViewRedirect(t *testing.T) {
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    &mockSocialService{},
+		Features:         featuremgmt.WithFeatures(),
+		log:              log.NewNopLogger(),
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -304,12 +306,6 @@ func TestLoginViewRedirect(t *testing.T) {
 				}
 				assert.True(t, redirectToCookieFound)
 			}
-
-			responseString, err := getBody(sc.resp)
-			require.NoError(t, err)
-			if c.err != nil {
-				assert.True(t, strings.Contains(responseString, c.err.Error()))
-			}
 		})
 	}
 }
@@ -344,83 +340,85 @@ func TestLoginPostRedirect(t *testing.T) {
 
 	redirectCases := []redirectCase{
 		{
-			desc:   "grafana relative url without subpath",
-			url:    "/profile",
-			appURL: "https://localhost:3000/",
+			desc:        "grafana relative url without subpath",
+			url:         "/profile",
+			redirectURL: "/profile",
+			appURL:      "https://localhost:3000/",
 		},
 		{
-			desc:      "grafana relative url with subpath with leading slash",
-			url:       "/grafana/profile",
-			appURL:    "https://localhost:3000/",
-			appSubURL: "/grafana",
+			desc:        "grafana relative url with subpath with leading slash",
+			url:         "/grafana/profile",
+			redirectURL: "/grafana/profile",
+			appURL:      "https://localhost:3000/",
+			appSubURL:   "/grafana",
 		},
 		{
-			desc:      "grafana invalid relative url starting with subpath",
-			url:       "/grafanablah",
-			appURL:    "https://localhost:3000/",
-			appSubURL: "/grafana",
-			err:       login.ErrInvalidRedirectTo,
+			desc:        "grafana invalid relative url starting with subpath",
+			url:         "/grafanablah",
+			redirectURL: "/grafana/",
+			appURL:      "https://localhost:3000/",
+			appSubURL:   "/grafana",
 		},
 		{
-			desc:      "relative url with missing subpath",
-			url:       "/profile",
-			appURL:    "https://localhost:3000/",
-			appSubURL: "/grafana",
-			err:       login.ErrInvalidRedirectTo,
+			desc:        "relative url with missing subpath",
+			url:         "/profile",
+			redirectURL: "/grafana/",
+			appURL:      "https://localhost:3000/",
+			appSubURL:   "/grafana",
 		},
 		{
-			desc:   "grafana absolute url",
-			url:    "http://localhost:3000/profile",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "grafana absolute url",
+			url:         "http://localhost:3000/profile",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "non grafana absolute url",
-			url:    "http://example.com",
-			appURL: "https://localhost:3000/",
-			err:    login.ErrAbsoluteRedirectTo,
+			desc:        "non grafana absolute url",
+			url:         "http://example.com",
+			appURL:      "https://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "invalid URL",
-			url:    ":foo",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrInvalidRedirectTo,
+			desc:        "invalid URL",
+			url:         ":foo",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "non-Grafana URL without scheme",
-			url:    "example.com",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrForbiddenRedirectTo,
+			desc:        "non-Grafana URL without scheme",
+			url:         "example.com",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "non-Grafana URL without scheme",
-			url:    "www.example.com",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrForbiddenRedirectTo,
+			desc:        "non-Grafana URL without scheme",
+			url:         "www.example.com",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "URL path is a host with two leading slashes",
-			url:    "//example.com",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrForbiddenRedirectTo,
+			desc:        "URL path is a host with two leading slashes",
+			url:         "//example.com",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "URL path is a host with three leading slashes",
-			url:    "///example.com",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrForbiddenRedirectTo,
+			desc:        "URL path is a host with three leading slashes",
+			url:         "///example.com",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "URL path is an IP address with two leading slashes",
-			url:    "//0.0.0.0",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrForbiddenRedirectTo,
+			desc:        "URL path is an IP address with two leading slashes",
+			url:         "//0.0.0.0",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 		{
-			desc:   "URL path is an IP address with three leading slashes",
-			url:    "///0.0.0.0",
-			appURL: "http://localhost:3000/",
-			err:    login.ErrForbiddenRedirectTo,
+			desc:        "URL path is an IP address with three leading slashes",
+			url:         "///0.0.0.0",
+			appURL:      "http://localhost:3000/",
+			redirectURL: "/",
 		},
 	}
 
@@ -449,11 +447,8 @@ func TestLoginPostRedirect(t *testing.T) {
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			require.NoError(t, err)
 			redirectURL := respJSON.Get("redirectUrl").MustString()
-			if c.err != nil {
-				assert.Equal(t, "", redirectURL)
-			} else {
-				assert.Equal(t, c.url, redirectURL)
-			}
+			assert.Equal(t, c.redirectURL, redirectURL)
+
 			// assert redirect_to cookie is deleted
 			setCookie, ok := sc.resp.Header()["Set-Cookie"]
 			assert.True(t, ok, "Set-Cookie exists")
@@ -491,6 +486,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
 		SocialService:    mock,
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -514,9 +510,10 @@ func TestLoginInternal(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
-		Cfg:     setting.NewCfg(),
-		License: &licensing.OSSLicensingService{},
-		log:     log.New("test"),
+		Cfg:      setting.NewCfg(),
+		License:  &licensing.OSSLicensingService{},
+		log:      log.New("test"),
+		Features: featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
@@ -569,6 +566,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
 		SocialService:    &mockSocialService{},
+		Features:         featuremgmt.WithFeatures(),
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {

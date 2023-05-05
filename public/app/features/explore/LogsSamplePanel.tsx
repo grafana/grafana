@@ -12,8 +12,8 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TimeZone, DataQuery } from '@grafana/schema';
-import { Button, Collapse, useStyles2 } from '@grafana/ui';
+import { DataQuery, TimeZone } from '@grafana/schema';
+import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 
@@ -50,7 +50,7 @@ export function LogsSamplePanel(props: Props) {
     }
 
     const logSampleQueries = queries
-      .map((query) => datasourceInstance.getSupplementaryQuery(SupplementaryQueryType.LogsSample, query))
+      .map((query) => datasourceInstance.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample }, query))
       .filter((query): query is DataQuery => !!query);
 
     if (!logSampleQueries.length) {
@@ -66,13 +66,7 @@ export function LogsSamplePanel(props: Props) {
     };
 
     return (
-      <Button
-        size="sm"
-        className={styles.logSamplesButton}
-        // TODO: support multiple queries (#62107)
-        // This currently works only for the first query as splitOpen supports only 1 query
-        onClick={onSplitOpen}
-      >
+      <Button size="sm" className={styles.logSamplesButton} onClick={onSplitOpen}>
         Open logs in split view
       </Button>
     );
@@ -111,20 +105,35 @@ export function LogsSamplePanel(props: Props) {
     );
   }
 
-  return (
-    <Collapse label="Logs sample" isOpen={enabled} collapsible={true} onToggle={onToggleLogsSampleCollapse}>
+  return queryResponse?.state !== LoadingState.NotStarted ? (
+    <Collapse
+      label={
+        <div>
+          Logs sample
+          <Tooltip content="Show log lines that contributed to visualized metrics">
+            <Icon name="info-circle" className={styles.infoTooltip} />
+          </Tooltip>
+        </div>
+      }
+      isOpen={enabled}
+      collapsible={true}
+      onToggle={onToggleLogsSampleCollapse}
+    >
       {LogsSamplePanelContent}
     </Collapse>
-  );
+  ) : null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logSamplesButton: css`
     position: absolute;
     top: ${theme.spacing(1)};
-    right: ${theme.spacing(1)}; ;
+    right: ${theme.spacing(1)};
   `,
   logContainer: css`
     overflow-x: scroll;
+  `,
+  infoTooltip: css`
+    margin-left: ${theme.spacing(1)};
   `,
 });

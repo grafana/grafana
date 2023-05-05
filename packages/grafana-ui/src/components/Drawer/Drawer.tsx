@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,12 +20,21 @@ export interface Props {
   subtitle?: ReactNode;
   /** Should the Drawer be closable by clicking on the mask, defaults to true */
   closeOnMaskClick?: boolean;
-  /** Render the drawer inside a container on the page */
+  /** @deprecated */
   inline?: boolean;
-  /** Either a number in px or a string with unit postfix */
+  /**
+   * @deprecated use the size property instead
+   **/
   width?: number | string;
   /** Should the Drawer be expandable to full width */
   expandable?: boolean;
+  /**
+   * Specifies the width and min-width.
+   * sm = width 25vw & min-width 384px
+   * md = width 50vw & min-width 568px
+   * lg = width 75vw & min-width 744px
+   **/
+  size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
   /** Set to true if the component rendered within in drawer content has its own scroll */
@@ -36,20 +45,19 @@ export interface Props {
 
 export function Drawer({
   children,
-  inline = false,
   onClose,
   closeOnMaskClick = true,
   scrollableContent = false,
   title,
   subtitle,
-  width = '40%',
+  width,
+  size = 'md',
   expandable = false,
   tabs,
 }: Props) {
-  const drawerStyles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const currentWidth = isExpanded ? '100%' : width;
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
@@ -66,31 +74,29 @@ export function Drawer({
     setIsOpen(true);
   }, []);
 
-  const content = <div className={drawerStyles.content}>{children}</div>;
-  const style: CSSProperties = {};
-  if (inline) {
-    style.position = 'absolute';
-  }
+  // deprecated width prop now defaults to empty string which make the size prop take over
+  const fixedWidth = isExpanded ? '100%' : width ?? '';
+  const rootClass = cx(styles.drawer, !fixedWidth && styles.sizes[size]);
+  const content = <div className={styles.content}>{children}</div>;
 
   return (
     <RcDrawer
       open={isOpen}
       onClose={onClose}
       placement="right"
-      width={currentWidth}
-      getContainer={inline ? undefined : 'body'}
-      style={style}
-      className={drawerStyles.drawerContent}
-      rootClassName={drawerStyles.drawer}
+      width={fixedWidth}
+      getContainer={'.main-view'}
+      className={styles.drawerContent}
+      rootClassName={rootClass}
       motion={{
         motionAppear: true,
-        motionName: drawerStyles.drawerMotion,
+        motionName: styles.drawerMotion,
       }}
-      maskClassName={drawerStyles.mask}
+      maskClassName={styles.mask}
       maskClosable={closeOnMaskClick}
       maskMotion={{
         motionAppear: true,
-        motionName: drawerStyles.maskMotion,
+        motionName: styles.maskMotion,
       }}
     >
       <FocusScope restoreFocus contain autoFocus>
@@ -100,14 +106,14 @@ export function Drawer({
               ? selectors.components.Drawer.General.title(title)
               : selectors.components.Drawer.General.title('no title')
           }
-          className={drawerStyles.container}
+          className={styles.container}
           {...overlayProps}
           {...dialogProps}
           ref={overlayRef}
         >
           {typeof title === 'string' && (
-            <div className={drawerStyles.header}>
-              <div className={drawerStyles.actions}>
+            <div className={styles.header}>
+              <div className={styles.actions}>
                 {expandable && !isExpanded && (
                   <IconButton
                     name="angle-left"
@@ -131,16 +137,16 @@ export function Drawer({
                   aria-label={selectors.components.Drawer.General.close}
                 />
               </div>
-              <div className={drawerStyles.titleWrapper}>
+              <div className={styles.titleWrapper}>
                 <h3 {...titleProps}>{title}</h3>
                 {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
                 {typeof subtitle !== 'string' && subtitle}
-                {tabs && <div className={drawerStyles.tabsWrapper}>{tabs}</div>}
+                {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>
           )}
           {typeof title !== 'string' && title}
-          <div className={drawerStyles.contentScroll}>
+          <div className={styles.contentScroll}>
             {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
           </div>
         </div>
@@ -162,10 +168,39 @@ const getStyles = (theme: GrafanaTheme2) => {
         box-shadow: ${theme.shadows.z3};
 
         ${theme.breakpoints.down('sm')} {
-          width: 100% !important;
+          width: calc(100% - ${theme.spacing(2)}) !important;
+          min-width: 0 !important;
         }
       }
     `,
+    sizes: {
+      sm: css({
+        '.rc-drawer-content-wrapper': {
+          label: 'drawer-sm',
+          width: '25vw',
+          minWidth: theme.spacing(48),
+        },
+      }),
+      md: css({
+        '.rc-drawer-content-wrapper': {
+          label: 'drawer-md',
+          width: '50vw',
+          minWidth: theme.spacing(66),
+        },
+      }),
+      lg: css({
+        '.rc-drawer-content-wrapper': {
+          label: 'drawer-lg',
+          width: '75vw',
+          minWidth: theme.spacing(93),
+
+          [theme.breakpoints.down('md')]: {
+            width: `calc(100% - ${theme.spacing(2)}) !important`,
+            minWidth: 0,
+          },
+        },
+      }),
+    },
     drawerContent: css`
       background-color: ${theme.colors.background.primary} !important;
       display: flex;

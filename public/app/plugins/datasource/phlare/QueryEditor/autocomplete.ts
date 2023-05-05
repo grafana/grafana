@@ -1,7 +1,5 @@
 import { monacoTypes, Monaco } from '@grafana/ui';
 
-import { SeriesMessage } from '../types';
-
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
@@ -16,7 +14,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private labels: { [label: string]: Set<string> } = {};
+  private labels: string[] = [];
+  private getLabelValues: (label: string) => Promise<string[]> = () => Promise.resolve([]);
+
+  init(labels: string[], getLabelValues: (label: string) => Promise<string[]>) {
+    this.labels = labels;
+    this.getLabelValues = getLabelValues;
+  }
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -35,39 +39,21 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
     const situation = getSituation(model.getValue(), offset);
-    const completionItems = this.getCompletions(situation);
 
-    // monaco by-default alphabetically orders the items.
-    // to stop it, we use a number-as-string sortkey,
-    // so that monaco keeps the order we use
-    const maxIndexDigits = completionItems.length.toString().length;
-    const suggestions: monacoTypes.languages.CompletionItem[] = completionItems.map((item, index) => ({
-      kind: getMonacoCompletionItemKind(item.type, this.monaco!),
-      label: item.label,
-      insertText: item.insertText,
-      sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-      range,
-    }));
-    return { suggestions };
-  }
-
-  /**
-   * We expect the data directly from the request and transform it here. We do some deduplication and turn them into
-   * object for quicker search as we usually need either a list of label names or values or particular label.
-   */
-  setSeries(series: SeriesMessage) {
-    this.labels = series.reduce<{ [label: string]: Set<string> }>((acc, serie) => {
-      const seriesLabels = serie.labels.reduce<{ [label: string]: Set<string> }>((acc, labelValue) => {
-        acc[labelValue.name] = acc[labelValue.name] || new Set();
-        acc[labelValue.name].add(labelValue.value);
-        return acc;
-      }, {});
-
-      for (const label of Object.keys(seriesLabels)) {
-        acc[label] = new Set([...(acc[label] || []), ...seriesLabels[label]]);
-      }
-      return acc;
-    }, {});
+    return this.getCompletions(situation).then((completionItems) => {
+      // monaco by-default alphabetically orders the items.
+      // to stop it, we use a number-as-string sortkey,
+      // so that monaco keeps the order we use
+      const maxIndexDigits = completionItems.length.toString().length;
+      const suggestions: monacoTypes.languages.CompletionItem[] = completionItems.map((item, index) => ({
+        kind: getMonacoCompletionItemKind(item.type, this.monaco!),
+        label: item.label,
+        insertText: item.insertText,
+        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+        range,
+      }));
+      return { suggestions };
+    });
   }
 
   /**
@@ -75,17 +61,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private getCompletions(situation: Situation): Completion[] {
-    if (!Object.keys(this.labels).length) {
-      return [];
-    }
+  private async getCompletions(situation: Situation): Promise<Completion[]> {
     switch (situation.type) {
       // Not really sure what would make sense to suggest in this case so just leave it
       case 'UNKNOWN': {
         return [];
       }
       case 'EMPTY': {
-        return Object.keys(this.labels).map((key) => {
+        return this.labels.map((key) => {
           return {
             label: key,
             insertText: `{${key}="`,
@@ -94,7 +77,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         });
       }
       case 'IN_LABEL_NAME':
-        return Object.keys(this.labels).map((key) => {
+        return this.labels.map((key) => {
           return {
             label: key,
             insertText: key,
@@ -102,7 +85,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           };
         });
       case 'IN_LABEL_VALUE':
-        return Array.from(this.labels[situation.labelName].values()).map((key) => {
+        let values = await this.getLabelValues(situation.labelName);
+        return values.map((key) => {
           return {
             label: key,
             insertText: situation.betweenQuotes ? key : `"${key}"`,

@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -57,6 +57,8 @@ type ClientParams struct {
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
+	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
+	SyncPermissions bool
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -217,10 +219,12 @@ type Identity struct {
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
 	// SessionToken is the session token used to authenticate the entity.
-	SessionToken *auth.UserToken
+	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams
+	// Permissions is the list of permissions the entity has.
+	Permissions map[int64]map[string][]string
 }
 
 // Role returns the role of the identity in the active organization.
@@ -273,6 +277,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		HelpFlags1:         i.HelpFlags1,
 		LastSeenAt:         i.LastSeenAt,
 		Teams:              i.Teams,
+		Permissions:        i.Permissions,
 	}
 
 	namespace, id := i.NamespacedID()
@@ -320,6 +325,7 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		LastSeenAt:     usr.LastSeenAt,
 		Teams:          usr.Teams,
 		ClientParams:   params,
+		Permissions:    usr.Permissions,
 	}
 }
 
@@ -357,7 +363,7 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 		redirectURL = redirectTo
 	}
 
-	WriteSessionCookie(w, cfg, identity)
+	WriteSessionCookie(w, cfg, identity.SessionToken)
 	return redirectURL
 }
 
@@ -371,11 +377,28 @@ func getRedirectURL(r *http.Request) string {
 	return v
 }
 
-func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Identity) {
+const sessionExpiryCookie = "grafana_session_expiry"
+
+func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoken.UserToken) {
 	maxAge := int(cfg.LoginMaxLifetime.Seconds())
 	if cfg.LoginMaxLifetime <= 0 {
 		maxAge = -1
 	}
 
-	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
+	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
+	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
+		opts := cookies.NewCookieOptions()
+		opts.NotHttpOnly = true
+		return opts
+	})
+}
+
+func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
+	cookies.DeleteCookie(w, cfg.LoginCookieName, nil)
+	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
+		opts := cookies.NewCookieOptions()
+		opts.NotHttpOnly = true
+		return opts
+	})
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 var (
@@ -17,6 +19,13 @@ var (
 	ErrInvalidTransformationType          = errors.New("invalid transformation type")
 	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
 	ErrTransformationRegexReqExp          = errors.New("regex transformations require expression")
+	ErrCorrelationsQuotaFailed            = errors.New("error getting correlations quota")
+	ErrCorrelationsQuotaReached           = errors.New("correlations quota reached")
+)
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "correlations"
+	QuotaTarget    quota.Target    = "correlations"
 )
 
 type CorrelationConfigType string

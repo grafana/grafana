@@ -58,18 +58,19 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			ServiceAccountID: &serviceAccountId,
 		}
 
-		if err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd); err != nil {
+		key, err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd)
+		if err != nil {
 			switch {
 			case errors.Is(err, apikey.ErrDuplicate):
-				return serviceaccounts.ErrDuplicateToken
+				return serviceaccounts.ErrDuplicateToken.Errorf("service account token with name %s already exists in the organization", cmd.Name)
 			case errors.Is(err, apikey.ErrInvalidExpiration):
-				return serviceaccounts.ErrInvalidTokenExpiration
+				return serviceaccounts.ErrInvalidTokenExpiration.Errorf("invalid service account token expiration value %d", cmd.SecondsToLive)
 			}
 
 			return err
 		}
 
-		apiKey = addKeyCmd.Result
+		apiKey = key
 		return nil
 	})
 }
@@ -84,7 +85,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return serviceaccounts.ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound.Errorf("service account token with id %d not found", tokenId)
 		}
 
 		return err
@@ -101,7 +102,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return serviceaccounts.ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound.Errorf("service account token with id %d not found for service account with id %d", tokenId, serviceAccountId)
 		}
 
 		return err

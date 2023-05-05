@@ -67,6 +67,17 @@ func ProvideService(
 	return s, nil
 }
 
+func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
+	stats := map[string]interface{}{}
+	caseInsensitiveLoginVal := 0
+	if s.cfg.CaseInsensitiveLogin {
+		caseInsensitiveLoginVal = 1
+	}
+
+	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	return stats
+}
+
 func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
 	u := &quota.Map{}
 	if used, err := s.store.Count(ctx); err != nil {
@@ -366,7 +377,7 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 	cmd.Email = cmd.Login
 	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
 	if err != nil {
-		return nil, serviceaccounts.ErrServiceAccountAlreadyExists
+		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
 
 	// create user
@@ -419,7 +430,9 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 				Login:            "sa-supportbundle",
 				OrgRole:          "Admin",
 				IsGrafanaAdmin:   true,
-				IsServiceAccount: true},
+				IsServiceAccount: true,
+				Permissions:      map[int64]map[string][]string{ac.GlobalOrgID: {ac.ActionUsersRead: {ac.ScopeGlobalUsersAll}}},
+			},
 			OrgID:      0,
 			Query:      "",
 			Page:       0,
@@ -433,7 +446,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 			return nil, err
 		}
 
-		userBytes, err := json.Marshal(res.Users)
+		userBytes, err := json.MarshalIndent(res.Users, "", " ")
 		if err != nil {
 			return nil, err
 		}

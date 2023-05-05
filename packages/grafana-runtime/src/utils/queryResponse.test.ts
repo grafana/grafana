@@ -54,6 +54,7 @@ const resWithError = {
     results: {
       A: {
         error: 'Hello Error',
+        status: 400,
         frames: [
           {
             schema: {
@@ -279,6 +280,82 @@ describe('Query Response parser', () => {
     expect(ids).toEqual(['A', 'B']);
   });
 
+  test('should handle a success-response without traceIds', () => {
+    const input = {
+      data: {
+        results: {
+          A: {
+            frames: [],
+          },
+        },
+      },
+    } as unknown as FetchResponse<BackendDataSourceResponse>;
+    const res = toDataQueryResponse(input);
+    expect(res.traceIds).toBeUndefined();
+  });
+
+  test('should handle a success-response with traceIds', () => {
+    const input = {
+      data: {
+        results: {
+          A: {
+            frames: [],
+          },
+        },
+      },
+      traceId: 'traceId1',
+    } as unknown as FetchResponse<BackendDataSourceResponse>;
+    const res = toDataQueryResponse(input);
+    expect(res.traceIds).toStrictEqual(['traceId1']);
+  });
+
+  test('should handle an error-response without traceIds', () => {
+    const input = {
+      data: {
+        results: {
+          A: {
+            error: 'error from A',
+            status: 400,
+          },
+          B: {
+            error: 'error from B',
+            status: 400,
+          },
+        },
+      },
+    } as unknown as FetchResponse<BackendDataSourceResponse>;
+    const res = toDataQueryResponse(input);
+    expect(res.traceIds).toBeUndefined();
+    expect(res.error?.traceId).toBeUndefined();
+    expect(res.errors).toHaveLength(2);
+    expect(res.errors?.[0].traceId).toBeUndefined();
+    expect(res.errors?.[1].traceId).toBeUndefined();
+  });
+
+  test('should handle an error-response with traceIds', () => {
+    const input = {
+      data: {
+        results: {
+          A: {
+            error: 'error from A',
+            status: 400,
+          },
+          B: {
+            error: 'error from B',
+            status: 400,
+          },
+        },
+      },
+      traceId: 'traceId1',
+    } as unknown as FetchResponse<BackendDataSourceResponse>;
+    const res = toDataQueryResponse(input);
+    expect(res.traceIds).toStrictEqual(['traceId1']);
+    expect(res.error?.traceId).toBe('traceId1');
+    expect(res.errors).toHaveLength(2);
+    expect(res.errors?.[0].traceId).toBe('traceId1');
+    expect(res.errors?.[1].traceId).toBe('traceId1');
+  });
+
   describe('Cache notice', () => {
     let resp: FetchResponse<BackendDataSourceResponse>;
 
@@ -354,12 +431,14 @@ describe('Query Response parser', () => {
       {
         "message": "Hello Error",
         "refId": "A",
+        "status": 400,
       }
     `);
     expect(res.errors).toEqual([
       {
         message: 'Hello Error',
         refId: 'A',
+        status: 400,
       },
     ]);
 

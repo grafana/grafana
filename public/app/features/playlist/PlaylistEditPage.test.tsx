@@ -56,7 +56,7 @@ describe('PlaylistEditPage', () => {
     it('then it should load playlist and header should be correct', async () => {
       await getTestContext();
 
-      expect(screen.getByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('5s');
       expect(screen.getAllByRole('row')).toHaveLength(1);
@@ -67,6 +67,7 @@ describe('PlaylistEditPage', () => {
     it('then correct api should be called', async () => {
       const { putMock } = await getTestContext();
 
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(locationService.getLocation().pathname).toEqual('/');
       await userEvent.clear(screen.getByRole('textbox', { name: /playlist name/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');

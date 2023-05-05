@@ -3,6 +3,7 @@ import React from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2, ClickOutsideWrapper } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -33,6 +34,10 @@ export function PanelHeader({ panel, error, isViewing, isEditing, data, alertSta
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
   const styles = useStyles2(panelStyles);
 
+  const onOpenMenu = () => {
+    reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
+  };
+
   return (
     <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
@@ -45,7 +50,7 @@ export function PanelHeader({ panel, error, isViewing, isEditing, data, alertSta
         error={error}
       />
       <div className={className}>
-        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
+        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)} onOpenMenu={onOpenMenu}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
               <ClickOutsideWrapper onClick={closeMenu} parent={document}>

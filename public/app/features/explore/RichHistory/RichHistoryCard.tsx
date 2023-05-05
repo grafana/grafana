@@ -23,7 +23,7 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId]!;
+  const { datasourceInstance } = explore.panes[exploreId]!;
   return {
     exploreId,
     datasourceInstance,
@@ -108,6 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     commentButtonRow: css`
       > * {
+        margin-top: ${theme.spacing(1)};
         margin-right: ${theme.spacing(1)};
       }
     `,

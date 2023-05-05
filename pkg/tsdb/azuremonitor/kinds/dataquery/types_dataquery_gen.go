@@ -27,12 +27,21 @@ const (
 const (
 	AzureLogsQueryResultFormatTable      AzureLogsQueryResultFormat = "table"
 	AzureLogsQueryResultFormatTimeSeries AzureLogsQueryResultFormat = "time_series"
+	AzureLogsQueryResultFormatTrace      AzureLogsQueryResultFormat = "trace"
 )
 
 // Defines values for AzureMonitorQueryAzureLogAnalyticsResultFormat.
 const (
 	AzureMonitorQueryAzureLogAnalyticsResultFormatTable      AzureMonitorQueryAzureLogAnalyticsResultFormat = "table"
 	AzureMonitorQueryAzureLogAnalyticsResultFormatTimeSeries AzureMonitorQueryAzureLogAnalyticsResultFormat = "time_series"
+	AzureMonitorQueryAzureLogAnalyticsResultFormatTrace      AzureMonitorQueryAzureLogAnalyticsResultFormat = "trace"
+)
+
+// Defines values for AzureMonitorQueryAzureTracesResultFormat.
+const (
+	AzureMonitorQueryAzureTracesResultFormatTable      AzureMonitorQueryAzureTracesResultFormat = "table"
+	AzureMonitorQueryAzureTracesResultFormatTimeSeries AzureMonitorQueryAzureTracesResultFormat = "time_series"
+	AzureMonitorQueryAzureTracesResultFormatTrace      AzureMonitorQueryAzureTracesResultFormat = "trace"
 )
 
 // Defines values for AzureQueryType.
@@ -46,8 +55,16 @@ const (
 	AzureQueryTypeAzureResourceGroups             AzureQueryType = "Azure Resource Groups"
 	AzureQueryTypeAzureResourceNames              AzureQueryType = "Azure Resource Names"
 	AzureQueryTypeAzureSubscriptions              AzureQueryType = "Azure Subscriptions"
+	AzureQueryTypeAzureTraces                     AzureQueryType = "Azure Traces"
 	AzureQueryTypeAzureWorkspaces                 AzureQueryType = "Azure Workspaces"
 	AzureQueryTypeGrafanaTemplateVariableFunction AzureQueryType = "Grafana Template Variable Function"
+)
+
+// Defines values for AzureTracesQueryResultFormat.
+const (
+	AzureTracesQueryResultFormatTable      AzureTracesQueryResultFormat = "table"
+	AzureTracesQueryResultFormatTimeSeries AzureTracesQueryResultFormat = "time_series"
+	AzureTracesQueryResultFormatTrace      AzureTracesQueryResultFormat = "trace"
 )
 
 // Defines values for GrafanaTemplateVariableQueryType.
@@ -92,6 +109,7 @@ const (
 const (
 	ResultFormatTable      ResultFormat = "table"
 	ResultFormatTimeSeries ResultFormat = "time_series"
+	ResultFormatTrace      ResultFormat = "trace"
 )
 
 // Defines values for SubscriptionsQueryKind.
@@ -352,6 +370,36 @@ type AzureMonitorQuery struct {
 		ResultFormat *string `json:"resultFormat,omitempty"`
 	} `json:"azureResourceGraph,omitempty"`
 
+	// Application Insights Traces sub-query properties.
+	AzureTraces *struct {
+		// Filters for property values.
+		Filters []struct {
+			// Values to filter by.
+			Filters []string `json:"filters"`
+
+			// Comparison operator to use. Either equals or not equals.
+			Operation string `json:"operation"`
+
+			// Property name, auto-populated based on available traces.
+			Property string `json:"property"`
+		} `json:"filters,omitempty"`
+
+		// Operation ID. Used only for Traces queries.
+		OperationId *string `json:"operationId,omitempty"`
+
+		// KQL query to be executed.
+		Query *string `json:"query,omitempty"`
+
+		// Array of resource URIs to be queried.
+		Resources []string `json:"resources,omitempty"`
+
+		// Specifies the format results should be returned as.
+		ResultFormat *AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat,omitempty"`
+
+		// Types of events to filter by.
+		TraceTypes []string `json:"traceTypes,omitempty"`
+	} `json:"azureTraces,omitempty"`
+
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -362,17 +410,18 @@ type AzureMonitorQuery struct {
 	GrafanaTemplateVariableFn *AzureMonitorQueryGrafanaTemplateVariableFn `json:"grafanaTemplateVariableFn,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key       *string `json:"key,omitempty"`
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide      *bool   `json:"hide,omitempty"`
 	Namespace *string `json:"namespace,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
 	// Azure Monitor query type.
@@ -392,6 +441,9 @@ type AzureMonitorQuery struct {
 
 // Specifies the format results should be returned as.
 type AzureMonitorQueryAzureLogAnalyticsResultFormat string
+
+// Specifies the format results should be returned as.
+type AzureMonitorQueryAzureTracesResultFormat string
 
 // @deprecated Legacy template variable support.
 type AzureMonitorQueryGrafanaTemplateVariableFn struct {
@@ -426,6 +478,51 @@ type AzureResourceGraphQuery struct {
 	// Specifies the format results should be returned as. Defaults to table.
 	ResultFormat *string `json:"resultFormat,omitempty"`
 }
+
+// AzureTracesFilter defines model for AzureTracesFilter.
+type AzureTracesFilter struct {
+	// Values to filter by.
+	Filters []string `json:"filters"`
+
+	// Comparison operator to use. Either equals or not equals.
+	Operation string `json:"operation"`
+
+	// Property name, auto-populated based on available traces.
+	Property string `json:"property"`
+}
+
+// Application Insights Traces sub-query properties
+type AzureTracesQuery struct {
+	// Filters for property values.
+	Filters []struct {
+		// Values to filter by.
+		Filters []string `json:"filters"`
+
+		// Comparison operator to use. Either equals or not equals.
+		Operation string `json:"operation"`
+
+		// Property name, auto-populated based on available traces.
+		Property string `json:"property"`
+	} `json:"filters,omitempty"`
+
+	// Operation ID. Used only for Traces queries.
+	OperationId *string `json:"operationId,omitempty"`
+
+	// KQL query to be executed.
+	Query *string `json:"query,omitempty"`
+
+	// Array of resource URIs to be queried.
+	Resources []string `json:"resources,omitempty"`
+
+	// Specifies the format results should be returned as.
+	ResultFormat *AzureTracesQueryResultFormat `json:"resultFormat,omitempty"`
+
+	// Types of events to filter by.
+	TraceTypes []string `json:"traceTypes,omitempty"`
+}
+
+// Specifies the format results should be returned as.
+type AzureTracesQueryResultFormat string
 
 // BaseGrafanaTemplateVariableQuery defines model for BaseGrafanaTemplateVariableQuery.
 type BaseGrafanaTemplateVariableQuery struct {

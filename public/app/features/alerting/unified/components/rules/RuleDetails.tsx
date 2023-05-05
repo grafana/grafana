@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { useStyles2, Tooltip } from '@grafana/ui';
+import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useCleanAnnotations } from '../../utils/annotations';
 import { isRecordingRulerRule } from '../../utils/rules';
+import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
@@ -23,9 +25,9 @@ interface Props {
 // The limit is set to 15 in order to upkeep the good performance
 // and to encourage users to go to the rule details page to see the rest of the instances
 // We don't want to paginate the instances list on the alert list page
-const INSTANCES_DISPLAY_LIMIT = 15;
+export const INSTANCES_DISPLAY_LIMIT = 15;
 
-export const RuleDetails: FC<Props> = ({ rule }) => {
+export const RuleDetails = ({ rule }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     namespace: { rulesSource },
@@ -63,6 +65,8 @@ interface EvaluationBehaviorSummaryProps {
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
   let forDuration: string | undefined;
   let every = rule.group.interval;
+  let lastEvaluation = rule.promRule?.lastEvaluation;
+  let lastEvaluationDuration = rule.promRule?.evaluationTime;
 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
@@ -79,6 +83,26 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
       {forDuration && (
         <DetailsField label="For" horizontal={true}>
           {forDuration}
+        </DetailsField>
+      )}
+
+      {lastEvaluation && !isNullDate(lastEvaluation) && (
+        <DetailsField label="Last evaluation" horizontal={true}>
+          <Tooltip
+            placement="top"
+            content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
+            theme="info"
+          >
+            <span>{`${dateTime(lastEvaluation).locale('en').fromNow(true)} ago`}</span>
+          </Tooltip>
+        </DetailsField>
+      )}
+
+      {lastEvaluation && !isNullDate(lastEvaluation) && lastEvaluationDuration !== undefined && (
+        <DetailsField label="Evaluation time" horizontal={true}>
+          <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
+            <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
+          </Tooltip>
         </DetailsField>
       )}
     </>

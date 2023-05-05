@@ -189,7 +189,6 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 
 func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
@@ -240,7 +239,6 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 
 func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
@@ -250,8 +248,9 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	input := strings.NewReader(testPatchOrgPreferencesCmd)
 	t.Run("Returns 200 on success", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), &user.SignedInUser{
-			OrgID:   1,
-			OrgRole: org.RoleAdmin,
+			OrgID:       1,
+			OrgRole:     org.RoleAdmin,
+			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgsPreferencesWrite: {}}},
 		})
 		response, err := server.SendJSON(req)
 		require.NoError(t, err)
@@ -262,8 +261,9 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	input = strings.NewReader(testPatchOrgPreferencesCmdBad)
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
 		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), &user.SignedInUser{
-			OrgID:   1,
-			OrgRole: org.RoleAdmin,
+			OrgID:       1,
+			OrgRole:     org.RoleAdmin,
+			Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgsPreferencesWrite: {}}},
 		})
 		response, err := server.SendJSON(req)
 		require.NoError(t, err)

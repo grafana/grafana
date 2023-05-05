@@ -66,7 +66,6 @@ const getTabStyles = (theme: GrafanaTheme2) => {
     activeStyle: css`
       label: activeTabStyle;
       color: ${theme.colors.text.maxContrast};
-      font-weight: 500;
       overflow: hidden;
 
       &::before {
@@ -77,7 +76,7 @@ const getTabStyles = (theme: GrafanaTheme2) => {
         width: 4px;
         bottom: 2px;
         top: 2px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.radius.default};
         background-image: linear-gradient(0deg, #f05a28 30%, #fbca0a 99%);
       }
     `,

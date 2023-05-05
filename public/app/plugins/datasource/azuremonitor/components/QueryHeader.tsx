@@ -11,10 +11,11 @@ interface QueryTypeFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
-export const QueryHeader: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange }) => {
+export const QueryHeader = ({ query, onQueryChange }: QueryTypeFieldProps) => {
   const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
+    { value: AzureQueryType.AzureTraces, label: 'Traces' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 

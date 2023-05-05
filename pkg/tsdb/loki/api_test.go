@@ -28,7 +28,7 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=logvolhist", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -40,7 +40,7 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=logsample", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -52,7 +52,7 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=datasample", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -64,7 +64,7 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -133,7 +133,7 @@ func TestApiUrlHandling(t *testing.T) {
 				QueryType: QueryTypeRange,
 			}
 
-			_, err := api.DataQuery(context.Background(), query)
+			_, err := api.DataQuery(context.Background(), query, ResponseOpts{})
 			require.NoError(t, err)
 			require.True(t, called)
 		})
@@ -154,7 +154,7 @@ func TestApiUrlHandling(t *testing.T) {
 				QueryType: QueryTypeInstant,
 			}
 
-			_, err := api.DataQuery(context.Background(), query)
+			_, err := api.DataQuery(context.Background(), query, ResponseOpts{})
 			require.NoError(t, err)
 			require.True(t, called)
 		})
@@ -187,5 +187,47 @@ func TestApiReturnValues(t *testing.T) {
 		require.True(t, called)
 		require.Equal(t, "gzip", encodedBytes.Encoding)
 		require.Equal(t, []byte("foo"), encodedBytes.Body)
+	})
+
+	t.Run("Loki should return the error as message", func(t *testing.T) {
+		called := false
+		api := makeCompressedMockedAPIWithUrl("http://localhost:3100", 400, "application/json", []byte("foo"), func(req *http.Request) {
+			called = true
+		})
+
+		encodedBytes, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, "gzip", encodedBytes.Encoding)
+		require.Equal(t, []byte("{\"message\":\"foo\"}"), encodedBytes.Body)
+	})
+
+	t.Run("Loki should return the error as is", func(t *testing.T) {
+		called := false
+		api := makeCompressedMockedAPIWithUrl("http://localhost:3100", 400, "application/json", []byte("{\"message\":\"foo\"}"), func(req *http.Request) {
+			called = true
+		})
+
+		encodedBytes, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
+		require.NoError(t, err)
+		require.True(t, called)
+		require.Equal(t, "gzip", encodedBytes.Encoding)
+		require.Equal(t, []byte("{\"message\":\"foo\"}"), encodedBytes.Body)
+	})
+
+	t.Run("Loki should not return the error on 500", func(t *testing.T) {
+		api := makeCompressedMockedAPIWithUrl("http://localhost:3100", 500, "application/json", []byte("foo"), nil)
+
+		_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "foo")
+	})
+
+	t.Run("Loki should not return the error on 500 in JSON", func(t *testing.T) {
+		api := makeCompressedMockedAPIWithUrl("http://localhost:3100", 500, "application/json", []byte("{\"message\":\"foo\"}"), nil)
+
+		_, err := api.RawQuery(context.Background(), "/loki/api/v1/labels?start=1&end=2")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "foo")
 	})
 }

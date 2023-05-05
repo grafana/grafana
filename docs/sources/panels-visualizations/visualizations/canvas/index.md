@@ -54,6 +54,10 @@ When building a canvas panel, you can connect elements together to create more c
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
+You can set both the size and color of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
+
 ## Canvas editing
 
 ### Inline editor
@@ -84,11 +88,24 @@ The inline editing toggle enables you to lock or unlock the canvas panel. When t
 
 ### Data links
 
-Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you've added a data link to the panel, you can display it by following these steps:
+Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). You can create a data link for a metric-value element and display it for all elements that use the field name by following these steps:
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.
+1. Create an override for **Fields with name** and select the element field name from the list.
+1. Click the **+ Add override property** button.
+1. Select `Datalinks > Datalinks` from the list.
+1. Click **+Add link** add a title and URL for the data link.
 1. Hover over the element to display the data link tooltip.
 1. Click on the element to be able to open the data link.
+
+If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
+
+1. In the panel editor for the canvas panel, click the **Transform** tab.
+1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
+1. Choose **Reduce row** from the dropdown and click the field name that you want to use for the element.
+1. Select **All Values** from the **Calculation** dropdown.
+1. Add an alias for the field name.
+1. Reference the new unique field alias to create the element and field override.
 
 {{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}

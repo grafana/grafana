@@ -65,9 +65,9 @@ Let's add a tab for managing server instances.
 
    ```ts
    import { AppRootProps } from '@grafana/data';
-   import React, { FC } from 'react';
+   import React from 'react';
 
-   export const Instances: FC<AppRootProps> = ({ query, path, meta }) => {
+   export const Instances = ({ query, path, meta }: AppRootProps) => {
      return <p>Hello</p>;
    };
    ```

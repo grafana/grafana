@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { Cell } from 'react-table';
 
 import { TableStyles } from './styles';
@@ -13,7 +13,7 @@ export interface Props {
   userProps?: object;
 }
 
-export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, userProps }) => {
+export const TableCell = ({ cell, tableStyles, onCellFilterAdded, userProps }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 

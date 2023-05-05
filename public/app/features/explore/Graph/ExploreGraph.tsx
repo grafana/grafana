@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { identity } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -15,11 +15,18 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
+  ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  LegendDisplayMode,
+  TooltipDisplayMode,
+  SortOrder,
+  GraphThresholdsStyleConfig,
+} from '@grafana/schema';
 import {
   Button,
   Icon,
@@ -29,13 +36,14 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
+import { PanelOptions as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
-import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -54,6 +62,9 @@ interface Props {
   onChangeTime: (timeRange: AbsoluteTimeRange) => void;
   graphStyle: ExploreGraphStyle;
   anchorToZero?: boolean;
+  yAxisMaximum?: number;
+  thresholdsConfig?: ThresholdsConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
 }
 
@@ -71,6 +82,9 @@ export function ExploreGraph({
   graphStyle,
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero = false,
+  yAxisMaximum,
+  thresholdsConfig,
+  thresholdsStyle,
   eventBus,
 }: Props) {
   const theme = useTheme2();
@@ -91,9 +105,10 @@ export function ExploreGraph({
     []
   );
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
+      max: yAxisMaximum || undefined,
       color: {
         mode: FieldColorModeId.PaletteClassic,
       },
@@ -106,7 +121,10 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  const styledFieldConfig = useMemo(() => applyGraphStyle(fieldConfig, graphStyle), [fieldConfig, graphStyle]);
+  const styledFieldConfig = useMemo(() => {
+    const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);
+    return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
+  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
@@ -159,7 +177,7 @@ export function ExploreGraph({
   return (
     <PanelContextProvider value={panelContext}>
       {data.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
-        <div className={cx([style.timeSeriesDisclaimer])}>
+        <div className={style.timeSeriesDisclaimer}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
           Showing only {MAX_NUMBER_OF_TIME_SERIES} time series.
           <Button
@@ -191,9 +209,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: time-series-disclaimer;
     margin: ${theme.spacing(1)} auto;
     padding: 10px 0;
-    border-radius: ${theme.spacing(2)};
     text-align: center;
-    background-color: ${theme.colors.background.primary};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;

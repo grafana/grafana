@@ -68,15 +68,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
 
 interface Props extends PanelProps<PanelOptions> {}
 
-export const BarChartPanel: React.FunctionComponent<Props> = ({
-  data,
-  options,
-  fieldConfig,
-  width,
-  height,
-  timeZone,
-  id,
-}) => {
+export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id }: Props) => {
   const theme = useTheme2();
   const { eventBus } = usePanelContext();
 
@@ -228,7 +220,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
-    return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
+    return frame0Ref.current!.fields[seriesIdx].values[valueIdx];
   };
 
   // Color by value
@@ -241,7 +233,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values[valueIdx]).color!;
   } else {
     const hasPerBarColor = frame0Ref.current!.fields.some((f) => {
       const fromThresholds =
@@ -269,7 +261,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame0Ref.current!.fields[seriesIdx];
-        return field.display!(field.values.get(valueIdx)).color!;
+        return field.display!(field.values[valueIdx]).color!;
       };
     }
   }
