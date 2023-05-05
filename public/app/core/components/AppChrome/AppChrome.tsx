@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import classNames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -33,7 +34,7 @@ export function AppChrome({ children }: Props) {
   // doesn't get re-mounted when chromeless goes from true to false.
 
   return (
-    <main className="main-view">
+    <main className={classNames('main-view', searchBarHidden && 'main-view--search-bar-hidden')}>
       {!state.chromeless && (
         <div className={cx(styles.topNav)}>
           {!searchBarHidden && <TopSearchBar />}
