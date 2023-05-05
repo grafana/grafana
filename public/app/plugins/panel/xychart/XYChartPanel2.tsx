@@ -26,9 +26,9 @@ import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
-import { PanelOptions, SeriesMapping } from './panelcfg.gen';
+import { SeriesMapping } from './models.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
-import { ScatterHoverEvent, ScatterSeries } from './types';
+import { PanelOptions, ScatterHoverEvent, ScatterSeries } from './types';
 
 type Props = PanelProps<PanelOptions>;
 const TOOLTIP_OFFSET = 10;

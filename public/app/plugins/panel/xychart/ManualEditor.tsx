@@ -7,7 +7,7 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
-import { PanelOptions, ScatterSeriesConfig, defaultPanelFieldConfig } from './panelcfg.gen';
+import { PanelOptions, ScatterSeriesConfig, defaultScatterFieldConfig } from './types';
 
 export const ManualEditor = ({
   value,
@@ -33,7 +33,7 @@ export const ManualEditor = ({
       ...value,
       {
         pointColor: {} as any,
-        pointSize: defaultPanelFieldConfig.pointSize,
+        pointSize: defaultScatterFieldConfig.pointSize,
       },
     ]);
     setSelected(value.length);

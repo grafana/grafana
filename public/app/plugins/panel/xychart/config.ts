@@ -7,14 +7,12 @@ import {
 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { MediaType, ResourceFolderName } from 'app/features/dimensions';
-import { ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { PanelFieldConfig, ScatterShow, defaultPanelFieldConfig } from './panelcfg.gen';
+import { ScatterFieldConfig, ScatterShow } from './types';
 
-export function getScatterFieldConfig(cfg: PanelFieldConfig): SetFieldConfigOptionsArgs<PanelFieldConfig> {
+export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -51,36 +49,6 @@ export function getScatterFieldConfig(cfg: PanelFieldConfig): SetFieldConfigOpti
             min: 1,
             max: 100,
             step: 1,
-          },
-          showIf: (c) => c.show !== ScatterShow.Lines,
-        })
-        .addGenericEditor(
-          {
-            path: 'pointSymbol',
-            name: 'Point symbol',
-            defaultValue: defaultPanelFieldConfig.pointSymbol ?? {
-              mode: 'fixed',
-              fixed: 'img/icons/marker/circle.svg',
-            },
-            settings: {
-              resourceType: MediaType.Icon,
-              folderName: ResourceFolderName.Marker,
-              placeholderText: 'Select a symbol',
-              placeholderValue: 'img/icons/marker/circle.svg',
-              showSourceRadio: false,
-            },
-            showIf: (c) => c.show !== ScatterShow.Lines,
-          },
-          ResourceDimensionEditor
-        )
-        .addSliderInput({
-          path: 'fillOpacity',
-          name: 'Fill opacity',
-          defaultValue: defaultPanelFieldConfig.fillOpacity,
-          settings: {
-            min: 0,
-            max: 1,
-            step: 0.05,
           },
           showIf: (c) => c.show !== ScatterShow.Lines,
         })

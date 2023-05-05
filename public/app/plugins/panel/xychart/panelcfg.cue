@@ -40,27 +40,24 @@ composableKinds: PanelCfg: {
 							exclude?: [...string]
 						} @cuetsy(kind="interface")
 
-						PanelFieldConfig: {
+						ScatterFieldConfig: {
 							common.HideableFieldConfig
 							common.AxisConfig
 
 							show?: ScatterShow & (*"points" | _)
 
-							pointSize?:   common.ScaleDimensionConfig
-							pointColor?:  common.ColorDimensionConfig
-							pointSymbol?: common.ResourceDimensionConfig
-							fillOpacity?: number & >=0 & <=1 | *0.5
+							pointSize?:  common.ScaleDimensionConfig
+							lineColor?:  common.ColorDimensionConfig
+							pointColor?: common.ColorDimensionConfig
+							labelValue?: common.TextDimensionConfig
 
-							lineColor?: common.ColorDimensionConfig
 							lineWidth?: int32 & >=0
 							lineStyle?: common.LineStyle
-
-							label?:      common.VisibilityMode & (*"auto" | _)
-							labelValue?: common.TextDimensionConfig
+							label?:     common.VisibilityMode & (*"auto" | _)
 						} @cuetsy(kind="interface",TSVeneer="type")
 
 						ScatterSeriesConfig: {
-							PanelFieldConfig
+							ScatterFieldConfig
 							x?:    string
 							y?:    string
 							name?: string

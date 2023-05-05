@@ -11,7 +11,7 @@ import {
 import { Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { getXYDimensions, isGraphable } from './dims';
-import { XYDimensionConfig, PanelOptions } from './panelcfg.gen';
+import { XYDimensionConfig, XYChartOptions } from './models.gen';
 
 interface XYInfo {
   numberFields: Array<SelectableValue<string>>;
@@ -19,7 +19,11 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYDimensionConfig, any, PanelOptions>) => {
+export const AutoEditor = ({
+  value,
+  onChange,
+  context,
+}: StandardEditorProps<XYDimensionConfig, any, XYChartOptions>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({

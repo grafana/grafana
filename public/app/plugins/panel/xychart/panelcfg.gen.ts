@@ -33,8 +33,7 @@ export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
   exclude: [],
 };
 
-export interface PanelFieldConfig extends common.HideableFieldConfig, common.AxisConfig {
-  fillOpacity?: number;
+export interface ScatterFieldConfig extends common.HideableFieldConfig, common.AxisConfig {
   label?: common.VisibilityMode;
   labelValue?: common.TextDimensionConfig;
   lineColor?: common.ColorDimensionConfig;
@@ -42,17 +41,15 @@ export interface PanelFieldConfig extends common.HideableFieldConfig, common.Axi
   lineWidth?: number;
   pointColor?: common.ColorDimensionConfig;
   pointSize?: common.ScaleDimensionConfig;
-  pointSymbol?: common.ResourceDimensionConfig;
   show?: ScatterShow;
 }
 
-export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
-  fillOpacity: 0.5,
+export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
   label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
 
-export interface ScatterSeriesConfig extends PanelFieldConfig {
+export interface ScatterSeriesConfig extends ScatterFieldConfig {
   name?: string;
   x?: string;
   y?: string;

@@ -5,10 +5,10 @@ import { AutoEditor } from './AutoEditor';
 import { ManualEditor } from './ManualEditor';
 import { XYChartPanel2 } from './XYChartPanel2';
 import { getScatterFieldConfig } from './config';
-import { PanelOptions, PanelFieldConfig, defaultPanelFieldConfig } from './panelcfg.gen';
+import { defaultScatterFieldConfig, PanelOptions, ScatterFieldConfig } from './types';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(XYChartPanel2)
-  .useFieldConfig(getScatterFieldConfig(defaultPanelFieldConfig))
+export const plugin = new PanelPlugin<PanelOptions, ScatterFieldConfig>(XYChartPanel2)
+  .useFieldConfig(getScatterFieldConfig(defaultScatterFieldConfig))
   .setPanelOptions((builder) => {
     builder
       .addRadio({
