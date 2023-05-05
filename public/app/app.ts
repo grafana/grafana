@@ -91,6 +91,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { startMeasure, stopMeasure } from './metrics';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
@@ -119,6 +120,8 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      // This needs to be done after the `initEchoSrv` since it is being used under the hood.
+      startMeasure('frontend_app_init');
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
@@ -219,6 +222,8 @@ export class GrafanaApp {
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
+    } finally {
+      stopMeasure('frontend_app_init');
     }
   }
 }
