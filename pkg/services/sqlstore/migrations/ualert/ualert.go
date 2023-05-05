@@ -455,6 +455,9 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 		return err
 	}
 
+	// remove an existing configuration, which could have been left during switching back to legacy alerting
+	_, _ = m.sess.Delete(AlertConfiguration{OrgID: orgID})
+
 	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{
 		AlertmanagerConfiguration: string(rawAmConfig),
