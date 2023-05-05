@@ -375,7 +375,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
+		rule, err := m.makeAlertRule(l, *newCond, da, folder.Uid)
 		if err != nil {
 			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
 		}
