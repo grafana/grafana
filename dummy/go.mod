@@ -36,92 +36,91 @@ require (
 	github.com/beevik/etree v1.1.0 // @backend-platform
 	github.com/benbjohnson/clock v1.3.0 // @backend-platform
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @backend-platform
-	github.com/centrifugal/centrifuge v0.29.1
-	github.com/crewjam/saml v0.4.12
-	github.com/fatih/color v1.15.0
-	github.com/gchaincl/sqlhooks v1.3.0
-	github.com/go-git/go-git/v5 v5.4.2
-	github.com/go-ldap/ldap/v3 v3.4.4
-	github.com/go-openapi/strfmt v0.21.7
-	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
-	github.com/go-sql-driver/mysql v1.6.0
-	github.com/go-stack/stack v1.8.1
-	github.com/gobwas/glob v0.2.3
+	github.com/centrifugal/centrifuge v0.29.1 // @backend-platform
+	github.com/crewjam/saml v0.4.12 // @backend-platform
+	github.com/fatih/color v1.15.0 // @backend-platform
+	github.com/gchaincl/sqlhooks v1.3.0 // @backend-platform
+	github.com/go-git/go-git/v5 v5.4.2 // @backend-platform
+	github.com/go-ldap/ldap/v3 v3.4.4 // @backend-platform
+	github.com/go-openapi/strfmt v0.21.7 // @backend-platform
+	github.com/go-redis/redis/v8 v8.11.5 // @backend-platform
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // @backend-platform
+	github.com/go-sql-driver/mysql v1.6.0 // @backend-platform
+	github.com/go-stack/stack v1.8.1 // @backend-platform
+	github.com/gobwas/glob v0.2.3 // @backend-platform
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
-	github.com/gogo/protobuf v1.3.2
-	github.com/golang/mock v1.6.0
-	github.com/golang/snappy v0.0.4
-	github.com/google/go-cmp v0.5.9
-	github.com/google/uuid v1.3.0
-	github.com/google/wire v0.5.0
-	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230428095912-33c5aa68a5ba
-	github.com/grafana/grafana-aws-sdk v0.12.0
-	github.com/grafana/grafana-azure-sdk-go v1.6.0
-	github.com/grafana/grafana-plugin-sdk-go v0.160.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/hashicorp/go-hclog v1.5.0
-	github.com/hashicorp/go-plugin v1.4.9
-	github.com/hashicorp/go-version v1.3.0
-	github.com/influxdata/influxdb-client-go/v2 v2.6.0
-	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
-	github.com/jmespath/go-jmespath v0.4.0
-	github.com/json-iterator/go v1.1.12
-	github.com/jung-kurt/gofpdf v1.16.2
-	github.com/lib/pq v1.10.6
-	github.com/linkedin/goavro/v2 v2.10.0
-	github.com/m3db/prometheus_remote_client_golang v0.4.4
-	github.com/magefile/mage v1.14.0
-	github.com/mattn/go-isatty v0.0.18
-	github.com/mattn/go-sqlite3 v1.14.16
-	github.com/matttproud/golang_protobuf_extensions v1.0.4
-	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
+	github.com/gogo/protobuf v1.3.2 // @backend-platform
+	github.com/golang/mock v1.6.0 // @backend-platform
+	github.com/golang/snappy v0.0.4 // @backend-platform
+	github.com/google/go-cmp v0.5.9 // @backend-platform
+	github.com/google/uuid v1.3.0 // @backend-platform
+	github.com/google/wire v0.5.0 // @backend-platform
+	github.com/gorilla/websocket v1.5.0 // @backend-platform
+	github.com/grafana/alerting v0.0.0-20230428095912-33c5aa68a5ba // @backend-platform
+	github.com/grafana/grafana-aws-sdk v0.12.0 // @backend-platform
+	github.com/grafana/grafana-azure-sdk-go v1.6.0 // @backend-platformv
+	github.com/grafana/grafana-plugin-sdk-go v0.160.0 // @backend-platform
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @backend-platform
+	github.com/hashicorp/go-plugin v1.4.9 // @backend-platform
+	github.com/hashicorp/go-version v1.3.0 // @backend-platform
+	github.com/influxdata/influxdb-client-go/v2 v2.6.0 // @backend-platform
+	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097 // @backend-platform
+	github.com/jmespath/go-jmespath v0.4.0 // @backend-platform
+	github.com/json-iterator/go v1.1.12 // @backend-platform
+	github.com/jung-kurt/gofpdf v1.16.2 // @backend-platform
+	github.com/lib/pq v1.10.6 // @backend-platform
+	github.com/linkedin/goavro/v2 v2.10.0 // @backend-platform
+	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @backend-platform
+	github.com/magefile/mage v1.14.0 // @backend-platform
+	github.com/mattn/go-isatty v0.0.18 // @backend-platform
+	github.com/mattn/go-sqlite3 v1.14.16 // @backend-platform
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @backend-platform
+	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @backend-platform
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/patrickmn/go-cache v2.1.0+incompatible // @backend-platform
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
-	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.25.0
-	github.com/prometheus/client_golang v1.14.0
-	github.com/prometheus/client_model v0.3.0
-	github.com/prometheus/common v0.42.0
-	github.com/prometheus/prometheus v1.8.2-0.20211217191541-41f1a8125e66
-	github.com/robfig/cron/v3 v3.0.1
-	github.com/russellhaering/goxmldsig v1.2.0
-	github.com/stretchr/testify v1.8.2
-	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
-	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
+	github.com/pkg/errors v0.9.1 // @backend-platform
+	github.com/prometheus/alertmanager v0.25.0 // @backend-platform
+	github.com/prometheus/client_golang v1.14.0 // @backend-platform
+	github.com/prometheus/client_model v0.3.0 // @backend-platform
+	github.com/prometheus/common v0.42.0 // @backend-platform
+	github.com/prometheus/prometheus v1.8.2-0.20211217191541-41f1a8125e66 // @backend-platform
+	github.com/robfig/cron/v3 v3.0.1 // @backend-platform
+	github.com/russellhaering/goxmldsig v1.2.0 // @backend-platform
+	github.com/stretchr/testify v1.8.2 // @backend-platform
+	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @backend-platform
+	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @backend-platform
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
-	github.com/urfave/cli/v2 v2.24.4
-	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae
-	github.com/yalue/merged_fs v1.2.2
-	github.com/yudai/gojsondiff v1.0.0
-	go.opentelemetry.io/collector v0.31.0
-	go.opentelemetry.io/collector/model v0.31.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.37.0
-	go.opentelemetry.io/otel v1.14.0
-	go.opentelemetry.io/otel/exporters/jaeger v1.0.0
-	go.opentelemetry.io/otel/sdk v1.14.0
-	go.opentelemetry.io/otel/trace v1.14.0
-	golang.org/x/crypto v0.7.0
-	golang.org/x/exp v0.0.0-20221211140036-ad323defaf05
-	golang.org/x/net v0.9.0
-	golang.org/x/oauth2 v0.6.0
-	golang.org/x/sync v0.1.0
-	golang.org/x/time v0.3.0
-	golang.org/x/tools v0.7.0
-	gonum.org/v1/gonum v0.11.0
-	google.golang.org/api v0.104.0
-	google.golang.org/grpc v1.54.0
-	google.golang.org/protobuf v1.30.0
+	github.com/urfave/cli/v2 v2.24.4 // @backend-platform
+	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @backend-platform
+	github.com/yalue/merged_fs v1.2.2 // @backend-platform
+	github.com/yudai/gojsondiff v1.0.0 // @backend-platform
+	go.opentelemetry.io/collector v0.31.0 // @backend-platform
+	go.opentelemetry.io/collector/model v0.31.0 // @backend-platform
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.37.0 // @backend-platform
+	go.opentelemetry.io/otel v1.14.0 // @backend-platform
+	go.opentelemetry.io/otel/exporters/jaeger v1.0.0 // @backend-platform
+	go.opentelemetry.io/otel/sdk v1.14.0 // @backend-platform
+	go.opentelemetry.io/otel/trace v1.14.0 // @backend-platform
+	golang.org/x/crypto v0.7.0 // @backend-platform
+	golang.org/x/exp v0.0.0-20221211140036-ad323defaf05 // @backend-platform
+	golang.org/x/net v0.9.0 // @backend-platform
+	golang.org/x/oauth2 v0.6.0 // @backend-platform
+	golang.org/x/sync v0.1.0 // @backend-platform
+	golang.org/x/time v0.3.0 // @backend-platform
+	golang.org/x/tools v0.7.0 // @backend-platform
+	gonum.org/v1/gonum v0.11.0 // @backend-platform
+	google.golang.org/api v0.104.0 // @backend-platform
+	google.golang.org/grpc v1.54.0 // @backend-platform
+	google.golang.org/protobuf v1.30.0 // @backend-platform
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/ini.v1 v1.67.0
-	gopkg.in/mail.v2 v2.3.1
+	gopkg.in/ini.v1 v1.67.0 // @backend-platform
+	gopkg.in/mail.v2 v2.3.1 // @backend-platform
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v3 v3.0.1 // @backend-platform
 	xorm.io/builder v0.3.6 // indirect
-	xorm.io/core v0.7.3
-	xorm.io/xorm v0.8.2
+	xorm.io/core v0.7.3 // @backend-platform
+	xorm.io/xorm v0.8.2 // @backend-platform
 )
 
 require (
@@ -134,7 +133,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/FZambia/eagle v0.0.2 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
-	github.com/andybalholm/brotli v1.0.4
+	github.com/andybalholm/brotli v1.0.4 // @backend-platform
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -149,31 +148,31 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/emicklei/proto v1.10.0 // indirect
-	github.com/go-kit/log v0.2.1
+	github.com/go-kit/log v0.2.1 // @backend-platform
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/loads v0.21.2
+	github.com/go-openapi/loads v0.21.2 // @backend-platform
 	github.com/go-openapi/runtime v0.25.0 // indirect
 	github.com/go-openapi/spec v0.20.8 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-openapi/validate v0.22.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.3
+	github.com/golang-jwt/jwt/v4 v4.4.3 // @backend-platform
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3
+	github.com/golang/protobuf v1.5.3 // @backend-platform
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
-	github.com/googleapis/gax-go/v2 v2.7.0
+	github.com/googleapis/gax-go/v2 v2.7.0 // @backend-platform
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/grafana/grafana-google-sdk-go v0.1.0
+	github.com/grafana/grafana-google-sdk-go v0.1.0 // @backend-platform
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
-	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-multierror v1.1.1 // @backend-platform
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
@@ -212,63 +211,63 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/atomic v1.10.0
+	go.uber.org/atomic v1.10.0 // @backend-platform
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/text v0.9.0
+	golang.org/x/text v0.9.0 // @backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
+	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // @backend-platform
 )
 
 require (
-	cloud.google.com/go/kms v1.4.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0
-	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0
-	github.com/Azure/azure-storage-blob-go v0.15.0
-	github.com/Azure/go-autorest/autorest/adal v0.9.21
-	github.com/armon/go-radix v1.0.0
-	github.com/blugelabs/bluge v0.1.9
-	github.com/blugelabs/bluge_segment_api v0.2.0
-	github.com/bufbuild/connect-go v1.4.1
-	github.com/dlmiddlecote/sqlstats v1.0.2
-	github.com/drone/drone-cli v1.6.1
-	github.com/getkin/kin-openapi v0.115.0
-	github.com/golang-migrate/migrate/v4 v4.7.0
-	github.com/google/go-github/v45 v45.2.0
-	github.com/grafana/codejen v0.0.3
-	github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc
-	github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413
-	github.com/huandu/xstrings v1.3.1
-	github.com/jmoiron/sqlx v1.3.5
-	github.com/matryer/is v1.4.0
-	github.com/urfave/cli v1.22.12
-	go.etcd.io/etcd/api/v3 v3.5.5
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
-	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.14.0
-	gocloud.dev v0.25.0
+	cloud.google.com/go/kms v1.4.0 // @backend-platform
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0 // @backend-platform
+	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @backend-platform
+	github.com/Azure/azure-storage-blob-go v0.15.0 // @backend-platform
+	github.com/Azure/go-autorest/autorest/adal v0.9.21 // @backend-platform
+	github.com/armon/go-radix v1.0.0 // @backend-platform
+	github.com/blugelabs/bluge v0.1.9 // @backend-platform
+	github.com/blugelabs/bluge_segment_api v0.2.0 // @backend-platform
+	github.com/bufbuild/connect-go v1.4.1 // @backend-platform
+	github.com/dlmiddlecote/sqlstats v1.0.2 // @backend-platform
+	github.com/drone/drone-cli v1.6.1 // @backend-platform
+	github.com/getkin/kin-openapi v0.115.0 // @backend-platform
+	github.com/golang-migrate/migrate/v4 v4.7.0 // @backend-platform
+	github.com/google/go-github/v45 v45.2.0 // @backend-platform
+	github.com/grafana/codejen v0.0.3 // @backend-platform
+	github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc // @backend-platform
+	github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 // @backend-platform
+	github.com/huandu/xstrings v1.3.1 // @backend-platform
+	github.com/jmoiron/sqlx v1.3.5 // @backend-platform
+	github.com/matryer/is v1.4.0 // @backend-platform
+	github.com/urfave/cli v1.22.12 // @backend-platform
+	go.etcd.io/etcd/api/v3 v3.5.5 // @backend-platform
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0 // @backend-platform
+	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0 // @backend-platform
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0 // @backend-platform
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.14.0 // @backend-platform
+	gocloud.dev v0.25.0 // @backend-platform
 )
 
 require (
-	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1
-	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4
-	github.com/Masterminds/semver/v3 v3.1.1
-	github.com/alicebob/miniredis/v2 v2.30.1
-	github.com/dave/dst v0.27.2
-	github.com/go-jose/go-jose/v3 v3.0.0
-	github.com/grafana/cuetsy v0.1.8
-	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
-	github.com/grafana/dataplane/sdata v0.0.6
-	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a
-	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
-	github.com/redis/go-redis/v9 v9.0.2
-	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
-	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
-	go.opentelemetry.io/contrib/samplers/jaegerremote v0.9.0
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
+	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1 // @backend-platform
+	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4 // @backend-platform
+	github.com/Masterminds/semver/v3 v3.1.1 // @backend-platform
+	github.com/alicebob/miniredis/v2 v2.30.1 // @backend-platform
+	github.com/dave/dst v0.27.2 // @backend-platform
+	github.com/go-jose/go-jose/v3 v3.0.0 // @backend-platform
+	github.com/grafana/cuetsy v0.1.8 // @backend-platform
+	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad // @backend-platform
+	github.com/grafana/dataplane/sdata v0.0.6 // @backend-platform
+	github.com/grafana/go-mssqldb v0.9.1 // @backend-platform
+	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a // @backend-platform
+	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe // @backend-platform
+	github.com/redis/go-redis/v9 v9.0.2 // @backend-platform
+	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4 // @backend-platform
+	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // @backend-platform
+	go.opentelemetry.io/contrib/samplers/jaegerremote v0.9.0 // @backend-platform
+	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // @backend-platform
 )
 
 require (
@@ -342,13 +341,13 @@ require (
 require (
 	cloud.google.com/go/compute v1.15.1 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
-	filippo.io/age v1.1.1
+	filippo.io/age v1.1.1 // @backend-platform
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
-	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/Masterminds/sprig/v3 v3.2.2 // @backend-platform
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
+	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // @backend-platform
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20191112132149-a4c4c47bc57f // indirect
@@ -363,7 +362,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/docker/docker v23.0.4+incompatible
+	github.com/docker/docker v23.0.4+incompatible // @backend-platform
 	github.com/elazarl/goproxy v0.0.0-20220115173737-adb46da277ac // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
@@ -373,7 +372,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
-	github.com/hmarr/codeowners v1.1.2
+	github.com/hmarr/codeowners v1.1.2 // @backend-platform
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
@@ -386,9 +385,9 @@ require (
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/wk8/go-ordered-map v1.0.0
+	github.com/wk8/go-ordered-map v1.0.0 // @backend-platform
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
-	github.com/xlab/treeprint v1.1.0
+	github.com/xlab/treeprint v1.1.0 // @backend-platform
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
