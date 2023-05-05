@@ -106,6 +106,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		LogHandler:       handleLog,
 		LogLevel:         centrifuge.LogLevelError,
 		MetricsNamespace: "grafana_live",
+		// Use reasonably large expiration interval for stream meta key,
+		// much bigger than maximum HistoryLifetime value in Node config.
+		// This way stream meta data will expire, in some cases you may want
+		// to prevent its expiration setting this to zero value.
+		HistoryMetaTTL: 7 * 24 * time.Hour,
 	})
 	if err != nil {
 		return nil, err
