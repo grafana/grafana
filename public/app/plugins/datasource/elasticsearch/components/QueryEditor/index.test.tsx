@@ -22,10 +22,15 @@ describe('QueryEditor', () => {
         metrics: [
           {
             id: '1',
-            type: 'raw_data',
+            type: 'count',
           },
         ],
-        bucketAggs: [],
+        bucketAggs: [
+          {
+            type: 'date_histogram',
+            id: '2',
+          },
+        ],
       };
 
       const onChange = jest.fn<void, [ElasticsearchQuery]>();
