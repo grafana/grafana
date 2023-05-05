@@ -120,6 +120,7 @@ export const Table = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
+      autoResetPage: false,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       autoResetFilters: false,
       sortTypes: {
