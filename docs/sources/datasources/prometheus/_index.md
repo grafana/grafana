@@ -62,10 +62,9 @@ To configure basic settings for the data source, complete the following steps:
     | `Disable metrics lookup`        | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                   |
     | `Custom query parameters`       | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                         |
 
-        **Exemplars configuration:**
-
-        | Name              | Description                                                                                                                                                                                                                                                    |
-
+    **Exemplars configuration:**
+        
+    | Name              | Description                                                                                                                                                                                                                                                    |
     | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
     | **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data. |
     | **Data source** | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data. |
