@@ -7142,6 +7142,12 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 get:
+  name: downstream-repo
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: grafana_downstream_repo
+---
+get:
   name: gcp_service_account_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -7160,6 +7166,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 973109dcb66504d619152d83d6d591ea30f809012f6abd28ad00ebdff40dc1ec
+hmac: 6bf44e00d6f9d7f0be53a9efa466c2e4bf5d685ec08452f145c84756db880813
 
 ...

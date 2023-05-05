@@ -8,6 +8,7 @@ gcp_upload_artifacts_key = "gcp_upload_artifacts_key"
 azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
+grafana_downstream_repo = "grafana_downstream_repo"
 
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
@@ -122,6 +123,11 @@ def secrets():
             "enterprise2_security_prefix",
             "infra/data/ci/grafana-release-eng/enterprise2",
             "security_prefix",
+        ),
+        vault_secret(
+            "grafana_downstream_repo",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "downstream-repo",
         ),
         vault_secret(
             rgm_gcp_key_base64,
