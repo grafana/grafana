@@ -121,19 +121,18 @@ const _isProxy = Symbol('isReadOnlyProxy');
  * @param obj The object to make read only
  * @returns A new read only object, does not modify the original object
  */
-export function readOnlyProxy<T extends object>(obj: T): T {
+export function getReadOnlyProxy<T extends object>(obj: T): T {
   if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj)) {
     return obj;
   }
 
   const cache = new WeakMap();
-  const readonly = () => false;
 
   return new Proxy(obj, {
-    defineProperty: readonly,
-    deleteProperty: readonly,
-    isExtensible: readonly,
-    set: readonly,
+    defineProperty: () => false,
+    deleteProperty: () => false,
+    isExtensible: () => false,
+    set: () => false,
     get(target, prop, receiver) {
       if (prop === _isProxy) {
         return true;
@@ -143,7 +142,7 @@ export function readOnlyProxy<T extends object>(obj: T): T {
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
-          cache.set(value, readOnlyProxy(value));
+          cache.set(value, getReadOnlyProxy(value));
         }
         return cache.get(value);
       }

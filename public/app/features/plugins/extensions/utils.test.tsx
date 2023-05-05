@@ -1,6 +1,6 @@
 import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
-import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, readOnlyProxy } from './utils';
+import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, getReadOnlyProxy } from './utils';
 
 describe('Plugin Extensions / Utils', () => {
   describe('deepFreeze()', () => {
@@ -220,9 +220,9 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('readOnlyProxy()', () => {
+  describe('getReadOnlyProxy()', () => {
     it('should not be possible to modify values in proxied object', () => {
-      const proxy = readOnlyProxy({ a: 'a' });
+      const proxy = getReadOnlyProxy({ a: 'a' });
 
       expect(() => {
         proxy.a = 'b';
@@ -230,7 +230,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should not be possible to modify values in proxied array', () => {
-      const proxy = readOnlyProxy([1, 2, 3]);
+      const proxy = getReadOnlyProxy([1, 2, 3]);
 
       expect(() => {
         proxy[0] = 2;
@@ -238,7 +238,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should not be possible to modify nested objects in proxied object', () => {
-      const proxy = readOnlyProxy({
+      const proxy = getReadOnlyProxy({
         a: {
           c: 'c',
         },
@@ -251,7 +251,7 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should not be possible to modify nested arrays in proxied object', () => {
-      const proxy = readOnlyProxy({
+      const proxy = getReadOnlyProxy({
         a: {
           c: ['c', 'd'],
         },
@@ -266,7 +266,7 @@ describe('Plugin Extensions / Utils', () => {
     it('should be possible to modify source object', () => {
       const source = { a: 'b' };
 
-      readOnlyProxy(source);
+      getReadOnlyProxy(source);
       source.a = 'c';
 
       expect(source.a).toBe('c');
@@ -275,7 +275,7 @@ describe('Plugin Extensions / Utils', () => {
     it('should be possible to modify source array', () => {
       const source = ['a', 'b'];
 
-      readOnlyProxy(source);
+      getReadOnlyProxy(source);
       source[0] = 'c';
 
       expect(source[0]).toBe('c');
@@ -284,7 +284,7 @@ describe('Plugin Extensions / Utils', () => {
     it('should be possible to modify nedsted objects in source object', () => {
       const source = { a: { b: 'c' } };
 
-      readOnlyProxy(source);
+      getReadOnlyProxy(source);
       source.a.b = 'd';
 
       expect(source.a.b).toBe('d');
@@ -293,14 +293,14 @@ describe('Plugin Extensions / Utils', () => {
     it('should be possible to modify nedsted arrays in source object', () => {
       const source = { a: { b: ['c', 'd'] } };
 
-      readOnlyProxy(source);
+      getReadOnlyProxy(source);
       source.a.b[0] = 'd';
 
       expect(source.a.b[0]).toBe('d');
     });
 
     it('should be possible to call functions in proxied object', () => {
-      const proxy = readOnlyProxy({
+      const proxy = getReadOnlyProxy({
         a: () => 'testing',
       });
 
