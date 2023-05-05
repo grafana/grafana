@@ -58,14 +58,32 @@ export interface BaseDimensionConfig {
   field?: string;
 }
 
+export enum ScaleDimensionMode {
+  Linear = 'linear',
+  Quad = 'quad',
+}
+
 export interface ScaleDimensionConfig extends BaseDimensionConfig {
   fixed?: number;
   max: number;
   min: number;
+  mode?: ScaleDimensionMode; // | *"linear"
 }
 
 export interface ColorDimensionConfig extends BaseDimensionConfig {
   fixed?: string; // color value
+}
+
+export enum ScalarDimensionMode {
+  Clamped = 'clamped',
+  Mod = 'mod',
+}
+
+export interface ScalarDimensionConfig extends BaseDimensionConfig {
+  fixed?: number;
+  max: number;
+  min: number;
+  mode?: ScalarDimensionMode;
 }
 
 export enum TextDimensionMode {
@@ -82,7 +100,7 @@ export interface TextDimensionConfig extends BaseDimensionConfig {
 export enum ResourceDimensionMode {
   Field = 'field',
   Fixed = 'fixed',
-  Template = 'template',
+  Mapping = 'mapping',
 }
 
 export interface MapLayerOptions {

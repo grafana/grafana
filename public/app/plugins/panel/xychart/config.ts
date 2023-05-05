@@ -12,7 +12,7 @@ import { ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { ScatterFieldConfig, ScatterShow } from './types';
+import { ScatterFieldConfig, ScatterShow } from './panelcfg.gen';
 
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {

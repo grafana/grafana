@@ -5,16 +5,29 @@ BaseDimensionConfig: {
   // fixed: T -- will be added by each element
 }@cuetsy(kind="interface")
 
+ScaleDimensionMode: "linear" | "quad" @cuetsy(kind="enum")
+
 ScaleDimensionConfig: {
   BaseDimensionConfig
   min: int32
   max: int32
   fixed?: int32
+  mode?: ScaleDimensionMode // | *"linear"
 }@cuetsy(kind="interface")
 
 ColorDimensionConfig: {
   BaseDimensionConfig
   fixed?: string // color value
+}@cuetsy(kind="interface")
+
+ScalarDimensionMode: "mod" | "clamped" @cuetsy(kind="enum")
+
+ScalarDimensionConfig: {
+  BaseDimensionConfig
+  min: number
+  max: number
+  fixed?: number
+  mode?: ScalarDimensionMode
 }@cuetsy(kind="interface")
 
 TextDimensionMode: "fixed" | "field" | "template" @cuetsy(kind="enum")
@@ -25,7 +38,7 @@ TextDimensionConfig: {
   fixed?: string 
 }@cuetsy(kind="interface")
 
-ResourceDimensionMode: "fixed" | "field" | "template" @cuetsy(kind="enum")
+ResourceDimensionMode: "fixed" | "field" | "mapping" @cuetsy(kind="enum")
 
 // Links to a resource (image/svg path)
 ResourceDimensionConfig: {

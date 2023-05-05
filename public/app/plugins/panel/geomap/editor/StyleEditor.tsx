@@ -5,6 +5,13 @@ import { Observable, of } from 'rxjs';
 
 import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import {
+  ScaleDimensionConfig,
+  ResourceDimensionConfig,
+  ColorDimensionConfig,
+  TextDimensionConfig,
+  ScalarDimensionConfig,
+} from '@grafana/schema';
+import {
   ColorPicker,
   Field,
   HorizontalGroup,
@@ -22,16 +29,7 @@ import {
   ScalarDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
-import {
-  ScaleDimensionConfig,
-  ResourceDimensionConfig,
-  ColorDimensionConfig,
-  ResourceFolderName,
-  TextDimensionConfig,
-  defaultTextConfig,
-  ScalarDimensionConfig,
-  MediaType,
-} from 'app/features/dimensions/types';
+import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
 import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
 import { styleUsesText } from '../style/utils';
