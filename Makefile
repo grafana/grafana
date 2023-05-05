@@ -77,7 +77,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./public/app/plugins/gen.go
 	go generate ./pkg/kindsys/report.go
 
-gen-go: $(WIRE) gen-cue
+gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
 
