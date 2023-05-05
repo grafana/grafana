@@ -55,16 +55,19 @@ describe('SearchStateManager', () => {
       }));
       const stm = getSearchStateManager();
       stm.initStateFromUrl();
+
       // Verify that they have been set
       expect(stm.state.query).toBe('hello');
       expect(stm.state.sort).toBe('alpha-asc');
+      expect(stm.state.folderUid).toBe(undefined);
 
       // Changed to a view with no URL state.
       parseRouteParamsSpy.mockImplementation(() => ({}));
-      stm.initStateFromUrl();
+      stm.initStateFromUrl('abc');
 
       expect(stm.state.query).toBe('');
       expect(stm.state.sort).toBe(undefined);
+      expect(stm.state.folderUid).toBe('abc');
     });
   });
 });
