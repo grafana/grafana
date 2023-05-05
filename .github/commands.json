@@ -429,6 +429,14 @@
   },
   {
     "type": "label",
+    "name": "area/panel/trend",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/panel/table",
     "action": "addToProject",
     "addToProject": {
