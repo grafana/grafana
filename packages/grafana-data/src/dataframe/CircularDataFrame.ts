@@ -10,6 +10,8 @@ interface CircularOptions {
 /**
  * This dataframe can have values constantly added, and will never
  * exceed the given capacity
+ *
+ * @deprecated use standard DataFrame
  */
 export class CircularDataFrame<T = any> extends MutableDataFrame<T> {
   constructor(options: CircularOptions) {
