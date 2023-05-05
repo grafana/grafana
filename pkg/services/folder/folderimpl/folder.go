@@ -485,7 +485,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			}
 
 			if cmd.ForceDeleteRules {
-				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.ForceDeleteRules); err != nil {
+				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
 					return err
 				}
 			}
@@ -501,7 +501,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, forceDeleteAlertRules bool) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
 	for _, v := range s.registry {
 		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
 			return err
