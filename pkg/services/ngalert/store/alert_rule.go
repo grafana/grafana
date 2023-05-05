@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	foldermodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -513,7 +512,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
-	rules, err := st.ListAlertRules(ctx, &foldermodels.ListAlertRulesQuery{
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},
 	})
