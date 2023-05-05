@@ -20,7 +20,7 @@ export interface Props {
   subtitle?: ReactNode;
   /** Should the Drawer be closable by clicking on the mask, defaults to true */
   closeOnMaskClick?: boolean;
-  /** Render the drawer inside a container on the page */
+  /** @deprecated */
   inline?: boolean;
   /**
    * @deprecated use the size property instead
@@ -28,7 +28,12 @@ export interface Props {
   width?: number | string;
   /** Should the Drawer be expandable to full width */
   expandable?: boolean;
-  /** Specifies the width and min-width */
+  /**
+   * Specifies the width and min-width.
+   * sm = width 25vw & min-width 384px
+   * md = width 50vw & min-width 568px
+   * lg = width 75vw & min-width 744px
+   **/
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
@@ -81,7 +86,7 @@ export function Drawer({
       onClose={onClose}
       placement="right"
       width={fixedWidth}
-      getContainer={inline ? false : '.main-view'}
+      getContainer={'.main-view'}
       className={styles.drawerContent}
       rootClassName={rootClass}
       motion={{
@@ -188,7 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.rc-drawer-content-wrapper': {
           label: 'drawer-lg',
           width: '75vw',
-          minWidth: theme.spacing(83),
+          minWidth: theme.spacing(93),
 
           [theme.breakpoints.down('md')]: {
             width: `calc(100% - ${theme.spacing(2)}) !important`,
