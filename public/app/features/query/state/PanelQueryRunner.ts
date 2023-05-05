@@ -26,6 +26,7 @@ import {
   toDataFrame,
   transformDataFrame,
   preProcessPanelData,
+  ApplyFieldOverrideOptions,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -91,7 +92,7 @@ export class PanelQueryRunner {
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
     let structureRev = 1;
-    let lastFieldConfig: unknown = undefined;
+    let lastFieldConfig: ApplyFieldOverrideOptions | undefined = undefined;
     let lastProcessedFrames: DataFrame[] = [];
     let lastRawFrames: DataFrame[] = [];
     let isFirstPacket = true;
@@ -109,7 +110,8 @@ export class PanelQueryRunner {
     return this.subject.pipe(
       mergeMap((data: PanelData) => {
         let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-        if (data.series === lastRawFrames && lastFieldConfig === fieldConfig) {
+
+        if (data.series === lastRawFrames && lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig) {
           console.log('returning same series');
           return of({ ...data, structureRev, series: lastProcessedFrames });
         }
