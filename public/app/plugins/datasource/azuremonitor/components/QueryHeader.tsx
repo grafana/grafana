@@ -21,11 +21,13 @@ export const QueryHeader = ({ query, onQueryChange }: QueryTypeFieldProps) => {
 
   const handleChange = useCallback(
     (change: SelectableValue<AzureQueryType>) => {
-      change.value &&
+      if (change.value && change.value !== query.queryType) {
         onQueryChange({
-          ...query,
+          refId: query.refId,
+          datasource: query.datasource,
           queryType: change.value,
         });
+      }
     },
     [onQueryChange, query]
   );
