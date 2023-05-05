@@ -65,13 +65,17 @@ export type CloudNotifierType =
   | 'opsgenie'
   | 'victorops'
   | 'webhook'
-  | 'wechat';
+  | 'wechat'
+  | 'webex'
+  | 'telegram'
+  | 'sns'
+  | 'discord';
 
 export type NotifierType = GrafanaNotifierType | CloudNotifierType;
-export interface NotifierDTO {
+export interface NotifierDTO<T = NotifierType> {
   name: string;
   description: string;
-  type: NotifierType;
+  type: T;
   heading: string;
   options: NotificationChannelOption[];
   info?: string;
@@ -131,10 +135,13 @@ export interface NotificationChannelOption {
   required: boolean;
   secure: boolean;
   selectOptions?: Array<SelectableValue<string>> | null;
+  defaultValue?: SelectableValue<string>;
   showWhen: { field: string; is: string };
   validationRule: string;
   subformOptions?: NotificationChannelOption[];
   dependsOn: string;
+  // react-hook-forms made me do this, they literally have the same type definition and we really can't know what type we get from "element"
+  setValueAs?: (value: any) => any;
 }
 
 export interface NotificationChannelState {
