@@ -56,7 +56,7 @@ describe('QueryEditor', () => {
       expect(onChange.mock.calls[0][0].alias).toBe(newAlias);
     });
 
-    it('Should be disabled if last bucket aggregation is not Date Histogram', () => {
+    it('Should not be shown if last bucket aggregation is not Date Histogram', () => {
       const query: ElasticsearchQuery = {
         refId: 'A',
         query: '',
@@ -74,7 +74,7 @@ describe('QueryEditor', () => {
       expect(screen.queryByLabelText('Alias')).toBeNull();
     });
 
-    it('Should be enabled if last bucket aggregation is Date Histogram', () => {
+    it('Should be shown if last bucket aggregation is Date Histogram', () => {
       const query: ElasticsearchQuery = {
         refId: 'A',
         query: '',
