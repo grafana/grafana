@@ -175,21 +175,24 @@ export function useStateSync(params: ExploreQueryParams) {
           return getPaneDatasource(datasource, queries, orgId, !!exploreMixedDatasource).then(
             async (paneDatasource) => {
               return Promise.resolve(
-                queries.length
-                  ? // if we have queries in the URL, we use them
-                    withUniqueRefIds(queries)
-                      // but filter out the ones that are not compatible with the pane datasource
-                      .filter(getQueryFilter(paneDatasource))
-                  : getDatasourceSrv()
-                      // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
-                      .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
-                      .then((ds) => [getDefaultQuery(ds)])
+                // FIXME: In theory, given the Grafana datasosurce will always be present, this should always be defined.
+                paneDatasource
+                  ? queries.length
+                    ? // if we have queries in the URL, we use them
+                      withUniqueRefIds(queries)
+                        // but filter out the ones that are not compatible with the pane datasource
+                        .filter(getQueryFilter(paneDatasource))
+                    : getDatasourceSrv()
+                        // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
+                        .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
+                        .then((ds) => [getDefaultQuery(ds)])
+                  : []
               )
                 .then(async (queries) => {
                   // we remove queries that have an invalid datasources
                   const validQueries = await removeQueriesWithInvalidDatasource(queries);
 
-                  if (!validQueries.length) {
+                  if (!validQueries.length && paneDatasource) {
                     // and in case there's no query left we add a default one.
                     return [
                       getDefaultQuery(
@@ -329,6 +332,7 @@ async function getPaneDatasource(
       .get(lastUsedDSUID)
       // Or the default one
       .catch(() => getDatasourceSrv().get())
+      .catch(() => undefined)
   );
 }
 
