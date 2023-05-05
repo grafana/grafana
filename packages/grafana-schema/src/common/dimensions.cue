@@ -9,9 +9,9 @@ ScaleDimensionMode: "linear" | "quad" @cuetsy(kind="enum")
 
 ScaleDimensionConfig: {
   BaseDimensionConfig
-  min: int32
-  max: int32
-  fixed?: int32
+  min: number
+  max: number
+  fixed?: number
   mode?: ScaleDimensionMode // | *"linear"
 }@cuetsy(kind="interface")
 
