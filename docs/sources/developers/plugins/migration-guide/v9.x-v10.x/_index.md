@@ -31,4 +31,4 @@ In Grafana 10, the values in DataFrames are now managed as simple JavaScript arr
 
 When writing plugins that should run on 9.x, continue to use the Vector interfaces; when targeting 10+ you can now use simple arrays rather than wrapper classes.
 
-To make this transition seamless, the ultimate javascript sin was employed: the [native Array prototype](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/types/vector.ts) has been modified to implement Vector directly.
+To make this transition seamless, the Original JavaScript Sin™ was employed: the native Array prototype [had to be extended](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/types/vector.ts) with several Vector methods. We will atone and undo this in v11, when Vector interfaces and classes are removed.
