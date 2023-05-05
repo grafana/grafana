@@ -140,8 +140,7 @@ export interface NotificationChannelOption {
   validationRule: string;
   subformOptions?: NotificationChannelOption[];
   dependsOn: string;
-  // react-hook-forms made me do this, they literally have the same type definition and we really can't know what type we get from "element"
-  setValueAs?: (value: any) => any;
+  setValueAs?: (value: string | boolean) => string | number | boolean | null;
 }
 
 export interface NotificationChannelState {
