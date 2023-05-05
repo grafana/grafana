@@ -51,7 +51,7 @@ composableKinds: PanelCfg: {
 							pointColor?:  common.ColorDimensionConfig
 							labelValue?:  common.TextDimensionConfig
 							pointSymbol?: common.ResourceDimensionConfig
-							fillOpacity?: number // TODO: 0-1, default to 0.5
+							fillOpacity?: number & >=0 & <=1 | *0.5 // TODO: 0-1, default to 0.5
 
 							lineWidth?: int32 & >=0
 							lineStyle?: common.LineStyle

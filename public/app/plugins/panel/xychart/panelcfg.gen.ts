@@ -47,6 +47,7 @@ export interface ScatterFieldConfig extends common.HideableFieldConfig, common.A
 }
 
 export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
+  fillOpacity: 0.5,
   label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
