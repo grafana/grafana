@@ -96,7 +96,7 @@ export const updateTime = (config: {
     // of __from and __to variables
     getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
-    return dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
+    dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
 };
 
