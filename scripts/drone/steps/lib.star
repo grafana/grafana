@@ -17,6 +17,7 @@ curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
 go_image = "golang:1.20.4"
+cypress_image = "cypress/included:12.11.0"
 
 trigger_oss = {
     "repo": [
@@ -875,7 +876,7 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         cmd += " --tries {}".format(tries)
     return {
         "name": "end-to-end-tests-{}".format(suite),
-        "image": "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97",
+        "image": cypress_image,
         "depends_on": [
             "grafana-server",
         ],
