@@ -3,7 +3,7 @@ import { createSelector } from 'reselect';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState } from 'app/types';
 
-import { DashboardsTreeItem, DashboardTreeSelection } from '../types';
+import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
@@ -16,7 +16,7 @@ const flatTreeSelector = createSelector(
   openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems ?? [], childrenByParentUID, openFolders);
+    return createFlatTree(folderUID, rootItems?.items ?? [], childrenByParentUID, openFolders);
   }
 );
 
@@ -45,9 +45,9 @@ const selectedItemsForActionsSelector = createSelector(
       const isSelected = selectedItems.folder[folderUID];
       if (isSelected) {
         // Unselect any children in the output
-        const children = childrenByParentUID[folderUID];
-        if (children) {
-          for (const child of children) {
+        const collection = childrenByParentUID[folderUID];
+        if (collection) {
+          for (const child of collection.items) {
             if (child.kind === 'dashboard') {
               result.dashboard[child.uid] = false;
             }
@@ -105,7 +105,7 @@ export function useActionSelectionState() {
 function createFlatTree(
   folderUID: string | undefined,
   rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
   level = 0
 ): DashboardsTreeItem[] {
@@ -113,7 +113,7 @@ function createFlatTree(
     const mappedChildren = createFlatTree(item.uid, rootItems, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.length === 0;
+    const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
     if (isOpen && emptyFolder) {
       mappedChildren.push({
         isOpen: false,
@@ -135,8 +135,8 @@ function createFlatTree(
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;
 
   const items = folderUID
-    ? (isOpen && childrenByUID[folderUID]) || [] // keep seperate lines
+    ? isOpen && childrenByUID[folderUID]?.items // keep seperate lines
     : rootItems;
 
-  return items.flatMap((item) => mapItem(item, folderUID, level));
+  return (items || []).flatMap((item) => mapItem(item, folderUID, level));
 }

@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect } from 'react';
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { ListOnItemsRenderedProps } from 'react-window';
 
 import { Spinner } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import {
   useFlatTreeState,
@@ -15,7 +17,7 @@ import {
   setAllSelection,
   useBrowseLoadingStatus,
 } from '../state';
-import { DashboardTreeSelection, SelectionState } from '../types';
+import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -31,6 +33,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
+  const rootItems = useSelector((wholeState) => wholeState.browseDashboards.rootItems);
   const childrenByParentUID = useChildrenByParentUIDState();
 
   const handleFolderClick = useCallback(
@@ -99,6 +102,56 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [selectedItems, childrenByParentUID]
   );
 
+  const handleItemsRendered = useMemo(() => {
+    function fn(props: ListOnItemsRenderedProps) {
+      console.log('Rendered up to', props.overscanStopIndex);
+
+      let folderToLoad: DashboardViewItem | undefined;
+
+      for (let index = 0; index < props.overscanStopIndex; index++) {
+        const viewItem = flatTree[index];
+        const { isOpen, item } = viewItem;
+
+        if (item.kind !== 'folder' || !isOpen) {
+          continue;
+        }
+
+        const collection = childrenByParentUID[item.uid];
+        if (!collection) {
+          // should never happen
+          continue;
+        }
+
+        const isFullyLoaded = collection.lastFetched === 'dashboard' && collection.lastFetchedSize < 50;
+        if (isFullyLoaded) {
+          continue;
+        }
+
+        console.log(item, 'is first open folder to load');
+        folderToLoad = item;
+        break;
+      }
+
+      if (folderToLoad) {
+        console.log('load more children from', folderToLoad);
+        dispatch(fetchChildren(folderToLoad.uid));
+      } else {
+        console.log('see if we need to load more root items');
+
+        const rootCollection = folderUID ? childrenByParentUID[folderUID] : rootItems;
+        if (!rootCollection) {
+          return;
+        }
+        const isFullyLoaded = rootCollection.lastFetched === 'dashboard' && rootCollection.lastFetchedSize < 50;
+        if (!isFullyLoaded) {
+          dispatch(fetchChildren(folderUID));
+        }
+      }
+    }
+
+    return debounce(fn, 1000);
+  }, [flatTree, dispatch, folderUID, rootItems, childrenByParentUID]);
+
   if (status === 'pending') {
     return <Spinner />;
   }
@@ -130,21 +183,22 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       onFolderClick={handleFolderClick}
       onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
       onItemSelectionChange={handleItemSelectionChange}
+      onItemsRendered={handleItemsRendered}
     />
   );
 }
 
 function hasSelectedDescendants(
   item: DashboardViewItem,
-  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>,
+  childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
-  const children = childrenByParentUID[item.uid];
-  if (!children) {
+  const collection = childrenByParentUID[item.uid];
+  if (!collection) {
     return false;
   }
 
-  return children.some((v) => {
+  return collection.items.some((v) => {
     const thisIsSelected = selectedItems[v.kind][v.uid];
     if (thisIsSelected) {
       return thisIsSelected;

@@ -11,15 +11,24 @@ import { findItem } from './utils';
 type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
 
 export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState, action: FetchChildrenAction) {
-  const parentUID = action.meta.arg;
-  const children = action.payload;
+  const parentUID = action.meta.arg === GENERAL_FOLDER_UID ? undefined : action.meta.arg;
+  const { page, children } = action.payload;
 
-  if (!parentUID || parentUID === GENERAL_FOLDER_UID) {
-    state.rootItems = children;
+  const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
+  const prevItems = collection?.items ?? [];
+  const newCollection = {
+    items: prevItems.concat(children),
+    lastFetched: children[0].kind as 'dashboard', // TODO don't cast this
+    lastFetchedSize: children.length,
+    lastFetchedPage: page,
+  };
+
+  if (!parentUID) {
+    state.rootItems = newCollection;
     return;
   }
 
-  state.childrenByParentUID[parentUID] = children;
+  state.childrenByParentUID[parentUID] = newCollection;
 
   // If the parent of the items we've loaded are selected, we must select all these items also
   const parentIsSelected = state.selectedItems.folder[parentUID];
@@ -56,8 +65,8 @@ export function setItemSelectionState(
       return;
     }
 
-    let children = state.childrenByParentUID[uid] ?? [];
-    for (const child of children) {
+    let collection = state.childrenByParentUID[uid];
+    for (const child of collection?.items ?? []) {
       markChildren(child.kind, child.uid);
     }
   }
@@ -70,7 +79,7 @@ export function setItemSelectionState(
   let nextParentUID = item.parentUID;
 
   while (nextParentUID) {
-    const parent = findItem(state.rootItems ?? [], state.childrenByParentUID, nextParentUID);
+    const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
 
     // This case should not happen, but a find can theortically return undefined, and it
     // helps limit infinite loops
@@ -87,7 +96,7 @@ export function setItemSelectionState(
   }
 
   // Check to see if we should mark the header checkbox selected if all root items are selected
-  state.selectedItems.$all = state.rootItems?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
+  state.selectedItems.$all = state.rootItems?.items?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
 export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<{ isSelected: boolean }>) {
@@ -103,14 +112,14 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
 
   if (isSelected) {
     for (const folderUID in state.childrenByParentUID) {
-      const children = state.childrenByParentUID[folderUID] ?? [];
+      const collection = state.childrenByParentUID[folderUID];
 
-      for (const child of children) {
+      for (const child of collection?.items ?? []) {
         state.selectedItems[child.kind][child.uid] = isSelected;
       }
     }
 
-    for (const child of state.rootItems ?? []) {
+    for (const child of state.rootItems?.items ?? []) {
       state.selectedItems[child.kind][child.uid] = isSelected;
     }
   } else {

@@ -1,15 +1,48 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getFolderChildren } from 'app/features/search/service/folders';
 import { createAsyncThunk, DashboardDTO } from 'app/types';
+
+import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
 
 export const fetchChildren = createAsyncThunk(
   'browseDashboards/fetchChildren',
-  async (parentUID: string | undefined) => {
+  async (parentUID: string | undefined, thunkAPI) => {
     // Need to handle the case where the parentUID is the root
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
-    return await getFolderChildren(uid, undefined, true);
+
+    if (process.env.NODE_ENV !== 'production' && parentUID === GENERAL_FOLDER_UID) {
+      const err = new Error("fetchChildren called with a parentUID of 'general' instead of undefined");
+      console.error(err);
+    }
+
+    const state = thunkAPI.getState().browseDashboards;
+    const collection = uid ? state.childrenByParentUID[uid] : state.rootItems;
+
+    if (!collection) {
+      // no previous data for this uid, so get folders first
+      const page = 1;
+      return {
+        children: await listFolders(uid, undefined, page),
+        page,
+      };
+    }
+
+    if (collection.lastFetched === 'folder' && collection.lastFetchedSize >= PAGE_SIZE) {
+      const page = collection.lastFetchedPage + 1;
+      return {
+        children: await listFolders(uid, undefined, page),
+        page,
+      };
+    } else {
+      const page = 1;
+      return {
+        children: await listDashboards(uid, page),
+        page,
+      };
+    }
+
+    // return await getFolderChildren(uid, undefined, true);
   }
 );
 
