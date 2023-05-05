@@ -116,14 +116,14 @@ func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource 
 		return userSource
 	}
 
-	highestStatusCode := 0
+	var highestStatusCode backend.Status = 0
 	for _, res := range resp.Responses {
 		if res.Error != nil {
 			return grafanaSource
 		}
 
-		if res.Status >= 400 && int(res.Status) > highestStatusCode {
-			highestStatusCode = int(res.Status)
+		if res.Status > highestStatusCode {
+			highestStatusCode = res.Status
 		}
 	}
 
