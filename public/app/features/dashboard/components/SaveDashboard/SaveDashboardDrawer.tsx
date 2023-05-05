@@ -131,7 +131,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     <Drawer
       title={title}
       onClose={onDismiss}
-      width={'40%'}
       subtitle={dashboard.title}
       tabs={
         <TabsBar>
