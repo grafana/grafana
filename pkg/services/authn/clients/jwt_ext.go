@@ -181,10 +181,9 @@ func (s *ExtendedJWT) VerifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	err = claims.ValidateWithLeeway(jwt.Expected{
-		Issuer: s.cfg.AppURL,
-		// FIXME: Commented this out for the credential grant to work, but might not be safe
-		// Audience: jwt.Audience{s.cfg.AppURL + "oauth2/token"},
-		Time: timeNow(),
+		Issuer:   s.cfg.AppURL,
+		Audience: jwt.Audience{s.cfg.AppURL},
+		Time:     timeNow(),
 	}, 0)
 
 	if err != nil {

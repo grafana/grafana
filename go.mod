@@ -273,7 +273,6 @@ require (
 	github.com/grafana/thema v0.0.0-20230302221249-6952e4a999b7
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
-	github.com/ory/x v0.0.214
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	gopkg.in/square/go-jose.v2 v2.5.2-0.20210529014059-a5c7eec3c614
@@ -340,6 +339,7 @@ require (
 	github.com/ory/go-acc v0.2.6 // indirect
 	github.com/ory/go-convenience v0.1.0 // indirect
 	github.com/ory/viper v1.7.5 // indirect
+	github.com/ory/x v0.0.214 // indirect
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
@@ -449,3 +449,5 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/ory/fosite => ../fosite
