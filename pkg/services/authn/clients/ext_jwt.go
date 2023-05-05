@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -29,17 +30,18 @@ var (
 )
 
 const (
-	SigningMethodNone = jose.SignatureAlgorithm("none")
+	SigningMethodNone     = jose.SignatureAlgorithm("none")
+	rfc9068ShortMediaType = "at+jwt"
+	rfc9068MediaType      = "application/at+jwt"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, features *featuremgmt.FeatureManager /*, oauthService oauthserver.OAuth2Service*/) *ExtendedJWT {
+func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, features *featuremgmt.FeatureManager, signingKeys signingkeys.Service) *ExtendedJWT {
 	return &ExtendedJWT{
 		cfg:         cfg,
 		features:    features,
 		log:         log.New(authn.ClientJWT),
 		userService: userService,
-		// oauthService: oauthService,
-		//publicKey: oauthService.GetServerPublicKey(),
+		signingKeys: signingKeys,
 	}
 }
 
@@ -48,8 +50,7 @@ type ExtendedJWT struct {
 	features    *featuremgmt.FeatureManager
 	log         log.Logger
 	userService user.Service
-	// oauthService oauthserver.OAuth2Service
-	publicKey interface{}
+	signingKeys signingkeys.Service
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -115,7 +116,7 @@ func (s *ExtendedJWT) retrieveToken(httpRequest *http.Request) string {
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !s.cfg.ExtendedJWTAuthEnabled || !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		return false
 	}
 
@@ -134,7 +135,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	return claims.Issuer == s.cfg.AppURL
+	return claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
 }
 
 // VerifyRFC9068Token verifies the token against the RFC 9068 specification.
@@ -156,7 +157,7 @@ func (s *ExtendedJWT) VerifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	jwtType := strings.ToLower(typeHeader.(string))
-	if jwtType != "at+jwt" && jwtType != "application/at+jwt" {
+	if jwtType != rfc9068ShortMediaType && jwtType != rfc9068MediaType {
 		return nil, fmt.Errorf("invalid JWT type: %s", jwtType)
 	}
 
@@ -166,16 +167,31 @@ func (s *ExtendedJWT) VerifyRFC9068Token(ctx context.Context, rawToken string) (
 
 	var claims jwt.Claims
 	var allClaims map[string]interface{}
-	err = parsedToken.Claims(s.publicKey, &claims, &allClaims)
+	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims, &allClaims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify JWT: %w", err)
 	}
 
+	if _, expClaimExists := allClaims["exp"]; !expClaimExists {
+		return nil, fmt.Errorf("missing 'exp' claim")
+	}
+
+	if _, jtiClaimExists := allClaims["jti"]; !jtiClaimExists {
+		return nil, fmt.Errorf("missing 'jti' claim")
+	}
+
+	if _, subClaimExists := allClaims["sub"]; !subClaimExists {
+		return nil, fmt.Errorf("missing 'sub' claim")
+	}
+
+	if _, iatClaimExists := allClaims["iat"]; !iatClaimExists {
+		return nil, fmt.Errorf("missing 'iat' claim")
+	}
+
 	err = claims.ValidateWithLeeway(jwt.Expected{
-		Issuer: s.cfg.AppURL,
-		// FIXME: Commented this out for the credential grant to work, but might not be safe
-		// Audience: jwt.Audience{s.cfg.AppURL + "oauth2/token"},
-		Time: timeNow(),
+		Issuer:   s.cfg.ExtendedJWTExpectIssuer,
+		Audience: jwt.Audience{s.cfg.ExtendedJWTExpectAudience},
+		Time:     timeNow(),
 	}, 0)
 
 	if err != nil {
