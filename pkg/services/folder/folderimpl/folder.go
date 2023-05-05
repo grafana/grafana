@@ -484,8 +484,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return dashboards.ErrFolderAccessDenied
 			}
 
-			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.ForceDeleteRules); err != nil {
-				return err
+			if cmd.ForceDeleteRules {
+				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.ForceDeleteRules); err != nil {
+					return err
+				}
 			}
 
 			err = s.legacyDelete(ctx, cmd, dashFolder)
@@ -501,9 +503,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, forceDeleteAlertRules bool) error {
 	for _, v := range s.registry {
-		if v.Kind() == folder.AlertRuleKind && !forceDeleteAlertRules {
-			return fmt.Errorf("folder cannot be deleted: %w", dashboards.ErrFolderContainsAlertRules)
-		}
 		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
 			return err
 		}
@@ -888,11 +887,6 @@ func toFolderError(err error) error {
 func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-
-	_, ok := s.registry[r.Kind()]
-	if ok {
-		return folder.ErrTargetRegistrySrvConflict.Errorf("target registry service: %s already exists", r.Kind())
-	}
 
 	s.registry[r.Kind()] = r
 
