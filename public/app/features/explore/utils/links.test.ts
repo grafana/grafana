@@ -369,8 +369,8 @@ describe('explore links utils', () => {
           transformations: [
             {
               type: SupportedTransformationType.Regex,
-              expression: '^(\\S*)$',
-              field: 'serviceTags.keyA',
+              expression: '{(?=[^\\}]*\\bkey":"keyA")[^\\}]*\\bvalue":"(.*?)".*}',
+              field: 'serviceTags',
               mapValue: 'msg',
             },
           ],
@@ -386,7 +386,7 @@ describe('explore links utils', () => {
             { value: 'apple', key: 'keyB' },
           ],
           [
-            { value: 'cauliflower', key: 'keyA' },
+            { key: 'keyA', value: 'cauliflower' },
             { value: 'durian', key: 'keyB' },
           ],
         ],
