@@ -56,8 +56,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
 	}, &req.PluginContext, totalBytes, func() (resp *backend.QueryDataResponse, innerErr error) {
-		resp, innerErr = p.QueryData(ctx, req)
-		return
+		return p.QueryData(ctx, req)
 	})
 
 	if err != nil {

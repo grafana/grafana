@@ -61,13 +61,11 @@ const (
 type errorSource string
 
 const (
-	grafanaError           errorSource = "grafana"
-	noneError              errorSource = "none"
-	callerError            errorSource = "caller"
-	downstream3xxError     errorSource = "downstream-3xx"
-	downstream4xxError     errorSource = "downstream-4xx"
-	downstream5xxError     errorSource = "downstream-5xx"
-	downstreamUnknownError errorSource = "downstream-unknown"
+	grafanaSource          errorSource = "grafana"
+	userSource             errorSource = "user"
+	downstreamClientSource errorSource = "downstreamClient"
+	downstreamServerSource errorSource = "downstreamServer"
+	noneSource             errorSource = "none"
 )
 
 var logger = plog.New("plugin.instrumentation")
@@ -111,71 +109,45 @@ func InstrumentQueryDataRequest(ctx context.Context, cfg Cfg, pluginCtx *backend
 
 func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource {
 	if status == statusError {
-		return grafanaError
+		return grafanaSource
 	}
 
 	if status == statusCancelled {
-		return callerError
+		return userSource
 	}
 
 	highestStatusCode := 0
 	for _, res := range resp.Responses {
 		if res.Error != nil {
-			return grafanaError
+			return grafanaSource
 		}
 
-		if res.Status >= 300 && int(res.Status) > highestStatusCode {
+		if res.Status >= 400 && int(res.Status) > highestStatusCode {
 			highestStatusCode = int(res.Status)
 		}
 	}
 
-	if highestStatusCode != 0 {
-		switch getStatusCodeCategory(highestStatusCode) {
-		case "3xx":
-			return downstream3xxError
-		case "4xx":
-			return downstream4xxError
-		case "5xx":
-			return downstream5xxError
-		case "unknown":
-			return downstreamUnknownError
-		}
+	if highestStatusCode >= 500 {
+		return downstreamServerSource
 	}
 
-	return noneError
-}
-
-func getStatusCodeCategory(statusCode int) string {
-	if statusCode >= 200 && statusCode < 300 {
-		return "2xx"
-	} else if statusCode >= 300 && statusCode < 400 {
-		return "3xx"
-	} else if statusCode >= 400 && statusCode < 500 {
-		return "4xx"
-	} else if statusCode >= 500 && statusCode < 600 {
-		return "5xx"
-	} else {
-		return "unknown"
+	if highestStatusCode >= 400 {
+		return downstreamClientSource
 	}
+
+	return noneSource
 }
 
 func getStatus(err error) string {
-	status := statusOK
-
-	if err != nil {
-		status = statusError
-		if errors.Is(err, context.Canceled) {
-			status = statusCancelled
-		}
-
-		if errors.Is(err, context.Canceled) {
-			status = statusCancelled
-		}
-
-		logger.Info("Plugin Request Completed")
+	if err == nil {
+		return statusOK
 	}
 
-	return status
+	if errors.Is(err, context.Canceled) {
+		return statusCancelled
+	}
+
+	return statusError
 }
 
 func updateMetrics(pluginId string, endpoint string, target string, elapsed time.Duration, status string, errorSource string) {
