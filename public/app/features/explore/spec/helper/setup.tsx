@@ -44,6 +44,7 @@ type SetupOptions = {
   datasources?: DatasourceSetup[];
   urlParams?: ExploreQueryParams & { [key: string]: string };
   prevUsedDatasource?: { orgId: number; datasource: string };
+  mixedEnabled?: boolean;
 };
 
 export function setupExplore(options?: SetupOptions): {
@@ -130,9 +131,21 @@ export function setupExplore(options?: SetupOptions): {
   const location = new HistoryWrapper(history);
   setLocationService(location);
 
+  const contextMock = getGrafanaContextMock({ location });
+
   const { unmount, container } = render(
     <Provider store={storeState}>
-      <GrafanaContext.Provider value={getGrafanaContextMock({ location })}>
+      <GrafanaContext.Provider
+        value={{
+          ...contextMock,
+          config: {
+            ...contextMock.config,
+            featureToggles: {
+              exploreMixedDatasource: options?.mixedEnabled ?? false,
+            },
+          },
+        }}
+      >
         <Router history={history}>
           <Route
             path="/explore"

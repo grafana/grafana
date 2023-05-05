@@ -1,9 +1,7 @@
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
 import {
-  ExploreUrlState,
   TimeRange,
   HistoryItem,
   DataSourceApi,
@@ -12,7 +10,7 @@ import {
   RawTimeRange,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { DEFAULT_RANGE, getQueryKeys } from 'app/core/utils/explore';
+import { getQueryKeys } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -210,30 +208,4 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   return state;
-};
-
-/**
- * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
- * side effects needed.
- */
-export const urlDiff = (
-  oldUrlState: ExploreUrlState | undefined,
-  currentUrlState: ExploreUrlState | undefined
-): {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  panelsState: boolean;
-} => {
-  const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
-  const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
-  const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
-
-  return {
-    datasource,
-    queries,
-    range,
-    panelsState,
-  };
 };

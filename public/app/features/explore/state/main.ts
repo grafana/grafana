@@ -15,7 +15,7 @@ import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { initializeExplore, paneReducer } from './explorePane';
-import { makeExplorePaneState } from './utils';
+import { DEFAULT_RANGE, makeExplorePaneState } from './utils';
 
 //
 // Actions and Payloads
@@ -63,30 +63,26 @@ export const setPaneState = createAction<SetPaneStateActionPayload>('explore/set
 
 export const clearPanes = createAction('explore/clearPanes');
 
-//
-// Action creators
-//
-
 /**
- * Opens a new right split pane by navigating to appropriate URL. It either copies existing state of the left pane
- * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
- * the URL.
+ * Opens a new split pane. It either copies existing state of the left pane
+ * or uses values from options arg.
+ *
+ * TODO: this can be improved by better inferring fallback values.
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
   async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
-    const leftState: ExploreItemState = getState().explore.panes.left!;
+    const leftState = getState().explore.panes.left;
 
-    const queries = options?.queries ?? (options?.query ? [options?.query] : leftState.queries);
+    const queries = options?.queries ?? (options?.query ? [options?.query] : leftState?.queries || []);
 
     await dispatch(
       initializeExplore({
         exploreId: ExploreId.right,
-        // TODO: fix this
-        datasource: options?.datasourceUid || leftState.datasourceInstance?.uid!,
+        datasource: options?.datasourceUid || leftState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
-        range: options?.range || leftState.range.raw,
-        panelsState: options?.panelsState || leftState.panelsState,
+        range: options?.range || leftState?.range.raw || DEFAULT_RANGE,
+        panelsState: options?.panelsState || leftState?.panelsState,
       })
     );
   }

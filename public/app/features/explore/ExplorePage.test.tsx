@@ -267,7 +267,7 @@ describe('ExplorePage', () => {
 
       describe('When root datasource is not specified in the URL', () => {
         it('Redirects to default datasource', async () => {
-          const { location } = setupExplore();
+          const { location } = setupExplore({ mixedEnabled: true });
           await waitForExplore();
 
           await waitFor(() => {
@@ -283,6 +283,7 @@ describe('ExplorePage', () => {
         it('Redirects to last used datasource when available', async () => {
           const { location } = setupExplore({
             prevUsedDatasource: { orgId: 1, datasource: 'elastic-uid' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -301,6 +302,7 @@ describe('ExplorePage', () => {
               left: '{"queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
             },
             prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -321,6 +323,7 @@ describe('ExplorePage', () => {
               left: '{"datasource":"elastic-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}',
             },
             prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -340,6 +343,7 @@ describe('ExplorePage', () => {
               left: '{"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
             },
             prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -355,6 +359,7 @@ describe('ExplorePage', () => {
           const { location } = setupExplore({
             urlParams: { left: '{"datasource":"NON-EXISTENT","range":{"from":"now-1h","to":"now"}}' },
             prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -370,6 +375,7 @@ describe('ExplorePage', () => {
           const { location } = setupExplore({
             urlParams: { left: '{"datasource":"NON-EXISTENT","range":{"from":"now-1h","to":"now"}}' },
             prevUsedDatasource: { orgId: 1, datasource: 'I DO NOT EXIST' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -384,6 +390,7 @@ describe('ExplorePage', () => {
         it('Fallbacks to default datasource if root datasource does not exist there is no last used datasource', async () => {
           const { location } = setupExplore({
             urlParams: { left: '{"datasource":"NON-EXISTENT","range":{"from":"now-1h","to":"now"}}' },
+            mixedEnabled: true,
           });
           await waitForExplore();
 
@@ -402,6 +409,7 @@ describe('ExplorePage', () => {
             left: '{"datasource":"-- Mixed --","queries":[{"refId":"A","datasource":{"type":"NON-EXISTENT","uid":"NON-EXISTENT"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
           },
           prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+          mixedEnabled: true,
         });
         await waitForExplore();
 
@@ -419,6 +427,7 @@ describe('ExplorePage', () => {
             left: '{"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
           },
           prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+          mixedEnabled: true,
         });
 
         await waitForExplore(undefined, true);
