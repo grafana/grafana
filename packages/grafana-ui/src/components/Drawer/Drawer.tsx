@@ -45,7 +45,6 @@ export interface Props {
 
 export function Drawer({
   children,
-  inline = false,
   onClose,
   closeOnMaskClick = true,
   scrollableContent = false,
