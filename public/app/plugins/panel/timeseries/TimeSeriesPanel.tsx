@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { usePrevious } from 'react-use';
 
 import { Field, PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
