@@ -25,6 +25,7 @@ const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
@@ -205,16 +206,19 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <div className={styles.dataSourceList}>
-        <DataSourceList
-          {...props}
-          enableKeyboardNavigation
-          current={current}
-          onChange={changeCallback}
-          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
-        ></DataSourceList>
-      </div>
-
+      <DataSourceList
+        {...props}
+        enableKeyboardNavigation
+        className={styles.dataSourceList}
+        current={current}
+        onChange={changeCallback}
+        filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
+        onClickEmptyStateCTA={() =>
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+          })
+        }
+      ></DataSourceList>
       <div className={styles.footer}>
         {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
           <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
