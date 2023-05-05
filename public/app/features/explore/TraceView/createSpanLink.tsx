@@ -23,7 +23,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
+import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';
@@ -74,15 +74,19 @@ export function createSpanLinkFactory({
         ...scopedVarsFromSpan(span),
       };
       // We should be here only if there are some links in the dataframe
-      const field = dataFrame.fields.find((f) => Boolean(f.config.links?.length))!;
+      const fields = dataFrame.fields.filter((f) => Boolean(f.config.links?.length))!;
       try {
-        const links = getFieldLinksForExplore({
-          field,
-          rowIndex: span.dataFrameRowIndex!,
-          splitOpenFn,
-          range: getTimeRangeFromSpan(span),
-          dataFrame,
-          vars: scopedVars,
+        let links: ExploreFieldLinkModel[] = [];
+        fields.forEach((field) => {
+          const fieldLinksForExplore = getFieldLinksForExplore({
+            field,
+            rowIndex: span.dataFrameRowIndex!,
+            splitOpenFn,
+            range: getTimeRangeFromSpan(span),
+            dataFrame,
+            vars: scopedVars,
+          });
+          links = links.concat(fieldLinksForExplore);
         });
 
         spanLinks = {
