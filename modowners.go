@@ -28,6 +28,6 @@ func main() {
 	// Iterate through requires in modfile
 	for _, require := range modFile.Require {
 		// For each require, print the comment suffix
-		fmt.Println("Require: %s", string(require.Syntax.Comments.Suffix))
+		// fmt.Println("Require: %s", string(require.Syntax.Comments.Suffix)) // TODO: figure out how to convert require.Syntax.Comments.Suffix (variable of type []modfile.Comment) to type string
 	}
 }
