@@ -4,6 +4,7 @@ import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
 import React, { ReactNode, useEffect } from 'react';
+import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -72,6 +73,7 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
+  useClickAway(overlayRef, onClose);
 
   // Apply size styles (unless deprecated width prop is used)
   const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
