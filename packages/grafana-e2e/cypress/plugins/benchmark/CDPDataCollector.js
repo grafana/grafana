@@ -1,24 +1,13 @@
-import CDP from 'chrome-remote-interface';
-import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
-import { countBy, mean } from 'lodash';
-import Tracelib, { TraceEvent } from 'tracelib';
+const CDP = require('chrome-remote-interface');
+const { countBy, mean } = require('lodash');
+const Tracelib = require('tracelib');
 
-import { CollectedData, DataCollector, DataCollectorName } from './DataCollector';
+class CDPDataCollector {
+  tracingCategories;
 
-type CDPDataCollectorDeps = {
-  port: number;
-};
+  state;
 
-export class CDPDataCollector implements DataCollector {
-  private tracingCategories: string[];
-
-  private state: {
-    client?: CDP.Client;
-    tracingPromise?: Promise<CollectedData>;
-    traceEvents: TraceEvent[];
-  };
-
-  constructor(private deps: CDPDataCollectorDeps) {
+  constructor(deps) {
     this.state = this.getDefaultState();
     this.tracingCategories = [
       'disabled-by-default-v8.cpu_profile',
@@ -37,29 +26,23 @@ export class CDPDataCollector implements DataCollector {
 
   getName = () => DataCollectorName.CDP;
 
-  private resetState = async () => {
+  resetState = async () => {
     if (this.state.client) {
       await this.state.client.close();
     }
     this.state = this.getDefaultState();
   };
 
-  private getDefaultState = () => ({
+  getDefaultState = () => ({
     traceEvents: [],
   });
 
   // workaround for type declaration issues in cdp lib
-  private asApis = (
-    client: CDP.Client
-  ): {
-    Profiler: ProtocolProxyApi.ProfilerApi;
-    Page: ProtocolProxyApi.PageApi;
-    Tracing: ProtocolProxyApi.TracingApi;
-  } => client;
+  asApis = (client) => client;
 
-  private getClientApis = async () => this.asApis(await this.getClient());
+  getClientApis = async () => this.asApis(await this.getClient());
 
-  private getClient = async () => {
+  getClient = async () => {
     if (this.state.client) {
       return this.state.client;
     }
@@ -74,7 +57,7 @@ export class CDPDataCollector implements DataCollector {
     return client;
   };
 
-  start: DataCollector['start'] = async ({ id }) => {
+  start = async ({ id }) => {
     if (this.state.tracingPromise) {
       throw new Error(`collection in progress - can't start another one! ${id}`);
     }
@@ -95,8 +78,8 @@ export class CDPDataCollector implements DataCollector {
       this.state.traceEvents.push(...events);
     });
 
-    let resolveFn: (data: CollectedData) => void;
-    this.state.tracingPromise = new Promise<CollectedData>((resolve) => {
+    let resolveFn;
+    this.state.tracingPromise = new Promise((resolve) => {
       resolveFn = resolve;
     });
     Tracing.on('tracingComplete', ({ dataLossOccurred }) => {
@@ -115,7 +98,7 @@ export class CDPDataCollector implements DataCollector {
     });
   };
 
-  stop: DataCollector['stop'] = async (req) => {
+  stop = async (req) => {
     if (!this.state.tracingPromise) {
       throw new Error(`collection was never started - there is nothing to stop!`);
     }
@@ -130,7 +113,9 @@ export class CDPDataCollector implements DataCollector {
     return traceData;
   };
 
-  close: DataCollector['close'] = async () => {
+  close = async () => {
     await this.resetState();
   };
 }
+
+exports.CDPDataCollector = CDPDataCollector;

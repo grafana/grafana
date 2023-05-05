@@ -29,7 +29,7 @@
     "cypress",
     "dist",
     "cli.js",
-    "cypress.json",
+    "cypress.config.js",
     "./README.md",
     "./CHANGELOG.md",
     "LICENSE_APACHE2"
@@ -68,6 +68,7 @@
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "9.1.2",
     "blink-diff": "1.0.13",
+    "bluebird": "3.7.1",
     "chrome-remote-interface": "0.32.1",
     "commander": "8.3.0",
     "cypress": "12.11.0",

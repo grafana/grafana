@@ -25,11 +25,7 @@ Cypress.Commands.add('readProvisions', (filePaths: string[]) => {
 });
 
 Cypress.Commands.add('getJSONFilesFromDir', (dirPath: string) => {
-  return cy.task('getJSONFilesFromDir', {
-    // CWD is set for plugins in the cli but not for the main grafana repo: https://github.com/grafana/grafana/blob/main/packages/grafana-e2e/cli.js#L12
-    projectPath: Cypress.env('CWD') || Cypress.config().parentTestsFolder,
-    relativePath: dirPath,
-  });
+  return cy.task('getJSONFilesFromDir', dirPath);
 });
 
 Cypress.Commands.add('startBenchmarking', (testName: string) => {

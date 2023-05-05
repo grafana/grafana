@@ -1,52 +1,22 @@
-import { fromPairs } from 'lodash';
+const { fromPairs } = require('lodash');
 
-import { CollectedData, DataCollectorName } from './DataCollector';
-
-type Stats = {
-  sum: number;
-  min: number;
-  max: number;
-  count: number;
-  avg: number;
-  time: number;
-};
-
-export enum MeasurementName {
-  DataRenderDelay = 'DataRenderDelay',
-}
-
-type LivePerformanceAppStats = Record<MeasurementName, Stats[]>;
-
-const isLivePerformanceAppStats = (data: CollectedData[]): data is LivePerformanceAppStats[] =>
+const isLivePerformanceAppStats = (data) =>
   data.some((st) => {
     const stat = st?.[MeasurementName.DataRenderDelay];
     return Array.isArray(stat) && Boolean(stat?.length);
   });
 
-type FormattedStats = {
-  total: {
-    count: number[];
-    avg: number[];
-  };
-  lastInterval: {
-    avg: number[];
-    min: number[];
-    max: number[];
-    count: number[];
-  };
-};
-
-export const formatAppStats = (allStats: CollectedData[]) => {
+const formatAppStats = (allStats) => {
   if (!isLivePerformanceAppStats(allStats)) {
     return {};
   }
 
-  const names = Object.keys(MeasurementName) as MeasurementName[];
+  const names = Object.keys(MeasurementName);
 
   return fromPairs(
     names.map((name) => {
       const statsForMeasurement = allStats.map((s) => s[name]);
-      const res: FormattedStats = {
+      const res = {
         total: {
           count: [],
           avg: [],
@@ -84,25 +54,9 @@ export const formatAppStats = (allStats: CollectedData[]) => {
   );
 };
 
-type CDPData = {
-  eventCounts: Record<string, unknown>;
-  fps: number;
-  tracingDataLoss: number;
-  warnings: Record<string, unknown>;
-};
+const isCDPData = (data) => data.every((d) => typeof d.eventCounts === 'object');
 
-const isCDPData = (data: any[]): data is CDPData[] => data.every((d) => typeof d.eventCounts === 'object');
-
-type FormattedCDPData = {
-  minorGC: number[];
-  majorGC: number[];
-  droppedFrames: number[];
-  fps: number[];
-  tracingDataLossOccurred: boolean;
-  longTaskWarnings: number[];
-};
-
-const emptyFormattedCDPData = (): FormattedCDPData => ({
+const emptyFormattedCDPData = () => ({
   minorGC: [],
   majorGC: [],
   droppedFrames: [],
@@ -111,25 +65,23 @@ const emptyFormattedCDPData = (): FormattedCDPData => ({
   longTaskWarnings: [],
 });
 
-const formatCDPData = (data: any): FormattedCDPData => {
+const formatCDPData = (data) => {
   if (!isCDPData(data)) {
     return emptyFormattedCDPData();
   }
 
   return data.reduce((acc, next) => {
-    acc.majorGC.push((next.eventCounts.MajorGC as number) ?? 0);
-    acc.minorGC.push((next.eventCounts.MinorGC as number) ?? 0);
+    acc.majorGC.push(next.eventCounts.MajorGC ?? 0);
+    acc.minorGC.push(next.eventCounts.MinorGC ?? 0);
     acc.fps.push(Math.round(next.fps) ?? 0);
     acc.tracingDataLossOccurred = acc.tracingDataLossOccurred || Boolean(next.tracingDataLoss);
-    acc.droppedFrames.push((next.eventCounts.DroppedFrame as number) ?? 0);
-    acc.longTaskWarnings.push((next.warnings.LongTask as number) ?? 0);
+    acc.droppedFrames.push(next.eventCounts.DroppedFrame ?? 0);
+    acc.longTaskWarnings.push(next.warnings.LongTask ?? 0);
     return acc;
   }, emptyFormattedCDPData());
 };
 
-export const formatResults = (
-  results: Array<{ appStats: CollectedData; collectorsData: CollectedData }>
-): CollectedData => {
+const formatResults = (results) => {
   return {
     ...formatAppStats(results.map(({ appStats }) => appStats)),
     ...formatCDPData(results.map(({ collectorsData }) => collectorsData[DataCollectorName.CDP])),
@@ -137,3 +89,6 @@ export const formatResults = (
     __raw: results,
   };
 };
+
+exports.formatResults = formatResults;
+exports.formatAppStats = formatAppStats;

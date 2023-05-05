@@ -11,6 +11,7 @@ module.exports = async (baseConfig) => {
     env: { CWD, UPDATE_SCREENSHOTS },
   } = baseConfig;
 
+  // We only want to extend the config for plugin developers.
   if (CWD) {
     // @todo: https://github.com/cypress-io/cypress/issues/6406
     const jsonReporter = require.resolve('@mochajs/json-file-reporter');
@@ -18,7 +19,7 @@ module.exports = async (baseConfig) => {
     // @todo `baseUrl: env.CYPRESS_BASEURL`
     const projectConfig = {
       fixturesFolder: `${CWD}/cypress/fixtures`,
-      integrationFolder: `${CWD}/cypress/integration`,
+      specPattern: `${CWD}/cypress/integration/**/*.{js,jsx,ts,tsx}`,
       reporter: jsonReporter,
       reporterOptions: {
         output: `${CWD}/cypress/report.json`,

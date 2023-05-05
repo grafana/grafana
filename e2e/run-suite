@@ -29,11 +29,10 @@ testFilesForSingleSuite="*.spec.ts"
 rootForEnterpriseSuite="extensions-suite"
 
 declare -A cypressConfig=(
-  [integrationFolder]=../../e2e
   [screenshotsFolder]=../../e2e/"${args[0]}"/screenshots
   [videosFolder]=../../e2e/"${args[0]}"/videos
   [fileServerFolder]=./cypress
-  [testFiles]=*-suite/*spec.ts
+  [specPattern]=../../e2e/*-suite/*spec.ts
   [defaultCommandTimeout]=30000
   [viewportWidth]=1920
   [viewportHeight]=1080
@@ -62,9 +61,8 @@ case "$1" in
         env[BENCHMARK_PLUGIN_ENABLED]=true
         env[BENCHMARK_PLUGIN_RESULTS_FOLDER]=../../e2e/benchmarks/"${args[1]}"/results
         cypressConfig[video]=false
-        cypressConfig[integrationFolder]=../../e2e/benchmarks/"${args[1]}"
         cypressConfig[screenshotsFolder]=../../e2e/benchmarks/"${args[1]}"/screenshots
-        cypressConfig[testFiles]=$testFilesForSingleSuite
+        cypressConfig[specPattern]=../../e2e/benchmarks/"${args[1]}"/$testFilesForSingleSuite
         ;;
     "enterprise")
         echo "Enterprise"
@@ -90,8 +88,7 @@ case "$1" in
     "")
         ;;
     *)
-        cypressConfig[integrationFolder]=../../e2e/"${args[0]}"
-        cypressConfig[testFiles]=$testFilesForSingleSuite
+        cypressConfig[specPattern]=../../e2e/"${args[0]}"/$testFilesForSingleSuite
         cypressConfig[video]=${args[1]}
         ;;
 esac

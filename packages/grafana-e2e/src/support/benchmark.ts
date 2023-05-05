@@ -32,18 +32,16 @@ export const benchmark = ({
 
   describe(name, () => {
     before(() => {
-      e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+      cy.session('login', () => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), true), {
+        cacheAcrossSpecs: true,
+      });
     });
 
     beforeEach(() => {
       e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
-      Cypress.Cookies.preserveOnce('grafana_session');
     });
 
     afterEach(() => e2e.flows.revertAllChanges());
-    after(() => {
-      e2e().clearCookies();
-    });
 
     Array(repeat)
       .fill(0)

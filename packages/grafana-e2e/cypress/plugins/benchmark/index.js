@@ -1,12 +1,12 @@
-import fs from 'fs';
-import { fromPairs } from 'lodash';
+const fs = require('fs');
+const { fromPairs } = require('lodash');
 
-import { CDPDataCollector } from './CDPDataCollector';
-import { CollectedData, DataCollector } from './DataCollector';
-import { formatResults } from './formatting';
+const { CDPDataCollector } = require('./CDPDataCollector');
+const { formatResults } = require('./formatting');
+
 const remoteDebuggingPortOptionPrefix = '--remote-debugging-port=';
 
-const getOrAddRemoteDebuggingPort = (args: string[]) => {
+const getOrAddRemoteDebuggingPort = (args) => {
   const existing = args.find((arg) => arg.startsWith(remoteDebuggingPortOptionPrefix));
 
   if (existing) {
@@ -18,16 +18,16 @@ const getOrAddRemoteDebuggingPort = (args: string[]) => {
   return port;
 };
 
-let collectors: DataCollector[] = [];
-let results: Array<{ appStats: CollectedData; collectorsData: CollectedData }> = [];
+let collectors = [];
+let results = [];
 
-const startBenchmarking = async ({ testName }: { testName: string }) => {
+const startBenchmarking = async ({ testName }) => {
   await Promise.all(collectors.map((coll) => coll.start({ id: testName })));
 
   return true;
 };
 
-const stopBenchmarking = async ({ testName, appStats }: { testName: string; appStats: CollectedData }) => {
+const stopBenchmarking = async ({ testName, appStats }) => {
   const data = await Promise.all(collectors.map(async (coll) => [coll.getName(), await coll.stop({ id: testName })]));
 
   results.push({
@@ -43,13 +43,17 @@ const afterRun = async () => {
   results = [];
 };
 
-const afterSpec = (resultsFolder: string) => async (spec: { name: string }) => {
-  fs.writeFileSync(`${resultsFolder}/${spec.name}-${Date.now()}.json`, JSON.stringify(formatResults(results), null, 2));
+const afterSpec = (resultsFolder) => async (spec) => {
+  console.log('spec', spec);
+  fs.writeFileSync(
+    `${resultsFolder}/${spec.baseName}-${Date.now()}.json`,
+    JSON.stringify(formatResults(results), null, 2)
+  );
 
   results = [];
 };
 
-export const initialize: Cypress.PluginConfig = (on, config) => {
+const initialize = (on, config) => {
   const resultsFolder = config.env['BENCHMARK_PLUGIN_RESULTS_FOLDER'];
 
   if (!fs.existsSync(resultsFolder)) {
@@ -86,3 +90,4 @@ export const initialize: Cypress.PluginConfig = (on, config) => {
   on('after:run', afterRun);
   on('after:spec', afterSpec(resultsFolder));
 };
+exports.initialize = initialize;
