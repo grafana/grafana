@@ -71,7 +71,7 @@ describe('QueryEditor', () => {
 
       render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
 
-      expect(screen.getByLabelText('Alias')).toBeDisabled();
+      expect(screen.queryByLabelText('Alias')).toBeNull();
     });
 
     it('Should be enabled if last bucket aggregation is Date Histogram', () => {
