@@ -56,7 +56,6 @@ export function Drawer({
   subtitle,
   width,
   size = 'md',
-  expandable = false,
   tabs,
 }: Props) {
   const styles = useStyles2(getStyles);
