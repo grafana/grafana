@@ -29,6 +29,6 @@ Recommended actions:
 
 In grafana 10, the values in DataFrames are now managed as simple javascript arrays. See [epic 66480](https://github.com/grafana/grafana/issues/66480). It is no longer necessary to wrap values in a [Vector<T>](https://github.com/grafana/grafana/blob/v9.5.x/packages/grafana-data/src/types/vector.ts) implementation. Most code targeting 9x will continue to work without any issues. In the rare case that existing code directly implements [Vector<T>](https://github.com/grafana/grafana/blob/v9.5.x/packages/grafana-data/src/types/vector.ts) rather than extending/using base classes, this should either return an array, or extend [FunctionalVector<T>](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/vector/FunctionalVector.ts#L9). All Vector implementations have been deprecated and will be removed in the future.
 
-When writing plugins that should run on 9x, continue to use the Vector interfaces; When targeting 10+ you can now use simple arrays rather than wrapper classes.
+When writing plugins that should run on 9.x, continue to use the Vector interfaces; when targeting 10+ you can now use simple arrays rather than wrapper classes.
 
 To make this transition seamless, the ultimate javascript sin was employed: the [native Array prototype](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/types/vector.ts) has been modified to implement Vector directly.
