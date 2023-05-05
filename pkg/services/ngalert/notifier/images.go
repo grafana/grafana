@@ -52,21 +52,31 @@ func (i imageProvider) GetImage(ctx context.Context, uri string) (*images.Image,
 }
 
 func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Alert) (string, error) {
-	fmt.Println("GetImageURL")
 	uri, err := getImageURI(alert)
 	if err != nil {
 		return "", err
 	}
 
-	var image *models.Image
-
-	// Check whether the uri is a URL or a token to know how to query the DB.
+	// If the identifier is a URL, validate that it corresponds to a stored, non-expired image.
 	if strings.HasPrefix(uri, "http") {
-		image, err = i.store.GetImageByURL(ctx, uri)
-	} else {
-		token := strings.TrimPrefix(uri, "token://")
-		image, err = i.store.GetImage(ctx, token)
+		exists, err := i.store.URLExists(ctx, uri)
+		if err != nil {
+			return "", err
+		}
+		if !exists {
+			return "", images.ErrImageNotFound
+		}
+		return uri, nil
 	}
+
+	// If the identifier is a token, remove the prefix, get the image and return the URL.
+	token := strings.TrimPrefix(uri, "token://")
+	return i.getImageURLFromToken(ctx, token)
+}
+
+// getImageURLFromToken takes a token and returns the URL of the image that token belongs to.
+func (i imageProvider) getImageURLFromToken(ctx context.Context, token string) (string, error) {
+	image, err := i.store.GetImage(ctx, token)
 	if err != nil {
 		return "", err
 	}
@@ -78,14 +88,13 @@ func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Al
 }
 
 func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Alert) (io.ReadCloser, string, error) {
-	fmt.Println("GetRawImage")
 	uri, err := getImageURI(alert)
 	if err != nil {
 		return nil, "", err
 	}
 
-	var image *models.Image
 	// Check whether the uri is a URL or a token to know how to query the DB.
+	var image *models.Image
 	if strings.HasPrefix(uri, "http") {
 		image, err = i.store.GetImageByURL(ctx, uri)
 	} else {
