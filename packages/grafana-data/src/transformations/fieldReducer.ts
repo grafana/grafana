@@ -291,9 +291,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   };
 
   const data = field.values;
-  calcs.count = ignoreNulls ? data.length : data.filter((val) => val != null).length;
 
-  const isNumberField = field.type === FieldType.number || FieldType.time;
+  const isNumberField = field.type === FieldType.number || field.type === FieldType.time;
 
   for (let i = 0; i < data.length; i++) {
     let currentValue = data[i];
@@ -312,6 +311,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
         currentValue = 0;
       }
     }
+
+    calcs.count++;
 
     if (currentValue != null) {
       // null || undefined
