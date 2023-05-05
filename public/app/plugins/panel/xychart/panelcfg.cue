@@ -26,54 +26,52 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
+		schemas: [{
+			version: [0, 0]
+			schema: {
 
-						SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum")
-						ScatterShow:   "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
+				SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum")
+				ScatterShow:   "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
 
-						XYDimensionConfig: {
-							frame: int32 & >=0
-							x?:    string
-							exclude?: [...string]
-						} @cuetsy(kind="interface")
+				XYDimensionConfig: {
+					frame: int32 & >=0
+					x?:    string
+					exclude?: [...string]
+				} @cuetsy(kind="interface")
 
-						ScatterFieldConfig: {
-							common.HideableFieldConfig
-							common.AxisConfig
+				ScatterFieldConfig: {
+					common.HideableFieldConfig
+					common.AxisConfig
 
-							show?: ScatterShow & (*"points" | _)
+					show?: ScatterShow & (*"points" | _)
 
-							pointSize?:  common.ScaleDimensionConfig
-							lineColor?:  common.ColorDimensionConfig
-							pointColor?: common.ColorDimensionConfig
-							labelValue?: common.TextDimensionConfig
+					pointSize?:  common.ScaleDimensionConfig
+					lineColor?:  common.ColorDimensionConfig
+					pointColor?: common.ColorDimensionConfig
+					labelValue?: common.TextDimensionConfig
 
-							lineWidth?: int32 & >=0
-							lineStyle?: common.LineStyle
-							label?:     common.VisibilityMode & (*"auto" | _)
-						} @cuetsy(kind="interface",TSVeneer="type")
+					lineWidth?: int32 & >=0
+					lineStyle?: common.LineStyle
+					label?:     common.VisibilityMode & (*"auto" | _)
+				} @cuetsy(kind="interface",TSVeneer="type")
 
-						ScatterSeriesConfig: {
-							ScatterFieldConfig
-							x?:    string
-							y?:    string
-							name?: string
-						} @cuetsy(kind="interface")
+				ScatterSeriesConfig: {
+					ScatterFieldConfig
+					x?:    string
+					y?:    string
+					name?: string
+				} @cuetsy(kind="interface")
 
-						PanelOptions: {
-							common.OptionsWithLegend
-							common.OptionsWithTooltip
+				PanelOptions: {
+					common.OptionsWithLegend
+					common.OptionsWithTooltip
 
-							seriesMapping?: SeriesMapping
-							dims:           XYDimensionConfig
-							series: [...ScatterSeriesConfig]
-						} @cuetsy(kind="interface")
-					},
-				]
-			},
-		]
+					seriesMapping?: SeriesMapping
+					dims:           XYDimensionConfig
+					series: [...ScatterSeriesConfig]
+				} @cuetsy(kind="interface")
+			}
+		}]
+		lenses: []
 	}
 }
