@@ -690,7 +690,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 	resourcesQuery := ""
 	if len(correlationResources) > 0 {
 		intermediate := make([]string, 0)
-		for resource, _ := range correlationResources {
+		for resource := range correlationResources {
 			resourceSplit := strings.SplitAfter(resource, "/")
 			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range filteredTypes {
@@ -773,7 +773,7 @@ func buildTracesLogsQuery(operationId *string, correlationResources map[string]b
 	selectors := "union " + strings.Join(types, ",\n") + "\n"
 	if len(correlationResources) > 0 {
 		intermediate := make([]string, 0)
-		for resource, _ := range correlationResources {
+		for resource := range correlationResources {
 			resourceSplit := strings.SplitAfter(resource, "/")
 			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range types {
