@@ -238,11 +238,15 @@ func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger log.Logger, queryURL string, query *AzureLogAnalyticsQuery) (*http.Request, error) {
+	from := query.TimeRange.From.Format(time.RFC3339)
+	to := query.TimeRange.To.Format(time.RFC3339)
+	timespan := fmt.Sprintf("%s/%s", from, to)
 	body := map[string]interface{}{
-		"query": query.Query,
+		"query":    query.Query,
+		"timespan": timespan,
 	}
 	if len(query.Resources) > 1 {
-		body["resources"] = query.Resources
+		body["workspaces"] = query.Resources
 	}
 	jsonValue, err := json.Marshal(body)
 	if err != nil {
