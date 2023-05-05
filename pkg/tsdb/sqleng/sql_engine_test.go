@@ -412,28 +412,6 @@ func TestSQLEngine(t *testing.T) {
 			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
 		}
 	})
-
-	t.Run("Should handle cases when the database successfully returns zero rows from a query", func(t *testing.T) {
-		// create instacneof fake data handler - pass all fields it needs
-		// pass in a channel, read from the channel
-		// xorm engine mock
-
-		
-		// originFrame := data.NewFrame("",
-		// 	data.NewField("value1", nil, []*int8{}),
-		// 	data.NewField("value2", nil, []*int8{}),
-		// 	data.NewField("value3", nil, []*int8{}),
-		// )
-		// originFrame.Meta.ExecutedQueryString = "SELECT * FROM database.table"
-
-		// queryResult := DBDataResponse{
-		// 	dataResponse: backend.DataResponse{Frames: [originFrame]},
-		// 	refID:        "1234",
-		// }
-
-		// what else do I need to add to test?
-		// how to test?!?!?
-	})
 }
 
 type testQueryResultTransformer struct {
