@@ -25,12 +25,13 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
       {metrics?.map((metric, index) => {
         switch (metric.type) {
           case 'logs':
-            return <QueryEditorSpecialMetricRow name="Logs" metric={metric} />;
+            return <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Logs" metric={metric} />;
           case 'raw_data':
-            return <QueryEditorSpecialMetricRow name="Raw Data" metric={metric} />;
+            return <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Raw Data" metric={metric} />;
           case 'raw_document':
             return (
               <QueryEditorSpecialMetricRow
+                key={`${metric.type}-${metric.id}`}
                 name="Raw Document"
                 metric={metric}
                 info="(NOTE: Raw document query type is deprecated)"
