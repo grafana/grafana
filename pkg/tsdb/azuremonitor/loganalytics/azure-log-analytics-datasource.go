@@ -687,7 +687,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		return ""
 	}
 
-	resourcesQuery := "*,"
+	resourcesQuery := ""
 	if len(correlationResources) > 0 {
 		intermediate := make([]string, 0)
 		for resource, _ := range correlationResources {
@@ -697,7 +697,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resourceName, table))
 			}
 		}
-		resourcesQuery += strings.Join(intermediate, ",")
+		resourcesQuery += "*," + strings.Join(intermediate, ",")
 	} else {
 		resourcesQuery += strings.Join(filteredTypes, ",")
 	}
@@ -770,6 +770,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 func buildTracesLogsQuery(operationId *string, correlationResources map[string]bool) string {
 	types := Tables
 	sort.Strings(types)
+	selectors := "union " + strings.Join(types, ",\n") + "\n"
 	if len(correlationResources) > 0 {
 		intermediate := make([]string, 0)
 		for resource, _ := range correlationResources {
@@ -781,9 +782,10 @@ func buildTracesLogsQuery(operationId *string, correlationResources map[string]b
 		}
 		sort.Strings(intermediate)
 		types = intermediate
+		selectors = strings.Join(append([]string{"union *"}, types...), ",\n") + "\n"
 	}
 
-	query := strings.Join(append([]string{"union *"}, types...), ", \n") + "\n"
+	query := selectors
 	query += fmt.Sprintf(`| where operation_Id == "%s"`, *operationId)
 	return query
 }

@@ -329,7 +329,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -390,7 +390,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -450,7 +450,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 				},
 			},
@@ -513,7 +513,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -580,7 +580,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -647,7 +647,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -714,7 +714,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -774,7 +774,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 				},
 			},
@@ -837,7 +837,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -880,7 +880,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TimeRange:         timeRange,
 					QueryType:         string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: "",
-					TraceLogsExploreQuery: "union *,availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces \n" +
+					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
 			},
@@ -941,13 +941,13 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceLogsExploreQuery: "union *, \n" +
-						"app('r2').availabilityResults, \n" +
-						"app('r2').customEvents, \n" +
-						"app('r2').dependencies, \n" +
-						"app('r2').exceptions, \n" +
-						"app('r2').pageViews, \n" +
-						"app('r2').requests, \n" +
+					TraceLogsExploreQuery: "union *,\n" +
+						"app('r2').availabilityResults,\n" +
+						"app('r2').customEvents,\n" +
+						"app('r2').dependencies,\n" +
+						"app('r2').exceptions,\n" +
+						"app('r2').pageViews,\n" +
+						"app('r2').requests,\n" +
 						"app('r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 				},
