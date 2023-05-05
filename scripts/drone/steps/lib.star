@@ -272,6 +272,8 @@ def enterprise_downstream_step(ver_mode):
     if ver_mode == "pr":
         step.update({"failure": "ignore"})
         step["settings"]["params"].append("OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}")
+    if ver_mode == "main":
+        step.update({"depends_on": ["sync-grafana-mirror",]})
 
     return step
 
@@ -1581,3 +1583,18 @@ def get_trigger_storybook(ver_mode):
             },
         }
     return trigger_storybook
+
+def sync_grafana_mirror_step():
+    return {
+        'name': 'sync-grafana-mirror',
+        'image': build_image,
+        "environment": {
+            "DOWNSTREAM_REPO": from_secret('grafana_downstream_repo'),
+        },
+        'commands': [
+            'git fetch origin main-synced',
+            'git checkout main-synced',
+            'git remote add grafana-mirror $${DOWNSTREAM_REPO}',
+            'git push -f grafana-mirror main',
+        ]
+    }

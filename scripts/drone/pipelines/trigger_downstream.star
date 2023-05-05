@@ -5,7 +5,9 @@ This module returns the pipeline used for triggering a downstream pipeline for G
 load(
     "scripts/drone/steps/lib.star",
     "enterprise_downstream_step",
+    "sync_grafana_mirror_step",
 )
+
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
@@ -28,6 +30,7 @@ trigger = {
 def enterprise_downstream_pipeline():
     environment = {"EDITION": "oss"}
     steps = [
+        sync_grafana_mirror_step(),
         enterprise_downstream_step(ver_mode = "main"),
     ]
     deps = [
