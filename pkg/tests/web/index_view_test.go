@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -41,6 +43,39 @@ func TestIntegrationIndexView(t *testing.T) {
 
 		assert.Empty(t, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce=""`, html)
+	})
+
+	t.Run("Test the exposed user data contains the analytics identifiers", func(t *testing.T) {
+		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			EnableFeatureToggles: []string{"authnService"},
+		})
+
+		addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
+		createdUser := testinfra.CreateUser(t, store, user.CreateUserCommand{
+			Login:    "admin",
+			Password: "admin",
+			Email:    "admin@grafana.com",
+			OrgID:    1,
+		})
+
+		// insert user_auth relationship
+		queryString := "INSERT INTO 'main'.'user_auth' ('id', 'user_id', 'auth_module', 'auth_id', 'created', 'o_auth_access_token', 'o_auth_refresh_token', 'o_auth_token_type', 'o_auth_expiry', 'o_auth_id_token') VALUES ('1', '%d', 'oauth_grafana_com', 'test-id-oauth-grafana', '2023-03-13 14:08:11', '', '', '', '', '');"
+		query := fmt.Sprintf(queryString, createdUser.ID)
+		_, err := store.GetEngine().Exec(query)
+		require.NoError(t, err)
+
+		// nolint:bodyclose
+		response, html := makeRequest(t, addr, "admin", "admin")
+		assert.Equal(t, 200, response.StatusCode)
+
+		// parse User.Analytics HTML view into user.AnalyticsSettings model
+		parsedHTML := strings.Split(html, "analytics\":")[1]
+		parsedHTML = strings.Split(parsedHTML, "},\n")[0]
+
+		var analyticsSettings user.AnalyticsSettings
+		require.NoError(t, json.Unmarshal([]byte(parsedHTML), &analyticsSettings))
+
+		require.Equal(t, "test-id-oauth-grafana", analyticsSettings.Identifier)
 	})
 }
 
