@@ -89,6 +89,11 @@ export class QueryRunner implements QueryRunnerSrv {
             return query;
           });
 
+          // Apply variables supported by the data source.
+          if (ds.interpolateVariablesInQueries) {
+            request.targets = ds.interpolateVariablesInQueries(request.targets, scopedVars ?? {});
+          }
+
           const lowerIntervalLimit = minInterval
             ? getTemplateSrv().replace(minInterval, request.scopedVars)
             : ds.interval;
