@@ -213,7 +213,7 @@ The `name_id_format` configuration field specifies the format of the NameID elem
 
 By default, this is set to `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` and does not need to be specified in the configuration file.
 
-These are the available values for this configuration field:
+The following list includes valid configuration field values:
 
 - `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
 - `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`
