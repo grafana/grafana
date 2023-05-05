@@ -18,11 +18,11 @@ replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-
 // contains go generation fixes
 replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.12.5-0.20230417081915-2945b61c0b1c
 
-// For some insane reason, client-go seems to have a broken v12.0.0 tag on it that forces us to
-// hoist a replace statement.
-replace k8s.io/client-go => k8s.io/client-go v0.25.3
+replace k8s.io/client-go => k8s.io/client-go v0.27.1
 
-require k8s.io/apimachinery v0.26.2
+replace k8s.io/api => k8s.io/api v0.27.1
+
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.27.1
 
 require (
 	cloud.google.com/go/storage v1.28.1
@@ -153,8 +153,8 @@ require (
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
 	github.com/go-openapi/errors v0.20.3 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.20.0 // indirect
+	github.com/go-openapi/jsonpointer v0.19.6 // indirect
+	github.com/go-openapi/jsonreference v0.20.1 // indirect
 	github.com/go-openapi/loads v0.21.2
 	github.com/go-openapi/runtime v0.25.0 // indirect
 	github.com/go-openapi/spec v0.20.8 // indirect
@@ -244,7 +244,7 @@ require (
 	github.com/matryer/is v1.4.0
 	github.com/urfave/cli v1.22.12
 	go.etcd.io/etcd/api/v3 v3.5.5
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.14.0
@@ -268,7 +268,8 @@ require (
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.9.0
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
+	k8s.io/apimachinery v0.27.1
+	k8s.io/utils v0.0.0-20230209194617-a36077c30491
 )
 
 require (
@@ -294,7 +295,6 @@ require (
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.3 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.13 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -336,7 +336,6 @@ require (
 	go.opentelemetry.io/otel/metric v0.37.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
-	k8s.io/api v0.26.2 // indirect
 )
 
 require (
