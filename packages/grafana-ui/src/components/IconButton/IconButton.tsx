@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
 
 import { useTheme2, stylesFactory } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -51,6 +51,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     let limitedIconSize: LimitedIconSize;
 
     // very large icons (xl to xxxl) are unified to size xl
+    deprecationWarning('IconButton', 'size="xxl" and size="xxxl"', 'size="xl"');
+
     if (size === 'xxl' || size === 'xxxl') {
       limitedIconSize = 'xl';
     } else {
