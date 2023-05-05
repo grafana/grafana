@@ -1592,8 +1592,8 @@ def sync_grafana_mirror_step():
             "DOWNSTREAM_REPO": from_secret('grafana_downstream_repo'),
         },
         'commands': [
-            'git fetch origin main-synced',
-            'git checkout main-synced',
+            'git fetch origin main',
+            'git checkout main',
             'git remote add grafana-mirror $${DOWNSTREAM_REPO}',
             'git push -f grafana-mirror main',
         ]

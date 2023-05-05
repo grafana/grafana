@@ -2142,8 +2142,8 @@ platform:
 services: []
 steps:
 - commands:
-  - git fetch origin main-synced
-  - git checkout main-synced
+  - git fetch origin main
+  - git checkout main
   - git remote add grafana-mirror $${DOWNSTREAM_REPO}
   - git push -f grafana-mirror main
   environment:
@@ -7160,6 +7160,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 3b7fe8f3ee70f3fdb96c8f5e41e2fd9c84992a93e1ddae5518065580f4e11ea7
+hmac: 973109dcb66504d619152d83d6d591ea30f809012f6abd28ad00ebdff40dc1ec
 
 ...
