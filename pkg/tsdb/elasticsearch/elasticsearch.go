@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -182,7 +183,8 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	if req.Path != "" {
+	// - /?/_mapping for fetching index mapping
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") {
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
