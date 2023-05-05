@@ -55,16 +55,18 @@ export function createSpanLinkFactory({
   let scopedVars = scopedVarsFromTrace(trace);
   const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
 
+  const createSpanLinks = legacyCreateSpanLinkFactory(
+    splitOpenFn,
+    // We need this to make the types happy but for this branch of code it does not matter which field we supply.
+    dataFrame.fields[0],
+    traceToLogsOptions,
+    traceToMetricsOptions,
+    createFocusSpanLink,
+    scopedVars
+  );
+
   return function SpanLink(span: TraceSpan): SpanLinks | undefined {
-    let spanLinks = legacyCreateSpanLinkFactory(
-      splitOpenFn,
-      // We need this to make the types happy but for this branch of code it does not matter which field we supply.
-      dataFrame.fields[0],
-      traceToLogsOptions,
-      traceToMetricsOptions,
-      createFocusSpanLink,
-      scopedVars
-    )(span);
+    let spanLinks = createSpanLinks(span);
 
     if (hasLinks) {
       scopedVars = {

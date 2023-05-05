@@ -101,7 +101,7 @@ const renderMenuItems = (
         </MenuGroup>
       ) : null}
       {!!links.otherLinks?.length ? (
-        <MenuGroup label="Other">
+        <MenuGroup label="Correlations">
           {links.otherLinks.map((link, i) => (
             <MenuItem
               key={i}
