@@ -91,6 +91,7 @@ export class PanelQueryRunner {
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
     let structureRev = 1;
+    let lastFieldConfig: unknown = undefined;
     let lastProcessedFrames: DataFrame[] = [];
     let lastRawFrames: DataFrame[] = [];
     let isFirstPacket = true;
@@ -107,11 +108,13 @@ export class PanelQueryRunner {
 
     return this.subject.pipe(
       mergeMap((data: PanelData) => {
-        if (data.series === lastRawFrames) {
+        let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+        if (data.series === lastRawFrames && lastFieldConfig === fieldConfig) {
           console.log('returning same series');
           return of({ ...data, structureRev, series: lastProcessedFrames });
         }
 
+        lastFieldConfig = fieldConfig;
         lastRawFrames = data.series;
         let dataWithTransforms = of(data);
 
@@ -157,9 +160,6 @@ export class PanelQueryRunner {
                   streamingPacketWithSameSchema = true;
                 }
               }
-
-              // Apply field defaults and overrides
-              let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
               if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
                 lastConfigRev = this.dataConfigSource.configRev!;
