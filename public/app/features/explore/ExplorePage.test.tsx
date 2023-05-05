@@ -444,14 +444,49 @@ describe('ExplorePage', () => {
     });
   });
 
-  // describe('exploreMixedDatasource off', () => {
-  //   beforeAll(() => {
-  //     config.featureToggles.exploreMixedDatasource = false;
-  //   });
+  describe('exploreMixedDatasource off', () => {
+    beforeAll(() => {
+      config.featureToggles.exploreMixedDatasource = false;
+    });
 
-  //   // TODO: mixed in url should redirect to default datasource
-  //   // TODO: mixed in url should redirect to last used datasource
-  // });
+    it('Redirects to the first query datasource if the root is mixed', async () => {
+      const { location } = setupExplore({
+        urlParams: {
+          left: '{"datasource":"-- Mixed --","queries":[{"refId":"A","datasource":{"type":"logs","uid":"elastic-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+        },
+        mixedEnabled: false,
+      });
+
+      await waitForExplore();
+
+      await waitFor(() => {
+        const urlParams = decodeURIComponent(location.getSearch().toString());
+
+        expect(urlParams).toBe(
+          'left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+        );
+      });
+    });
+
+    it('Redirects to the default datasource if the root is mixed and there are no queries', async () => {
+      const { location } = setupExplore({
+        urlParams: {
+          left: '{"datasource":"-- Mixed --","range":{"from":"now-1h","to":"now"}}',
+        },
+        mixedEnabled: false,
+      });
+
+      await waitForExplore();
+
+      await waitFor(() => {
+        const urlParams = decodeURIComponent(location.getSearch().toString());
+
+        expect(urlParams).toBe(
+          'left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+        );
+      });
+    });
+  });
 
   it('removes `from` and `to` parameters from url when first mounted', async () => {
     const { location } = setupExplore({ urlParams: { from: '1', to: '2' } });
