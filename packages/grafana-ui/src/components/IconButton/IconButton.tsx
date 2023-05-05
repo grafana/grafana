@@ -51,9 +51,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     let limitedIconSize: LimitedIconSize;
 
     // very large icons (xl to xxxl) are unified to size xl
-    deprecationWarning('IconButton', 'size="xxl" and size="xxxl"', 'size="xl"');
-
     if (size === 'xxl' || size === 'xxxl') {
+      deprecationWarning('IconButton', 'size="xxl" and size="xxxl"', 'size="xl"');
       limitedIconSize = 'xl';
     } else {
       limitedIconSize = size;
