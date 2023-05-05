@@ -1,6 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType, DataFrame } from '../../types';
-import { ArrayVector } from '../../vector';
 import { getFieldMatcher } from '../matchers';
 
 import { FieldMatcherID } from './ids';
@@ -401,12 +400,12 @@ describe('Field Regexp or Names Matcher', () => {
   it('Support fallback name matchers', () => {
     const frame: DataFrame = {
       fields: [
-        { name: 'time', type: FieldType.time, config: {}, values: new ArrayVector([1, 2]) },
+        { name: 'time', type: FieldType.time, config: {}, values: [1, 2] },
         {
           name: 'UP',
           type: FieldType.number,
           config: {},
-          values: new ArrayVector([1, 2]),
+          values: [1, 2],
           labels: { __name__: 'UP' },
         },
       ],
@@ -433,12 +432,12 @@ describe('Field Regexp or Names Matcher', () => {
 it('Support fallback multiple names matchers', () => {
   const frame: DataFrame = {
     fields: [
-      { name: 'time', type: FieldType.time, config: {}, values: new ArrayVector([1, 2]) },
+      { name: 'time', type: FieldType.time, config: {}, values: [1, 2] },
       {
         name: 'UP',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([1, 2]),
+        values: [1, 2],
         labels: { __name__: 'UP' },
       },
     ],

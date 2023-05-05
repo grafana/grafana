@@ -6,18 +6,15 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme2, Spinner } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
-import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useListPublicDashboardsQuery } from 'app/features/dashboard/api/publicDashboardApi';
+import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
 import { ListPublicDashboardResponse } from '../../types';
 
 import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
-
-export const viewPublicDashboardUrl = (accessToken: string): string =>
-  `${getConfig().appUrl}public-dashboards/${accessToken}`;
 
 export const PublicDashboardListTable = () => {
   const { width } = useWindowSize();
@@ -72,7 +69,7 @@ export const PublicDashboardListTable = () => {
                 <td>
                   <ButtonGroup className={styles.buttonGroup}>
                     <LinkButton
-                      href={viewPublicDashboardUrl(pd.accessToken)}
+                      href={generatePublicDashboardUrl(pd.accessToken)}
                       fill="text"
                       size={responsiveSize}
                       title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}

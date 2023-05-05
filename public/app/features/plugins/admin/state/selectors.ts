@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { PluginError, PluginErrorCode, unEscapeStringFromRegex } from '@grafana/data';
+import { PluginError, PluginErrorCode, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
@@ -14,44 +14,54 @@ export const selectDisplayMode = createSelector(selectRoot, ({ settings }) => se
 
 export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
 
-const selectInstalled = (filterBy: string) =>
-  createSelector(selectAll, (plugins) =>
-    plugins.filter((plugin) => (filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore))
-  );
+export type PluginFilters = {
+  // Searches for a string in certain fields (e.g. "name" or "orgName")
+  // (Note: this will be an escaped regex string as it comes from `FilterInput`)
+  keyword?: string;
 
-const findByInstallAndType = (filterBy: string, filterByType: string) =>
-  createSelector(selectInstalled(filterBy), (plugins) =>
-    plugins.filter((plugin) => filterByType === 'all' || plugin.type === filterByType)
-  );
+  // (Optional, only applied if set)
+  type?: PluginType;
 
-const findByKeyword = (searchBy: string) =>
+  // (Optional, only applied if set)
+  isCore?: boolean;
+
+  // (Optional, only applied if set)
+  isInstalled?: boolean;
+
+  // (Optional, only applied if set)
+  isEnterprise?: boolean;
+};
+
+export const selectPlugins = (filters: PluginFilters) =>
   createSelector(selectAll, (plugins) => {
-    if (searchBy === '') {
-      return [];
-    }
+    const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
 
     return plugins.filter((plugin) => {
-      const fields: String[] = [];
-      if (plugin.name) {
-        fields.push(plugin.name.toLowerCase());
+      const fieldsToSearchIn = [plugin.name, plugin.orgName].filter(Boolean).map((f) => f.toLowerCase());
+
+      if (keyword && !fieldsToSearchIn.some((f) => f.includes(keyword))) {
+        return false;
       }
 
-      if (plugin.orgName) {
-        fields.push(plugin.orgName.toLowerCase());
+      if (filters.type && plugin.type !== filters.type) {
+        return false;
       }
 
-      return fields.some((f) => f.includes(unEscapeStringFromRegex(searchBy).toLowerCase()));
+      if (filters.isInstalled !== undefined && plugin.isInstalled !== filters.isInstalled) {
+        return false;
+      }
+
+      if (filters.isCore !== undefined && plugin.isCore !== filters.isCore) {
+        return false;
+      }
+
+      if (filters.isEnterprise !== undefined && plugin.isEnterprise !== filters.isEnterprise) {
+        return false;
+      }
+
+      return true;
     });
   });
-
-export const find = (searchBy: string, filterBy: string, filterByType: string) =>
-  createSelector(
-    findByInstallAndType(filterBy, filterByType),
-    findByKeyword(searchBy),
-    (filteredPlugins, searchedPlugins) => {
-      return searchBy === '' ? filteredPlugins : searchedPlugins;
-    }
-  );
 
 export const selectPluginErrors = createSelector(selectAll, (plugins) =>
   plugins

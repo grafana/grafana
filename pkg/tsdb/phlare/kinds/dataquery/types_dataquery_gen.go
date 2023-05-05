@@ -16,8 +16,8 @@ const (
 	PhlareQueryTypeProfile PhlareQueryType = "profile"
 )
 
-// PhlareDataQuery defines model for PhlareDataQuery.
-type PhlareDataQuery struct {
+// GrafanaPyroscopeDataQuery defines model for GrafanaPyroscopeDataQuery.
+type GrafanaPyroscopeDataQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -34,6 +34,9 @@ type PhlareDataQuery struct {
 
 	// Specifies the query label selectors.
 	LabelSelector string `json:"labelSelector"`
+
+	// Sets the maximum number of nodes in the flamegraph.
+	MaxNodes *int64 `json:"maxNodes,omitempty"`
 
 	// Specifies the type of profile to query.
 	ProfileTypeId string `json:"profileTypeId"`

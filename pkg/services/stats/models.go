@@ -1,7 +1,11 @@
 package stats
 
+import "time"
+
 type SystemStats struct {
 	Dashboards                int64
+	DashboardBytesTotal       int64
+	DashboardBytesMax         int64
 	Datasources               int64
 	Users                     int64
 	ActiveUsers               int64
@@ -43,6 +47,10 @@ type SystemStats struct {
 	ActiveDataKeys            int64
 	PublicDashboards          int64
 	Correlations              int64
+	DatabaseCreatedTime       *time.Time
+
+	// name of the driver
+	DatabaseDriver string
 }
 
 type DataSourceStats struct {

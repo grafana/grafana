@@ -1,6 +1,5 @@
 import {
   AbsoluteTimeRange,
-  ArrayVector,
   FieldType,
   Labels,
   LogLevel,
@@ -322,12 +321,12 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'Time',
             type: FieldType.time,
-            values: new ArrayVector([1, 2, 3]),
+            values: [1, 2, 3],
           },
           {
             name: 'Value',
             type: FieldType.number,
-            values: new ArrayVector([3, 3, 1]),
+            values: [3, 3, 1],
             config: {
               displayNameFromDS: 'info',
             },
@@ -339,12 +338,12 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'Time',
             type: FieldType.time,
-            values: new ArrayVector([1, 2, 3, 5]),
+            values: [1, 2, 3, 5],
           },
           {
             name: 'Value',
             type: FieldType.number,
-            values: new ArrayVector([1, 2, 3, 0]),
+            values: [1, 2, 3, 0],
             config: {
               displayNameFromDS: 'debug',
             },
@@ -356,12 +355,12 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'Time',
             type: FieldType.time,
-            values: new ArrayVector([1, 6]),
+            values: [1, 6],
           },
           {
             name: 'Value',
             type: FieldType.number,
-            values: new ArrayVector([2, 1]),
+            values: [2, 1],
             config: {
               displayNameFromDS: 'error',
             },
@@ -385,12 +384,12 @@ describe('getLogsVolumeDimensions', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([]),
+          values: [],
         },
         {
           name: 'value',
           type: FieldType.number,
-          values: new ArrayVector(values),
+          values: values,
         },
       ],
     });

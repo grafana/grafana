@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
@@ -12,15 +11,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
-    e2e()
-      .window()
-      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
-        if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.NavToolbar.container().click();
-        } else {
-          e2e.components.PageToolbar.container().click();
-        }
-      });
+    e2e.components.NavToolbar.container().click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
 
@@ -72,15 +63,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
-    e2e()
-      .window()
-      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
-        if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.NavToolbar.container().click();
-        } else {
-          e2e.components.PageToolbar.container().click();
-        }
-      });
+    e2e.components.NavToolbar.container().click();
 
     e2e().wait('@query');
 
@@ -130,15 +113,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
 
-    e2e()
-      .window()
-      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
-        if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.NavToolbar.container().click();
-        } else {
-          e2e.components.PageToolbar.container().click();
-        }
-      });
+    e2e.components.NavToolbar.container().click();
 
     e2e().wait('@query');
 

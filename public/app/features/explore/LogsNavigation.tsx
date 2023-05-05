@@ -207,9 +207,7 @@ function LogsNavigation({
 export default memo(LogsNavigation);
 
 const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
-  const navContainerHeight = theme.flags.topnav
-    ? `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`
-    : '95vh';
+  const navContainerHeight = `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`;
   return {
     navContainer: css`
       max-height: ${navContainerHeight};

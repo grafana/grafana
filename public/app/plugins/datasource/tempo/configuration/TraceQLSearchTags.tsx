@@ -8,7 +8,7 @@ import TagsInput from '../SearchTraceQLEditor/TagsInput';
 import { replaceAt } from '../SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
-import { CompletionProvider } from '../traceql/autocomplete';
+import { intrinsics } from '../traceql/traceql';
 import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {
@@ -94,7 +94,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           filters={options.jsonData.search?.filters || []}
           datasource={datasource}
           setError={() => {}}
-          tags={[...CompletionProvider.intrinsics, ...(tags || [])]}
+          tags={[...intrinsics, ...(tags || [])]}
           isTagsLoading={loading}
           hideValues={true}
         />

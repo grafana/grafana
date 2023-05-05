@@ -6,7 +6,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -221,6 +221,29 @@ describe('datasource_srv', () => {
       });
     });
 
+    describe('when loading datasource', () => {
+      it('should load expressions', async () => {
+        let api = await dataSourceSrv.loadDatasource('-100'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+
+        api = await dataSourceSrv.loadDatasource('__expr__'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+
+        api = await dataSourceSrv.loadDatasource('Expression'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+      });
+
+      it('should load by variable', async () => {
+        const api = await dataSourceSrv.loadDatasource('${datasource}');
+        expect(api.meta).toBe(dataSourceInit.BBB.meta);
+      });
+
+      it('should load by name', async () => {
+        let api = await dataSourceSrv.loadDatasource('ZZZ');
+        expect(api.meta).toBe(dataSourceInit.ZZZ.meta);
+      });
+    });
+
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
@@ -342,6 +365,36 @@ describe('datasource_srv', () => {
       // assert
       expect(getBackendSrvGetMock).toHaveBeenCalledWith('/api/frontend/settings');
       expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
+    });
+  });
+
+  describe('getNameOrUid', () => {
+    it('should return expression uid __expr__', () => {
+      expect(getNameOrUid('__expr__')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('-100')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('Expression')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid({ type: '__expr__' })).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid({ type: '-100' })).toBe(ExpressionDatasourceRef.uid);
+    });
+
+    it('should return ref if it is string', () => {
+      const value = 'mixed-datasource';
+      const nameOrUid = getNameOrUid(value);
+      expect(nameOrUid).not.toBeUndefined();
+      expect(nameOrUid).toBe(value);
+    });
+
+    it('should return the uid if the ref is not string', () => {
+      const value = { type: 'mixed', uid: 'theUID' };
+      const nameOrUid = getNameOrUid(value);
+      expect(nameOrUid).not.toBeUndefined();
+      expect(nameOrUid).toBe(value.uid);
+    });
+
+    it('should return undefined if the ref has no uid', () => {
+      const value = { type: 'mixed' };
+      const nameOrUid = getNameOrUid(value);
+      expect(nameOrUid).toBeUndefined();
     });
   });
 });

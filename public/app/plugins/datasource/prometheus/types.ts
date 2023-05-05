@@ -18,6 +18,11 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  // store the metrics modal additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  fullMetaSearch?: boolean;
+  excludeNullMetadata?: boolean;
 }
 
 export enum PrometheusCacheLevel {
@@ -38,6 +43,8 @@ export interface PromOptions extends DataSourceJsonData {
   prometheusVersion?: string;
   cacheLevel?: PrometheusCacheLevel;
   defaultEditor?: QueryEditorMode;
+  incrementalQuerying?: boolean;
+  incrementalQueryOverlapWindow?: string;
 }
 
 export type ExemplarTraceIdDestination = {

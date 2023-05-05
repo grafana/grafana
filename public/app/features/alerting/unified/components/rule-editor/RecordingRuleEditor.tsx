@@ -7,12 +7,9 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, LoadingState } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { TABLE, TIMESERIES } from '../../utils/constants';
 import { isPromOrLokiQuery } from '../../utils/rule-form';
-import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
 import { VizWrapper } from './VizWrapper';
 
@@ -39,10 +36,6 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
   const styles = useStyles2(getStyles);
 
-  const isExpression = isExpressionQuery(queries[0]?.model);
-
-  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
-
   useEffect(() => {
     setData(panelData?.[queries[0]?.refId]);
   }, [panelData, queries]);
@@ -57,17 +50,19 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
   const handleChangedQuery = (changedQuery: DataQuery) => {
     const query = queries[0];
+    const dataSourceId = getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid;
 
-    if (!isPromOrLokiQuery(query.model)) {
+    if (!isPromOrLokiQuery(changedQuery) || !dataSourceId) {
       return;
     }
 
-    const expr = query.model.expr;
+    const expr = changedQuery.expr;
 
     const merged = {
       ...query,
       refId: changedQuery.refId,
-      queryType: query.model.queryType ?? '',
+      queryType: changedQuery.queryType ?? '',
+      datasourceUid: dataSourceId,
       expr,
       model: {
         refId: changedQuery.refId,
@@ -106,7 +101,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
       {data && (
         <div className={styles.vizWrapper}>
-          <VizWrapper data={data} currentPanel={pluginId} changePanel={changePluginId} />
+          <VizWrapper data={data} />
         </div>
       )}
     </>
