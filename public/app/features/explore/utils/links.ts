@@ -129,28 +129,8 @@ export const getFieldLinksForExplore = (options: {
           link.internal?.transformations.forEach((transformation) => {
             let fieldValue;
             if (transformation.field) {
-              const hasPath = (transformation.field.match(/./g) || []).length > 0;
-              let transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
-
-              // if the field is not found but has a path, use before first period as the fieldName, and everything after as the key if it is an array
-              if (transformField === undefined && hasPath) {
-                const firstSplitIdx = transformation.field.indexOf('.');
-                const splitField = [
-                  transformation.field.slice(0, firstSplitIdx),
-                  transformation.field.slice(firstSplitIdx + 1),
-                ];
-
-                transformField = dataFrame?.fields.find((field) => field.name === splitField[0]);
-                const tempFieldValue = transformField?.values[rowIndex];
-                if (Array.isArray(tempFieldValue)) {
-                  // support finding values in fields formatted like [{key, value}] present in TraceView
-                  fieldValue = tempFieldValue.find((keyVal) => keyVal.key === splitField[1]).value;
-                } else {
-                  fieldValue = tempFieldValue;
-                }
-              } else {
-                fieldValue = transformField?.values[rowIndex];
-              }
+              const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
+              fieldValue = transformField?.values[rowIndex];
             } else {
               fieldValue = field.values[rowIndex];
             }
