@@ -797,9 +797,21 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql
+  name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -890,8 +902,8 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -901,9 +913,26 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+    MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-tests
+  name: mysql-5.7-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
@@ -947,7 +976,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -1832,9 +1864,21 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql
+  name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -1903,8 +1947,8 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -1914,9 +1958,26 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+    MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-tests
+  name: mysql-5.7-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
@@ -1954,7 +2015,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -3482,7 +3546,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -3730,7 +3797,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -4998,7 +5068,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -5160,9 +5233,21 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql
+  name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -5224,8 +5309,8 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -5235,9 +5320,26 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+    MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-tests
+  name: mysql-5.7-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
@@ -5269,7 +5371,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -5628,7 +5733,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -5852,9 +5960,21 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql
+  name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -5943,8 +6063,8 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -5954,9 +6074,26 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+    MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-tests
+  name: mysql-5.7-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
@@ -5988,7 +6125,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6315,7 +6455,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6350,9 +6493,21 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql
+  name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -6414,8 +6569,8 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -6425,9 +6580,26 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+    MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-tests
+  name: mysql-5.7-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
@@ -6460,7 +6632,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6495,9 +6670,21 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql
+  name: mysql57
   volumes:
-  - name: mysql
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
     path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
@@ -6587,8 +6774,8 @@ steps:
 - commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql57 -P 3306 -u root
     -prootpass
   - go clean -testcache
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -6598,9 +6785,26 @@ steps:
   - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
+    MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-tests
+  name: mysql-5.7-integration-tests
+- commands:
+  - apt-get update
+  - apt-get install -yq default-mysql-client
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
+  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql80 -P 3306 -u root
+    -prootpass
+  - go clean -testcache
+  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - go clean -testcache
@@ -6633,7 +6837,10 @@ volumes:
 - name: postgres
   temp:
     medium: memory
-- name: mysql
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
   temp:
     medium: memory
 ---
@@ -6941,6 +7148,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: e7a06868456687331f07e34fec5eb6ec45d2b987564ba7ec11d7f29bfa6a98c9
+hmac: 1a5358f92b6ca848288fb7917e62b994430c89eaa43ac2e5c1de49df359886d5
 
 ...
