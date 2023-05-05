@@ -318,7 +318,14 @@ export const Table = memo((props: Props) => {
   };
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
+    <div
+      {...getTableProps()}
+      className={tableStyles.table}
+      aria-label={ariaLabel}
+      role="table"
+      ref={tableDivRef}
+      style={{ width, height }}
+    >
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (
