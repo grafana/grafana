@@ -48,7 +48,7 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
               >
                 <MetricEditor value={metric} />
 
-                {!metricAggregationConfig[metric.type].isSingleMetric && index === 0 && (
+                {metricAggregationConfig[metric.type].impliedQueryType === 'metrics' && index === 0 && (
                   <IconButton iconName="plus" onClick={() => dispatch(addMetric(nextId))} label="add" />
                 )}
               </QueryEditorRow>
