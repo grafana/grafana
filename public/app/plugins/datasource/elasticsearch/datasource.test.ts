@@ -18,7 +18,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, reportInteraction } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, reportInteraction, config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -30,6 +30,8 @@ import { createElasticDatasource } from './mocks';
 import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
+
+const originalConsoleError = console.error;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -1291,3 +1293,211 @@ const logsResponse = {
     ],
   },
 };
+
+describe('ElasticDatasource using backend', () => {
+  beforeEach(() => {
+    console.error = jest.fn();
+    config.featureToggles.enableElasticsearchBackendQuerying = true;
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
+    config.featureToggles.enableElasticsearchBackendQuerying = false;
+  });
+  describe('getDatabaseVersion', () => {
+    it('should correctly get db version', async () => {
+      const { ds } = getTestContext();
+      ds.getResource = jest.fn().mockResolvedValue({ version: { number: '8.0.0' } });
+      const version = await ds.getDatabaseVersion();
+      expect(version?.raw).toBe('8.0.0');
+    });
+
+    it('should correctly return null if invalid numeric version', async () => {
+      const { ds } = getTestContext();
+      ds.getResource = jest.fn().mockResolvedValue({ version: { number: 8 } });
+      const version = await ds.getDatabaseVersion();
+      expect(version).toBe(null);
+    });
+
+    it('should correctly return null if rejected request', async () => {
+      const { ds } = getTestContext();
+      ds.getResource = jest.fn().mockRejectedValue({});
+      const version = await ds.getDatabaseVersion();
+      expect(version).toBe(null);
+    });
+  });
+
+  describe('getFields', () => {
+    const getFieldsMockData = {
+      '[test-]YYYY.MM.DD': {
+        mappings: {
+          properties: {
+            '@timestamp_millis': {
+              type: 'date',
+              format: 'epoch_millis',
+            },
+            classification_terms: {
+              type: 'keyword',
+            },
+            ip_address: {
+              type: 'ip',
+            },
+            justification_blob: {
+              properties: {
+                criterion: {
+                  type: 'text',
+                  fields: {
+                    keyword: {
+                      type: 'keyword',
+                      ignore_above: 256,
+                    },
+                  },
+                },
+                shallow: {
+                  properties: {
+                    jsi: {
+                      properties: {
+                        sdb: {
+                          properties: {
+                            dsel2: {
+                              properties: {
+                                'bootlegged-gille': {
+                                  properties: {
+                                    botness: {
+                                      type: 'float',
+                                    },
+                                    general_algorithm_score: {
+                                      type: 'float',
+                                    },
+                                  },
+                                },
+                                'uncombed-boris': {
+                                  properties: {
+                                    botness: {
+                                      type: 'float',
+                                    },
+                                    general_algorithm_score: {
+                                      type: 'float',
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            overall_vote_score: {
+              type: 'float',
+            },
+          },
+        },
+      },
+    };
+
+    it('should not retry when ES is down', async () => {
+      const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
+      const { ds, timeSrv } = getTestContext({
+        from: 'now-2w',
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockImplementation((options) => {
+        if (options.url === `test-${twoDaysBefore}/_mapping`) {
+          return of({
+            data: {},
+          });
+        }
+        return throwError({ status: 500 });
+      });
+
+      const range = timeSrv.timeRange();
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toStrictEqual({ status: 500 });
+        expect(ds.getResource).toBeCalledTimes(1);
+      });
+    });
+
+    it('should not retry more than 7 indices', async () => {
+      const { ds, timeSrv } = getTestContext({
+        from: 'now-2w',
+        jsonData: { interval: 'Daily' },
+      });
+      const range = timeSrv.timeRange();
+
+      ds.getResource = jest.fn().mockImplementation(() => {
+        return throwError({ status: 404 });
+      });
+
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
+        expect(ds.getResource).toBeCalledTimes(7);
+      });
+    });
+
+    it('should return nested fields', async () => {
+      const { ds } = getTestContext({
+        from: 'now-2w',
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields()).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual([
+          '@timestamp_millis',
+          'classification_terms',
+          'ip_address',
+          'justification_blob.criterion.keyword',
+          'justification_blob.criterion',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+          'overall_vote_score',
+        ]);
+      });
+    });
+    it('should return number fields', async () => {
+      const { ds } = getTestContext({});
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual([
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+          'overall_vote_score',
+        ]);
+      });
+    });
+
+    it('should return date fields', async () => {
+      const { ds } = getTestContext({});
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual(['@timestamp_millis']);
+      });
+    });
+  });
+});

@@ -122,16 +122,16 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         reportInteraction('grafana_explore_compact_notice');
       }
 
-      this.props.initializeExplore(
+      this.props.initializeExplore({
         exploreId,
-        rootDatasourceOverride || queries[0]?.datasource || initialDatasource,
+        datasource: rootDatasourceOverride || queries[0]?.datasource || initialDatasource,
         queries,
-        initialRange,
-        width,
-        this.exploreEvents,
+        range: initialRange,
+        containerWidth: width,
+        eventBridge: this.exploreEvents,
         panelsState,
-        isFromCompactUrl
-      );
+        isFromCompactUrl,
+      });
     }
   }
 
@@ -181,7 +181,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     : getTimeRange(timeZone, DEFAULT_RANGE, fiscalYearStartMonth);
 
   return {
-    initialized: state.explore[props.exploreId]?.initialized,
+    initialized: state.explore.panes[props.exploreId]?.initialized,
     initialDatasource,
     initialQueries: queries,
     initialRange,

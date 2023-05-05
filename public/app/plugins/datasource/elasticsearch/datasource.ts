@@ -1,5 +1,5 @@
 import { cloneDeep, find, first as _first, isObject, isString, map as _map } from 'lodash';
-import { generate, lastValueFrom, Observable, of } from 'rxjs';
+import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
 
@@ -179,9 +179,12 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.legacyQueryRunner
-          .request('GET', indexUrlList[listLen - index - 1])
-          .pipe(catchError((err) => of({ err })));
+        const path = indexUrlList[listLen - index - 1];
+        const requestObservable = config.featureToggles.enableElasticsearchBackendQuerying
+          ? from(this.getResource(path))
+          : this.legacyQueryRunner.request('GET', path);
+
+        return requestObservable.pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -462,7 +465,7 @@ export class ElasticDatasource
             return true;
           }
 
-          // equal query type filter, or via typemap translation
+          // equal query type filter, or via type map translation
           return type.includes(obj.type) || type.includes(typeMap[obj.type]);
         };
 
@@ -739,7 +742,11 @@ export class ElasticDatasource
 
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
-    return lastValueFrom(this.legacyQueryRunner.request('GET', '/')).then(
+    const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
+      ? from(this.getResource(''))
+      : this.legacyQueryRunner.request('GET', '/');
+
+    return lastValueFrom(getDbVersionObservable).then(
       (data) => {
         const versionNumber = data?.version?.number;
         if (typeof versionNumber !== 'string') {
