@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
-	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -394,11 +393,9 @@ func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger log.Logger, queryURL string, query *AzureLogAnalyticsQuery) (*http.Request, error) {
-	duration := int64(query.TimeRange.Duration())
-	timespan, err := azTime.CreateISO8601DurationFromIntervalMS(duration)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse timespan: %s", err)
-	}
+	from := query.TimeRange.From.Format(time.RFC3339)
+	to := query.TimeRange.To.Format(time.RFC3339)
+	timespan := fmt.Sprintf("%s/%s", from, to)
 	body := map[string]interface{}{
 		"query":    query.Query,
 		"timespan": timespan,
