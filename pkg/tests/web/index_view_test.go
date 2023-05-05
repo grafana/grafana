@@ -27,7 +27,7 @@ func TestIntegrationIndexView(t *testing.T) {
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
-		resp, html := makeRequest(t, addr)
+		resp, html := makeRequest(t, addr, "", "")
 		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
@@ -37,20 +37,27 @@ func TestIntegrationIndexView(t *testing.T) {
 		addr, _ := testinfra.StartGrafana(t, grafDir, cfgPath)
 
 		// nolint:bodyclose
-		resp, html := makeRequest(t, addr)
+		resp, html := makeRequest(t, addr, "", "")
 
 		assert.Empty(t, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce=""`, html)
 	})
 }
 
-func makeRequest(t *testing.T, addr string) (*http.Response, string) {
+func makeRequest(t *testing.T, addr, username, passwowrd string) (*http.Response, string) {
 	t.Helper()
 
 	u := fmt.Sprintf("http://%s", addr)
 	t.Logf("Making GET request to %s", u)
-	// nolint:gosec
-	resp, err := http.Get(u)
+
+	request, err := http.NewRequest("GET", u, nil)
+	require.NoError(t, err)
+
+	if username != "" && passwowrd != "" {
+		request.SetBasicAuth(username, passwowrd)
+	}
+
+	resp, err := http.DefaultClient.Do(request)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	t.Cleanup(func() {
