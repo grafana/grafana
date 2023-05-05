@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	foldermodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -509,6 +510,40 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		return nil
 	})
 }
+
+// CountInFolder returns the number of alert rules in a given folder.
+func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+	return st.CountAlertRulesInFolder(ctx, &foldermodels.CountAlertRulesQuery{
+		OrgID:        orgID,
+		NamespaceUID: folderUID,
+	})
+}
+
+// DeleteInFolder deletes the rules contained in a given folder along with their associated data.
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
+	rules, err := st.ListAlertRules(ctx, &foldermodels.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folderUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	uids := make([]string, 0, len(rules))
+	for _, tgt := range rules {
+		if tgt != nil {
+			uids = append(uids, tgt.UID)
+		}
+	}
+
+	if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Kind returns the name of the alert rule type of entity.
+func (st DBstore) Kind() string { return folder.AlertRuleKind }
 
 // GenerateNewAlertRuleUID generates a unique UID for a rule.
 // This is set as a variable so that the tests can override it.

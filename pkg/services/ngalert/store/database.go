@@ -45,8 +45,8 @@ type DBstore struct {
 
 func ProvideDBStore(
 	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service,
-	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) *DBstore {
-	return &DBstore{
+	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) (*DBstore, error) {
+	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
 		SQLStore:         sqlstore,
@@ -55,4 +55,8 @@ func ProvideDBStore(
 		AccessControl:    access,
 		DashboardService: dashboards,
 	}
+	if err := folderService.RegisterService(store); err != nil {
+		return nil, err
+	}
+	return &store, nil
 }

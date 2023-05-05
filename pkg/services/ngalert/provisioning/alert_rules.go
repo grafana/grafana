@@ -9,11 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -518,32 +516,6 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 
 	return result, nil
 }
-
-// CountInFolder returns the number of alert rules in a given folder.
-func (service AlertRuleService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
-	return service.ruleStore.CountAlertRulesInFolder(ctx, &models.CountAlertRulesQuery{
-		OrgID:        orgID,
-		NamespaceUID: folderUID,
-	})
-}
-
-// DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (service AlertRuleService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
-	rules, err := service.ruleStore.ListAlertRules(ctx, &models.ListAlertRulesQuery{
-		OrgID:         orgID,
-		NamespaceUIDs: []string{folderUID},
-	})
-	if err != nil {
-		return err
-	}
-
-	if err := service.deleteRules(ctx, orgID, rules...); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (service AlertRuleService) Kind() string { return folder.AlertRuleKind }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
 func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.AlertRuleGroup {

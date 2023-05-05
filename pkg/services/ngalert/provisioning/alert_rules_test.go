@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -179,38 +178,6 @@ func TestAlertRuleService(t *testing.T) {
 		require.NotNil(t, updatedGroup.Rules[0].PanelID)
 		require.Equal(t, dashboardUid, *updatedGroup.Rules[0].DashboardUID)
 		require.Equal(t, panelId, *updatedGroup.Rules[0].PanelID)
-	})
-
-	t.Run("alert rule counting should return the correct number of alert rules", func(t *testing.T) {
-		folder := "counting-folder"
-		_, err := ruleService.CreateAlertRule(context.Background(), createTestRule(
-			"counting-test",
-			"counting-group",
-			orgID,
-			folder,
-		), models.ProvenanceAPI, 0)
-		require.NoError(t, err)
-
-		count, err := ruleService.CountInFolder(context.Background(), orgID, folder, &user.SignedInUser{})
-		require.NoError(t, err)
-		require.Equal(t, int64(1), count)
-	})
-
-	t.Run("should delete all alert rules in a folder", func(t *testing.T) {
-		folder := "folder-to-be-deleted"
-		rule, err := ruleService.CreateAlertRule(context.Background(), createTestRule(
-			"deletion-test",
-			"deletion-group",
-			orgID,
-			folder,
-		), models.ProvenanceAPI, 0)
-		require.NoError(t, err)
-
-		err = ruleService.DeleteInFolder(context.Background(), orgID, folder)
-		require.NoError(t, err)
-
-		_, _, err = ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
-		require.Error(t, err, models.ErrAlertRuleNotFound)
 	})
 
 	t.Run("alert rule provenace should be correctly checked", func(t *testing.T) {

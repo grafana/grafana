@@ -149,14 +149,10 @@ func (ng *AlertNG) init() error {
 	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
-	store := &store.DBstore{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		FeatureToggles:   ng.FeatureToggles,
-		SQLStore:         ng.SQLStore,
-		Logger:           ng.Log,
-		FolderService:    ng.folderService,
-		AccessControl:    ng.accesscontrol,
-		DashboardService: ng.dashboardService,
+	store, err := store.ProvideDBStore(ng.Cfg, ng.FeatureToggles, ng.SQLStore,
+		ng.folderService, ng.accesscontrol, ng.dashboardService)
+	if err != nil {
+		return err
 	}
 	ng.store = store
 
@@ -286,10 +282,6 @@ func (ng *AlertNG) init() error {
 		DefaultLimits: defaultLimits,
 		Reporter:      ng.api.Usage,
 	}); err != nil {
-		return err
-	}
-
-	if err := ng.folderService.RegisterService(alertRuleService); err != nil {
 		return err
 	}
 
