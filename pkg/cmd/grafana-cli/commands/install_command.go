@@ -49,7 +49,7 @@ func logRestartNotice() {
 	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 }
 
-func (cmd Command) installCommand(c utils.CommandLine) error {
+func installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
