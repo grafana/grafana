@@ -54,7 +54,7 @@ jobs:
         with:
           username: ${{ github.event.issue.user.login }}
           team: "${{ env.TEAM }}"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
 
       - name: "Send Slack notification"
         if: ${{ (env.CHANNEL != 'null') && ((steps.checkUserMember.outputs.isTeamMember == 'false') || (env.TEAM != 'null')) }}
