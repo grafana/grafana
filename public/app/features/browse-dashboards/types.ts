@@ -6,9 +6,16 @@ export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string
   $all: boolean;
 };
 
+export type DashboardViewItemCollection = {
+  items: DashboardViewItem[];
+} & (
+  | { lastFetched: 'folder' | 'dashboard'; lastFetchedSize: number; lastFetchedPage: number }
+  | { lastFetched: undefined; lastFetchedSize: undefined; lastFetchedPage: undefined }
+);
+
 export interface BrowseDashboardsState {
-  rootItems: DashboardViewItem[] | undefined;
-  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>;
+  rootItems: DashboardViewItemCollection | undefined;
+  childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
   selectedItems: DashboardTreeSelection;
 
   // Only folders can ever be open or closed, so no need to seperate this by kind

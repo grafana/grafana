@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { TableInstance, useTable } from 'react-table';
-import { FixedSizeList as List } from 'react-window';
+import { FixedSizeList as List, ListOnItemsRenderedProps, ListOnScrollProps } from 'react-window';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -31,6 +31,7 @@ interface DashboardsTreeProps {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  onItemsRendered?: (props: ListOnItemsRenderedProps) => void;
   canSelect: boolean;
 }
 
@@ -45,6 +46,7 @@ export function DashboardsTree({
   onFolderClick,
   onAllSelectionChange,
   onItemSelectionChange,
+  onItemsRendered,
   canSelect = false,
 }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
@@ -97,6 +99,18 @@ export function DashboardsTree({
     [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
   );
 
+  const handleScroll = useCallback((props: ListOnScrollProps) => {
+    // console.log('handleScroll', props);
+  }, []);
+
+  const handleItemsRendered = useCallback(
+    (props: ListOnItemsRenderedProps) => {
+      // console.log('handleItemsRendered', props);
+      onItemsRendered?.(props);
+    },
+    [onItemsRendered]
+  );
+
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">
       {headerGroups.map((headerGroup) => {
@@ -126,6 +140,8 @@ export function DashboardsTree({
           itemCount={items.length}
           itemData={virtualData}
           itemSize={ROW_HEIGHT}
+          onScroll={handleScroll}
+          onItemsRendered={handleItemsRendered}
         >
           {VirtualListRow}
         </List>
