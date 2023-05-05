@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -28,7 +28,9 @@ export interface Props {
    * @deprecated use the size property instead
    **/
   width?: number | string;
-  /** Should the Drawer be expandable to full width */
+  /**
+   * @deprecated use a large size instead if high width is needed
+   **/
   expandable?: boolean;
   /**
    * Specifies the width and min-width.
@@ -58,7 +60,6 @@ export function Drawer({
   tabs,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const [isExpanded, setIsExpanded] = useState(false);
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
@@ -71,11 +72,10 @@ export function Drawer({
   );
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
-  useBodyClassWhileOpen(inline);
+  useBodyClassWhileOpen();
 
-  // deprecated width prop now defaults to empty string which make the size prop take over
-  const fixedWidth = isExpanded ? '100%' : width ?? '';
-  const rootClass = cx(styles.drawer, !fixedWidth && styles.sizes[size]);
+  // Apply size styles (unless deprecated width prop is used)
+  const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
   const content = <div className={styles.content}>{children}</div>;
 
   return (
@@ -83,7 +83,8 @@ export function Drawer({
       open={true}
       onClose={onClose}
       placement="right"
-      width={fixedWidth}
+      // Important to set this to empty string so that the width can be controlled by the css
+      width={width ?? ''}
       getContainer={'.main-view'}
       className={styles.drawerContent}
       rootClassName={rootClass}
@@ -111,24 +112,8 @@ export function Drawer({
           ref={overlayRef}
         >
           {typeof title === 'string' && (
-            <div className={cx(styles.header, tabs && styles.headerWithTabs)}>
+            <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
-                {/* {expandable && !isExpanded && (
-                  <IconButton
-                    name="angle-left"
-                    size="xl"
-                    onClick={() => setIsExpanded(true)}
-                    aria-label={selectors.components.Drawer.General.expand}
-                  />
-                )}
-                {expandable && isExpanded && (
-                  <IconButton
-                    name="angle-right"
-                    size="xl"
-                    onClick={() => setIsExpanded(false)}
-                    aria-label={selectors.components.Drawer.General.contract}
-                  />
-                )} */}
                 <Button
                   icon="times"
                   variant="secondary"
@@ -156,9 +141,9 @@ export function Drawer({
   );
 }
 
-function useBodyClassWhileOpen(inline?: boolean) {
+function useBodyClassWhileOpen() {
   useEffect(() => {
-    if (inline || !document.body) {
+    if (!document.body) {
       return;
     }
 
@@ -167,7 +152,7 @@ function useBodyClassWhileOpen(inline?: boolean) {
     return () => {
       document.body.classList.remove('body-drawer-open');
     };
-  }, [inline]);
+  }, []);
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
