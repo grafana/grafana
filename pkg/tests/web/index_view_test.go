@@ -59,8 +59,7 @@ func TestIntegrationIndexView(t *testing.T) {
 		})
 
 		// insert user_auth relationship
-		queryString := "INSERT INTO \"main\".\"user_auth\" (\"id\", \"user_id\", \"auth_module\", \"auth_id\", \"created\", \"o_auth_access_token\", \"o_auth_refresh_token\", \"o_auth_token_type\", \"o_auth_expiry\", \"o_auth_id_token\") VALUES (\"1\", \"%d\", \"oauth_grafana_com\", \"test-id-oauth-grafana\", \"2023-03-13 14:08:11\", \"\", \"\", \"\", \"\", \"\");"
-		query := fmt.Sprintf(queryString, createdUser.ID)
+		query := fmt.Sprintf(`INSERT INTO "user_auth" ("user_id", "auth_module", "auth_id", "created") VALUES ('%d', 'oauth_grafana_com', 'test-id-oauth-grafana', '2023-03-13 14:08:11')`, createdUser.ID)
 		_, err := store.GetEngine().Exec(query)
 		require.NoError(t, err)
 
