@@ -217,7 +217,7 @@ export class DashboardGrid extends PureComponent<Props> {
     const { isEditable, dashboard } = this.props;
 
     if (config.featureToggles.emptyDashboardPage && dashboard.panels.length === 0) {
-      return <DashboardEmpty dashboard={dashboard} canCreate={!!dashboard.meta.canEdit} />;
+      return <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />;
     }
 
     /**
