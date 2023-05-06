@@ -21,7 +21,7 @@ export interface XYDimensions {
 }
 
 export function isGraphable(field: Field) {
-  return field.type === FieldType.number;
+  return field.type === FieldType.number || field.type === FieldType.time;
 }
 
 export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XYDimensions {
@@ -70,7 +70,6 @@ export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XY
     }
     fields.push(f);
   }
-
   return {
     x,
     fields: {

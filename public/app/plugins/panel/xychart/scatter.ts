@@ -591,14 +591,14 @@ const prepConfig = (
 
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
-
+  // TODO isTime should be optionally set.
   builder.addScale({
     scaleKey: 'x',
-    isTime: false,
+    isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    min: xField.config.min,
-    max: xField.config.max,
+    min: Math.min(...xField.values),
+    max: Math.max(...xField.values),
   });
 
   // why does this fall back to '' instead of null or undef?
@@ -655,7 +655,7 @@ const prepConfig = (
       facets: [
         {
           scale: 'x',
-          auto: true,
+          // auto: true,
         },
         {
           scale: scaleKey,
@@ -720,6 +720,8 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
         colorValues = Array(frame.length).fill(r);
         colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
       }
+      console.log('in prep data', info);
+
       return [
         s.x(frame).values, // X
         s.y(frame).values, // Y
