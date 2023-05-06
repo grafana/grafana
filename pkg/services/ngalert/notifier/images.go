@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -78,6 +79,9 @@ func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Al
 func (i imageProvider) getImageURLFromToken(ctx context.Context, token string) (string, error) {
 	image, err := i.store.GetImage(ctx, token)
 	if err != nil {
+		if errors.Is(err, models.ErrImageNotFound) {
+			return "", images.ErrImageNotFound
+		}
 		return "", err
 	}
 
@@ -102,6 +106,9 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 		image, err = i.store.GetImage(ctx, token)
 	}
 	if err != nil {
+		if errors.Is(err, models.ErrImageNotFound) {
+			return nil, "", images.ErrImageNotFound
+		}
 		return nil, "", err
 	}
 
