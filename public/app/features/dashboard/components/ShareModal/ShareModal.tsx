@@ -52,7 +52,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
   }
 
   if (Boolean(config.featureToggles['publicDashboards'])) {
-    tabs.push({ label: 'Public dashboard', value: 'share-public-dashboard', component: SharePublicDashboard });
+    tabs.push({ label: 'Public dashboard', value: 'public-dashboard', component: SharePublicDashboard });
   }
 
   const at = tabs.find((t) => t.value === activeTab);
