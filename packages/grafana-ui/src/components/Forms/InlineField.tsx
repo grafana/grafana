@@ -27,6 +27,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   htmlFor?: string;
   /** Make tooltip interactive */
   interactive?: boolean;
+  /** Custom width for the field as a multiple of 8px */
+  width?: number | 'auto';
 }
 
 export const InlineField = ({
@@ -34,6 +36,7 @@ export const InlineField = ({
   label,
   tooltip,
   labelWidth = 'auto',
+  width = 'auto',
   invalid,
   loading,
   disabled,
@@ -48,7 +51,7 @@ export const InlineField = ({
   ...htmlProps
 }: Props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, grow, shrink);
+  const styles = getStyles(theme, grow, shrink, width);
   const inputId = htmlFor ?? getChildId(children);
 
   const labelElement =
@@ -83,7 +86,7 @@ export const InlineField = ({
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
+const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean, width?: number | 'auto') => {
   return {
     container: css`
       display: flex;
@@ -96,6 +99,7 @@ const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
     `,
     childContainer: css`
       flex: ${grow ? 1 : 0} ${shrink ? 1 : 0} auto;
+      width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
     `,
     fieldValidationWrapper: css`
       margin-top: ${theme.spacing(0.5)};
