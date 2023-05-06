@@ -182,13 +182,13 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		reorderedRules, err := st.reorderUpdates(sess, rules)
+		err := st.preventIntermediateUniqueConstraintViolations(sess, rules)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed when preventing intermediate unique constraint violation: %w", err)
 		}
 
-		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(reorderedRules))
-		for _, r := range reorderedRules {
+		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
+		for _, r := range rules {
 			var parentVersion int64
 			r.New.ID = r.Existing.ID
 			r.New.Version = r.Existing.Version // xorm will take care of increasing it (see https://xorm.io/docs/chapter-06/1.lock/)
@@ -238,104 +238,71 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 	})
 }
 
-// reorderUpdates returns a reordered slice of updates to avoid unique constraint violations. In case there are cycles,
-// without deferred constraints there is no possible order to execute without violations. To avoid this, a new intermediate
-// update is performed to temporarily break each cycle. Because of the possibility of intermediate updates, this method
-// should not be called outside a transaction.
-func (st DBstore) reorderUpdates(sess *db.Session, rules []ngmodels.UpdateRule) ([]ngmodels.UpdateRule, error) {
-	// If there are chains of updates, we need to make sure to update them in the right order.
-	// If we don't, there could be a situation where we try to update a rule to a title that already exists, this will cause
-	// a unique constraint violation.
-	// Ex. Assuming Rule A, B, and C exist, and we have an update chain of RuleA -> RuleB -> RuleC -> RuleNew. We need to update in reverse order.
-	reorderedRules := make([]ngmodels.UpdateRule, 0, len(rules))
-	processedUpdates := make(map[string]struct{}, len(rules))
-	chains := findTitleUpdateChains(rules)
-	for _, chain := range chains {
-		// If the chain is a cycle, we need to add an intermediate update to a fake value to break the cycle. Otherwise, there is
-		// no valid order to update the rules that won't violate the unique constraint.
-		// Ex. Assuming Rule A, B, and C exist, and we have an update chain of RuleA -> RuleB -> RuleC -> RuleA. We need to break the cycle
-		//     by adding a temporary update of RuleA -> RuleTemp, then we can update in reverse order.
-		if chain[0].Existing.Title == chain[len(chain)-1].New.Title {
-			r := chain[0].Existing
-			if updated, err := sess.ID(r.ID).Cols("title").Update(&ngmodels.AlertRule{Title: r.Title + uuid.New().String(), Version: r.Version}); err != nil || updated == 0 {
-				if err != nil {
-					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return nil, ngmodels.ErrAlertRuleUniqueConstraintViolation
-					}
-					return nil, fmt.Errorf("failed to clear rule title [%s] %s: %w", r.UID, r.Title, err)
+// preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
+// The uniqueness constraint for titles within an org+folder is enforced on every update within a transaction
+// instead of on commit (deferred constraint). This means that there could be a set of updates that will throw
+// a unique constraint violation in an intermediate step even though the final state is valid.
+// For example, a chain of updates RuleA -> RuleB -> RuleC could fail if not executed in the correct order, or
+// a swap of titles RuleA <-> RuleB cannot be executed in any order without violating the constraint.
+func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session, updates []ngmodels.UpdateRule) error {
+	// The exact solution to this is complex and requires determining directed paths and cycles in the update graph,
+	// adding in temporary updates to break cycles, and then executing the updates in reverse topological order.
+	// This is not implemented here. Instead, we choose a simpler solution that works in all cases but might perform
+	// more updates than necessary. This simpler solution makes a determination of whether an intermediate collision
+	// could occur and if so, adds a temporary title on all updated rules to break any cycles and remove the need for
+	// specific ordering.
+
+	// This short circuit detects when no intermediate unique constraint violations are possible.
+	// It may return false positives, but never false negatives.
+	if !newTitlesOverlapExisting(updates) {
+		// No possibility of an intermediate unique constraint violation.
+		return nil
+	}
+
+	for _, update := range updates {
+		r := update.Existing
+		u := uuid.New().String()
+		uniqueTempTitle := r.Title + u
+		if len(uniqueTempTitle) > AlertRuleMaxTitleLength {
+			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
+		}
+		if updated, err := sess.ID(r.ID).Cols("title").Update(&ngmodels.AlertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
+			if err != nil {
+				if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
+					return ngmodels.ErrAlertRuleUniqueConstraintViolation
 				}
-				return nil, fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.UID, r.Version)
+				return fmt.Errorf("failed to set temporary rule title [%s] %s: %w", r.UID, r.Title, err)
 			}
-
-			// Otherwise optimistic locking will conflict on the 2nd update.
-			chain[0].Existing.Version++
+			return fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.UID, r.Version)
 		}
 
-		for i := len(chain) - 1; i >= 0; i-- {
-			reorderedRules = append(reorderedRules, chain[i])
-			processedUpdates[chain[i].Existing.Title] = struct{}{}
-		}
+		// Otherwise optimistic locking will conflict on the 2nd update.
+		r.Version++
 	}
 
-	// Add the leftover updates that aren't part of a chain.
-	for _, update := range rules {
-		if _, ok := processedUpdates[update.Existing.Title]; ok {
-			// This update has already been processed as part of a chain.
-			continue
-		}
-
-		reorderedRules = append(reorderedRules, update)
-	}
-	return reorderedRules, nil
+	return nil
 }
 
-// findTitleUpdateChains returns a slice of title update chains of length greater than one. A chain of title updates is
-// a directed path where UpdateA is connected to UpdateB if UpdateA.New.Title == UpdateB.Existing.Title.
-func findTitleUpdateChains(updates []ngmodels.UpdateRule) [][]ngmodels.UpdateRule {
-	type fingerprint struct {
-		orgID        int64
-		namespaceUID string
-		title        string
-	}
-	fp := func(r ngmodels.AlertRule) fingerprint {
-		return fingerprint{orgID: r.OrgID, namespaceUID: r.NamespaceUID, title: r.Title}
-	}
-
-	adj := make(map[fingerprint]ngmodels.UpdateRule, len(updates))
-
-	for _, update := range updates {
-		adj[fp(*update.Existing)] = update
-	}
-
-	chains := make([][]ngmodels.UpdateRule, 0)
-	seen := make(map[fingerprint]struct{}, len(updates))
-	for _, update := range updates {
-		f := fp(*update.Existing)
-		if _, ok := seen[f]; ok {
-			continue
+// newTitlesOverlapExisting returns true if among the rules that have a title update any of the new titles overlap with existing titles.
+// It does so in a case-insensitive manner as some supported databases perform case-insensitive comparisons.
+func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
+	existingTitles := make(map[string]struct{}, len(rules))
+	for _, r := range rules {
+		if r.Existing.Title != r.New.Title {
+			existingTitles[strings.ToLower(r.Existing.Title)] = struct{}{}
 		}
-		seen[f] = struct{}{}
+	}
 
-		chain := []ngmodels.UpdateRule{update}
-		nextFp := fp(update.New)
-		for {
-			nextUpdate, ok := adj[nextFp]
-			_, visited := seen[nextFp]
-			if !ok || visited {
-				// Chain has ended or cycled, stop here.
-				break
+	// Check if there is any overlap between lower case existing and new titles.
+	for _, r := range rules {
+		if r.Existing.Title != r.New.Title {
+			if _, ok := existingTitles[strings.ToLower(r.New.Title)]; ok {
+				return true
 			}
-			chain = append(chain, nextUpdate)
-			seen[fp(*nextUpdate.Existing)] = struct{}{}
-			nextFp = fp(nextUpdate.New)
-		}
-
-		if len(chain) > 1 {
-			chains = append(chains, chain)
 		}
 	}
 
-	return chains
+	return false
 }
 
 // CountInFolder is a handler for retrieving the number of alert rules of

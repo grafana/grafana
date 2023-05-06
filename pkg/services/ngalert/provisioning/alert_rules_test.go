@@ -187,8 +187,8 @@ func TestAlertRuleService(t *testing.T) {
 		require.Len(t, readGroup.Rules, 2)
 		require.Equal(t, "overlap-test-rule-2", readGroup.Rules[0].Title)
 		require.Equal(t, "overlap-test-rule-3", readGroup.Rules[1].Title)
-		require.Equal(t, int64(2), readGroup.Rules[0].Version)
-		require.Equal(t, int64(2), readGroup.Rules[1].Version)
+		require.Equal(t, int64(3), readGroup.Rules[0].Version)
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
 	})
 
 	t.Run("updating a group to swap the name of two rules should not throw unique constraint", func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, "swap-test-rule-2", readGroup.Rules[0].Title)
 		require.Equal(t, "swap-test-rule-1", readGroup.Rules[1].Title)
 		require.Equal(t, int64(3), readGroup.Rules[0].Version) // Needed an extra update to break the update cycle.
-		require.Equal(t, int64(2), readGroup.Rules[1].Version)
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
 	})
 
 	t.Run("updating a group that has a rule name cycle should not throw unique constraint", func(t *testing.T) {
@@ -253,8 +253,8 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, "cycle-test-rule-3", readGroup.Rules[1].Title)
 		require.Equal(t, "cycle-test-rule-1", readGroup.Rules[2].Title)
 		require.Equal(t, int64(3), readGroup.Rules[0].Version) // Needed an extra update to break the update cycle.
-		require.Equal(t, int64(2), readGroup.Rules[1].Version)
-		require.Equal(t, int64(2), readGroup.Rules[2].Version)
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
+		require.Equal(t, int64(3), readGroup.Rules[2].Version)
 	})
 
 	t.Run("updating a group that has multiple rule name cycles should not throw unique constraint", func(t *testing.T) {
@@ -297,10 +297,10 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, "multi-cycle-test-rule-5", readGroup.Rules[3].Title)
 		require.Equal(t, "multi-cycle-test-rule-3", readGroup.Rules[4].Title)
 		require.Equal(t, int64(3), readGroup.Rules[0].Version) // Needed an extra update to break the update cycle.
-		require.Equal(t, int64(2), readGroup.Rules[1].Version)
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
 		require.Equal(t, int64(3), readGroup.Rules[2].Version) // Needed an extra update to break the update cycle.
-		require.Equal(t, int64(2), readGroup.Rules[3].Version)
-		require.Equal(t, int64(2), readGroup.Rules[4].Version)
+		require.Equal(t, int64(3), readGroup.Rules[3].Version)
+		require.Equal(t, int64(3), readGroup.Rules[4].Version)
 	})
 
 	t.Run("updating a group to recreate a rule using the same name should not throw unique constraint", func(t *testing.T) {
