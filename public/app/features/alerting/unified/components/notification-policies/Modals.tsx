@@ -62,7 +62,7 @@ const useAddPolicyModal = (
             onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
             actionButtons={
               <Modal.ButtonRow>
-                <Button type="submit">Add policy</Button>
+                <Button type="submit">Save policy</Button>
                 <Button type="button" variant="secondary" onClick={handleDismiss}>
                   Cancel
                 </Button>
@@ -218,9 +218,11 @@ const useAlertGroupsModal = (): [
     setMatchers([]);
   }, []);
 
-  const handleShow = useCallback((alertGroups, matchers) => {
+  const handleShow = useCallback((alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => {
     setAlertGroups(alertGroups);
-    setMatchers(matchers);
+    if (matchers) {
+      setMatchers(matchers);
+    }
     setShowModal(true);
   }, []);
 

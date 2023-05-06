@@ -37,11 +37,9 @@ e2e.scenario({
     e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST, true);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);
 
     expectDrawerTabsAndContent();
-
-    expectDrawerExpandAndContract(viewPortWidth);
 
     expectDrawerClose();
 
@@ -49,7 +47,7 @@ e2e.scenario({
     expectSubMenuScenario('Query');
     expectSubMenuScenario('Panel JSON', 'JSON');
 
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST, true);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
     e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
 
@@ -105,30 +103,6 @@ const expectDrawerClose = () => {
   // close using close button
   e2e.components.Drawer.General.close().click();
   e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`).should('not.exist');
-};
-
-const expectDrawerExpandAndContract = (viewPortWidth: number) => {
-  // try expand button
-  // drawer should take up half the screen
-  e2e.components.Drawer.General.rcContentWrapper()
-    .should('be.visible')
-    .should('have.css', 'width', `${viewPortWidth / 2}px`);
-
-  e2e.components.Drawer.General.expand().click();
-  e2e.components.Drawer.General.contract().should('be.visible');
-
-  // drawer should take up the whole screen
-  e2e.components.Drawer.General.rcContentWrapper()
-    .should('be.visible')
-    .should('have.css', 'width', `${viewPortWidth}px`);
-
-  // try contract button
-  e2e.components.Drawer.General.contract().click();
-  e2e.components.Drawer.General.expand().should('be.visible');
-
-  e2e.components.Drawer.General.rcContentWrapper()
-    .should('be.visible')
-    .should('have.css', 'width', `${viewPortWidth / 2}px`);
 };
 
 const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {

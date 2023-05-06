@@ -14,7 +14,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,6 +26,11 @@ func TestFinder_Find(t *testing.T) {
 	if err != nil {
 		require.NoError(t, err)
 	}
+
+	cfg := setting.NewCfg()
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name            string
 		pluginDirs      []string
@@ -55,10 +63,7 @@ func TestFinder_Find(t *testing.T) {
 							Backend:    true,
 							Executable: "test",
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "valid-v2-signature/plugin/plugin.json"):  {},
-							filepath.Join(testData, "valid-v2-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "valid-v2-signature/plugin")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "valid-v2-signature/plugin")),
 					},
 				},
 			},
@@ -87,12 +92,7 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
-							filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "duplicate-plugins/nested")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
 					},
 					Children: []*plugins.FoundPlugin{
 						{
@@ -114,10 +114,7 @@ func TestFinder_Find(t *testing.T) {
 									Plugins:        []plugins.Dependency{},
 								},
 							},
-							FS: plugins.NewLocalFS(map[string]struct{}{
-								filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-								filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-							}, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+							FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
 						},
 					},
 				},
@@ -178,14 +175,7 @@ func TestFinder_Find(t *testing.T) {
 								{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer"},
 							},
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "includes-symlinks/MANIFEST.txt"):                 {},
-							filepath.Join(testData, "includes-symlinks/dashboards/connections.json"):  {},
-							filepath.Join(testData, "includes-symlinks/dashboards/extra/memory.json"): {},
-							filepath.Join(testData, "includes-symlinks/plugin.json"):                  {},
-							filepath.Join(testData, "includes-symlinks/symlink_to_txt"):               {},
-							filepath.Join(testData, "includes-symlinks/text.txt"):                     {},
-						}, filepath.Join(testData, "includes-symlinks")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "includes-symlinks")),
 					},
 				},
 			},
@@ -213,12 +203,7 @@ func TestFinder_Find(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 					},
-					FS: plugins.NewLocalFS(map[string]struct{}{
-						filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
-						filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
-						filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-						filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-					}, filepath.Join(testData, "duplicate-plugins/nested")),
+					FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
 				},
 				Children: []*plugins.FoundPlugin{
 					{
@@ -240,10 +225,7 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
 					},
 				},
 			},
@@ -267,10 +249,7 @@ func TestFinder_Find(t *testing.T) {
 							State:   plugins.AlphaRelease,
 							Backend: true,
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "invalid-v1-signature/plugin/plugin.json"):  {},
-							filepath.Join(testData, "invalid-v1-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "invalid-v1-signature/plugin")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "invalid-v1-signature/plugin")),
 					},
 				},
 			},
@@ -278,7 +257,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder()
+			f := NewLocalFinder(pCfg)
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return tc.pluginDirs
@@ -294,14 +273,18 @@ func TestFinder_Find(t *testing.T) {
 				return pluginBundles[i].Primary.JSONData.ID < pluginBundles[j].Primary.JSONData.ID
 			})
 
-			if !cmp.Equal(pluginBundles, tc.expectedBundles, localFSComparer) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, localFSComparer))
+			if !cmp.Equal(pluginBundles, tc.expectedBundles, fsComparer) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, fsComparer))
 			}
 		})
 	}
 }
 
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
+	cfg := setting.NewCfg()
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
+	require.NoError(t, err)
+
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
 		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
@@ -311,7 +294,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder()
+		finder := NewLocalFinder(pCfg)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -326,7 +309,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder()
+		finder := NewLocalFinder(pCfg)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -341,7 +324,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder()
+		finder := NewLocalFinder(pCfg)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)
@@ -469,9 +452,15 @@ func TestFinder_readPluginJSON(t *testing.T) {
 	}
 }
 
-var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS) bool {
-	fs1Files := fs1.Files()
-	fs2Files := fs2.Files()
+var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
+	fs1Files, err := fs1.Files()
+	if err != nil {
+		panic(err)
+	}
+	fs2Files, err := fs2.Files()
+	if err != nil {
+		panic(err)
+	}
 
 	sort.SliceStable(fs1Files, func(i, j int) bool {
 		return fs1Files[i] < fs1Files[j]
@@ -483,3 +472,9 @@ var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS
 
 	return cmp.Equal(fs1Files, fs2Files) && fs1.Base() == fs2.Base()
 })
+
+func mustNewStaticFSForTests(t *testing.T, dir string) plugins.FS {
+	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(dir))
+	require.NoError(t, err)
+	return sfs
+}

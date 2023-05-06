@@ -13,32 +13,135 @@ title: Dashboard kind
 
 A Grafana dashboard.
 
-| Property               | Type                              | Required | Default   | Description                                                                                                                                                                                                                                 |
-|------------------------|-----------------------------------|----------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `editable`             | boolean                           | **Yes**  | `true`    | Whether a dashboard is editable or not.                                                                                                                                                                                                     |
-| `graphTooltip`         | integer                           | **Yes**  | `0`       | 0 for no shared crosshair or tooltip (default).<br/>1 for shared crosshair.<br/>2 for shared crosshair AND shared tooltip.<br/>Possible values are: `0`, `1`, `2`.                                                                          |
-| `schemaVersion`        | uint16                            | **Yes**  | `36`      | Version of the JSON schema, incremented each time a Grafana update brings<br/>changes to said schema.<br/>TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion                                    |
-| `style`                | string                            | **Yes**  | `dark`    | Theme of dashboard.<br/>Possible values are: `dark`, `light`.                                                                                                                                                                               |
-| `annotations`          | [object](#annotations)            | No       |           | TODO docs                                                                                                                                                                                                                                   |
-| `description`          | string                            | No       |           | Description of dashboard.                                                                                                                                                                                                                   |
-| `fiscalYearStartMonth` | integer                           | No       | `0`       | The month that the fiscal year starts on.  0 = January, 11 = December<br/>Constraint: `>=0 & <12`.                                                                                                                                          |
-| `gnetId`               | string                            | No       |           | For dashboards imported from the https://grafana.com/grafana/dashboards/ portal                                                                                                                                                             |
-| `id`                   | integer                           | No       |           | Unique numeric identifier for the dashboard.<br/>TODO must isolate or remove identifiers local to a Grafana instance...?                                                                                                                    |
-| `links`                | [DashboardLink](#dashboardlink)[] | No       |           | TODO docs                                                                                                                                                                                                                                   |
-| `liveNow`              | boolean                           | No       |           | When set to true, the dashboard will redraw panels at an interval matching the pixel width.<br/>This will keep data "moving left" regardless of the query refresh rate.  This setting helps<br/>avoid dashboards presenting stale live data |
-| `panels`               | [object](#panels)[]               | No       |           |                                                                                                                                                                                                                                             |
-| `refresh`              |                                   | No       |           | Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".                                                                                                                                                    |
-| `revision`             | integer                           | No       |           | This property should only be used in dashboards defined by plugins.  It is a quick check<br/>to see if the version has changed since the last time.  Unclear why using the version property<br/>is insufficient.                            |
-| `snapshot`             | [Snapshot](#snapshot)             | No       |           | TODO docs                                                                                                                                                                                                                                   |
-| `tags`                 | string[]                          | No       |           | Tags associated with dashboard.                                                                                                                                                                                                             |
-| `templating`           | [object](#templating)             | No       |           | TODO docs                                                                                                                                                                                                                                   |
-| `time`                 | [object](#time)                   | No       |           | Time range for dashboard, e.g. last 6 hours, last 7 days, etc                                                                                                                                                                               |
-| `timepicker`           | [object](#timepicker)             | No       |           | TODO docs<br/>TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes                                                                                                      |
-| `timezone`             | string                            | No       | `browser` | Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".                                                                                                                                                                     |
-| `title`                | string                            | No       |           | Title of dashboard.                                                                                                                                                                                                                         |
-| `uid`                  | string                            | No       |           | Unique dashboard identifier that can be generated by anyone. string (8-40)                                                                                                                                                                  |
-| `version`              | uint32                            | No       |           | Version of the dashboard, incremented each time the dashboard is updated.                                                                                                                                                                   |
-| `weekStart`            | string                            | No       |           | TODO docs                                                                                                                                                                                                                                   |
+| Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
+|------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redefining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
+| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+| `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+
+### Metadata
+
+metadata contains embedded CommonMetadata and can be extended with custom string fields
+TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
+without external reference as using the CommonMetadata reference breaks thema codegen.
+
+It extends [_kubeObjectMetadata](#_kubeobjectmetadata).
+
+| Property            | Type                   | Required | Default | Description                                                                                                                             |
+|---------------------|------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `createdBy`         | string                 | **Yes**  |         |                                                                                                                                         |
+| `creationTimestamp` | string                 | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `extraFields`       | [object](#extrafields) | **Yes**  |         | extraFields is reserved for any fields that are pulled from the API server metadata but do not have concrete fields in the CUE metadata |
+| `finalizers`        | string[]               | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `labels`            | map[string]string      | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `resourceVersion`   | string                 | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `uid`               | string                 | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `updateTimestamp`   | string                 | **Yes**  |         |                                                                                                                                         |
+| `updatedBy`         | string                 | **Yes**  |         |                                                                                                                                         |
+| `deletionTimestamp` | string                 | No       |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+
+### _kubeObjectMetadata
+
+_kubeObjectMetadata is metadata found in a kubernetes object's metadata field.
+It is not exhaustive and only includes fields which may be relevant to a kind's implementation,
+As it is also intended to be generic enough to function with any API Server.
+
+| Property            | Type              | Required | Default | Description |
+|---------------------|-------------------|----------|---------|-------------|
+| `creationTimestamp` | string            | **Yes**  |         |             |
+| `finalizers`        | string[]          | **Yes**  |         |             |
+| `labels`            | map[string]string | **Yes**  |         |             |
+| `resourceVersion`   | string            | **Yes**  |         |             |
+| `uid`               | string            | **Yes**  |         |             |
+| `deletionTimestamp` | string            | No       |         |             |
+
+### ExtraFields
+
+extraFields is reserved for any fields that are pulled from the API server metadata but do not have concrete fields in the CUE metadata
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+
+### Spec
+
+| Property               | Type                                        | Required | Default   | Description                                                                                                                                                                                                                                 |
+|------------------------|---------------------------------------------|----------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `editable`             | boolean                                     | **Yes**  | `true`    | Whether a dashboard is editable or not.                                                                                                                                                                                                     |
+| `graphTooltip`         | integer                                     | **Yes**  | `0`       | 0 for no shared crosshair or tooltip (default).<br/>1 for shared crosshair.<br/>2 for shared crosshair AND shared tooltip.<br/>Possible values are: `0`, `1`, `2`.                                                                          |
+| `schemaVersion`        | uint16                                      | **Yes**  | `36`      | Version of the JSON schema, incremented each time a Grafana update brings<br/>changes to said schema.<br/>TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion                                    |
+| `style`                | string                                      | **Yes**  | `dark`    | Theme of dashboard.<br/>Possible values are: `dark`, `light`.                                                                                                                                                                               |
+| `annotations`          | [AnnotationContainer](#annotationcontainer) | No       |           | TODO -- should not be a public interface on its own, but required for Veneer                                                                                                                                                                |
+| `description`          | string                                      | No       |           | Description of dashboard.                                                                                                                                                                                                                   |
+| `fiscalYearStartMonth` | integer                                     | No       | `0`       | The month that the fiscal year starts on.  0 = January, 11 = December<br/>Constraint: `>=0 & <12`.                                                                                                                                          |
+| `gnetId`               | string                                      | No       |           | For dashboards imported from the https://grafana.com/grafana/dashboards/ portal                                                                                                                                                             |
+| `id`                   | integer                                     | No       |           | Unique numeric identifier for the dashboard.<br/>TODO must isolate or remove identifiers local to a Grafana instance...?                                                                                                                    |
+| `links`                | [DashboardLink](#dashboardlink)[]           | No       |           | TODO docs                                                                                                                                                                                                                                   |
+| `liveNow`              | boolean                                     | No       |           | When set to true, the dashboard will redraw panels at an interval matching the pixel width.<br/>This will keep data "moving left" regardless of the query refresh rate.  This setting helps<br/>avoid dashboards presenting stale live data |
+| `panels`               | [object](#panels)[]                         | No       |           |                                                                                                                                                                                                                                             |
+| `refresh`              |                                             | No       |           | Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".                                                                                                                                                    |
+| `revision`             | integer                                     | No       |           | This property should only be used in dashboards defined by plugins.  It is a quick check<br/>to see if the version has changed since the last time.  Unclear why using the version property<br/>is insufficient.                            |
+| `snapshot`             | [Snapshot](#snapshot)                       | No       |           | TODO docs                                                                                                                                                                                                                                   |
+| `tags`                 | string[]                                    | No       |           | Tags associated with dashboard.                                                                                                                                                                                                             |
+| `templating`           | [object](#templating)                       | No       |           | TODO docs                                                                                                                                                                                                                                   |
+| `time`                 | [object](#time)                             | No       |           | Time range for dashboard, e.g. last 6 hours, last 7 days, etc                                                                                                                                                                               |
+| `timepicker`           | [object](#timepicker)                       | No       |           | TODO docs<br/>TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes                                                                                                      |
+| `timezone`             | string                                      | No       | `browser` | Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".                                                                                                                                                                     |
+| `title`                | string                                      | No       |           | Title of dashboard.                                                                                                                                                                                                                         |
+| `uid`                  | string                                      | No       |           | Unique dashboard identifier that can be generated by anyone. string (8-40)                                                                                                                                                                  |
+| `version`              | uint32                                      | No       |           | Version of the dashboard, incremented each time the dashboard is updated.                                                                                                                                                                   |
+| `weekStart`            | string                                      | No       |           | TODO docs                                                                                                                                                                                                                                   |
+
+### AnnotationContainer
+
+TODO -- should not be a public interface on its own, but required for Veneer
+
+| Property | Type                                  | Required | Default | Description |
+|----------|---------------------------------------|----------|---------|-------------|
+| `list`   | [AnnotationQuery](#annotationquery)[] | No       |         |             |
+
+### AnnotationQuery
+
+TODO docs
+FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
+
+| Property     | Type                                            | Required | Default | Description                                                                                                                                                                  |
+|--------------|-------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `datasource` | [object](#datasource)                           | **Yes**  |         | TODO: Should be DataSourceRef                                                                                                                                                |
+| `enable`     | boolean                                         | **Yes**  | `true`  | When enabled the annotation query is issued with every dashboard refresh                                                                                                     |
+| `iconColor`  | string                                          | **Yes**  |         | Color to use for the annotation event markers                                                                                                                                |
+| `name`       | string                                          | **Yes**  |         | Name of annotation.                                                                                                                                                          |
+| `filter`     | [AnnotationPanelFilter](#annotationpanelfilter) | No       |         |                                                                                                                                                                              |
+| `hide`       | boolean                                         | No       | `false` | Annotation queries can be toggled on or off at the top of the dashboard.<br/>When hide is true, the toggle is not shown in the dashboard.                                    |
+| `target`     | [AnnotationTarget](#annotationtarget)           | No       |         | TODO: this should be a regular DataQuery that depends on the selected dashboard<br/>these match the properties of the "grafana" datasouce that is default in most dashboards |
+| `type`       | string                                          | No       |         | TODO -- this should not exist here, it is based on the --grafana-- datasource                                                                                                |
+
+### AnnotationPanelFilter
+
+| Property  | Type      | Required | Default | Description                                         |
+|-----------|-----------|----------|---------|-----------------------------------------------------|
+| `ids`     | integer[] | **Yes**  |         | Panel IDs that should be included or excluded       |
+| `exclude` | boolean   | No       | `false` | Should the specified panels be included or excluded |
+
+### AnnotationTarget
+
+TODO: this should be a regular DataQuery that depends on the selected dashboard
+these match the properties of the "grafana" datasouce that is default in most dashboards
+
+| Property   | Type     | Required | Default | Description                                                                                                       |
+|------------|----------|----------|---------|-------------------------------------------------------------------------------------------------------------------|
+| `limit`    | integer  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `matchAny` | boolean  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `tags`     | string[] | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `type`     | string   | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+
+### Datasource
+
+TODO: Should be DataSourceRef
+
+| Property | Type   | Required | Default | Description |
+|----------|--------|----------|---------|-------------|
+| `type`   | string | No       |         |             |
+| `uid`    | string | No       |         |             |
 
 ### DashboardLink
 
@@ -75,52 +178,6 @@ TODO docs
 | `updated`     | string  | **Yes**  |         | TODO docs   |
 | `userId`      | uint32  | **Yes**  |         | TODO docs   |
 | `url`         | string  | No       |         | TODO docs   |
-
-### Annotations
-
-TODO docs
-
-| Property | Type                                  | Required | Default | Description |
-|----------|---------------------------------------|----------|---------|-------------|
-| `list`   | [AnnotationQuery](#annotationquery)[] | No       |         |             |
-
-### AnnotationQuery
-
-TODO docs
-FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
-
-| Property     | Type                                  | Required | Default     | Description                       |
-|--------------|---------------------------------------|----------|-------------|-----------------------------------|
-| `builtIn`    | uint8                                 | **Yes**  | `0`         |                                   |
-| `datasource` | [object](#datasource)                 | **Yes**  |             | Datasource to use for annotation. |
-| `enable`     | boolean                               | **Yes**  | `true`      | Whether annotation is enabled.    |
-| `showIn`     | uint8                                 | **Yes**  | `0`         |                                   |
-| `type`       | string                                | **Yes**  | `dashboard` |                                   |
-| `hide`       | boolean                               | No       | `false`     | Whether to hide annotation.       |
-| `iconColor`  | string                                | No       |             | Annotation icon color.            |
-| `name`       | string                                | No       |             | Name of annotation.               |
-| `rawQuery`   | string                                | No       |             | Query for annotation data.        |
-| `target`     | [AnnotationTarget](#annotationtarget) | No       |             | TODO docs                         |
-
-### AnnotationTarget
-
-TODO docs
-
-| Property   | Type     | Required | Default | Description |
-|------------|----------|----------|---------|-------------|
-| `limit`    | integer  | **Yes**  |         |             |
-| `matchAny` | boolean  | **Yes**  |         |             |
-| `tags`     | string[] | **Yes**  |         |             |
-| `type`     | string   | **Yes**  |         |             |
-
-### Datasource
-
-Datasource to use for annotation.
-
-| Property | Type   | Required | Default | Description |
-|----------|--------|----------|---------|-------------|
-| `type`   | string | No       |         |             |
-| `uid`    | string | No       |         |             |
 
 ### Panels
 
@@ -601,5 +658,35 @@ TODO this appears to be spread all over in the frontend. Concepts will likely ne
 | `hidden`            | boolean  | **Yes**  | `false`                               | Whether timepicker is visible or not.   |
 | `refresh_intervals` | string[] | **Yes**  | `[5s 10s 30s 1m 5m 15m 30m 1h 2h 1d]` | Selectable intervals for auto-refresh.  |
 | `time_options`      | string[] | **Yes**  | `[5m 15m 1h 6h 12h 24h 2d 7d 30d]`    | TODO docs                               |
+
+### Status
+
+| Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
+|--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `additionalFields` | [object](#additionalfields)                                                      | **Yes**  |         | additionalFields is reserved for future use                                                                                                                                |
+| `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
+
+### AdditionalFields
+
+additionalFields is reserved for future use
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+
+### JoinSchema.Status.#OperatorState
+
+| Property           | Type               | Required | Default | Description                                                                                                                                                                      |
+|--------------------|--------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lastEvaluation`   | string             | **Yes**  |         | lastEvaluation is the ResourceVersion last evaluated                                                                                                                             |
+| `state`            | string             | **Yes**  |         | state describes the state of the lastEvaluation.<br/>It is limited to three possible states for machine evaluation.<br/>Possible values are: `success`, `in_progress`, `failed`. |
+| `descriptiveState` | string             | No       |         | descriptiveState is an optional more descriptive state field which has no requirements on format                                                                                 |
+| `details`          | [object](#details) | No       |         | details contains any extra information that is operator-specific                                                                                                                 |
+
+### Details
+
+details contains any extra information that is operator-specific
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
 
 

@@ -26,7 +26,14 @@ describe('LokiVariableQueryEditor', () => {
       onChange: () => {},
     };
 
-    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([]);
+    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([
+      {
+        text: 'moon',
+      },
+      {
+        text: 'luna',
+      },
+    ]);
   });
 
   test('Allows to create a Label names variable', async () => {
@@ -47,14 +54,6 @@ describe('LokiVariableQueryEditor', () => {
 
   test('Allows to create a Label values variable', async () => {
     const onChange = jest.fn();
-    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([
-      {
-        text: 'moon',
-      },
-      {
-        text: 'luna',
-      },
-    ]);
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
@@ -77,14 +76,6 @@ describe('LokiVariableQueryEditor', () => {
 
   test('Allows to create a Label values variable with custom label', async () => {
     const onChange = jest.fn();
-    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([
-      {
-        text: 'moon',
-      },
-      {
-        text: 'luna',
-      },
-    ]);
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
@@ -106,12 +97,12 @@ describe('LokiVariableQueryEditor', () => {
   });
 
   test('Migrates legacy string queries to LokiVariableQuery instances', async () => {
-    const query = 'label_values(log stream selector, label_selector)';
+    const query = 'label_values(log stream selector, luna)';
     // @ts-expect-error
     render(<LokiVariableQueryEditor {...props} onChange={() => {}} query={query} />);
 
     await waitFor(() => expect(screen.getByText('Label values')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('label_selector')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('luna')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByDisplayValue('log stream selector')).toBeInTheDocument());
   });
 
@@ -122,7 +113,7 @@ describe('LokiVariableQueryEditor', () => {
         onChange={() => {}}
         query={{
           type: LokiVariableQueryType.LabelValues,
-          label: 'label_selector',
+          label: 'luna',
           stream: 'log stream selector',
           refId,
         }}
@@ -130,7 +121,25 @@ describe('LokiVariableQueryEditor', () => {
     );
 
     await waitFor(() => expect(screen.getByText('Label values')).toBeInTheDocument());
-    await waitFor(() => expect(screen.getByText('label_selector')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('luna')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByDisplayValue('log stream selector')).toBeInTheDocument());
+  });
+
+  test('Label options are not lost when selecting one', async () => {
+    const { rerender } = render(<LokiVariableQueryEditor {...props} onChange={() => {}} />);
+
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+
+    const updatedQuery = {
+      refId: 'test',
+      type: LokiVariableQueryType.LabelValues,
+      label: 'luna',
+    };
+    rerender(<LokiVariableQueryEditor {...props} query={updatedQuery} onChange={() => {}} />);
+
+    await selectOptionInTest(screen.getByLabelText('Label'), 'moon');
+    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await screen.findByText('luna');
   });
 });

@@ -57,6 +57,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/panel/barchart", "barchart", rt),
 		parsePluginOrPanic("public/app/plugins/panel/bargauge", "bargauge", rt),
 		parsePluginOrPanic("public/app/plugins/panel/dashlist", "dashlist", rt),
+		parsePluginOrPanic("public/app/plugins/panel/datagrid", "datagrid", rt),
 		parsePluginOrPanic("public/app/plugins/panel/debug", "debug", rt),
 		parsePluginOrPanic("public/app/plugins/panel/flamegraph", "flamegraph", rt),
 		parsePluginOrPanic("public/app/plugins/panel/gauge", "gauge", rt),
@@ -79,6 +80,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/panel/text", "text", rt),
 		parsePluginOrPanic("public/app/plugins/panel/timeseries", "timeseries", rt),
 		parsePluginOrPanic("public/app/plugins/panel/traces", "traces", rt),
+		parsePluginOrPanic("public/app/plugins/panel/trend", "trend", rt),
 		parsePluginOrPanic("public/app/plugins/panel/welcome", "welcome", rt),
 		parsePluginOrPanic("public/app/plugins/panel/xychart", "xychart", rt),
 	}

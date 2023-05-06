@@ -50,6 +50,7 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
 		}
+		renameSpecNode(def.Props().Common().Name, f)
 		elems, err := gen.extractTSIndexVeneerElements(def, f)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
@@ -75,19 +76,23 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 		sels := p.Selectors()
 		switch len(sels) {
 		case 0:
-			name = comm.Name
-			fallthrough
+			return true
+
 		case 1:
 			// Only deal with subpaths that are definitions, for now
 			// TODO incorporate smarts about grouped lineages here
 			if name == "" {
-				if !sels[0].IsDefinition() {
+				if !(sels[0].IsDefinition() || sels[0].String() == "spec") {
 					return false
 				}
 				// It might seem to make sense that we'd strip replaceout the leading # here for
 				// definitions. However, cuetsy's tsast actually has the # still present in its
 				// Ident types, stripping it replaceout on the fly when stringifying.
 				name = sels[0].String()
+			}
+
+			if name == "spec" {
+				name = comm.Name
 			}
 
 			// Search the generated TS AST for the type and default def nodes

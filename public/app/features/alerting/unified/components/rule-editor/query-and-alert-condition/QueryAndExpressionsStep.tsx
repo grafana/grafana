@@ -198,19 +198,26 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   useEffect(() => {
     setPanelData({});
     if (type === RuleFormType.cloudRecording) {
+      const expr = getValues('expression');
+      const datasourceUid =
+        (editingExistingRule && getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid) ||
+        recordingRuleDefaultDatasource.uid;
+
       const defaultQuery = {
         refId: 'A',
-        datasourceUid: recordingRuleDefaultDatasource.uid,
+        datasourceUid,
         queryType: '',
         relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr,
         model: {
           refId: 'A',
           hide: false,
+          expr,
         },
       };
-      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: getValues('expression') }));
+      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: expr }));
     }
-  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues]);
+  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues, dataSourceName]);
 
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
     dispatch(duplicateQuery(query));

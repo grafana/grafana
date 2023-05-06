@@ -23,6 +23,19 @@ Grafana plugins must adhere to the following criteria when being reviewed for pu
   - Should not access the filesystem
   - Should not access environment variables
 
+## Plugin licensing
+
+Plugins must be licensed under one of the following AGPL compliant licenses for publishing to the catalog:
+
+- AGPL-3.0
+- Apache-2.0
+- BSD
+- GPL-3.0
+- LGPL-3.0
+- MIT
+
+If contributing a plugin on behalf of an organization, be sure to seek guidance from your legal team.
+
 ## Commercial
 
 - Usage of 3rd party software or dependencies within the plugin must be licensed for the intended use. For example, using open source dependencies must be credited/licensed; embedding logos or trademarks;

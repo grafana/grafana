@@ -111,7 +111,6 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     };
 
     const group = requests[requestGroup];
-    const requestId = `${group.request.requestId}_${requestN}`;
     const range = group.partition[requestN - 1];
     const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
 
@@ -120,23 +119,27 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       return;
     }
 
-    subquerySubsciption = datasource
-      .runQuery({ ...requests[requestGroup].request, range, requestId, targets })
-      .subscribe({
-        next: (partialResponse) => {
-          mergedResponse = combineResponses(mergedResponse, partialResponse);
-          if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
-            shouldStop = true;
-          }
-        },
-        complete: () => {
-          subscriber.next(mergedResponse);
-          nextRequest();
-        },
-        error: (error) => {
-          subscriber.error(error);
-        },
-      });
+    const subRequest = { ...requests[requestGroup].request, range, targets };
+    // request may not have a request id
+    if (group.request.requestId) {
+      subRequest.requestId = `${group.request.requestId}_${requestN}`;
+    }
+
+    subquerySubsciption = datasource.runQuery(subRequest).subscribe({
+      next: (partialResponse) => {
+        mergedResponse = combineResponses(mergedResponse, partialResponse);
+        if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
+          shouldStop = true;
+        }
+      },
+      complete: () => {
+        subscriber.next(mergedResponse);
+        nextRequest();
+      },
+      error: (error) => {
+        subscriber.error(error);
+      },
+    });
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
@@ -154,11 +157,14 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
   // There's a pending request from the next group:
-  if (requests[requestGroup + 1]?.partition[requestN - 1]) {
-    return {
-      nextRequestGroup: requestGroup + 1,
-      nextRequestN: requestN,
-    };
+  for (let i = requestGroup + 1; i < requests.length; i++) {
+    const group = requests[i];
+    if (group.partition[requestN - 1]) {
+      return {
+        nextRequestGroup: i,
+        nextRequestN: requestN,
+      };
+    }
   }
   return {
     // Find the first group where `[requestN - 1]` is defined
@@ -173,7 +179,6 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
-
   const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
     query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs

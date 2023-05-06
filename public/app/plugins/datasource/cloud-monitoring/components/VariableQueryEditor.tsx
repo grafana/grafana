@@ -62,7 +62,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
 
   async componentDidMount() {
     await this.props.datasource.ensureGCEDefaultProject();
-    const projectName = this.props.datasource.getDefaultProject();
+    const projectName = this.props.query.projectName || this.props.datasource.getDefaultProject();
     const projects = (await this.props.datasource.getProjects()) as MetricDescriptor[];
     const metricDescriptors = await this.props.datasource.getMetricTypes(
       this.props.query.projectName || this.props.datasource.getDefaultProject()

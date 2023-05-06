@@ -246,6 +246,20 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
     });
+    test('with mixed splitDuration runs the expected amount of queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'count_over_time({c="d"}[1m])', refId: 'A', splitDuration: '15m' },
+          { expr: '{a="b"}', refId: 'B', splitDuration: '15m' },
+          { expr: '{a="b"}', refId: 'C', splitDuration: '1h' },
+        ],
+        range: range1h,
+      });
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        // 4 * 15m + 4 * 15m + 1 * 1h
+        expect(datasource.runQuery).toHaveBeenCalledTimes(9);
+      });
+    });
     test('with 1h/30m splitDuration and 1 log and 2 metric target runs 3 queries', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [

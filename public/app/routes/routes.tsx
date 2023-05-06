@@ -1,9 +1,10 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
-import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
-import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { isTruthy } from '@grafana/data';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
+import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
+import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -23,35 +24,6 @@ import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
-  const topnavRoutes: RouteDescriptor[] = config.featureToggles.topnav
-    ? [
-        {
-          path: '/apps',
-          component: () => <NavLandingPage navId="apps" />,
-        },
-        {
-          path: '/alerts-and-incidents',
-          component: () => <NavLandingPage navId="alerts-and-incidents" />,
-        },
-        {
-          path: '/monitoring',
-          component: () => <NavLandingPage navId="monitoring" />,
-        },
-        {
-          path: '/admin/general',
-          component: () => <NavLandingPage navId="admin/general" />,
-        },
-        {
-          path: '/admin/plugins',
-          component: () => <NavLandingPage navId="admin/plugins" />,
-        },
-        {
-          path: '/admin/access',
-          component: () => <NavLandingPage navId="admin/access" />,
-        },
-      ]
-    : [];
-
   return [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
@@ -224,7 +196,30 @@ export function getAppRoutes(): RouteDescriptor[] {
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
-    ...topnavRoutes,
+    {
+      path: '/apps',
+      component: () => <NavLandingPage navId="apps" />,
+    },
+    {
+      path: '/alerts-and-incidents',
+      component: () => <NavLandingPage navId="alerts-and-incidents" />,
+    },
+    {
+      path: '/monitoring',
+      component: () => <NavLandingPage navId="monitoring" />,
+    },
+    {
+      path: '/admin/general',
+      component: () => <NavLandingPage navId="admin/general" />,
+    },
+    {
+      path: '/admin/plugins',
+      component: () => <NavLandingPage navId="admin/plugins" />,
+    },
+    {
+      path: '/admin/access',
+      component: () => <NavLandingPage navId="admin/access" />,
+    },
     {
       path: '/org',
       component: SafeDynamicImport(
@@ -310,18 +305,26 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // ADMIN
     {
+      path: '/admin/authentication',
+      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
+      component:
+        config.featureToggles.authenticationConfigUI && config.licenseInfo.enabledFeatures?.saml
+          ? SafeDynamicImport(
+              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+            )
+          : () => <Redirect to="/admin" />,
+    },
+    {
       path: '/admin',
-      component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
+      component: () => <NavLandingPage navId="cfg" />,
     },
     {
       path: '/admin/access',
-      component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin/access" /> : <Redirect to="/admin/users" />,
+      component: () => <NavLandingPage navId="admin/access" />,
     },
     {
       path: '/admin/config',
-      component: () =>
-        config.featureToggles.topnav ? <NavLandingPage navId="admin/config" /> : <Redirect to="/admin/org" />,
+      component: () => <NavLandingPage navId="admin/config" />,
     },
     {
       path: '/admin/settings',
@@ -335,11 +338,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
-      component: config.featureToggles.topnav
-        ? SafeDynamicImport(() => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage'))
-        : SafeDynamicImport(
-            () => import(/* webpackChunkName: "UserListAdminPage" */ 'app/features/admin/UserListAdminPage')
-          ),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
+      ),
     },
     {
       path: '/admin/users/create',
@@ -509,11 +510,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getDataConnectionsRoutes(),
     {
       path: '/*',
-      component: ErrorPage,
+      component: PageNotFound,
     },
-    // TODO[Router]
-    // ...playlistRoutes,
-  ];
+  ].filter(isTruthy);
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
