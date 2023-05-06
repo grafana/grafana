@@ -77,7 +77,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     breadcrumbsWrapper: css({
       display: 'flex',
       overflow: 'hidden',
-      minWidth: '50%',
+      [theme.breakpoints.down('sm')]: {
+        minWidth: '60%',
+      },
     }),
     pageToolbar: css({
       height: TOP_BAR_LEVEL_HEIGHT,

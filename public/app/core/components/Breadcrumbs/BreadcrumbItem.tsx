@@ -23,7 +23,12 @@ export function BreadcrumbItem({ href, isCurrent, text, index }: Props) {
   return (
     <li className={styles.breadcrumbWrapper} style={{ flexGrow: index + 1 }}>
       {isCurrent ? (
-        <span data-testid={Components.Breadcrumbs.breadcrumb(text)} className={styles.breadcrumb} aria-current="page">
+        <span
+          data-testid={Components.Breadcrumbs.breadcrumb(text)}
+          className={styles.breadcrumb}
+          aria-current="page"
+          title={text}
+        >
           {text}
         </span>
       ) : (
@@ -32,6 +37,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index }: Props) {
             onClick={onBreadcrumbClick}
             data-testid={Components.Breadcrumbs.breadcrumb(text)}
             className={cx(styles.breadcrumb, styles.breadcrumbLink)}
+            title={text}
             href={href}
           >
             {text}
@@ -46,10 +52,6 @@ export function BreadcrumbItem({ href, isCurrent, text, index }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const separator = css({
-    color: theme.colors.text.secondary,
-  });
-
   return {
     breadcrumb: css({
       display: 'block',
@@ -80,21 +82,15 @@ const getStyles = (theme: GrafanaTheme2) => {
         display: 'none',
         '&:nth-last-child(2)': {
           display: 'flex',
-          flexDirection: 'row-reverse',
-
-          [`.${separator}`]: {
-            transform: 'rotate(180deg)',
-          },
+          minWidth: '40px',
         },
-        '&:first-child&:last-child': {
+        '&:last-child': {
           display: 'flex',
-
-          [`.${separator}`]: {
-            display: 'none',
-          },
         },
       },
     }),
-    separator,
+    separator: css({
+      color: theme.colors.text.secondary,
+    }),
   };
 };
