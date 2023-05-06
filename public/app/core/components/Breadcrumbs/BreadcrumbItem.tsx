@@ -10,9 +10,10 @@ import { Breadcrumb } from './types';
 
 type Props = Breadcrumb & {
   isCurrent: boolean;
+  index: number;
 };
 
-export function BreadcrumbItem({ href, isCurrent, text }: Props) {
+export function BreadcrumbItem({ href, isCurrent, text, index }: Props) {
   const styles = useStyles2(getStyles);
 
   const onBreadcrumbClick = () => {
@@ -20,7 +21,7 @@ export function BreadcrumbItem({ href, isCurrent, text }: Props) {
   };
 
   return (
-    <li className={styles.breadcrumbWrapper}>
+    <li className={styles.breadcrumbWrapper} style={{ flexGrow: index + 1 }}>
       {isCurrent ? (
         <span data-testid={Components.Breadcrumbs.breadcrumb(text)} className={styles.breadcrumb} aria-current="page">
           {text}
@@ -75,7 +76,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       // logic for small screens
       // hide any breadcrumbs that aren't the second to last child (the parent)
       // unless there's only one breadcrumb, in which case we show it
-      [theme.breakpoints.down('md')]: {
+      [theme.breakpoints.down('sm')]: {
         display: 'none',
         '&:nth-last-child(2)': {
           display: 'flex',

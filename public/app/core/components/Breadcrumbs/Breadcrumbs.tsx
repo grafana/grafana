@@ -19,7 +19,7 @@ export function Breadcrumbs({ breadcrumbs, className }: Props) {
     <nav aria-label="Breadcrumbs" className={className}>
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
-          <BreadcrumbItem {...breadcrumb} isCurrent={index === breadcrumbs.length - 1} key={index} />
+          <BreadcrumbItem {...breadcrumb} isCurrent={index === breadcrumbs.length - 1} key={index} index={index} />
         ))}
       </ol>
     </nav>
@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'nowrap',
+      overflow: 'hidden',
     }),
   };
 };
