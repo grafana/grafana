@@ -185,5 +185,5 @@ Formats single- and multi-valued variables into their query parameter representa
 ```bash
 servers = ["test1", "test2"]
 String to interpolate: '${servers:queryparam}'
-Interpolation result: "var-servers=test1&var-servers=test2"
+Interpolation result: "servers=test1&servers=test2"
 ```
