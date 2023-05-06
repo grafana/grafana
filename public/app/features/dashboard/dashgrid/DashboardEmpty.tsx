@@ -107,6 +107,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
+      paddingTop: theme.spacing(12),
     }),
     containerBox: css({
       label: 'container-box',
