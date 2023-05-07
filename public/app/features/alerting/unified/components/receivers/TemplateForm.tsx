@@ -190,7 +190,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                       <div className={styles.editWrapper}>
                         <TemplateEditor
                           value={getValues('content')}
-                          width={640}
+                          width={'auto'}
                           height={363}
                           onBlur={(value) => setValue('content', value)}
                         />
@@ -430,6 +430,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     width: 640px;
     height: 363px;
+    ${theme.breakpoints.up(1600)} {
+      width: 600px;
+    }
+    ${theme.breakpoints.up(1640)} {
+      width: 640px;
+    }
   `,
   toggle: css({
     color: theme.colors.text.secondary,

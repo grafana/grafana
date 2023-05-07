@@ -88,7 +88,7 @@ export function PayloadEditor({
         </div>
 
         <CodeEditor
-          width={640}
+          width={'auto'}
           height={363}
           language={'json'}
           showLineNumbers={true}
@@ -177,6 +177,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     padding-top: 38px;
+    width: 640px;
+    ${theme.breakpoints.up(1600)} {
+      width: 600px;
+    }
+    ${theme.breakpoints.up(1640)} {
+      width: 640px;
+    }
   `,
   tooltip: css`
     padding-left: ${theme.spacing(1)};
