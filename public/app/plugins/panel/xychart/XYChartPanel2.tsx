@@ -88,9 +88,11 @@ export const XYChartPanel2 = (props: Props) => {
   }, [props.data.series, error, series]);
 
   useEffect(() => {
-    if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {
+    if (oldOptions !== props.options) {
       initSeries();
-    } else if (oldData !== props.data) {
+    }
+    if (oldOptions !== undefined && oldData !== props.data) {
+      initSeries();
       initFacets();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
