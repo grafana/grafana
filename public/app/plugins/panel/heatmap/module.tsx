@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelData, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, FieldType, identityOverrideProcessor, PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
@@ -48,7 +48,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     let isOrdinalY = false;
 
     try {
-      const v = prepareHeatmapData({ series: context.data } as PanelData, opts, config.theme2);
+      const v = prepareHeatmapData(context.data, undefined, opts, config.theme2);
       isOrdinalY = readHeatmapRowsCustomMeta(v.heatmap).yOrdinalDisplay != null;
     } catch {}
 
