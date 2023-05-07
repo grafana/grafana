@@ -91,7 +91,7 @@ export const XYChartPanel2 = (props: Props) => {
     if (oldOptions !== props.options) {
       initSeries();
     }
-    if (oldOptions !== undefined && oldData !== props.data) {
+    if (oldOptions !== undefined && oldData?.series !== props.data.series) {
       initSeries();
       initFacets();
     }
