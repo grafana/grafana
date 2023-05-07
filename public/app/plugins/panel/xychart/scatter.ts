@@ -591,14 +591,20 @@ const prepConfig = (
 
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
-  // TODO isTime should be optionally set.
+  let isTime = xField.type === 'time';
   builder.addScale({
     scaleKey: 'x',
-    isTime: true,
+    isTime,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    min: Math.min(...xField.values),
-    max: Math.max(...xField.values),
+    range: (u, dataMin, dataMax) => {
+      // dataMin/Max are null when isTime is true, so we're calculating the bounds here.
+      if (isTime && Array.isArray(u.data[1][0])) {
+        dataMin = Math.min(...u.data[1][0]);
+        dataMax = Math.max(...u.data[1][0]);
+      }
+      return [dataMin, dataMax];
+    },
   });
 
   // why does this fall back to '' instead of null or undef?
@@ -655,7 +661,7 @@ const prepConfig = (
       facets: [
         {
           scale: 'x',
-          // auto: true,
+          auto: true,
         },
         {
           scale: scaleKey,
@@ -720,8 +726,6 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
         colorValues = Array(frame.length).fill(r);
         colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
       }
-      console.log('in prep data', info);
-
       return [
         s.x(frame).values, // X
         s.y(frame).values, // Y

@@ -70,6 +70,7 @@ export function getXYDimensions(cfg?: XYDimensionConfig, data?: DataFrame[]): XY
     }
     fields.push(f);
   }
+
   return {
     x,
     fields: {
