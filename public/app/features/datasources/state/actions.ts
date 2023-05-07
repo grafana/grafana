@@ -149,10 +149,14 @@ export const testDataSource = (
 export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     dispatch(dataSourcesLoad());
+    let response = [];
     try {
-      const response = await api.getDataSources();
+      response = await api.getDataSources();
       dispatch(dataSourcesLoaded(response));
-      // if api.getDataSources() fails, dispatch dataSourcesLoaded with an empty array as payload so that infinite loading can be avoided
+      /* 
+      if api.getDataSources() fails, dispatch dataSourcesLoaded with 
+      an empty array as payload so that infinite loading can be avoided
+      */
     } catch (err) {
       dispatch(dataSourcesLoaded([]));
     }
