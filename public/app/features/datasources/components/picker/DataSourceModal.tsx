@@ -155,6 +155,7 @@ export function DataSourceModal({
                 item: INTERACTION_ITEM.CONFIG_NEW_DS,
                 src: analyticsInteractionSrc,
               });
+              onDismiss();
             }}
           />
         </div>

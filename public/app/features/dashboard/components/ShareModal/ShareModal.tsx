@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { locationService, reportInteraction } from '@grafana/runtime/src';
-import { Modal, ModalsContext, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -86,8 +86,6 @@ function getInitialState(props: Props): State {
 }
 
 export class ShareModal extends React.Component<Props, State> {
-  static contextType = ModalsContext;
-
   constructor(props: Props) {
     super(props);
     this.state = getInitialState(props);
