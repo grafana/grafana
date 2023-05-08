@@ -30,7 +30,7 @@ import {
   LogRowContextOptions,
   SupplementaryQueryOptions,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config } from '@grafana/runtime';
+import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -146,6 +146,18 @@ export class ElasticDatasource
     this.languageProvider = new LanguageProvider(this);
     this.timeSrv = getTimeSrv();
     this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
+  }
+
+  getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
+    return this.getResource(path, params, options);
+  }
+
+  postResourceRequest(path: string, data?: BackendSrvRequest['data'], options?: Partial<BackendSrvRequest>) {
+    const resourceOptions = options ?? {};
+    resourceOptions.headers = resourceOptions.headers ?? {};
+    resourceOptions.headers['content-type'] = 'application/x-ndjson';
+
+    return this.postResource(path, data, resourceOptions);
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchQuery[]> {
@@ -532,7 +544,12 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
-    return this.legacyQueryRunner.request('POST', url, esQuery).pipe(
+    const termsObservable = config.featureToggles.enableElasticsearchBackendQuerying
+      ? // TODO: This is run trough resource call, but maybe should run trough query
+        from(this.postResourceRequest(url, esQuery))
+      : this.legacyQueryRunner.request('POST', url, esQuery);
+
+    return termsObservable.pipe(
       map((res) => {
         if (!res.responses[0].aggregations) {
           return [];
@@ -743,7 +760,7 @@ export class ElasticDatasource
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
     const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? from(this.getResource(''))
+      ? from(this.getResourceRequest(''))
       : this.legacyQueryRunner.request('GET', '/');
 
     return lastValueFrom(getDbVersionObservable).then(
