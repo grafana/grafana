@@ -90,6 +90,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     title: css({
       margin: '0 0 0 0',
+      maxWidth: '500px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      display: 'inline-block',
     }),
     datasourceNameInput: css({
       input: {
