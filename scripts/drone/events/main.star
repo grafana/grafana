@@ -32,6 +32,7 @@ load(
 load(
     "scripts/drone/pipelines/windows.star",
     "windows",
+    "windows_test_backend",
 )
 load(
     "scripts/drone/pipelines/trigger_downstream.star",
@@ -89,6 +90,8 @@ def main_pipelines():
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         windows(trigger, edition = "oss", ver_mode = ver_mode),
+        windows_test_backend(trigger, "oss", ver_mode),
+        windows_test_backend(trigger, "enterprise", ver_mode),
         notify_pipeline(
             name = "notify-drone-changes",
             slack_channel = "slack-webhooks-test",

@@ -25,6 +25,10 @@ load(
     "publish_image_pipelines_public",
     "publish_image_pipelines_security",
 )
+load(
+    "scripts/drone/pipelines/ci_images.star",
+    "publish_ci_windows_test_image_pipeline",
+)
 load("scripts/drone/pipelines/github.star", "publish_github_pipeline")
 load("scripts/drone/pipelines/aws_marketplace.star", "publish_aws_marketplace_pipeline")
 load("scripts/drone/version.star", "version_branch_pipelines")
@@ -54,6 +58,7 @@ def main(_ctx):
         artifacts_page_pipeline() +
         version_branch_pipelines() +
         integration_test_pipelines() +
+        publish_ci_windows_test_image_pipeline() +
         cronjobs() +
         secrets()
     )
