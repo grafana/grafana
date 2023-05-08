@@ -21,11 +21,11 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
 
   info.push({
     label: (
-      <Tooltip content={'The default data source is preselected in new panels'}>
-        <>
-          Default
-          <Icon className={styles.tooltip} name="exclamation-circle" />
-        </>
+      <Tooltip placement="top" content="The default data source is preselected in new panels." theme="info">
+        <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+          Deault
+          <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
+        </div>
       </Tooltip>
     ),
     value: (
