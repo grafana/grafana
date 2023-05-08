@@ -70,14 +70,18 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
 
-	s.rr.Any("/k8s/*", middleware.ReqSignedIn, func(c *contextmodel.ReqContext) {
-		if s.handler != nil {
-			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
-				handle(c)
-				return
+	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+		handler := func(c *contextmodel.ReqContext) {
+			if s.handler != nil {
+				if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
+					handle(c)
+					return
+				}
 			}
+			panic("k8s api handler not added")
 		}
-		panic("k8s api handler not added")
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	})
 
 	return s, nil
@@ -155,6 +159,9 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
+		if req.URL.Path == "" {
+			req.URL.Path = "/"
+		}
 		ctx := req.Context()
 		signedInUser := appcontext.MustUser(ctx)
 
