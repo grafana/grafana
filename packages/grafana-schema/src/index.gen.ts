@@ -7,6 +7,16 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Raw generated types from AccessPolicy kind.
+export type {
+  AccessPolicy,
+  RoleID,
+  ResourceID
+} from './raw/accesspolicy/x/accesspolicy_types.gen';
+
+// Raw generated enums and default consts from accesspolicy kind.
+export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen';
+
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
@@ -128,6 +138,12 @@ export type {
 
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
+
+// Raw generated types from Role kind.
+export type { Role } from './raw/role/x/role_types.gen';
+
+// Raw generated types from RoleMapping kind.
+export type { RoleMapping } from './raw/rolemapping/x/rolemapping_types.gen';
 
 // Raw generated types from ServiceAccount kind.
 export type {
