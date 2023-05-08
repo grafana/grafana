@@ -196,10 +196,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = createTheme(getThemeCustomizations(this));
-
     this.theme = this.theme2.v1;
-    // Special feature toggle that impact theme/component looks
-    this.theme2.flags.topnav = this.featureToggles.topnav;
   }
 }
 

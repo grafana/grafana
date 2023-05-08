@@ -138,17 +138,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }
   `;
 
-  const defaultTopNav = css`
-    color: ${theme.colors.text.secondary};
-    background: transparent;
-    border: 1px solid transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
   return {
     button: css`
       label: toolbar-button;
@@ -194,7 +183,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: defaultTopNav,
+    default: css`
+      color: ${theme.colors.text.secondary};
+      background: transparent;
+      border: 1px solid transparent;
+
+      &:hover {
+        color: ${theme.colors.text.primary};
+        background: ${theme.colors.background.secondary};
+      }
+    `,
     canvas: defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};
