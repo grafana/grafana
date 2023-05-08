@@ -330,13 +330,18 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     style.width = '100%';
   } else if (windowWidth < theme.breakpoints.values.md) {
     // Mobile layout is a bit different, every panel take up full width
-    width = props.gridWidth!;
+    width = gridWidth!;
     height = translateGridHeightToScreenHeight(gridPos!.h);
     style.height = height;
     style.width = '100%';
   } else {
     // Normal grid layout. The grid framework passes width and height directly to children as style props.
-    width = parseFloat(props.style.width);
+    const styleWidth = props.style.width;
+    if (typeof styleWidth === 'string' && styleWidth.endsWith('%')) {
+      width = (parseFloat(styleWidth) / 100) * gridWidth!;
+    } else {
+      width = parseFloat(styleWidth);
+    }
     height = parseFloat(props.style.height);
   }
 

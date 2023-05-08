@@ -119,15 +119,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       type: 'grafana',
       uid: 'grafana',
     };
+    const dashboard = this.props.dashboard;
     DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
       const snapshot: DataFrameJSON[] = [];
       next.dataFrames.forEach((df) => {
         const dataframeJson = dataFrameToJSON(df);
         snapshot.push(dataframeJson);
       });
-      this.props.dashboard?.addPanel({
+      dashboard?.addPanel({
         type: 'table',
-        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        gridPos: calculateNewPanelGridPos(dashboard),
         title: next.file.name,
         datasource: grafanaDS,
         targets: [
