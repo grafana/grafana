@@ -5,7 +5,7 @@ import { AlertLabel } from 'app/features/alerting/unified/components/AlertLabel'
 import { getAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { Alert } from 'app/types/unified-alerting';
 
-import { AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { GroupedRules, UnifiedAlertListOptions } from '../types';
@@ -88,7 +88,7 @@ function parseMapKey(key: string): Array<[string, string]> {
 }
 
 function alertHasEveryLabelForCombinedRules(rule: CombinedRuleWithLocation, groupByKeys: string[]) {
-  const alertingRule: AlertingRule | null = getAlertingRule(rule);
+  const alertingRule = getAlertingRule(rule);
   return groupByKeys.every((key) => {
     return (alertingRule?.alerts ?? []).some((alert) => alert.labels[key]);
   });
