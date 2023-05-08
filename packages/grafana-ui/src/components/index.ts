@@ -14,6 +14,7 @@ export { Tooltip } from './Tooltip/Tooltip';
 export type { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
+export { Toggletip } from './Toggletip/Toggletip';
 export { Portal, getPortalContainer, PortalContainer } from './Portal/Portal';
 export { CustomScrollbar, type ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, type TabConfig } from './TabbedContainer/TabbedContainer';
