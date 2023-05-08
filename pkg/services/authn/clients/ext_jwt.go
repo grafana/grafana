@@ -115,7 +115,8 @@ func (s *ExtendedJWT) Name() string {
 	return authn.ClientExtendedJWT
 }
 
-func (c *ExtendedJWT) Priority() uint {
+func (s *ExtendedJWT) Priority() uint {
+	// This client should come before the normal JWT client, because it is more specific, because of the Issuer check
 	return 15
 }
 
@@ -125,7 +126,7 @@ func (s *ExtendedJWT) parseEntitlements(entitlementsClaimValue interface{}) (map
 	entitlements, ok := entitlementsClaimValue.(map[string]interface{})
 	if !ok {
 		s.log.Error("Entitlements claim cannot be parsed")
-		return nil, fmt.Errorf("Entitlements claim cannot be parsed")
+		return nil, fmt.Errorf("entitlements claim cannot be parsed")
 	}
 
 	for key, value := range entitlements {
@@ -135,7 +136,7 @@ func (s *ExtendedJWT) parseEntitlements(entitlementsClaimValue interface{}) (map
 			parsedScopeArray, err := s.parseScopesArray(value)
 			if err != nil {
 				s.log.Error("Failed to parse scopes for permission", "error", err, "permission", key, "scopes", value, "expectedFormat", []string{"folders:uid:general"})
-				return nil, fmt.Errorf("Failed to parse scopes for permission: %s", key)
+				return nil, fmt.Errorf("failed to parse scopes for permission: %s", key)
 			}
 			result[key] = parsedScopeArray
 		}
@@ -147,7 +148,7 @@ func (s *ExtendedJWT) parseEntitlements(entitlementsClaimValue interface{}) (map
 func (s *ExtendedJWT) parseScopesArray(scopes interface{}) ([]string, error) {
 	result := []string{}
 	if _, ok := scopes.([]interface{}); !ok {
-		return nil, fmt.Errorf("Permissions' scopes cannot be parsed")
+		return nil, fmt.Errorf("permissions' scopes cannot be parsed")
 	}
 	for _, entitlement := range scopes.([]interface{}) {
 		result = append(result, entitlement.(string))
@@ -194,7 +195,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	var allClaims map[string]interface{}
 	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims, &allClaims)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify JWT: %w", err)
+		return nil, fmt.Errorf("failed to verify the signature: %w", err)
 	}
 
 	if _, expClaimExists := allClaims["exp"]; !expClaimExists {

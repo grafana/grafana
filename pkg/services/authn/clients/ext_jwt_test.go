@@ -39,7 +39,7 @@ var (
 				"folders:uid:general",
 			},
 			"datasources:explore":       nil,
-			"datasources.insights:read": []string{},
+			"datasources.insights:read": {},
 		},
 		Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
 		IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
