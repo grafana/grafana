@@ -17,6 +17,7 @@ curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
 go_image = "golang:1.20.4"
+windows_go_image = "grafana/grafana-ci-windows-test:0.1.0"
 
 trigger_oss = {
     "repo": [
@@ -54,6 +55,19 @@ def wire_install_step():
         ],
         "depends_on": [
             "verify-gen-cue",
+        ],
+    }
+
+def windows_wire_install_step(edition):
+    return {
+        "name": "wire-install",
+        "image": windows_go_image,
+        "commands": [
+            "go install github.com/google/wire/cmd/wire@v0.5.0",
+            "wire gen -tags {} ./pkg/server".format(edition),
+        ],
+        "depends_on": [
+            "windows-init",
         ],
     }
 
@@ -187,6 +201,61 @@ def init_enterprise_step(ver_mode):
             "mv /tmp/grabpl bin/",
         ],
     }
+
+def windows_init_enterprise_steps(ver_mode):
+    """Performs init-enterprise steps in a Windows environment
+
+    Args:
+        ver_mode: in what mode should this be run
+
+    Returns:
+        A list of steps setting up an enterprise folder
+    """
+    if ver_mode == "release":
+        source = "${DRONE_TAG}"
+    elif ver_mode == "release-branch":
+        source = "$$env:DRONE_BRANCH"
+    else:
+        source = "main"
+
+    clone_cmds = [
+        'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
+        "cd grafana-enterprise",
+        "git checkout {}".format(source),
+    ]
+
+    init_cmds = [
+        # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
+        "cp -r grafana-enterprise C:\\App\\grafana-enterprise",
+        "rm -r -force grafana-enterprise",
+        "cp grabpl.exe C:\\App\\grabpl.exe",
+        "rm -force grabpl.exe",
+        "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise",
+        "cp C:\\App\\grabpl.exe grabpl.exe",
+    ]
+
+    steps = []
+    steps.extend(
+        [
+            download_grabpl_step(platform = "windows"),
+            {
+                "name": "clone",
+                "image": wix_image,
+                "environment": {
+                    "GITHUB_TOKEN": from_secret("github_token"),
+                },
+                "commands": clone_cmds,
+            },
+            {
+                "name": "windows-init",
+                "image": wix_image,
+                "commands": init_cmds,
+                "depends_on": ["clone"],
+                "environment": {"GITHUB_TOKEN": from_secret("github_token")},
+            },
+        ],
+    )
+    return steps
 
 def download_grabpl_step(platform = "linux"):
     if platform == "windows":
@@ -605,10 +674,10 @@ def build_plugins_step(edition, ver_mode):
         ],
     }
 
-def test_backend_step():
+def test_backend_step(image = build_image):
     return {
         "name": "test-backend",
-        "image": build_image,
+        "image": image,
         "depends_on": [
             "wire-install",
         ],
@@ -616,6 +685,11 @@ def test_backend_step():
             "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
         ],
     }
+
+def windows_test_backend_step():
+    step = test_backend_step(image = windows_go_image)
+    step["failure"] = "ignore"
+    return step
 
 def test_backend_integration_step():
     return {
@@ -1379,6 +1453,8 @@ def get_windows_steps(edition, ver_mode):
                 },
             ],
         )
+
+    # TODO: Run windows backend tests
 
     if (
         ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))
