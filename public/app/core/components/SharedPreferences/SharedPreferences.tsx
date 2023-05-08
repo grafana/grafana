@@ -75,7 +75,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     ];
 
     if (config.featureToggles.extraThemes) {
-      this.themeOptions.push({ value: 'mignight', label: t('shared-preferences.theme.midnight-label', 'Midnight') });
+      this.themeOptions.push({ value: 'midnight', label: t('shared-preferences.theme.midnight-label', 'Midnight') });
     }
   }
 

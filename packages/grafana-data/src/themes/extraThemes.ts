@@ -23,6 +23,8 @@ export function getThemeById(id: string): GrafanaTheme2 {
 }
 
 function createMidnight(): GrafanaTheme2 {
+  const whiteBase = '204, 204, 220';
+
   return createTheme({
     name: 'Midnight',
     colors: {
@@ -31,6 +33,11 @@ function createMidnight(): GrafanaTheme2 {
         canvas: '#000000',
         primary: '#000000',
         secondary: '#181818',
+      },
+      border: {
+        weak: `rgba(${whiteBase}, 0.15)`,
+        medium: `rgba(${whiteBase}, 0.25)`,
+        strong: `rgba(${whiteBase}, 0.35)`,
       },
     },
   });

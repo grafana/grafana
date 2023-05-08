@@ -8,34 +8,37 @@ import { contextSrv } from '../core';
 import { PreferencesService } from './PreferencesService';
 
 export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
+  const oldTheme = config.theme2;
+
   const newTheme = getThemeById(themeId);
 
   // Special feature toggle that impact theme/component looks
   newTheme.flags.topnav = config.featureToggles.topnav;
 
   appEvents.publish(new ThemeChangedEvent(newTheme));
-  config.theme2.isDark = newTheme.isDark;
 
   // Add css file for new theme
-  const newCssLink = document.createElement('link');
-  newCssLink.rel = 'stylesheet';
-  newCssLink.href = config.bootData.themePaths[newTheme.colors.mode];
-  newCssLink.onload = () => {
-    // Remove old css file
-    const bodyLinks = document.getElementsByTagName('link');
-    for (let i = 0; i < bodyLinks.length; i++) {
-      const link = bodyLinks[i];
+  if (oldTheme.colors.mode !== newTheme.colors.mode) {
+    const newCssLink = document.createElement('link');
+    newCssLink.rel = 'stylesheet';
+    newCssLink.href = config.bootData.themePaths[newTheme.colors.mode];
+    newCssLink.onload = () => {
+      // Remove old css file
+      const bodyLinks = document.getElementsByTagName('link');
+      for (let i = 0; i < bodyLinks.length; i++) {
+        const link = bodyLinks[i];
 
-      if (link.href && link.href.includes(`build/grafana.${!newTheme.colors.mode}`)) {
-        // Remove existing link once the new css has loaded to avoid flickering
-        // If we add new css at the same time we remove current one the page will be rendered without css
-        // As the new css file is loading
-        link.remove();
+        if (link.href && link.href.includes(`build/grafana.${oldTheme.colors.mode}`)) {
+          // Remove existing link once the new css has loaded to avoid flickering
+          // If we add new css at the same time we remove current one the page will be rendered without css
+          // As the new css file is loading
+          link.remove();
+        }
       }
-    }
-  };
+    };
 
-  document.body.appendChild(newCssLink);
+    document.head.insertBefore(newCssLink, document.head.firstChild);
+  }
 
   if (runtimeOnly) {
     return;

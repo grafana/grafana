@@ -15,9 +15,8 @@ import {
   PanelPluginMeta,
   systemDateFormats,
   SystemDateFormatSettings,
+  getThemeById,
 } from '@grafana/data';
-
-import { getThemeById } from '../../grafana-data/src/themes/extraThemes';
 
 export interface AzureSettings {
   cloud?: string;
