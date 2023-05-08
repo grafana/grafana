@@ -373,6 +373,56 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: pr-oss-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands: []
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags oss ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    - pkg/**
+    - packaging/**
+    - go.sum
+    - go.mod
+    include: []
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: pr-lint-backend
 node:
   type: no-parallel
@@ -2024,7 +2074,127 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: /var/run/docker.sock
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: main-oss-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands: []
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags oss ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: main-enterprise-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: grabpl
+- commands:
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout main
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cp -r grafana-enterprise C:\App\grafana-enterprise
+  - rm -r -force grafana-enterprise
+  - cp grabpl.exe C:\App\grabpl.exe
+  - rm -force grabpl.exe
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+  - cp C:\App\grabpl.exe grabpl.exe
+  depends_on:
+  - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags enterprise ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
   name: docker
 ---
 clone:
@@ -2584,10 +2754,130 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-oss-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands: []
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags oss ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-enterprise-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: grabpl
+- commands:
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout ${DRONE_TAG}
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cp -r grafana-enterprise C:\App\grafana-enterprise
+  - rm -r -force grafana-enterprise
+  - cp grabpl.exe C:\App\grabpl.exe
+  - rm -force grabpl.exe
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+  - cp C:\App\grabpl.exe grabpl.exe
+  depends_on:
+  - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags enterprise ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  retries: 3
 depends_on:
 - release-oss-build-e2e-publish
 - release-oss-test-frontend
-- release-oss-test-backend
+- release-oss-test-backend-windows
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -2645,7 +2935,7 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: /var/run/docker.sock
+    path: //./pipe/docker_engine/
   name: docker
 ---
 clone:
@@ -3229,7 +3519,7 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: /var/run/docker.sock
+    path: //./pipe/docker_engine/
   name: docker
 ---
 clone:
@@ -5037,6 +5327,114 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: release-branch-oss-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands: []
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags oss ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-branch-enterprise-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: grabpl
+- commands:
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
+  - cd grafana-enterprise
+  - git checkout $$env:DRONE_BRANCH
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cp -r grafana-enterprise C:\App\grafana-enterprise
+  - rm -r -force grafana-enterprise
+  - cp grabpl.exe C:\App\grabpl.exe
+  - rm -force grabpl.exe
+  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+  - cp C:\App\grabpl.exe grabpl.exe
+  depends_on:
+  - clone
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags enterprise ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  failure: ignore
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  ref:
+  - refs/heads/v[0-9]*
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: release-branch-oss-integration-tests
 node:
   type: no-parallel
@@ -5178,7 +5576,7 @@ clone:
 depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test-frontend
-- release-branch-oss-test-backend
+- release-branch-oss-test-backend-windows
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -5226,7 +5624,7 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: /var/run/docker.sock
+    path: //./pipe/docker_engine/
   name: docker
 ---
 clone:
@@ -5965,7 +6363,7 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: /var/run/docker.sock
+    path: //./pipe/docker_engine/
   name: docker
 ---
 clone:
@@ -6538,6 +6936,54 @@ volumes:
     medium: memory
 ---
 clone:
+  disable: true
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: publish-ci-windows-test-image
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-ci-sandbox.git"
+    .
+  - git checkout -f $$env:DRONE_COMMIT
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands:
+  - cd scripts\build\ci-windows-test
+  - docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD
+  - docker build -t grafana/grafana-ci-windows-test:$$env:TAG .
+  - docker push grafana/grafana-ci-windows-test:$$env:TAG
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  image: docker:windowsservercore-1809
+  name: build-and-publish
+  volumes:
+  - name: docker
+    path: //./pipe/docker_engine/
+trigger:
+  event:
+  - promote
+  target:
+  - ci-windows-test-image
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
   retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-image
@@ -6823,6 +7269,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 172df42aacf2eb264f643eb57631b628bae1189bcbc2361753edc6f03a3baa82
+hmac: a79b7c0fe0f5ddcea5bb269810e75bce08ddb138c918ed02f1fa7be03a233c4d
 
 ...
