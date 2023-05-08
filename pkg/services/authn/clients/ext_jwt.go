@@ -28,6 +28,8 @@ const (
 	SigningMethodNone     = jose.SignatureAlgorithm("none")
 	rfc9068ShortMediaType = "at+jwt"
 	rfc9068MediaType      = "application/at+jwt"
+
+	defaultOrgID = 1
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
@@ -51,15 +53,15 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	claims, err := s.verifyRFC9068Token(ctx, jwtToken)
 	if err != nil {
-		s.log.Error("failed to verify JWT", "error", err)
-		return nil, errJWTInvalid.Errorf("failed to verify JWT: %w", err)
+		s.log.Error("Failed to verify JWT", "error", err)
+		return nil, errJWTInvalid.Errorf("Failed to verify JWT: %w", err)
 	}
 
 	// user:id:18
 	userID, err := strconv.ParseInt(strings.TrimPrefix(claims["sub"].(string), fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
-		s.log.Error("failed to parse sub", "error", err)
-		return nil, errJWTInvalid.Errorf("failed to parse sub: %w", err)
+		s.log.Error("Failed to parse sub", "error", err)
+		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
 	}
 
 	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: r.OrgID, UserID: userID})
@@ -73,9 +75,14 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	}
 
 	if claims["entitlements"] == nil {
-		s.log.Debug("missing entitlements claim")
+		s.log.Error("Entitlements claim is missing")
+		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	} else {
-		signedInUser.Permissions[1] = s.parseEntitlements(claims["entitlements"].(map[string]interface{}))
+		permissions, err := s.parseEntitlements(claims["entitlements"])
+		if err != nil {
+			return nil, errJWTInvalid.Errorf("Failed to parse permissions: %w", err)
+		}
+		signedInUser.Permissions[defaultOrgID] = permissions
 	}
 
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
@@ -112,24 +119,40 @@ func (c *ExtendedJWT) Priority() uint {
 	return 15
 }
 
-func (s *ExtendedJWT) parseEntitlements(entitlements map[string]interface{}) map[string][]string {
+// parseEntitlements parses the entitlements claim.
+func (s *ExtendedJWT) parseEntitlements(entitlementsClaimValue interface{}) (map[string][]string, error) {
 	result := map[string][]string{}
+	entitlements, ok := entitlementsClaimValue.(map[string]interface{})
+	if !ok {
+		s.log.Error("Entitlements claim cannot be parsed")
+		return nil, fmt.Errorf("Entitlements claim cannot be parsed")
+	}
+
 	for key, value := range entitlements {
 		if value == nil {
 			result[key] = []string{}
 		} else {
-			result[key] = s.parseEntitlementsArray(value)
+			parsedScopeArray, err := s.parseScopesArray(value)
+			if err != nil {
+				s.log.Error("Failed to parse scopes for permission", "error", err, "permission", key, "scopes", value, "expectedFormat", []string{"folders:uid:general"})
+				return nil, fmt.Errorf("Failed to parse scopes for permission: %s", key)
+			}
+			result[key] = parsedScopeArray
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (s *ExtendedJWT) parseEntitlementsArray(entitlements interface{}) []string {
+// parseScopesArray parses the scopes array of the current permission from the entitlements claim.
+func (s *ExtendedJWT) parseScopesArray(scopes interface{}) ([]string, error) {
 	result := []string{}
-	for _, entitlement := range entitlements.([]interface{}) {
+	if _, ok := scopes.([]interface{}); !ok {
+		return nil, fmt.Errorf("Permissions' scopes cannot be parsed")
+	}
+	for _, entitlement := range scopes.([]interface{}) {
 		result = append(result, entitlement.(string))
 	}
-	return result
+	return result, nil
 }
 
 // retrieveToken retrieves the JWT token from the request.

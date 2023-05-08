@@ -31,6 +31,16 @@ var (
 		ID:       "1234567890",
 		ClientID: "grafana",
 		Scopes:   []string{"profile", "groups"},
+		Entitlements: map[string][]string{
+			"dashboards:create": {
+				"folders:uid:general",
+			},
+			"folders:read": {
+				"folders:uid:general",
+			},
+			"datasources:explore":       nil,
+			"datasources.insights:read": []string{},
+		},
 		Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
 		IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 	}
@@ -93,7 +103,7 @@ func TestExtendedJWTTest(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			extJwtClient := setupTestCtx(t, nil, nil)
+			extJwtClient := setupTestCtx(t, nil, tc.cfg)
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
@@ -148,7 +158,18 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 				AuthID:         "",
 				IsDisabled:     false,
 				HelpFlags1:     0,
-				Permissions:    map[int64]map[string][]string{},
+				Permissions: map[int64]map[string][]string{
+					1: {
+						"dashboards:create": {
+							"folders:uid:general",
+						},
+						"folders:read": {
+							"folders:uid:general",
+						},
+						"datasources:explore":       []string{},
+						"datasources.insights:read": []string{},
+					},
+				},
 				ClientParams: authn.ClientParams{
 					SyncUser:            false,
 					AllowSignUp:         false,
@@ -215,6 +236,37 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 			userSvcSetup: func(userSvc *usertest.FakeUserService) {
 				userSvc.ExpectedError = user.ErrUserNotFound
 			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when entitlements claim is missing",
+			payload: rfc9068Payload{
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:id:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				ClientID: "grafana",
+				Scopes:   []string{"profile", "groups"},
+				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return error when the entitlements are not in the correct format",
+			payload: rfc9068Payload{
+				Issuer:       "http://localhost:3000",
+				Subject:      "user:id:2",
+				Audience:     jwt.Audience{"http://localhost:3000"},
+				ID:           "1234567890",
+				ClientID:     "grafana",
+				Scopes:       []string{"profile", "groups"},
+				Entitlements: []string{"dashboards:create", "folders:read"},
+				Expiry:       time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt:     time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			want:    nil,
 			wantErr: true,
 		},
 	}
@@ -412,15 +464,16 @@ func setupTestCtx(t *testing.T, userSvc user.Service, cfg *setting.Cfg) *Extende
 }
 
 type rfc9068Payload struct {
-	Issuer    string       `json:"iss,omitempty"`
-	Subject   string       `json:"sub,omitempty"`
-	Audience  jwt.Audience `json:"aud,omitempty"`
-	Expiry    int64        `json:"exp,omitempty"`
-	NotBefore int64        `json:"nbf,omitempty"`
-	IssuedAt  int64        `json:"iat,omitempty"`
-	ID        string       `json:"jti,omitempty"`
-	ClientID  string       `json:"client_id,omitempty"`
-	Scopes    []string     `json:"scope,omitempty"`
+	Issuer       string       `json:"iss,omitempty"`
+	Subject      string       `json:"sub,omitempty"`
+	Audience     jwt.Audience `json:"aud,omitempty"`
+	Expiry       int64        `json:"exp,omitempty"`
+	NotBefore    int64        `json:"nbf,omitempty"`
+	IssuedAt     int64        `json:"iat,omitempty"`
+	ID           string       `json:"jti,omitempty"`
+	ClientID     string       `json:"client_id,omitempty"`
+	Scopes       []string     `json:"scope,omitempty"`
+	Entitlements interface{}  `json:"entitlements,omitempty"` // By default Entitlements is a map[string][]string; interface{} used for testing purposes
 }
 
 func generateToken(payload rfc9068Payload, signingKey *rsa.PrivateKey) string {
