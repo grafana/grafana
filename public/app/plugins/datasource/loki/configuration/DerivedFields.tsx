@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { Button, useTheme2 } from '@grafana/ui';
@@ -30,14 +30,12 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
 
   const [showDebug, setShowDebug] = useState(false);
 
-  const validateNameRule = useMemo(() => {
-    return {
-      rule: (name: string) => {
-        return fields.filter((field) => field.name && field.name === name).length <= 1;
-      },
-      errorMessage: 'Name already in use',
-    };
-  }, [fields]);
+  const validateName = useCallback(
+    (name: string) => {
+      return fields.filter((field) => field.name && field.name === name).length > 1;
+    },
+    [fields]
+  );
 
   return (
     <>
@@ -64,7 +62,7 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
                 newDerivedFields.splice(index, 1);
                 onChange(newDerivedFields);
               }}
-              validateName={validateNameRule}
+              validateName={validateName}
               suggestions={[
                 {
                   value: DataLinkBuiltInVars.valueRaw,

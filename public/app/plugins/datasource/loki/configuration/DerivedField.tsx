@@ -4,16 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import {
-  Button,
-  DataLinkInput,
-  EventsWithValidation,
-  Field,
-  Input,
-  LegacyForms,
-  useStyles2,
-  ValidationRule,
-} from '@grafana/ui';
+import { Button, DataLinkInput, Field, Input, LegacyForms, useStyles2 } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -45,7 +36,7 @@ type Props = {
   onDelete: () => void;
   suggestions: VariableSuggestion[];
   className?: string;
-  validateName: ValidationRule;
+  validateName: (name: string) => boolean;
 };
 export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className, validateName } = props;
@@ -70,11 +61,13 @@ export const DerivedField = (props: Props) => {
     });
   };
 
+  const invalidName = validateName(value.name);
+
   return (
     <div className={className} data-testid="derived-field">
       <div className="gf-form">
-        <Field className={styles.nameField} label="Name">
-          <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" />
+        <Field className={styles.nameField} label="Name" invalid={invalidName} error="The name is already in use">
+          <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
         </Field>
         <Field
           className={styles.regexField}
