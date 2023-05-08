@@ -128,7 +128,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -450,4 +450,4 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
-replace github.com/ory/fosite => ../fosite
+replace github.com/ory/fosite => github.com/mgyongyosi/fosite v0.0.0-20230504165338-8f10923c9110

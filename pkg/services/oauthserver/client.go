@@ -195,5 +195,5 @@ func (c *Client) IsPublic() bool {
 // GetAudience returns the allowed audience(s) for this client.
 func (c *Client) GetAudience() fosite.Arguments {
 	// TODO: This is to be inline with the PoC, check what we should really return here
-	return fosite.Arguments{c.ClientID}
+	return fosite.Arguments{"http://localhost:3000"}
 }
