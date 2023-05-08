@@ -30,18 +30,18 @@ const (
 	AzureLogsQueryResultFormatTrace      AzureLogsQueryResultFormat = "trace"
 )
 
-// Defines values for AzureLogAnalyticsResultFormat.
+// Defines values for AzureMonitorQueryAzureLogAnalyticsResultFormat.
 const (
-	AzureLogAnalyticsResultFormatTable      AzureLogAnalyticsResultFormat = "table"
-	AzureLogAnalyticsResultFormatTimeSeries AzureLogAnalyticsResultFormat = "time_series"
-	AzureLogAnalyticsResultFormatTrace      AzureLogAnalyticsResultFormat = "trace"
+	AzureMonitorQueryAzureLogAnalyticsResultFormatTable      AzureMonitorQueryAzureLogAnalyticsResultFormat = "table"
+	AzureMonitorQueryAzureLogAnalyticsResultFormatTimeSeries AzureMonitorQueryAzureLogAnalyticsResultFormat = "time_series"
+	AzureMonitorQueryAzureLogAnalyticsResultFormatTrace      AzureMonitorQueryAzureLogAnalyticsResultFormat = "trace"
 )
 
-// Defines values for AzureTracesResultFormat.
+// Defines values for AzureMonitorQueryAzureTracesResultFormat.
 const (
-	AzureTracesResultFormatTable      AzureTracesResultFormat = "table"
-	AzureTracesResultFormatTimeSeries AzureTracesResultFormat = "time_series"
-	AzureTracesResultFormatTrace      AzureTracesResultFormat = "trace"
+	AzureMonitorQueryAzureTracesResultFormatTable      AzureMonitorQueryAzureTracesResultFormat = "table"
+	AzureMonitorQueryAzureTracesResultFormatTimeSeries AzureMonitorQueryAzureTracesResultFormat = "time_series"
+	AzureMonitorQueryAzureTracesResultFormatTrace      AzureMonitorQueryAzureTracesResultFormat = "trace"
 )
 
 // Defines values for AzureQueryType.
@@ -262,7 +262,10 @@ type AzureMetricQuery struct {
 }
 
 // AzureMonitorDataQuery defines model for AzureMonitorDataQuery.
-type AzureMonitorDataQuery struct {
+type AzureMonitorDataQuery = map[string]interface{}
+
+// AzureMonitorQuery defines model for AzureMonitorQuery.
+type AzureMonitorQuery struct {
 	// Azure Monitor Logs sub-query properties.
 	AzureLogAnalytics *struct {
 		// KQL query to be executed.
@@ -275,7 +278,7 @@ type AzureMonitorDataQuery struct {
 		Resources []string `json:"resources,omitempty"`
 
 		// Specifies the format results should be returned as.
-		ResultFormat *AzureLogAnalyticsResultFormat `json:"resultFormat,omitempty"`
+		ResultFormat *AzureMonitorQueryAzureLogAnalyticsResultFormat `json:"resultFormat,omitempty"`
 
 		// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
 		Workspace *string `json:"workspace,omitempty"`
@@ -391,7 +394,7 @@ type AzureMonitorDataQuery struct {
 		Resources []string `json:"resources,omitempty"`
 
 		// Specifies the format results should be returned as.
-		ResultFormat *AzureTracesResultFormat `json:"resultFormat,omitempty"`
+		ResultFormat *AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat,omitempty"`
 
 		// Types of events to filter by.
 		TraceTypes []string `json:"traceTypes,omitempty"`
@@ -404,7 +407,7 @@ type AzureMonitorDataQuery struct {
 	Datasource *interface{} `json:"datasource,omitempty"`
 
 	// @deprecated Legacy template variable support.
-	GrafanaTemplateVariableFn *GrafanaTemplateVariableFn `json:"grafanaTemplateVariableFn,omitempty"`
+	GrafanaTemplateVariableFn *AzureMonitorQueryGrafanaTemplateVariableFn `json:"grafanaTemplateVariableFn,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -419,7 +422,10 @@ type AzureMonitorDataQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId    string  `json:"refId"`
+	RefId string `json:"refId"`
+
+	// Azure Monitor query type.
+	// queryType: #AzureQueryType
 	Region   *string `json:"region,omitempty"`
 	Resource *string `json:"resource,omitempty"`
 
@@ -434,13 +440,13 @@ type AzureMonitorDataQuery struct {
 }
 
 // Specifies the format results should be returned as.
-type AzureLogAnalyticsResultFormat string
+type AzureMonitorQueryAzureLogAnalyticsResultFormat string
 
 // Specifies the format results should be returned as.
-type AzureTracesResultFormat string
+type AzureMonitorQueryAzureTracesResultFormat string
 
 // @deprecated Legacy template variable support.
-type GrafanaTemplateVariableFn struct {
+type AzureMonitorQueryGrafanaTemplateVariableFn struct {
 	Kind                 *interface{}           `json:"kind,omitempty"`
 	MetricName           *string                `json:"metricName,omitempty"`
 	MetricNamespace      *string                `json:"metricNamespace,omitempty"`

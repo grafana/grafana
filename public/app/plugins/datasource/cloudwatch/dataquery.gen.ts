@@ -277,6 +277,10 @@ export interface LogGroup {
 /**
  * Shape of a CloudWatch Annotation query
  */
+/**
+ * TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
+ * #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
+ */
 export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
   /**
    * Use this parameter to filter the results of the operation to only those alarms
