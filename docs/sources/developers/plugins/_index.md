@@ -12,7 +12,7 @@ You can extend Grafana's built-in capabilities with plugins. Plugins enable Graf
 
 You can create plugins for private use or contribute them to the open source community by publishing to the [Grafana plugin catalog](https://grafana.com/grafana/plugins/). This catalog has hundreds of other community and commercial plugins.
 
-If you are a Grafana plugin developer or want to become one, this documentation is for you. Use it to get productive quickly, follow along with step-by-step tutorials, or you can refer back to it as you develop.
+If you are a Grafana plugin developer or want to become one, this plugin developer's guide contains the tutorials and reference materials to help you get started. 
 
 ## Plugin basics
 
