@@ -61,6 +61,10 @@ load(
     "test_backend",
     "test_backend_enterprise",
 )
+load(
+    "scripts/drone/pipelines/windows.star",
+    "windows_test_backend",
+)
 load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
@@ -202,7 +206,8 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -222,7 +227,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         depends_on = [
             "{}-oss-build-e2e-publish".format(ver_mode),
             "{}-oss-test-frontend".format(ver_mode),
-            "{}-oss-test-backend".format(ver_mode),
+            "{}-oss-test-backend-windows".format(ver_mode),
         ],
         environment = environment,
     )
@@ -239,6 +244,8 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         ),
         test_frontend(trigger, ver_mode),
         test_backend(trigger, ver_mode),
+        windows_test_backend(trigger, "oss", ver_mode),
+        windows_test_backend(trigger, "enterprise", ver_mode),
     ]
 
     if ver_mode not in ("release"):
@@ -355,7 +362,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -738,7 +746,8 @@ def integration_test_pipelines():
     volumes = integration_test_services_volumes()
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]

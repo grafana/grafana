@@ -71,7 +71,6 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *contextmodel
 		Id:         "plugin-page-" + plugin.ID,
 		Img:        plugin.Info.Logos.Small,
 		SubTitle:   plugin.Info.Description,
-		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
 		IsSection:  true,
 		PluginID:   plugin.ID,
@@ -201,17 +200,15 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				SubTitle:   "App plugins that extend the Grafana experience",
 				Id:         navtree.NavIDApps,
 				Children:   []*navtree.NavLink{appLink},
-				Section:    navtree.NavSectionCore,
 				SortWeight: navtree.WeightApps,
 				Url:        s.cfg.AppSubURL + "/apps",
 			})
 		case navtree.NavIDMonitoring:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Monitoring",
+				Text:       "Observability",
 				Id:         navtree.NavIDMonitoring,
-				SubTitle:   "Monitoring and infrastructure apps",
+				SubTitle:   "Observability and infrastructure apps",
 				Icon:       "heart-rate",
-				Section:    navtree.NavSectionCore,
 				SortWeight: navtree.WeightMonitoring,
 				Children:   []*navtree.NavLink{appLink},
 				Url:        s.cfg.AppSubURL + "/monitoring",
@@ -228,7 +225,6 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Id:         navtree.NavIDAlertsAndIncidents,
 				SubTitle:   "Alerting and incident management apps",
 				Icon:       "bell",
-				Section:    navtree.NavSectionCore,
 				SortWeight: navtree.WeightAlertsAndIncidents,
 				Children:   alertsAndIncidentsChildren,
 				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
@@ -260,6 +256,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Synthetics"},
+		"grafana-kowalski-app":             {SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Frontend"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
@@ -287,7 +284,16 @@ func (s *ServiceImpl) readNavigationSettings() {
 			}
 		}
 
-		s.navigationAppConfig[pluginId] = *appCfg
+		// Only apply the new values, don't completely overwrite the entry if it exists
+		if entry, ok := s.navigationAppConfig[pluginId]; ok {
+			entry.SectionID = appCfg.SectionID
+			if appCfg.SortWeight != 0 {
+				entry.SortWeight = appCfg.SortWeight
+			}
+			s.navigationAppConfig[pluginId] = entry
+		} else {
+			s.navigationAppConfig[pluginId] = *appCfg
+		}
 	}
 
 	for _, key := range appStandalonePages.Keys() {

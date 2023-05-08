@@ -36,7 +36,7 @@ func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRe
 
 	if !accesscontrol.IsDisabled(cfg) {
 		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
+		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 			return nil, err
 		}
 	}

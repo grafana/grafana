@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dataplane/examples"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -49,6 +50,8 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		dataService:       me,
 		dataSourceService: &datafakes.FakeDataSourceService{},
 		features:          &featuremgmt.FeatureManager{},
+		tracer:            tracing.InitializeTracerForTest(),
+		metrics:           newMetrics(nil),
 	}
 	queries := []Query{{
 		RefID: "A",

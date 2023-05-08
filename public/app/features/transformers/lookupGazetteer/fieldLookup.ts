@@ -65,7 +65,7 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matc
           const found = gaz.find(values[v]);
           if (found?.index != null) {
             for (let i = 0; i < src.length; i++) {
-              sub[i][v] = src[i].values.get(found.index);
+              sub[i][v] = src[i].values[found.index];
             }
           }
         }

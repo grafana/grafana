@@ -25,9 +25,8 @@ import {
   GraphSeriesValue,
 } from '../types/index';
 
-import { ArrayDataFrame } from './ArrayDataFrame';
+import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
-import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -36,7 +35,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: [] as any[],
+      values: [] as unknown[],
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -261,7 +260,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
+    const v = field.values[i];
     if (v != null) {
       return guessFieldTypeFromValue(v);
     }
@@ -315,7 +314,7 @@ export function toDataFrame(data: any): DataFrame {
     }
 
     // This will convert the array values into Vectors
-    return new MutableDataFrame(data as DataFrameDTO);
+    return createDataFrame(data as DataFrameDTO);
   }
 
   // Handle legacy docs/json type
@@ -339,7 +338,7 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (Array.isArray(data)) {
-    return new ArrayDataFrame(data);
+    return arrayToDataFrame(data);
   }
 
   console.warn('Can not convert', data);
@@ -350,7 +349,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   const { fields } = frame;
 
   const rowCount = frame.length;
-  const rows: any[][] = [];
+  const rows: unknown[][] = [];
 
   if (fields.length === 2) {
     const { timeField, timeIndex } = getTimeField(frame);
@@ -362,8 +361,8 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
       // Make sure it is [value,time]
       for (let i = 0; i < rowCount; i++) {
         rows.push([
-          valueField.values.get(i), // value
-          timeField.values.get(i), // time
+          valueField.values[i], // value
+          timeField.values[i], // time
         ]);
       }
 
@@ -379,9 +378,9 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   for (let i = 0; i < rowCount; i++) {
-    const row: any[] = [];
+    const row: unknown[] = [];
     for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values.get(i));
+      row.push(fields[j].values[i]);
     }
     rows.push(row);
   }
@@ -460,10 +459,10 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
 /**
  * Wrapper to get an array from each field value
  */
-export function getDataFrameRow(data: DataFrame, row: number): any[] {
-  const values: any[] = [];
+export function getDataFrameRow(data: DataFrame, row: number): unknown[] {
+  const values: unknown[] = [];
   for (const field of data.fields) {
-    values.push(field.values.get(row));
+    values.push(field.values[row]);
   }
   return values;
 }
@@ -565,5 +564,37 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
     series: processedDataFrames,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
+}
+
+export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
+  fields: Array<Partial<Field>>;
+}
+
+export function createDataFrame(input: PartialDataFrame): DataFrame {
+  let length = 0;
+  const fields = input.fields.map((p, idx) => {
+    const { state, ...field } = p;
+    if (!field.name) {
+      field.name = `Field ${idx + 1}`;
+    }
+    if (!field.config) {
+      field.config = {};
+    }
+    if (!field.values) {
+      field.values = new Array(length);
+    } else if (field.values.length > length) {
+      length = field.values.length;
+    }
+    if (!field.type) {
+      field.type = guessFieldTypeForField(field as Field) ?? FieldType.other;
+    }
+    return field as Field;
+  });
+
+  return {
+    ...input,
+    fields,
+    length,
   };
 }

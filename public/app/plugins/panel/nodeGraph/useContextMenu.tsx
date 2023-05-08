@@ -177,7 +177,7 @@ function FieldRow({ field, index }: { field: Field; index: number }) {
   return (
     <HeaderRow
       label={field.config?.displayName || field.name}
-      value={statToString(field.config, field.values.get(index) || '')}
+      value={statToString(field.config, field.values[index] || '')}
     />
   );
 }
@@ -200,7 +200,7 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
   if (nodes) {
     const fields = getNodeFields(nodes);
     for (const f of [fields.title, fields.subTitle, fields.mainStat, fields.secondaryStat, ...fields.details]) {
-      if (f && f.values.get(node.dataFrameRowIndex)) {
+      if (f && f.values[node.dataFrameRowIndex]) {
         rows.push(<FieldRow field={f} index={node.dataFrameRowIndex} />);
       }
     }
@@ -227,8 +227,8 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
 function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
-  const valueSource = fields.source?.values.get(index) || '';
-  const valueTarget = fields.target?.values.get(index) || '';
+  const valueSource = fields.source?.values[index] || '';
+  const valueTarget = fields.target?.values[index] || '';
 
   const rows = [];
   if (valueSource && valueTarget) {
@@ -236,7 +236,7 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   }
 
   for (const f of [fields.mainStat, fields.secondaryStat, ...fields.details]) {
-    if (f && f.values.get(index)) {
+    if (f && f.values[index]) {
       rows.push(<FieldRow field={f} index={index} />);
     }
   }
