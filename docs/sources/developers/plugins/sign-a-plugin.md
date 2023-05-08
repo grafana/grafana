@@ -113,7 +113,7 @@ T6scfmuhWC/TOcm83EVoCzIV3R5dOTKHqkjIUg==
 
 ### Why do I get a "Modified signature" error?
 
-Because of an issue when signing the plugin on Windows, in some cases an invalid MANIFEST.txt is generated. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/` in the MANIFEST.txt file. You need to do this every time you sign your plugin.
+In some cases an invalid `MANIFEST.txt` is generated because of an issue when signing the plugin on Windows. You can fix this by replacing all double backslashes, `\\`, with a forward slash, `/`, in the `MANIFEST.txt` file. You need to do this every time you sign your plugin.
 
 ### Why do I get a "Field is required: `rootUrls`" error for my public plugin?
 
