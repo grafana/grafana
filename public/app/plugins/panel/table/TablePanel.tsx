@@ -41,7 +41,6 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <Table
       height={tableHeight}
-      // This calculation is to accommodate the optionally rendered Row Numbers Column
       width={width}
       data={main}
       noHeader={!options.showHeader}
