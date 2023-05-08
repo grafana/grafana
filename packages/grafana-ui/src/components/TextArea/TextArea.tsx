@@ -9,14 +9,18 @@ import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 export interface Props extends Omit<HTMLProps<HTMLTextAreaElement>, 'size'> {
   /** Show an invalid state around the input */
   invalid?: boolean;
+  //** Manage the loading state */
+  loading?: boolean;
 }
 
-export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>(({ invalid, className, ...props }, ref) => {
-  const theme = useTheme2();
-  const styles = getTextAreaStyle(theme, invalid);
+export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>(
+  ({ invalid, loading, className, ...props }, ref) => {
+    const theme = useTheme2();
+    const styles = getTextAreaStyle(theme, invalid);
 
-  return <textarea {...props} className={cx(styles.textarea, className)} ref={ref} />;
-});
+    return <textarea {...props} className={cx(styles.textarea, className)} ref={ref} />;
+  }
+);
 
 const getTextAreaStyle = stylesFactory((theme: GrafanaTheme2, invalid = false) => {
   return {
