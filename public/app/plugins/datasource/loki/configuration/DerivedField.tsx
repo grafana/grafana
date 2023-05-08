@@ -4,11 +4,9 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, Field, Icon, Input, Label, LegacyForms, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Switch } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
-
-const { Switch } = LegacyForms;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
@@ -30,6 +28,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   urlDisplayLabelField: css`
     flex: 1;
   `,
+  internalLink: css`
+    margin-right: ${theme.spacing(1)};
+  `,
+  dataSource: css``,
 });
 
 type Props = {
@@ -123,32 +125,35 @@ export const DerivedField = (props: Props) => {
         </Field>
       </div>
 
-      <div className={styles.row}>
-        <Switch
-          label="Internal link"
-          checked={showInternalLink}
-          onChange={() => {
-            if (showInternalLink) {
-              onChange({
-                ...value,
-                datasourceUid: undefined,
-              });
-            }
-            setShowInternalLink(!showInternalLink);
-          }}
-        />
+      <div className="gf-form">
+        <Field label="Internal link" className={styles.internalLink}>
+          <Switch
+            checked={showInternalLink}
+            onChange={() => {
+              if (showInternalLink) {
+                onChange({
+                  ...value,
+                  datasourceUid: undefined,
+                });
+              }
+              setShowInternalLink(!showInternalLink);
+            }}
+          />
+        </Field>
 
         {showInternalLink && (
-          <DataSourcePicker
-            tracing={true}
-            onChange={(ds) =>
-              onChange({
-                ...value,
-                datasourceUid: ds.uid,
-              })
-            }
-            current={value.datasourceUid}
-          />
+          <Field label="" className={styles.dataSource}>
+            <DataSourcePicker
+              tracing={true}
+              onChange={(ds) =>
+                onChange({
+                  ...value,
+                  datasourceUid: ds.uid,
+                })
+              }
+              current={value.datasourceUid}
+            />
+          </Field>
         )}
       </div>
     </div>
