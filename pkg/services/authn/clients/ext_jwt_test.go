@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -114,66 +113,141 @@ func TestExtendedJWTTest(t *testing.T) {
 }
 
 func TestExtendedJWTAuthenticate(t *testing.T) {
-	expectedIdentity := &authn.Identity{
-		OrgID:          1,
-		OrgCount:       0,
-		OrgName:        "",
-		OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-		ID:             "user:2",
-		Login:          "johndoe",
-		Name:           "John Doe",
-		Email:          "johndoe@grafana.com",
-		IsGrafanaAdmin: boolPtr(false),
-		AuthModule:     "",
-		AuthID:         "",
-		IsDisabled:     false,
-		HelpFlags1:     0,
-		Permissions:    map[int64]map[string][]string{},
-		ClientParams: authn.ClientParams{
-			SyncUser:            false,
-			AllowSignUp:         false,
-			FetchSyncedUser:     false,
-			EnableDisabledUsers: false,
-			SyncOrgRoles:        false,
-			SyncTeams:           false,
-			SyncPermissions:     false,
-			LookUpParams: login.UserLookupParams{
-				UserID: nil,
-				Email:  nil,
-				Login:  nil,
+	type testCase struct {
+		name         string
+		payload      rfc9068Payload
+		want         *authn.Identity
+		userSvcSetup func(userSvc *usertest.FakeUserService)
+		wantErr      bool
+	}
+	testCases := []testCase{
+		{
+			name:    "successful authentication",
+			payload: validPayload,
+			userSvcSetup: func(userSvc *usertest.FakeUserService) {
+				userSvc.ExpectedSignedInUser = &user.SignedInUser{
+					UserID:  2,
+					OrgID:   1,
+					OrgRole: roletype.RoleAdmin,
+					Name:    "John Doe",
+					Email:   "johndoe@grafana.com",
+					Login:   "johndoe",
+				}
 			},
+			want: &authn.Identity{
+				OrgID:          1,
+				OrgCount:       0,
+				OrgName:        "",
+				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+				ID:             "user:2",
+				Login:          "johndoe",
+				Name:           "John Doe",
+				Email:          "johndoe@grafana.com",
+				IsGrafanaAdmin: boolPtr(false),
+				AuthModule:     "",
+				AuthID:         "",
+				IsDisabled:     false,
+				HelpFlags1:     0,
+				Permissions:    map[int64]map[string][]string{},
+				ClientParams: authn.ClientParams{
+					SyncUser:            false,
+					AllowSignUp:         false,
+					FetchSyncedUser:     false,
+					EnableDisabledUsers: false,
+					SyncOrgRoles:        false,
+					SyncTeams:           false,
+					SyncPermissions:     false,
+					LookUpParams: login.UserLookupParams{
+						UserID: nil,
+						Email:  nil,
+						Login:  nil,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error when the user cannot be parsed from the Subject claim",
+			payload: rfc9068Payload{
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				ClientID: "grafana",
+				Scopes:   []string{"profile", "groups"},
+				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return error when the user cannot be found",
+			payload: rfc9068Payload{
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:id:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				ClientID: "grafana",
+				Scopes:   []string{"profile", "groups"},
+				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			want: nil,
+			userSvcSetup: func(userSvc *usertest.FakeUserService) {
+				userSvc.ExpectedError = user.ErrUserNotFound
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when the user cannot be found",
+			payload: rfc9068Payload{
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:id:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				ClientID: "grafana",
+				Scopes:   []string{"profile", "groups"},
+				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			want: nil,
+			userSvcSetup: func(userSvc *usertest.FakeUserService) {
+				userSvc.ExpectedError = user.ErrUserNotFound
+			},
+			wantErr: true,
 		},
 	}
 
-	userSvc := &usertest.FakeUserService{
-		ExpectedSignedInUser: &user.SignedInUser{
-			UserID:  2,
-			OrgID:   1,
-			OrgRole: roletype.RoleAdmin,
-			Name:    "John Doe",
-			Email:   "johndoe@grafana.com",
-			Login:   "johndoe",
-		},
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			userSvc := &usertest.FakeUserService{}
+			extJwtClient := setupTestCtx(t, userSvc, nil)
+			if tc.userSvcSetup != nil {
+				tc.userSvcSetup(userSvc)
+			}
+
+			validHTTPReq := &http.Request{
+				Header: map[string][]string{
+					"Authorization": {generateToken(tc.payload, pk)},
+				},
+			}
+
+			mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
+
+			id, err := extJwtClient.Authenticate(context.Background(), &authn.Request{
+				OrgID:       1,
+				HTTPRequest: validHTTPReq,
+				Resp:        nil,
+			})
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
+			}
+		})
 	}
-
-	extJwtClient := setupTestCtx(t, userSvc, nil)
-
-	validHTTPReq := &http.Request{
-		Header: map[string][]string{
-			"Authorization": {generateToken(validPayload, pk)},
-		},
-	}
-
-	mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
-
-	id, err := extJwtClient.Authenticate(context.Background(), &authn.Request{
-		OrgID:       1,
-		HTTPRequest: validHTTPReq,
-		Resp:        nil,
-	})
-	require.NoError(t, err)
-
-	assert.EqualValues(t, expectedIdentity, id, fmt.Sprintf("%+v", id))
 }
 
 // https://datatracker.ietf.org/doc/html/rfc9068#name-data-structure
@@ -182,15 +256,6 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		name    string
 		payload rfc9068Payload
 	}
-
-	// Issuer:   "http://localhost:3000",
-	// 			Subject:  "user:id:2",
-	// 			Audience: jwt.Audience{"http://localhost:3000"},
-	// 			ID:       "1234567890",
-	// 			ClientID: "grafana",
-	// 			Scopes:   []string{"profile", "groups"},
-	// 			Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
-	// 			IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 
 	testCases := []testCase{
 		{
@@ -324,7 +389,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tokenToTest := generateToken(tc.payload, pk)
-			_, err := extJwtClient.VerifyRFC9068Token(context.Background(), tokenToTest)
+			_, err := extJwtClient.verifyRFC9068Token(context.Background(), tokenToTest)
 			require.Error(t, err)
 		})
 	}
@@ -342,7 +407,7 @@ func setupTestCtx(t *testing.T, userSvc user.Service, cfg *setting.Cfg) *Extende
 	signingKeysSvc := &signingkeystest.FakeSigningKeysService{}
 	signingKeysSvc.ExpectedServerPublicKey = &pk.PublicKey
 
-	extJwtClient := ProvideExtendedJWT(userSvc, cfg, featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth), signingKeysSvc)
+	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc)
 	return extJwtClient
 }
 

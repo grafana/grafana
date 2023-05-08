@@ -13,19 +13,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var _ authn.Client = new(ExtendedJWT)
 
 var (
-	ErrInvalidToken = errutil.NewBase(errutil.StatusUnauthorized,
-		"invalid_token", errutil.WithPublicMessage("Failed to verify JWT"))
-
 	timeNow = time.Now
 )
 
@@ -35,11 +30,10 @@ const (
 	rfc9068MediaType      = "application/at+jwt"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, features *featuremgmt.FeatureManager, signingKeys signingkeys.Service) *ExtendedJWT {
+func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
 	return &ExtendedJWT{
 		cfg:         cfg,
-		features:    features,
-		log:         log.New(authn.ClientJWT),
+		log:         log.New(authn.ClientExtendedJWT),
 		userService: userService,
 		signingKeys: signingKeys,
 	}
@@ -47,7 +41,6 @@ func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, features *fe
 
 type ExtendedJWT struct {
 	cfg         *setting.Cfg
-	features    *featuremgmt.FeatureManager
 	log         log.Logger
 	userService user.Service
 	signingKeys signingkeys.Service
@@ -56,22 +49,23 @@ type ExtendedJWT struct {
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	jwtToken := s.retrieveToken(r.HTTPRequest)
 
-	claims, err := s.VerifyRFC9068Token(ctx, jwtToken)
+	claims, err := s.verifyRFC9068Token(ctx, jwtToken)
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to verify JWT", "error", err)
-		return nil, ErrInvalidToken.Errorf("failed to verify JWT: %w", err)
+		s.log.Error("failed to verify JWT", "error", err)
+		return nil, errJWTInvalid.Errorf("failed to verify JWT: %w", err)
 	}
 
 	// user:id:18
 	userID, err := strconv.ParseInt(strings.TrimPrefix(claims["sub"].(string), fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
-		s.log.FromContext(ctx).Debug("failed to parse sub", "error", err)
+		s.log.Error("failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("failed to parse sub: %w", err)
 	}
 
 	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: r.OrgID, UserID: userID})
 	if err != nil {
-		return nil, err
+		s.log.Error("Failed to get user", "error", err)
+		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
 	}
 
 	if signedInUser.Permissions == nil {
@@ -79,12 +73,43 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	}
 
 	if claims["entitlements"] == nil {
-		s.log.FromContext(ctx).Info("missing entitlements claim")
+		s.log.Debug("missing entitlements claim")
 	} else {
 		signedInUser.Permissions[1] = s.parseEntitlements(claims["entitlements"].(map[string]interface{}))
 	}
 
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
+}
+
+func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
+	if !s.cfg.ExtendedJWTAuthEnabled {
+		return false
+	}
+
+	rawToken := s.retrieveToken(r.HTTPRequest)
+	if rawToken == "" {
+		return false
+	}
+
+	parsedToken, err := jwt.ParseSigned(rawToken)
+	if err != nil {
+		return false
+	}
+
+	var claims jwt.Claims
+	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return false
+	}
+
+	return claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
+}
+
+func (s *ExtendedJWT) Name() string {
+	return authn.ClientExtendedJWT
+}
+
+func (c *ExtendedJWT) Priority() uint {
+	return 15
 }
 
 func (s *ExtendedJWT) parseEntitlements(entitlements map[string]interface{}) map[string][]string {
@@ -115,31 +140,8 @@ func (s *ExtendedJWT) retrieveToken(httpRequest *http.Request) string {
 	return strings.TrimPrefix(jwtToken, "Bearer ")
 }
 
-func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.ExtendedJWTAuthEnabled || !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		return false
-	}
-
-	rawToken := s.retrieveToken(r.HTTPRequest)
-	if rawToken == "" {
-		return false
-	}
-
-	parsedToken, err := jwt.ParseSigned(rawToken)
-	if err != nil {
-		return false
-	}
-
-	var claims jwt.Claims
-	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return false
-	}
-
-	return claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
-}
-
-// VerifyRFC9068Token verifies the token against the RFC 9068 specification.
-func (s *ExtendedJWT) VerifyRFC9068Token(ctx context.Context, rawToken string) (map[string]interface{}, error) {
+// verifyRFC9068Token verifies the token against the RFC 9068 specification.
+func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (map[string]interface{}, error) {
 	parsedToken, err := jwt.ParseSigned(rawToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
@@ -211,24 +213,15 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims map[stri
 		return fmt.Errorf("missing 'client_id' claim")
 	}
 
-	// clientId
 	_, ok = clientIdClaim.(string)
 	if !ok {
 		return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
 	}
 
-	// TODO: Add an interface for GetExternalService to the oauth service
+	// TODO: Implement the validation for client_id when the OAuth server is ready.
 	// if _, err := s.oauthService.GetExternalService(ctx, clientId); err != nil {
 	// 	return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
 	// }
 
 	return nil
-}
-
-func (s *ExtendedJWT) Name() string {
-	return "extended_jwt"
-}
-
-func (c *ExtendedJWT) Priority() uint {
-	return 15
 }
