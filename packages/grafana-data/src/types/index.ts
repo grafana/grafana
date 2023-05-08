@@ -61,3 +61,4 @@ export {
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
 } from './pluginExtensions';
+export * from './transformerPlugin'

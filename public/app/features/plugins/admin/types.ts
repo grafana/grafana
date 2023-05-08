@@ -30,6 +30,7 @@ export enum PluginIconName {
   panel = 'credit-card',
   renderer = 'capture',
   secretsmanager = 'key-skeleton-alt',
+  transformer  = 'process'
 }
 
 export interface CatalogPlugin extends WithAccessControlMetadata {

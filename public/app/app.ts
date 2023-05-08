@@ -77,7 +77,7 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
+import { preloadPlugins, loadTransformerPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -189,6 +189,10 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       const preloadResults = await preloadPlugins(config.apps);
+
+      // Register all transformation from Transformer plugins
+      await loadTransformerPlugins(config.transformers, standardTransformersRegistry )
+
 
       // Create extension registry out of the preloaded plugins
       const pluginExtensionGetter: GetPluginExtensions = (options) =>

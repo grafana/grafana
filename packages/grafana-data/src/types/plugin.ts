@@ -18,6 +18,7 @@ export enum PluginType {
   app = 'app',
   renderer = 'renderer',
   secretsmanager = 'secretsmanager',
+  transformer = 'transformer',
 }
 
 /** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */

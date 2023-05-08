@@ -260,6 +260,15 @@ type AppDTO struct {
 	Preload bool   `json:"preload"`
 }
 
+type TransformerDTO struct {
+	ID           string `json:"id"`
+	Path         string `json:"path"`
+	Version      string `json:"version"`
+	Info         Info   `json:"info"`
+	ReleaseState string `json:"state"`
+	Module       string `json:"module"`
+}
+
 const (
 	signatureMissing  ErrorCode = "signatureMissing"
 	signatureModified ErrorCode = "signatureModified"

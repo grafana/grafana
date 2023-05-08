@@ -126,6 +126,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.plugins.apps.count"] = s.appCount(ctx)
 	m["stats.plugins.panels.count"] = s.panelCount(ctx)
 	m["stats.plugins.datasources.count"] = s.dataSourceCount(ctx)
+	m["stats.plugins.transformer.count"] = s.transformerCount(ctx)
 	m["stats.alerts.count"] = statsResult.Alerts
 	m["stats.active_users.count"] = statsResult.ActiveUsers
 	m["stats.active_admins.count"] = statsResult.ActiveAdmins
@@ -347,4 +348,8 @@ func (s *Service) panelCount(ctx context.Context) int {
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.DataSource))
+}
+
+func (s *Service) transformerCount(ctx context.Context) int {
+	return len(s.plugins.Plugins(ctx, plugins.Transformer))
 }

@@ -44,6 +44,14 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		)
 	}
 
+	transformers := make(map[string]*plugins.TransformerDTO, 0)
+	for _, ap := range availablePlugins[plugins.Transformer] {
+		transformers[ap.Plugin.ID] = newTransformerDTO(
+			ap.Plugin,
+			ap.Settings,
+		)
+	}
+
 	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
@@ -98,6 +106,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		MinRefreshInterval:                  setting.MinRefreshInterval,
 		Panels:                              panels,
 		Apps:                                apps,
+		Transformers:                        transformers,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
@@ -417,6 +426,19 @@ func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugi
 	return app
 }
 
+func newTransformerDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugins.TransformerDTO {
+	transformer := &plugins.TransformerDTO{
+		ID:           plugin.ID,
+		Path:         plugin.Module,
+		Version:      plugin.Info.Version,
+		Info:         plugin.Info,
+		ReleaseState: string(plugin.State),
+		Module:       plugin.Module,
+	}
+
+	return transformer
+}
+
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
@@ -516,6 +538,18 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 		}
 	}
 	ap[plugins.Panel] = panels
+
+	transformers := make(map[string]*availablePluginDTO)
+	for _, p := range hs.pluginStore.Plugins(ctx, plugins.Transformer) {
+		if s, exists := pluginSettingMap[p.ID]; exists {
+			transformers[p.ID] = &availablePluginDTO{
+				Plugin:   p,
+				Settings: *s,
+			}
+		}
+	}
+
+	ap[plugins.Transformer] = transformers
 
 	return ap, nil
 }

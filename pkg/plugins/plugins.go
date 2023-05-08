@@ -399,6 +399,10 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
 }
 
+func (p *Plugin) IsTransformer() bool {
+	return p.Type == Transformer
+}
+
 func (p *Plugin) IsRenderer() bool {
 	return p.Type == Renderer
 }
@@ -441,6 +445,7 @@ var PluginTypes = []Type{
 	App,
 	Renderer,
 	SecretsManager,
+	Transformer,
 }
 
 type Type string
@@ -451,11 +456,12 @@ const (
 	App            Type = "app"
 	Renderer       Type = "renderer"
 	SecretsManager Type = "secretsmanager"
+	Transformer    Type = "transformer"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case DataSource, Panel, App, Renderer, SecretsManager:
+	case DataSource, Panel, App, Renderer, SecretsManager, Transformer:
 		return true
 	}
 	return false

@@ -1,4 +1,10 @@
-import type { PluginExtensionLinkConfig } from '@grafana/data';
+import type {
+  PluginExtensionLinkConfig,
+  TransformerPlugin,
+  Registry,
+  TransformerRegistryItem,
+  TransformerPluginMeta
+} from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 
 import * as pluginLoader from './plugin_loader';
@@ -23,5 +29,25 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
     return { pluginId, extensionConfigs: [], error };
+  }
+}
+
+export async function loadTransformerPlugins(transformerPlugins: Record<string, TransformerPluginMeta>, transformRegistry: Registry<TransformerRegistryItem<any>>){
+  const pluginsToPreload = Object.values(transformerPlugins);
+  return Promise.all(pluginsToPreload.map(loadTransformerPlugin)).then(values => values.forEach(v => v.transformers.forEach(t => transformRegistry.register(t))));
+}
+
+async function loadTransformerPlugin(config: TransformerPluginMeta): Promise<TransformerPlugin> {
+  const { module, info } = config;
+  try {
+    return await pluginLoader.importPluginModule(module, info.version).then((pluginExports) => {
+      const plugin = pluginExports.plugin as TransformerPlugin;
+      plugin.meta = config;
+      console.log(plugin)
+      return plugin ;
+    });
+  } catch (error) {
+    console.error(`[Plugins] Failed to preload plugin: ${module} (version: ${info.version})`, error);
+    throw error;
   }
 }

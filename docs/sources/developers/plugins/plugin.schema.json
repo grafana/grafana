@@ -10,12 +10,12 @@
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin `id` has to follow the naming conventions.",
-      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager|transformer)$"
     },
     "type": {
       "type": "string",
       "description": "Plugin type.",
-      "enum": ["app", "datasource", "panel", "renderer", "secretsmanager"]
+      "enum": ["app", "datasource", "panel", "renderer", "secretsmanager", "transformer"]
     },
     "info": {
       "type": "object",

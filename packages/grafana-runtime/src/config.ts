@@ -17,6 +17,7 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
+  TransformerPluginMeta,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -37,6 +38,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   apps: Record<string, AppPluginConfig> = {};
+  transformers: { [key: string]: TransformerPluginMeta } = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
@@ -171,6 +173,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       datasources: {},
       windowTitlePrefix: 'Grafana - ',
       panels: {},
+      transformers: {},
       newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
