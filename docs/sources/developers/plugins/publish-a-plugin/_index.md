@@ -3,6 +3,7 @@ description: Topics related to plugin publishing
 title: Publish a plugin
 ---
 
+<<<<<<< HEAD
 # Publish a plugin
 
 This section contains topics related to publishing Grafana plugins.
