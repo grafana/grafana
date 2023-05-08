@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, AutoSizeInput, useStyles2 } from '@grafana/ui';
+import { IconButton, useStyles2, Input } from '@grafana/ui';
 
 interface Props {
   dataSource: DataSourceSettings;
@@ -60,18 +60,17 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: P
         </div>
       ) : (
         <div className={styles.datasourceNameInput}>
-          <AutoSizeInput
+          <Input
             id="edit-data-source-name"
             type="text"
-            defaultValue={name}
+            value={name}
             placeholder="Name"
-            onCommitChange={(evt: React.FormEvent<HTMLInputElement>) => handleNameChange(evt.currentTarget.value)}
-            minWidth={40}
-            maxWidth={80}
+            onChange={(evt: React.FormEvent<HTMLInputElement>) => setName(evt.currentTarget.value)}
+            onBlur={(evt: React.FormEvent<HTMLInputElement>) => handleNameChange(evt.currentTarget.value)}
             required
             data-testid={selectors.pages.DataSource.name}
             autoFocus={isNameEditable}
-          ></AutoSizeInput>
+          ></Input>
         </div>
       )}
     </div>
