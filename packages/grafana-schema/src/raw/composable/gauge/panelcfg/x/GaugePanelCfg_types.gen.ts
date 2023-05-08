@@ -5,8 +5,11 @@
 // Using jennies:
 //     TSTypesJenny
 //     LatestMajorsOrXJenny
+//     PluginEachMajorJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
+
+import * as common from '@grafana/schema';
 
 export interface PanelOptions extends common.SingleStatBaseOptions {
   showThresholdLabels: boolean;

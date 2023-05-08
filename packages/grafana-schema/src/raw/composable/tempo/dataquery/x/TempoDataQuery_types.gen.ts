@@ -5,8 +5,11 @@
 // Using jennies:
 //     TSTypesJenny
 //     LatestMajorsOrXJenny
+//     PluginEachMajorJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
+
+import * as common from '@grafana/schema';
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
@@ -56,7 +59,11 @@ export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceM
 /**
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
-export type TraceqlSearchFilterType = ('static' | 'dynamic');
+export enum TraceqlSearchScope {
+  Resource = 'resource',
+  Span = 'span',
+  Unscoped = 'unscoped',
+}
 
 export interface TraceqlFilter {
   /**
@@ -68,13 +75,13 @@ export interface TraceqlFilter {
    */
   operator?: string;
   /**
+   * The scope of the filter, can either be unscoped/all scopes, resource or span
+   */
+  scope?: TraceqlSearchScope;
+  /**
    * The tag for the search filter, for example: .http.status_code, .service.name, status
    */
   tag?: string;
-  /**
-   * The type of the filter, can either be static (pre defined in the UI) or dynamic
-   */
-  type: TraceqlSearchFilterType;
   /**
    * The value for the search filter
    */

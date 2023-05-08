@@ -11,13 +11,9 @@
 
 import * as common from '@grafana/schema';
 
-export interface PanelOptions {
-  dedupStrategy: common.LogsDedupStrategy;
-  enableLogDetails: boolean;
-  prettifyLogMessage: boolean;
-  showCommonLabels: boolean;
-  showLabels: boolean;
-  showTime: boolean;
-  sortOrder: common.LogsSortOrder;
-  wrapLogMessage: boolean;
+export interface PanelOptions extends common.OptionsWithTimezones {
+  legend: common.VizLegendOptions;
+  tooltip: common.VizTooltipOptions;
 }
+
+export interface PanelFieldConfig extends common.GraphFieldConfig {}

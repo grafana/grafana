@@ -11,13 +11,16 @@
 
 import * as common from '@grafana/schema';
 
+/**
+ * Identical to timeseries... except it does not have timezone settings
+ */
 export interface PanelOptions {
-  dedupStrategy: common.LogsDedupStrategy;
-  enableLogDetails: boolean;
-  prettifyLogMessage: boolean;
-  showCommonLabels: boolean;
-  showLabels: boolean;
-  showTime: boolean;
-  sortOrder: common.LogsSortOrder;
-  wrapLogMessage: boolean;
+  legend: common.VizLegendOptions;
+  tooltip: common.VizTooltipOptions;
+  /**
+   * Name of the x field to use (defaults to first number)
+   */
+  xField?: string;
 }
+
+export interface PanelFieldConfig extends common.GraphFieldConfig {}

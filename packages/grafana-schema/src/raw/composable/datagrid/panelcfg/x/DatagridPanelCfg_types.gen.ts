@@ -9,15 +9,10 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as common from '@grafana/schema';
-
 export interface PanelOptions {
-  dedupStrategy: common.LogsDedupStrategy;
-  enableLogDetails: boolean;
-  prettifyLogMessage: boolean;
-  showCommonLabels: boolean;
-  showLabels: boolean;
-  showTime: boolean;
-  sortOrder: common.LogsSortOrder;
-  wrapLogMessage: boolean;
+  selectedSeries: number;
 }
+
+export const defaultPanelOptions: Partial<PanelOptions> = {
+  selectedSeries: 0,
+};

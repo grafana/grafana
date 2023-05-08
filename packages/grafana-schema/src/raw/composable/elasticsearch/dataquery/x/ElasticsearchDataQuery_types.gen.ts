@@ -5,8 +5,11 @@
 // Using jennies:
 //     TSTypesJenny
 //     LatestMajorsOrXJenny
+//     PluginEachMajorJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
+
+import * as common from '@grafana/schema';
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 

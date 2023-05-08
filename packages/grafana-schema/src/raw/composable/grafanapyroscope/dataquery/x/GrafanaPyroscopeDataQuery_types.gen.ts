@@ -11,21 +11,30 @@
 
 import * as common from '@grafana/schema';
 
-export type ParcaQueryType = ('metrics' | 'profile' | 'both');
+export type PhlareQueryType = ('metrics' | 'profile' | 'both');
 
-export const defaultParcaQueryType: ParcaQueryType = 'both';
+export const defaultPhlareQueryType: PhlareQueryType = 'both';
 
-export interface ParcaDataQuery extends common.DataQuery {
+export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
+  /**
+   * Allows to group the results.
+   */
+  groupBy: Array<string>;
   /**
    * Specifies the query label selectors.
    */
   labelSelector: string;
+  /**
+   * Sets the maximum number of nodes in the flamegraph.
+   */
+  maxNodes?: number;
   /**
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
 }
 
-export const defaultParcaDataQuery: Partial<ParcaDataQuery> = {
+export const defaultGrafanaPyroscopeDataQuery: Partial<GrafanaPyroscopeDataQuery> = {
+  groupBy: [],
   labelSelector: '{}',
 };

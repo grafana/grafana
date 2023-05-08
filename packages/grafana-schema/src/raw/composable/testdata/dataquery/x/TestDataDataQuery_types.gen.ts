@@ -5,8 +5,11 @@
 // Using jennies:
 //     TSTypesJenny
 //     LatestMajorsOrXJenny
+//     PluginEachMajorJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
+
+import * as common from '@grafana/schema';
 
 export enum TestDataQueryType {
   Annotations = 'annotations',
@@ -108,7 +111,7 @@ export interface TestDataDataQuery extends common.DataQuery {
   channel?: string;
   csvContent?: string;
   csvFileName?: string;
-  csvWave?: Array<CSVWave>;
+  csvWave?: Array<CSVWave>; // TODO can we prevent partial from being generated
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
   labels?: string;
   levelColumn?: boolean;

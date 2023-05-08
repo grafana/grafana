@@ -5,8 +5,11 @@
 // Using jennies:
 //     TSTypesJenny
 //     LatestMajorsOrXJenny
+//     PluginEachMajorJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
+
+import * as ui from '@grafana/schema';
 
 export interface PanelOptions {
   /**
@@ -25,10 +28,6 @@ export interface PanelOptions {
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
-  /**
-   * Controls whether the columns should be numbered
-   */
-  showRowNums?: boolean;
   /**
    * Controls whether the header should show icons for the column types
    */
@@ -57,7 +56,6 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   },
   frameIndex: 0,
   showHeader: true,
-  showRowNums: false,
   showTypeIcons: false,
   sortBy: [],
 };
