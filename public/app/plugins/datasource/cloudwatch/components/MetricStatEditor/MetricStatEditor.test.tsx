@@ -42,7 +42,6 @@ describe('MetricStatEditor', () => {
   describe('statistics field', () => {
     test.each(['Average', 'p23.23', 'p34', '$statistic'])('should accept valid values', async (statistic) => {
       const onChange = jest.fn();
-      props.datasource.getVariables = jest.fn().mockReturnValue(['$statistic']);
       render(<MetricStatEditor {...props} onChange={onChange} />);
 
       const statisticElement = await screen.findByLabelText('Statistic');
