@@ -1231,18 +1231,18 @@ func TestIntegrationMySQL(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		type empty struct {
+		type emptyObj struct {
 			EmptyKey string
 			EmptyVal int64
 		}
 
-		exists, err := sess.IsTableExist(empty{})
+		exists, err := sess.IsTableExist(emptyObj{})
 		require.NoError(t, err)
 		if exists {
-			err := sess.DropTable(empty{})
+			err := sess.DropTable(emptyObj{})
 			require.NoError(t, err)
 		}
-		err = sess.CreateTable(empty{})
+		err = sess.CreateTable(emptyObj{})
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
@@ -1250,7 +1250,7 @@ func TestIntegrationMySQL(t *testing.T) {
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
-							"rawSql": "SELECT empty_key, empty_val FROM empty",
+							"rawSql": "SELECT * FROM empty_obj",
 							"format": "table"
 						}`),
 						RefID: "A",
