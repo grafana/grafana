@@ -60,7 +60,7 @@ Add visualization type hints, labels, and other optional features to logs.
 
 ### Add a preferred visualization type hint to the data frame
 
-To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have to set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries/#selecting-preferred-visualisation" >}})
+To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore, set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries/#selecting-preferred-visualisation" >}})
 
 **Example:**
 
