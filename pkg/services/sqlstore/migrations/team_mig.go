@@ -29,9 +29,9 @@ func addTeamMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Update uid column values in team", NewRawSQLMigration("").
-		SQLite("UPDATE team SET uid=printf('%09d',id) WHERE uid IS NULL;").
-		Postgres("UPDATE team SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
-		Mysql("UPDATE team SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+		SQLite("UPDATE team SET uid=printf('t%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE team SET uid='t' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE team SET uid=CONCAT('t', lpad(id,9,'0')) WHERE uid IS NULL;"))
 
 	mg.AddMigration("Add unique index team_org_id_uid", NewAddIndexMigration(teamV1, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
