@@ -16,7 +16,7 @@ If you are a Grafana plugin developer or want to become one, this plugin develop
 
 ## Plugin basics
 
-These are among the types of plugins you can create:
+You can create several types of plugins, including:
 
 - **Panel plugins** - Visualize data and navigate between dashboards.
 - **Data source plugins** - Link to new databases or other sources of data.
