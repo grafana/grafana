@@ -169,7 +169,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 inputId="group"
                 key={`my_unique_select_key__${selectedGroup?.title ?? ''}`}
                 {...field}
-                invalid={Boolean(folder) && !selectedGroup.value}
+                invalid={Boolean(folder) && !selectedGroup.title}
                 loadOptions={debouncedSearch}
                 loadingMessage={'Loading groups...'}
                 defaultOptions={groupOptions}
