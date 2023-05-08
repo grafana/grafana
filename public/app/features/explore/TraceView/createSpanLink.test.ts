@@ -865,8 +865,9 @@ describe('createSpanLinkFactory', () => {
       });
       const links = createLink!(createTraceSpan());
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(decodeURIComponent(linkDef!.href)).toContain(
         `datasource":"${searchUID}","queries":[{"query":"cluster=\\"cluster1\\" AND hostname=\\"hostname1\\"","refId":""}]`
       );
@@ -878,8 +879,9 @@ describe('createSpanLinkFactory', () => {
       });
       const links = createLink!(createTraceSpan());
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toContain(
         `${encodeURIComponent('{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"}')}`
       );
@@ -901,8 +903,9 @@ describe('createSpanLinkFactory', () => {
       expect(createLink).toBeDefined();
       const links = createLink!(createTraceSpan());
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster=\\"cluster1\\" AND hostname=\\"hostname1\\"","refId":""}]}`
@@ -929,8 +932,9 @@ describe('createSpanLinkFactory', () => {
         })
       );
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(decodeURIComponent(linkDef!.href)).toBe(
         `/explore?left={"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"searchUID","queries":[{"query":"\\"7946b05c2e2e4e5a\\"","refId":""}]}`
       );
@@ -953,8 +957,9 @@ describe('createSpanLinkFactory', () => {
         })
       );
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"ip=\\"192.168.0.1\\"","refId":""}]}`
@@ -982,8 +987,9 @@ describe('createSpanLinkFactory', () => {
         })
       );
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"hostname=\\"hostname1\\" AND ip=\\"192.168.0.1\\"","refId":""}]}`
@@ -1014,8 +1020,9 @@ describe('createSpanLinkFactory', () => {
         })
       );
 
-      const linkDef = links?.logLinks?.[0];
+      const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"service=\\"serviceName\\" AND pod=\\"podName\\"","refId":""}]}`
