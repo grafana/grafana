@@ -20,6 +20,8 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 
 > **Note:** Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
 
+> **Note:** Disabling the UI does not affect any configuration settings that were previously set up through the UI. Those settings will continue to function as intended even with the UI disabled.
+
 ## Before you begin
 
 To follow this guide, you need:
