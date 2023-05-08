@@ -24,7 +24,7 @@ export interface DataFrame extends QueryResultBase {
 
 ### Data frame fields
 
-A data frame is a collection of _fields_, where each field corresponds to a column. Each field, in turn, consists of a collection of values, along with metadata, such as the data type of those values.
+A data frame is a collection of _fields_, where each field corresponds to a column. Each field, in turn, consists of a collection of values and metadata, such as the data type of those values.
 
 ```ts
 export interface Field<T = any, V = Vector<T>> {
