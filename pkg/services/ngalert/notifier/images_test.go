@@ -11,6 +11,7 @@ import (
 	alertingImages "github.com/grafana/alerting/images"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/prometheus/common/model"
@@ -19,7 +20,7 @@ import (
 
 func TestGetImage(t *testing.T) {
 	fakeImageStore := store.NewFakeImageStore(t)
-	store := newImageStore(fakeImageStore)
+	store := newImageProvider(fakeImageStore, log.NewNopLogger())
 
 	t.Run("queries by token when it gets a token", func(tt *testing.T) {
 		img := models.Image{
@@ -72,7 +73,7 @@ func TestGetImageURL(t *testing.T) {
 	)
 
 	fakeImageStore := store.NewFakeImageStore(t, &imageWithoutURL, &testImage)
-	store := newImageStore(fakeImageStore)
+	store := newImageProvider(fakeImageStore, log.NewNopLogger())
 
 	tests := []struct {
 		name   string
@@ -142,7 +143,7 @@ func TestGetRawImage(t *testing.T) {
 	)
 
 	fakeImageStore := store.NewFakeImageStore(t, &imageWithoutPath, &testImage)
-	store := newImageStore(fakeImageStore)
+	store := newImageProvider(fakeImageStore, log.NewNopLogger())
 
 	tests := []struct {
 		name        string

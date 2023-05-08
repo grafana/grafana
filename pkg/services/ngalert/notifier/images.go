@@ -3,7 +3,6 @@ package notifier
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -13,17 +12,20 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 type imageProvider struct {
-	store store.ImageStore
+	store  store.ImageStore
+	logger log.Logger
 }
 
-func newImageStore(store store.ImageStore) alertingImages.Provider {
+func newImageProvider(store store.ImageStore, logger log.Logger) alertingImages.Provider {
 	return &imageProvider{
-		store: store,
+		store:  store,
+		logger: logger,
 	}
 }
 
@@ -35,9 +37,11 @@ func (i imageProvider) GetImage(ctx context.Context, uri string) (*alertingImage
 
 	// Check whether the uri is a URL or a token to know how to query the DB.
 	if strings.HasPrefix(uri, "http") {
+		i.logger.Debug("Received an image URL in annotations")
 		image, err = i.store.GetImageByURL(ctx, uri)
 	} else {
 		token := strings.TrimPrefix(uri, "token://")
+		i.logger.Debug("Received an image token in annotations", "token", token)
 		image, err = i.store.GetImage(ctx, token)
 	}
 	if err != nil {
@@ -60,11 +64,13 @@ func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Al
 
 	// If the identifier is a URL, validate that it corresponds to a stored, non-expired image.
 	if strings.HasPrefix(uri, "http") {
+		i.logger.Debug("Received an image URL in annotations", "alert", alert)
 		exists, err := i.store.URLExists(ctx, uri)
 		if err != nil {
 			return "", err
 		}
 		if !exists {
+			i.logger.Warn("Image URL not found in database", "alert", alert)
 			return "", alertingImages.ErrImageNotFound
 		}
 		return uri, nil
@@ -72,6 +78,7 @@ func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Al
 
 	// If the identifier is a token, remove the prefix, get the image and return the URL.
 	token := strings.TrimPrefix(uri, "token://")
+	i.logger.Debug("Received an image token in annotations", "alert", alert, "token", token)
 	return i.getImageURLFromToken(ctx, token)
 }
 
@@ -80,6 +87,7 @@ func (i imageProvider) getImageURLFromToken(ctx context.Context, token string) (
 	image, err := i.store.GetImage(ctx, token)
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
+			i.logger.Warn("Image not found in database", "token", token)
 			return "", alertingImages.ErrImageNotFound
 		}
 		return "", err
@@ -100,13 +108,16 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 	// Check whether the uri is a URL or a token to know how to query the DB.
 	var image *models.Image
 	if strings.HasPrefix(uri, "http") {
+		i.logger.Debug("Received an image URL in annotations", "alert", alert)
 		image, err = i.store.GetImageByURL(ctx, uri)
 	} else {
 		token := strings.TrimPrefix(uri, "token://")
+		i.logger.Debug("Received an image token in annotations", "alert", alert, "token", token)
 		image, err = i.store.GetImage(ctx, token)
 	}
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
+			i.logger.Warn("Image not found in database", "alert", alert)
 			return nil, "", alertingImages.ErrImageNotFound
 		}
 		return nil, "", err
@@ -119,6 +130,7 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 	// Return image bytes and filename.
 	readCloser, err := openImage(image.Path)
 	if err != nil {
+		i.logger.Error("Error looking for image on disk", "path", image.Path, "error", err)
 		return nil, "", err
 	}
 	filename := filepath.Base(image.Path)
@@ -129,7 +141,7 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 func getImageURI(alert *alertingNotify.Alert) (string, error) {
 	uri, ok := alert.Annotations[alertingModels.ImageTokenAnnotation]
 	if !ok {
-		return "", fmt.Errorf("no image uri in annotations")
+		return "", alertingImages.ErrNoImageForAlert
 	}
 	return string(uri), nil
 }

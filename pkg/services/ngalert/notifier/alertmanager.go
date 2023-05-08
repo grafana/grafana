@@ -316,7 +316,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		return nil, err
 	}
 	s := &sender{am.NotificationService}
-	img := newImageStore(am.Store)
+	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
 	integrations, err := alertingNotify.BuildReceiverIntegrations(
 		receiverCfg,
 		tmpl,
