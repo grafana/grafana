@@ -2,7 +2,7 @@ package kind
 
 name:        "RoleMapping"
 maturity:    "merged"
-description: "Public dashboard configuration"
+description: "Role mappings link a given identity to a configured role"
 
 lineage: seqs: [
 	{
@@ -14,7 +14,7 @@ lineage: seqs: [
 					role: string
 					// is the identity a user or team
 					kind: "team" | "user"
-					// the team/user k8s name
+					// the team/user k8s name	
 					identity: string
 				} @cuetsy(kind="interface")
 			},

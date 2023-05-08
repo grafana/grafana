@@ -37,8 +37,8 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				#AccessRule: {
-					target: string                // dashboards, dashboards.permissions, alert.rules, ..
 					action: "*" | "none" | string // READ, WRITE, CREATE, DELETE, ...
+					target: "*" | string          // dashboards, dashboards.permissions, alert.rules, ..
 				}
 			},
 		]
