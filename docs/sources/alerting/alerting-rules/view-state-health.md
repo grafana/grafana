@@ -88,6 +88,9 @@ To enable the state history view, complete the following steps.
 
    b. Enable the three feature toggles for alert state history.
 
+**Example:**
+{{< figure src="/media/docs/alerting/state-history-config.png" max-width="750px" caption="State history configuration" >}}
+
 ### View state history
 
 To use the State history view, complete the following steps.
