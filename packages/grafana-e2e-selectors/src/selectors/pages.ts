@@ -17,7 +17,7 @@ export const Pages = {
     url: '/',
   },
   DataSource: {
-    name: 'Data source settings page name input field',
+    name: 'data-testid Data source settings page name input field',
     nameEditIcon: 'data-testid Data source settings page name edit icon button',
     delete: 'Data source settings page Delete button',
     readOnly: 'Data source settings page read only message',
