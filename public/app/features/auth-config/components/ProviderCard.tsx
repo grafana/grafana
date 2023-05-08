@@ -1,10 +1,20 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { Badge, Card, useStyles2, Icon, Tooltip } from '@grafana/ui';
-import config from 'app/core/config';
+interface AuthSaml {
+  enabled: {
+    db: string;
+    system: string;
+  };
+}
 
+interface Settings {
+  'auth.saml': AuthSaml;
+}
 import { BASE_PATH } from '../constants';
 
 export const LOGO_SIZE = '48px';
@@ -23,11 +33,15 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
   configPath = BASE_PATH + (configPath || providerId);
 
   // TODO: make this auth agnostic
-  const isEnabledInIniFile = config.samlEnabled;
+  const { loading, value: settings } = useAsync(() => getBackendSrv().get<Settings>('/api/admin/settings-verbose'), []);
+  let authSamlEnabledinFile = '';
+  if (!loading && settings) {
+    authSamlEnabledinFile = settings['auth.saml'].enabled.system;
+  }
   return (
     <Card href={configPath} className={styles.container}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
-      {isEnabledInIniFile && (
+      {!loading && authSamlEnabledinFile && (
         <>
           <span className={styles.initext}>
             <Tooltip
