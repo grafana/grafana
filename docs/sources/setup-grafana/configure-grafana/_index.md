@@ -189,6 +189,11 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 `http`,`https`,`h2` or `socket`
 
+### min_tls_version
+
+The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.
+If you do not specify a version, the system uses TLS1.2.
+
 ### http_addr
 
 The host for the server to listen on. If your machine has more than one network interface, you can use this setting to expose the Grafana service on only one network interface and not have it available on others, such as the loopback interface. An empty value is equivalent to setting the value to `0.0.0.0`, which means the Grafana service binds to all interfaces.
