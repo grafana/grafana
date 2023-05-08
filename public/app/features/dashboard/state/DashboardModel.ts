@@ -101,6 +101,7 @@ export class DashboardModel implements TimeModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
+  private timeRangeUpdatedDuringEdit = false;
 
   // ------------------
   // not persisted
@@ -110,7 +111,6 @@ export class DashboardModel implements TimeModel {
   declare meta: DashboardMeta;
   events: EventBusExtended;
   private getVariablesFromState: GetVariables;
-  private timeRangeUpdatedDuringEdit = false;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -381,6 +381,7 @@ export class DashboardModel implements TimeModel {
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
+
     if (this.panelInEdit) {
       this.timeRangeUpdatedDuringEdit = true;
     }
@@ -422,7 +423,7 @@ export class DashboardModel implements TimeModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
-    getTimeSrv().pauseAutoRefresh();
+    getTimeSrv().stopAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
     this.timeRangeUpdatedDuringEdit = false;
     return this.panelInEdit;
@@ -432,15 +433,13 @@ export class DashboardModel implements TimeModel {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
 
-    const refreshQueued = getTimeSrv().refreshQueued;
     getTimeSrv().resumeAutoRefresh();
 
     if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
-      !refreshQueued &&
-        this.startRefresh({
-          panelIds: this.panelsAffectedByVariableChange ?? [],
-          refreshAll: this.timeRangeUpdatedDuringEdit,
-        });
+      this.startRefresh({
+        panelIds: this.panelsAffectedByVariableChange ?? [],
+        refreshAll: this.timeRangeUpdatedDuringEdit,
+      });
       this.panelsAffectedByVariableChange = null;
       this.timeRangeUpdatedDuringEdit = false;
     }
