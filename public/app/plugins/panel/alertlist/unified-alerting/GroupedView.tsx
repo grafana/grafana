@@ -16,7 +16,7 @@ type Props = {
   options: UnifiedAlertListOptions;
 };
 
-const UNGROUPED_KEY = '';
+const UNGROUPED_KEY = '__ungrouped__';
 
 const GroupedModeView = ({ rules, options }: Props) => {
   const styles = useStyles2(getStyles);
@@ -67,8 +67,9 @@ const GroupedModeView = ({ rules, options }: Props) => {
           <div>
             <div className={styles.customGroupDetails}>
               <div className={styles.alertLabels}>
-                {key && parseMapKey(key).map(([key, value]) => <AlertLabel key={key} labelKey={key} value={value} />)}
-                {!key && 'No grouping'}
+                {key !== UNGROUPED_KEY &&
+                  parseMapKey(key).map(([key, value]) => <AlertLabel key={key} labelKey={key} value={value} />)}
+                {key === UNGROUPED_KEY && 'No grouping'}
               </div>
             </div>
             <AlertInstances alerts={alerts} options={options} />
