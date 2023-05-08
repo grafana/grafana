@@ -4,7 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, Field, Input, LegacyForms, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkInput, Field, Icon, Input, Label, LegacyForms, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -73,11 +73,13 @@ export const DerivedField = (props: Props) => {
         </Field>
         <Field
           className={styles.regexField}
-          label="Regex"
+          label={
+            <TooltipLabel
+              label="Regex"
+              content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
+            />
+          }
           onChange={handleChange('matcherRegex')}
-          //</div>tooltip={
-          //  'Use to parse and capture some part of the log message. You can use the captured groups in the template.'
-          //}
         >
           <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />
         </Field>
@@ -110,8 +112,12 @@ export const DerivedField = (props: Props) => {
         </Field>
         <Field
           className={styles.urlDisplayLabelField}
-          label="URL Label"
-          //tooltip={'Use to override the button label when this derived field is found in a log.'}
+          label={
+            <TooltipLabel
+              label="URL Label"
+              content="Use to override the button label when this derived field is found in a log."
+            />
+          }
         >
           <Input value={value.urlDisplayLabel} onChange={handleChange('urlDisplayLabel')} />
         </Field>
@@ -148,3 +154,12 @@ export const DerivedField = (props: Props) => {
     </div>
   );
 };
+
+const TooltipLabel = ({ content, label }: { content: string; label: string }) => (
+  <Label>
+    {label}
+    <Tooltip placement="top" content={content} theme="info">
+      <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
+    </Tooltip>
+  </Label>
+);
