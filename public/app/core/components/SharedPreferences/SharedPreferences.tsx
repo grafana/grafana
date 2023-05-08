@@ -11,7 +11,6 @@ import {
   FieldSet,
   Form,
   Label,
-  RadioButtonGroup,
   Select,
   stylesFactory,
   TimeZonePicker,
@@ -22,6 +21,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
+import { changeTheme } from 'app/core/services/theme';
 
 export interface Props {
   resourceUri: string;
@@ -69,10 +69,14 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     this.themeOptions = [
       { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
-      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
-      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
       { value: 'system', label: t('shared-preferences.theme.system-label', 'System') },
+      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
+      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
     ];
+
+    if (config.featureToggles.extraThemes) {
+      this.themeOptions.push({ value: 'mignight', label: t('shared-preferences.theme.midnight-label', 'Midnight') });
+    }
   }
 
   async componentDidMount() {
@@ -98,8 +102,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
   };
 
-  onThemeChanged = (value: string) => {
-    this.setState({ theme: value });
+  onThemeChanged = (value: SelectableValue<string>) => {
+    this.setState({ theme: value.value });
+
+    if (value.value) {
+      changeTheme(value.value, true);
+    }
   };
 
   onTimeZoneChanged = (timezone?: string) => {
@@ -142,11 +150,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           return (
             <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
               <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
-                <RadioButtonGroup
-                  options={this.themeOptions}
-                  value={currentThemeOption}
-                  onChange={this.onThemeChanged}
-                />
+                <Select options={this.themeOptions} value={currentThemeOption} onChange={this.onThemeChanged} />
               </Field>
 
               <Field

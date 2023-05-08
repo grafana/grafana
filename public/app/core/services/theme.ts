@@ -1,4 +1,4 @@
-import { createTheme } from '@grafana/data';
+import { getThemeById } from '@grafana/data/src/themes/extraThemes';
 import { ThemeChangedEvent } from '@grafana/runtime';
 
 import appEvents from '../app_events';
@@ -7,21 +7,14 @@ import { contextSrv } from '../core';
 
 import { PreferencesService } from './PreferencesService';
 
-export async function changeTheme(mode: 'dark' | 'light', runtimeOnly?: boolean) {
-  const newTheme = createTheme({
-    colors: {
-      mode: mode,
-    },
-  });
+export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
+  const newTheme = getThemeById(themeId);
+
   // Special feature toggle that impact theme/component looks
   newTheme.flags.topnav = config.featureToggles.topnav;
 
   appEvents.publish(new ThemeChangedEvent(newTheme));
   config.theme2.isDark = newTheme.isDark;
-
-  if (runtimeOnly) {
-    return;
-  }
 
   // Add css file for new theme
   const newCssLink = document.createElement('link');
@@ -33,7 +26,7 @@ export async function changeTheme(mode: 'dark' | 'light', runtimeOnly?: boolean)
     for (let i = 0; i < bodyLinks.length; i++) {
       const link = bodyLinks[i];
 
-      if (link.href && link.href.includes(`build/grafana.${!newTheme.isDark ? 'dark' : 'light'}`)) {
+      if (link.href && link.href.includes(`build/grafana.${!newTheme.colors.mode}`)) {
         // Remove existing link once the new css has loaded to avoid flickering
         // If we add new css at the same time we remove current one the page will be rendered without css
         // As the new css file is loading
@@ -41,7 +34,12 @@ export async function changeTheme(mode: 'dark' | 'light', runtimeOnly?: boolean)
       }
     }
   };
+
   document.body.appendChild(newCssLink);
+
+  if (runtimeOnly) {
+    return;
+  }
 
   if (!contextSrv.isSignedIn) {
     return;

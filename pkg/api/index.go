@@ -16,13 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	// Themes
-	lightName  = "light"
-	darkName   = "dark"
-	systemName = "system"
-)
-
 func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
 	hasEditPermissionInFoldersQuery := folder.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
 	hasEditPermissionInFoldersQueryResult, err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery)
@@ -91,6 +84,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
+	theme := pref.GetThemeByID(prefs.Theme)
+
+	themeURLParam := c.Query("theme")
+	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
+		theme = pref.GetThemeByID(themeURLParam)
+	}
+
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserID,
@@ -105,8 +105,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			Theme:                      prefs.Theme,
-			LightTheme:                 prefs.Theme == lightName,
+			Theme:                      theme.ID,
+			LightTheme:                 theme.Type == "light",
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
 			Locale:                     locale,
@@ -119,7 +119,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			},
 		},
 		Settings:                            settings,
-		Theme:                               prefs.Theme,
+		ThemeType:                           theme.Type,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
@@ -162,12 +162,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	if len(data.User.Name) == 0 {
 		data.User.Name = data.User.Login
-	}
-
-	themeURLParam := c.Query("theme")
-	if themeURLParam == lightName || themeURLParam == darkName || themeURLParam == systemName {
-		data.User.Theme = themeURLParam
-		data.Theme = themeURLParam
 	}
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
