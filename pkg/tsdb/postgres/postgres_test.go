@@ -1333,18 +1333,18 @@ func TestIntegrationPostgres(t *testing.T) {
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
-		type emptyObj struct {
+		type empty struct {
 			EmptyKey string
 			EmptyVal int64
 		}
 
-		exists, err := sess.IsTableExist(emptyObj{})
+		exists, err := sess.IsTableExist(empty{})
 		require.NoError(t, err)
 		if exists {
-			err := sess.DropTable(emptyObj{})
+			err := sess.DropTable(empty{})
 			require.NoError(t, err)
 		}
-		err = sess.CreateTable(emptyObj{})
+		err = sess.CreateTable(empty{})
 		require.NoError(t, err)
 
 		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
