@@ -5,7 +5,7 @@ import React from 'react';
 import { CreateNewButton } from './CreateNewButton';
 
 async function renderAndOpen(folderUID?: string) {
-  render(<CreateNewButton inFolder={folderUID} />);
+  render(<CreateNewButton canCreateDashboard canCreateFolder inFolder={folderUID} />);
   const newButton = screen.getByText('New');
   await userEvent.click(newButton);
 }
@@ -25,5 +25,25 @@ describe('NewActionsButton', () => {
     expect(screen.getByText('New Dashboard')).toHaveAttribute('href', '/dashboard/new');
     expect(screen.getByText('New Folder')).toHaveAttribute('href', '/dashboards/folder/new');
     expect(screen.getByText('Import')).toHaveAttribute('href', '/dashboard/import');
+  });
+
+  it('should only render dashboard items when folder creation is disabled', async () => {
+    render(<CreateNewButton canCreateDashboard canCreateFolder={false} />);
+    const newButton = screen.getByText('New');
+    await userEvent.click(newButton);
+
+    expect(screen.getByText('New Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Import')).toBeInTheDocument();
+    expect(screen.queryByText('New Folder')).not.toBeInTheDocument();
+  });
+
+  it('should only render folder item when dashboard creation is disabled', async () => {
+    render(<CreateNewButton canCreateDashboard={false} canCreateFolder />);
+    const newButton = screen.getByText('New');
+    await userEvent.click(newButton);
+
+    expect(screen.queryByText('New Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('Import')).not.toBeInTheDocument();
+    expect(screen.getByText('New Folder')).toBeInTheDocument();
   });
 });

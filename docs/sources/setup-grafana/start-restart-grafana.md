@@ -116,24 +116,32 @@ Alternatively, you can use the `docker compose restart` command to restart Grafa
 Configure your `docker-compose.yml` file. For example:
 
 ```bash
-grafana:
-  image: grafana/grafana:latest
-  ports:
-    - "3000:3000"
-  environment:
-    - TERM=linux
-    - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel,grafana-polystat-panel
+version: "3.8"
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - TERM=linux
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-polystat-panel
+    ports:
+      - '3000:3000'
+    volumes:
+      - 'grafana_storage:/var/lib/grafana'
+volumes:
+  grafana_storage: {}
 ```
 
 Start the Grafana server:
 
-`docker-compose up`
+`docker compose up -d`
 
-This starts the Grafana server along with the three plugins specified in the YAML file.
+This starts the Grafana server container in detached mode along with the two plugins specified in the YAML file.
 
 To restart the running container, use this command:
 
-`docker-compose restart grafana`
+`docker compose restart grafana`
 
 ## Windows
 

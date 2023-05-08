@@ -6109,19 +6109,6 @@
         ],
         "type": "object"
       },
-      "MigrateQueriesToQueryHistoryCommand": {
-        "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
-        "properties": {
-          "queries": {
-            "description": "Array of queries to store in query history.",
-            "items": {
-              "$ref": "#/components/schemas/QueryToMigrate"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
       "MoveFolderCommand": {
         "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
         "properties": {
@@ -7468,22 +7455,6 @@
           },
           "message": {
             "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "QueryHistoryMigrationResponse": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "starredCount": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "totalCount": {
-            "format": "int64",
-            "type": "integer"
           }
         },
         "type": "object"
@@ -19257,41 +19228,6 @@
           }
         },
         "summary": "Add query to query history.",
-        "tags": [
-          "query_history"
-        ]
-      }
-    },
-    "/query-history/migrate": {
-      "post": {
-        "description": "Adds multiple queries to query history.",
-        "operationId": "migrateQueries",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MigrateQueriesToQueryHistoryCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getQueryHistoryMigrationResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Migrate queries to query history.",
         "tags": [
           "query_history"
         ]

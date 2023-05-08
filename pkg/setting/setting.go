@@ -166,6 +166,7 @@ type Cfg struct {
 	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
+	MinTLSVersion    string
 
 	// Security settings
 	SecretKey             string
@@ -236,6 +237,7 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
+	PluginForcePublicKeyDownload     bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -361,9 +363,6 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
-
-	// Sentry config
-	Sentry Sentry
 
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
@@ -519,6 +518,12 @@ type Cfg struct {
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+
+	// DatabaseInstrumentQueries is used to decide if database queries
+	// should be instrumented with metrics, logs and traces.
+	// This needs to be on the global object since its used in the
+	// sqlstore package and HTTP middlewares.
+	DatabaseInstrumentQueries bool
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1180,7 +1185,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
-	cfg.readSentryConfig()
 	cfg.readGrafanaJavascriptAgentConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
@@ -1188,6 +1192,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.LogConfigSources()
+
+	databaseSection := iniFile.Section("database")
+	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 
 	return nil
 }
@@ -1580,7 +1587,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
@@ -1788,6 +1795,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	}
+
+	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
+	if cfg.MinTLSVersion == "TLS1.0" || cfg.MinTLSVersion == "TLS1.1" {
+		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
 	}
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")
