@@ -193,7 +193,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	rawConfig, err := json.Marshal(&cfg)
 	if err != nil {
-		return fmt.Errorf("Failed to serialize to the Alertmanager configuration: %w", err)
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}
 
 	var outerErr error
@@ -263,7 +263,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	cfg.AlertmanagerConfig.Templates = append(cfg.AlertmanagerConfig.Templates, "__default__.tmpl")
 
 	// next, we need to make sure we persist the templates to disk.
-	_, templatesChanged, err := PersistTemplates(cfg, am.Base.WorkingDirectory())
+	_, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
 	if err != nil {
 		return false, err
 	}

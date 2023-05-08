@@ -16,7 +16,7 @@ import (
 
 var cfglogger = log.New("ngalert.notifier.config")
 
-func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
+func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
 	if len(cfg.TemplateFiles) < 1 {
 		return nil, false, nil
 	}
@@ -58,7 +58,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
 	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
+		logger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
@@ -67,7 +67,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				cfglogger.Error("unable to delete template", "error", err, "file", p)
+				logger.Error("unable to delete template", "error", err, "file", p)
 			}
 		}
 	}

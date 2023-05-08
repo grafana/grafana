@@ -80,7 +80,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 }
 
 func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
-	clusterLogger := moa.logger.New("ngalert.notifier.multiorg_alertmanager")
+	clusterLogger := moa.logger.New("component", "clustering")
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby
 	// increasing the probability of success when waiting for the cluster to settle.
