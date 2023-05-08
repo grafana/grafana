@@ -2,133 +2,44 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
-import { useStyles2, MenuGroup, MenuItem, Icon, ContextMenu } from '@grafana/ui';
+import { useStyles2, MenuItem, Icon, ContextMenu } from '@grafana/ui';
 
-import { SpanLinks } from '../types/links';
+import { SpanLinkDef } from '../types/links';
 
 interface SpanLinksProps {
-  links: SpanLinks;
+  links: SpanLinkDef[];
   datasourceType: string;
 }
 
 const renderMenuItems = (
-  links: SpanLinks,
+  links: SpanLinkDef[],
   styles: ReturnType<typeof getStyles>,
   closeMenu: () => void,
   datasourceType: string
 ) => {
-  return (
-    <>
-      {!!links.logLinks?.length ? (
-        <MenuGroup label="Logs">
-          {links.logLinks.map((link, i) => (
-            <MenuItem
-              key={i}
-              label="Logs for this span"
-              onClick={
-                link.onClick
-                  ? (event) => {
-                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-                        datasourceType: datasourceType,
-                        grafana_version: config.buildInfo.version,
-                        type: 'log',
-                        location: 'menu',
-                      });
-                      event?.preventDefault();
-                      link.onClick!(event);
-                      closeMenu();
-                    }
-                  : undefined
-              }
-              url={link.href}
-              className={styles.menuItem}
-            />
-          ))}
-        </MenuGroup>
-      ) : null}
-      {!!links.metricLinks?.length ? (
-        <MenuGroup label="Metrics">
-          {links.metricLinks.map((link, i) => (
-            <MenuItem
-              key={i}
-              label={link.title ?? 'Metrics for this span'}
-              onClick={
-                link.onClick
-                  ? (event) => {
-                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-                        datasourceType: datasourceType,
-                        grafana_version: config.buildInfo.version,
-                        type: 'metric',
-                        location: 'menu',
-                      });
-                      event?.preventDefault();
-                      link.onClick!(event);
-                      closeMenu();
-                    }
-                  : undefined
-              }
-              url={link.href}
-              className={styles.menuItem}
-            />
-          ))}
-        </MenuGroup>
-      ) : null}
-      {!!links.traceLinks?.length ? (
-        <MenuGroup label="Traces">
-          {links.traceLinks.map((link, i) => (
-            <MenuItem
-              key={i}
-              label={link.title ?? 'View linked span'}
-              onClick={
-                link.onClick
-                  ? (event) => {
-                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-                        datasourceType: datasourceType,
-                        grafana_version: config.buildInfo.version,
-                        type: 'trace',
-                        location: 'menu',
-                      });
-                      event?.preventDefault();
-                      link.onClick!(event);
-                      closeMenu();
-                    }
-                  : undefined
-              }
-              url={link.href}
-              className={styles.menuItem}
-            />
-          ))}
-        </MenuGroup>
-      ) : null}
-      {!!links.otherLinks?.length ? (
-        <MenuGroup label="Correlations">
-          {links.otherLinks.map((link, i) => (
-            <MenuItem
-              key={i}
-              label={link.title ?? 'View link'}
-              onClick={
-                link.onClick
-                  ? (event) => {
-                      reportInteraction('grafana_traces_trace_view_other_link_clicked', {
-                        datasourceType: datasourceType,
-                        grafana_version: config.buildInfo.version,
-                        type: 'other',
-                        location: 'menu',
-                      });
-                      event?.preventDefault();
-                      link.onClick!(event);
-                      closeMenu();
-                    }
-                  : undefined
-              }
-              url={link.href}
-              className={styles.menuItem}
-            />
-          ))}
-        </MenuGroup>
-      ) : null}
-    </>
-  );
+  return links.map((link, i) => (
+    <MenuItem
+      key={i}
+      label={link.title || 'Link'}
+      onClick={
+        link.onClick
+          ? (event) => {
+              reportInteraction(`grafana_traces_${link.type}_view_span_link_clicked`, {
+                datasourceType: datasourceType,
+                grafana_version: config.buildInfo.version,
+                type: link.type,
+                location: 'menu',
+              });
+              event?.preventDefault();
+              link.onClick!(event);
+              closeMenu();
+            }
+          : undefined
+      }
+      url={link.href}
+      className={styles.menuItem}
+    />
+  ));
 };
 
 export const SpanLinksMenu = ({ links, datasourceType }: SpanLinksProps) => {
@@ -157,7 +68,7 @@ export const SpanLinksMenu = ({ links, datasourceType }: SpanLinksProps) => {
         <ContextMenu
           onClose={() => setIsMenuOpen(false)}
           renderMenuItems={() => renderMenuItems(links, styles, closeMenu, datasourceType)}
-          focusOnOpen={true}
+          focusOnOpen={false}
           x={menuPosition.x}
           y={menuPosition.y}
         />

@@ -25,8 +25,8 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { SpanLinkFunc, Trace, TraceSpan } from './components';
-import { SpanLinks } from './components/types/links';
+import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
+import { SpanLinkType } from './components/types/links';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -65,7 +65,7 @@ export function createSpanLinkFactory({
     scopedVars
   );
 
-  return function SpanLink(span: TraceSpan): SpanLinks | undefined {
+  return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
     let spanLinks = createSpanLinks(span);
 
     if (hasLinks) {
@@ -89,18 +89,18 @@ export function createSpanLinkFactory({
           links = links.concat(fieldLinksForExplore);
         });
 
-        spanLinks = {
-          ...spanLinks,
-          otherLinks: links.map((link) => {
-            return {
-              title: link.title,
-              href: link.href,
-              onClick: link.onClick,
-              content: <Icon name="link" title={link.title || 'Link'} />,
-              field: link.origin,
-            };
-          }),
-        };
+        const newSpanLinks: SpanLinkDef[] = links.map((link) => {
+          return {
+            title: link.title,
+            href: link.href,
+            onClick: link.onClick,
+            content: <Icon name="link" title={link.title || 'Link'} />,
+            field: link.origin,
+            type: SpanLinkType.Unknown,
+          };
+        });
+
+        spanLinks.push.apply(spanLinks, newSpanLinks);
       } catch (error) {
         // It's fairly easy to crash here for example if data source defines wrong interpolation in the data link
         console.error(error);
@@ -136,12 +136,12 @@ function legacyCreateSpanLinkFactory(
     metricsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToMetricsOptions.datasourceUid);
   }
 
-  return function SpanLink(span: TraceSpan): SpanLinks {
+  return function SpanLink(span: TraceSpan): SpanLinkDef[] {
     scopedVars = {
       ...scopedVars,
       ...scopedVarsFromSpan(span),
     };
-    const links: SpanLinks = { traceLinks: [] };
+    const links: SpanLinkDef[] = [];
     let query: DataQuery | undefined;
     let tags = '';
 
@@ -214,21 +214,20 @@ function legacyCreateSpanLinkFactory(
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
 
-          links.logLinks = [
-            {
-              href: link.href,
-              onClick: link.onClick,
-              content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
-              field,
-            },
-          ];
+          links.push({
+            href: link.href,
+            title: 'View linked logs',
+            onClick: link.onClick,
+            content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
+            field,
+            type: SpanLinkType.Logs,
+          });
         }
       }
     }
 
     // Get metrics links
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
-      links.metricLinks = [];
       for (const query of traceToMetricsOptions.queries) {
         const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags || [], span);
         const dataLink: DataLink<PromQuery> = {
@@ -261,12 +260,13 @@ function legacyCreateSpanLinkFactory(
           replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         });
 
-        links.metricLinks.push({
+        links.push({
           title: query?.name,
           href: link.href,
           onClick: link.onClick,
           content: <Icon name="chart-line" title="Explore metrics for this span" />,
           field,
+          type: SpanLinkType.Metrics,
         });
       }
     }
@@ -281,12 +281,13 @@ function legacyCreateSpanLinkFactory(
 
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
-        links.traceLinks!.push({
+        links!.push({
           href: link.href,
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
           field: link.origin,
+          type: SpanLinkType.Traces,
         });
       }
     }
@@ -295,12 +296,13 @@ function legacyCreateSpanLinkFactory(
       for (const reference of span.subsidiarilyReferencedBy) {
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
-        links.traceLinks!.push({
+        links!.push({
           href: link.href,
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
           field: link.origin,
+          type: SpanLinkType.Traces,
         });
       }
     }
