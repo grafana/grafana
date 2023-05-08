@@ -55,9 +55,7 @@ func main() {
 		kind2pd(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		)),
-		// TODO UGH SO MUCH DUPLICATION, CODEJEN NEEDS TO BE BETTER
-		kinds2pd(corecodegen.LatestMajorsOrXJenny(
-			filepath.Join("packages", "grafana-schema", "src", "raw", "composable"), false, corecodegen.TSTypesJenny{})),
+		codegen.PluginTSEachMajor(rt),
 	)
 
 	schifs := kindsys.SchemaInterfaces(rt.Context())
@@ -99,16 +97,6 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 
 func kind2pd(j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
-		kd, err := kindsys.BindComposable(nil, pd.KindDecl)
-		if err != nil {
-			return nil
-		}
-		return kd
-	})
-}
-
-func kinds2pd(j codejen.OneToMany[kindsys.Kind]) codejen.OneToMany[*pfs.PluginDecl] {
-	return codejen.AdaptOneToMany(j, func(pd *pfs.PluginDecl) kindsys.Kind {
 		kd, err := kindsys.BindComposable(nil, pd.KindDecl)
 		if err != nil {
 			return nil
