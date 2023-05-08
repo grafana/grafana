@@ -349,7 +349,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			}
 		}
 
-		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) {
+		// Why only these 2 datasources???
+		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) || (ds.Type == datasources.DS_MYSQL) {
 			dsDTO.Database = ds.Database
 		}
 
