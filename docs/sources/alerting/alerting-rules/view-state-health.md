@@ -92,11 +92,8 @@ To enable the state history view, complete the following steps.
 
 ```
 [unified_alerting.state_history]
-
 enabled = true
-
 backend = loki
-
 loki_remote_url = http://localhost:3100
 
 [feature_toggles]
