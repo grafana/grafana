@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, CodeEditor, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -86,17 +87,22 @@ export function PayloadEditor({
             <Icon name="info-circle" className={styles.tooltip} size="xl" />
           </Tooltip>
         </div>
-
-        <CodeEditor
-          width={640}
-          height={363}
-          language={'json'}
-          showLineNumbers={true}
-          showMiniMap={false}
-          value={payload}
-          readOnly={false}
-          onBlur={setPayload}
-        />
+        <AutoSizer disableHeight>
+          {({ width }) => (
+            <div className={styles.editorWrapper}>
+              <CodeEditor
+                width={width}
+                height={362}
+                language={'json'}
+                showLineNumbers={true}
+                showMiniMap={false}
+                value={payload}
+                readOnly={false}
+                onBlur={setPayload}
+              />
+            </div>
+          )}
+        </AutoSizer>
 
         <div className={styles.buttonsWrapper}>
           <Button
@@ -159,27 +165,38 @@ const AlertTemplateDataTable = () => {
 };
 const getStyles = (theme: GrafanaTheme2) => ({
   jsonEditor: css`
-    width: 605px;
-    height: 363px;
+    width: 100%;
+    height: 100%;
   `,
   buttonsWrapper: css`
     margin-top: ${theme.spacing(1)};
     display: flex;
+    flex-wrap: wrap;
   `,
   button: css`
     flex: none;
     width: fit-content;
     padding-right: ${theme.spacing(1)};
     margin-right: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   title: css`
     font-weight: ${theme.typography.fontWeightBold};
+    heigth: 41px;
+    padding-top: 10px;
+    padding-left: ${theme.spacing(2)};
+    margin-top: 19px;
   `,
   wrapper: css`
-    padding-top: 38px;
+    flex: 1;
+    min-width: 450px;
   `,
   tooltip: css`
     padding-left: ${theme.spacing(1)};
+  `,
+  editorWrapper: css`
+    width: min-content;
+    padding-top: 7px;
   `,
   editor: css`
     display: flex;
