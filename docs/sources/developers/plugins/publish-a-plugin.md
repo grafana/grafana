@@ -54,7 +54,7 @@ Follow these steps to publish your plugin for the first time.
    - The remaining questions help us determine the [signature level]({{< relref "./sign-a-plugin#plugin-signature-levels" >}}) for your plugin.
 1. Click **Submit**.
    After you submit your plugin, we run an automated validation to make sure it adheres to our guidelines.
-   Once your submission passes the validation, it's placed in a review queue.
+Your submission is placed in the review queue after the submission is validated.
 
 All submissions are manually inspected by a plugin reviewer.
 For every new plugin, we perform a manual review that includes the following checks:
