@@ -87,6 +87,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      h1: {
+        display: 'inline-block',
+      },
     }),
     title: css({
       margin: '0 0 0 0',
@@ -94,7 +97,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      display: 'inline-block',
     }),
     datasourceNameInput: css({
       input: {
