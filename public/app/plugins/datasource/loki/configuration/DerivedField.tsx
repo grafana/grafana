@@ -158,7 +158,6 @@ export const DerivedField = (props: Props) => {
                 datasourceUid: ds.uid,
               })
             }
-            noDefault
             current={value.datasourceUid}
           />
         )}
