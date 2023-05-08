@@ -64,7 +64,6 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
-  shareView?: string;
   panelType?: string;
   inspect?: string;
   from?: string;
@@ -419,20 +418,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
     const showSubMenu = !editPanel && !kioskMode && !this.props.queryParams.editview;
 
-    const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
-      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-        <DashNav
-          dashboard={dashboard}
-          title={dashboard.title}
-          folderTitle={dashboard.meta.folderTitle}
-          isFullscreen={!!viewPanel}
-          onAddPanel={this.onAddPanel}
-          kioskMode={kioskMode}
-          hideTimePicker={dashboard.timepicker.hidden}
-          shareModalActiveTab={this.props.queryParams.shareView}
-        />
-      </header>
-    );
+    const showToolbar = kioskMode !== KioskMode.Full && !queryParams.editview;
 
     const pageClassName = cx({
       'panel-in-fullscreen': Boolean(viewPanel),
@@ -453,11 +439,23 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           navModel={sectionNav}
           pageNav={pageNav}
           layout={PageLayoutType.Canvas}
-          toolbar={toolbar}
           className={pageClassName}
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
         >
+          {showToolbar && (
+            <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+              <DashNav
+                dashboard={dashboard}
+                title={dashboard.title}
+                folderTitle={dashboard.meta.folderTitle}
+                isFullscreen={!!viewPanel}
+                onAddPanel={this.onAddPanel}
+                kioskMode={kioskMode}
+                hideTimePicker={dashboard.timepicker.hidden}
+              />
+            </header>
+          )}
           <DashboardPrompt dashboard={dashboard} />
           {initError && <DashboardFailed />}
           {showSubMenu && (

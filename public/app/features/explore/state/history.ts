@@ -67,8 +67,9 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
 };
 
 const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemState, exploreId: ExploreId) => void) => {
-  callback(state.left, ExploreId.left);
-  state.right && callback(state.right, ExploreId.right);
+  Object.entries(state.panes).forEach(([exploreId, item]) => {
+    callback(item!, exploreId as ExploreId);
+  });
 };
 
 export const addHistoryItem = (
@@ -130,7 +131,7 @@ export const deleteRichHistory = (): ThunkResult<void> => {
 
 export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const filters = getState().explore![exploreId]?.richHistorySearchFilters;
+    const filters = getState().explore.panes[exploreId]!.richHistorySearchFilters;
     if (filters) {
       const richHistoryResults = await getRichHistory(filters);
       dispatch(richHistoryUpdatedAction({ richHistoryResults, exploreId }));
@@ -140,8 +141,8 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
 
 export const loadMoreRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const currentFilters = getState().explore![exploreId]?.richHistorySearchFilters;
-    const currentRichHistory = getState().explore![exploreId]?.richHistory;
+    const currentFilters = getState().explore.panes[exploreId]?.richHistorySearchFilters;
+    const currentRichHistory = getState().explore.panes[exploreId]?.richHistory;
     if (currentFilters && currentRichHistory) {
       const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
       const moreRichHistory = await getRichHistory(nextFilters);

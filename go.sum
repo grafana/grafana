@@ -1272,10 +1272,6 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20230427200804-f8565cd8b74b h1:SyatotlHGK+05AxICctry09ZEawhE0AasWpOifljH4M=
-github.com/grafana/alerting v0.0.0-20230427200804-f8565cd8b74b/go.mod h1:nHfrSTdV7/l74N5/ezqlQ+JwSvIChhN3G5+PjCfwG/E=
-github.com/grafana/alerting v0.0.0-20230428094731-e067f119be06 h1:g+J4UGslzpi9Kt+846NDAjGtVyt8K9Lgjj/vUh61yK0=
-github.com/grafana/alerting v0.0.0-20230428094731-e067f119be06/go.mod h1:5edgy6tQY4+W2wuJdi8g2GjbVmpJufguy7QGIRl2q4o=
 github.com/grafana/alerting v0.0.0-20230428095912-33c5aa68a5ba h1:aNTu22ojw4XY24DYNAuvw8v/5iFUNk2bkdTeeWQ5+0o=
 github.com/grafana/alerting v0.0.0-20230428095912-33c5aa68a5ba/go.mod h1:5edgy6tQY4+W2wuJdi8g2GjbVmpJufguy7QGIRl2q4o=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
@@ -1294,6 +1290,8 @@ github.com/grafana/go-mssqldb v0.9.2 h1:FkyRJR4ywsT07iMtpFMHStrl8uuNkGIwp253Fee0
 github.com/grafana/go-mssqldb v0.9.2/go.mod h1:HTCsUqZdb7oIO7jc37YauiSB5C3P/13AnpctVWBhlus=
 github.com/grafana/grafana-aws-sdk v0.12.0 h1:eUjFdFZeZE+nyu/RMRz+qFxTBew69ToLBrbRhTbjkfM=
 github.com/grafana/grafana-aws-sdk v0.12.0/go.mod h1:rCXLYoMpPqF90U7XqgVJ1HIAopFVF0bB3SXBVEJIm3I=
+github.com/grafana/grafana-aws-sdk v0.15.0 h1:ZOPHQcC5NUFi1bLTwnju91G0KmGh1z+qXOKj9nDfxNs=
+github.com/grafana/grafana-aws-sdk v0.15.0/go.mod h1:rCXLYoMpPqF90U7XqgVJ1HIAopFVF0bB3SXBVEJIm3I=
 github.com/grafana/grafana-azure-sdk-go v1.6.0 h1:lxvH/mVY7gKBtJKhZ4B/6tIZFY7Jth97HxBA38olaxs=
 github.com/grafana/grafana-azure-sdk-go v1.6.0/go.mod h1:X4PdEQIYgHfn0KTa2ZTKvufhNz6jbCEKUQPZIlcyOGw=
 github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HGQbTqewE3JvRaNA=

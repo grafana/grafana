@@ -54,7 +54,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    if (doInitialSearch && this.hasSearchFilters()) {
+    if (doInitialSearch) {
       this.doSearch();
     }
   }

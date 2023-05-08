@@ -11,7 +11,7 @@ import {
   DataTransformerConfig,
   DataTransformerID,
 } from '@grafana/data';
-import { ResourceDimensionMode } from 'app/features/dimensions';
+import { ResourceDimensionMode } from '@grafana/schema';
 
 import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
