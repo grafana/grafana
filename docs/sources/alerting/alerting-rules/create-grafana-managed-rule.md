@@ -116,4 +116,4 @@ If your evaluation returns an error, you can set the state on your alert rule to
 
 An alert instance is considered stale if after two evaluation intervals its state is still **Alerting**.
 
-Stale alert instances are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
+Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
