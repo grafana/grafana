@@ -5404,7 +5404,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "tags": [
           "folders"
         ],
@@ -5490,12 +5490,13 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "tags": [
           "folders"
         ],
         "summary": "Get folder by id.",
         "operationId": "getFolderByID",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -5632,6 +5633,40 @@
           },
           "400": {
             "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
+        "operationId": "getFolderDescendantCounts",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "folder_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getFolderDescendantCountsResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -7688,40 +7723,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getQueryHistoryResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/query-history/migrate": {
-      "post": {
-        "description": "Adds multiple queries to query history.",
-        "tags": [
-          "query_history"
-        ],
-        "summary": "Migrate queries to query history.",
-        "operationId": "migrateQueries",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/MigrateQueriesToQueryHistoryCommand"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getQueryHistoryMigrationResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -13056,6 +13057,13 @@
         }
       }
     },
+    "DescendantCounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "format": "int64"
+      }
+    },
     "DiscordConfig": {
       "type": "object",
       "title": "DiscordConfig configures notifications via Discord.",
@@ -13530,6 +13538,13 @@
           "description": "only used if nested folders are enabled",
           "type": "string"
         },
+        "parents": {
+          "description": "the parent folders starting from the root going down",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Folder"
+          }
+        },
         "title": {
           "type": "string"
         },
@@ -13555,9 +13570,6 @@
     "FolderSearchHit": {
       "type": "object",
       "properties": {
-        "accessControl": {
-          "$ref": "#/definitions/Metadata"
-        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -14996,19 +15008,6 @@
         }
       }
     },
-    "MigrateQueriesToQueryHistoryCommand": {
-      "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
-      "type": "object",
-      "properties": {
-        "queries": {
-          "description": "Array of queries to store in query history.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/QueryToMigrate"
-          }
-        }
-      }
-    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -16360,22 +16359,6 @@
         }
       }
     },
-    "QueryHistoryMigrationResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "starredCount": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "QueryHistoryPreference": {
       "type": "object",
       "properties": {
@@ -16504,27 +16487,6 @@
         },
         "writeable": {
           "description": "Writeable indicates that the datasource knows how to update this value",
-          "type": "boolean"
-        }
-      }
-    },
-    "QueryToMigrate": {
-      "type": "object",
-      "properties": {
-        "comment": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "datasourceUid": {
-          "type": "string"
-        },
-        "queries": {
-          "$ref": "#/definitions/Json"
-        },
-        "starred": {
           "type": "boolean"
         }
       }
@@ -20293,6 +20255,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/DataSourceList"
+      }
+    },
+    "getFolderDescendantCountsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DescendantCounts"
       }
     },
     "getFolderPermissionListResponse": {

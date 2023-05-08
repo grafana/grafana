@@ -1,4 +1,11 @@
-import { FieldColorModeId, FieldDTO, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldDTO,
+  FieldType,
+  MutableDataFrame,
+  NodeGraphDataFrameFieldNames,
+  DataFrame,
+} from '@grafana/data';
 
 import { nodes, edges } from './testData/serviceMapResponse';
 
@@ -105,28 +112,29 @@ export function generateRandomNodes(count = 10) {
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
 
-  const edgesFrame = new MutableDataFrame({
+  const edgesFrame: DataFrame = {
     name: 'edges',
     fields: [
-      { name: NodeGraphDataFrameFieldNames.id, values: [], type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number },
+      { name: NodeGraphDataFrameFieldNames.id, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
-  });
+    length: 0,
+  };
 
   const edgesSet = new Set();
   for (const node of nodes) {
-    nodeFields.id.values.add(node.id);
-    nodeFields.title.values.add(node.title);
-    nodeFields[NodeGraphDataFrameFieldNames.subTitle].values.add(node.subTitle);
-    nodeFields[NodeGraphDataFrameFieldNames.mainStat].values.add(node.stat1);
-    nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.add(node.stat2);
-    nodeFields.arc__success.values.add(node.success);
-    nodeFields.arc__errors.values.add(node.error);
+    nodeFields.id.values.push(node.id);
+    nodeFields.title.values.push(node.title);
+    nodeFields[NodeGraphDataFrameFieldNames.subTitle].values.push(node.subTitle);
+    nodeFields[NodeGraphDataFrameFieldNames.mainStat].values.push(node.stat1);
+    nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.push(node.stat2);
+    nodeFields.arc__success.values.push(node.success);
+    nodeFields.arc__errors.values.push(node.error);
     const rnd = Math.random();
-    nodeFields[NodeGraphDataFrameFieldNames.icon].values.add(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
+    nodeFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
       // We can have duplicate edges when we added some more by random
@@ -134,12 +142,13 @@ export function generateRandomNodes(count = 10) {
         continue;
       }
       edgesSet.add(id);
-      edgesFrame.fields[0].values.add(`${node.id}--${edge}`);
-      edgesFrame.fields[1].values.add(node.id);
-      edgesFrame.fields[2].values.add(edge);
-      edgesFrame.fields[3].values.add(Math.random() * 100);
+      edgesFrame.fields[0].values.push(`${node.id}--${edge}`);
+      edgesFrame.fields[1].values.push(node.id);
+      edgesFrame.fields[2].values.push(edge);
+      edgesFrame.fields[3].values.push(Math.random() * 100);
     }
   }
+  edgesFrame.length = edgesFrame.fields[0].values.length;
 
   return [nodeFrame, edgesFrame];
 }

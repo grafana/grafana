@@ -5,7 +5,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
@@ -330,6 +330,17 @@ describe('AzureLogAnalyticsDatasource', () => {
 
       expect(laDatasource.filterQuery(query)).toBeFalsy();
     });
+
+    it('should not run traces queries missing a resource', () => {
+      const query: AzureMonitorQuery = {
+        refId: 'A',
+        azureTraces: {
+          resources: [],
+        },
+      };
+
+      expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
   });
 
   describe('When performing interpolateVariablesInQueries for azure_log_analytics', () => {
@@ -344,12 +355,12 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(templatedQuery[0]).toEqual(query);
     });
 
-    it('should return a query with any template variables replaced', () => {
+    it('should return a logs query with any template variables replaced', () => {
       const templateableProps = ['resource', 'workspace', 'query'];
       const templateVariables = createTemplateVariables(templateableProps);
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
-      const azureLogAnalytics: { [index: string]: any } = {};
+      const azureLogAnalytics: Partial<AzureLogsQuery> = {};
       azureLogAnalytics.query = '$query';
       azureLogAnalytics.workspace = '$workspace';
       azureLogAnalytics.resources = ['$resource'];
@@ -364,6 +375,40 @@ describe('AzureLogAnalyticsDatasource', () => {
         query: templateVariables.get('query')?.templateVariable.current.value,
         workspace: templateVariables.get('workspace')?.templateVariable.current.value,
         resources: [templateVariables.get('resource')?.templateVariable.current.value],
+      });
+    });
+
+    it('should return a traces query with any template variables replaced', () => {
+      const templateableProps = ['resource', 'query', 'traceTypes', 'property', 'operation', 'filter', 'operationId'];
+      const templateVariables = createTemplateVariables(templateableProps);
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureTraces: Partial<AzureTracesQuery> = {};
+      azureTraces.resources = ['$resource'];
+      azureTraces.query = '$query';
+      azureTraces.traceTypes = ['$traceTypes'];
+      azureTraces.filters = [{ filters: ['$filter'], operation: 'eq', property: '$property' }];
+      azureTraces.operationId = '$operationId';
+      query.queryType = AzureQueryType.AzureTraces;
+      query.azureTraces = {
+        ...query.azureTraces,
+        ...azureTraces,
+      };
+
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].azureTraces).toMatchObject({
+        query: templateVariables.get('query')?.templateVariable.current.value,
+        resources: [templateVariables.get('resource')?.templateVariable.current.value],
+        operationId: templateVariables.get('operationId')?.templateVariable.current.value,
+        traceTypes: [templateVariables.get('traceTypes')?.templateVariable.current.value],
+        filters: [
+          {
+            filters: [templateVariables.get('filter')?.templateVariable.current.value],
+            operation: 'eq',
+            property: templateVariables.get('property')?.templateVariable.current.value,
+          },
+        ],
       });
     });
   });

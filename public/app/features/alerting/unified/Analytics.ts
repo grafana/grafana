@@ -17,7 +17,7 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
 };
 
-// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
+// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly
 export function logInfo(message: string, context: Record<string, string | number> = {}) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {

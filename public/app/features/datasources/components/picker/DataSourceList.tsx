@@ -1,9 +1,16 @@
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useRef } from 'react';
+import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
+
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
-import { isDataSourceMatch, useGetDatasources } from './utils';
+import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -27,15 +34,28 @@ export interface DataSourceListProps {
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
   width?: number;
+  keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  onClickEmptyStateCTA?: () => void;
+  enableKeyboardNavigation?: boolean;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
-  const { className, current, onChange } = props;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
+    keyboardEvents: props.keyboardEvents,
+    containerRef: containerRef,
+  });
+
+  const theme = useTheme2();
+  const styles = getStyles(theme, selectedItemCssSelector);
+
+  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
   // QUESTION: Should we use data from the Redux store as admin DS view does?
-  const dataSources = useGetDatasources({
+  const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
     dashboard: props.dashboard,
@@ -48,18 +68,77 @@ export function DataSourceList(props: DataSourceListProps) {
     variables: props.variables,
   });
 
+  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+
   return (
-    <div className={className}>
-      {dataSources
-        .filter((ds) => (props.filter ? props.filter(ds) : true))
+    <div ref={containerRef} className={cx(className, styles.container)}>
+      {filteredDataSources.length === 0 && (
+        <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
+      )}
+      {filteredDataSources
+        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
             key={ds.uid}
             ds={ds}
-            onClick={() => onChange(ds)}
+            onClick={() => {
+              pushRecentlyUsedDataSource(ds);
+              onChange(ds);
+            }}
             selected={!!isDataSourceMatch(ds, current)}
+            {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
     </div>
   );
+}
+
+function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {
+  const styles = useStyles2(getEmptyStateStyles);
+  return (
+    <div className={cx(className, styles.container)}>
+      <p className={styles.message}>No data sources found</p>
+      <AddNewDataSourceButton onClick={onClickCTA} />
+    </div>
+  );
+}
+
+function getEmptyStateStyles(theme: GrafanaTheme2) {
+  return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    `,
+    message: css`
+      margin-bottom: ${theme.spacing(3)};
+    `,
+  };
+}
+
+function getDataSourceVariableIDs() {
+  const templateSrv = getTemplateSrv();
+  /** Unforunately there is no easy way to identify data sources that are variables. The uid of the data source will be the name of the variable in a templating syntax $([name]) **/
+  return templateSrv
+    .getVariables()
+    .filter((v) => v.type === 'datasource')
+    .map((v) => `\${${v.id}}`);
+}
+
+function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
+  return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      ${selectedItemCssSelector} {
+        background-color: ${theme.colors.background.secondary};
+      }
+    `,
+    emptyState: css`
+      height: 100%;
+      flex: 1;
+    `,
+  };
 }

@@ -15,7 +15,6 @@ import {
   formatLabels,
   getDisplayProcessor,
   Labels,
-  MutableField,
   PreferredVisualisationType,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
@@ -208,7 +207,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     const valueText = getValueText(refIds.length, refId);
     const valueField = getValueField({ data: [], valueName: valueText });
     const timeField = getTimeField([]);
-    const labelFields: MutableField[] = [];
+    const labelFields: Field[] = [];
 
     // Fill labelsFields with labels from dataFrames
     dataFramesByRefId[refId].forEach((df) => {
@@ -235,11 +234,11 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     dataFramesByRefId[refId].forEach((df) => {
       const timeFields = df.fields[0]?.values ?? [];
       const dataFields = df.fields[1]?.values ?? [];
-      timeFields.forEach((value) => timeField.values.add(value));
+      timeFields.forEach((value) => timeField.values.push(value));
       dataFields.forEach((value) => {
-        valueField.values.add(parseSampleValue(value));
+        valueField.values.push(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
-        labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
+        labelFields.forEach((field) => field.values.push(getLabelValue(labelsForField, field.name)));
       });
     });
 
@@ -248,7 +247,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       refId,
       fields,
       // Prometheus specific UI for instant queries
-      meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
+      meta: {
+        ...dataFramesByRefId[refId][0].meta,
+        preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType,
+      },
       length: timeField.values.length,
     };
   });
@@ -329,14 +331,13 @@ export function transform(
 
   // Return early if result type is scalar
   if (prometheusResult.resultType === 'scalar') {
-    return [
-      {
-        meta: options.meta,
-        refId: options.refId,
-        length: 1,
-        fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
-      },
-    ];
+    const df: DataFrame = {
+      meta: options.meta,
+      refId: options.refId,
+      length: 1,
+      fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
+    };
+    return [df];
   }
 
   // Return early again if the format is table, this needs special transformation.
@@ -527,14 +528,14 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
   md.forEach((d) => {
     if (isMatrixData(d)) {
       d.values.forEach((val) => {
-        timeField.values.add(val[0] * 1000);
+        timeField.values.push(val[0] * 1000);
         metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
-        valueField.values.add(parseSampleValue(val[1]));
+        valueField.values.push(parseSampleValue(val[1]));
       });
     } else {
-      timeField.values.add(d.value[0] * 1000);
+      timeField.values.push(d.value[0] * 1000);
       metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
-      valueField.values.add(parseSampleValue(d.value[1]));
+      valueField.values.push(parseSampleValue(d.value[1]));
     }
   });
 
@@ -556,7 +557,7 @@ function getLabelValue(metric: PromMetric, label: string): string | number {
   return '';
 }
 
-function getTimeField(data: PromValue[], isMs = false): MutableField {
+function getTimeField(data: PromValue[], isMs = false): Field<number> {
   return {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
@@ -579,7 +580,7 @@ function getValueField({
   parseValue = true,
   labels,
   displayNameFromDS,
-}: ValueFieldOptions): MutableField {
+}: ValueFieldOptions): Field {
   return {
     name: valueName,
     type: FieldType.number,

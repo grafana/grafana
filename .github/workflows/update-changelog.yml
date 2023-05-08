@@ -5,21 +5,23 @@ on:
       version:
         required: true
         description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
+      skip_pr:
+        required: false
+        default: "0"
+      skip_community_post:
+        required: false
+        default: "0"
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v3
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run update changelog (manually invoked)        
-        uses: ./actions/update-changelog
+      - name: Run update changelog (manually invoked)
+        uses: grafana/grafana-github-actions-go/update-changelog@main
         with:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-          grafanabotForumKey: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+          version: ${{ inputs.version }}
+          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+          community_api_username: grafanabot
+          skip_pr: ${{ inputs.skip_pr }}
+          skip_community_post: ${{ inputs.skip_community_post }}

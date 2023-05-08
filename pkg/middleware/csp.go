@@ -45,7 +45,7 @@ func nonceMiddleware(next http.Handler, logger log.Logger) http.Handler {
 func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		policy := replacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, ctx.RequestNonce)
+		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy", policy)
 		next.ServeHTTP(rw, req)
 	})
@@ -54,13 +54,13 @@ func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.
 func cspReportOnlyMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		policy := replacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, ctx.RequestNonce)
+		policy := ReplacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy-Report-Only", policy)
 		next.ServeHTTP(rw, req)
 	})
 }
 
-func replacePolicyVariables(policyTemplate, appURL, nonce string) string {
+func ReplacePolicyVariables(policyTemplate, appURL, nonce string) string {
 	policy := strings.ReplaceAll(policyTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
 	re := regexp.MustCompile(`^\w+:(//)?`)
 	rootPath := re.ReplaceAllString(appURL, "")

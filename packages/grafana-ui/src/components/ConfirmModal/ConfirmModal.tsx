@@ -97,7 +97,7 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
+        <Button variant={dismissVariant} onClick={onDismiss}>
           {dismissText}
         </Button>
         <Button
@@ -105,7 +105,7 @@ export const ConfirmModal = ({
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}
-          aria-label={selectors.pages.ConfirmModal.delete}
+          data-testid={selectors.pages.ConfirmModal.delete}
         >
           {confirmText}
         </Button>

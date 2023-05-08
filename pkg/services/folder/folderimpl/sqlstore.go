@@ -239,10 +239,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		sql := strings.Builder{}
 		args := make([]interface{}, 0, 2)
 		if q.UID == "" {
-			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?"))
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC"))
 			args = append(args, q.OrgID)
 		} else {
-			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY title ASC"))
 			args = append(args, q.UID, q.OrgID)
 		}
 

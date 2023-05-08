@@ -18,6 +18,11 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  // store the metrics modal additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  fullMetaSearch?: boolean;
+  excludeNullMetadata?: boolean;
 }
 
 export enum PrometheusCacheLevel {

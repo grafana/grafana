@@ -3,24 +3,94 @@ import { createSelector } from 'reselect';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState } from 'app/types';
 
-import { DashboardsTreeItem } from '../types';
+import { DashboardsTreeItem, DashboardTreeSelection } from '../types';
+
+export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
+export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
+export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
+export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
 
 const flatTreeSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.rootItems,
-  (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
-  (wholeState: StoreState) => wholeState.browseDashboards.openFolders,
+  rootItemsSelector,
+  childrenByParentUIDSelector,
+  openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
+    return createFlatTree(folderUID, rootItems ?? [], childrenByParentUID, openFolders);
   }
 );
+
+const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {
+  return Object.values(selectedItems).some((selectedItem) =>
+    Object.values(selectedItem).some((isSelected) => isSelected)
+  );
+});
+
+// Returns a DashboardTreeSelection but unselects any selected folder's children.
+// This is useful when making backend requests to move or delete items.
+// In this case, we only need to move/delete the parent folder and it will cascade to the children.
+const selectedItemsForActionsSelector = createSelector(
+  selectedItemsSelector,
+  childrenByParentUIDSelector,
+  (selectedItems, childrenByParentUID) => {
+    // Take a copy of the selected items to work with
+    // We don't care about panels here, only dashboards and folders can be moved or deleted
+    const result: Omit<DashboardTreeSelection, 'panel' | '$all'> = {
+      dashboard: { ...selectedItems.dashboard },
+      folder: { ...selectedItems.folder },
+    };
+
+    // Loop over selected folders in the input
+    for (const folderUID of Object.keys(selectedItems.folder)) {
+      const isSelected = selectedItems.folder[folderUID];
+      if (isSelected) {
+        // Unselect any children in the output
+        const children = childrenByParentUID[folderUID];
+        if (children) {
+          for (const child of children) {
+            if (child.kind === 'dashboard') {
+              result.dashboard[child.uid] = false;
+            }
+            if (child.kind === 'folder') {
+              result.folder[child.uid] = false;
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+);
+
+export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending' | 'fulfilled' {
+  return useSelector((wholeState) => {
+    const children = folderUID
+      ? wholeState.browseDashboards.childrenByParentUID[folderUID]
+      : wholeState.browseDashboards.rootItems;
+
+    return children ? 'fulfilled' : 'pending';
+  });
+}
 
 export function useFlatTreeState(folderUID: string | undefined) {
   return useSelector((state) => flatTreeSelector(state, folderUID));
 }
 
-export function useSelectedItemsState() {
-  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.selectedItems);
+export function useHasSelection() {
+  return useSelector((state) => hasSelectionSelector(state));
+}
+
+export function useCheckboxSelectionState() {
+  return useSelector(selectedItemsSelector);
+}
+
+export function useChildrenByParentUIDState() {
+  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
+}
+
+export function useActionSelectionState() {
+  return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
 /**

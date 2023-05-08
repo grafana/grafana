@@ -530,6 +530,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
 		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
+		folderTitle := "folderName"
+		ruleFp := ruleWithFolder{rule, folderTitle}.Fingerprint()
 
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
@@ -540,7 +542,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: "folderName"})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: folderTitle})
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
@@ -552,6 +554,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
+			folderTitle: folderTitle,
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)
@@ -584,9 +587,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version - 1), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false} // second time just to make sure that previous messages were handled
+			updateChan <- ruleVersionAndPauseStatus{ruleFp, false}
+			updateChan <- ruleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -595,7 +597,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version + rand.Int63n(1000) + 1), false}
+			updateChan <- ruleVersionAndPauseStatus{ruleFp + 1, false}
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls) > 0
