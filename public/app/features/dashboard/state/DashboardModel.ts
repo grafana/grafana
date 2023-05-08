@@ -431,13 +431,16 @@ export class DashboardModel implements TimeModel {
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
+
+    const refreshQueued = getTimeSrv().refreshQueued;
     getTimeSrv().resumeAutoRefresh();
 
     if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
-      this.startRefresh({
-        panelIds: this.panelsAffectedByVariableChange ?? [],
-        refreshAll: this.timeRangeUpdatedDuringEdit,
-      });
+      !refreshQueued &&
+        this.startRefresh({
+          panelIds: this.panelsAffectedByVariableChange ?? [],
+          refreshAll: this.timeRangeUpdatedDuringEdit,
+        });
       this.panelsAffectedByVariableChange = null;
       this.timeRangeUpdatedDuringEdit = false;
     }

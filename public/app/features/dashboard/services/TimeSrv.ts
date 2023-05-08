@@ -256,6 +256,10 @@ export class TimeSrv {
     this.timeModel?.timeRangeUpdated(this.timeRange());
   }
 
+  get refreshQueued() {
+    return this.queueRefresh;
+  }
+
   private startNextRefreshTimer(afterMs: number) {
     this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
