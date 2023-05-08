@@ -4,11 +4,20 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, EventsWithValidation, LegacyForms, useStyles2, ValidationRule } from '@grafana/ui';
+import {
+  Button,
+  DataLinkInput,
+  EventsWithValidation,
+  Field,
+  Input,
+  LegacyForms,
+  useStyles2,
+  ValidationRule,
+} from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
 
-const { Switch, FormField, Input } = LegacyForms;
+const { Switch } = LegacyForms;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
@@ -64,34 +73,19 @@ export const DerivedField = (props: Props) => {
   return (
     <div className={className} data-testid="derived-field">
       <div className="gf-form">
-        <FormField
-          labelWidth={10}
-          className={styles.nameField}
-          inputEl={
-            <Input
-              value={value.name}
-              onChange={handleChange('name')}
-              placeholder="Field name"
-              validationEvents={{
-                [EventsWithValidation.onBlur]: [validateName],
-                [EventsWithValidation.onFocus]: [validateName],
-              }}
-            />
-          }
-          label="Name"
-        />
-        <FormField
-          labelWidth={10}
+        <Field className={styles.nameField} label="Name">
+          <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" />
+        </Field>
+        <Field
           className={styles.regexField}
-          inputWidth={null}
           label="Regex"
-          type="text"
-          value={value.matcherRegex}
           onChange={handleChange('matcherRegex')}
-          tooltip={
-            'Use to parse and capture some part of the log message. You can use the captured groups in the template.'
-          }
-        />
+          //</div>tooltip={
+          //  'Use to parse and capture some part of the log message. You can use the captured groups in the template.'
+          //}
+        >
+          <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />
+        </Field>
         <Button
           variant="destructive"
           title="Remove field"
@@ -104,34 +98,26 @@ export const DerivedField = (props: Props) => {
       </div>
 
       <div className="gf-form">
-        <FormField
-          labelWidth={10}
-          label={showInternalLink ? 'Query' : 'URL'}
-          inputEl={
-            <DataLinkInput
-              placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
-              value={value.url || ''}
-              onChange={(newValue) =>
-                onChange({
-                  ...value,
-                  url: newValue,
-                })
-              }
-              suggestions={suggestions}
-            />
-          }
-          className={styles.urlField}
-        />
-        <FormField
+        <Field label={showInternalLink ? 'Query' : 'URL'} className={styles.urlField}>
+          <DataLinkInput
+            placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
+            value={value.url || ''}
+            onChange={(newValue) =>
+              onChange({
+                ...value,
+                url: newValue,
+              })
+            }
+            suggestions={suggestions}
+          />
+        </Field>
+        <Field
           className={styles.urlDisplayLabelField}
-          labelWidth={10}
-          inputWidth={null}
           label="URL Label"
-          type="text"
-          value={value.urlDisplayLabel}
-          onChange={handleChange('urlDisplayLabel')}
-          tooltip={'Use to override the button label when this derived field is found in a log.'}
-        />
+          //tooltip={'Use to override the button label when this derived field is found in a log.'}
+        >
+          <Input value={value.urlDisplayLabel} onChange={handleChange('urlDisplayLabel')} />
+        </Field>
       </div>
 
       <div className={styles.row}>
