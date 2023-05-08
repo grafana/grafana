@@ -118,7 +118,7 @@ To submit an **update** for an already published plugin:
 
 ### Can I still use Angular for my plugin?
 
-- No. We will not accept any new plugin submissions written in angular. For more information, refer to our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
+- No. We will not accept any new plugin submissions written in Angular. For more information, refer to our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
 
 ### Do plugin signatures expire?
 
