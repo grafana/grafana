@@ -16,7 +16,7 @@ type Props = {
   options: UnifiedAlertListOptions;
 };
 
-const UNGROUPED_KEY = '__ungrouped__';
+export const UNGROUPED_KEY = '__ungrouped__';
 
 const GroupedModeView = ({ rules, options }: Props) => {
   const styles = useStyles2(getStyles);
@@ -63,7 +63,7 @@ const GroupedModeView = ({ rules, options }: Props) => {
   return (
     <>
       {Array.from(groupedRules).map(([key, alerts]) => (
-        <li className={styles.alertRuleItem} key={key}>
+        <li className={styles.alertRuleItem} key={key} data-testid={key}>
           <div>
             <div className={styles.customGroupDetails}>
               <div className={styles.alertLabels}>
