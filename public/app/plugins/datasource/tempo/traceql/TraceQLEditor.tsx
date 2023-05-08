@@ -154,8 +154,10 @@ function useAutocomplete(datasource: TempoDatasource) {
         if (tags) {
           // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
           // so Tempo doesn't send anything and we inject it here for the autocomplete
-          if (!tags.find((t) => t === 'status')) {
-            tags.push('status');
+          if (tags.v1) {
+            if (!tags.v1.find((t) => t === 'status')) {
+              tags.v1.push('status');
+            }
           }
           providerRef.current.setTags(tags);
         }

@@ -8,8 +8,10 @@ import { useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { Scope, Tags } from '../types';
 
 import SearchField from './SearchField';
+import { getUnscopedTags } from './utils';
 
 const getStyles = () => ({
   vertical: css`
@@ -30,7 +32,7 @@ interface Props {
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError) => void;
-  tags: string[];
+  tags: Tags | undefined;
   isTagsLoading: boolean;
   hideValues?: boolean;
 }
@@ -57,6 +59,22 @@ const TagsInput = ({
     }
   }, [filters, handleOnAdd]);
 
+  const getTags = (f: TraceqlFilter) => {
+    if (tags) {
+      if (tags.v1) {
+        return tags.v1;
+      } else if (tags.v2) {
+        const scope = tags.v2.find((scope: Scope) => scope.name && scope.name === f.scope);
+        // unscoped chosen in tag select
+        if (!scope) {
+          return getUnscopedTags(tags.v2);
+        }
+        return scope && scope.tags ? scope.tags : [];
+      }
+    }
+    return [];
+  };
+
   return (
     <div className={styles.vertical}>
       {filters?.map((f, i) => (
@@ -66,7 +84,7 @@ const TagsInput = ({
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
-            tags={tags}
+            tags={getTags(f)}
             isTagsLoading={isTagsLoading}
             deleteFilter={deleteFilter}
             allowDelete={true}

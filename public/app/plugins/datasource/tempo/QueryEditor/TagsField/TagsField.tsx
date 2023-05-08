@@ -7,6 +7,7 @@ import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 import { createErrorNotification } from '../../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../../store/store';
+import { getUnscopedTags } from '../../SearchTraceQLEditor/utils';
 import { TempoDatasource } from '../../datasource';
 
 import { CompletionProvider } from './autocomplete';
@@ -123,10 +124,14 @@ function useAutocomplete(datasource: TempoDatasource) {
         if (tags) {
           // This is needed because the /api/search/tag/${tag}/values API expects "status.code" and the v2 API expects "status"
           // so Tempo doesn't send anything and we inject it here for the autocomplete
-          if (!tags.find((t) => t === 'status.code')) {
-            tags.push('status.code');
+          if (tags.v1) {
+            if (!tags.v1.find((t) => t === 'status.code')) {
+              tags.v1.push('status.code');
+            }
+            providerRef.current.setTags(tags.v1);
+          } else if (tags.v2) {
+            providerRef.current.setTags(getUnscopedTags(tags.v2));
           }
-          providerRef.current.setTags(tags);
         }
       } catch (error) {
         if (error instanceof Error) {
