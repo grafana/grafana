@@ -25,7 +25,7 @@ func AddMigration(mg *migrator.Migrator) {
 			{Name: "secret", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "grant_types", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
 			{Name: "service_account_id", Type: migrator.DB_BigInt, Nullable: true},
-			{Name: "public_pem", Type: migrator.DB_Text, Length: 4096, Nullable: true}, // TODO: 4096 should be enough but it is not too much?
+			{Name: "public_pem", Type: migrator.DB_Text, Nullable: true}, // TODO: 4096 should be enough but it is not too much? -> Removed the limit because pg does not support it
 			{Name: "redirect_uri", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
 			// {Name: "domain", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 		},

@@ -35,7 +35,7 @@ header="{
 payload="{
     \"iss\": \"$client_id\",
     \"sub\": \"$user_id\",
-    \"aud\": \"$auth_server\",
+    \"aud\": [ \"$auth_server\", \"http://localhost:3000\" ],
     \"exp\": $( date -d '+1 hour' +%s ),
     \"iat\": $( date +%s ),
     \"jti\": \"$( uuidgen )\"
