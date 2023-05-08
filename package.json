@@ -197,7 +197,7 @@
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.1.1",
     "husky": "8.0.3",
-    "i18next-parser": "6.6.0",
+    "i18next-parser": "7.9.0",
     "jest": "29.3.1",
     "jest-canvas-mock": "2.4.0",
     "jest-date-mock": "1.0.8",
