@@ -11,6 +11,7 @@ var themes = []ThemeDTO{
 	{Name: "Dark", ID: "dark", Type: "dark"},
 	{Name: "System", ID: "system", Type: "dark"},
 	{Name: "Midnight", ID: "midnight", Type: "dark"},
+	{Name: "Blue night", ID: "blue-night", Type: "dark"},
 }
 
 func GetThemes() []ThemeDTO {

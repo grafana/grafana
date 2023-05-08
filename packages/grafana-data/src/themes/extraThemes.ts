@@ -16,12 +16,17 @@ export function getThemeById(id: string): GrafanaTheme2 {
       return createTheme({ colors: { mode: 'light' } });
     case 'midnight':
       return createMidnight();
+    case 'blue-night':
+      return createBlueNight();
     case 'dark':
     default:
       return createTheme({ colors: { mode: 'dark' } });
   }
 }
 
+/**
+ * Just a temporary placeholder for a possible new theme
+ */
 function createMidnight(): GrafanaTheme2 {
   const whiteBase = '204, 204, 220';
 
@@ -35,9 +40,31 @@ function createMidnight(): GrafanaTheme2 {
         secondary: '#181818',
       },
       border: {
-        weak: `rgba(${whiteBase}, 0.15)`,
+        weak: `rgba(${whiteBase}, 0.17)`,
         medium: `rgba(${whiteBase}, 0.25)`,
         strong: `rgba(${whiteBase}, 0.35)`,
+      },
+    },
+  });
+}
+
+/**
+ * Just a temporary placeholder for a possible new theme
+ */
+function createBlueNight(): GrafanaTheme2 {
+  return createTheme({
+    name: 'Blue night',
+    colors: {
+      mode: 'dark',
+      background: {
+        canvas: '#15161d',
+        primary: '#15161d',
+        secondary: '#1d1f2e',
+      },
+      border: {
+        weak: `#2e304f`,
+        medium: `#2e304f`,
+        strong: `#2e304f`,
       },
     },
   });
