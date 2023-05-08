@@ -7,12 +7,7 @@ import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data/src';
 import { PrometheusDatasource } from '../../datasource';
 import { PromOptions } from '../../types';
 
-import {
-  formatPrometheusLabelFilters,
-  formatPrometheusLabelFiltersToString,
-  MetricSelect,
-  Props,
-} from './MetricSelect';
+import { formatPrometheusLabelFilters, formatPrometheusLabelFiltersToString, MetricSelect } from './MetricSelect';
 
 const instanceSettings = {
   url: 'proxied',
