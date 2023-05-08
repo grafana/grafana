@@ -9,10 +9,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { DerivedField } from './DerivedField';
 
 const mockList = jest.fn();
-const validateMock = {
-  rule: jest.fn(),
-  errorMessage: '',
-};
+const validateMock = jest.fn();
 
 describe('DerivedField', () => {
   beforeEach(() => {
@@ -126,15 +123,12 @@ describe('DerivedField', () => {
       name: 'field-name',
       datasourceUid: 'test',
     };
-    const validate = {
-      rule: jest.fn().mockReturnValue(false),
-      errorMessage: 'Error message',
-    };
+    const validate = jest.fn().mockReturnValue(false);
     render(
       <DerivedField validateName={validate} value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />
     );
     userEvent.click(await screen.findByDisplayValue(value.name));
 
-    expect(await screen.findByText(validate.errorMessage)).toBeInTheDocument();
+    expect(await screen.findByText('The name is already in use')).toBeInTheDocument();
   });
 });

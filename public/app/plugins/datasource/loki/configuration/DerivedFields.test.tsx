@@ -64,7 +64,7 @@ describe('DerivedFields', () => {
 
     userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
 
-    expect(await screen.findByText('Name already in use')).toBeInTheDocument();
+    expect(await screen.findAllByText('The name is already in use')).toHaveLength(2);
   });
 
   it('does not validate empty names as repeated', () => {
@@ -82,7 +82,7 @@ describe('DerivedFields', () => {
 
     userEvent.click(screen.getAllByPlaceholderText('Field name')[0]);
 
-    expect(screen.queryByText('Name already in use')).not.toBeInTheDocument();
+    expect(screen.queryByText('The name is already in use')).not.toBeInTheDocument();
   });
 });
 

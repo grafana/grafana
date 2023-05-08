@@ -32,7 +32,7 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
 
   const validateName = useCallback(
     (name: string) => {
-      return fields.filter((field) => field.name && field.name === name).length > 1;
+      return fields.filter((field) => field.name && field.name === name).length <= 1;
     },
     [fields]
   );

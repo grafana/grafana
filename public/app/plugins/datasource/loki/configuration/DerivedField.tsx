@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
@@ -65,7 +65,7 @@ export const DerivedField = (props: Props) => {
     });
   };
 
-  const invalidName = validateName(value.name);
+  const invalidName = !validateName(value.name);
 
   return (
     <div className={className} data-testid="derived-field">
@@ -128,15 +128,16 @@ export const DerivedField = (props: Props) => {
       <div className="gf-form">
         <Field label="Internal link" className={styles.internalLink}>
           <Switch
-            checked={showInternalLink}
-            onChange={() => {
-              if (showInternalLink) {
+            value={showInternalLink}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const checked = e.currentTarget.checked;
+              if (!checked) {
                 onChange({
                   ...value,
                   datasourceUid: undefined,
                 });
               }
-              setShowInternalLink(!showInternalLink);
+              setShowInternalLink(checked);
             }}
           />
         </Field>
