@@ -4,7 +4,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { contextSrv } from 'app/core/core';
 
-export const USER_CREATION_MIN_DAYS = 15;
+export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
