@@ -17,9 +17,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   nameField: css`
     flex: 2;
+    margin-right: ${theme.spacing(0.5)};
   `,
   regexField: css`
     flex: 3;
+    margin-right: ${theme.spacing(0.5)};
   `,
   urlField: css`
     flex: 1;
@@ -79,15 +81,17 @@ export const DerivedField = (props: Props) => {
         >
           <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />
         </Field>
-        <Button
-          variant="destructive"
-          title="Remove field"
-          icon="times"
-          onClick={(event) => {
-            event.preventDefault();
-            onDelete();
-          }}
-        />
+        <Field label="">
+          <Button
+            variant="destructive"
+            title="Remove field"
+            icon="times"
+            onClick={(event) => {
+              event.preventDefault();
+              onDelete();
+            }}
+          />
+        </Field>
       </div>
 
       <div className="gf-form">
