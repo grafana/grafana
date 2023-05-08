@@ -99,9 +99,17 @@ export function PayloadEditor({
         />
 
         <div className={styles.buttonsWrapper}>
-          <Button onClick={onReset} className={styles.button} icon="arrow-up" type="button" variant="secondary">
-            {RESET_TO_DEFAULT}
+          <Button
+            type="button"
+            variant="secondary"
+            className={styles.button}
+            icon="bell"
+            disabled={errorInPayloadJson}
+            onClick={onOpenAlertSelectorModal}
+          >
+            Select alert instances
           </Button>
+
           <Button
             onClick={onOpenEditAlertModal}
             className={styles.button}
@@ -110,17 +118,10 @@ export function PayloadEditor({
             variant="secondary"
             disabled={errorInPayloadJson}
           >
-            Add alert data
+            Add custom alerts
           </Button>
-
-          <Button
-            type="button"
-            variant="secondary"
-            icon="bell"
-            disabled={errorInPayloadJson}
-            onClick={onOpenAlertSelectorModal}
-          >
-            Choose alert instances
+          <Button onClick={onReset} className={styles.button} icon="arrow-up" type="button" variant="destructive">
+            {RESET_TO_DEFAULT}
           </Button>
 
           {payloadFormatError !== null && (
