@@ -60,6 +60,7 @@ func main() {
 		// For each require, access the comment
 		for _, comment := range require.Syntax.Comments.Suffix {
 			owners := strings.Fields(comment.Token)
+			fmt.Println("owners!!", owners) // QUESTION: i left the last dependency in the dummy modfile empty - why doesn't this print the empty dependency?
 			// For each comment, determine if it contains an owner(s)
 			for _, owner := range owners {
 				// Break if dependency is indirect

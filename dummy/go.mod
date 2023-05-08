@@ -37,7 +37,7 @@ require (
 	cloud.google.com/go/compute v1.15.1 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
 	filippo.io/age v1.1.1 // @backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
