@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.50-fixfpm'
+grabpl_version = 'v2.9.50-fixfpm-3'
 build_image = 'grafana/build-container:1.5.5-go1.19.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -118,13 +118,18 @@ def init_enterprise_step(ver_mode):
         source_commit = ' ${DRONE_TAG}'
         environment = {
             'GITHUB_TOKEN': from_secret(github_token),
+            'GRAFANA_BRANCH': 'v8.5.x',
         }
         token = "--github-token $${GITHUB_TOKEN}"
     elif ver_mode == 'release-branch':
-        environment = {}
+        environment = {
+            'GRAFANA_BRANCH': 'v8.5.x',
+        }
         token = ""
     else:
-        environment = {}
+        environment = {
+            'GRAFANA_BRANCH': 'v8.5.x',
+        }
         token = ""
     commands = [
         'mv bin/grabpl /tmp/',
@@ -1133,7 +1138,8 @@ def get_windows_steps(edition, ver_mode):
             'environment': {
                 'GCP_KEY': from_secret('gcp_key'),
                 'PRERELEASE_BUCKET': from_secret(prerelease_bucket),
-                'GITHUB_TOKEN': from_secret('github_token')
+                'GITHUB_TOKEN': from_secret('github_token'),
+                'GRAFANA_BRANCH': 'v8.5.x',
             },
             'commands': installer_commands,
         })
