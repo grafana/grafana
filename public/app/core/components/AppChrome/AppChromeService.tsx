@@ -106,6 +106,8 @@ export class AppChromeService {
   onToggleSearchBar = () => {
     const searchBarHidden = !this.state.getValue().searchBarHidden;
     store.set(this.searchBarStorageKey, searchBarHidden);
+    // Exit kiosk mode whenever search bar is toggled
+    this.exitKioskMode();
     this.update({ searchBarHidden });
   };
 
