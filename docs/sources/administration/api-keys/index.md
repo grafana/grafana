@@ -61,7 +61,7 @@ For more information about the benefits of service accounts, refer to [Grafana s
 
 The service account endpoints generate a machine user for authentication instead of using API keys. When you migrate an API key to a service account, a service account will be created with a service account token.
 
-> **Note:** If you are using API keys for authentication, we recommend that you migrate your integration to the service account authentication method. The API key will continue to work as a service account token. You can locate the migrated API key under Service accounts, service account tokens tab. See [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
+> **Note:** If you're currently utilizing API keys for authentication, we strongly advise transitioning your integration to the service account authentication method. Rest assured, your existing API key will still function as a service account token. To find the migrated API key, navigate to the Service Accounts section and select the Service Account Tokens tab. For more information, please refer to the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
 
 ## Ways of migrating API keys to service accounts
 
