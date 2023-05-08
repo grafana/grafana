@@ -1,4 +1,4 @@
-import { DataFrame, FieldConfig, FieldSparkline, FieldType } from '@grafana/data';
+import { DataFrame, FieldConfig, FieldSparkline, FieldType, sortDataFrame } from '@grafana/data';
 import { GraphFieldConfig } from '@grafana/schema';
 
 import { applyNullInsertThreshold } from '../GraphNG/nullInsertThreshold';
@@ -13,22 +13,24 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
     ...config,
   };
 
-  return applyNullInsertThreshold({
-    frame: {
-      refId: 'sparkline',
-      fields: [
-        sparkline.x ?? {
-          name: '',
-          values: [...Array(length).keys()],
-          type: FieldType.number,
-          config: {},
-        },
-        {
-          ...sparkline.y,
-          config: yFieldConfig,
-        },
-      ],
-      length,
-    },
-  });
+  const frame = {
+    refId: 'sparkline',
+    fields: [
+      sparkline.x ?? {
+        name: '',
+        values: [...Array(length).keys()],
+        type: FieldType.number,
+        config: {},
+      },
+      {
+        ...sparkline.y,
+        config: yFieldConfig,
+      },
+    ],
+    length,
+  };
+
+  const sortedFrame = sortDataFrame(frame, 0);
+
+  return applyNullInsertThreshold({ frame: sortedFrame });
 }
