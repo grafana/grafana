@@ -37,7 +37,7 @@ The following topics give you an idea of what to expect from this guide:
 
 ## Go further
 
-Learn more about additional tools and find useful examples of a variety of plugin types.
+Learn more about additional tools and see plugin type examples. 
 
 ### User interface creation
 
