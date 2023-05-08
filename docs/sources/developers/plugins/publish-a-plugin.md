@@ -55,9 +55,8 @@ Follow these steps to publish your plugin for the first time.
 1. Click **Submit**.
    After you submit your plugin, we run an automated validation to make sure it adheres to our guidelines.
    Once your submission passes the validation, it's placed in a review queue.
-
-All submissions are manually inspected by a plugin reviewer.
-For every new plugin, we perform a manual review that includes the following checks:
+   All submissions are manually inspected by a plugin reviewer.
+   For every new plugin, we perform a manual review that includes the following checks:
 
 - **Code review:** For quality and security purposes, we review the source code for the plugin.
   If you're unable to make the source code publicly available, let us know in a comment on your plugin submission.
@@ -72,9 +71,7 @@ To submit an **update** for an already published plugin:
 1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update. The Create Plugin Submission dialog appears.
-
    {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
-
 1. Enter the information requested by the form.
    - **OS & Architecture:**
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
@@ -110,7 +107,7 @@ To submit an **update** for an already published plugin:
 
 ### Can I unlist my plugin from the Grafana plugin catalog in case of a bug?
 
-- In the event of a bug, unlisting the plugin from our catalog may be possible in exceptional cases, such as security concerns. However, we don't have control over the specific instances where the plugin is installed.
+- In the event of a bug, unlisting the plugin from our catalog may be possible in exceptional cases, such as security concerns. However, we don't have control over the instances where the plugin is installed.
 
 ### Can I distribute my plugin somewhere else other than the Grafana plugin catalog?
 
@@ -118,7 +115,7 @@ To submit an **update** for an already published plugin:
 
 ### Can I still use Angular for my plugin?
 
-- No. We will not accept any new plugin submissions written in angular. For more information, refer to our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
+- No. We will not accept any new plugin submissions written in Angular. For more information, refer to our [Angular support deprecation documentation]({{< relref "../angular_deprecation" >}}).
 
 ### Do plugin signatures expire?
 
@@ -127,5 +124,5 @@ To submit an **update** for an already published plugin:
 ### What source code URL formats are supported?
 
 - Using a tag or branch: `https://github.com/grafana/clock-panel/tree/v2.1.3`
-- A tag or branch and the code is in a subdirectory (important for mono repos): `https://github.com/grafana/clock-panel/tree/v2.1.3/plugin/` (here, the plugin contains the plugin code)
+- Using a tag or branch and the code is in a subdirectory (important for mono repos): `https://github.com/grafana/clock-panel/tree/v2.1.3/plugin/` (here, the plugin contains the plugin code)
 - Using the latest main or master branch commit: `https://github.com/grafana/clock-panel/` (not recommended, it's better to pass a tag or branch)

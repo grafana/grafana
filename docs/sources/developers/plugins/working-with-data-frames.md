@@ -4,7 +4,7 @@ title: Work with data frames
 
 # Work with data frames
 
-The [data frame](data-frames.md) is a columnar data structure that allows for efficient querying of large amounts of data. Since data frames are a central concept when developing plugins for Grafana, in this guide we'll look at some ways you can use them.
+The [data frame]({{< relref "data-frames" >}}) is a columnar data structure that allows for efficient querying of large amounts of data. Since data frames are a central concept when developing plugins for Grafana, in this guide we'll look at some ways you can use them.
 
 The `DataFrame` interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
 
@@ -57,7 +57,7 @@ function SimplePanel({ data: Props }) {
 }
 ```
 
-Before you start reading the data, think about what data you expect. For example, to visualize a time series we need at least one time field and one number field.
+Before you start reading the data, think about what data you expect. For example, to visualize a time series you need at least one time field and one number field.
 
 ```ts
 const timeField = frame.fields.find((field) => field.type === FieldType.time);

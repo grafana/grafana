@@ -8,7 +8,7 @@ Grafana supports a variety of different data sources, each with its own data mod
 
 ## The data frame
 
-Data frames have a columnar-oriented table structure, which means it stores data by column and not by row.
+Data frames have a columnar-oriented table structure, meaning that they store data by column and not by row.
 
 You can see what this means by looking at the TypeScript definition used by Grafana:
 
@@ -33,7 +33,7 @@ export interface Field<T = any, V = Vector<T>> {
    */
   name: string;
   /**
-   *  Field value type (string, number, etc)
+   *  Field value type (string, number, and so on)
    */
   type: FieldType;
   /**
@@ -74,7 +74,7 @@ export interface Field<T = any, V = Vector<T>> {
 }
 ```
 
-Let's look at an example. The following table demonstrates a data frame with two fields, _time_ and _temperature_.
+Let's look at an example. The following table demonstrates a data frame with two fields, _time_ and _temperature_:
 
 | time                | temperature |
 | ------------------- | ----------- |
@@ -110,7 +110,7 @@ For more information on time series, refer to our [Introduction to time series](
 
 When a collection of time series shares the same _time index_—the time fields in each time series are identical—they can be stored together, in a _wide_ format. By reusing the time field, less data is sent to the browser.
 
-In this example, the `cpu` usage from each host shares the time index, so we can store them in the same data frame.
+In this example, the `cpu` usage from each host shares the time index, so we can store them in the same data frame:
 
 ```text
 Name: Wide
@@ -125,7 +125,7 @@ Dimensions: 3 fields by 2 rows
 +---------------------+-----------------+-----------------+
 ```
 
-However, if the two time series don't share the same time values, they are represented as two distinct data frames.
+However, if the two time series don't share the same time values, they are represented as two distinct data frames:
 
 ```text
 Name: cpu
