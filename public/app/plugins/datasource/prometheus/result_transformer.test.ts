@@ -1,5 +1,4 @@
 import {
-  createDataFrame,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -771,7 +770,7 @@ describe('Prometheus Result Transformer', () => {
       const executedQueryForRefB = 'Expr: avg_over_time(access_evaluation_duration_bucket[5m])\nStep: 15s';
 
       const dataframes = [
-        createDataFrame({
+        new MutableDataFrame({
           refId: 'A',
           meta: {
             typeVersion: [0, 1],
@@ -790,7 +789,7 @@ describe('Prometheus Result Transformer', () => {
             },
           ],
         }),
-        createDataFrame({
+        new MutableDataFrame({
           refId: 'B',
           meta: {
             typeVersion: [0, 1],
