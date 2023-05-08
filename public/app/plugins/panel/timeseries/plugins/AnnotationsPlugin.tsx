@@ -3,6 +3,7 @@ import uPlot from 'uplot';
 
 import { colorManipulator, DataFrame, DataFrameFieldIndex, DataFrameView, TimeZone } from '@grafana/data';
 import { EventsCanvas, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { AnnotationMarker } from './annotations/AnnotationMarker';
 import { AnnotationsDataFrameViewDTO } from './types';
@@ -36,6 +37,8 @@ export const AnnotationsPlugin = ({ annotations, timeZone, config }: Annotations
   }, [annotations]);
 
   useLayoutEffect(() => {
+    getTimeSrv().refreshTimeModel();
+
     config.addHook('init', (u) => {
       plotInstance.current = u;
     });
