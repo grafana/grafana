@@ -11,9 +11,10 @@ import { Breadcrumb } from './types';
 type Props = Breadcrumb & {
   isCurrent: boolean;
   index: number;
+  flexGrow: number;
 };
 
-export function BreadcrumbItem({ href, isCurrent, text, index }: Props) {
+export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
   const styles = useStyles2(getStyles);
 
   const onBreadcrumbClick = () => {
@@ -21,7 +22,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index }: Props) {
   };
 
   return (
-    <li className={styles.breadcrumbWrapper} style={{ flexGrow: index + 1 }}>
+    <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
       {isCurrent ? (
         <span
           data-testid={Components.Breadcrumbs.breadcrumb(text)}
