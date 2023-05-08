@@ -89,7 +89,19 @@ To enable the state history view, complete the following steps.
    b. Enable the three feature toggles for alert state history.
 
 **Example:**
-{{< figure src="/media/docs/alerting/state-history-config.png" max-width="750px" caption="State history configuration" >}}
+
+```
+[unified_alerting.state_history]
+
+enabled = true
+
+backend = loki
+
+loki_remote_url = http://localhost:3100
+
+[feature_toggles]
+enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStateHistoryLokiOnly
+```
 
 ### View state history
 
