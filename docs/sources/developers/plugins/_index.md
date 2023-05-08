@@ -26,7 +26,7 @@ You can create several types of plugins, including:
 
 ## Contents of this developer's guide
 
-The following topics give you an idea of what to expect from this guide:
+The following topics are covered in this guide:
 
 - **[Get started with plugins]({{< relref "./get-started-with-plugins" >}})** - The easiest way to start developing Grafana plugins is to use the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool.
 - **[Introduction to plugin development]({{< relref "./introduction-to-plugin-development" >}})** - Ground yourself in the fundamentals of Grafana plugin development: frontend and backend development processes, data frames, error handling, and more.
