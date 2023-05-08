@@ -28,7 +28,7 @@ You can create several types of plugins, including:
 
 The following topics are covered in this guide:
 
-- **[Get started with plugins]({{< relref "./get-started-with-plugins" >}})** - The easiest way to start developing Grafana plugins is to use the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool.
+- **[Get started with plugins]({{< relref "./get-started-with-plugins" >}})** - Start developing Grafana plugins with the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool.
 - **[Introduction to plugin development]({{< relref "./introduction-to-plugin-development" >}})** - Ground yourself in the fundamentals of Grafana plugin development: frontend and backend development processes, data frames, error handling, and more.
 - **[Create a Grafana plugin]({{< relref "./create-a-grafana-plugin" >}})** - If you're already familiar with plugin creation basics, then it's time to dive deeper into specific development scenarios. You'll find tutorials for creating panel plugins, data source plugins, and more.
 - **[Migrate a plugin]({{< relref "./migration-guide" >}})** - Learn how to upgrade from a previous version of a Grafana plugin, rewrite an old Angular plugin in React, or update to a newer version.
