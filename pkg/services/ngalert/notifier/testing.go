@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/images"
+	alertingImages "github.com/grafana/alerting/images"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -25,23 +25,23 @@ type fakeConfigStore struct {
 
 // Saves the image or returns an error.
 func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
-	return images.ErrImageNotFound
+	return alertingImages.ErrImageNotFound
 }
 
 func (f *fakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
-	return nil, images.ErrImageNotFound
+	return nil, alertingImages.ErrImageNotFound
 }
 
 func (f *fakeConfigStore) GetImageByURL(ctx context.Context, url string) (*models.Image, error) {
-	return nil, images.ErrImageNotFound
+	return nil, alertingImages.ErrImageNotFound
 }
 
 func (f *fakeConfigStore) URLExists(ctx context.Context, url string) (bool, error) {
-	return false, images.ErrImageNotFound
+	return false, alertingImages.ErrImageNotFound
 }
 
 func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
-	return nil, nil, images.ErrImageNotFound
+	return nil, nil, alertingImages.ErrImageNotFound
 }
 
 func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) *fakeConfigStore {

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/alerting/images"
+	alertingImages "github.com/grafana/alerting/images"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -21,13 +21,13 @@ type imageProvider struct {
 	store store.ImageStore
 }
 
-func newImageStore(store store.ImageStore) images.Provider {
+func newImageStore(store store.ImageStore) alertingImages.Provider {
 	return &imageProvider{
 		store: store,
 	}
 }
 
-func (i imageProvider) GetImage(ctx context.Context, uri string) (*images.Image, error) {
+func (i imageProvider) GetImage(ctx context.Context, uri string) (*alertingImages.Image, error) {
 	var (
 		image *models.Image
 		err   error
@@ -44,7 +44,7 @@ func (i imageProvider) GetImage(ctx context.Context, uri string) (*images.Image,
 		return nil, err
 	}
 
-	return &images.Image{
+	return &alertingImages.Image{
 		Token:     image.Token,
 		Path:      image.Path,
 		URL:       image.URL,
@@ -65,7 +65,7 @@ func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Al
 			return "", err
 		}
 		if !exists {
-			return "", images.ErrImageNotFound
+			return "", alertingImages.ErrImageNotFound
 		}
 		return uri, nil
 	}
@@ -80,13 +80,13 @@ func (i imageProvider) getImageURLFromToken(ctx context.Context, token string) (
 	image, err := i.store.GetImage(ctx, token)
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
-			return "", images.ErrImageNotFound
+			return "", alertingImages.ErrImageNotFound
 		}
 		return "", err
 	}
 
 	if !image.HasURL() {
-		return "", images.ErrImagesNoURL
+		return "", alertingImages.ErrImagesNoURL
 	}
 	return image.URL, nil
 }
@@ -107,13 +107,13 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 	}
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
-			return nil, "", images.ErrImageNotFound
+			return nil, "", alertingImages.ErrImageNotFound
 		}
 		return nil, "", err
 	}
 
 	if !image.HasPath() {
-		return nil, "", images.ErrImagesNoPath
+		return nil, "", alertingImages.ErrImagesNoPath
 	}
 
 	// Return image bytes and filename.
@@ -139,7 +139,7 @@ func openImage(path string) (io.ReadCloser, error) {
 	fp := filepath.Clean(path)
 	_, err := os.Stat(fp)
 	if os.IsNotExist(err) || os.IsPermission(err) {
-		return nil, images.ErrImageNotFound
+		return nil, alertingImages.ErrImageNotFound
 	}
 
 	f, err := os.Open(fp)

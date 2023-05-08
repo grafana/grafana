@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/images"
+	alertingImages "github.com/grafana/alerting/images"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -84,7 +84,7 @@ func TestGetImageURL(t *testing.T) {
 			"URL does not exist",
 			"https://invalid.com/test",
 			"",
-			images.ErrImageNotFound,
+			alertingImages.ErrImageNotFound,
 		}, {
 			"existing URL",
 			testImage.URL,
@@ -94,7 +94,7 @@ func TestGetImageURL(t *testing.T) {
 			"token does not exist",
 			"token://invalid",
 			"",
-			images.ErrImageNotFound,
+			alertingImages.ErrImageNotFound,
 		}, {
 			"existing token",
 			"token://" + testImage.Token,
@@ -104,7 +104,7 @@ func TestGetImageURL(t *testing.T) {
 			"image has no URL",
 			"token://" + imageWithoutURL.Token,
 			"",
-			images.ErrImagesNoURL,
+			alertingImages.ErrImagesNoURL,
 		},
 	}
 
@@ -156,7 +156,7 @@ func TestGetRawImage(t *testing.T) {
 			"https://invalid.com/test",
 			"",
 			nil,
-			images.ErrImageNotFound,
+			alertingImages.ErrImageNotFound,
 		}, {
 			"existing URL",
 			testImage.URL,
@@ -168,7 +168,7 @@ func TestGetRawImage(t *testing.T) {
 			"token://invalid",
 			"",
 			nil,
-			images.ErrImageNotFound,
+			alertingImages.ErrImageNotFound,
 		}, {
 			"existing token",
 			"token://" + testImage.Token,
@@ -180,7 +180,7 @@ func TestGetRawImage(t *testing.T) {
 			"token://" + imageWithoutPath.Token,
 			"",
 			nil,
-			images.ErrImagesNoPath,
+			alertingImages.ErrImagesNoPath,
 		},
 	}
 
