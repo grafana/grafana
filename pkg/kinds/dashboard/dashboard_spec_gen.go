@@ -250,13 +250,13 @@ type DataTransformerConfig struct {
 
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
-	Options any `json:"options"`
+	Options interface{} `json:"options"`
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
-	Id    string `json:"id"`
-	Value *any   `json:"value,omitempty"`
+	Id    string       `json:"id"`
+	Value *interface{} `json:"value,omitempty"`
 }
 
 // TODO docs
@@ -281,7 +281,7 @@ type FieldConfig struct {
 
 	// custom is specified by the PanelFieldConfig field
 	// in panel plugin schemas.
-	Custom map[string]any `json:"custom,omitempty"`
+	Custom map[string]interface{} `json:"custom,omitempty"`
 
 	// Significant digits (for display)
 	Decimals *float32 `json:"decimals,omitempty"`
@@ -300,7 +300,7 @@ type FieldConfig struct {
 	Filterable *bool `json:"filterable,omitempty"`
 
 	// The behavior when clicking on a result
-	Links []any `json:"links,omitempty"`
+	Links []interface{} `json:"links,omitempty"`
 
 	// Convert input values into a display string
 	Mappings []interface{} `json:"mappings,omitempty"`
@@ -388,8 +388,8 @@ type MappingType string
 
 // MatcherConfig defines model for MatcherConfig.
 type MatcherConfig struct {
-	Id      string `json:"id"`
-	Options *any   `json:"options,omitempty"`
+	Id      string       `json:"id"`
+	Options *interface{} `json:"options,omitempty"`
 }
 
 // Dashboard panels. Panels are canonically defined inline
@@ -424,7 +424,7 @@ type Panel struct {
 
 	// options is specified by the PanelOptions field in panel
 	// plugin schemas.
-	Options map[string]any `json:"options"`
+	Options map[string]interface{} `json:"options"`
 
 	// FIXME this almost certainly has to be changed in favor of scuemata versions
 	PluginVersion *string `json:"pluginVersion,omitempty"`
@@ -447,14 +447,14 @@ type Panel struct {
 	Targets []Target `json:"targets,omitempty"`
 
 	// TODO docs - seems to be an old field from old dashboard alerts?
-	Thresholds []any `json:"thresholds,omitempty"`
+	Thresholds []interface{} `json:"thresholds,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
 	TimeFrom *string `json:"timeFrom,omitempty"`
 
 	// TODO docs
-	TimeRegions []any `json:"timeRegions,omitempty"`
+	TimeRegions []interface{} `json:"timeRegions,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
@@ -695,7 +695,7 @@ type SpecialValueMapType string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
-type Target = map[string]any
+type Target = map[string]interface{}
 
 // TODO docs
 type Threshold struct {
@@ -752,15 +752,15 @@ type VariableHide int
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
 	// Ref to a DataSource instance
-	Datasource  *DataSourceRef `json:"datasource,omitempty"`
-	Description *string        `json:"description,omitempty"`
-	Error       map[string]any `json:"error,omitempty"`
-	Global      bool           `json:"global"`
-	Hide        VariableHide   `json:"hide"`
-	Id          string         `json:"id"`
-	Index       int            `json:"index"`
-	Label       *string        `json:"label,omitempty"`
-	Name        string         `json:"name"`
+	Datasource  *DataSourceRef         `json:"datasource,omitempty"`
+	Description *string                `json:"description,omitempty"`
+	Error       map[string]interface{} `json:"error,omitempty"`
+	Global      bool                   `json:"global"`
+	Hide        VariableHide           `json:"hide"`
+	Id          string                 `json:"id"`
+	Index       int                    `json:"index"`
+	Label       *string                `json:"label,omitempty"`
+	Name        string                 `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
 	Query        *interface{} `json:"query,omitempty"`

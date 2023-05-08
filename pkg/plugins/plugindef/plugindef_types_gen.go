@@ -415,7 +415,7 @@ type RoleRegistration struct {
 type Route struct {
 	// For data source plugins. Route headers set the body content and
 	// length to the proxied request.
-	Body map[string]any `json:"body,omitempty"`
+	Body map[string]interface{} `json:"body,omitempty"`
 
 	// For data source plugins. Route headers adds HTTP headers to the
 	// proxied request.
