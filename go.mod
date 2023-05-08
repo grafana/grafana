@@ -262,8 +262,8 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a
-	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
+	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
+	github.com/grafana/thema v0.0.0-20230508173855-53a6fb01cf31
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
@@ -427,7 +427,3 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421
 
 // Use 1.10.6 of pq to avoid a change in 1.10.7 that has certificate validation issues. https://github.com/grafana/grafana/issues/65816
 replace github.com/lib/pq => github.com/lib/pq v1.10.6
-
-replace github.com/grafana/kindsys => ../kindsys
-
-replace github.com/grafana/thema => ../thema

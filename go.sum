@@ -1329,6 +1329,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0 h1:jELbsqee5kRz9vD1hZeP8+984xMZDU/M6uGv0RhOR34=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
+github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
+github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 h1:bBzCezZNRyYlJpXTkyZdY4fpPxHZUdyeyRWzhtw/P6I=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413/go.mod h1:IvwuGG9xa/h96UH/exgvsfy3zE+ZpctkNT9o5aaGdrU=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230426142720-803b73a2f1f7 h1:ebffH74Mxh6WLnoShty88jWQ5iLlI/d/qOxS/wdclMg=
@@ -1337,6 +1339,10 @@ github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6 h1:oHn/OOUkECNX06D
 github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
 github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
+github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe h1:Ws23A0XH6XYNaF/XhrOhNiC09rqGisvflCf0aHRhpTM=
+github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe/go.mod h1:hjlPua8wL3HO188Qg6GhTeYOPaUOneC04sFYRtcxSNw=
+github.com/grafana/thema v0.0.0-20230508173855-53a6fb01cf31 h1:LPF51jHksy4NJWVQwe3I/PSdThvITF6Jr1FPC5t5GXk=
+github.com/grafana/thema v0.0.0-20230508173855-53a6fb01cf31/go.mod h1:Pn9nfzCk7nV0mvNgwusgCjCROZP6nm4GpwTnmEhLT24=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
