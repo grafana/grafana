@@ -16,6 +16,10 @@ load(
     "integration_tests",
 )
 load(
+    "scripts/drone/pipelines/windows.star",
+    "windows_test_backend",
+)
+load(
     "scripts/drone/pipelines/build.star",
     "build_e2e",
 )
@@ -98,6 +102,13 @@ def pr_pipelines():
                     "devenv/**",
                 ],
             ),
+            ver_mode,
+        ),
+        windows_test_backend(
+            get_pr_trigger(
+                exclude_paths = ["pkg/**", "packaging/**", "go.sum", "go.mod"],
+            ),
+            "oss",
             ver_mode,
         ),
         lint_backend_pipeline(
