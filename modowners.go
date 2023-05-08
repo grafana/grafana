@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"golang.org/x/mod/modfile"
 )
@@ -40,7 +41,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to read file: %s", err)
 	}
-	fmt.Printf("Contents of go.mod file:\n%s\n", string(data))
 
 	// Parse modfile
 	modFile, err := modfile.Parse("", data, nil)
@@ -48,20 +48,33 @@ func main() {
 		log.Fatalf("failed to parse modfile: %s", err)
 	}
 
-	// TODO: remove this
-	fmt.Println("MODFILE", modFile.Module.Mod.Path)
+	// New Module struct
+	m := Module{}
+
+	// Flag to track if dependency is indirect
+	flag := false
+	fmt.Println("flag", flag) // QUESTION: including this line for now because if i comment this out, i get compile warning "flag declared but not used" - how come?
 
 	// Iterate through requires in modfile
 	for _, require := range modFile.Require {
-		// For each require, print the comment suffix
+		// For each require, access the comment
 		for _, comment := range require.Syntax.Comments.Suffix {
-			// For each comment, determine if it's an owner (contains an @)
-			for _, owner := range comment {
-				// If yes add to owners list; ignore if implicit
-				// Use boolean flag to see if it’s implicit or not, initially assume module is explicit, unless i find a comment that includes implicit word, then change flag to implicit
-
+			owners := strings.Fields(comment.Token)
+			// For each comment, determine if it contains an owner(s)
+			for _, owner := range owners {
+				// Break if dependency is indirect
+				if strings.Contains(owner, "indirect") {
+					flag = true // QUESTION: why do we need flag if we're breaking anyway?
+					break
+				}
+				// If an owner, add to owners list
+				if strings.Contains(owner, "@") {
+					if !strings.Contains(strings.Join(m.Owners, " "), owner) { // QUESTION: this `strings.Join(m.Owners, " ")` doesn't change the original m.Owners, right?
+						m.Owners = append(m.Owners, owner)
+					}
+				}
 			}
-			fmt.Println("comment: ", comment)
 		}
 	}
+	fmt.Println("owners: ", m.Owners)
 }
