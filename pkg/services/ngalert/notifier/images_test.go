@@ -2,7 +2,7 @@ package notifier
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,6 +30,7 @@ func TestGetImage(t *testing.T) {
 		err := fakeImageStore.SaveImage(context.Background(), &img)
 		require.NoError(tt, err)
 
+		// nolint:staticcheck
 		savedImg, err := store.GetImage(context.Background(), "token://"+img.Token)
 		require.NoError(tt, err)
 		require.Equal(tt, savedImg.Token, img.Token)
@@ -46,6 +47,7 @@ func TestGetImage(t *testing.T) {
 		err := fakeImageStore.SaveImage(context.Background(), &img)
 		require.NoError(tt, err)
 
+		// nolint:staticcheck
 		savedImg, err := store.GetImage(context.Background(), img.URL)
 		require.NoError(tt, err)
 		require.Equal(tt, savedImg.Token, img.Token)
@@ -194,10 +196,10 @@ func TestGetRawImage(t *testing.T) {
 			require.Equal(tt, test.expFilename, filename)
 
 			if test.expBytes != nil {
-				defer readCloser.Close()
-				b, err := ioutil.ReadAll(readCloser)
+				b, err := io.ReadAll(readCloser)
 				require.NoError(tt, err)
 				require.Equal(tt, test.expBytes, b)
+				require.NoError(t, readCloser.Close())
 			}
 		})
 	}
