@@ -70,3 +70,56 @@ When evaluation of an alerting rule produces state `NoData` or `Error`, Grafana 
 | **datasource_uid** | The UID of the data source that caused the state.                      |
 
 You can handle these alerts the same way as regular alerts by adding a silence, route to a contact point, and so on.
+
+## State history view
+
+Use the State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
+
+### Configure the state history view
+
+**Note:** This applies to Open Source only. There is no configuration required if you are using Grafana Cloud.
+
+To enable the state history view, complete the following steps.
+
+1. Ensure you have a Loki instance running to save your history to.
+1. Configure the following settings in your Grafana configuration:
+
+   a. Enable the Loki backend and Loki remote URL.
+
+   b. Enable the three feature toggles for alert state history.
+
+**Example:**
+
+```
+[unified_alerting.state_history]
+enabled = true
+backend = loki
+loki_remote_url = http://localhost:3100
+
+[feature_toggles]
+enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStateHistoryLokiOnly
+```
+
+### View state history
+
+To use the State history view, complete the following steps.
+
+1. Navigate to **Alerts&IRM** -> **Alerting** -> **Alert rules**.
+1. Click an alert rule.
+1. Select **Show state history**.
+
+   The State history view opens.
+
+   The timeline view at the top displays a timeline of changes for the past hour, so you can track how your alert instances are behaving over time.
+
+   The bottom part shows the alert instances, their previous and current state, the value of each part of the expression and a unique set of labels.
+
+   Common labels are displayed at the top to make it easier to identify different alert instances.
+
+1. From the timeline view, hover over a time to get an automatic display of all the changes that happened at that particular moment.
+
+   These changes are displayed in real time in the timestamp view at the bottom of the page. The timestamp view is a list of all the alert instances that changed state at that point in time. The visualization only displays 12 instances by default.
+
+   The value shown for each instance is for each part of the expression that was evaluated.
+
+1. Click the labels to filter and narrow down the results.
