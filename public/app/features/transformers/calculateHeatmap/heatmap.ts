@@ -16,6 +16,7 @@ import {
   durationToMilliseconds,
   parseDuration,
 } from '@grafana/data';
+import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   ScaleDistribution,
   HeatmapCellLayout,
@@ -326,7 +327,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   };
 
   const heat2d = heatmap(xs, ys, {
-    xSorted: true,
+    xSorted: isLikelyAscendingVector(xs),
     xTime: xField.type === FieldType.time,
     xMode: xBucketsCfg.mode,
     xSize:
