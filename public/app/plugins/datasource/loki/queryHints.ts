@@ -23,20 +23,35 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
   const { queryWithParser, parserCount } = isQueryWithParser(query);
 
   if (!queryWithParser) {
-    const { hasLogfmt, hasJSON } = extractLogParserFromDataFrame(series[0]);
+    const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
     if (hasJSON) {
-      hints.push({
-        type: 'ADD_JSON_PARSER',
-        label: 'Selected log stream selector has JSON formatted logs.',
-        fix: {
-          title: 'add json parser',
-          label: 'Consider using JSON parser.',
-          action: {
-            type: 'ADD_JSON_PARSER',
-            query,
+      if (hasPack) {
+        hints.push({
+          type: 'ADD_UNPACK_PARSER',
+          label: 'Selected log stream selector has packed logs.',
+          fix: {
+            title: 'add unpack parser',
+            label: 'Consider using unpack parser.',
+            action: {
+              type: 'ADD_UNPACK_PARSER',
+              query,
+            },
           },
-        },
-      });
+        });
+      } else {
+        hints.push({
+          type: 'ADD_JSON_PARSER',
+          label: 'Selected log stream selector has JSON formatted logs.',
+          fix: {
+            title: 'add json parser',
+            label: 'Consider using JSON parser.',
+            action: {
+              type: 'ADD_JSON_PARSER',
+              query,
+            },
+          },
+        });
+      }
     }
 
     if (hasLogfmt) {

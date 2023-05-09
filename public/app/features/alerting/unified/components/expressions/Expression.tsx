@@ -19,7 +19,7 @@ import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
 import { AlertConditionIndicator } from './AlertConditionIndicator';
-import { formatLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
+import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
   isAlertCondition?: boolean;
@@ -135,20 +135,12 @@ interface ExpressionResultProps {
 }
 export const PAGE_SIZE = 20;
 export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
-  const { page, pageItems, onPageChange, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
+  const { pageItems, previousPage, nextPage, numberOfPages, pageStart, pageEnd } = usePagination(series, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
   // sometimes we receive results where every value is just "null" when noData occurs
   const emptyResults = isEmptySeries(series);
   const isTimeSeriesResults = !emptyResults && isTimeSeriesFrames(series);
-
-  const previousPage = useCallback(() => {
-    onPageChange(page - 1);
-  }, [page, onPageChange]);
-
-  const nextPage = useCallback(() => {
-    onPageChange(page + 1);
-  }, [page, onPageChange]);
 
   const shouldShowPagination = numberOfPages > 1;
 
@@ -310,16 +302,37 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 
   const name = getSeriesName(frame) || 'Series ' + index;
   const value = getSeriesValue(frame);
+  const labelsRecord = getSeriesLabels(frame);
+  const labels = Object.entries(labelsRecord);
+  const hasLabels = labels.length > 0;
 
   const showFiring = isAlertCondition && value !== 0;
   const showNormal = isAlertCondition && value === 0;
 
+  const title = `${hasLabels ? '' : name}${hasLabels ? `{${formatLabels(labelsRecord)}}` : ''}`;
+
   return (
     <div className={styles.expression.resultsRow}>
       <Stack direction="row" gap={1} alignItems="center">
-        <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
-          {name}
-        </span>
+        <div className={styles.expression.resultLabel} title={title}>
+          <span>{hasLabels ? '' : name}</span>
+          {hasLabels && (
+            <>
+              <span>{'{'}</span>
+              {labels.map(([key, value], index) => (
+                <span key={uniqueId()}>
+                  <span className={styles.expression.labelKey}>{key}</span>
+                  <span>=</span>
+                  <span>&quot;</span>
+                  <span className={styles.expression.labelValue}>{value}</span>
+                  <span>&quot;</span>
+                  {index < labels.length - 1 && <span>, </span>}
+                </span>
+              ))}
+              <span>{'}'}</span>
+            </>
+          )}
+        </div>
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
         {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
@@ -331,13 +344,16 @@ const FrameRow: FC<FrameProps> = ({ frame, index, isAlertCondition }) => {
 const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => {
   const styles = useStyles2(getStyles);
 
-  const hasLabels = frame.fields[1].labels;
-  const name = hasLabels ? formatLabels(frame.fields[1].labels ?? {}) : 'Series ' + index;
+  const valueField = frame.fields[1]; // field 0 is "time", field 1 is "value"
 
-  const timestamps = frame.fields[0].values.toArray();
+  const hasLabels = valueField.labels;
+  const displayNameFromDS = valueField.config?.displayNameFromDS;
+  const name = displayNameFromDS ?? (hasLabels ? formatLabels(valueField.labels ?? {}) : 'Series ' + index);
 
-  const getTimestampFromIndex = (index: number) => frame.fields[0].values.get(index);
-  const getValueFromIndex = (index: number) => frame.fields[1].values.get(index);
+  const timestamps = frame.fields[0].values;
+
+  const getTimestampFromIndex = (index: number) => frame.fields[0].values[index];
+  const getValueFromIndex = (index: number) => frame.fields[1].values[index];
 
   return (
     <div className={styles.expression.resultsRow}>
@@ -402,6 +418,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: ${theme.colors.primary.text};
     `,
     results: css`
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+
       border-top: solid 1px ${theme.colors.border.medium};
     `,
     noResults: css`
@@ -420,12 +440,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
         background-color: ${theme.colors.background.canvas};
       }
     `,
+    labelKey: css`
+      color: ${theme.isDark ? '#73bf69' : '#56a64b'};
+    `,
+    labelValue: css`
+      color: ${theme.isDark ? '#ce9178' : '#a31515'};
+    `,
     resultValue: css`
-      color: ${theme.colors.text.maxContrast};
       text-align: right;
     `,
     resultLabel: css`
       flex: 1;
+      overflow-x: auto;
+
+      display: inline-block;
+      white-space: nowrap;
     `,
     noData: css`
       display: flex;

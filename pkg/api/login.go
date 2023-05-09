@@ -318,8 +318,8 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
 		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: c.UserID}
-		if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-			if getAuthQuery.Result.AuthModule == loginservice.SAMLAuthModule {
+		if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+			if authInfo.AuthModule == loginservice.SAMLAuthModule {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 				return
 			}

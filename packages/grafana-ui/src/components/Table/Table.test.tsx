@@ -65,7 +65,7 @@ function getDefaultDataFrame(): DataFrame {
       overrides: [],
     },
     replaceVariables: (value, vars, format) => {
-      return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+      return vars && value === '${__value.text}' ? '${__value.text} interpolation' : value;
     },
     timeZone: 'utc',
     theme: createTheme(),
@@ -144,43 +144,11 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
-    });
-  });
-
-  describe('when `showRowNums` is toggled', () => {
-    const showRowNumsTestContext = {
-      data: toDataFrame({
-        name: 'A',
-        fields: [
-          {
-            name: 'number',
-            type: FieldType.number,
-            values: [1, 1, 1, 2, 2, 3, 4, 5],
-            config: {
-              custom: {
-                filterable: true,
-              },
-            },
-          },
-        ],
-      }),
-    };
-
-    it('should render the (fields.length) rows when `showRowNums` is untoggled', () => {
-      getTestContext({ ...showRowNumsTestContext, showRowNums: false });
-
-      expect(screen.getAllByRole('columnheader')).toHaveLength(1);
-    });
-
-    it('should render (fields.length + 1) rows row when `showRowNums` is toggled', () => {
-      getTestContext({ ...showRowNumsTestContext, showRowNums: true });
-
-      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     });
   });
 
@@ -203,10 +171,10 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
       ]);
     });
   });
@@ -582,10 +550,10 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
 
       await userEvent.click(within(rows[1]).getByLabelText('Expand row'));

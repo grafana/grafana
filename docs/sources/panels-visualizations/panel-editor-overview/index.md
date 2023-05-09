@@ -6,6 +6,7 @@ aliases:
   - ../panels/add-panels-dynamically/about-repeating-panels-rows/
   - ../panels/add-panels-dynamically/configure-repeating-panels/
   - ../panels/add-panels-dynamically/configure-repeating-rows/
+  - ../panels/working-with-panels/
   - ../panels/working-with-panels/add-panel/
   - ../panels/working-with-panels/navigate-inspector-panel/
   - ../panels/working-with-panels/navigate-panel-editor/
@@ -23,13 +24,20 @@ weight: 1
 
 # Panel editor overview
 
-{{< figure src="/static/img/docs/panel-editor/panel-editor-8-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
+In the panel editor, you can update all the elements of a visualization including the data source, queries, time range, and visualization display options.
+
+![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
+
+To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard. To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown:
+
+![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
+
+## Panel editor
 
 This section describes the areas of the Grafana panel editor.
 
 1. Panel header: The header section lists the dashboard in which the panel appears and the following controls:
 
-   - **Dashboard settings (gear) icon:** Click to access the dashboard settings.
    - **Discard:** Discards changes you have made to the panel since you last saved the dashboard.
    - **Save:** Saves changes you made to the panel.
    - **Apply:** Applies changes you made and closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
@@ -49,9 +57,11 @@ This section describes the areas of the Grafana panel editor.
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 
-## Open the panel inspect drawer
+## Panel inspect drawer
 
 The inspect drawer helps you understand and troubleshoot your panels. You can view the raw data for any panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
+
+To access the panel inspect drawer from the edit view, hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Inspect**.
 
 > **Note:** Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 

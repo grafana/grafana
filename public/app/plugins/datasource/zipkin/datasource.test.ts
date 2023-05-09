@@ -21,7 +21,6 @@ describe('ZipkinDatasource', () => {
       replace: jest.fn(),
       getVariables: jest.fn(),
       containsTemplate: jest.fn(),
-      getAllVariablesInTarget: jest.fn(),
       updateTimeRange: jest.fn(),
     };
 

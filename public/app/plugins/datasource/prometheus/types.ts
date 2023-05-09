@@ -13,14 +13,24 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
+  // store the metrics modal additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  fullMetaSearch?: boolean;
+  excludeNullMetadata?: boolean;
 }
 
+export enum PrometheusCacheLevel {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+  None = 'None',
+}
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -31,7 +41,10 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
+  cacheLevel?: PrometheusCacheLevel;
   defaultEditor?: QueryEditorMode;
+  incrementalQuerying?: boolean;
+  incrementalQueryOverlapWindow?: string;
 }
 
 export type ExemplarTraceIdDestination = {

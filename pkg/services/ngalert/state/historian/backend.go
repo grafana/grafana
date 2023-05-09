@@ -18,7 +18,6 @@ const (
 	BackendTypeLoki        BackendType = "loki"
 	BackendTypeMultiple    BackendType = "multiple"
 	BackendTypeNoop        BackendType = "noop"
-	BackendTypeSQL         BackendType = "sql"
 )
 
 func ParseBackendType(s string) (BackendType, error) {
@@ -29,7 +28,6 @@ func ParseBackendType(s string) (BackendType, error) {
 		BackendTypeLoki:        {},
 		BackendTypeMultiple:    {},
 		BackendTypeNoop:        {},
-		BackendTypeSQL:         {},
 	}
 	p := BackendType(norm)
 	if _, ok := types[p]; !ok {

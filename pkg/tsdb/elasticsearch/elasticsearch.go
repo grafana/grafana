@@ -1,13 +1,18 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path"
 	"strconv"
+	"strings"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -44,12 +49,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 // separate function to allow testing the whole transformation and query flow
 func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
-	// Support for version after their end-of-life (currently <7.10.0) was removed
-	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
-	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
-		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
-	}
-
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
@@ -84,10 +83,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		version, err := coerceVersion(jsonData["esVersion"])
-		if err != nil {
-			return nil, fmt.Errorf("elasticsearch version is required, err=%v", err)
-		}
+		// we used to have a field named `esVersion`, please do not use this name in the future.
 
 		timeField, ok := jsonData["timeField"].(string)
 		if !ok {
@@ -116,6 +112,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		timeInterval, ok := jsonData["timeInterval"].(string)
 		if !ok {
 			timeInterval = ""
+		}
+
+		index, ok := jsonData["index"].(string)
+		if !ok {
+			index = ""
+		}
+		if index == "" {
+			index = settings.Database
 		}
 
 		var maxConcurrentShardRequests float64
@@ -152,9 +156,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			ID:                         settings.ID,
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
-			Database:                   settings.Database,
+			Database:                   index,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
-			ESVersion:                  version,
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			TimeInterval:               timeInterval,
@@ -176,31 +179,67 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	return &instance, nil
 }
 
-func coerceVersion(v interface{}) (*semver.Version, error) {
-	versionString, ok := v.(string)
-	if ok {
-		return semver.NewVersion(versionString)
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger := eslog.FromContext(ctx)
+	// allowed paths for resource calls:
+	// - empty string for fetching db version
+	// - ?/_mapping for fetching index mapping
+	// - _msearch for executing getTerms queries
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
-	versionNumber, ok := v.(float64)
-	if !ok {
-		return nil, fmt.Errorf("elasticsearch version %v, cannot be cast to int", v)
+	ds, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return err
 	}
 
-	// Legacy version numbers (before Grafana 8)
-	// valid values were 2,5,56,60,70
-	switch int64(versionNumber) {
-	case 2:
-		return semver.NewVersion("2.0.0")
-	case 5:
-		return semver.NewVersion("5.0.0")
-	case 56:
-		return semver.NewVersion("5.6.0")
-	case 60:
-		return semver.NewVersion("6.0.0")
-	case 70:
-		return semver.NewVersion("7.0.0")
-	default:
-		return nil, fmt.Errorf("elasticsearch version=%d is not supported", int64(versionNumber))
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return err
 	}
+
+	resourcePath, err := url.Parse(req.Path)
+	if err != nil {
+		return err
+	}
+
+	// We take the path and the query-string only
+	esUrl.RawQuery = resourcePath.RawQuery
+	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
+
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
+	if err != nil {
+		return err
+	}
+
+	response, err := ds.HTTPClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	responseHeaders := map[string][]string{
+		"content-type": {"application/json"},
+	}
+
+	if response.Header.Get("Content-Encoding") != "" {
+		responseHeaders["content-encoding"] = []string{response.Header.Get("Content-Encoding")}
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  response.StatusCode,
+		Headers: responseHeaders,
+		Body:    body,
+	})
 }

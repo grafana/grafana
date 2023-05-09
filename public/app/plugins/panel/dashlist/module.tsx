@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { PanelModel, PanelPlugin } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { TagsInput } from '@grafana/ui';
 
 import {
@@ -11,25 +10,21 @@ import {
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 
 import { DashList } from './DashList';
-import { defaultOptions, PanelLayout, Options } from './panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(DashList)
   .setPanelOptions((builder) => {
-    if (config.featureToggles.dashboardPreviews) {
-      builder.addRadio({
-        path: 'layout',
-        name: 'Layout',
-        defaultValue: PanelLayout.List,
-        settings: {
-          options: [
-            { value: PanelLayout.List, label: 'List' },
-            { value: PanelLayout.Previews, label: 'Preview' },
-          ],
-        },
-      });
-    }
-
     builder
+      .addBooleanSwitch({
+        path: 'keepTime',
+        name: 'Include current time range',
+        defaultValue: defaultOptions.keepTime,
+      })
+      .addBooleanSwitch({
+        path: 'includeVars',
+        name: 'Include current template variable values',
+        defaultValue: defaultOptions.includeVars,
+      })
       .addBooleanSwitch({
         path: 'showStarred',
         name: 'Starred',

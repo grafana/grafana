@@ -92,6 +92,10 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	uid := cmd.UID
 
 	var foldr *folder.Folder
+
+	if cmd.NewDescription == nil && cmd.NewTitle == nil && cmd.NewUID == nil && cmd.NewParentUID == nil {
+		return nil, folder.ErrBadRequest.Errorf("nothing to update")
+	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
 		sql.Write([]byte("UPDATE folder SET "))
@@ -114,8 +118,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		}
 
 		if cmd.NewParentUID != nil {
-			columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
-			args = append(args, *cmd.NewParentUID)
+			if *cmd.NewParentUID == "" {
+				columnsToUpdate = append(columnsToUpdate, "parent_uid = NULL")
+			} else {
+				columnsToUpdate = append(columnsToUpdate, "parent_uid = ?")
+				args = append(args, *cmd.NewParentUID)
+			}
 		}
 
 		if len(columnsToUpdate) == 0 {
@@ -182,6 +190,9 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 }
 
 func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if q.UID == "" {
+		return []*folder.Folder{}, nil
+	}
 	var folders []*folder.Folder
 
 	recQuery := `
@@ -228,10 +239,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		sql := strings.Builder{}
 		args := make([]interface{}, 0, 2)
 		if q.UID == "" {
-			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?"))
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC"))
 			args = append(args, q.OrgID)
 		} else {
-			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY title ASC"))
 			args = append(args, q.UID, q.OrgID)
 		}
 
@@ -273,7 +284,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 			folders = append(folders, f)
 			uid = f.ParentUID
 			if len(folders) > folder.MaxNestedFolderDepth {
-				return folder.ErrFolderTooDeep
+				return folder.ErrMaximumDepthReached.Errorf("failed to get parent folders iteratively")
 			}
 		}
 		return nil

@@ -102,10 +102,6 @@ export const PieChartPanelChangedHandler = (
       if (angular.legend.percentage) {
         options.legend.values.push(PieChartLegendValues.Percent);
       }
-      if (!angular.legend.percentage && !angular.legend.values) {
-        // If you deselect both value and percentage in the old pie chart plugin, the legend is hidden.
-        options.legend.showLegend = false;
-      }
     }
 
     // Set up labels when the old piechart is using 'on graph', for the legend option.

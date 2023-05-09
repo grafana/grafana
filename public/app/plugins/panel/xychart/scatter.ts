@@ -13,15 +13,17 @@ import {
 } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
-import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
-import { UPlotConfigBuilder } from '@grafana/ui';
-import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import {
-  findFieldIndex,
-  getScaledDimensionForField,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+  VisibilityMode,
   ScaleDimensionConfig,
   ScaleDimensionMode,
-} from 'app/features/dimensions';
+} from '@grafana/schema';
+import { UPlotConfigBuilder } from '@grafana/ui';
+import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
+import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
@@ -123,10 +125,10 @@ function getScatterSeries(
         const index = dims.pointColorIndex;
         pointColor = (frame: DataFrame) => {
           // Yes we can improve this later
-          return frame.fields[index].values.toArray().map((v) => disp(v).color!);
+          return frame.fields[index].values.map((v) => disp(v).color!);
         };
       } else {
-        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values.get(0), 1);
+        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);
         pointColor = () => seriesColor;
       }
     }
@@ -142,7 +144,7 @@ function getScatterSeries(
       const s = getScaledDimensionForField(
         frame.fields[dims.pointSizeIndex!],
         dims.pointSizeConfig!,
-        ScaleDimensionMode.Quadratic
+        ScaleDimensionMode.Quad
       );
       const vals = Array(frame.length);
       for (let i = 0; i < frame.length; i++) {
@@ -675,8 +677,8 @@ const prepConfig = (
       let { fields } = frames[i];
 
       return f.y.map((yIndex, frameSeriesIndex) => {
-        let xValues = fields[f.x[frameSeriesIndex]].values.toArray();
-        let yValues = fields[f.y[frameSeriesIndex]].values.toArray();
+        let xValues = fields[f.x[frameSeriesIndex]].values;
+        let yValues = fields[f.y[frameSeriesIndex]].values;
         let sizeValues = f.size![frameSeriesIndex](frames[i]);
 
         if (!Array.isArray(sizeValues)) {
@@ -719,8 +721,8 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
         colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
       }
       return [
-        s.x(frame).values.toArray(), // X
-        s.y(frame).values.toArray(), // Y
+        s.x(frame).values, // X
+        s.y(frame).values, // Y
         asArray(frame, s.pointSize),
         colorValues,
         colorAlphaValues,

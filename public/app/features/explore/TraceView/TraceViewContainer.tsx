@@ -28,12 +28,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.background.primary};
     border: 1px solid ${theme.colors.border.medium};
     position: relative;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     width: 100%;
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
-    padding: ${config.featureToggles.newTraceView ? 0 : theme.spacing(theme.components.panel.padding)};
+    padding: ${config.featureToggles.newTraceViewHeader ? 0 : theme.spacing(theme.components.panel.padding)};
   `,
 });
 
@@ -47,7 +47,7 @@ export function TraceViewContainer(props: Props) {
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const datasource = useSelector(
-    (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
+    (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
   );
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
@@ -57,7 +57,7 @@ export function TraceViewContainer(props: Props) {
 
   return (
     <div className={style.container}>
-      {!config.featureToggles.newTraceView && (
+      {!config.featureToggles.newTraceViewHeader && (
         <TracePageSearchBar
           navigable={true}
           searchValue={search}

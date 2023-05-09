@@ -267,6 +267,16 @@ export function getNewDashboardModelData(
   urlFolderUid?: string,
   panelType?: string
 ): { dashboard: any; meta: DashboardMeta } {
+  const panels = config.featureToggles.emptyDashboardPage
+    ? []
+    : [
+        {
+          type: panelType ?? 'add-panel',
+          gridPos: { x: 0, y: 0, w: 12, h: 9 },
+          title: 'Panel Title',
+        },
+      ];
+
   const data = {
     meta: {
       canStar: false,
@@ -277,13 +287,7 @@ export function getNewDashboardModelData(
     },
     dashboard: {
       title: 'New dashboard',
-      panels: [
-        {
-          type: panelType ?? 'add-panel',
-          gridPos: { x: 0, y: 0, w: 12, h: 9 },
-          title: 'Panel Title',
-        },
-      ],
+      panels,
     },
   };
 

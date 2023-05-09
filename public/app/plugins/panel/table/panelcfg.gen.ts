@@ -30,10 +30,6 @@ export interface Options {
    */
   showHeader: boolean;
   /**
-   * Controls whether the columns should be numbered
-   */
-  showRowNums?: boolean;
-  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -61,7 +57,6 @@ export const defaultOptions: Partial<Options> = {
   },
   frameIndex: 0,
   showHeader: true,
-  showRowNums: false,
   showTypeIcons: false,
   sortBy: [],
 };

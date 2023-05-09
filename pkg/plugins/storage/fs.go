@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,51 +11,43 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-var _ Manager = (*FS)(nil)
+var _ ZipExtractor = (*FS)(nil)
 
 var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
-var (
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside of the plugins directory")
-	ErrUninstallInvalidPluginDir   = errors.New("cannot recognize as plugin folder")
-)
-
 type FS struct {
-	store      map[string]string
-	mu         sync.RWMutex
 	pluginsDir string
 	log        log.PrettyLogger
 }
 
 func FileSystem(logger log.PrettyLogger, pluginsDir string) *FS {
 	return &FS{
-		store:      make(map[string]string),
 		pluginsDir: pluginsDir,
 		log:        logger,
 	}
 }
 
-func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadCloser) (
+func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.ReadCloser) (
 	*ExtractedPluginArchive, error) {
 	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
 
-	res, err := toPluginDTO(pluginID, pluginDir)
+	pluginJSON, err := readPluginJSON(pluginID, pluginDir)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to convert to plugin DTO", err)
 	}
 
-	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
+	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", pluginJSON.ID, pluginJSON.Info.Version, pluginDir)
 
-	deps := make([]*Dependency, 0, len(res.Dependencies.Plugins))
-	for _, plugin := range res.Dependencies.Plugins {
+	deps := make([]*Dependency, 0, len(pluginJSON.Dependencies.Plugins))
+	for _, plugin := range pluginJSON.Dependencies.Plugins {
 		deps = append(deps, &Dependency{
 			ID:      plugin.ID,
 			Version: plugin.Version,
@@ -64,43 +55,11 @@ func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadC
 	}
 
 	return &ExtractedPluginArchive{
-		ID:           res.ID,
-		Version:      res.Info.Version,
+		ID:           pluginJSON.ID,
+		Version:      pluginJSON.Info.Version,
 		Dependencies: deps,
 		Path:         pluginDir,
 	}, nil
-}
-
-func (fs *FS) Register(_ context.Context, pluginID, pluginDir string) error {
-	fs.mu.Lock()
-	fs.store[pluginID] = pluginDir
-	fs.mu.Unlock()
-
-	return nil
-}
-
-func (fs *FS) Remove(_ context.Context, pluginID string) error {
-	fs.mu.RLock()
-	pluginDir, exists := fs.store[pluginID]
-	fs.mu.RUnlock()
-	if !exists {
-		return fmt.Errorf("%s does not exist", pluginID)
-	}
-
-	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
-	path, err := filepath.Rel(fs.pluginsDir, pluginDir)
-	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
-		return ErrUninstallOutsideOfPluginDir
-	}
-
-	if _, err = os.Stat(filepath.Join(pluginDir, "plugin.json")); os.IsNotExist(err) {
-		if _, err = os.Stat(filepath.Join(pluginDir, "dist/plugin.json")); os.IsNotExist(err) {
-			return ErrUninstallInvalidPluginDir
-		}
-	}
-
-	fs.log.Infof("Uninstalling plugin %v", pluginDir)
-	return os.RemoveAll(pluginDir)
 }
 
 func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string) (string, error) {
@@ -261,34 +220,26 @@ func removeGitBuildFromName(filename, pluginID string) string {
 	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
 }
 
-func toPluginDTO(pluginID, pluginDir string) (InstalledPlugin, error) {
-	distPluginDataPath := filepath.Join(pluginDir, "dist", "plugin.json")
+func readPluginJSON(pluginID, pluginDir string) (plugins.JSONData, error) {
+	pluginPath := filepath.Join(pluginDir, "plugin.json")
 
 	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 	// nolint:gosec
-	data, err := os.ReadFile(distPluginDataPath)
+	data, err := os.ReadFile(pluginPath)
 	if err != nil {
-		pluginDataPath := filepath.Join(pluginDir, "plugin.json")
+		pluginPath = filepath.Join(pluginDir, "dist", "plugin.json")
 		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 		// nolint:gosec
-		data, err = os.ReadFile(pluginDataPath)
+		data, err = os.ReadFile(pluginPath)
 		if err != nil {
-			return InstalledPlugin{}, fmt.Errorf("could not find dist/plugin.json or plugin.json for %s in %s", pluginID, pluginDir)
+			return plugins.JSONData{}, fmt.Errorf("could not find plugin.json or dist/plugin.json for %s in %s", pluginID, pluginDir)
 		}
 	}
 
-	res := InstalledPlugin{}
-	if err = json.Unmarshal(data, &res); err != nil {
-		return res, err
+	pJSON, err := plugins.ReadPluginJSON(bytes.NewReader(data))
+	if err != nil {
+		return plugins.JSONData{}, err
 	}
 
-	if res.ID == "" {
-		return InstalledPlugin{}, fmt.Errorf("could not find valid plugin %s in %s", pluginID, pluginDir)
-	}
-
-	if res.Info.Version == "" {
-		res.Info.Version = "0.0.0"
-	}
-
-	return res, nil
+	return pJSON, nil
 }

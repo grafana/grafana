@@ -14,15 +14,24 @@ load(
     "artifacts_page_pipeline",
     "enterprise2_pipelines",
     "enterprise_pipelines",
+    "integration_test_pipelines",
     "oss_pipelines",
     "publish_artifacts_pipelines",
     "publish_npm_pipelines",
     "publish_packages_pipeline",
 )
 load(
+    "scripts/drone/rgm.star",
+    "rgm",
+)
+load(
     "scripts/drone/pipelines/publish_images.star",
     "publish_image_pipelines_public",
     "publish_image_pipelines_security",
+)
+load(
+    "scripts/drone/pipelines/ci_images.star",
+    "publish_ci_windows_test_image_pipeline",
 )
 load("scripts/drone/pipelines/github.star", "publish_github_pipeline")
 load("scripts/drone/pipelines/aws_marketplace.star", "publish_aws_marketplace_pipeline")
@@ -37,10 +46,6 @@ def main(_ctx):
         oss_pipelines() +
         enterprise_pipelines() +
         enterprise2_pipelines() +
-        enterprise2_pipelines(
-            prefix = "custom-",
-            trigger = {"event": ["custom"]},
-        ) +
         publish_image_pipelines_public() +
         publish_image_pipelines_security() +
         publish_github_pipeline("public") +
@@ -50,8 +55,11 @@ def main(_ctx):
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
+        rgm() +
         artifacts_page_pipeline() +
         version_branch_pipelines() +
+        integration_test_pipelines() +
+        publish_ci_windows_test_image_pipeline() +
         cronjobs() +
         secrets()
     )

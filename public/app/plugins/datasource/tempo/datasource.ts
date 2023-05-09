@@ -36,6 +36,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
   histogramMetric,
@@ -66,6 +67,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   search?: {
     hide?: boolean;
+    filters?: TraceqlFilter[];
   };
   nodeGraph?: NodeGraphOptions;
   lokiSearch?: {
@@ -92,6 +94,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.languageProvider = new TempoLanguageProvider(this);
+    if (!this.search?.filters) {
+      this.search = {
+        ...this.search,
+        filters: [
+          {
+            id: 'service-name',
+            tag: 'service.name',
+            operator: '=',
+            scope: TraceqlSearchScope.Resource,
+          },
+          { id: 'span-name', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
+        ],
+      };
+    }
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -581,7 +597,7 @@ function errorAndDurationQuery(
   let serviceGraphViewMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
-  const spanNames = rateResponse.data[0][0]?.fields[1]?.values.toArray() ?? [];
+  const spanNames = rateResponse.data[0][0]?.fields[1]?.values ?? [];
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
@@ -781,8 +797,8 @@ function getServiceGraphView(
   }
 
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
-    const errorRateNames = errorRate[0].fields[1]?.values.toArray() ?? [];
-    const errorRateValues = errorRate[0].fields[2]?.values.toArray() ?? [];
+    const errorRateNames = errorRate[0].fields[1]?.values ?? [];
+    const errorRateValues = errorRate[0].fields[2]?.values ?? [];
     let errorRateObj: any = {};
     errorRateNames.map((name: string, index: number) => {
       errorRateObj[name] = { value: errorRateValues[index] };
@@ -832,7 +848,7 @@ function getServiceGraphView(
     duration.map((d) => {
       const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
       const name = d.refId?.split(delimiter)[1].split('"}')[0];
-      durationObj[name] = { value: d.fields[1].values.toArray()[0] };
+      durationObj[name] = { value: d.fields[1].values[0] };
     });
 
     df.fields.push({
@@ -902,7 +918,7 @@ export function getRateAlignedValues(
   rateResp: DataQueryResponseData[],
   objToAlign: { [x: string]: { value: string } }
 ) {
-  const rateNames = rateResp[0]?.fields[1]?.values.toArray() ?? [];
+  const rateNames = rateResp[0]?.fields[1]?.values ?? [];
   let values: string[] = [];
 
   for (let i = 0; i < rateNames.length; i++) {

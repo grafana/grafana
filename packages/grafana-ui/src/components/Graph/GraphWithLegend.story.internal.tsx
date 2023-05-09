@@ -1,7 +1,7 @@
 import { Story } from '@storybook/react';
 import React from 'react';
 
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
+import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -42,13 +42,13 @@ const series: GraphSeriesXY[] = [
     timeField: {
       type: FieldType.time,
       name: 'time',
-      values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
+      values: [1546372800000, 1546376400000, 1546380000000],
       config: {},
     },
     valueField: {
       type: FieldType.number,
       name: 'a-series',
-      values: new ArrayVector([10, 20, 10]),
+      values: [10, 20, 10],
       config: {
         color: {
           mode: FieldColorModeId.Fixed,
@@ -74,13 +74,13 @@ const series: GraphSeriesXY[] = [
     timeField: {
       type: FieldType.time,
       name: 'time',
-      values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
+      values: [1546372800000, 1546376400000, 1546380000000],
       config: {},
     },
     valueField: {
       type: FieldType.number,
       name: 'b-series',
-      values: new ArrayVector([20, 30, 40]),
+      values: [20, 30, 40],
       config: {
         color: {
           mode: FieldColorModeId.Fixed,

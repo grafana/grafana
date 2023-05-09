@@ -13,7 +13,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
 
   const histogram = useMemo(() => {
-    if (!data?.series?.length) {
+    if (!data.series.length) {
       return undefined;
     }
 

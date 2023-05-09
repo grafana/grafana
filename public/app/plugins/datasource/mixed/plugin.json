@@ -4,6 +4,19 @@
   "id": "mixed",
 
   "builtIn": true,
+
+  "info": {
+    "description": "Lets you query multiple data sources in the same panel.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "public/img/icn-datasource.svg",
+      "large": "public/img/icn-datasource.svg"
+    }
+  },
+
   "mixed": true,
   "metrics": true,
 

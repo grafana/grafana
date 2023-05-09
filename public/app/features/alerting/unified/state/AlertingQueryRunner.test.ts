@@ -3,7 +3,6 @@ import { delay, take } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
-  ArrayVector,
   DataFrame,
   DataFrameJSON,
   DataSourceApi,
@@ -238,7 +237,7 @@ const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: n
         name: 'time',
         state: null,
         type: FieldType.time,
-        values: new ArrayVector(time),
+        values: time,
       } as Field,
       {
         config: {},
@@ -246,7 +245,7 @@ const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: n
         name: 'value',
         state: null,
         type: FieldType.number,
-        values: new ArrayVector(values),
+        values: values,
       } as Field,
     ],
     length: values.length,

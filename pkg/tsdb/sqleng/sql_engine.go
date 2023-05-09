@@ -84,6 +84,13 @@ type DataSourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 }
 
+// Defaults for the xorm connection pool
+type DefaultConnectionInfo struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime int
+}
+
 type DataPluginConfiguration struct {
 	DriverName        string
 	DSInfo            DataSourceInfo
@@ -101,7 +108,6 @@ type DataSourceHandler struct {
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
-	session                *xorm.Session
 }
 
 type QueryJson struct {
@@ -151,7 +157,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	// Create the xorm engine
 	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
 	if err != nil {
 		return nil, err
@@ -162,11 +167,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
 	queryDataHandler.engine = engine
-
-	// Create the xorm session
-	session := engine.NewSession()
-	queryDataHandler.session = session
-
 	return &queryDataHandler, nil
 }
 
@@ -277,7 +277,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	db := e.session.DB()
+	session := e.engine.NewSession()
+	defer session.Close()
+	db := session.DB()
 
 	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
@@ -310,9 +312,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	frame.Meta.ExecutedQueryString = interpolatedQuery
 
-	// If no rows were returned, no point checking anything else.
+	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
+	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
+	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
+	// additionally-needed frame data stays intact and is correctly passed to our visulization.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{}
+		frame.Fields = []*data.Field{}
+		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult
 		return
 	}
