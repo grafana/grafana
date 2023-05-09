@@ -168,6 +168,19 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/templates/test alertmanager RoutePostTestGrafanaTemplates
+//
+// Test Grafana managed templates without saving them.
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//
+//       200: TestTemplatesResults
+//       400: ValidationError
+//       403: PermissionDenied
+//       409: AlertManagerNotReady
+
 // swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
 //
 // get silences
@@ -292,6 +305,56 @@ type TestReceiverConfigResult struct {
 	Status string `json:"status"`
 	Error  string `json:"error,omitempty"`
 }
+
+// swagger:parameters RoutePostTestGrafanaTemplates
+type TestTemplatesConfigParams struct {
+	// in:body
+	Body TestTemplatesConfigBodyParams
+}
+
+type TestTemplatesConfigBodyParams struct {
+	// Alerts to use as data when testing the template.
+	Alerts []*amv2.PostableAlert `json:"alerts"`
+
+	// Template string to test.
+	Template string `json:"template"`
+
+	// Name of the template file.
+	Name string `json:"name"`
+}
+
+// swagger:model
+type TestTemplatesResults struct {
+	Results []TestTemplatesResult      `json:"results,omitempty"`
+	Errors  []TestTemplatesErrorResult `json:"errors,omitempty"`
+}
+
+type TestTemplatesResult struct {
+	// Name of the associated template definition for this result.
+	Name string `json:"name"`
+
+	// Interpolated value of the template.
+	Text string `json:"text"`
+}
+
+type TestTemplatesErrorResult struct {
+	// Name of the associated template for this error. Will be empty if the Kind is "invalid_template".
+	Name string `json:"name,omitempty"`
+
+	// Kind of template error that occurred.
+	Kind TemplateErrorKind `json:"kind"`
+
+	// Error message.
+	Message string `json:"message"`
+}
+
+// swagger:enum TemplateErrorKind
+type TemplateErrorKind string
+
+const (
+	InvalidTemplate TemplateErrorKind = "invalid_template"
+	ExecutionError  TemplateErrorKind = "execution_error"
+)
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
 type CreateSilenceParams struct {

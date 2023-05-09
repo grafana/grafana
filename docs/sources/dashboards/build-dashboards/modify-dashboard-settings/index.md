@@ -1,6 +1,6 @@
 ---
 title: Modify dashboard settings
-menuTitle: Dashboard settings
+menuTitle: Modify dashboard settings
 weight: 8
 keywords:
   - time settings
@@ -12,7 +12,7 @@ keywords:
 
 # Modify dashboard settings
 
-The dashboard settings page enables you to:
+The dashboard settings page allows you to:
 
 - Edit general dashboard properties, including time settings
 - Add annotation queries
@@ -31,7 +31,7 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 
 1. On the **Dashboard settings** page, click **General**.
 1. Navigate to the **Time Options** section.
-1. Specify time settings according to the following descriptions.
+1. Specify time settings as follows.
 
    - **Timezone:** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
      - **Default:** Grafana uses the default selected time zone for the user profile, team, or organization. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses the local browser time.
@@ -62,7 +62,7 @@ the dashboard. These dropdowns make it easy to change the data being displayed i
 For more information about variables, refer to [Variables]({{< relref "../../variables/" >}}).
 
 1. On the **Dashboard settings** page, click **Variable** in the left side section menu and then the **Add variable** button.
-1. In the **General** section, the the name of the variable. This is the name that you will later use in queries.
+1. In the **General** section, the name of the variable. This is the name that you will later use in queries.
 1. Select a variable **Type**.
 
    > **Note:** The variable type you select impacts which fields you populate on the page.
@@ -74,7 +74,7 @@ For more information about variables, refer to [Variables]({{< relref "../../var
 Dashboard links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for easy navigation to other, related dashboards and content.
 
 1. On the **Dashboard settings** page, click **Links** in the left side section menu and then the **Add link** button.
-1. Enter title and and in the **Type** field, select **Dashboard** or **Link**.
+1. Enter title and in the **Type** field, select **Dashboard** or **Link**.
 1. To add a dashboard link:
    a. Add an optional tag. Tags are useful creating a dynamic dropdown of dashboards that all have a specific tag.
    b. Select any of the dashboard link **Options**.

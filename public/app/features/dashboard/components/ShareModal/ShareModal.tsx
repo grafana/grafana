@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { reportInteraction } from '@grafana/runtime/src';
+import { locationService, reportInteraction } from '@grafana/runtime/src';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -52,7 +52,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
   }
 
   if (Boolean(config.featureToggles['publicDashboards'])) {
-    tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
+    tabs.push({ label: 'Public dashboard', value: 'public-dashboard', component: SharePublicDashboard });
   }
 
   const at = tabs.find((t) => t.value === activeTab);
@@ -93,6 +93,10 @@ export class ShareModal extends React.Component<Props, State> {
 
   componentDidMount() {
     reportInteraction('grafana_dashboards_share_modal_viewed');
+  }
+
+  componentWillUnmount() {
+    locationService.partial({ shareView: null });
   }
 
   onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {

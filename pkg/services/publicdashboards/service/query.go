@@ -315,7 +315,6 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 		for i := range frames {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
-				frames[i].Meta.Custom = nil
 			}
 		}
 	}

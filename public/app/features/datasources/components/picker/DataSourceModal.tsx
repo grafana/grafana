@@ -10,23 +10,22 @@ import {
   FileDropzone,
   FileDropzoneDefaultChildren,
   CustomScrollbar,
-  LinkButton,
   useStyles2,
   Input,
   Icon,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
-import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceList } from './DataSourceList';
+import { matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
   UPLOAD_FILE: 'upload_file',
   CONFIG_NEW_DS: 'config_new_ds',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
   SEARCH: 'search',
   DISMISS: 'dismiss',
 };
@@ -52,9 +51,6 @@ export function DataSourceModal({
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
-  const newDataSourceURL = config.featureToggles.dataConnectionsConsole
-    ? CONNECTIONS_ROUTES.DataSourcesNew
-    : DATASOURCES_ROUTES.New;
 
   const onDismissModal = () => {
     onDismiss();
@@ -90,6 +86,7 @@ export function DataSourceModal({
     >
       <div className={styles.leftColumn}>
         <Input
+          autoFocus
           className={styles.searchInput}
           value={search}
           prefix={<Icon name="search" />}
@@ -101,12 +98,19 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
+            className={styles.dataSourceList}
             dashboard={false}
             mixed={false}
             variables
-            filter={(ds) => ds.name.includes(search) && !ds.meta.builtIn}
+            filter={(ds) => matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
             onChange={onChangeDataSource}
             current={current}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+                src: analyticsInteractionSrc,
+              })
+            }
           />
         </CustomScrollbar>
       </div>
@@ -144,18 +148,16 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.dsCTAs}>
-          <LinkButton
+          <AddNewDataSourceButton
             variant="secondary"
-            href={newDataSourceURL}
             onClick={() => {
               reportInteraction(INTERACTION_EVENT_NAME, {
                 item: INTERACTION_ITEM.CONFIG_NEW_DS,
                 src: analyticsInteractionSrc,
               });
+              onDismiss();
             }}
-          >
-            Configure a new data source
-          </LinkButton>
+          />
         </div>
       </div>
     </Modal>
@@ -195,6 +197,9 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     builtInDataSources: css`
       flex: 1;
       margin-bottom: ${theme.spacing(4)};
+    `,
+    dataSourceList: css`
+      height: 100%;
     `,
     builtInDataSourceList: css`
       margin-bottom: ${theme.spacing(4)};

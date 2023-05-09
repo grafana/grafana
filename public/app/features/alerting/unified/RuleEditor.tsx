@@ -21,7 +21,6 @@ type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
   id: 'alert-rule-view',
-  breadcrumbs: [{ title: 'Alert rules', url: 'alerting/list' }],
 };
 
 const getPageNav = (state: 'edit' | 'add') => {

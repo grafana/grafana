@@ -580,7 +580,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
 
           if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
             throw new Error(
-              'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+              'A newer Alertmanager configuration is available. Please reload the page and try again to not overwrite recent changes.'
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));

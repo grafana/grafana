@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FieldConfigSource, PanelData } from '@grafana/data';
+import { FieldConfigSource, PanelData, VisualizationSuggestion } from '@grafana/data';
 
 /**
  * Describes the properties that can be passed to the PanelDataErrorView.
@@ -15,7 +15,7 @@ export interface PanelDataErrorViewProps {
   needsTimeField?: boolean;
   needsNumberField?: boolean;
   needsStringField?: boolean;
-  // suggestions?: VisualizationSuggestion[]; <<< for sure optional
+  suggestions?: VisualizationSuggestion[];
 }
 
 /**

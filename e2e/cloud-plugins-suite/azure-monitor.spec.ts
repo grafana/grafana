@@ -44,7 +44,7 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
       // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
-      e2e().wait(30000);
+      e2e().wait(15000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
@@ -100,6 +100,10 @@ const addAzureMonitorVariable = (
   e2e.pages.Dashboard.Settings.Actions.close().click();
 };
 
+const storageAcctName = 'azmonteststorage';
+const logAnalyticsName = 'az-mon-test-logs';
+const applicationInsightsName = 'az-mon-test-ai-a';
+
 e2e.scenario({
   describeName: 'Add Azure Monitor datasource',
   itName: 'fills out datasource connection configuration',
@@ -140,7 +144,7 @@ e2e.scenario({
 
 e2e.scenario({
   describeName: 'Create dashboard and add a panel for each query type',
-  itName: 'create dashboard, add panel for metrics query, log analytics query, and ARG query',
+  itName: 'create dashboard, add panel for metrics, log analytics, ARG, and traces queries',
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
@@ -160,14 +164,15 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
-          .type('azmonmetricstest')
+          .type(storageAcctName)
           .wait(500)
           .type('{enter}');
-        e2e().contains('azmonmetricstest').click();
+        e2e().contains(storageAcctName).click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e().contains('microsoft.storage/storageaccounts');
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
       },
+      timeout: 10000,
     });
     e2e.components.PanelEditor.applyButton().click();
     e2e.flows.addPanel({
@@ -179,14 +184,15 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
-          .type('azmonlogstest')
+          .type(logAnalyticsName)
           .wait(500)
           .type('{enter}');
-        e2e().contains('azmonlogstest').click();
+        e2e().contains(logAnalyticsName).click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e.components.CodeEditor.container().type('AzureDiagnostics');
         e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
       },
+      timeout: 10000,
     });
     e2e.components.PanelEditor.applyButton().click();
     e2e.flows.addPanel({
@@ -205,6 +211,27 @@ e2e.scenario({
         );
         e2e.components.PanelEditor.toggleTableView().click({ force: true });
       },
+      timeout: 10000,
+    });
+    e2e.components.PanelEditor.applyButton().click();
+    e2e.flows.addPanel({
+      dataSourceName,
+      visitDashboardAtStart: false,
+      queriesForm: () => {
+        e2eSelectors.queryEditor.header.select().find('input').type('Traces{enter}');
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
+        e2eSelectors.queryEditor.resourcePicker.search
+          .input()
+          .wait(100)
+          .type(applicationInsightsName)
+          .wait(500)
+          .type('{enter}');
+        e2e().contains(applicationInsightsName).click();
+        e2eSelectors.queryEditor.resourcePicker.apply.button().click();
+        e2e().wait(10000);
+        e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Trace{enter}');
+      },
+      timeout: 10000,
     });
   },
 });
@@ -255,7 +282,7 @@ e2e.scenario({
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
       .parent()
       .find('input')
-      .type('azmonmetricstest{downArrow}{enter}');
+      .type(`${storageAcctName}{downArrow}{enter}`);
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
@@ -270,6 +297,7 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
       },
+      timeout: 10000,
     });
   },
 });
@@ -291,8 +319,8 @@ e2e.scenario({
     e2e.pages.Dashboard.Settings.Annotations.Settings.name().type('TestAnnotation');
     e2e.components.DataSourcePicker.inputV2().click().type(`${dataSourceName}{enter}`);
     e2eSelectors.queryEditor.resourcePicker.select.button().click();
-    e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
-    e2e().contains('azmonmetricstest').click();
+    e2eSelectors.queryEditor.resourcePicker.search.input().type(storageAcctName);
+    e2e().contains(storageAcctName).click();
     e2eSelectors.queryEditor.resourcePicker.apply.button().click();
     e2e().contains('microsoft.storage/storageaccounts');
     e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
@@ -303,8 +331,8 @@ e2e.scenario({
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
-        e2e().contains('azmonmetricstest').click();
+        e2eSelectors.queryEditor.resourcePicker.search.input().type(storageAcctName);
+        e2e().contains(storageAcctName).click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e().contains('microsoft.storage/storageaccounts');
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
