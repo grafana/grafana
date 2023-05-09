@@ -1,6 +1,3 @@
-//go:build ignore
-// +build ignore
-
 //go:generate go run gen.go
 
 package main
@@ -8,6 +5,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/thema"
 	"log"
 	"os"
 	"path/filepath"
@@ -52,7 +50,7 @@ func main() {
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		kind2pd(corecodegen.DocsJenny(
+		kind2pd(rt, corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		)),
 	)
@@ -89,9 +87,9 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 	})
 }
 
-func kind2pd(j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
+func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
-		kd, err := kindsys.BindComposable(nil, pd.KindDecl)
+		kd, err := kindsys.BindComposable(rt, pd.KindDecl)
 		if err != nil {
 			return nil
 		}
