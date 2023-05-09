@@ -14,7 +14,6 @@ import (
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-var cfglogger = log.New("ngalert.notifier.config")
 
 func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
 	if len(cfg.TemplateFiles) < 1 {
