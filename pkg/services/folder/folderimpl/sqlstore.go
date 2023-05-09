@@ -29,6 +29,15 @@ func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
 }
 
+func withURL(f *folder.Folder) *folder.Folder {
+	if f == nil || f.URL != "" {
+		return f
+	}
+
+	f.URL = dashboards.GetFolderURL(f.UID, slugify.Slugify(f.Title))
+	return f
+}
+
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
@@ -74,7 +83,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		}
 		return nil
 	})
-	return foldr, err
+	return withURL(foldr), err
 }
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
@@ -159,7 +168,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		return nil
 	})
 
-	return foldr, err
+	return withURL(foldr), err
 }
 
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
@@ -185,8 +194,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
-	foldr.URL = dashboards.GetFolderURL(foldr.UID, slugify.Slugify(foldr.Title))
-	return foldr, err
+	return withURL(foldr), err
 }
 
 func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -217,6 +225,10 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 			return nil
 		}); err != nil {
 			return nil, err
+		}
+
+		for _, f := range folders {
+			f.URL = dashboards.GetFolderURL(f.UID, slugify.Slugify(f.Title))
 		}
 	default:
 		ss.log.Debug("recursive CTE subquery is not supported; it fallbacks to the iterative implementation")
@@ -257,6 +269,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
+
+		for _, f := range folders {
+			f = withURL(f)
+		}
 		return nil
 	})
 	return folders, err
@@ -281,7 +297,8 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 			if !ok {
 				break
 			}
-			folders = append(folders, f)
+
+			folders = append(folders, withURL(f))
 			uid = f.ParentUID
 			if len(folders) > folder.MaxNestedFolderDepth {
 				return folder.ErrMaximumDepthReached.Errorf("failed to get parent folders iteratively")
