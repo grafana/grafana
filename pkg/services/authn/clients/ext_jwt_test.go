@@ -166,7 +166,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 						"folders:read": {
 							"folders:uid:general",
 						},
-						"datasources:explore":       []string{},
+						"datasources:explore":       nil,
 						"datasources.insights:read": []string{},
 					},
 				},

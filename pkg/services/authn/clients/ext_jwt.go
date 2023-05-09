@@ -48,6 +48,17 @@ type ExtendedJWT struct {
 	signingKeys signingkeys.Service
 }
 
+type ExtendedJWTClaims struct {
+	jwt.Claims
+	ClientID     string              `json:"client_id"`
+	Groups       []string            `json:"groups"`
+	Email        string              `json:"email"`
+	Name         string              `json:"name"`
+	Login        string              `json:"login"`
+	Scopes       []string            `json:"scp"`
+	Entitlements map[string][]string `json:"entitlements"`
+}
+
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	jwtToken := s.retrieveToken(r.HTTPRequest)
 
@@ -58,7 +69,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	}
 
 	// user:id:18
-	userID, err := strconv.ParseInt(strings.TrimPrefix(claims["sub"].(string), fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
+	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
 	if err != nil {
 		s.log.Error("Failed to parse sub", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
@@ -74,16 +85,12 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		signedInUser.Permissions = make(map[int64]map[string][]string)
 	}
 
-	if claims["entitlements"] == nil {
+	if len(claims.Entitlements) == 0 {
 		s.log.Error("Entitlements claim is missing")
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
-	} else {
-		permissions, err := s.parseEntitlements(claims["entitlements"])
-		if err != nil {
-			return nil, errJWTInvalid.Errorf("Failed to parse permissions: %w", err)
-		}
-		signedInUser.Permissions[defaultOrgID] = permissions
 	}
+
+	signedInUser.Permissions[defaultOrgID] = claims.Entitlements
 
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
 }
@@ -120,42 +127,6 @@ func (s *ExtendedJWT) Priority() uint {
 	return 15
 }
 
-// parseEntitlements parses the entitlements claim.
-func (s *ExtendedJWT) parseEntitlements(entitlementsClaimValue interface{}) (map[string][]string, error) {
-	result := map[string][]string{}
-	entitlements, ok := entitlementsClaimValue.(map[string]interface{})
-	if !ok {
-		s.log.Error("Entitlements claim cannot be parsed")
-		return nil, fmt.Errorf("entitlements claim cannot be parsed")
-	}
-
-	for key, value := range entitlements {
-		if value == nil {
-			result[key] = []string{}
-		} else {
-			parsedScopeArray, err := s.parseScopesArray(value)
-			if err != nil {
-				s.log.Error("Failed to parse scopes for permission", "error", err, "permission", key, "scopes", value, "expectedFormat", []string{"folders:uid:general"})
-				return nil, fmt.Errorf("failed to parse scopes for permission: %s", key)
-			}
-			result[key] = parsedScopeArray
-		}
-	}
-	return result, nil
-}
-
-// parseScopesArray parses the scopes array of the current permission from the entitlements claim.
-func (s *ExtendedJWT) parseScopesArray(scopes interface{}) ([]string, error) {
-	result := []string{}
-	if _, ok := scopes.([]interface{}); !ok {
-		return nil, fmt.Errorf("permissions' scopes cannot be parsed")
-	}
-	for _, entitlement := range scopes.([]interface{}) {
-		result = append(result, entitlement.(string))
-	}
-	return result, nil
-}
-
 // retrieveToken retrieves the JWT token from the request.
 func (s *ExtendedJWT) retrieveToken(httpRequest *http.Request) string {
 	jwtToken := httpRequest.Header.Get("Authorization")
@@ -165,7 +136,7 @@ func (s *ExtendedJWT) retrieveToken(httpRequest *http.Request) string {
 }
 
 // verifyRFC9068Token verifies the token against the RFC 9068 specification.
-func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (map[string]interface{}, error) {
+func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (*ExtendedJWTClaims, error) {
 	parsedToken, err := jwt.ParseSigned(rawToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
@@ -191,26 +162,25 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 		return nil, fmt.Errorf("invalid algorithm: %s", parsedHeader.Algorithm)
 	}
 
-	var claims jwt.Claims
-	var allClaims map[string]interface{}
-	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims, &allClaims)
+	var claims ExtendedJWTClaims
+	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify the signature: %w", err)
 	}
 
-	if _, expClaimExists := allClaims["exp"]; !expClaimExists {
+	if claims.Expiry == nil {
 		return nil, fmt.Errorf("missing 'exp' claim")
 	}
 
-	if _, jtiClaimExists := allClaims["jti"]; !jtiClaimExists {
+	if claims.ID == "" {
 		return nil, fmt.Errorf("missing 'jti' claim")
 	}
 
-	if _, subClaimExists := allClaims["sub"]; !subClaimExists {
+	if claims.Subject == "" {
 		return nil, fmt.Errorf("missing 'sub' claim")
 	}
 
-	if _, iatClaimExists := allClaims["iat"]; !iatClaimExists {
+	if claims.IssuedAt == nil {
 		return nil, fmt.Errorf("missing 'iat' claim")
 	}
 
@@ -224,22 +194,16 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 		return nil, fmt.Errorf("failed to validate JWT: %w", err)
 	}
 
-	if err := s.validateClientIdClaim(ctx, allClaims); err != nil {
+	if err := s.validateClientIdClaim(ctx, claims); err != nil {
 		return nil, err
 	}
 
-	return allClaims, nil
+	return &claims, nil
 }
 
-func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims map[string]interface{}) error {
-	clientIdClaim, ok := claims["client_id"]
-	if !ok {
+func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {
+	if claims.ClientID == "" {
 		return fmt.Errorf("missing 'client_id' claim")
-	}
-
-	_, ok = clientIdClaim.(string)
-	if !ok {
-		return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
 	}
 
 	// TODO: Implement the validation for client_id when the OAuth server is ready.
