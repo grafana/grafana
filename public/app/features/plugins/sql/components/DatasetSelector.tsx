@@ -25,6 +25,7 @@ export const DatasetSelector = ({
   preconfiguredDataset,
   hasConfigIssue,
 }: DatasetSelectorProps) => {
+  console.log(dataset, 'dataset');
   /* 
     The behavior of this component - for MSSQL and MYSQL datasources - is based on whether the user chose to create a datasource
     with or without a default database (preconfiguredDataset). If the user configured a default database, this selector
@@ -46,8 +47,25 @@ export const DatasetSelector = ({
     }
 
     const datasets = await db.datasets();
+    console.log(datasets, 'datasets');
     return datasets.map(toOption);
   }, []);
+
+  // useEffect(() => {
+  //   // Set default dataset when values are fetched
+  //   if (!dataset) {
+  //     if (state.value && state.value[0]) {
+  //       onChange(state.value[0]);
+  //     }
+  //   } else {
+  //     if (state.value && state.value.find((v) => v.value === dataset) === undefined) {
+  //       // if value is set and newly fetched values does not contain selected value
+  //       if (state.value.length > 0) {
+  //         onChange(state.value[0]);
+  //       }
+  //     }
+  //   }
+  // }, [state.value, dataset, onChange]);
 
   return (
     <Select
@@ -58,6 +76,7 @@ export const DatasetSelector = ({
       disabled={hasConfigIssue || state.loading}
       isLoading={state.loading}
       menuShouldPortal={true}
+      // placeholder={dataset}
     />
   );
 };

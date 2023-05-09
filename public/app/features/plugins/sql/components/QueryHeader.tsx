@@ -95,7 +95,7 @@ export function QueryHeader({
     onChange(next);
   };
 
-  const isDatasetDropdownEnabled = () => {
+  const datasetDropdownIsAvailable = () => {
     // If the feature flag is DISABLED, && the datasource is Postgres (isPostgresInstance),
     // we want to hide the dropdown - as per previous behavior.
     if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {
@@ -227,7 +227,7 @@ export function QueryHeader({
         <>
           <Space v={0.5} />
           <EditorRow>
-            {isDatasetDropdownEnabled() && (
+            {datasetDropdownIsAvailable() && (
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}

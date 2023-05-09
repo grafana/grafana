@@ -32,6 +32,8 @@ import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
 
+import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './../components/QueryEditorFeatureFlag.utils';
+
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
   responseParser: ResponseParser;
@@ -129,24 +131,26 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       If a preconfigured database exists - or is added/updated, and there are ANY number of db queries
       that use a database OTHER than the preconfigured one, this error with throw. 
     */
-    const defaultDatabaseHasIssue = () => {
-      if (!!this.preconfiguredDatabase) {
-        const getDatabaseTargets = request.targets.map((t) => t.dataset);
-        for (const targetDatabase of getDatabaseTargets) {
-          if (targetDatabase !== this.preconfiguredDatabase) {
-            return true;
+    if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
+      const defaultDatabaseHasIssue = () => {
+        if (!!this.preconfiguredDatabase) {
+          const getDatabaseTargets = request.targets.map((t) => t.dataset);
+          for (const targetDatabase of getDatabaseTargets) {
+            if (targetDatabase !== this.preconfiguredDatabase) {
+              return true;
+            }
           }
         }
+
+        return false;
+      };
+
+      if (defaultDatabaseHasIssue()) {
+        const error = new Error(
+          'Your default database configuration has been modified. Please update your panel query accordingly.'
+        );
+        return throwError(() => error);
       }
-
-      return false;
-    };
-
-    if (defaultDatabaseHasIssue()) {
-      const error = new Error(
-        'Your default database configuration has been modified. Please update your panel query accordingly.'
-      );
-      return throwError(() => error);
     }
 
     return super.query(request);
