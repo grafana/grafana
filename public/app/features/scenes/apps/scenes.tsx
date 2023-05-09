@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { FieldColorModeId, getFrameDisplayName } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
@@ -17,6 +19,7 @@ import {
   SceneRefreshPicker,
   SceneFlexItem,
 } from '@grafana/scenes';
+import { LinkButton } from '@grafana/ui';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
@@ -49,7 +52,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
   const httpHandlersTable = new VizPanel({
     $data: httpHandlerQueriesFiltered,
     pluginId: 'table',
-    title: '',
+    title: 'Handlers',
     options: {
       footer: {
         enablePagination: true,
@@ -154,14 +157,23 @@ export function getHttpHandlerListScene(): EmbeddedScene {
         }),
         body: new SceneFlexLayout({
           direction: 'row',
+          key: `row-${frameIndex}`,
           children: [
             new SceneFlexItem({
+              key: `flex1-${frameIndex}`,
               body: new VizPanel({
+                key: `viz1-${frameIndex}`,
                 pluginId: 'timeseries',
-                // titleLink: {
-                //   path: `/scenes/grafana-monitoring/handlers/${encodeURIComponent(frame.fields[1].labels.handler)}`,
-                //   queryKeys: ['from', 'to', 'var-instance'],
-                // },
+                headerActions: (
+                  <LinkButton
+                    fill="text"
+                    size="sm"
+                    icon="arrow-right"
+                    href={getHandlerDrilldownUrl(frame.fields[1].labels.handler)}
+                  >
+                    Details
+                  </LinkButton>
+                ),
                 title: getFrameDisplayName(frame),
                 options: {
                   legend: { showLegend: false },
@@ -170,26 +182,16 @@ export function getHttpHandlerListScene(): EmbeddedScene {
             }),
 
             new SceneFlexItem({
+              key: `flex1-${frameIndex}`,
               width: 200,
               body: new VizPanel({
+                key: `viz3-${frameIndex}`,
                 title: 'Last',
                 pluginId: 'stat',
                 fieldConfig: {
                   defaults: {
                     displayName: 'Last',
-                    links: [
-                      {
-                        title: 'Go to handler drilldown view',
-                        url: ``,
-                        onBuildUrl: () => {
-                          const params = locationService.getSearchObject();
-                          return getLinkUrlWithAppUrlState(
-                            '/scenes/grafana-monitoring/handlers/${__field.labels.handler:percentencode}',
-                            params
-                          );
-                        },
-                      },
-                    ],
+                    links: [],
                   },
                   overrides: [],
                 },
@@ -240,6 +242,11 @@ export function getHttpHandlerListScene(): EmbeddedScene {
   });
 
   return scene;
+}
+
+function getHandlerDrilldownUrl(handler: string) {
+  const params = locationService.getSearchObject();
+  return getLinkUrlWithAppUrlState(`/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}`, params);
 }
 
 export function getHandlerDetailsScene(handler: string): EmbeddedScene {
