@@ -15,7 +15,7 @@ export function AngularPanelPluginWarning({ plugin }: Props) {
     <div className={styles.wrapper}>
       <Alert title="Angular panel plugin" severity="warning">
         <div className="markdown-html">
-          <p>The selected visualization plugin is using deprecated plugin APIs.</p>
+          <p>The selected panel plugin is using deprecated plugin APIs.</p>
           <ul>
             <li>
               <a
