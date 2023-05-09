@@ -120,7 +120,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: -1000,
 
       ':focus': {
-        top: 0,
+        left: theme.spacing(1),
+        top: theme.spacing(1),
         zIndex: theme.zIndex.portal,
       },
     }),
