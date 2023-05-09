@@ -52,10 +52,13 @@ export const getFilteredTags = (tags: Tags | undefined, staticTags: Array<string
       filteredTags.v1 = [...intrinsics, ...tags.v1].filter((t) => !staticTags.includes(t));
     } else if (tags.v2) {
       filteredTags.v2 = tags.v2.map((scope: Scope) => {
-        return {
-          ...scope,
-          tags: scope.tags ? [...intrinsics, ...scope.tags].filter((t) => !staticTags.includes(t)) : [],
-        };
+        if (scope.name && scope.name !== 'intrinsic') {
+          return {
+            ...scope,
+            tags: scope.tags ? [...intrinsics, ...scope.tags].filter((t) => !staticTags.includes(t)) : [],
+          };
+        }
+        return { ...scope };
       });
     }
   }

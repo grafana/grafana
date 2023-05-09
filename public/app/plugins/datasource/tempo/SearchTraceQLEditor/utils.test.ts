@@ -1,6 +1,7 @@
 import { TraceqlSearchScope } from '../dataquery.gen';
+import { defaultTags, emptyTags, v2Tags } from '../traceql/autocomplete.test';
 
-import { generateQueryFromFilters } from './utils';
+import { generateQueryFromFilters, getFilteredTags, getUnscopedTags } from './utils';
 
 describe('generateQueryFromFilters generates the correct query for', () => {
   it('an empty array', () => {
@@ -99,4 +100,82 @@ describe('generateQueryFromFilters generates the correct query for', () => {
       ])
     ).toBe('{resource.footag>=1234}');
   });
+});
+
+describe('gets correct filtered tags', () => {
+  it('when no tags supplied', () => {
+    const tags = getFilteredTags(emptyTags, []);
+    expect(tags).toEqual({ v1: ['duration', 'kind', 'name', 'status'], v2: [] });
+  });
+
+  it('when API v1 tags supplied', () => {
+    const tags = getFilteredTags(defaultTags, []);
+    expect(tags).toEqual({ v1: ['duration', 'kind', 'name', 'status', 'bar', 'foo'], v2: undefined });
+  });
+
+  it('when API v1 tags supplied with tags to filter out', () => {
+    const tags = getFilteredTags(defaultTags, ['duration']);
+    expect(tags).toEqual({ v1: ['kind', 'name', 'status', 'bar', 'foo'], v2: undefined });
+  });
+
+  it('when API v2 tags supplied', () => {
+    const tags = getFilteredTags(v2Tags, []);
+    expect(tags).toEqual({
+      v1: undefined,
+      v2: [
+        {
+          name: 'resource',
+          tags: ['duration', 'kind', 'name', 'status', 'cluster', 'container'],
+        },
+        {
+          name: 'span',
+          tags: ['duration', 'kind', 'name', 'status', 'db'],
+        },
+        {
+          name: 'intrinsic',
+          tags: ['duration', 'kind', 'name', 'status'],
+        },
+      ],
+    });
+  });
+
+  it('when API v2 tags supplied with tags to filter out', () => {
+    const tags = getFilteredTags(v2Tags, ['duration', 'cluster']);
+    expect(tags).toEqual({
+      v1: undefined,
+      v2: [
+        {
+          name: 'resource',
+          tags: ['kind', 'name', 'status', 'container'],
+        },
+        {
+          name: 'span',
+          tags: ['kind', 'name', 'status', 'db'],
+        },
+        {
+          name: 'intrinsic',
+          tags: ['duration', 'kind', 'name', 'status'],
+        },
+      ],
+    });
+  });
+});
+
+describe('gets correct unscoped tags', () => {
+  const scopes = [
+    {
+      name: 'resource',
+      tags: ['cluster', 'container'],
+    },
+    {
+      name: 'span',
+      tags: ['db'],
+    },
+    {
+      name: 'intrinsic',
+      tags: ['duration', 'name'],
+    },
+  ];
+  const tags = getUnscopedTags(scopes);
+  expect(tags).toEqual(['cluster', 'container', 'db']);
 });
