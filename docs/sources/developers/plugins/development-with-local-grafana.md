@@ -1,35 +1,39 @@
 ---
-title: Development with local Grafana
+title: Develop with a local environment
 ---
 
-# Development with local Grafana
+# Develop with a local environment
 
-This guide allows you to setup a development environment where you run Grafana and your plugin locally. With this, you will be able to see your changes as you add them.
+Follow the steps in this guide to set up a development environment where you run Grafana and your plugin locally. With this setup, you can see your changes as you add them.
+
+## Before you begin
+
+We recommend that you have the most recent stable versions of Git, Go, and NodeJS installed on your system.
 
 ## Run Grafana in your host
 
-If you have git, Go and the required version of NodeJS in your system, you can clone and run Grafana locally:
+Here's how to clone and run Grafana locally:
 
-1. Download and set up Grafana. You can find instructions on how to do it in the [developer-guide](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md).
+1. Download and set up Grafana. Refer to the [developer-guide](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md).
 
-2. Grafana will look for plugins, by default, on its `data/plugins` directory. You can create a symbolic link to your plugin repository to detect new changes:
+2. Grafana looks for plugins, by default, in its `data/plugins` directory. You can create a symbolic link to your plugin repository to detect new changes:
 
    ```bash
    ln -s <plugin-path>/dist data/plugins/<plugin-name>
    ```
 
-3. (Optional) If the step above doesn't work for you (e.g. you are running on Windows), you can also modify the default path in the Grafana configuration (that can be found at `conf/custom.ini`) and point to the directory with your plugin:
+3. Optional: If the step above doesn't work for you (for example, if you are running on Windows), then modify the default path in the Grafana configuration. Find the default path at `conf/custom.ini`) and point it to your plugin's directory:
 
    ```ini
    [paths]
    plugins = <path-to-your-plugin-parent-directory>
    ```
 
-## Run Grafana with docker-compose
+## Run Grafana with `docker-compose`
 
-Another possibility is to run Grafana with docker-compose so it runs in a container. For doing so, create the docker-compose file in your plugin directory:
+Another option is to run Grafana with docker-compose so that it runs in a container. To do so, create the `docker-compose` file in your plugin directory.
 
-**NOTE**: Some plugins already include a docker-compose file so you can skip this step.
+> **Note:**: If your plugin already includes a docker-compose, then skip this step.
 
 ```yaml
 version: '3.7'
@@ -41,7 +45,7 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
-      # Use your plugin folder (e.g. redshift-datasource)
+      # Use your plugin folder (for example, redshift-datasource)
       - ./dist:/var/lib/grafana/plugins/<plugin-folder>
       - ./provisioning:/etc/grafana/provisioning
     environment:
@@ -51,9 +55,9 @@ services:
       - GF_DEFAULT_APP_MODE=development
 ```
 
-## Run your plugin
+## Run your plugin in development mode
 
-Finally start your plugin in development mode. Go to your plugin root directory and follow these steps:
+Finally, start your plugin in development mode. Go to your plugin's root directory and follow these steps:
 
 1. Build your plugin backend and start the frontend in watch mode:
 
@@ -62,9 +66,9 @@ Finally start your plugin in development mode. Go to your plugin root directory 
    yarn watch
    ```
 
-2. Start Grafana backend and frontend:
+2. Start the Grafana backend and frontend:
 
-   2.1 For a local copy of Grafana, go to the directory with Grafana source code and run:
+   a. For a local copy of Grafana, go to the directory with Grafana source code and run:
 
    ```bash
    make run
@@ -74,25 +78,27 @@ Finally start your plugin in development mode. Go to your plugin root directory 
    yarn start
    ```
 
-   2.2 Or with docker-compose, in your plugin directory, run:
+   b. Or, with docker-compose in your plugin directory, run:
 
    ```bash
    docker-compose up
    ```
 
-After this, you should be able to see your plugin listed in Grafana and test your changes. Note that any change in the fronted will require you to refresh your browser while changes in the backend may require to rebuild your plugin binaries and reload the plugin (`mage && mage reloadPlugin` for local development or `docker-compose up` again if you are using docker-compose).
+After this, you should be able to see your plugin listed in Grafana, and then you can test your changes. 
+
+If you make a change in the fronted, you must refresh your browser. However, changes in the backend may require that you rebuild your plugin binaries and reload the plugin (`mage && mage reloadPlugin` for local development, or run `docker-compose up` again if you are using docker-compose).
 
 ## Run your backend plugin with a debugger
 
 > Note: The following method only works with a local Grafana instance and currently doesn't work with Docker.
 
-You can run a backend plugin and attach a debugger to it, which allows you to set breakpoints and debug your backend plugin directly from your IDE of choice.
+Running a backend plugin with a debugger is a feature that supports Visual Studio Code and GoLand out of the box, but it can also work with any other IDE or debugger.
 
-We support Visual Studio Code and GoLand out of the box, but this feature can also work with any other IDE or debugger.
+You can run a backend plugin and attach a debugger to it, which allows you to set breakpoints and debug your backend plugin directly from your IDE of choice:
 
 1. Go to your plugin's folder.
 
-1. Check your `go.mod` and make sure `grafana-plugin-sdk-go` is at least on `v0.156.0`
+1. Make sure that your `go.mod` and `grafana-plugin-sdk-go` are at least on `v0.156.0`
    - If not, update it to the latest version:
      ```
      go get -u github.com/grafana/grafana-plugin-sdk-go
@@ -127,9 +133,9 @@ Now that your plugin is ready to run, follow the instructions bellow for your ID
    ```
 
 1. Press `F5` to run your plugin in debug mode.
-1. Start Grafana, if it's not already running.
+1. If Grafana isn't already running, run it.
 
-> If you re-run the configuration, Grafana will automatically reload the plugin.
+> If you re-run the configuration, Grafana automatically reloads the plugin.
 
 ### GoLand
 
@@ -141,30 +147,30 @@ Now that your plugin is ready to run, follow the instructions bellow for your ID
 
 1. Run the config (with or without the debugger).
 
-1. Start Grafana, if it's not already running.
+1. If Grafana isn't already running, run it.
 
-> If you re-run the configuration, Grafana will automatically reload the plugin.
+> **Note:** If you re-run the configuration, Grafana  automatically reloads the plugin.
 
 ### Other IDEs
 
 Configure your code editor to run the following steps:
 
-1. Build the executable with debug flags.
+1. Build the executable file with debug flags.
    ```
    mage build:debug
    ```
-1. Run the plugin's executable (inside `dist`) with `-standalone -debug` flags.
+1. Run the plugin's executable file (inside `dist`) with `-standalone -debug` flags.
    ```
    ./gpx_xyz_linux_amd64 -standalone -debug
    ```
 1. Attach a debugger to the process.
 
-Then, you can start Grafana, if it's not already running.
+1. If Grafana isn't already running, run it.
 
-> If you re-run the configuration, Grafana will automatically reload the plugin.
+> If you re-run the configuration, Grafana automatically reloads the plugin.
 
 ### Notes
 
-- All logs are printed in the plugin's `stdout` rather than in Grafana logs.
-- If the backend plugin doesn't serve requests after turning off debug mode, you can force reset the standalone mode. To do so, delete the files `dist/standalone.txt` and `dist/pid.txt` alongside the executable file, and then restart Grafana.
-- We currently do not support debugging backend plugins running inside Docker.
+- Grafana prints all logs in the plugin's `stdout` rather than in Grafana logs.
+- If the backend plugin doesn't serve requests after you turn off debug mode, you can force a reset to the standalone mode. To do so, delete the files `dist/standalone.txt`, `dist/pid.txt`, and  the executable file, and then restart Grafana.
+- Grafana doesn't support debugging backend plugins running inside Docker.
