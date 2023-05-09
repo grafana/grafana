@@ -96,7 +96,7 @@ export function QueryHeader({
   };
 
   const datasetDropdownIsAvailable = () => {
-    // If the feature flag is DISABLED, && the datasource is Postgres (isPostgresInstance),
+    // If the feature flag is DISABLED, && the datasource is Postgres (`isPostgresInstance`),
     // we want to hide the dropdown - as per previous behavior.
     if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {
       return false;

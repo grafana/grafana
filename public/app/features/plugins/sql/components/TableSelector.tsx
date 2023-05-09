@@ -35,7 +35,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, hasConf
       onChange={onChange}
       isLoading={state.loading}
       menuShouldPortal={true}
-      placeholder={state.loading ? 'Loading tables' : table}
+      placeholder={state.loading ? 'Loading tables' : 'Select table'}
     />
   );
 };

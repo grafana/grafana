@@ -47,7 +47,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    console.log(instanceSettings, 'instance settings');
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;
@@ -127,11 +126,11 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
-    /*
-      If a preconfigured database exists - or is added/updated, and there are ANY number of db queries
-      that use a database OTHER than the preconfigured one, this error with throw. 
-    */
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
+      /*
+        If a preconfigured database exists - or is added/updated, and there are ANY number of db queries
+        that use a database OTHER than the preconfigured one, this error with throw. 
+      */
       const defaultDatabaseHasIssue = () => {
         if (!!this.preconfiguredDatabase) {
           const getDatabaseTargets = request.targets.map((t) => t.dataset);

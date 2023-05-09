@@ -46,7 +46,7 @@ export function SqlQueryEditor({
   useEffect(() => {
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       /*
-        If there is a preconfigured database (either through the provisioning config, or the data source configuration component),
+        If there is a preconfigured database (either through the provisioning config file, or the Data Source Configuration component),
         AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
         that means either 1) the preconfigured database changed/updated (updated either through provisioning or the GUI),
         OR 2) there WASN'T a preconfigred database before, but there IS now (updated either through provisioning or the GUI).
@@ -57,9 +57,9 @@ export function SqlQueryEditor({
       }
 
       /*
-        If the data source is Postgres (all Postgres data source query editors are passed a default prop of `isPostgresInstance`),
-        then test for a preconfigured database (either through provisioning or the GUI). Postgres REQUIRES a default database,
-        so throw the appropriate warning.
+        If the data source is Postgres (Postgres data source Query Editors are passed a default prop `isPostgresInstance = true`),
+        then here test for a preconfigured database (either through provisioning or the GUI). Postgres REQUIRES a default database,
+        so throw the appropriate warning if none exists.
       */
       if (isPostgresInstance && !preconfiguredDatabase) {
         setHasNoPostgresDefaultDatabaseConfig(true);
@@ -153,7 +153,7 @@ export function SqlQueryEditor({
         <Alert severity="error" title="Default datasource error" elevated={true}>
           You do not currently have a default database configured for this data source. Postgres requires a default
           database with which to connect. Please configure one through the Data Sources Configuration page, or if you
-          are using a provisioned data source, update you configuration file with a default database name.
+          are using a provisioning file, update that configuration file with a default database.
         </Alert>
       )}
 
@@ -167,6 +167,7 @@ export function SqlQueryEditor({
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
         isPostgresInstance={isPostgresInstance}
+        // This will disable any downstream children buttons/dropdowns until the error/warning is handled.
         hasConfigIssue={hasDatabaseConfigIssue || hasNoPostgresDefaultDatabaseConfig}
       />
 

@@ -26,20 +26,20 @@ export const DatasetSelector = ({
   hasConfigIssue,
 }: DatasetSelectorProps) => {
   /* 
-    The behavior of this component - for MSSQL and MYSQL datasources - is based on whether the user chose to create a datasource
+    The behavior of this component - for MSSQL and MySQL datasources - is based on whether the user chose to create a datasource
     with or without a default database (preconfiguredDataset). If the user configured a default database, this selector
     should only allow that single preconfigured database option to be selected. If the user chose to NOT assign/configure a default database,
     then the user should be able to use this component to choose between multiple databases available to the datasource.
     NOTE: Postgres is NOT configured to be able to connect WITHOUT a default database, so if the datasource is Postgres (isPostgresInstance),
-    this component will disable.
+    this component will become disabled.
   */
   // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
   // OR if 2) the datasource is Postgres, in which case this component should be disabled by default.
   const hasPreconfigCondition = !!preconfiguredDataset || isPostgresInstance;
 
   const state = useAsync(async () => {
-    // If a default database is already configured for a MSSQL or MYSQL data source, OR the data source is Postgres, no need to fetch other databases.
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
+      // If a default database is already configured for a MSSQL or MySQL data source, OR the data source is Postgres, no need to fetch other databases.
       if (hasPreconfigCondition) {
         return [toOption(preconfiguredDataset)];
       }
