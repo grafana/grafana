@@ -1,4 +1,4 @@
-import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
+import { DataSourceJsonData, DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import {
   config,
   DataSourceWithBackend,
@@ -149,15 +149,11 @@ export const testDataSource = (
 export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     dispatch(dataSourcesLoad());
+    let response: Array<DataSourceSettings<DataSourceJsonData, {}>> = [];
     try {
-      const response = await api.getDataSources();
+      response = await api.getDataSources();
+    } finally {
       dispatch(dataSourcesLoaded(response));
-      /* 
-      if api.getDataSources() fails, dispatch dataSourcesLoaded with 
-      an empty array as payload so that infinite loading can be avoided
-      */
-    } catch (err) {
-      dispatch(dataSourcesLoaded([]));
     }
   };
 }
