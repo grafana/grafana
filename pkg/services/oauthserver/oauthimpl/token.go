@@ -210,25 +210,13 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 func (s *OAuth2ServiceImpl) filteredUserPermissions(ctx context.Context, userID int64, actionsFilter map[string]bool) ([]ac.Permission, error) {
 	permissions := []ac.Permission{}
 
-	// TODO find a more efficient way to get the user permissions
-	tmpUser := &user.SignedInUser{
-		OrgID: oauthserver.TmpOrgID,
-		Permissions: map[int64]map[string][]string{
-			oauthserver.TmpOrgID: {
-				ac.ActionUsersPermissionsRead: {ac.Scope("users", "id", strconv.FormatInt(userID, 10))},
-			},
-		},
-	}
-	permissionsMap, err := s.acService.SearchUsersPermissions(ctx, tmpUser, oauthserver.TmpOrgID, ac.SearchOptions{UserID: userID})
+	permissions, err := s.acService.SearchUserPermissions(ctx, oauthserver.TmpOrgID, ac.SearchOptions{UserID: userID})
 	if err != nil {
 		return nil, &fosite.RFC6749Error{
 			DescriptionField: "The permissions scope could not be processed.",
 			ErrorField:       "server_error",
 			CodeField:        http.StatusInternalServerError,
 		}
-	}
-	if permissionsMap != nil && permissionsMap[userID] != nil {
-		permissions = permissionsMap[userID]
 	}
 
 	// Apply the actions filter
