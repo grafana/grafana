@@ -35,7 +35,7 @@ export const fetchChildren = createAsyncThunk(
         page,
       };
     } else {
-      const page = 1;
+      const page = collection.lastFetched === 'folder' ? 1 : (collection.lastFetchedPage ?? 1) + 1;
       return {
         children: await listDashboards(uid, page),
         page,

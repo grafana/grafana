@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, throttle } from 'lodash';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { ListOnItemsRenderedProps } from 'react-window';
 
@@ -104,7 +104,37 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   const handleItemsRendered = useMemo(() => {
     function fn(props: ListOnItemsRenderedProps) {
-      console.log('Rendered up to', props.overscanStopIndex);
+      console.group(
+        'Visible range: %c%d%c - %c%d%c. Overscan range: %c%d%c - %c%d%c. flatTree last index %c%d%c',
+        'color: #3498db',
+        props.visibleStartIndex,
+        'color: unset',
+        'color: #3498db',
+        props.visibleStopIndex,
+        'color: unset',
+        'color: #3498db',
+        props.overscanStartIndex,
+        'color: unset',
+        'color: #3498db',
+        props.overscanStopIndex,
+        'color: unset',
+        'color: #3498db',
+        flatTree.length - 1,
+        'color: unset'
+      );
+
+      // Continue if overscan range >= flatTree.length - 1
+
+      // TODO: instead of checking length of flatTree, we've got to check the length of....
+      // the expanded folder that's intersecting with overscanStopIndex? what if our page sizes
+      // are smaller than what's visible on screen?
+      const maybeShouldLoadMore = props.overscanStopIndex >= flatTree.length - 1;
+
+      if (!maybeShouldLoadMore) {
+        console.log('Already loaded enough for now');
+        console.groupEnd();
+        return;
+      }
 
       let folderToLoad: DashboardViewItem | undefined;
 
@@ -140,16 +170,22 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
         const rootCollection = folderUID ? childrenByParentUID[folderUID] : rootItems;
         if (!rootCollection) {
+          console.groupEnd();
           return;
         }
         const isFullyLoaded = rootCollection.lastFetched === 'dashboard' && rootCollection.lastFetchedSize < 50;
         if (!isFullyLoaded) {
           dispatch(fetchChildren(folderUID));
         }
+
+        console.groupEnd();
       }
     }
 
-    return debounce(fn, 1000);
+    // TODO: doesnt work if opening a folder at the top after we've scrolled a lot
+    // TODO: should not attempt to load additional children if a request is already in flight
+
+    return throttle(fn, 300);
   }, [flatTree, dispatch, folderUID, rootItems, childrenByParentUID]);
 
   if (status === 'pending') {
