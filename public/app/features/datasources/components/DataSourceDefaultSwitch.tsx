@@ -33,7 +33,7 @@ export function DataSourceDefaultSwitch({ dataSource, isDefault, readOnly, onUpd
     return (
       <Tooltip
         placement="top"
-        content="This data source was added by config and cannot be modified using the UI"
+        content="This data source was added by config and cannot be modified using the UI."
         theme="info"
       >
         <div className={styles.div}>
