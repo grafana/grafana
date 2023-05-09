@@ -25,9 +25,8 @@ const GroupedModeView = ({ rules, options }: Props) => {
   const groupedRules = useMemo<GroupedRules>(() => {
     const groupedRules = new Map<string, Alert[]>();
 
-    const hasInstancesWithMatchingLabels = (rule: CombinedRuleWithLocation) => {
-      return groupBy ? alertHasEveryLabelForCombinedRules(rule, groupBy) : true;
-    };
+    const hasInstancesWithMatchingLabels = (rule: CombinedRuleWithLocation) =>
+      groupBy ? alertHasEveryLabelForCombinedRules(rule, groupBy) : true;
 
     rules.forEach((rule) => {
       const alertingRule = getAlertingRule(rule);
