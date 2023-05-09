@@ -82,7 +82,7 @@ InAField.args = {
   indeterminate: false,
 };
 
-export const AllStates: ComponentStory<typeof Checkbox> = (args) => {
+export const AllStates: StoryFn<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
