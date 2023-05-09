@@ -54,7 +54,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
     <Page navId="authentication">
       <Page.Contents isLoading={isLoading}>
         <div className={styles.doclink}>
-          <a href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/">
+          <a href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/">
             Documentation
           </a>
         </div>
