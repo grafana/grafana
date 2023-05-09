@@ -753,10 +753,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		propertiesFunc = fmt.Sprintf("bag_merge(bag_pack_columns(%s), customDimensions, customMeasurements)", strings.Join(tags, ","))
 	}
 
-	errorProperty := ""
-	if slices.Contains(filteredTypes, "exceptions") {
-		errorProperty = `| extend error = iff(itemType == "exceptions", true, false)`
-	}
+	errorProperty := `| extend error = todynamic(iff(itemType == "exception", "true", "false"))`
 
 	baseQuery := fmt.Sprintf(`set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true %s`, resourcesQuery)
 	propertiesStaticQuery := `| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -768,7 +765,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 		`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 		`| order by startTime asc`
-	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + errorProperty + filtersClause + projectClause
+	return baseQuery + whereClause + propertiesStaticQuery + errorProperty + propertiesQuery + filtersClause + projectClause
 }
 
 func buildTracesLogsQuery(operationId string, resources map[string]bool) string {
