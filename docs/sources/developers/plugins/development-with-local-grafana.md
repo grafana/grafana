@@ -29,7 +29,7 @@ Here's how to clone and run Grafana locally:
    plugins = <path-to-your-plugin-parent-directory>
    ```
 
-## Run Grafana with `docker-compose`
+## Run Grafana with docker-compose
 
 Another option is to run Grafana with docker-compose so that it runs in a container. To do so, create the `docker-compose` file in your plugin directory.
 
