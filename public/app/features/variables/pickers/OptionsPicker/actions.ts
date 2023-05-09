@@ -77,7 +77,7 @@ export const filterOrSearchOptions = (
 
     const { query, options } = variable;
 
-    let queryTarget = typeof query === 'string' ? query : query.target;
+    const queryTarget = typeof query === 'string' ? query : query.target;
     if (containsSearchFilter(queryTarget)) {
       return searchForOptionsWithDebounce(dispatch, getState, searchQuery, rootStateKey);
     }
