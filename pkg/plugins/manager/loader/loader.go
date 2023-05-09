@@ -157,7 +157,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		// Detect angular for external plugins
 		if plugin.IsExternalPlugin() {
 			var err error
-			plugin.Angular, err = angulardetector.Inspect(plugin)
+			plugin.AngularDetected, err = angulardetector.Inspect(plugin)
 			if err != nil {
 				l.log.Warn("could not inspect plugin for angular", "pluginID", plugin.ID, "err", err)
 			}
