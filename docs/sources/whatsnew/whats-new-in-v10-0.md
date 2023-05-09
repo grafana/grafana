@@ -357,3 +357,13 @@ To use it in enforce mode:
 
 - Enable `content_security_policy` in the configuration.
 - Add `require-trusted-types-for 'script';` to the `content_security_policy_template`.
+
+## Data plane
+
+Starting with Grafana 10, data types are being defined to create a data plane layer between producers and consumers of data. By defining data types as part of Grafana's platform, plugin and application developers can use these data types to achieve more reliable interoperability across the platform. Additionally, data consumers in the platform do not have to infer the data type.
+
+Resources:
+
+- [Data Plane Contract - Technical Specification](https://grafana.github.io/dataplane/contract/)
+- [Example Typed Dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
+- [Go library for reading and writing dataplane data](https://github.com/grafana/dataplane/tree/main/sdata)
