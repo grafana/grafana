@@ -18,7 +18,7 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 - It doesn't require Grafana to be restarted after a configuration update
 - Access to the SAML UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
 
-> **Note:** Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
+> **Note:** Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file. For more information on how Grafana determines the order of precedence for its settings, please refer to the [Settings update at runtime]({{< relref "../../configure-grafana/settings-updates-at-runtime/" >}}).
 
 > **Note:** Disabling the UI does not affect any configuration settings that were previously set up through the UI. Those settings will continue to function as intended even with the UI disabled.
 
