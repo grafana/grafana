@@ -112,7 +112,7 @@ export default class GraphiteQuery {
         });
 
         // bug fix for parsing multiple functions as params
-        handlemultipleSeriesByTagsParams(astNode, innerFunc);
+        handleMultipleSeriesByTagsParams(astNode);
 
         each(astNode.params, (param) => {
           this.parseTargetRecursive(param, innerFunc);
@@ -336,9 +336,9 @@ function renderTagString(tag: { key: any; operator?: any; value?: any }) {
  * @param astNode
  * @param innerFunc
  */
-function handlemultipleSeriesByTagsParams(astNode: AstNode, innerFunc: FuncInstance) {
-  // if function is asPercent and has two params that are function seriesByTags keep the second as a string otherwise we have a parsing error
-  if (innerFunc.def.name === 'asPercent' && astNode.params && astNode.params.length >= 2) {
+function handleMultipleSeriesByTagsParams(astNode: AstNode) {
+  // if function has two params that are function seriesByTags keep the second as a string otherwise we have a parsing error
+  if (astNode.params && astNode.params.length >= 2) {
     let count = 0;
     astNode.params = astNode.params.map((p: AstNode) => {
       if (p.type === 'function') {
