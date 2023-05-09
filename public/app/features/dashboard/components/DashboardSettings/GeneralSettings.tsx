@@ -3,6 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
@@ -113,6 +114,10 @@ export function GeneralSettingsUnconnected({
               dashboardId={dashboard.id}
               skipInitialLoad={true}
             />
+          </Field>
+
+          <Field label="Nested Folder">
+            <NestedFolderPicker />
           </Field>
 
           <Field
