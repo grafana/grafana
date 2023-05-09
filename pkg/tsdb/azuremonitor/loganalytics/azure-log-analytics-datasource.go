@@ -144,25 +144,32 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 
 			resources = azureTracesTarget.Resources
 			resourceOrWorkspace = azureTracesTarget.Resources[0]
+			resourcesMap := make(map[string]bool, 0)
+			if len(resources) > 1 {
+				for _, resource := range resources {
+					resourcesMap[strings.ToLower(resource)] = true
+				}
+				// Remove the base resource as that's where the query is run anyway
+				delete(resourcesMap, strings.ToLower(resourceOrWorkspace))
+			}
 
 			operationId := ""
-			var correlationResources map[string]bool
 			if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
 				operationId = *queryJSONModel.AzureTraces.OperationId
-				correlationResources, err = getCorrelationWorkspaces(ctx, logger, resources, dsInfo, operationId, tracer)
+				resourcesMap, err = getCorrelationWorkspaces(ctx, logger, resourceOrWorkspace, resourcesMap, dsInfo, operationId, tracer)
 				if err != nil {
 					return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
 				}
 			}
 
-			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, correlationResources)
+			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, resourcesMap)
 			traceIdVariable := "${__data.fields.traceID}"
 			if operationId == "" {
-				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, nil, nil)
-				traceLogsExploreQuery = buildTracesLogsQuery(&traceIdVariable, nil)
+				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, resourcesMap)
+				traceLogsExploreQuery = buildTracesLogsQuery(traceIdVariable, resourcesMap)
 			} else {
 				traceExploreQuery = queryString
-				traceLogsExploreQuery = buildTracesLogsQuery(&operationId, correlationResources)
+				traceLogsExploreQuery = buildTracesLogsQuery(operationId, resourcesMap)
 			}
 			traceExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceExploreQuery, "TimeGenerated")
 			if err != nil {
@@ -478,14 +485,9 @@ func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error
 	return portalUrl, nil
 }
 
-func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, resources []string, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (map[string]bool, error) {
+func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (map[string]bool, error) {
 	azMonService := dsInfo.Services["Azure Monitor"]
-	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", resources[0], operationId)
-	resourcesMap := make(map[string]bool)
-
-	for _, resource := range resources {
-		resourcesMap[strings.ToLower(resource)] = true
-	}
+	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", baseResource, operationId)
 
 	callCorrelationAPI := func(url string) (AzureCorrelationAPIResponse, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer([]byte{}))
@@ -564,8 +566,8 @@ func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, resources 
 		nextLink = correlationResponse.Properties.NextLink
 	}
 
-	// Remove the first element as that's where the query is run anyway
-	delete(resourcesMap, strings.ToLower(resources[0]))
+	// Remove the base element as that's where the query is run anyway
+	delete(resourcesMap, strings.ToLower(baseResource))
 	return resourcesMap, nil
 }
 
@@ -668,7 +670,7 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters, resultFormat *string, correlationResources map[string]bool) string {
+func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters, resultFormat *string, resources map[string]bool) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
@@ -687,19 +689,17 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 		return ""
 	}
 
-	resourcesQuery := ""
-	if len(correlationResources) > 0 {
+	resourcesQuery := strings.Join(filteredTypes, ",")
+	if len(resources) > 0 {
 		intermediate := make([]string, 0)
-		for resource := range correlationResources {
+		for resource := range resources {
 			resourceSplit := strings.SplitAfter(resource, "/")
 			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range filteredTypes {
 				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resourceName, table))
 			}
 		}
-		resourcesQuery += "*," + strings.Join(intermediate, ",")
-	} else {
-		resourcesQuery += strings.Join(filteredTypes, ",")
+		resourcesQuery += "," + strings.Join(intermediate, ",")
 	}
 
 	tagsMap := make(map[string]bool)
@@ -767,13 +767,13 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 	return baseQuery + whereClause + propertiesStaticQuery + propertiesQuery + errorProperty + filtersClause + projectClause
 }
 
-func buildTracesLogsQuery(operationId *string, correlationResources map[string]bool) string {
+func buildTracesLogsQuery(operationId string, resources map[string]bool) string {
 	types := Tables
 	sort.Strings(types)
 	selectors := "union " + strings.Join(types, ",\n") + "\n"
-	if len(correlationResources) > 0 {
+	if len(resources) > 0 {
 		intermediate := make([]string, 0)
-		for resource := range correlationResources {
+		for resource := range resources {
 			resourceSplit := strings.SplitAfter(resource, "/")
 			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range types {
@@ -786,6 +786,6 @@ func buildTracesLogsQuery(operationId *string, correlationResources map[string]b
 	}
 
 	query := selectors
-	query += fmt.Sprintf(`| where operation_Id == "%s"`, *operationId)
+	query += fmt.Sprintf(`| where operation_Id == "%s"`, operationId)
 	return query
 }
