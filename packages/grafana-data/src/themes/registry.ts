@@ -21,7 +21,7 @@ export function getThemeById(id: string): GrafanaTheme2 {
  * @internal
  * For internal use only
  */
-export function getThemesList(includeExtras?: boolean) {
+export function getBuiltInThemes(includeExtras?: boolean) {
   return themeRegistry.list().filter((item) => {
     return includeExtras ? true : !item.isExtra;
   });

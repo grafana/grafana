@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { FeatureState, SelectableValue } from '@grafana/data';
-import { getThemesList } from '@grafana/data/src/themes/registry';
+import { FeatureState, SelectableValue, getBuiltInThemes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -68,7 +67,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       queryHistory: { homeTab: '' },
     };
 
-    this.themeOptions = getThemesList(config.featureToggles.extraThemes).map((theme) => ({
+    this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
       value: theme.id,
       label: t(`shared-preferences.theme.${theme.id}-label`, theme.name),
     }));
@@ -145,7 +144,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           return (
             <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
               <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
-                <Select options={this.themeOptions} value={currentThemeOption} onChange={this.onThemeChanged} />
+                <Select
+                  options={this.themeOptions}
+                  value={currentThemeOption}
+                  onChange={this.onThemeChanged}
+                  inputId="shared-preferences-theme-select"
+                />
               </Field>
 
               <Field
