@@ -35,22 +35,24 @@ export function AppChrome({ children }: Props) {
 
   return (
     <div className={classNames('main-view', searchBarHidden && 'main-view--search-bar-hidden')}>
-      <LinkButton className={styles.skipLink} href="#pageContent">
-        Skip to main content
-      </LinkButton>
       {!state.chromeless && (
-        <div className={cx(styles.topNav)}>
-          {!searchBarHidden && <TopSearchBar />}
-          <NavToolbar
-            searchBarHidden={searchBarHidden}
-            sectionNav={state.sectionNav.node}
-            pageNav={state.pageNav}
-            actions={state.actions}
-            onToggleSearchBar={chrome.onToggleSearchBar}
-            onToggleMegaMenu={chrome.onToggleMegaMenu}
-            onToggleKioskMode={chrome.onToggleKioskMode}
-          />
-        </div>
+        <>
+          <LinkButton className={styles.skipLink} href="#pageContent">
+            Skip to main content
+          </LinkButton>
+          <div className={cx(styles.topNav)}>
+            {!searchBarHidden && <TopSearchBar />}
+            <NavToolbar
+              searchBarHidden={searchBarHidden}
+              sectionNav={state.sectionNav.node}
+              pageNav={state.pageNav}
+              actions={state.actions}
+              onToggleSearchBar={chrome.onToggleSearchBar}
+              onToggleMegaMenu={chrome.onToggleMegaMenu}
+              onToggleKioskMode={chrome.onToggleKioskMode}
+            />
+          </div>
+        </>
       )}
       <main className={contentClass} id="pageContent">
         <div className={styles.panes}>
