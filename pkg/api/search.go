@@ -142,18 +142,24 @@ type SearchParams struct {
 	// Enum: dash-folder,dash-db
 	Type string `json:"type"`
 	// List of dashboard id’s to search for
+	// This is deprecated: users should use the `dashboardUIDs` query parameter instead
 	// in:query
 	// required: false
+	// deprecated: true
 	DashboardIds []int64 `json:"dashboardIds"`
 	// List of dashboard uid’s to search for
 	// in:query
 	// required: false
 	DashboardUIDs []string `json:"dashboardUIDs"`
 	// List of folder id’s to search in for dashboards
+	// If it's `0` then it will query for the top level folders
+	// This is deprecated: users should use the `folderUIDs` query parameter instead
 	// in:query
 	// required: false
+	// deprecated: true
 	FolderIds []int64 `json:"folderIds"`
 	// List of folder UID’s to search in for dashboards
+	// If it's an empty string then it will query for the top level folders
 	// in:query
 	// required: false
 	FolderUIDs []string `json:"folderUIDs"`
