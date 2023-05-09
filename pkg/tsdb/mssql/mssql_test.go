@@ -1284,7 +1284,7 @@ func TestMSSQL(t *testing.T) {
 				Queries: []backend.DataQuery{
 					{
 						JSON: []byte(`{
-							"rawSql": "SELECT empty_key, empty_val FROM empty",
+							"rawSql": "SELECT empty_key, empty_val FROM empty_obj",
 							"format": "table"
 						}`),
 						RefID: "A",
