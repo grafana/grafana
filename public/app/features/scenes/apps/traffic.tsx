@@ -118,10 +118,11 @@ export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldo
   }
 
   private onHandlerChanged(handler: string | undefined) {
+    const layout = this.getLayout();
+
     if (handler == null) {
-      this.removeDrilldownView();
+      layout.setState({ children: layout.state.children.slice(0, 1) });
     } else {
-      const layout = this.getLayout();
       layout.setState({ children: [layout.state.children[0], this.getDrilldownView(handler)] });
     }
   }
@@ -135,14 +136,11 @@ export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldo
         }),
         pluginId: 'timeseries',
         title: `Handler: ${handler} details`,
-        headerActions: <Button size="sm" variant="secondary" icon="times" onClick={() => this.removeDrilldownView()} />,
+        headerActions: (
+          <Button size="sm" variant="secondary" icon="times" onClick={() => this.setState({ handler: undefined })} />
+        ),
       }),
     });
-  }
-
-  private removeDrilldownView() {
-    const layout = this.getLayout();
-    layout.setState({ children: layout.state.children.slice(0, 1) });
   }
 
   public getUrlState() {
