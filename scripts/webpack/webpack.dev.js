@@ -38,7 +38,6 @@ module.exports = (env = {}) =>
           use: {
             loader: 'esbuild-loader',
             options: {
-              loader: 'tsx',
               target: esbuildTargets,
             },
           },

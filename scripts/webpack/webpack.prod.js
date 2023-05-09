@@ -2,7 +2,7 @@
 
 const browserslist = require('browserslist');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const { ESBuildMinifyPlugin } = require('esbuild-loader');
+const { EsbuildPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -33,7 +33,6 @@ module.exports = (env = {}) =>
           use: {
             loader: 'esbuild-loader',
             options: {
-              loader: 'tsx',
               target: esbuildTargets,
             },
           },
@@ -48,7 +47,7 @@ module.exports = (env = {}) =>
       nodeEnv: 'production',
       minimize: parseInt(env.noMinify, 10) !== 1,
       minimizer: [
-        new ESBuildMinifyPlugin({
+        new EsbuildPlugin({
           target: esbuildTargets,
         }),
         new CssMinimizerPlugin(),
