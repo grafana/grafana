@@ -1,6 +1,14 @@
-import { AlertmanagerGroup, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
+import { cloneDeep } from 'lodash';
 
-import { normalizeMatchers } from './amroutes';
+import {
+  AlertmanagerGroup,
+  MatcherOperator,
+  ObjectMatcher,
+  Route,
+  RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
+
+import { normalizeMatchers } from './matchers';
 
 export type Label = [string, string];
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
@@ -42,8 +50,9 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
   let matches: T[] = [];
 
   // If the current node is not a match, return nothing
-  const normalizedMatchers = normalizeMatchers(root);
-  if (!matchLabels(normalizedMatchers, labels)) {
+  // const normalizedMatchers = normalizeMatchers(root);
+  // Normalization should have happened earlier in the code
+  if (!root.object_matchers || !matchLabels(root.object_matchers, labels)) {
     return [];
   }
 
@@ -70,6 +79,24 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
   }
 
   return matches;
+}
+
+export type NormalizedRoute = Omit<RouteWithID, 'matchers' | 'match' | 'match_re'> & { routes?: NormalizedRoute[] };
+
+// This is a performance improvement to normalize matchers only once and use the normalized version later on
+export function normalizeRootRoute(rootRoute: RouteWithID): NormalizedRoute {
+  function normalizeRoute(route: RouteWithID) {
+    route.object_matchers = normalizeMatchers(route);
+    delete route.matchers;
+    delete route.match;
+    delete route.match_re;
+    route.routes?.forEach(normalizeRoute);
+  }
+
+  const normalizedRootRoute = cloneDeep(rootRoute);
+  normalizeRoute(normalizedRootRoute);
+
+  return normalizedRootRoute;
 }
 
 /**

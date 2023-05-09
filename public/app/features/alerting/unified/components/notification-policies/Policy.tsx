@@ -18,7 +18,7 @@ import {
 import { ReceiversState } from 'app/types';
 
 import { getNotificationsPermissions } from '../../utils/access-control';
-import { normalizeMatchers } from '../../utils/amroutes';
+import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';

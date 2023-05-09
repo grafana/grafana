@@ -39,8 +39,9 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import type { FilterEngine } from './notificationPolicyWorker';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
-import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
+import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
+import { normalizeMatchers } from './utils/matchers';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
@@ -132,9 +133,9 @@ const AmRoutes = () => {
       const routeGroupMapPromise = engine.getRouteGroupsMap(rootRoute, alertGroups);
       console.timeEnd('Instances Map Init');
 
-      console.time('Route Instances Map Algorithm');
+      console.time(`Route Instances Map Algorithm (${rootRoute.id})`);
       const routeGroupMap = await routeGroupMapPromise;
-      console.timeEnd('Route Instances Map Algorithm');
+      console.timeEnd(`Route Instances Map Algorithm (${rootRoute.id})`);
       return routeGroupMap;
     }
     return undefined;

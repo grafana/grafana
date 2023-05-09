@@ -2,7 +2,8 @@ import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/type
 
 import { FormAmRoute } from '../types/amroutes';
 
-import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute, normalizeMatchers } from './amroutes';
+import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute } from './amroutes';
+import { normalizeMatchers } from './matchers';
 
 const emptyAmRoute: Route = {
   receiver: '',
