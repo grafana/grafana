@@ -36,7 +36,7 @@ import { Policy } from './components/notification-policies/Policy';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import type { FilterEngine } from './notificationPolicyWorker';
+import type { RouteGroupsMatcher } from './routeGroupsMatcherWorker';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
@@ -50,8 +50,8 @@ enum ActiveTab {
   MuteTimings = 'mute_timings',
 }
 
-const worker = new Worker(new URL('./notificationPolicyWorker.ts', import.meta.url), { type: 'module' });
-const engine = comlink.wrap<FilterEngine>(worker);
+const worker = new Worker(new URL('./routeGroupsMatcherWorker.ts', import.meta.url), { type: 'module' });
+const engine = comlink.wrap<RouteGroupsMatcher>(worker);
 
 const AmRoutes = () => {
   const dispatch = useDispatch();
@@ -71,8 +71,6 @@ const AmRoutes = () => {
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const contactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
-
-  // const [routeAlertGroupsMap, setRouteAlertGroupsMap] = useState(new Map<string, AlertmanagerGroup[]>());
 
   useEffect(() => {
     if (alertManagerSourceName) {
@@ -111,24 +109,9 @@ const AmRoutes = () => {
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
-  // const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  // const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
-
-  // useEffect(() => {
-  //   if (rootRoute && fetchAlertGroups.result) {
-  //     initMatchingInstances(rootRoute, fetchAlertGroups.result);
-  //   }
-  //
-  //   async function initMatchingInstances(rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) {
-  //     console.time('Route Instances Map');
-  //     const routeGroupMap = await engine.getRouteGroupsMap(rootRoute, alertGroups);
-  //     console.timeEnd('Route Instances Map');
-  //     setRouteAlertGroupsMap(routeGroupMap);
-  //   }
-  // }, [rootRoute, fetchAlertGroups.result]);
-
   const { value: routeAlertGroupsMap } = useAsync(async () => {
     if (rootRoute && alertGroups) {
+      // TODO Log the time it takes to compute the routeGroupMap to Loki
       console.time('Instances Map Init');
       const routeGroupMapPromise = engine.getRouteGroupsMap(rootRoute, alertGroups);
       console.timeEnd('Instances Map Init');
@@ -214,13 +197,6 @@ const AmRoutes = () => {
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
-
-  // fetch AM instances grouping
-  // useEffect(() => {
-  //   if (alertManagerSourceName) {
-  //     dispatch(fetchAlertGroupsAction(alertManagerSourceName));
-  //   }
-  // }, [alertManagerSourceName, dispatch]);
 
   if (!alertManagerSourceName) {
     return (

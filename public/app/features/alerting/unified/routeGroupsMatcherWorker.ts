@@ -1,10 +1,10 @@
 import * as comlink from 'comlink';
 
-import type { AlertmanagerGroup, ObjectMatcher, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
+import type { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 
 import { findMatchingAlertGroups, NormalizedRoute, normalizeRootRoute } from './utils/notification-policies';
 
-const npFilterEngine = {
+const routeGroupsMatcher = {
   getRouteGroupsMap(rootRoute: RouteWithID, groups: AlertmanagerGroup[]): Map<string, AlertmanagerGroup[]> {
     const normalizedRootRoute = normalizeRootRoute(rootRoute);
 
@@ -22,11 +22,6 @@ const npFilterEngine = {
   },
 };
 
-export type FilterEngine = typeof npFilterEngine;
+export type RouteGroupsMatcher = typeof routeGroupsMatcher;
 
-comlink.expose(npFilterEngine);
-
-export interface RouteFilters {
-  contactPointFilter?: string;
-  labelMatchersFilter?: ObjectMatcher[];
-}
+comlink.expose(routeGroupsMatcher);

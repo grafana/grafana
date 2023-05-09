@@ -1,48 +1,8 @@
 import { cloneDeep } from 'lodash';
 
-import {
-  AlertmanagerGroup,
-  MatcherOperator,
-  ObjectMatcher,
-  Route,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { normalizeMatchers } from './matchers';
-
-export type Label = [string, string];
-type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
-
-const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
-  [MatcherOperator.equal]: (lv, mv) => lv === mv,
-  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => Boolean(lv.match(new RegExp(mv))),
-  [MatcherOperator.notRegex]: (lv, mv) => !Boolean(lv.match(new RegExp(mv))),
-};
-
-function isLabelMatch(matcher: ObjectMatcher, label: Label) {
-  const [labelKey, labelValue] = label;
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  // not interested, keys don't match
-  if (labelKey !== matcherKey) {
-    return false;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
-// check if every matcher returns "true" for the set of labels
-function matchLabels(matchers: ObjectMatcher[], labels: Label[]) {
-  return matchers.every((matcher) => {
-    return labels.some((label) => isLabelMatch(matcher, label));
-  });
-}
+import { Label, normalizeMatchers, labelsMatchObjectMatchers } from './matchers';
 
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
@@ -52,7 +12,7 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
   // If the current node is not a match, return nothing
   // const normalizedMatchers = normalizeMatchers(root);
   // Normalization should have happened earlier in the code
-  if (!root.object_matchers || !matchLabels(root.object_matchers, labels)) {
+  if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
     return [];
   }
 
@@ -129,4 +89,4 @@ function findMatchingAlertGroups(
   }, matchingGroups);
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes, matchLabels };
+export { findMatchingAlertGroups, findMatchingRoutes };
