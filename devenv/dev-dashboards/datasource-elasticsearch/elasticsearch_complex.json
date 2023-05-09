@@ -28,7 +28,7 @@
           "refId": "Anno",
           "scenarioId": "annotations"
         },
-        "textField": "This is Elasticsearch error"
+        "textField": "line"
       }
     ]
   },
