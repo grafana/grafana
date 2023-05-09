@@ -7,7 +7,7 @@ import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 import { createErrorNotification } from '../../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../../store/store';
-import { getUnscopedTags } from '../../SearchTraceQLEditor/utils';
+import { getAllTags } from '../../SearchTraceQLEditor/utils';
 import { TempoDatasource } from '../../datasource';
 
 import { CompletionProvider } from './autocomplete';
@@ -130,7 +130,11 @@ function useAutocomplete(datasource: TempoDatasource) {
             }
             providerRef.current.setTags(tags.v1);
           } else if (tags.v2) {
-            providerRef.current.setTags(getUnscopedTags(tags.v2));
+            const allTags = getAllTags(tags.v2);
+            if (!allTags.find((t) => t === 'status.code')) {
+              allTags.push('status.code');
+            }
+            providerRef.current.setTags(allTags);
           }
         }
       } catch (error) {

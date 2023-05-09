@@ -64,11 +64,10 @@ const TagsInput = ({
       if (tags.v1) {
         return tags.v1;
       } else if (tags.v2) {
-        const scope = tags.v2.find((scope: Scope) => scope.name && scope.name === f.scope);
-        // unscoped chosen in tag select
-        if (!scope) {
+        if (f.scope === TraceqlSearchScope.Unscoped) {
           return getUnscopedTags(tags.v2);
         }
+        const scope = tags.v2.find((scope: Scope) => scope.name && scope.name === f.scope);
         return scope && scope.tags ? scope.tags : [];
       }
     }

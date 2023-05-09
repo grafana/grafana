@@ -71,6 +71,10 @@ export const getUnscopedTags = (scopes: Scope[]) => {
   );
 };
 
+export const getAllTags = (scopes: Scope[]) => {
+  return uniq(scopes.map((scope: Scope) => (scope.tags ? scope.tags : [])).flat());
+};
+
 export function replaceAt<T>(array: T[], index: number, value: T) {
   const ret = array.slice(0);
   ret[index] = value;
