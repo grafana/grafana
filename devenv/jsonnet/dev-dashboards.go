@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"os"
@@ -36,16 +37,20 @@ func main() {
 		panic(err)
 	}
 
-	f := codejen.NewFile(OUTPUT_PATH, []byte(out), &dummyJenny{})
+	f := codejen.NewFile(OUTPUT_PATH, []byte(out), dummyJenny{})
+	fs := codejen.NewFS()
+	if err = fs.Add(*f); err != nil {
+		panic(err)
+	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		err = f.Validate()
+		err = fs.Verify(context.Background(), "")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "generated code is not up to date:\n%s\nrun `make gen-jsonnet` to regenerate\n\n", err)
 			os.Exit(1)
 		}
 	} else {
-		err = f.Validate()
+		err = fs.Verify(context.Background(), "")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
 			os.Exit(1)
@@ -124,6 +129,6 @@ func (g *libjsonnetGen) readDir(dir string) error {
 
 type dummyJenny struct{}
 
-func (*dummyJenny) JennyName() string {
+func (dummyJenny) JennyName() string {
 	return "dummyJenny"
 }
