@@ -166,6 +166,7 @@ type Cfg struct {
 	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
+	MinTLSVersion    string
 
 	// Security settings
 	SecretKey             string
@@ -1794,6 +1795,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	}
+
+	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
+	if cfg.MinTLSVersion == "TLS1.0" || cfg.MinTLSVersion == "TLS1.1" {
+		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
 	}
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")

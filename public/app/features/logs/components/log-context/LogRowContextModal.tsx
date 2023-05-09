@@ -180,7 +180,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
-    setLimit(option.value!);
+    if (option.value) {
+      setLimit(option.value);
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+        new_limit: option.value,
+      });
+    }
   };
 
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
