@@ -1,4 +1,4 @@
-import { getThemeById } from '@grafana/data/src/themes/extraThemes';
+import { getThemeById } from '@grafana/data/src/themes/registry';
 import { ThemeChangedEvent } from '@grafana/runtime';
 
 import appEvents from '../app_events';
@@ -36,7 +36,6 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
         }
       }
     };
-
     document.head.insertBefore(newCssLink, document.head.firstChild);
   }
 

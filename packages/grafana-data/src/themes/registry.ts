@@ -27,13 +27,16 @@ export function getThemesList(includeExtras?: boolean) {
   });
 }
 
-export const themeRegistry = new Registry<ThemeRegistryItem>(() => {
+/**
+ * There is also a backend list at services/perferences/themes.go
+ */
+const themeRegistry = new Registry<ThemeRegistryItem>(() => {
   return [
     { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
     { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
     { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
-    { id: 'blue-night', name: 'Blue night', build: createBlueNight },
-    { id: 'midnight', name: 'Midnight', build: createMidnight },
+    { id: 'blue-night', name: 'Blue night', build: createBlueNight, isExtra: true },
+    { id: 'midnight', name: 'Midnight', build: createMidnight, isExtra: true },
   ];
 });
 

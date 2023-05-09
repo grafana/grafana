@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { FeatureState, SelectableValue } from '@grafana/data';
-import { getThemesList } from '@grafana/data/src/themes/extraThemes';
+import { getThemesList } from '@grafana/data/src/themes/registry';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
