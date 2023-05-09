@@ -53,6 +53,11 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   return (
     <Page navId="authentication">
       <Page.Contents isLoading={isLoading}>
+        <div className={styles.doclink}>
+          <a href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/">
+            Documentation
+          </a>
+        </div>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
         {!!enabledProviders?.length && (
           <div className={styles.cardsContainer}>
@@ -115,6 +120,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     settingName: css`
       padding-left: 25px;
+    `,
+    doclink: css`
+      padding-bottom: 5px;
+      padding-top: -5px;
+      text-size: 10px;
     `,
     settingValue: css`
       white-space: break-spaces;
