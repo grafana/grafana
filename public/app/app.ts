@@ -67,6 +67,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
@@ -91,7 +92,6 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
-import { startMeasure, stopMeasure } from './metrics';
 import { configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins

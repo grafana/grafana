@@ -1,6 +1,6 @@
 import type { PluginExtensionLinkConfig } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
-import { startMeasure, stopMeasure } from 'app/metrics';
+import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 
 import * as pluginLoader from './plugin_loader';
 

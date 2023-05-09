@@ -1,4 +1,4 @@
-import { reportPerformance } from './core/services/echo/EchoSrv';
+import { reportPerformance } from '../services/echo/EchoSrv';
 
 export function startMeasure(eventName: string) {
   if (!performance) {
