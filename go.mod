@@ -34,7 +34,7 @@ require (
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.44.234
 	github.com/beevik/etree v1.1.0
-	github.com/benbjohnson/clock v1.3.0
+	github.com/benbjohnson/clock v1.3.3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/centrifugal/centrifuge v0.29.1
 	github.com/crewjam/saml v0.4.12
@@ -82,7 +82,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/alertmanager v0.25.0
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/prometheus/client_model v0.3.0
 	github.com/prometheus/common v0.42.0
 	github.com/prometheus/prometheus v1.8.2-0.20211217191541-41f1a8125e66
@@ -199,7 +199,7 @@ require (
 	github.com/prometheus/exporter-toolkit v0.9.1 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
-	github.com/rs/cors v1.8.3 // indirect
+	github.com/rs/cors v1.9.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/encoding v0.3.6 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
@@ -413,7 +413,7 @@ replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda756
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20230426142720-803b73a2f1f7
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20230508090422-7d5630522a53
 
 // grpc v1.46.0 removed "WithBalancerName()" API, still in use by weaveworks/commons.
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
