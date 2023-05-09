@@ -223,13 +223,13 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {
-		return fmt.Errorf("Failed to parse Alertmanager config: %w", err)
+		return fmt.Errorf("failed to parse Alertmanager config: %w", err)
 	}
 
 	var outerErr error
 	am.Base.WithLock(func() {
 		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
-			outerErr = fmt.Errorf("Unable to apply configuration: %w", err)
+			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
 	})

@@ -77,7 +77,7 @@ func TestPersistTemplates(t *testing.T) {
 			}
 			c := &api.PostableUserConfig{TemplateFiles: tt.templates}
 
-			testLogger := log.New("configTestLogger")
+			testLogger := logtest.Fake{}
 			paths, changed, persistErr := PersistTemplates(testLogger, c, dir)
 
 			files := map[string]string{}
