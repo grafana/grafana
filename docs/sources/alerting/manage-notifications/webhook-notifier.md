@@ -41,7 +41,10 @@ Example JSON body:
       "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT2%2Cteam%3Dblue%2Czone%3Dus-1",
       "dashboardURL": "",
       "panelURL": "",
-      "valueString": "[ metric='' labels={} value=14151.331895396988 ]"
+      "values": {
+        "data-avg": 14151.331895396988
+      },
+      "valueString": "[ metric='data-avg' labels={} value=14151.331895396988 ]"
     },
     {
       "status": "firing",
@@ -62,7 +65,10 @@ Example JSON body:
       "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT1%2Cteam%3Dblue%2Czone%3Deu-1",
       "dashboardURL": "",
       "panelURL": "",
-      "valueString": "[ metric='' labels={} value=47043.702386305304 ]"
+      "values": {
+        "data-avg": 47043.702386305304
+      },
+      "valueString": "[ metric='data-avg' labels={} value=47043.702386305304 ]"
     }
   ],
   "groupLabels": {},
@@ -117,8 +123,7 @@ Example JSON body:
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
 | dashboardURL | string | **Will be deprecated soon**                                                        |
 | panelURL     | string | **Will be deprecated soon**                                                        |
-| imageURL     | string | URL of the screenshots of the panel alert rule assigned to notifications           |
-| embeddedImage| string | embedded screenshots of the panel alert rule assigned to notifications             |
+| imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 ### Removed fields related to dashboards
 
