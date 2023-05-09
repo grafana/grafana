@@ -363,12 +363,14 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			}
 		}
 
-		// Update outdated provisioned SQL datasource's Database value for evaluation on the front end
+		// Update the `jsonData.database` value for outdated provisioned SQL datasources created WITHOUT the `jsonData` object.
+		// In these cases, the `Database` value is defined on the root level of the provisioning config object.
 		if (ds.Type == datasources.DS_MSSQL) || (ds.Type == datasources.DS_MYSQL) || (ds.Type == datasources.DS_POSTGRES) {
-			dsDTO.Database = ds.Database
+			if dsDTO.JSONData["database"] == "" {
+				dsDTO.JSONData["database"] = ds.Database
+			}
 		}
 
-		// Why only these 2 datasources???
 		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) {
 			dsDTO.Database = ds.Database
 		}

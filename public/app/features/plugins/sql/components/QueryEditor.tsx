@@ -146,8 +146,8 @@ export function SqlQueryEditor({
           <span>
             Your default database configuration has been modified. The previous database {<code>{query.dataset}</code>}{' '}
             is no longer available, and has been updated to {<code>{preconfiguredDatabase}</code>}. Make note of the
-            query you have built before clicking <code>Update Query.</code> Clicking <code>Update Database</code> will
-            clear your previous query parameters.
+            query you have built before clicking <code>Update Database</code>. Clicking <code>Update Database</code>{' '}
+            will clear your previous query parameters.
           </span>
         </Alert>
       )}
