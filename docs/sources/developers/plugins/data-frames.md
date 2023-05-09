@@ -6,21 +6,11 @@ title: Data frames
 
 Grafana supports a variety of different data sources, each with its own data model. To make this possible, Grafana consolidates the query results from each of these data sources into one unified data structure called a _data frame_.
 
-## The data frame
+The data frame structure is a concept that's borrowed from data analysis tools like the [R programming language](https://www.r-project.org) and [Pandas](https://pandas.pydata.org/).
 
-Data frames have a columnar-oriented table structure, meaning that they store data by column and not by row.
+> Data frames are available in Grafana 7.0+, and replaced the Time series and Table structures with a more generic data structure that can support a wider range of data types.
 
-You can see what this means by looking at the TypeScript definition used by Grafana:
-
-```ts
-export interface DataFrame extends QueryResultBase {
-  name?: string;
-  fields: Field[]; // All fields of equal length
-
-  // The number of rows
-  length: number;
-}
-```
+This document gives an overview of the data frame structure, and of how data is handled within Grafana.
 
 ### Data frame fields
 

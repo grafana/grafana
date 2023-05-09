@@ -1,14 +1,14 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import * as React from 'react';
 
-import { ArrayVector, DataFrame, dateTime, EventBus, FieldType, LoadingState, MutableDataFrame } from '@grafana/data';
+import { ArrayVector, DataFrame, dateTime, EventBus, Field, FieldType, LoadingState } from '@grafana/data';
 
 import { DataGridPanel, DataGridProps } from './DataGridPanel';
 import * as utils from './utils';
 
 jest.mock('./featureFlagUtils', () => {
   return {
-    isDatagridEditEnabled: jest.fn().mockReturnValue(true),
+    isDatagridEnabled: jest.fn().mockReturnValue(true),
   };
 });
 
@@ -18,7 +18,7 @@ jest.mock('./utils', () => {
     ...originalModule,
     deleteRows: jest.fn(),
     clearCellsFromRangeSelection: jest.fn(),
-    publishSnapshot: jest.fn(),
+    updateSnapshot: jest.fn(),
   };
 });
 
@@ -111,14 +111,28 @@ describe('DataGrid', () => {
       expect(screen.getByText('Remove all data')).toBeInTheDocument();
       expect(screen.getByText('Search...')).toBeInTheDocument();
 
-      // click on header cell should show only column options
+      // right clicking on header cell without clicking/selecting the cell should show only general options
+      fireEvent.contextMenu(scroller, {
+        clientX: 50,
+        clientY: 36,
+      });
+
+      expect(screen.getByText('Remove all data')).toBeInTheDocument();
+      expect(screen.getByText('Search...')).toBeInTheDocument();
+
+      // selecting the header first and then right click on header cell should show only column options
+      const canvas = screen.getByTestId('data-grid-canvas');
+      sendClick(canvas, {
+        clientX: 50,
+        clientY: 36,
+      });
+
       fireEvent.contextMenu(scroller, {
         clientX: 50,
         clientY: 36,
       });
 
       expect(screen.getByText('Delete column')).toBeInTheDocument();
-      expect(screen.getByText('Clear column')).toBeInTheDocument();
       expect(screen.getByText('Remove all data')).toBeInTheDocument();
       expect(screen.getByText('Search...')).toBeInTheDocument();
 
@@ -192,7 +206,7 @@ describe('DataGrid', () => {
     });
 
     it('editing a cell triggers publishing the snapshot', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -215,7 +229,7 @@ describe('DataGrid', () => {
       const expectedField = {
         ...props.data.series[0].fields[0],
       };
-      expectedField.values = new ArrayVector([1, 9, 3, 4]);
+      expectedField.values = [1, 9, 3, 4];
 
       await waitFor(() => {
         const overlay = screen.getByDisplayValue('9');
@@ -234,7 +248,7 @@ describe('DataGrid', () => {
           expect.objectContaining({
             fields: expect.arrayContaining([expectedField]),
           }),
-          1
+          undefined
         );
       });
     });
@@ -272,7 +286,7 @@ describe('DataGrid', () => {
       });
     });
     it('should add a new column', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -301,11 +315,12 @@ describe('DataGrid', () => {
             }),
           ]),
         }),
-        1
+        undefined
       );
     });
+
     it('should not add a new column if input is empty', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -322,8 +337,9 @@ describe('DataGrid', () => {
 
       expect(spy).not.toBeCalled();
     });
+
     it('should add a new row', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -368,9 +384,9 @@ describe('DataGrid', () => {
     });
 
     it('should clear cell when cell is selected and delete button clicked', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
       const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
-      const spy = jest.spyOn(utils, 'publishSnapshot');
 
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
@@ -398,9 +414,9 @@ describe('DataGrid', () => {
     });
 
     it('should clear row when row is selected delete button clicked', async () => {
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       const spyClearingCells = jest.spyOn(utils, 'clearCellsFromRangeSelection');
       const spyDeleteRows = jest.spyOn(utils, 'deleteRows');
-      const spy = jest.spyOn(utils, 'publishSnapshot');
 
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
@@ -424,8 +440,7 @@ describe('DataGrid', () => {
     });
 
     it('should move column when column dragged and dropped', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
-
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -446,17 +461,18 @@ describe('DataGrid', () => {
 
       fireEvent.mouseUp(canvas);
 
-      const df = new MutableDataFrame(props.data.series[0]);
+      const df = {
+        ...props.data.series[0],
+      };
 
       df.fields = [df.fields[1], df.fields[0], df.fields[2]];
-      const received = spy.mock.calls[spy.mock.calls.length - 1][0].fields.map((f) => f.name);
+      const received = spy.mock.calls[spy.mock.calls.length - 1][0].fields.map((f: Field) => f.name);
 
       expect(received).toEqual(df.fields.map((f) => f.name));
     });
 
     it('should move row when row dragged and dropped', async () => {
-      const spy = jest.spyOn(utils, 'publishSnapshot');
-
+      const spy = jest.spyOn(utils, 'updateSnapshot');
       jest.useFakeTimers();
       render(<DataGridPanel {...props} />, {
         wrapper: Context,
@@ -591,10 +607,10 @@ const sendClick = (el: Element | Node | Document | Window, options?: {}): void =
   fireEvent.click(el, options);
 };
 
-const Context = (p: any) => {
+const Context = (props: { children: React.ReactNode }) => {
   return (
     <>
-      {p.children}
+      {props.children}
       <div id="grafana-portal-container"></div>
     </>
   );

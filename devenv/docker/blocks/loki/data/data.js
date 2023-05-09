@@ -160,6 +160,7 @@ function getRandomNanosecPart() {
 const sharedLabels = {
   source: 'data',
   instance: 'server\\1',
+  re: 'one.two$three^four', // to test regex escaping
   job: '"grafana/data"'
 };
 

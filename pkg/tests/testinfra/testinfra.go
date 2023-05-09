@@ -216,6 +216,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = rbacSect.NewKey("permission_cache", "false")
 	require.NoError(t, err)
 
+	analyticsSect, err := cfg.NewSection("analytics")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
+	require.NoError(t, err)
+
 	getOrCreateSection := func(name string) (*ini.Section, error) {
 		section, err := cfg.GetSection(name)
 		if err != nil {

@@ -62,7 +62,7 @@ Follow these steps to publish your plugin for the first time.
   If you're unable to make the source code publicly available, let us know in a comment on your plugin submission.
 - **Tests:** We install your plugin on one of our Grafana instances to test it for basic use.
   For more advanced plugins, we may ask you to assist us in configuring a test environment for the plugin.
-  We will use the test environment whenever you submit a plugin update.
+  We use the test environment whenever you submit a plugin update.
 
 ## Update your plugin
 

@@ -1,5 +1,5 @@
 import { LinkModel } from '@grafana/data/src';
-import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
+import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from '@grafana/schema';
 
 export interface Placement {
   top?: number;

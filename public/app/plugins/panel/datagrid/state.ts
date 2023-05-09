@@ -10,7 +10,7 @@ import {
 
 import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
 
-import { isDatagridEditEnabled } from './featureFlagUtils';
+import { isDatagridEnabled } from './featureFlagUtils';
 import {
   DatagridContextMenuData,
   DEFAULT_CONTEXT_MENU,
@@ -30,56 +30,110 @@ interface DatagridState {
   isResizeInProgress: boolean;
 }
 
-interface UpdateColumnsPayload {
-  frame: DataFrame;
+interface UpdateColumnsAction {
+  type: DatagridActionType.updateColumns;
+  payload: {
+    frame: DataFrame;
+  };
 }
 
-interface ColumnResizeStartPayload {
-  columnIndex: number;
-  width: number;
+interface ColumnResizeStartAction {
+  type: DatagridActionType.columnResizeStart;
+  payload: {
+    columnIndex: number;
+    width: number;
+  };
 }
 
-interface OpenCellContextMenuPayload {
-  event: CellClickedEventArgs;
-  cell: Item;
+interface OpenCellContextMenuAction {
+  type: DatagridActionType.openCellContextMenu;
+  payload: {
+    event: CellClickedEventArgs;
+    cell: Item;
+  };
 }
 
-interface OpenHeaderContextMenuPayload {
-  event: HeaderClickedEventArgs;
-  columnIndex: number;
+interface OpenHeaderContextMenuAction {
+  type: DatagridActionType.openHeaderContextMenu;
+  payload: {
+    event: HeaderClickedEventArgs;
+    columnIndex: number;
+  };
 }
 
-interface OpenHeaderDropdownMenuPayload {
-  screenPosition: Rectangle;
-  columnIndex: number;
-  value: string;
+interface OpenHeaderDropdownMenuAction {
+  type: DatagridActionType.openHeaderDropdownMenu;
+  payload: {
+    screenPosition: Rectangle;
+    columnIndex: number;
+    value: string;
+  };
 }
 
-interface ColumnMovePayload {
-  from: number;
-  to: number;
+interface ColumnMoveAction {
+  type: DatagridActionType.columnMove;
+  payload: {
+    from: number;
+    to: number;
+  };
 }
 
-interface MultipleCellsSelectedPayload {
-  selection: GridSelection;
+interface MultipleCellsSelectedAction {
+  type: DatagridActionType.multipleCellsSelected;
+  payload: {
+    selection: GridSelection;
+  };
 }
 
-interface ColumnFreezeChangedPayload {
-  columnIndex: number;
+interface ColumnFreezeChangedAction {
+  type: DatagridActionType.columnFreezeChanged;
+  payload: {
+    columnIndex: number;
+  };
 }
 
-export interface DatagridAction {
-  type: DatagridActionType;
-  payload?:
-    | UpdateColumnsPayload
-    | ColumnResizeStartPayload
-    | OpenCellContextMenuPayload
-    | OpenHeaderContextMenuPayload
-    | OpenHeaderDropdownMenuPayload
-    | ColumnMovePayload
-    | MultipleCellsSelectedPayload
-    | ColumnFreezeChangedPayload;
+interface ColumnResizeEndAction {
+  type: DatagridActionType.columnResizeEnd;
 }
+interface ShowColumnRenameInputAction {
+  type: DatagridActionType.showColumnRenameInput;
+}
+interface HideColumnRenameInputAction {
+  type: DatagridActionType.hideColumnRenameInput;
+}
+interface CloseContextMenuAction {
+  type: DatagridActionType.closeContextMenu;
+}
+interface CloseSearchAction {
+  type: DatagridActionType.closeSearch;
+}
+interface OpenSearchAction {
+  type: DatagridActionType.openSearch;
+}
+interface GridSelectionClearedAction {
+  type: DatagridActionType.gridSelectionCleared;
+}
+interface ColumnFreezeResetAction {
+  type: DatagridActionType.columnFreezeReset;
+}
+
+export type DatagridAction =
+  | UpdateColumnsAction
+  | ColumnResizeStartAction
+  | OpenCellContextMenuAction
+  | OpenHeaderContextMenuAction
+  | OpenHeaderDropdownMenuAction
+  | ColumnMoveAction
+  | MultipleCellsSelectedAction
+  | ColumnFreezeChangedAction
+  | ColumnResizeEndAction
+  | ShowColumnRenameInputAction
+  | HideColumnRenameInputAction
+  | CloseContextMenuAction
+  | CloseSearchAction
+  | OpenSearchAction
+  | GridSelectionClearedAction
+  | ColumnFreezeResetAction;
 
 export enum DatagridActionType {
   columnResizeStart = 'columnResizeStart',
@@ -124,7 +178,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
   switch (action.type) {
     case DatagridActionType.columnResizeStart:
       columns = [...state.columns];
-      const columnResizeStartPayload: ColumnResizeStartPayload = action.payload as ColumnResizeStartPayload;
+      const columnResizeStartPayload = action.payload;
 
       columns[columnResizeStartPayload.columnIndex] = {
         ...state.columns[columnResizeStartPayload.columnIndex],
@@ -138,7 +192,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
       };
     case DatagridActionType.columnMove:
       columns = [...state.columns];
-      const columnMovePayload: ColumnMovePayload = action.payload as ColumnMovePayload;
+      const columnMovePayload = action.payload;
 
       const widthFrom = state.columns[columnMovePayload.from].width;
 
@@ -161,16 +215,21 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         isResizeInProgress: false,
       };
     case DatagridActionType.updateColumns:
-      const updateColumnsPayload: UpdateColumnsPayload = action.payload as UpdateColumnsPayload;
+      const updateColumnsPayload = action.payload;
 
       columns = [
         ...updateColumnsPayload.frame.fields.map((field: Field, index: number) => {
           const displayName = getFieldDisplayName(field, updateColumnsPayload.frame);
+
+          // find column by field name and update width in new set. We cannot use index because
+          // if a column gets deleted we don't know the correct index anymore
+          const width = state.columns.find((column) => column.title === displayName)?.width;
+
           return {
             title: displayName,
-            width: state.columns[index]?.width ?? getCellWidth(field),
+            width: width ?? getCellWidth(field),
             icon: typeToIconMap.get(field.type),
-            hasMenu: isDatagridEditEnabled(),
+            hasMenu: isDatagridEnabled(),
             trailingRowOptions: { targetColumn: --index },
           };
         }),
@@ -197,7 +256,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         },
       };
     case DatagridActionType.openCellContextMenu:
-      const openCellContextMenuPayload: OpenCellContextMenuPayload = action.payload as OpenCellContextMenuPayload;
+      const openCellContextMenuPayload = action.payload;
       const cellEvent: CellClickedEventArgs = openCellContextMenuPayload.event;
       const cell: Item = openCellContextMenuPayload.cell;
 
@@ -213,7 +272,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         },
       };
     case DatagridActionType.openHeaderContextMenu:
-      const openHeaderContextMenuPayload: OpenHeaderContextMenuPayload = action.payload as OpenHeaderContextMenuPayload;
+      const openHeaderContextMenuPayload = action.payload;
       const headerEvent: HeaderClickedEventArgs = openHeaderContextMenuPayload.event;
 
       return {
@@ -228,8 +287,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         },
       };
     case DatagridActionType.openHeaderDropdownMenu:
-      const openHeaderDropdownMenuPayload: OpenHeaderDropdownMenuPayload =
-        action.payload as OpenHeaderDropdownMenuPayload;
+      const openHeaderDropdownMenuPayload = action.payload;
       const screenPosition: Rectangle = openHeaderDropdownMenuPayload.screenPosition;
 
       return {
@@ -270,7 +328,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         toggleSearch: true,
       };
     case DatagridActionType.multipleCellsSelected:
-      const multipleCellsSelectedPayload: MultipleCellsSelectedPayload = action.payload as MultipleCellsSelectedPayload;
+      const multipleCellsSelectedPayload = action.payload;
 
       return {
         ...state,
@@ -287,7 +345,7 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
         columnFreezeIndex: 0,
       };
     case DatagridActionType.columnFreezeChanged:
-      const columnFreezeChangedPayload: ColumnFreezeChangedPayload = action.payload as ColumnFreezeChangedPayload;
+      const columnFreezeChangedPayload = action.payload;
 
       return {
         ...state,
