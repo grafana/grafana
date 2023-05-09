@@ -98,6 +98,9 @@ type FolderUIDFilter struct {
 }
 
 func (f FolderUIDFilter) Where() (string, []interface{}) {
+	if len(f.UIDs) == 1 && f.UIDs[0] == "" {
+		return "dashboard.folder_id = 0", nil
+	}
 	innerSelect, params := sqlUIDin("uid", f.UIDs)
 	params = append([]interface{}{f.OrgID}, params...)
 	return fmt.Sprintf("dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND %s)", innerSelect), params
