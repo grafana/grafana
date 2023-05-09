@@ -27,9 +27,6 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
-  // console.log('🚀 ~ file: QueryEditor.tsx:30 ~ query:', query);
-  // console.log('🚀 ~ file: QueryEditor.tsx:30 ~ datasource:', datasource);
-
   const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
   const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
 

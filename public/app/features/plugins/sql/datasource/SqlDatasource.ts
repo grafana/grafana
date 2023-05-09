@@ -125,7 +125,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
-    console.log(request, 'request');
     /*
       If a preconfigured database exists - or is added/updated, and there are ANY number of db queries
       that use a database OTHER than the preconfigured one, this error with throw. 
@@ -177,7 +176,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   async runSql<T>(query: string, options?: RunSQLOptions) {
-    console.log('inside', this.type);
     const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, options);
     return new DataFrameView<T>(frame);
   }
