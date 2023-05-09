@@ -21,9 +21,7 @@ tracing = true
 
 ### OpenTelemetry configuration
 
-Grafana supports [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing), then tracing is disabled in the plugin.
-
-> **Note:** Although Grafana doesn't support Jaeger, it supports [OpenTelemetry Jaeger propagator](https://www.npmjs.com/package/@opentelemetry/propagator-jaeger) for HTTP header propagation.
+Grafana supports [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing), then tracing is disabled in the plugin provided by the SDK and configured when calling `datasource.Manage | app.Manage`.
 
 OpenTelemetry must be enabled and configured for the Grafana instance. Please refer to the [Grafana configuration documentation](
 {{< relref "../../setup-grafana/configure-grafana/#tracingopentelemetry" >}}) for more information.
@@ -90,7 +88,7 @@ When OpenTelemetry tracing is enabled on the main Grafana instance and tracing i
 
 ### Tracing gRPC calls
 
-When tracing is enabled, a new span is created automatically for each gRPC call (`QueryData`, `CheckHealth`, etc.), both on Grafana's side and on the plugin's side. The plugin also injects the trace context into the `context.Context` that is passed to those methods.
+When tracing is enabled, a new span is created automatically for each gRPC call (`QueryData`, `CheckHealth`, etc.), both on Grafana's side and on the plugin's side. The plugin SDK also injects the trace context into the `context.Context` that is passed to those methods.
 
 You can retrieve the [`trace.SpanContext`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) with `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
 

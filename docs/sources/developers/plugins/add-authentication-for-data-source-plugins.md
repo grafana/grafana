@@ -22,6 +22,7 @@ Configure your data source plugin to authenticate against a third-party API in o
 | Does your API support OAuth 2.0 using client credentials?                                       | Use the data source proxy.      |
 | Does your API use a custom authentication method that isn't supported by the data source proxy? | Use a backend plugin.           |
 | Does your API communicate over a protocol other than HTTP?                                      | Build and use a backend plugin. |
+| Does your plugin require alerting support?                                                      | Build and use a backend plugin. |
 
 ## Encrypt data source configuration
 
@@ -37,7 +38,7 @@ Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) 
 
 > **Note:** You can see the settings that the current user has access to by entering `window.grafanaBootData` in the developer console of your browser.
 
-### Store configuration in `secureJasonData`
+### Store configuration in `secureJsonData`
 
 If you need to store sensitive information, use `secureJsonData` instead of `jsonData`. Whenever the user saves the data source configuration, the secrets in `secureJsonData` are sent to the Grafana server and encrypted before they're stored.
 
@@ -315,11 +316,11 @@ To get Grafana to forward the headers, create a HTTP client using the [Grafana p
 
 ```go
 func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	opts, err := settings.HTTPClientOptions()
+  opts, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, fmt.Errorf("http client options: %w", err)
 	}
-  // Important: Reuse the same client for each query to avoid using all available connections on a host.
+    // Important: Reuse the same client for each query to avoid using all available connections on a host.
 	cl, err := httpclient.New(opts)
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)

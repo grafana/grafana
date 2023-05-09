@@ -2,7 +2,7 @@
 title: Add features to Explore queries
 ---
 
-# Add features to Explore queries
+# Add features for Explore queries
 
 [Explore]({{< relref "../../explore/" >}}) allows users can make ad-hoc queries without the use of a dashboard. This is useful when they want to troubleshoot or learn more about the data.
 

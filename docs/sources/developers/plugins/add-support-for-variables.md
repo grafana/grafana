@@ -4,7 +4,7 @@ title: Add support for variables in plugins
 
 # Add support for variables in plugins
 
-Variables are placeholders for values, and Grafana uses them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
+Variables are placeholders for values, and you can use them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
 
 In this guide, you'll see how you can turn an `id` string like this:
 
