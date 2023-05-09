@@ -141,7 +141,8 @@ export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldo
   }
 
   private removeDrilldownView() {
-    this.getLayout().setState({ children: layout.state.children.slice(0, 1) });
+    const layout = this.getLayout();
+    layout.setState({ children: layout.state.children.slice(0, 1) });
   }
 
   public getUrlState() {
