@@ -366,7 +366,8 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		// Update the `jsonData.database` value for outdated provisioned SQL datasources created WITHOUT the `jsonData` object.
 		// In these cases, the `Database` value is defined on the root level of the provisioning config object.
 		if (ds.Type == datasources.DS_MSSQL) || (ds.Type == datasources.DS_MYSQL) || (ds.Type == datasources.DS_POSTGRES) {
-			if dsDTO.JSONData["database"] == "" {
+			// Only update is the value isn't already assigned.
+			if dsDTO.JSONData["database"] == nil || dsDTO.JSONData["database"] == "" {
 				dsDTO.JSONData["database"] = ds.Database
 			}
 		}
