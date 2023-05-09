@@ -353,7 +353,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 				ResultFormat *dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormat "json:\"resultFormat,omitempty\""
 				Workspace    *string                                                   "json:\"workspace,omitempty\""
 			}{
-				Resources: queryJSONModel.AzureTraces.Resources,
+				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
 				Query:     &query.TraceLogsExploreQuery,
 			},
 			QueryType: &logsQueryType,
@@ -405,7 +405,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 		"query":    query.Query,
 		"timespan": timespan,
 	}
-	if len(query.Resources) > 1 {
+	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 		body["workspaces"] = query.Resources
 	}
 	jsonValue, err := json.Marshal(body)
