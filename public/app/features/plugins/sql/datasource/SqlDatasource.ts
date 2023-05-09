@@ -136,18 +136,22 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           const getDatabaseTargets = request.targets.map((t) => t.dataset);
           for (const targetDatabase of getDatabaseTargets) {
             if (targetDatabase !== this.preconfiguredDatabase) {
-              return true;
+              return 'Your default database configuration has been modified. Please update your panel query accordingly.';
             }
           }
         }
 
-        return false;
+        if (this.type === 'postgres' && !this.preconfiguredDatabase) {
+          return 'You do not currently have a default database configured for this data source.';
+        }
+
+        return;
       };
 
-      if (defaultDatabaseHasIssue()) {
-        const error = new Error(
-          'Your default database configuration has been modified. Please update your panel query accordingly.'
-        );
+      const issue = defaultDatabaseHasIssue();
+
+      if (!!issue) {
+        const error = new Error(issue);
         return throwError(() => error);
       }
     }
