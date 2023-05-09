@@ -28,7 +28,6 @@ export class TimeSrv {
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
   timeAtLoad: any;
-  private queueRefresh = false;
   private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
@@ -249,10 +248,6 @@ export class TimeSrv {
 
   refreshTimeModel() {
     this.timeModel?.timeRangeUpdated(this.timeRange());
-  }
-
-  get refreshQueued() {
-    return this.queueRefresh;
   }
 
   private startNextRefreshTimer(afterMs: number) {
