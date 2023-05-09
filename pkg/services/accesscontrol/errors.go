@@ -11,6 +11,7 @@ var (
 	ErrInvalidScope           = errors.New("invalid scope")
 	ErrResolverNotFound       = errors.New("no resolver found")
 	ErrPluginIDRequired       = errors.New("plugin ID is required")
+	ErrRoleNotFound           = errors.New("role not found")
 )
 
 type ErrorInvalidRole struct{}
