@@ -1,27 +1,46 @@
+import { Registry, RegistryItem } from '../utils/Registry';
+
 import { createTheme } from './createTheme';
 import { GrafanaTheme2 } from './types';
+
+export interface ThemeRegistryItem extends RegistryItem {
+  isExtra?: boolean;
+  build: () => GrafanaTheme2;
+}
 
 /**
  * @internal
  * Only for internal use, never use this from a plugin
  **/
 export function getThemeById(id: string): GrafanaTheme2 {
-  if (id === 'system') {
-    const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
-    id = mediaResult.matches ? 'dark' : 'light';
-  }
+  const theme = themeRegistry.getIfExists(id) ?? themeRegistry.get('dark');
+  return theme.build();
+}
 
-  switch (id) {
-    case 'light':
-      return createTheme({ colors: { mode: 'light' } });
-    case 'midnight':
-      return createMidnight();
-    case 'blue-night':
-      return createBlueNight();
-    case 'dark':
-    default:
-      return createTheme({ colors: { mode: 'dark' } });
-  }
+/**
+ * @internal
+ * For internal use only
+ */
+export function getThemesList(includeExtras?: boolean) {
+  return themeRegistry.list().filter((item) => {
+    return includeExtras ? true : !item.isExtra;
+  });
+}
+
+export const themeRegistry = new Registry<ThemeRegistryItem>(() => {
+  return [
+    { id: 'system', name: 'System preference', build: getSystemPreferenceTheme },
+    { id: 'dark', name: 'Dark', build: () => createTheme({ colors: { mode: 'dark' } }) },
+    { id: 'light', name: 'Light', build: () => createTheme({ colors: { mode: 'light' } }) },
+    { id: 'blue-night', name: 'Blue night', build: createBlueNight },
+    { id: 'midnight', name: 'Midnight', build: createMidnight },
+  ];
+});
+
+function getSystemPreferenceTheme() {
+  const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
+  const id = mediaResult.matches ? 'dark' : 'light';
+  return getThemeById(id);
 }
 
 /**

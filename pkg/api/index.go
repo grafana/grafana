@@ -84,12 +84,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := pref.GetThemeByID(prefs.Theme)
-
-	themeURLParam := c.Query("theme")
-	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
-		theme = pref.GetThemeByID(themeURLParam)
-	}
+	theme := getThemeForIndexData(prefs.Theme, c.Query("theme"), hs.Cfg.DefaultTheme)
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
@@ -194,4 +189,16 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	}
 
 	c.HTML(404, "index", data)
+}
+
+func getThemeForIndexData(themePrefId string, themeURLParam string, defaultTheme string) *pref.ThemeDTO {
+	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
+		return pref.GetThemeByID(themeURLParam)
+	}
+
+	if pref.IsValidThemeID(themePrefId) {
+		return pref.GetThemeByID(themePrefId)
+	}
+
+	return pref.GetThemeByID(defaultTheme)
 }

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { FeatureState, SelectableValue } from '@grafana/data';
+import { getThemesList } from '@grafana/data/src/themes/extraThemes';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -67,20 +68,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
       queryHistory: { homeTab: '' },
     };
 
-    this.themeOptions = [
-      { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
-      { value: 'system', label: t('shared-preferences.theme.system-label', 'System') },
-      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
-      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
-    ];
+    this.themeOptions = getThemesList(config.featureToggles.extraThemes).map((theme) => ({
+      value: theme.id,
+      label: t(`shared-preferences.theme.${theme.id}-label`, theme.name),
+    }));
 
-    if (config.featureToggles.extraThemes) {
-      this.themeOptions.push({ value: 'midnight', label: t('shared-preferences.theme.midnight-label', 'Midnight') });
-      this.themeOptions.push({
-        value: 'blue-night',
-        label: t('shared-preferences.theme.blue-night-label', 'Blue night'),
-      });
-    }
+    // Add default option
+    this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
   }
 
   async componentDidMount() {
@@ -143,17 +137,14 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { disabled } = this.props;
     const styles = getStyles();
     const languages = getLanguageOptions();
-    let currentThemeOption = this.themeOptions[0].value;
-    if (theme?.length) {
-      currentThemeOption = this.themeOptions.find((item) => item.value === theme)?.value;
-    }
+    const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
             <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-              <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
+              <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
                 <Select options={this.themeOptions} value={currentThemeOption} onChange={this.onThemeChanged} />
               </Field>
 
