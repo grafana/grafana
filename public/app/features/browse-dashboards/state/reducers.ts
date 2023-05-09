@@ -18,7 +18,7 @@ export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState,
   const prevItems = collection?.items ?? [];
   const newCollection = {
     items: prevItems.concat(children),
-    lastFetched: children[0].kind as 'dashboard', // TODO don't cast this
+    lastFetched: children[0].kind as 'dashboard', // TODO don't cast this // TODO: this doesn't work if there's no children
     lastFetchedSize: children.length,
     lastFetchedPage: page,
   };

@@ -70,11 +70,18 @@ export class SQLSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
 
+    if (query.from !== undefined && query.limit === undefined) {
+      throw new Error('Must specify explicit page size when using from');
+    }
+
+    const page = query.from ? query.from / (query.limit || 1) : undefined;
+
     const q = await this.composeQuery(
       {
         limit: query.limit ?? DEFAULT_MAX_VALUES, // default 1k max values
         tag: query.tags,
         sort: query.sort,
+        page,
       },
       query
     );

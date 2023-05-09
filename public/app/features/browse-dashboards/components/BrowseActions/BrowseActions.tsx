@@ -26,6 +26,8 @@ import { MoveModal } from './MoveModal';
 
 export interface Props {}
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
   const selectedItems = useActionSelectionState();
@@ -62,7 +64,7 @@ export function BrowseActions() {
     for (const folderUID of selectedFolders) {
       await dispatch(deleteFolder(folderUID));
       // find the parent folder uid and add it to parentsToRefresh
-      const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
+      const folder = findItem(rootItems?.items ?? [], childrenByParentUID, folderUID);
       parentsToRefresh.add(folder?.parentUID);
     }
 
@@ -70,8 +72,9 @@ export function BrowseActions() {
     // TODO error handling here
     for (const dashboardUID of selectedDashboards) {
       await dispatch(deleteDashboard(dashboardUID));
+      await wait(250);
       // find the parent folder uid and add it to parentsToRefresh
-      const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
+      const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);
     }
     onActionComplete(parentsToRefresh);
@@ -86,7 +89,7 @@ export function BrowseActions() {
     for (const folderUID of selectedFolders) {
       await dispatch(moveFolder({ folderUID, destinationUID }));
       // find the parent folder uid and add it to parentsToRefresh
-      const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
+      const folder = findItem(rootItems?.items ?? [], childrenByParentUID, folderUID);
       parentsToRefresh.add(folder?.parentUID);
     }
 
@@ -95,7 +98,7 @@ export function BrowseActions() {
     for (const dashboardUID of selectedDashboards) {
       await dispatch(moveDashboard({ dashboardUID, destinationUID }));
       // find the parent folder uid and add it to parentsToRefresh
-      const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
+      const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);
     }
     onActionComplete(parentsToRefresh);
