@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 //go:generate go run gen.go
 
 package main
@@ -5,7 +8,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/thema"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/thema"
 )
 
 var skipPlugins = map[string]bool{
