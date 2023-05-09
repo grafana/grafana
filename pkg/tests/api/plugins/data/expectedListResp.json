@@ -34,7 +34,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Alertmanager",
@@ -76,7 +76,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Annotations list",
@@ -113,7 +113,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Azure Monitor",
@@ -172,7 +172,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Bar chart",
@@ -209,7 +209,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Bar gauge",
@@ -246,7 +246,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Candlestick",
@@ -283,7 +283,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Canvas",
@@ -320,7 +320,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "CloudWatch",
@@ -357,7 +357,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Dashboard list",
@@ -394,7 +394,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Datagrid",
@@ -431,7 +431,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Elasticsearch",
@@ -473,7 +473,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Flame Graph",
@@ -510,7 +510,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Gauge",
@@ -547,7 +547,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Geomap",
@@ -584,7 +584,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Getting Started",
@@ -621,7 +621,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Google Cloud Monitoring",
@@ -658,7 +658,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Grafana Pyroscope",
@@ -700,7 +700,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Graph (old)",
@@ -737,7 +737,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Graphite",
@@ -783,7 +783,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Heatmap",
@@ -820,7 +820,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Histogram",
@@ -857,7 +857,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "InfluxDB",
@@ -894,7 +894,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Jaeger",
@@ -940,7 +940,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Logs",
@@ -977,7 +977,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Loki",
@@ -1023,7 +1023,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Microsoft SQL Server",
@@ -1060,7 +1060,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "MySQL",
@@ -1097,7 +1097,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "News",
@@ -1134,7 +1134,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Node Graph",
@@ -1171,7 +1171,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "OpenTSDB",
@@ -1208,7 +1208,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Parca",
@@ -1250,7 +1250,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Pie chart",
@@ -1287,7 +1287,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "PostgreSQL",
@@ -1324,7 +1324,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Prometheus",
@@ -1366,7 +1366,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Stat",
@@ -1403,7 +1403,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "State timeline",
@@ -1440,7 +1440,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Status history",
@@ -1477,7 +1477,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Table",
@@ -1514,7 +1514,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Table (old)",
@@ -1551,7 +1551,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Tempo",
@@ -1593,7 +1593,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "TestData",
@@ -1630,7 +1630,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Text",
@@ -1667,7 +1667,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Time series",
@@ -1704,7 +1704,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Traces",
@@ -1741,7 +1741,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Trend",
@@ -1778,7 +1778,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Welcome",
@@ -1815,7 +1815,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "XY Chart",
@@ -1852,7 +1852,7 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   },
   {
     "name": "Zipkin",
@@ -1894,6 +1894,6 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angular": false
+    "angularDetected": false
   }
 ]
