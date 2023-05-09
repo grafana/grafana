@@ -252,53 +252,56 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 	// could occur and if so, adds a temporary title on all updated rules to break any cycles and remove the need for
 	// specific ordering.
 
+	titleUpdates := make([]ngmodels.UpdateRule, 0)
+	for _, update := range updates {
+		if update.Existing.Title != update.New.Title {
+			titleUpdates = append(titleUpdates, update)
+		}
+	}
 	// This short circuit detects when no intermediate unique constraint violations are possible.
 	// It may return false positives, but never false negatives.
-	if !newTitlesOverlapExisting(updates) {
+	if !newTitlesOverlapExisting(titleUpdates) {
 		// No possibility of an intermediate unique constraint violation.
 		return nil
 	}
 
-	for _, update := range updates {
+	for _, update := range titleUpdates {
 		r := update.Existing
 		u := uuid.New().String()
+
+		// Some defensive programming in case the temporary title is somehow persisted it will still be recognizable.
 		uniqueTempTitle := r.Title + u
 		if len(uniqueTempTitle) > AlertRuleMaxTitleLength {
 			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
 		}
+
 		if updated, err := sess.ID(r.ID).Cols("title").Update(&ngmodels.AlertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
 			if err != nil {
-				if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-					return ngmodels.ErrAlertRuleUniqueConstraintViolation
-				}
 				return fmt.Errorf("failed to set temporary rule title [%s] %s: %w", r.UID, r.Title, err)
 			}
 			return fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.UID, r.Version)
 		}
-
 		// Otherwise optimistic locking will conflict on the 2nd update.
 		r.Version++
+		// For consistency.
+		r.Title = uniqueTempTitle
 	}
 
 	return nil
 }
 
-// newTitlesOverlapExisting returns true if among the rules that have a title update any of the new titles overlap with existing titles.
+// newTitlesOverlapExisting returns true if any new titles overlap with existing titles.
 // It does so in a case-insensitive manner as some supported databases perform case-insensitive comparisons.
 func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 	existingTitles := make(map[string]struct{}, len(rules))
 	for _, r := range rules {
-		if r.Existing.Title != r.New.Title {
-			existingTitles[strings.ToLower(r.Existing.Title)] = struct{}{}
-		}
+		existingTitles[strings.ToLower(r.Existing.Title)] = struct{}{}
 	}
 
 	// Check if there is any overlap between lower case existing and new titles.
 	for _, r := range rules {
-		if r.Existing.Title != r.New.Title {
-			if _, ok := existingTitles[strings.ToLower(r.New.Title)]; ok {
-				return true
-			}
+		if _, ok := existingTitles[strings.ToLower(r.New.Title)]; ok {
+			return true
 		}
 	}
 
