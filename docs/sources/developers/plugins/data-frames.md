@@ -6,7 +6,7 @@ title: Data frames
 
 Grafana supports a variety of different data sources, each with its own data model. To make this possible, Grafana consolidates the query results from each of these data sources into one unified data structure called a _data frame_.
 
-The data frame structure is a concept that's borrowed from data analysis tools like the [R programming language](https://www.r-project.org), and [Pandas](https://pandas.pydata.org/).
+The data frame structure is a concept that's borrowed from data analysis tools like the [R programming language](https://www.r-project.org) and [Pandas](https://pandas.pydata.org/).
 
 > Data frames are available in Grafana 7.0+, and replaced the Time series and Table structures with a more generic data structure that can support a wider range of data types.
 
@@ -161,7 +161,7 @@ Dimensions: 5 fields by 2 rows
 +---------------------+------------------+------------------+------------------+------------------+
 ```
 
-> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels-visualizations/query-transform-data/transform-data/#prepare-time-series" >}}).
+> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we've introduced a transformation that can be used to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels-visualizations/query-transform-data/transform-data/#prepare-time-series" >}}).
 
 ## Technical references
 
