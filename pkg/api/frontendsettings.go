@@ -363,8 +363,13 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			}
 		}
 
+		// Update outdated provisioned SQL datasource's Database value for evaluation on the front end
+		if (ds.Type == datasources.DS_MSSQL) || (ds.Type == datasources.DS_MYSQL) || (ds.Type == datasources.DS_POSTGRES) {
+			dsDTO.Database = ds.Database
+		}
+
 		// Why only these 2 datasources???
-		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) || (ds.Type == datasources.DS_MYSQL) {
+		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) {
 			dsDTO.Database = ds.Database
 		}
 
