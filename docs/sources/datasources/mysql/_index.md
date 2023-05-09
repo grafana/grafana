@@ -183,7 +183,7 @@ The response from MySQL can be formatted as either a table or as a time series. 
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
 
-**Note:** If a default database has been chosen through the Data Source configuration page, the Dataset Dropdown will be disabled, and only the configured database will be available for querying.
+**Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
 
 ### Columns and Aggregation functions (SELECT)
 
