@@ -24,6 +24,14 @@ export interface Props {
   header?: string;
 }
 
+//string, unknown, string, boolean
+interface DisplayValue {
+  name: string;
+  value: unknown;
+  valueString: string;
+  highlight: boolean;
+}
+
 export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -42,8 +50,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     return null;
   }
 
-  //TODO change this to an array of objects with structure
-  const displayValues: Array<[string, unknown, string, boolean]> = [];
+  const displayValues: DisplayValue[] = [];
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
@@ -64,11 +71,16 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
-    displayValues.push([getFieldDisplayName(f, data), v, formattedValueToString(disp), f.highlight]);
+    displayValues.push({
+      name: getFieldDisplayName(f, data),
+      value: v,
+      valueString: formattedValueToString(disp),
+      highlight: f.highlight,
+    });
   }
 
   if (sortOrder && sortOrder !== SortOrder.None) {
-    displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
+    displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
   }
 
   const renderLinks = () =>
@@ -105,9 +117,9 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
         <tbody>
           {displayValues.map((v, i) => (
             <tr key={`${i}/${rowIndex}`}>
-              <div className={v[3] ? styles.highlight : ''}>
-                <th>{v[0]}:</th>
-                <td>{renderValue(v[2])}</td>
+              <div className={v.highlight ? styles.highlight : ''}>
+                <th>{v.name}:</th>
+                <td>{renderValue(v.valueString)}</td>
               </div>
             </tr>
           ))}
