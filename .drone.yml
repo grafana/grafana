@@ -663,7 +663,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
@@ -672,7 +671,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -681,7 +679,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
@@ -690,7 +687,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -1593,7 +1589,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
@@ -1602,7 +1597,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
@@ -1611,7 +1605,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
@@ -1620,7 +1613,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
@@ -2527,7 +2519,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
@@ -2536,7 +2527,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
@@ -2545,7 +2535,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
@@ -2554,7 +2543,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
@@ -3194,7 +3182,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
@@ -3203,7 +3190,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
@@ -3212,7 +3198,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
@@ -3221,7 +3206,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
@@ -4985,7 +4969,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
@@ -4994,7 +4977,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
@@ -5003,7 +4985,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
@@ -5012,7 +4993,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
@@ -5775,7 +5755,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
@@ -5784,7 +5763,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
@@ -5793,7 +5771,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
@@ -5802,7 +5779,6 @@ steps:
   image: cypress/included:12.11.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
@@ -7343,6 +7319,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 6b68d720415a48bc55a65dd6708f3c9d86e753567b9271f44bd28da749a9d66f
+hmac: 65343aa62b7af42a6a614035f00f9b9c99560188e0871b96ceb2fc1c612710c4
 
 ...
