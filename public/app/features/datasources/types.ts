@@ -21,6 +21,7 @@ export type DataSourceInfo = {
   dataSource: DataSourceSettings;
   dataSourcePluginName: string;
   isDefault: boolean;
+  isReadOnly: boolean;
   alertingSupported: boolean;
   onUpdate: (dataSource: DataSourceSettings) => Promise<DataSourceSettings>;
 };

@@ -21,6 +21,7 @@ export function DataSourceTabPage({ uid, pageId, navId }: Props) {
     dataSource: nav.dataSource,
     dataSourcePluginName: nav.main.dataSourcePluginName,
     isDefault: nav.dataSource.isDefault,
+    isReadOnly: nav.dataSource.readOnly,
     alertingSupported: nav.dataSourceHeader.alertingSupported,
     onUpdate: nav.dataSourceHeader.onUpdate,
   });

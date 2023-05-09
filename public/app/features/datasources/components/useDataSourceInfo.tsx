@@ -21,9 +21,9 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
 
   info.push({
     label: (
-      <Tooltip placement="top" content="The default data source is preselected in new panels." theme="info">
+      <Tooltip placement="top" content="The default data source is preselected in Explore." theme="info">
         <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-          Deault
+          Default
           <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
         </div>
       </Tooltip>
@@ -33,6 +33,7 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
         dataSource={dataSourceInfo.dataSource}
         isDefault={dataSourceInfo.isDefault}
         onUpdate={dataSourceInfo.onUpdate}
+        readOnly={dataSourceInfo.isReadOnly}
       ></DataSourceDefaultSwitch>
     ),
   });

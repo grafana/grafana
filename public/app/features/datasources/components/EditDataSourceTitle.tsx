@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, useStyles2, Input } from '@grafana/ui';
+import { IconButton, useStyles2, Input, Tooltip } from '@grafana/ui';
 
 interface Props {
   dataSource: DataSourceSettings;
@@ -48,14 +48,16 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: P
         <div className={styles.titleContainer}>
           <h1 className={styles.title}>{name}</h1>
           {!readOnly && (
-            <IconButton
-              name="pen"
-              onClick={toggleEditMode}
-              size="lg"
-              title="Change data source name"
-              className={styles.editIcon}
-              data-testid={selectors.pages.DataSource.nameEditIcon}
-            />
+            <Tooltip placement="top" content="Edit data source name" theme="info">
+              <IconButton
+                name="pen"
+                onClick={toggleEditMode}
+                size="lg"
+                title="Change data source name"
+                className={styles.editIcon}
+                data-testid={selectors.pages.DataSource.nameEditIcon}
+              />
+            </Tooltip>
           )}
         </div>
       ) : (
@@ -92,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     title: css({
       margin: '0 0 0 0',
-      maxWidth: '500px',
+      maxWidth: '40vw',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
@@ -100,12 +102,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     datasourceNameInput: css({
       input: {
         fontSize: theme.typography.h1.fontSize,
+        width: '40vw',
         padding: '6px 8px',
         height: '40px',
       },
     }),
     editIcon: css({
       marginLeft: theme.spacing(1),
+      color: theme.colors.text.secondary,
     }),
   };
 };
