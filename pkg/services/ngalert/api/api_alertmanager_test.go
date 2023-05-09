@@ -108,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}, {
 			Name: "test2",
@@ -116,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}}))
 	})
@@ -128,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -136,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}}))
 	})
@@ -148,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}, {
 			Name: "test2",
@@ -156,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}}))
 	})
@@ -418,6 +418,46 @@ func TestRoutePostGrafanaAlertingConfigHistoryActivate(t *testing.T) {
 
 		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "abc")
 		require.Equal(tt, 400, response.Status())
+	})
+}
+
+func TestRoutePostTestTemplates(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 404 when no alertmanager found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
+		require.Equal(tt, 404, response.Status())
+	})
+
+	t.Run("assert 409 when alertmanager not ready", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(3)
+
+		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
+		require.Equal(tt, 409, response.Status())
+	})
+
+	t.Run("assert 200 for a valid alertmanager", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
+		require.Equal(tt, 200, response.Status())
 	})
 }
 

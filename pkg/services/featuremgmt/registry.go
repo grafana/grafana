@@ -22,12 +22,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "database_metrics",
-			Description: "Add Prometheus metrics for database tables",
-			State:       FeatureStateStable,
-			Owner:       hostedGrafanaTeam,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -91,13 +85,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "k8s",
-			Description:     "Explore native k8s integrations",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateBeta,
@@ -116,13 +103,6 @@ var (
 			Description: "Correlations page",
 			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
-		},
-		{
-			Name:        "cloudWatchDynamicLabels",
-			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -354,9 +334,10 @@ var (
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplitting",
@@ -428,14 +409,30 @@ var (
 		{
 			Name:        "prometheusDataplane",
 			Description: "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present.",
-			State:       FeatureStateAlpha,
+			Expression:  "true",
+			State:       FeatureStateStable,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "lokiMetricDataplane",
-			Description: "Changes responses from Loki to be compliant with the dataplane specification.",
-			State:       FeatureStateAlpha,
+			Description: "Changes metric responses from Loki to be compliant with the dataplane specification.",
+			State:       FeatureStateStable,
+			Expression:  "true",
 			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "dataplaneFrontendFallback",
+			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true",
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "disableSSEDataplane",
+			Description: "Disables dataplane specific processing in server side expressions.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "alertStateHistoryLokiSecondary",
@@ -454,12 +451,6 @@ var (
 			Description: "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
-		},
-		{
-			Name:        "disableSSEDataplane",
-			Description: "Disables dataplane specific processing in server side expressions.",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "unifiedRequestLog",
@@ -485,13 +476,6 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 			Owner:           grafanaAuthnzSquad,
-		},
-		{
-			Name:         "dataplaneFrontendFallback",
-			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:            "useCachingService",
@@ -531,6 +515,20 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:         "faroDatasourceSelector",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
+		},
+		{
+			Name:         "enableDatagridEditing",
+			Description:  "Enables the edit functionality in the datagrid panel",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )
