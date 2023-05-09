@@ -30,7 +30,7 @@ import {
   LogRowContextOptions,
   SupplementaryQueryOptions,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config } from '@grafana/runtime';
+import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -148,6 +148,18 @@ export class ElasticDatasource
     this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
   }
 
+  getResourceRequest(path: string, params?: BackendSrvRequest['params'], options?: Partial<BackendSrvRequest>) {
+    return this.getResource(path, params, options);
+  }
+
+  postResourceRequest(path: string, data?: BackendSrvRequest['data'], options?: Partial<BackendSrvRequest>) {
+    const resourceOptions = options ?? {};
+    resourceOptions.headers = resourceOptions.headers ?? {};
+    resourceOptions.headers['content-type'] = 'application/x-ndjson';
+
+    return this.postResource(path, data, resourceOptions);
+  }
+
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchQuery[]> {
     return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
   }
@@ -179,9 +191,12 @@ export class ElasticDatasource
     }).pipe(
       mergeMap((index) => {
         // catch all errors and emit an object with an err property to simplify checks later in the pipeline
-        return this.legacyQueryRunner
-          .request('GET', indexUrlList[listLen - index - 1])
-          .pipe(catchError((err) => of({ err })));
+        const path = indexUrlList[listLen - index - 1];
+        const requestObservable = config.featureToggles.enableElasticsearchBackendQuerying
+          ? from(this.getResource(path))
+          : this.legacyQueryRunner.request('GET', path);
+
+        return requestObservable.pipe(catchError((err) => of({ err })));
       }),
       skipWhile((resp) => resp?.err?.status === 404), // skip all requests that fail because missing Elastic index
       throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
@@ -462,7 +477,7 @@ export class ElasticDatasource
             return true;
           }
 
-          // equal query type filter, or via typemap translation
+          // equal query type filter, or via type map translation
           return type.includes(obj.type) || type.includes(typeMap[obj.type]);
         };
 
@@ -529,7 +544,12 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
-    return this.legacyQueryRunner.request('POST', url, esQuery).pipe(
+    const termsObservable = config.featureToggles.enableElasticsearchBackendQuerying
+      ? // TODO: This is run trough resource call, but maybe should run trough query
+        from(this.postResourceRequest(url, esQuery))
+      : this.legacyQueryRunner.request('POST', url, esQuery);
+
+    return termsObservable.pipe(
       map((res) => {
         if (!res.responses[0].aggregations) {
           return [];
@@ -740,7 +760,7 @@ export class ElasticDatasource
   private getDatabaseVersionUncached(): Promise<SemVer | null> {
     // we want this function to never fail
     const getDbVersionObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? from(this.getResource(''))
+      ? from(this.getResourceRequest(''))
       : this.legacyQueryRunner.request('GET', '/');
 
     return lastValueFrom(getDbVersionObservable).then(
