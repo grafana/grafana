@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -699,35 +700,53 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 	return countsMap, nil
 }
 
+func withLock(mu *sync.Mutex, f func()) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	f()
+}
+
 func (s *Service) getDescendantUIDs(ctx context.Context, orgID int64, uid string) ([]string, error) {
 	descendants, err := s.getDescendants(ctx, orgID, uid)
 	if err != nil {
 		return nil, err
 	}
 	result := make([]string, 0, len(descendants))
-	for _, f := range descendants {
-		result = append(result, f.UID)
-	}
 
-	return result, nil
+	var mu sync.Mutex
+	err = concurrency.ForEachJob(ctx, len(descendants), len(descendants), func(ctx context.Context, idx int) error {
+		withLock(&mu, func() {
+			result = append(result, descendants[idx].UID)
+		})
+		return nil
+	})
+	return result, err
 }
 
 func (s *Service) getDescendants(ctx context.Context, orgID int64, uid string) ([]*folder.Folder, error) {
 	var result []*folder.Folder
+	var mu sync.Mutex
+
 	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, f := range folders {
-		result = append(result, f)
-		subfolders, err := s.getDescendants(ctx, f.OrgID, f.UID)
+	err = concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		withLock(&mu, func() {
+			result = append(result, folders[idx])
+		})
+		descendants, err := s.getDescendants(ctx, folders[idx].OrgID, folders[idx].UID)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		result = append(result, subfolders...)
-	}
-	return result, nil
+		withLock(&mu, func() {
+			result = append(result, descendants...)
+		})
+		return nil
+	})
+	return result, err
 }
 
 // MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin

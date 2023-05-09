@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"sync"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -53,28 +56,50 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		dbUIDs = c.QueryStrings("dashboardUID")
 	}
 
+	// TODO deprecate and use folderUIDs instead
+	// after merging https://github.com/grafana/grafana/pull/65040
 	folderIDs := make([]int64, 0)
-	for _, id := range c.QueryStrings("folderIds") {
-		folderID, err := strconv.ParseInt(id, 10, 64)
-		if err == nil {
-			folderIDs = append(folderIDs, folderID)
+	folderIdsQry := c.QueryStrings("folderIds")
+
+	var mu sync.Mutex
+
+	withLock := func(mu *sync.Mutex, f func()) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		f()
+	}
+
+	err := concurrency.ForEachJob(c.Req.Context(), len(folderIdsQry), len(folderIdsQry), func(ctx context.Context, idx int) error {
+		folderID, err := strconv.ParseInt(folderIdsQry[idx], 10, 64)
+		if err != nil {
+			hs.log.Debug("failed to parse folder ID", "folderID", folderID, "err", err)
+			return nil
 		}
+
+		withLock(&mu, func() {
+			folderIDs = append(folderIDs, folderID)
+		})
 
 		f, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, ID: &folderID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			hs.log.Debug("ignoring searching in folder", "folderID", folderID, "err", err)
-			continue
+			return nil
 		}
 
 		descendants, err := hs.folderService.GetDescendantFolders(c.Req.Context(), folder.GetDescendantsQuery{OrgID: c.OrgID, UID: f.UID, SignedInUser: c.SignedInUser})
 		if err != nil {
 			hs.log.Debug("ignoring searching in descendant folders", "err", err)
-			continue
+			return nil
 		}
-		for _, f := range descendants {
-			folderIDs = append(folderIDs, f.ID)
-		}
-	}
+
+		withLock(&mu, func() {
+			for _, f := range descendants {
+				folderIDs = append(folderIDs, f.ID)
+			}
+		})
+		return nil
+	})
 
 	if len(dbIDs) > 0 && len(dbUIDs) > 0 {
 		return response.Error(400, "search supports UIDs or IDs, not both", nil)
