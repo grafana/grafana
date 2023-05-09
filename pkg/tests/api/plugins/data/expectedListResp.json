@@ -3,7 +3,6 @@
     "name": "Alert list",
     "type": "panel",
     "id": "alertlist",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -34,13 +33,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Alertmanager",
     "type": "datasource",
     "id": "alertmanager",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -76,13 +75,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Annotations list",
     "type": "panel",
     "id": "annolist",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -113,13 +112,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Azure Monitor",
     "type": "datasource",
     "id": "grafana-azure-monitor-datasource",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -172,13 +171,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Bar chart",
     "type": "panel",
     "id": "barchart",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -209,13 +208,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Bar gauge",
     "type": "panel",
     "id": "bargauge",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -246,13 +245,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Candlestick",
     "type": "panel",
     "id": "candlestick",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -283,13 +282,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Canvas",
     "type": "panel",
     "id": "canvas",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -320,13 +319,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "CloudWatch",
     "type": "datasource",
     "id": "cloudwatch",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -357,13 +356,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Dashboard list",
     "type": "panel",
     "id": "dashlist",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -394,7 +393,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Datagrid",
@@ -430,13 +430,13 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Elasticsearch",
     "type": "datasource",
     "id": "elasticsearch",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -472,13 +472,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Flame Graph",
     "type": "panel",
     "id": "flamegraph",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -509,13 +509,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Gauge",
     "type": "panel",
     "id": "gauge",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -546,13 +546,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Geomap",
     "type": "panel",
     "id": "geomap",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -583,13 +583,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Getting Started",
     "type": "panel",
     "id": "gettingstarted",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -620,13 +620,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Google Cloud Monitoring",
     "type": "datasource",
     "id": "stackdriver",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -657,7 +657,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Grafana Pyroscope",
@@ -698,13 +699,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Graph (old)",
     "type": "panel",
     "id": "graph",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -735,13 +736,13 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Graphite",
     "type": "datasource",
     "id": "graphite",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -781,13 +782,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Heatmap",
     "type": "panel",
     "id": "heatmap",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -818,13 +819,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Histogram",
     "type": "panel",
     "id": "histogram",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -855,13 +856,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "InfluxDB",
     "type": "datasource",
     "id": "influxdb",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -892,13 +893,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Jaeger",
     "type": "datasource",
     "id": "jaeger",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -938,13 +939,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Logs",
     "type": "panel",
     "id": "logs",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -975,13 +976,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Loki",
     "type": "datasource",
     "id": "loki",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1021,13 +1022,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Microsoft SQL Server",
     "type": "datasource",
     "id": "mssql",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1058,13 +1059,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "MySQL",
     "type": "datasource",
     "id": "mysql",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1095,13 +1096,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "News",
     "type": "panel",
     "id": "news",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1132,13 +1133,13 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Node Graph",
     "type": "panel",
     "id": "nodeGraph",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1169,13 +1170,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "OpenTSDB",
     "type": "datasource",
     "id": "opentsdb",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1206,13 +1207,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Parca",
     "type": "datasource",
     "id": "parca",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1248,13 +1249,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Pie chart",
     "type": "panel",
     "id": "piechart",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1285,13 +1286,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "PostgreSQL",
     "type": "datasource",
     "id": "postgres",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1322,13 +1323,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Prometheus",
     "type": "datasource",
     "id": "prometheus",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1364,13 +1365,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Stat",
     "type": "panel",
     "id": "stat",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1401,13 +1402,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "State timeline",
     "type": "panel",
     "id": "state-timeline",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1438,13 +1439,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Status history",
     "type": "panel",
     "id": "status-history",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1475,13 +1476,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Table",
     "type": "panel",
     "id": "table",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1512,13 +1513,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Table (old)",
     "type": "panel",
     "id": "table-old",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1549,13 +1550,13 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Tempo",
     "type": "datasource",
     "id": "tempo",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1591,13 +1592,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "TestData",
     "type": "datasource",
     "id": "testdata",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1628,13 +1629,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Text",
     "type": "panel",
     "id": "text",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1665,13 +1666,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Time series",
     "type": "panel",
     "id": "timeseries",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1702,13 +1703,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Traces",
     "type": "panel",
     "id": "traces",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1739,7 +1740,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Trend",
@@ -1775,13 +1777,13 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Welcome",
     "type": "panel",
     "id": "welcome",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1812,13 +1814,13 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "XY Chart",
     "type": "panel",
     "id": "xychart",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1849,13 +1851,13 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   },
   {
     "name": "Zipkin",
     "type": "datasource",
     "id": "zipkin",
-    "angular": false,
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1891,6 +1893,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angular": false
   }
 ]
