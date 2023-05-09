@@ -145,7 +145,26 @@ describe('sharedReducer', () => {
             ...initialQueryVariableModelState,
             ...initialState['1'],
             id: '11',
-            name: 'copy_of_Name-1',
+            name: 'copy_of_Name-1_1',
+            index: 3,
+          },
+        });
+    });
+
+    it('then state should be correct', () => {
+      const initialState: VariablesState = getVariableState(3, -1, false, true);
+      initialState['1'].name = 'copy_of_Name-1_2';
+      const payload = toVariablePayload({ id: '1', type: 'query' }, { newId: '11' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
+        .whenActionIsDispatched(duplicateVariable(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '11': {
+            ...initialQueryVariableModelState,
+            ...initialState['1'],
+            id: '11',
+            name: 'copy_of_Name-1_3',
             index: 3,
           },
         });

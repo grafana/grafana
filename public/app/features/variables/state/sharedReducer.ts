@@ -73,8 +73,20 @@ const sharedReducerSlice = createSlice({
       }
     },
     duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newId: string }>>) => {
+      function escapeRegExp(string: string): string {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
-      const name = `copy_of_${original.name}`;
+      const originalName = original.name.match(/^copy_of_(.*)_\d+$/)?.[1] || original.name;
+      const copyRegex = new RegExp(`^copy_of_${escapeRegExp(originalName)}_(\\d+)$`);
+      const suffix =
+        (Object.values(state)
+          .map(({ name }) => name.match(copyRegex)?.[1])
+          .filter((v): v is string => v != null)
+          .map((v) => +v)
+          .sort((a, b) => b - a)?.[0] || 0) + 1;
+      const name = `copy_of_${originalName}_${suffix}`;
       const newId = action.payload.data?.newId ?? name;
       const index = getNextVariableIndex(Object.values(state));
       state[newId] = {
