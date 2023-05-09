@@ -49,19 +49,6 @@ export const DatasetSelector = ({
     return datasets.map(toOption);
   }, []);
 
-  // const determinePlaceholder = () => {
-  //   if (isPostgresInstance) {
-  //     return 'Unconfigured database';
-  //   }
-
-  //   // This will only be true for unconfigured (no default database) MSSQL/MYSQL data sources.
-  //   if (!dataset) {
-  //     return 'Select dataset';
-  //   }
-
-  //   return 'Select dataset';
-  // };
-
   return (
     <Select
       aria-label="Dataset selector"
@@ -71,7 +58,6 @@ export const DatasetSelector = ({
       disabled={hasConfigIssue || state.loading}
       isLoading={state.loading}
       menuShouldPortal={true}
-      // placeholder={determinePlaceholder()}
     />
   );
 };
