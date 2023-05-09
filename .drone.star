@@ -42,10 +42,6 @@ def main(_ctx):
         oss_pipelines() +
         enterprise_pipelines() +
         enterprise2_pipelines() +
-        enterprise2_pipelines(
-            prefix = "custom-",
-            trigger = {"event": ["custom"]},
-        ) +
         publish_image_pipelines_public() +
         publish_image_pipelines_security() +
         publish_github_pipeline("public") +
