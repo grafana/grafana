@@ -70,7 +70,7 @@ func (i imageProvider) GetImageURL(ctx context.Context, alert *alertingNotify.Al
 			return "", err
 		}
 		if !exists {
-			i.logger.Warn("Image URL not found in database", "alert", alert)
+			i.logger.Info("Image URL not found in database", "alert", alert)
 			return "", alertingImages.ErrImageNotFound
 		}
 		return uri, nil
@@ -87,7 +87,7 @@ func (i imageProvider) getImageURLFromToken(ctx context.Context, token string) (
 	image, err := i.store.GetImage(ctx, token)
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
-			i.logger.Warn("Image not found in database", "token", token)
+			i.logger.Info("Image not found in database", "token", token)
 			return "", alertingImages.ErrImageNotFound
 		}
 		return "", err
@@ -117,7 +117,7 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 	}
 	if err != nil {
 		if errors.Is(err, models.ErrImageNotFound) {
-			i.logger.Warn("Image not found in database", "alert", alert)
+			i.logger.Info("Image not found in database", "alert", alert)
 			return nil, "", alertingImages.ErrImageNotFound
 		}
 		return nil, "", err
