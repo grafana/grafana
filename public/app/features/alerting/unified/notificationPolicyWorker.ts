@@ -1,4 +1,5 @@
 import * as comlink from 'comlink';
+import { cloneDeep } from 'lodash';
 
 import {
   AlertmanagerGroup,
@@ -11,17 +12,17 @@ import {
 
 const npFilterEngine = {
   getRouteGroupsMap(rootRoute: RouteWithID, groups: AlertmanagerGroup[]): Map<string, AlertmanagerGroup[]> {
-    function addRouteGroups(route: RouteWithID, acc: Map<string, AlertmanagerGroup[]>) {
-      const routeGroups = rootRoute ? findMatchingAlertGroups(rootRoute, route, groups) : [];
+    const normalizedRootRoute = normalizeRootRoute(rootRoute);
+
+    function addRouteGroups(route: NormalizedRoute, acc: Map<string, AlertmanagerGroup[]>) {
+      const routeGroups = findMatchingAlertGroups(normalizedRootRoute, route, groups);
       acc.set(route.id, routeGroups);
 
       route.routes?.forEach((r) => addRouteGroups(r, acc));
     }
 
     const routeGroupsMap = new Map<string, AlertmanagerGroup[]>();
-    if (rootRoute) {
-      addRouteGroups(rootRoute, routeGroupsMap);
-    }
+    addRouteGroups(normalizedRootRoute, routeGroupsMap);
 
     return routeGroupsMap;
   },
@@ -36,9 +37,26 @@ export interface RouteFilters {
   labelMatchersFilter?: ObjectMatcher[];
 }
 
+type NormalizedRoute = Omit<RouteWithID, 'matchers' | 'match' | 'match_re'> & { routes?: NormalizedRoute[] };
+// This is a performance improvement to normalize matchers only once and use the normalized version later on
+function normalizeRootRoute(rootRoute: RouteWithID): NormalizedRoute {
+  function normalizeRoute(route: RouteWithID) {
+    route.object_matchers = normalizeMatchers(route);
+    delete route.matchers;
+    delete route.match;
+    delete route.match_re;
+    route.routes?.forEach(normalizeRoute);
+  }
+
+  const normalizedRootRoute = cloneDeep(rootRoute);
+  normalizeRoute(normalizedRootRoute);
+
+  return normalizedRootRoute;
+}
+
 function findMatchingAlertGroups(
-  routeTree: Route,
-  route: Route,
+  routeTree: NormalizedRoute,
+  route: NormalizedRoute,
   alertGroups: AlertmanagerGroup[]
 ): AlertmanagerGroup[] {
   const matchingGroups: AlertmanagerGroup[] = [];
@@ -66,8 +84,9 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
   let matches: T[] = [];
 
   // If the current node is not a match, return nothing
-  const normalizedMatchers = normalizeMatchers(root);
-  if (!matchLabels(normalizedMatchers, labels)) {
+  // const normalizedMatchers = normalizeMatchers(root);
+  // Normalization should have happened earlier in the code
+  if (!root.object_matchers || !matchLabels(root.object_matchers, labels)) {
     return [];
   }
 

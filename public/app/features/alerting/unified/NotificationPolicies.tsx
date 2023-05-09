@@ -13,6 +13,7 @@ import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -36,7 +37,7 @@ import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import type { FilterEngine } from './notificationPolicyWorker';
-import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
+import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
@@ -54,6 +55,7 @@ const engine = comlink.wrap<FilterEngine>(worker);
 const AmRoutes = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const { useGetAlertmanagerAlertGroupsQuery } = alertmanagerApi;
 
   const [queryParams, setQueryParams] = useQueryParams();
   const { tab } = getActiveTabFromUrl(queryParams);
@@ -76,6 +78,11 @@ const AmRoutes = () => {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
+
+  const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
+    { amSourceName: alertManagerSourceName ?? '' },
+    { skip: !alertManagerSourceName }
+  );
 
   const {
     result,
@@ -103,8 +110,8 @@ const AmRoutes = () => {
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
-  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+  // const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
+  // const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
   // useEffect(() => {
   //   if (rootRoute && fetchAlertGroups.result) {
@@ -120,14 +127,18 @@ const AmRoutes = () => {
   // }, [rootRoute, fetchAlertGroups.result]);
 
   const { value: routeAlertGroupsMap } = useAsync(async () => {
-    if (rootRoute && fetchAlertGroups.result) {
-      console.time('Route Instances Map');
-      const routeGroupMap = await engine.getRouteGroupsMap(rootRoute, fetchAlertGroups.result);
-      console.timeEnd('Route Instances Map');
+    if (rootRoute && alertGroups) {
+      console.time('Instances Map Init');
+      const routeGroupMapPromise = engine.getRouteGroupsMap(rootRoute, alertGroups);
+      console.timeEnd('Instances Map Init');
+
+      console.time('Route Instances Map Algorithm');
+      const routeGroupMap = await routeGroupMapPromise;
+      console.timeEnd('Route Instances Map Algorithm');
       return routeGroupMap;
     }
     return undefined;
-  }, [rootRoute, fetchAlertGroups.result]);
+  }, [rootRoute, alertGroups]);
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
@@ -179,7 +190,7 @@ const AmRoutes = () => {
       .unwrap()
       .then(() => {
         if (alertManagerSourceName) {
-          dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+          refetchAlertGroups();
         }
         closeEditModal();
         closeAddModal();
@@ -204,11 +215,11 @@ const AmRoutes = () => {
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   // fetch AM instances grouping
-  useEffect(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertGroupsAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch]);
+  // useEffect(() => {
+  //   if (alertManagerSourceName) {
+  //     dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+  //   }
+  // }, [alertManagerSourceName, dispatch]);
 
   if (!alertManagerSourceName) {
     return (
@@ -282,7 +293,7 @@ const AmRoutes = () => {
                       receivers={receivers}
                       routeTree={rootRoute}
                       currentRoute={rootRoute}
-                      alertGroups={fetchAlertGroups.result}
+                      alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
                       readOnly={readOnlyPolicies}
                       alertManagerSourceName={alertManagerSourceName}

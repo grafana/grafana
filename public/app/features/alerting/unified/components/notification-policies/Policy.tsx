@@ -41,7 +41,7 @@ interface PolicyComponentProps {
   readOnly?: boolean;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: RouteWithID[];
-  routeAlertGroupsMap: Map<string, AlertmanagerGroup[]> | undefined;
+  routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
