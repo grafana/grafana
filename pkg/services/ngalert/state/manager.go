@@ -244,12 +244,8 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := make([]StateTransition, 0, len(results))
+	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger)
 
-	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
-		states = append(states, s)
-	}
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
 	st.deleteAlertStates(ctx, logger, staleStates)
 
@@ -262,10 +258,42 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	return allChanges
 }
 
-// Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
-	currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
+	if results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK) { // If it is no data, check the mapping and switch all results to the new state
+		// TODO aggregate UID of datasources that returned NoData into one and provide as auxiliary info, probably annotation
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	if results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState) {
+		// TODO squash all errors into one, and provide as annotation
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	transitions := make([]StateTransition, 0, len(results))
+	for _, result := range results {
+		currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		s := st.setNextState(ctx, alertRule, currentState, result, logger)
+		transitions = append(transitions, s)
+	}
+	return transitions
+}
 
+func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger) []StateTransition {
+	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
+	transitions := make([]StateTransition, 0, len(currentStates))
+	for _, currentState := range currentStates {
+		t := st.setNextState(ctx, alertRule, currentState, result, logger)
+		transitions = append(transitions, t)
+	}
+	return transitions
+}
+
+// Set the current state based on evaluation results
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
