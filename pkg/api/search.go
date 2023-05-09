@@ -70,7 +70,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		f()
 	}
 
-	err := concurrency.ForEachJob(c.Req.Context(), len(folderIdsQry), len(folderIdsQry), func(ctx context.Context, idx int) error {
+	if err := concurrency.ForEachJob(c.Req.Context(), len(folderIdsQry), len(folderIdsQry), func(ctx context.Context, idx int) error {
 		folderID, err := strconv.ParseInt(folderIdsQry[idx], 10, 64)
 		if err != nil {
 			hs.log.Debug("failed to parse folder ID", "folderID", folderID, "err", err)
@@ -99,7 +99,9 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 			}
 		})
 		return nil
-	})
+	}); err != nil {
+		return response.Error(500, "Search failed", err)
+	}
 
 	if len(dbIDs) > 0 && len(dbUIDs) > 0 {
 		return response.Error(400, "search supports UIDs or IDs, not both", nil)
