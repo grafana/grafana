@@ -12,20 +12,17 @@ import {
   SceneTimeRange,
   VariableValueSelectors,
   SceneQueryRunner,
-  SceneVariableSet,
-  QueryVariable,
   SceneControlsSpacer,
   SceneDataTransformer,
   SceneRefreshPicker,
   SceneFlexItem,
 } from '@grafana/scenes';
 import { LinkButton } from '@grafana/ui';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { SceneRadioToggle } from './SceneRadioToggle';
 import { SceneSearchBox } from './SceneSearchBox';
 import { getTableFilterTransform, getTimeSeriesFilterTransform } from './transforms';
-import { getLinkUrlWithAppUrlState } from './utils';
+import { getInstantQuery, getLinkUrlWithAppUrlState, getTimeSeriesQuery, getVariablesDefinitions } from './utils';
 
 export function getHttpHandlerListScene(): EmbeddedScene {
   const searchBox = new SceneSearchBox({ value: '' });
@@ -169,7 +166,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
                     fill="text"
                     size="sm"
                     icon="arrow-right"
-                    href={getHandlerDrilldownUrl(frame.fields[1].labels.handler)}
+                    href={getHandlerDrilldownUrl(frame.fields[1]!.labels!.handler)}
                   >
                     Details
                   </LinkButton>
@@ -297,36 +294,6 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
   return scene;
 }
 
-function getInstantQuery(query: Partial<PromQuery>): SceneQueryRunner {
-  return new SceneQueryRunner({
-    datasource: { uid: 'gdev-prometheus' },
-    queries: [
-      {
-        refId: 'A',
-        instant: true,
-        format: 'table',
-        maxDataPoints: 500,
-        ...query,
-      },
-    ],
-  });
-}
-
-function getTimeSeriesQuery(query: Partial<PromQuery>): SceneQueryRunner {
-  return new SceneQueryRunner({
-    datasource: { uid: 'gdev-prometheus' },
-    queries: [
-      {
-        refId: 'A',
-        range: true,
-        format: 'time_series',
-        maxDataPoints: 500,
-        ...query,
-      },
-    ],
-  });
-}
-
 export function getOverviewScene(): EmbeddedScene {
   const scene = new EmbeddedScene({
     $variables: getVariablesDefinitions(),
@@ -434,18 +401,6 @@ export function getOverviewScene(): EmbeddedScene {
   });
 
   return scene;
-}
-
-function getVariablesDefinitions() {
-  return new SceneVariableSet({
-    variables: [
-      new QueryVariable({
-        name: 'instance',
-        datasource: { uid: 'gdev-prometheus' },
-        query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)' },
-      }),
-    ],
-  });
 }
 
 function getInstantStatPanel(query: string, title: string) {
