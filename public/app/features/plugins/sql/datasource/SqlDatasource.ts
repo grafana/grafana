@@ -149,7 +149,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
     if (defaultDatabaseHasIssue()) {
       const error = new Error(
-        'Your default database configuration has been modified. Please update you panel query accordingly.'
+        'Your default database configuration has been modified. Please update your panel query accordingly.'
       );
       return throwError(() => error);
     }
