@@ -23,7 +23,7 @@ import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
 export class TimeSrv {
   time: any;
-  refreshTimer: any;
+  refreshTimer: number | undefined;
   refresh: any;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
@@ -235,7 +235,7 @@ export class TimeSrv {
     const validInterval = this.contextSrv.getValidInterval(interval);
     const intervalMs = rangeUtil.intervalToMs(validInterval);
 
-    this.refreshTimer = setTimeout(() => {
+    this.refreshTimer = window.setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
       this.refreshTimeModel();
     }, intervalMs);
@@ -256,7 +256,7 @@ export class TimeSrv {
   }
 
   private startNextRefreshTimer(afterMs: number) {
-    this.refreshTimer = setTimeout(() => {
+    this.refreshTimer = window.setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
         this.refreshTimeModel();
@@ -268,6 +268,7 @@ export class TimeSrv {
 
   stopAutoRefresh() {
     clearTimeout(this.refreshTimer);
+    this.refreshTimer = undefined;
   }
 
   // resume auto-refresh based on old dashboard refresh property
