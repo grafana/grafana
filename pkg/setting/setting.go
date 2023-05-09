@@ -561,7 +561,7 @@ func ToAbsUrl(relativeUrl string) string {
 }
 
 func RedactedValue(key, value string) string {
-	if value != "" {
+	if value == "" {
 		return ""
 	}
 
