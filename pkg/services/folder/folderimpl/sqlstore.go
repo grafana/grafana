@@ -5,10 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,15 +26,6 @@ var _ store = (*sqlStore)(nil)
 
 func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
 	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
-}
-
-func withURL(f *folder.Folder) *folder.Folder {
-	if f == nil || f.URL != "" {
-		return f
-	}
-
-	f.URL = dashboards.GetFolderURL(f.UID, slugify.Slugify(f.Title))
-	return f
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -83,7 +73,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		}
 		return nil
 	})
-	return withURL(foldr), err
+	return foldr.WithURL(), err
 }
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
@@ -168,7 +158,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		return nil
 	})
 
-	return withURL(foldr), err
+	return foldr.WithURL(), err
 }
 
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
@@ -194,7 +184,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
-	return withURL(foldr), err
+	return foldr.WithURL(), err
 }
 
 func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -227,8 +217,11 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 			return nil, err
 		}
 
-		for _, f := range folders {
-			f.URL = dashboards.GetFolderURL(f.UID, slugify.Slugify(f.Title))
+		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+			folders[idx].WithURL()
+			return nil
+		}); err != nil {
+			ss.log.Debug("failed to set URL to folders", "err", err)
 		}
 	default:
 		ss.log.Debug("recursive CTE subquery is not supported; it fallbacks to the iterative implementation")
@@ -270,8 +263,11 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		for _, f := range folders {
-			f = withURL(f)
+		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+			folders[idx].WithURL()
+			return nil
+		}); err != nil {
+			ss.log.Debug("failed to set URL to folders", "err", err)
 		}
 		return nil
 	})
@@ -298,7 +294,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 				break
 			}
 
-			folders = append(folders, withURL(f))
+			folders = append(folders, f.WithURL())
 			uid = f.ParentUID
 			if len(folders) > folder.MaxNestedFolderDepth {
 				return folder.ErrMaximumDepthReached.Errorf("failed to get parent folders iteratively")
