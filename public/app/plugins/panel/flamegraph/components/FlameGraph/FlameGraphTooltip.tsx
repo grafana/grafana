@@ -1,94 +1,95 @@
 import { css } from '@emotion/css';
 import React, { LegacyRef } from 'react';
 
-import { createTheme, Field, getDisplayProcessor } from '@grafana/data';
 import { useStyles2, Tooltip } from '@grafana/ui';
 
-import { TooltipData, SampleUnit } from '../types';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
-  tooltipRef: LegacyRef<HTMLDivElement>;
-  tooltipData: TooltipData;
-  getLabelValue: (label: string | number) => string;
+  data: FlameGraphDataContainer;
+  totalTicks: number;
+  item?: LevelItem;
+  tooltipRef?: LegacyRef<HTMLDivElement>;
 };
 
-const FlameGraphTooltip = ({ tooltipRef, tooltipData, getLabelValue }: Props) => {
+const FlameGraphTooltip = ({ data, tooltipRef, item, totalTicks }: Props) => {
   const styles = useStyles2(getStyles);
 
+  let content = null;
+  if (item) {
+    const tooltipData = getTooltipData(data, item, totalTicks);
+    content = (
+      <Tooltip
+        content={
+          <div>
+            <p>{data.getLabel(item.itemIndex)}</p>
+            <p className={styles.lastParagraph}>
+              {tooltipData.unitTitle}
+              <br />
+              Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
+              <br />
+              Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
+              <br />
+              Samples: <b>{tooltipData.samples}</b>
+            </p>
+          </div>
+        }
+        placement={'right'}
+        show={true}
+      >
+        <span></span>
+      </Tooltip>
+    );
+  }
+
+  // Even if we don't show tooltip we need this div so the ref is consistently attached. Would need some refactor in
+  // FlameGraph.tsx to make it work without it.
   return (
     <div ref={tooltipRef} className={styles.tooltip}>
-      {tooltipData && (
-        <Tooltip
-          content={
-            <div>
-              <p>{getLabelValue(tooltipData.name)}</p>
-              <p className={styles.lastParagraph}>
-                {tooltipData.unitTitle}
-                <br />
-                Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
-                <br />
-                Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
-                <br />
-                Samples: <b>{tooltipData.samples}</b>
-              </p>
-            </div>
-          }
-          placement={'right'}
-          show={true}
-        >
-          <span></span>
-        </Tooltip>
-      )}
+      {content}
     </div>
   );
 };
 
-export const getTooltipData = (
-  field: Field,
-  label: string,
-  value: number,
-  self: number,
-  totalTicks: number
-): TooltipData => {
-  let unitTitle;
+type TooltipData = {
+  name: string;
+  percentValue: number;
+  percentSelf: number;
+  unitTitle: string;
+  unitValue: string;
+  unitSelf: string;
+  samples: string;
+};
 
-  const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
-  const displayValue = processor(value);
-  const displaySelf = processor(self);
+export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
+  const displayValue = data.getValueDisplay(item.itemIndex);
+  const displaySelf = data.getSelfDisplay(item.itemIndex);
 
-  const percentValue = Math.round(10000 * (value / totalTicks)) / 100;
-  const percentSelf = Math.round(10000 * (self / totalTicks)) / 100;
+  const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;
+  const percentSelf = Math.round(10000 * (displaySelf.numeric / totalTicks)) / 100;
   let unitValue = displayValue.text + displayValue.suffix;
   let unitSelf = displaySelf.text + displaySelf.suffix;
 
-  switch (field.config.unit) {
-    case SampleUnit.Bytes:
-      unitTitle = 'RAM';
-      break;
-    case SampleUnit.Nanoseconds:
-      unitTitle = 'Time';
-      break;
-    default:
-      unitTitle = 'Count';
-      if (!displayValue.suffix) {
-        // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-        unitValue = displayValue.text;
-      }
-      if (!displaySelf.suffix) {
-        // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-        unitSelf = displaySelf.text;
-      }
-      break;
+  const unitTitle = data.getUnitTitle();
+  if (unitTitle === 'Count') {
+    if (!displayValue.suffix) {
+      // Makes sure we don't show 123undefined or something like that if suffix isn't defined
+      unitValue = displayValue.text;
+    }
+    if (!displaySelf.suffix) {
+      // Makes sure we don't show 123undefined or something like that if suffix isn't defined
+      unitSelf = displaySelf.text;
+    }
   }
 
   return {
-    name: label,
+    name: data.getLabel(item.itemIndex),
     percentValue,
     percentSelf,
     unitTitle,
     unitValue,
     unitSelf,
-    samples: value.toLocaleString(),
+    samples: displayValue.numeric.toLocaleString(),
   };
 };
 

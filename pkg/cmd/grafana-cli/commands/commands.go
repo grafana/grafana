@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -91,47 +90,38 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 	}
 }
 
-// Command contains command state.
-type Command struct {
-	Client utils.ApiClient
-}
-
-var cmd Command = Command{
-	Client: &services.GrafanaComClient{},
-}
-
 var pluginCommands = []*cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin id> <plugin version (optional)>",
-		Action: runPluginCommand(cmd.installCommand),
+		Action: runPluginCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runPluginCommand(cmd.listRemoteCommand),
+		Action: runPluginCommand(listRemoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",
-		Action: runPluginCommand(cmd.listVersionsCommand),
+		Action: runPluginCommand(listVersionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
 		Aliases: []string{"upgrade"},
-		Action:  runPluginCommand(cmd.upgradeCommand),
+		Action:  runPluginCommand(upgradeCommand),
 	}, {
 		Name:    "update-all",
 		Aliases: []string{"upgrade-all"},
 		Usage:   "update all your installed plugins",
-		Action:  runPluginCommand(cmd.upgradeAllCommand),
+		Action:  runPluginCommand(upgradeAllCommand),
 	}, {
 		Name:   "ls",
 		Usage:  "list installed plugins (excludes core plugins)",
-		Action: runPluginCommand(cmd.lsCommand),
+		Action: runPluginCommand(lsCommand),
 	}, {
 		Name:    "uninstall",
 		Aliases: []string{"remove"},
 		Usage:   "uninstall <plugin id>",
-		Action:  runPluginCommand(cmd.removeCommand),
+		Action:  runPluginCommand(removeCommand),
 	},
 }
 

@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -33,7 +34,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
-  const [queryStats, setQueryStats] = useState<QueryStats>();
+  const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
   const timerange = datasource.getTimeRange();
@@ -76,7 +77,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   }, [data]);
 
   const onChangeInternal = (query: LokiQuery) => {
-    setDataIsStale(true);
+    if (!isEqual(query, props.query)) {
+      setDataIsStale(true);
+    }
     onChange(query);
   };
 

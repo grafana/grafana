@@ -58,7 +58,8 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			ServiceAccountID: &serviceAccountId,
 		}
 
-		if err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd); err != nil {
+		key, err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd)
+		if err != nil {
 			switch {
 			case errors.Is(err, apikey.ErrDuplicate):
 				return serviceaccounts.ErrDuplicateToken.Errorf("service account token with name %s already exists in the organization", cmd.Name)
@@ -69,7 +70,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			return err
 		}
 
-		apiKey = addKeyCmd.Result
+		apiKey = key
 		return nil
 	})
 }

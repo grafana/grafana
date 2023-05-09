@@ -1,16 +1,11 @@
+import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
 import {
-  isPluginExtensionCommand,
   isPluginExtensionLink,
-  PanelMenuItem,
-  PluginExtensionPlacements,
-} from '@grafana/data';
-import {
   AngularComponent,
   getDataSourceSrv,
   getPluginExtensions,
   locationService,
   reportInteraction,
-  PluginExtensionPanelContext,
 } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
@@ -45,7 +40,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
-    reportInteraction('dashboards_panelheader_view_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'view' });
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
@@ -53,25 +48,26 @@ export function getPanelMenu(
     locationService.partial({
       editPanel: panel.id,
     });
-    reportInteraction('dashboards_panelheader_edit_clicked');
+
+    reportInteraction('dashboards_panelheader_menu', { item: 'edit' });
   };
 
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_share_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_createlibrarypanel_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
-    reportInteraction('dashboards_panelheader_unlinklibrarypanel_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'unlinkLibraryPanel' });
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -79,7 +75,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-    reportInteraction('dashboards_panelheader_inspect_clicked', { tab: tab ?? InspectTab.Data });
+    reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
   };
 
   const onMore = (event: React.MouseEvent<any>) => {
@@ -89,19 +85,19 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_duplicate_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'duplicate' });
   };
 
   const onCopyPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     copyPanel(panel);
-    reportInteraction('dashboards_panelheader_copy_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'copy' });
   };
 
   const onRemovePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
-    reportInteraction('dashboards_panelheader_remove_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'remove' });
   };
 
   const onNavigateToExplore = (event: React.MouseEvent<any>) => {
@@ -109,13 +105,13 @@ export function getPanelMenu(
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
-    reportInteraction('dashboards_panelheader_explore_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
-    reportInteraction('dashboards_panelheader_togglelegend_clicked');
+    reportInteraction('dashboards_panelheader_menu', { item: 'toggleLegend' });
   };
 
   const menu: PanelMenuItem[] = [];
@@ -180,35 +176,50 @@ export function getPanelMenu(
     type: 'submenu',
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
-    onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
+    onClick: (e: React.MouseEvent<HTMLElement>) => {
+      const currentTarget = e.currentTarget;
+      const target = e.target as HTMLElement;
+      const closestMenuItem = target.closest('[role="menuitem"]');
+
+      if (target === currentTarget || closestMenuItem === currentTarget) {
+        onInspectPanel();
+      }
+    },
     shortcut: 'i',
     subMenu: inspectMenu,
   });
 
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
-
-  if (canEdit && !(panel.isViewing || panel.isEditing)) {
-    subMenu.push({
-      text: t('panel.header-menu.duplicate', `Duplicate`),
-      onClick: onDuplicatePanel,
-      shortcut: 'p d',
-    });
-
-    subMenu.push({
-      text: t('panel.header-menu.copy', `Copy`),
-      onClick: onCopyPanel,
-    });
-
-    if (isPanelModelLibraryPanel(panel)) {
+  if (!(panel.isViewing || panel.isEditing)) {
+    if (canEdit) {
       subMenu.push({
-        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-        onClick: onUnlinkLibraryPanel,
+        text: t('panel.header-menu.duplicate', `Duplicate`),
+        onClick: onDuplicatePanel,
+        shortcut: 'p d',
       });
-    } else {
+
       subMenu.push({
-        text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        onClick: onAddLibraryPanel,
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: onCopyPanel,
+      });
+
+      if (isPanelModelLibraryPanel(panel)) {
+        subMenu.push({
+          text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          onClick: onUnlinkLibraryPanel,
+        });
+      } else {
+        subMenu.push({
+          text: t('panel.header-menu.create-library-panel', `Create library panel`),
+          onClick: onAddLibraryPanel,
+        });
+      }
+    } else if (contextSrv.isEditor) {
+      // An editor but the dashboard is not editable
+      subMenu.push({
+        text: t('panel.header-menu.copy', `Copy`),
+        onClick: onCopyPanel,
       });
     }
   }
@@ -269,11 +280,11 @@ export function getPanelMenu(
   }
 
   const { extensions } = getPluginExtensions({
-    placement: PluginExtensionPlacements.DashboardPanelMenu,
+    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
   });
 
-  if (extensions.length > 0) {
+  if (extensions.length > 0 && !panel.isEditing) {
     const extensionsMenu: PanelMenuItem[] = [];
 
     for (const extension of extensions) {
@@ -281,14 +292,7 @@ export function getPanelMenu(
         extensionsMenu.push({
           text: truncateTitle(extension.title, 25),
           href: extension.path,
-        });
-        continue;
-      }
-
-      if (isPluginExtensionCommand(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          onClick: extension.callHandlerWithContext,
+          onClick: extension.onClick,
         });
         continue;
       }
@@ -325,26 +329,17 @@ function truncateTitle(title: string, length: number): string {
 }
 
 function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
-  const timeRange = Object.assign({}, dashboard.time);
-
-  return Object.freeze({
+  return {
     id: panel.id,
     pluginId: panel.type,
     title: panel.title,
-    timeRange: Object.freeze(timeRange),
+    timeRange: dashboard.time,
     timeZone: dashboard.timezone,
-    dashboard: Object.freeze({
+    dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,
-      tags: Object.freeze(Array.from<string>(dashboard.tags)),
-    }),
-    targets: Object.freeze(
-      panel.targets.map((t) =>
-        Object.freeze({
-          refId: t.refId,
-          pluginId: t.datasource?.type ?? 'unknown',
-        })
-      )
-    ),
-  });
+      tags: Array.from<string>(dashboard.tags),
+    },
+    targets: panel.targets,
+  };
 }

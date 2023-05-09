@@ -89,6 +89,7 @@ const NotificationPoliciesFilter = ({
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
         <Select
           id="receiver"
+          aria-label="Search by contact point"
           value={selectedContactPoint}
           options={receiverOptions}
           onChange={(option) => {

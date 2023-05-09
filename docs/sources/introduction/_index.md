@@ -8,7 +8,7 @@ weight: 5
 
 # Grafana OSS
 
-[Grafana open source software](https://grafana.com/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
+[Grafana open source software](https://grafana.com/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
 
 After you have [installed Grafana]({{< relref "../setup-grafana/installation/" >}}) and set up your first dashboard using instructions in [Getting started with Grafana]({{< relref "../getting-started/build-first-dashboard.md" >}}), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist]({{< relref "../dashboards/create-manage-playlists/" >}}). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning]({{< relref "../administration/provisioning/" >}}) and [authentication]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
 
@@ -71,3 +71,5 @@ In addition to Grafana, Grafana Labs also provides the following open source pro
 **Grafana Tempo:** Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Grafana Tempo documentation](https://grafana.com/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
 
 **Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](https://grafana.com/docs/mimir/latest/).
+
+**Grafana Phlare:** Grafana Phlare is an open-source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that enables you to understand your workload's resource (CPU, memory, etc.) usage to the exact line number. For more information about using Grafana Phlare, refer to [Grafana Phlare documentation](https://grafana.com/docs/phlare/latest/).

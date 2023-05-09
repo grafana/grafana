@@ -24,6 +24,7 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaTheme2, invalid = false) =
       sharedInputStyle(theme),
       getFocusStyle(theme),
       css`
+        display: block;
         border-radius: ${theme.shape.borderRadius()};
         padding: ${theme.spacing.gridSize / 4}px ${theme.spacing.gridSize}px;
         width: 100%;

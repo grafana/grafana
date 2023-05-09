@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { ResourceDimensionMode } from '@grafana/schema';
 import { Portal, useTheme2 } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { MediaType, ResourceDimensionMode, ResourceFolderName } from '../../../features/dimensions';
+import { MediaType, ResourceFolderName } from '../../../features/dimensions';
 import { ResourcePickerPopover } from '../../../features/dimensions/editors/ResourcePickerPopover';
 
 import { AnchorPoint } from './types';

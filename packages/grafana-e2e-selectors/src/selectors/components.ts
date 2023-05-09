@@ -72,8 +72,15 @@ export const Components = {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
+      menuItems: (item: string) => `data-testid Panel menu item ${item}`,
+      menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
+      loadingBar: () => `Panel loading bar`,
+      HoverWidget: {
+        container: 'data-test-id hover-header-container',
+        dragIcon: 'data-testid drag-icon',
+      },
     },
     Visualization: {
       Graph: {
@@ -239,9 +246,15 @@ export const Components = {
     Configuration: {
       button: 'Configuration',
     },
+    Toggle: {
+      button: 'Toggle menu',
+    },
     Reporting: {
       button: 'Reporting',
     },
+  },
+  NavMenu: {
+    item: 'data-testid Nav menu item',
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
@@ -249,6 +262,7 @@ export const Components = {
   PageToolbar: {
     container: () => '.page-toolbar',
     item: (tooltip: string) => `${tooltip}`,
+    itemButton: (title: string) => `data-testid ${title}`,
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
@@ -405,5 +419,9 @@ export const Components = {
   },
   Variables: {
     variableOption: 'data-testid variable-option',
+  },
+  Annotations: {
+    annotationsTypeInput: 'annotations-type-input',
+    annotationsChoosePanelInput: 'choose-panels-input',
   },
 };

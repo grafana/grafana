@@ -23,6 +23,7 @@ export interface SelectCommonProps<T> {
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
+  blurInputOnSelect?: boolean;
   captureMenuScroll?: boolean;
   className?: string;
   closeMenuOnSelect?: boolean;
@@ -38,6 +39,7 @@ export interface SelectCommonProps<T> {
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
   getOptionValue?: (item: SelectableValue<T>) => string;
+  hideSelectedOptions?: boolean;
   inputValue?: string;
   invalid?: boolean;
   isClearable?: boolean;

@@ -30,6 +30,7 @@ export interface SqlQueryForInterpolation {
 export interface SQLConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
+  maxIdleConnsAuto: boolean;
   connMaxLifetime: number;
 }
 

@@ -13,6 +13,15 @@ export interface DataLinkClickEvent<T = any> {
 }
 
 /**
+ * Data Links can be created by data source plugins or correlations.
+ * Origin is set in DataLink object and indicates where the link was created.
+ */
+export enum DataLinkConfigOrigin {
+  Datasource = 'Datasource',
+  Correlations = 'Correlations',
+}
+
+/**
  * Link configuration. The values may contain variables that need to be
  * processed before showing the link to user.
  *
@@ -39,17 +48,24 @@ export interface DataLink<T extends DataQuery = any> {
   // more custom onClick behaviour if needed.
   // @internal and subject to change in future releases
   internal?: InternalDataLink<T>;
+
+  origin?: DataLinkConfigOrigin;
 }
 
-/** @internal */
-export enum SupportedTransformationTypes {
+/**
+ * We provide tooltips with information about these to guide the user, please
+ * check for validity when adding more transformation types.
+ *
+ * @internal
+ */
+export enum SupportedTransformationType {
   Regex = 'regex',
   Logfmt = 'logfmt',
 }
 
 /** @internal */
 export interface DataLinkTransformationConfig {
-  type: SupportedTransformationTypes;
+  type: SupportedTransformationType;
   field?: string;
   expression?: string;
   mapValue?: string;

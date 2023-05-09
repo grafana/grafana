@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagAlertingBigTransactions
-	// Use big transactions for alerting database writes
-	FlagAlertingBigTransactions = "alertingBigTransactions"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -18,18 +14,6 @@ const (
 	// FlagDisableEnvelopeEncryption
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
-
-	// FlagDatabaseMetrics
-	// Add Prometheus metrics for database tables
-	FlagDatabaseMetrics = "database_metrics"
-
-	// FlagDashboardPreviews
-	// Create and show thumbnails for dashboard search results
-	FlagDashboardPreviews = "dashboardPreviews"
-
-	// FlagLivePipeline
-	// Enable a generic live processing pipeline
-	FlagLivePipeline = "live-pipeline"
 
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
@@ -59,10 +43,6 @@ const (
 	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
 
-	// FlagLokiDataframeApi
-	// Use experimental loki api for WebSocket streaming (early prototype)
-	FlagLokiDataframeApi = "lokiDataframeApi"
-
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
@@ -75,33 +55,17 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8S
-	// Explore native k8s integrations
-	FlagK8S = "k8s"
-
-	// FlagDashboardsFromStorage
-	// Load dashboards from the generic storage interface
-	FlagDashboardsFromStorage = "dashboardsFromStorage"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagTracing
-	// Adds trace ID to error notifications
-	FlagTracing = "tracing"
-
-	// FlagNewTraceView
-	// Shows the new trace view design
-	FlagNewTraceView = "newTraceView"
+	// FlagNewTraceViewHeader
+	// Shows the new trace view header
+	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
-
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
@@ -119,9 +83,13 @@ const (
 	// Validate dashboard JSON POSTed to api/dashboards/db
 	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
 
-	// FlagAutoMigrateGraphPanels
-	// Replace the angular graph panel with timeseries
-	FlagAutoMigrateGraphPanels = "autoMigrateGraphPanels"
+	// FlagAutoMigrateOldPanels
+	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
+	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
+
+	// FlagDisableAngular
+	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
+	FlagDisableAngular = "disableAngular"
 
 	// FlagPrometheusWideSeries
 	// Enable wide series responses in the Prometheus datasource
@@ -152,11 +120,11 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// Displays new top nav and page layouts
+	// Enables new top navigation and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
-	// Run GRPC server
+	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
 	// FlagEntityStore
@@ -199,24 +167,24 @@ const (
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
 
-	// FlagElasticsearchBackendMigration
-	// Use Elasticsearch as backend data source
-	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+	// FlagShowTraceId
+	// Show trace ids for requests
+	FlagShowTraceId = "showTraceId"
 
 	// FlagDatasourceOnboarding
 	// Enable data source onboarding page
 	FlagDatasourceOnboarding = "datasourceOnboarding"
 
-	// FlagSecureSocksDatasourceProxy
-	// Enable secure socks tunneling for supported core datasources
-	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
+	// FlagEmptyDashboardPage
+	// Enable the redesigned user interface of a dashboard page that includes no panels
+	FlagEmptyDashboardPage = "emptyDashboardPage"
 
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
 
 	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus examplar sampling
+	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting
@@ -251,9 +219,9 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagDrawerDataSourcePicker
-	// Changes the user experience for data source selection to a drawer.
-	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
+	// FlagOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with external auth providers
+	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
 
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
@@ -267,7 +235,91 @@ const (
 	// Enable time series table transformer &amp; sparkline cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 
+	// FlagPrometheusResourceBrowserCache
+	// Displays browser caching options in Prometheus data source configuration
+	FlagPrometheusResourceBrowserCache = "prometheusResourceBrowserCache"
+
 	// FlagInfluxdbBackendMigration
 	// Query InfluxDB InfluxQL without the proxy
 	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
+
+	// FlagClientTokenRotation
+	// Replaces the current in-request token rotation so that the client initiates the rotation
+	FlagClientTokenRotation = "clientTokenRotation"
+
+	// FlagPrometheusDataplane
+	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from &#39;Value&#39; to the value of the `__name__` label when present.
+	FlagPrometheusDataplane = "prometheusDataplane"
+
+	// FlagLokiMetricDataplane
+	// Changes metric responses from Loki to be compliant with the dataplane specification.
+	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
+
+	// FlagAlertStateHistoryLokiSecondary
+	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
+	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertStateHistoryLokiPrimary
+	// Enable a remote Loki instance as the primary source for state history reads.
+	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
+
+	// FlagAlertStateHistoryLokiOnly
+	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
+	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger
+	FlagUnifiedRequestLog = "unifiedRequestLog"
+
+	// FlagRenderAuthJWT
+	// Uses JWT-based auth for rendering instead of relying on remote cache
+	FlagRenderAuthJWT = "renderAuthJWT"
+
+	// FlagPyroscopeFlameGraph
+	// Changes flame graph to pyroscope one
+	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
+
+	// FlagExternalServiceAuth
+	// Starts an OAuth2 authentication provider for external services
+	FlagExternalServiceAuth = "externalServiceAuth"
+
+	// FlagUseCachingService
+	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
+	FlagUseCachingService = "useCachingService"
+
+	// FlagEnableElasticsearchBackendQuerying
+	// Enable the processing of queries and responses in the Elasticsearch data source through backend
+	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
+
+	// FlagAuthenticationConfigUI
+	// Enables authentication configuration UI
+	FlagAuthenticationConfigUI = "authenticationConfigUI"
+
+	// FlagPluginsAPIManifestKey
+	// Use grafana.com API to retrieve the public manifest key
+	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
+
+	// FlagAdvancedDataSourcePicker
+	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
+
+	// FlagOpensearchDetectVersion
+	// Enable version detection in OpenSearch
+	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
+
+	// FlagEnableDatagridEditing
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditing = "enableDatagridEditing"
 )

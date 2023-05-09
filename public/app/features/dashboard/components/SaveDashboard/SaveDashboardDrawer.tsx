@@ -13,16 +13,14 @@ import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
-import { SaveToStorageForm } from './forms/SaveToStorageForm';
 import { SaveDashboardData, SaveDashboardModalProps, SaveDashboardOptions } from './types';
 import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
-  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid?.indexOf('/') > 0;
-  const isProvisioned = dashboard.meta.provisioned && !isFromStorage;
-  const isNew = dashboard.version === 0 && !isFromStorage;
+  const isProvisioned = dashboard.meta.provisioned;
+  const isNew = dashboard.version === 0;
 
   const previous = useAsync(async () => {
     if (isNew) {
@@ -82,22 +80,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       );
     }
 
-    if (isFromStorage) {
-      return (
-        <SaveToStorageForm
-          dashboard={dashboard}
-          saveModel={data}
-          onCancel={onDismiss}
-          onSuccess={onSuccess}
-          onSubmit={onDashboardSave}
-          options={options}
-          onOptionsChange={setOptions}
-          isNew={isNew}
-          isCopy={isCopy}
-        />
-      );
-    }
-
     if (isNew || isCopy) {
       return (
         <SaveDashboardAsForm
@@ -149,7 +131,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     <Drawer
       title={title}
       onClose={onDismiss}
-      width={'40%'}
       subtitle={dashboard.title}
       tabs={
         <TabsBar>
@@ -159,7 +140,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
           )}
         </TabsBar>
       }
-      expandable
       scrollableContent
     >
       {renderSaveBody()}

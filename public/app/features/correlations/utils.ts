@@ -1,4 +1,6 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+
+import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 
 import { CorrelationData } from './useCorrelations';
 
@@ -21,7 +23,14 @@ export const attachCorrelationsToDataFrames = (
     if (!frameRefId) {
       return;
     }
-    const dataSourceUid = dataFrameRefIdToDataSourceUid[frameRefId];
+    let dataSourceUid = dataFrameRefIdToDataSourceUid[frameRefId];
+
+    // rawPrometheus queries append a value to refId to a separate dataframe for the table view
+    if (dataSourceUid === undefined && dataFrame.meta?.preferredVisualisationType === 'rawPrometheus') {
+      const formattedRefID = formatValueName(frameRefId);
+      dataSourceUid = dataFrameRefIdToDataSourceUid[formattedRefID];
+    }
+
     const sourceCorrelations = correlations.filter((correlation) => correlation.source.uid === dataSourceUid);
     decorateDataFrameWithInternalDataLinks(dataFrame, sourceCorrelations);
   });
@@ -31,10 +40,10 @@ export const attachCorrelationsToDataFrames = (
 
 const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlations: CorrelationData[]) => {
   dataFrame.fields.forEach((field) => {
+    field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
-        field.config.links = field.config.links || [];
-        field.config.links.push({
+        field.config.links!.push({
           internal: {
             query: correlation.config?.target,
             datasourceUid: correlation.target.uid,
@@ -43,6 +52,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
           },
           url: '',
           title: correlation.label || correlation.target.name,
+          origin: DataLinkConfigOrigin.Correlations,
         });
       }
     });

@@ -5,7 +5,7 @@
 
 import { CanvasElementOptions } from 'app/features/canvas';
 import { IconConfig } from 'app/features/canvas/elements/icon';
-import { ResourceDimensionMode } from 'app/features/dimensions';
+import { ResourceDimensionMode } from '@grafana/schema';
 
 export interface PanelOptions {
   root: Omit<CanvasElementOptions<IconConfig>, 'type' | 'name'>; // type is forced

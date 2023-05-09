@@ -41,12 +41,12 @@ A user can belong to multiple teams.
 To create a team:
 
 1. Sign in to Grafana as an organization administrator or team administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click **New Team**.
 1. Complete the fields and click **Create**.
 1. Click **Add member**.
-1. In the **Add team member** field, locate and select a user.
-1. Click **Add to team**.
+1. In the **Add member** field, locate and select a user.
+1. Click **Save**.
 
 ## Add a team member
 
@@ -55,11 +55,11 @@ Add a team member to an existing team whenever you want to provide access to tea
 To add a team member:
 
 1. Sign in to Grafana as an organization administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the name of the team to which you want to add members, and click **Add member**.
 1. Locate and select a user.
 1. Choose if you want to add the user as a team Member or an Admin.
-1. Click **Add to team**.
+1. Click **Save**.
 
 ## Grant team member permissions
 
@@ -68,10 +68,10 @@ Complete this task when you want to add or modify team member permissions.
 To grant team member permissions:
 
 1. Sign in to Grafana as an organization administrator or a team administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the name of the team for which you want to add or modify team member permissions.
 1. In the team member list, find and click the user that you want to change. You can use the search field to filter the list if necessary.
-1. Click the **Permission** list, and then click the new user permission level.
+1. In the Permission column, select the new user permission level.
 
 ## Remove a team member
 
@@ -80,10 +80,9 @@ You can remove a team member when you no longer want to apply team permissions t
 To remove a team member:
 
 1. Sign in to Grafana as an organization administrator or team administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click a team from which you want to remove a user.
 1. Click the **X** next to the name of the user.
-1. Click **Delete**.
 
 ## Delete a team
 
@@ -92,7 +91,7 @@ Delete a team when you no longer need it. This action permanently deletes the te
 To delete a team:
 
 1. Sign in to Grafana as an organization administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click **Administration** in the left-side menu and select **Teams**.
 1. Click the **X** next to the name of the team.
 1. Click **Delete**.
 
@@ -103,7 +102,7 @@ See the complete list of teams in your Grafana organization.
 To view a list of teams:
 
 1. Sign in to Grafana as an organization administrator or a team administrator.
-1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Teams**.
+1. Click **Administration** in the left-side menu and select **Teams**.
 
 The role you use to sign in to Grafana determines how you see team lists.
 
@@ -111,10 +110,10 @@ The role you use to sign in to Grafana determines how you see team lists.
 
 The following example shows a list as it appears to an organization administrator.
 
-![Team list](/static/img/docs/manage-users/org-admin-team-list-7-3.png)
+![Team list view for org admin](/media/docs/grafana/screenshot-org-admin-team-list.png)
 
 ## Team administrator view
 
 The following example shows a list as it appears to a team administrator.
 
-![Team list](/static/img/docs/manage-users/team-admin-team-list-7-3.png)
+![Team list view for team admin](/media/docs/grafana/screenshot-team-admin-team-list.png)

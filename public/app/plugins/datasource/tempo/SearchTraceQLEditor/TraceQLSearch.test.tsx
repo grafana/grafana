@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
@@ -39,12 +40,25 @@ jest.mock('../language_provider', () => {
 describe('TraceQLSearch', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
+  const datasource: TempoDatasource = {
+    search: {
+      filters: [
+        {
+          id: 'service-name',
+          tag: 'service.name',
+          operator: '=',
+          scope: TraceqlSearchScope.Resource,
+        },
+      ],
+    },
+  } as TempoDatasource;
+
   let query: TempoQuery = {
     refId: 'A',
     queryType: 'traceqlSearch',
     key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
     query: '',
-    filters: [{ id: 'min-duration', operator: '>', type: 'static', valueType: 'duration', tag: 'duration' }],
+    filters: [{ id: 'min-duration', operator: '>', valueType: 'duration', tag: 'duration' }],
   };
   const onChange = (q: TempoQuery) => {
     query = q;
@@ -62,14 +76,11 @@ describe('TraceQLSearch', () => {
   });
 
   it('should update operator when new value is selected in operator input', async () => {
-    const { container } = render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />
-    );
+    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
 
     const minDurationOperator = container.querySelector(`input[aria-label="select min-duration operator"]`);
     expect(minDurationOperator).not.toBeNull();
     expect(minDurationOperator).toBeInTheDocument();
-    expect(await screen.findByText('>')).toBeInTheDocument();
 
     if (minDurationOperator) {
       await user.click(minDurationOperator);
@@ -83,9 +94,7 @@ describe('TraceQLSearch', () => {
   });
 
   it('should add new filter when new value is selected in the service name section', async () => {
-    const { container } = render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />
-    );
+    const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
     const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
     expect(serviceNameValue).not.toBeNull();
     expect(serviceNameValue).toBeInTheDocument();
@@ -101,31 +110,8 @@ describe('TraceQLSearch', () => {
       expect(nameFilter).not.toBeNull();
       expect(nameFilter?.operator).toBe('=');
       expect(nameFilter?.value).toStrictEqual(['customer']);
-      expect(nameFilter?.tag).toBe('.service.name');
-    }
-  });
-
-  it('should add new filter when new filter button is clicked and remove filter when remove button is clicked', async () => {
-    render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
-
-    const dynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
-    expect(dynamicFilters.length).toBe(1);
-    const addButton = await screen.findByTitle('Add tag');
-    await user.click(addButton);
-    jest.advanceTimersByTime(1000);
-
-    // We have to rerender here so it picks up the new dynamic field
-    render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
-
-    const newDynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
-    expect(newDynamicFilters.length).toBe(2);
-
-    const notInitialDynamic = newDynamicFilters.find((f) => f.id !== dynamicFilters[0].id);
-    const secondDynamicRemoveButton = await screen.findByLabelText(`remove tag with ID ${notInitialDynamic?.id}`);
-    await waitFor(() => expect(secondDynamicRemoveButton).toBeInTheDocument());
-    if (secondDynamicRemoveButton) {
-      await user.click(secondDynamicRemoveButton);
-      expect(query.filters.filter((f) => f.type === 'dynamic')).toStrictEqual(dynamicFilters);
+      expect(nameFilter?.tag).toBe('service.name');
+      expect(nameFilter?.scope).toBe(TraceqlSearchScope.Resource);
     }
   });
 });

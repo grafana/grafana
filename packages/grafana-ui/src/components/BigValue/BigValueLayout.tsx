@@ -67,7 +67,10 @@ export abstract class BigValueLayout {
       styles.paddingRight = '0.75ch';
     }
 
-    if (this.props.colorMode === BigValueColorMode.Background) {
+    if (
+      this.props.colorMode === BigValueColorMode.Background ||
+      this.props.colorMode === BigValueColorMode.BackgroundSolid
+    ) {
       styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
     }
 
@@ -92,6 +95,7 @@ export abstract class BigValueLayout {
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
         styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
         break;
       case BigValueColorMode.None:
@@ -142,6 +146,9 @@ export abstract class BigValueLayout {
           .toRgbString();
         panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
         break;
+      case BigValueColorMode.BackgroundSolid:
+        panelStyles.background = tinycolor(this.valueColor).toString();
+        break;
       case BigValueColorMode.Value:
         panelStyles.background = `transparent`;
         break;
@@ -167,6 +174,7 @@ export abstract class BigValueLayout {
 
     switch (colorMode) {
       case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
         fillColor = 'rgba(255,255,255,0.4)';
         lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();
         break;

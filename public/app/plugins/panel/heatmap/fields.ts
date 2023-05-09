@@ -8,7 +8,6 @@ import {
   GrafanaTheme2,
   LinkModel,
   outerJoinDataFrames,
-  PanelData,
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
@@ -19,6 +18,7 @@ import {
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
 import { CellValues, PanelOptions } from './types';
 import { boundedMinMax } from './utils';
@@ -55,17 +55,17 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(
-  data: PanelData,
+  frames: DataFrame[],
+  annotations: DataFrame[] | undefined,
   options: PanelOptions,
   theme: GrafanaTheme2,
   getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
 ): HeatmapData {
-  let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
-  const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
+  const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
   if (getFieldLinks) {
     exemplars?.fields.forEach((field, index) => {
@@ -94,6 +94,14 @@ export function prepareHeatmapData(
   // Everything past here assumes a field for each row in the heatmap (buckets)
   if (!rowsHeatmap) {
     if (frames.length > 1) {
+      let allNamesNumeric = frames.every(
+        (frame) => !Number.isNaN(parseSampleValue(frame.name ?? frame.fields[1].name))
+      );
+
+      if (allNamesNumeric) {
+        frames.sort(sortSeriesByLabel);
+      }
+
       rowsHeatmap = [
         outerJoinDataFrames({
           frames,
@@ -137,7 +145,7 @@ const getSparseHeatmapData = (
   const disp = updateFieldDisplay(frame.fields[3], options.cellValues, theme);
 
   let [minValue, maxValue] = boundedMinMax(
-    frame.fields[3].values.toArray(),
+    frame.fields[3].values,
     options.color.min,
     options.color.max,
     options.filterValues?.le,
@@ -224,8 +232,8 @@ const getDenseHeatmapData = (
   // y:      3,4,5,6,3,4,5,6
   // count:  0,0,0,7,0,3,0,1
 
-  const xs = frame.fields[0].values.toArray();
-  const ys = frame.fields[1].values.toArray();
+  const xs = frame.fields[0].values;
+  const ys = frame.fields[1].values;
   const dlen = xs.length;
 
   // below is literally copy/paste from the pathBuilder code in utils.ts
@@ -236,7 +244,7 @@ const getDenseHeatmapData = (
   let xBinIncr = xs[yBinQty] - xs[0];
 
   let [minValue, maxValue] = boundedMinMax(
-    valueField.values.toArray(),
+    valueField.values,
     options.color.min,
     options.color.max,
     options.filterValues?.le,

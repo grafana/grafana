@@ -16,10 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -199,6 +201,99 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, "user2", resp[1].Login)
 			}, mock)
 	})
+}
+
+func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
+	type testCase struct {
+		desc            string
+		SkipOrgRoleSync bool
+		AuthEnabled     bool
+		AuthModule      string
+		expectedCode    int
+	}
+	permissions := []accesscontrol.Permission{
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+	}
+	tests := []testCase{
+		{
+			desc:            "should be able to change basicRole when skip_org_role_sync true",
+			SkipOrgRoleSync: true,
+			AuthEnabled:     true,
+			AuthModule:      login.LDAPAuthModule,
+			expectedCode:    http.StatusOK,
+		},
+		{
+			desc:            "should not be able to change basicRole when skip_org_role_sync false",
+			SkipOrgRoleSync: false,
+			AuthEnabled:     true,
+			AuthModule:      login.LDAPAuthModule,
+			expectedCode:    http.StatusForbidden,
+		},
+		{
+			desc:            "should not be able to change basicRole with a different provider",
+			SkipOrgRoleSync: false,
+			AuthEnabled:     true,
+			AuthModule:      login.GenericOAuthModule,
+			expectedCode:    http.StatusForbidden,
+		},
+		{
+			desc:            "should be able to change basicRole with a basic Auth",
+			SkipOrgRoleSync: false,
+			AuthEnabled:     false,
+			AuthModule:      "",
+			expectedCode:    http.StatusOK,
+		},
+		{
+			desc:            "should be able to change basicRole with a basic Auth",
+			SkipOrgRoleSync: true,
+			AuthEnabled:     true,
+			AuthModule:      "",
+			expectedCode:    http.StatusOK,
+		},
+	}
+
+	userWithPermissions := userWithPermissions(1, permissions)
+	userRequesting := &user.User{ID: 2, OrgID: 1}
+	reqBody := `{"userId": "1", "role": "Admin", "orgId": "1"}`
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
+				if tt.AuthModule == login.LDAPAuthModule {
+					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
+					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
+				} else if tt.AuthModule == login.GenericOAuthModule {
+					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
+					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
+				} else if tt.AuthModule == "" {
+					// authmodule empty means basic auth
+				} else {
+					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
+				}
+
+				hs.authInfoService = &logintest.AuthInfoServiceFake{
+					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
+				}
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
+				hs.orgService = &orgtest.FakeOrgService{}
+				hs.accesscontrolService = &actest.FakeService{
+					ExpectedPermissions: permissions,
+				}
+			})
+			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orgs/%d/users/%d", userRequesting.OrgID, userRequesting.ID), strings.NewReader(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			userWithPermissions.OrgRole = roletype.RoleAdmin
+			res, err := server.Send(webtest.RequestWithSignedInUser(req, userWithPermissions))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
@@ -630,7 +725,11 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{
+					ExpectedUserAuth: &login.UserAuth{
+						AuthModule: "",
+					},
+				}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
@@ -708,7 +807,11 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.Cfg = setting.NewCfg()
 				hs.Cfg.RBACEnabled = tt.enableAccessControl
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{
+					ExpectedUserAuth: &login.UserAuth{
+						AuthModule: "",
+					},
+				}
 				hs.accesscontrolService = &actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},

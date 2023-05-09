@@ -1,16 +1,17 @@
-import {
-  from,
-  lastValueFrom,
-  merge,
-  MonoTypeOperatorFunction,
-  Observable,
-  of,
-  Subject,
-  Subscription,
-  throwError,
-} from 'rxjs';
+import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
+import {
+  catchError,
+  filter,
+  finalize,
+  map,
+  mergeMap,
+  retryWhen,
+  share,
+  takeUntil,
+  tap,
+  throwIfEmpty,
+} from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
@@ -20,7 +21,6 @@ import { getConfig } from 'app/core/config';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
@@ -51,6 +51,8 @@ export interface FolderRequestOptions {
   withAccessControl?: boolean;
 }
 
+const GRAFANA_TRACEID_HEADER = 'grafana-trace-id';
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
@@ -58,6 +60,7 @@ export class BackendSrv implements BackendService {
   private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
+  private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -65,7 +68,6 @@ export class BackendSrv implements BackendService {
     contextSrv: contextSrv,
     logout: () => {
       contextSrv.setLoggedOut();
-      window.location.reload();
     },
   };
 
@@ -141,18 +143,9 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    const fromFetchStream = this.getFromFetchStream<T>(options);
-    const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));
-    const successStream = fromFetchStream.pipe(
-      filter((response) => response.ok === true),
-      tap((response) => {
-        this.showSuccessAlert(response);
-        this.inspectorStream.next(response);
-      })
-    );
-
-    return merge(successStream, failureStream).pipe(
-      catchError((err: FetchError) => throwError(this.processRequestError(options, err))),
+    return this.getFromFetchStream<T>(options).pipe(
+      this.handleStreamResponse<T>(options),
+      this.handleStreamError(options),
       this.handleStreamCancellation(options)
     );
   }
@@ -225,59 +218,11 @@ export class BackendSrv implements BackendService {
           type,
           redirected,
           config: options,
+          traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
         };
         return fetchResponse;
-      }),
-      share() // sharing this so we can split into success and failure and then merge back
+      })
     );
-  }
-
-  private toFailureStream<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
-    const { isSignedIn } = this.dependencies.contextSrv.user;
-
-    return (inputStream) =>
-      inputStream.pipe(
-        filter((response) => response.ok === false),
-        mergeMap((response) => {
-          const { status, statusText, data } = response;
-          const fetchErrorResponse: FetchError = { status, statusText, data, config: options };
-          return throwError(fetchErrorResponse);
-        }),
-        retryWhen((attempts: Observable<any>) =>
-          attempts.pipe(
-            mergeMap((error, i) => {
-              const firstAttempt = i === 0 && options.retry === 0;
-
-              if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
-                if (error.data?.error?.id === 'ERR_TOKEN_REVOKED') {
-                  this.dependencies.appEvents.publish(
-                    new ShowModalReactEvent({
-                      component: TokenRevokedModal,
-                      props: {
-                        maxConcurrentSessions: error.data?.error?.maxConcurrentSessions,
-                      },
-                    })
-                  );
-
-                  return of({});
-                }
-
-                return from(this.loginPing()).pipe(
-                  catchError((err) => {
-                    if (err.status === 401) {
-                      this.dependencies.logout();
-                      return throwError(err);
-                    }
-                    return throwError(err);
-                  })
-                );
-              }
-
-              return throwError(error);
-            })
-          )
-        )
-      );
   }
 
   showApplicationErrorAlert(err: FetchError) {}
@@ -289,7 +234,7 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    // is showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
+    // if showSuccessAlert is undefined we only show alerts non GET request, non data query and local api requests
     if (
       config.showSuccessAlert === undefined &&
       (config.method === 'GET' || isDataQuery(config.url) || !isLocalUrl(config.url))
@@ -374,6 +319,74 @@ export class BackendSrv implements BackendService {
     return err;
   }
 
+  private handleStreamResponse<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
+    return (inputStream) =>
+      inputStream.pipe(
+        map((response) => {
+          if (!response.ok) {
+            const { status, statusText, data } = response;
+            const fetchErrorResponse: FetchError = {
+              status,
+              statusText,
+              data,
+              config: options,
+              traceId: response.headers.get(GRAFANA_TRACEID_HEADER) ?? undefined,
+            };
+            throw fetchErrorResponse;
+          }
+          return response;
+        }),
+        tap((response) => {
+          this.showSuccessAlert(response);
+          this.inspectorStream.next(response);
+        })
+      );
+  }
+
+  private handleStreamError<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
+    const { isSignedIn } = this.dependencies.contextSrv.user;
+
+    return (inputStream) =>
+      inputStream.pipe(
+        retryWhen((attempts: Observable<any>) =>
+          attempts.pipe(
+            mergeMap((error, i) => {
+              const firstAttempt = i === 0 && options.retry === 0;
+
+              if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
+                if (error.data?.error?.id === 'ERR_TOKEN_REVOKED') {
+                  this.dependencies.appEvents.publish(
+                    new ShowModalReactEvent({
+                      component: TokenRevokedModal,
+                      props: {
+                        maxConcurrentSessions: error.data?.error?.maxConcurrentSessions,
+                      },
+                    })
+                  );
+                  return throwError(() => error);
+                }
+
+                let authChecker = config.featureToggles.clientTokenRotation ? this.rotateToken() : this.loginPing();
+
+                return from(authChecker).pipe(
+                  catchError((err) => {
+                    if (err.status === 401) {
+                      this.dependencies.logout();
+                      return throwError(err);
+                    }
+                    return throwError(err);
+                  })
+                );
+              }
+
+              return throwError(error);
+            })
+          )
+        ),
+        catchError((err: FetchError) => throwError(() => this.processRequestError(options, err)))
+      );
+  }
+
   private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
     return (inputStream) =>
       inputStream.pipe(
@@ -446,8 +459,23 @@ export class BackendSrv implements BackendService {
     });
   }
 
+  rotateToken() {
+    if (this._tokenRotationInProgress) {
+      return this._tokenRotationInProgress;
+    }
+
+    this._tokenRotationInProgress = this.fetch({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 }).pipe(
+      finalize(() => {
+        this._tokenRotationInProgress = null;
+      }),
+      share()
+    );
+
+    return this._tokenRotationInProgress;
+  }
+
   loginPing() {
-    return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
+    return this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
   /** @deprecated */
@@ -456,9 +484,6 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
-      return getGrafanaStorage().getDashboard(uid);
-    }
     return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
   }
 

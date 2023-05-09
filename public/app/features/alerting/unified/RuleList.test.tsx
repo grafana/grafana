@@ -125,7 +125,7 @@ const ui = {
     intervalInput: byRole('textbox', {
       name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
     }),
-    saveButton: byRole('button', { name: /Save changes/ }),
+    saveButton: byRole('button', { name: /Save evaluation interval/ }),
   },
 };
 

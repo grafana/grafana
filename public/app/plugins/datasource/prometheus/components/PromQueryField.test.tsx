@@ -1,4 +1,4 @@
-import { getByTestId, render, screen } from '@testing-library/react';
+import { getByTestId, render, screen, waitFor } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -141,14 +141,16 @@ describe('PromQueryField', () => {
 
     // If we check the label browser right away it should be in loading state
     let labelBrowser = screen.getByRole('button');
-    expect(labelBrowser.textContent).toContain('Loading');
+    expect(labelBrowser).toHaveTextContent('Loading');
 
     // wait for component to rerender
     labelBrowser = await screen.findByRole('button');
-    expect(labelBrowser.textContent).toContain('Metrics browser');
+    await waitFor(() => {
+      expect(labelBrowser).toHaveTextContent('Metrics browser');
+    });
   });
 
-  it('should not run query onBlur in explore', async () => {
+  it('should not run query onBlur', async () => {
     const onRunQuery = jest.fn();
     const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Explore} onRunQuery={onRunQuery} />);
 
@@ -162,22 +164,6 @@ describe('PromQueryField', () => {
     // blur element
     await userEvent.click(document.body);
     expect(onRunQuery).not.toHaveBeenCalled();
-  });
-
-  it('should run query onBlur in dashboard', async () => {
-    const onRunQuery = jest.fn();
-    const { container } = render(<PromQueryField {...defaultProps} app={CoreApp.Dashboard} onRunQuery={onRunQuery} />);
-
-    // wait for component to rerender
-    await screen.findByRole('button');
-
-    const input = getByTestId(container, 'dummy-code-input');
-    expect(input).toBeInTheDocument();
-    await userEvent.type(input, 'metric');
-
-    // blur element
-    await userEvent.click(document.body);
-    expect(onRunQuery).toHaveBeenCalled();
   });
 });
 

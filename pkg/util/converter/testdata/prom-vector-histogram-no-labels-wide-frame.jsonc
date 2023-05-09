@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "heatmap-cells"
+//      "type": "heatmap-cells",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 5 Fields by 134 Rows
@@ -30,7 +34,11 @@
     {
       "schema": {
         "meta": {
-          "type": "heatmap-cells"
+          "type": "heatmap-cells",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {

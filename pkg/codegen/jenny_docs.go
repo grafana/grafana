@@ -371,7 +371,7 @@ func (md mdSection) write(w io.Writer) {
 	}
 
 	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Property", "Type", "Required", "Description"})
+	table.SetHeader([]string{"Property", "Type", "Required", "Default", "Description"})
 	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 	table.SetCenterSeparator("|")
 	table.SetAutoFormatHeaders(false)
@@ -558,15 +558,16 @@ func makeRows(s *schema) [][]string {
 			desc += "\nPossible values are: `" + strings.Join(vals, "`, `") + "`."
 		}
 
+		var defaultValue string
 		if p.Default != nil {
-			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
+			defaultValue = fmt.Sprintf("`%v`", p.Default)
 		}
 
 		// Render a constraint only if it's not a type alias https://cuelang.org/docs/references/spec/#predeclared-identifiers
 		if alias == "" {
 			desc += constraintDescr(p)
 		}
-		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
+		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, defaultValue, formatForTable(desc)})
 	}
 
 	// Sort by the required column, then by the name column.
