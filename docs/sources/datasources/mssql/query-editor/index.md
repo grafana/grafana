@@ -92,7 +92,7 @@ In **Builder mode**, you can build queries using a visual interface.
 In the **Dataset** dropdown, select the MSSQL database to query. Grafana populates the dropdown with all databases that the user can access.
 Once you select a database, Grafana populates the dropdown with all available tables.
 
-**Note:** If a default database has been configured through the Data Source configuration page, the Dataset Dropdown will be disabled, and only that configured database will be available for querying.
+**Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
 
 ### Select columns and aggregation functions (SELECT)
 
