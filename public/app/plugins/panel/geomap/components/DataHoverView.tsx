@@ -104,9 +104,11 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       <table className={styles.infoWrap}>
         <tbody>
           {displayValues.map((v, i) => (
-            <tr key={`${i}/${rowIndex}`} className={v[3] ? styles.highlight : ''}>
-              <th>{v[0]}:</th>
-              <td>{renderValue(v[2])}</td>
+            <tr key={`${i}/${rowIndex}`}>
+              <div className={v[3] ? styles.highlight : ''}>
+                <th>{v[0]}:</th>
+                <td>{renderValue(v[2])}</td>
+              </div>
             </tr>
           ))}
           {renderLinks()}
@@ -155,7 +157,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     highlight: css`
-      background: ${theme.colors.action.hover}; //TODO investigate highlight styling
+      background: ${theme.colors.action.hover};
     `,
     link: css`
       color: #6e9fff;
