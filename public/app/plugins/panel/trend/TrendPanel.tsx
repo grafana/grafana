@@ -66,7 +66,7 @@ export const TrendPanel = ({
     }
 
     return { frames: prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx) };
-  }, [data, options.xField]);
+  }, [data.series, options.xField]);
 
   if (info.warning || !info.frames) {
     return (

@@ -81,24 +81,6 @@ export function MetricSelect({
     [styles.highlight]
   );
 
-  const formatLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
-    return labelsFilters.map((label) => {
-      return `,${label.label}="${label.value}"`;
-    });
-  };
-
-  /**
-   * Transform queryString and any currently set label filters into label_values() string
-   */
-  const queryAndFilterToLabelValuesString = (
-    queryString: string,
-    labelsFilters: QueryBuilderLabelFilter[] | undefined
-  ): string => {
-    return `label_values({__name__=~".*${queryString}"${
-      labelsFilters ? formatLabelFilters(labelsFilters).join() : ''
-    }},__name__)`;
-  };
-
   /**
    * Reformat the query string and label filters to return all valid results for current query editor state
    */
@@ -108,7 +90,7 @@ export function MetricSelect({
   ): string => {
     const queryString = regexifyLabelValuesQueryString(query);
 
-    return queryAndFilterToLabelValuesString(queryString, labelsFilters);
+    return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
   };
 
   /**
@@ -284,3 +266,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
   `,
 });
+
+export const formatPrometheusLabelFiltersToString = (
+  queryString: string,
+  labelsFilters: QueryBuilderLabelFilter[] | undefined
+): string => {
+  const filterArray = labelsFilters ? formatPrometheusLabelFilters(labelsFilters) : [];
+
+  return `label_values({__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}},__name__)`;
+};
+
+export const formatPrometheusLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
+  return labelsFilters.map((label) => {
+    return `,${label.label}="${label.value}"`;
+  });
+};

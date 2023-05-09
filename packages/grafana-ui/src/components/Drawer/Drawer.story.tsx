@@ -22,7 +22,6 @@ const meta: ComponentMeta<typeof Drawer> = {
   args: {
     closeOnMaskClick: true,
     scrollableContent: false,
-    width: '40%',
     expandable: false,
     subtitle: 'This is a subtitle.',
   },
@@ -142,42 +141,6 @@ LongContent.args = {
   title: 'Drawer title with long content',
 };
 
-export const InLine: ComponentStory<typeof Drawer> = (args) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <>
-      <div
-        style={{
-          height: '300px',
-          width: '500px',
-          border: '1px solid white',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <Button onClick={() => setIsOpen(true)}>Open drawer</Button>
-        {isOpen && (
-          <Drawer {...args} onClose={() => setIsOpen(false)}>
-            <ul>
-              <li>this</li>
-              <li>is</li>
-              <li>a</li>
-              <li>list</li>
-              <li>of</li>
-              <li>menu</li>
-              <li>items</li>
-            </ul>
-          </Drawer>
-        )}
-      </div>
-    </>
-  );
-};
-InLine.args = {
-  title: 'Drawer title inline',
-  inline: true,
-};
-
 export const WithTabs: ComponentStory<typeof Drawer> = (args) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('options');
@@ -206,6 +169,7 @@ export const WithTabs: ComponentStory<typeof Drawer> = (args) => {
     </>
   );
 };
+
 WithTabs.args = {
   title: 'Drawer title with tabs',
 };
