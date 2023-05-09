@@ -235,6 +235,7 @@ export function QueryHeader({
                   isPostgresInstance={isPostgresInstance}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
+                  hasConfigIssue={hasConfigIssue}
                 />
               </EditorField>
             )}
@@ -244,8 +245,7 @@ export function QueryHeader({
                 dataset={query.dataset || preconfiguredDataset}
                 table={query.table}
                 onChange={onTableChange}
-                applyDefault
-                cascadeDisable={hasConfigIssue}
+                hasConfigIssue={hasConfigIssue}
               />
             </EditorField>
           </EditorRow>
