@@ -24,7 +24,15 @@ weight: 1
 
 # Panel editor overview
 
+In the panel editor, you can update all the elements of a visualization including the data source, queries, time range, and visualization display options.
+
 ![Panel editor](/media/docs/grafana/panels-visualizations/screenshot-panel-editor-view.png)
+
+To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard. To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown:
+
+![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
+
+## Panel editor
 
 This section describes the areas of the Grafana panel editor.
 
@@ -49,7 +57,7 @@ This section describes the areas of the Grafana panel editor.
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 
-## Open the panel inspect drawer
+## Panel inspect drawer
 
 The inspect drawer helps you understand and troubleshoot your panels. You can view the raw data for any panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
 

@@ -1327,6 +1327,69 @@ describe('ElasticDatasource using backend', () => {
     });
   });
 
+  describe('metricFindQuery', () => {
+    async function runScenario() {
+      const data = {
+        responses: [
+          {
+            aggregations: {
+              '1': {
+                buckets: [
+                  { doc_count: 1, key: 'test' },
+                  {
+                    doc_count: 2,
+                    key: 'test2',
+                    key_as_string: 'test2_as_string',
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+
+      const { ds } = getTestContext();
+      const postResourceMock = jest.spyOn(ds, 'postResource');
+      postResourceMock.mockResolvedValue(data);
+
+      const results = await ds.metricFindQuery('{"find": "terms", "field": "test"}');
+
+      expect(ds.postResource).toHaveBeenCalledTimes(1);
+      const requestOptions = postResourceMock.mock.calls[0][1];
+      const parts = requestOptions.split('\n');
+      const header = JSON.parse(parts[0]);
+      const body = JSON.parse(parts[1]);
+
+      return { results, body, header };
+    }
+
+    it('should get results', async () => {
+      const { results } = await runScenario();
+      expect(results.length).toEqual(2);
+    });
+
+    it('should use key or key_as_string', async () => {
+      const { results } = await runScenario();
+      expect(results[0].text).toEqual('test');
+      expect(results[1].text).toEqual('test2_as_string');
+    });
+
+    it('should not set search type to count', async () => {
+      const { header } = await runScenario();
+      expect(header.search_type).not.toEqual('count');
+    });
+
+    it('should set size to 0', async () => {
+      const { body } = await runScenario();
+      expect(body.size).toBe(0);
+    });
+
+    it('should not set terms aggregation size to 0', async () => {
+      const { body } = await runScenario();
+      expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+
   describe('getFields', () => {
     const getFieldsMockData = {
       '[test-]YYYY.MM.DD': {
