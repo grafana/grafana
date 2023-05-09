@@ -358,6 +358,73 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		SignedInUser: &signedInUser,
 	}
 
+	t.Run("Should get descendants", func(t *testing.T) {
+		depth := 5
+		t.Run("With nested folder feature flag on", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantsOn", createCmd)
+
+			q := folder.GetDescendantsQuery{
+				UID:          ancestorUIDs[0],
+				OrgID:        orgID,
+				SignedInUser: &signedInUser,
+			}
+			r, err := serviceWithFlagOn.GetDescendantFolders(context.Background(), q)
+			require.NoError(t, err)
+			require.Equal(t, len(ancestorUIDs[1:]), len(r))
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+				for _, uid := range ancestorUIDs {
+					err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+					assert.NoError(t, err)
+				}
+			})
+		})
+		t.Run("With nested folder feature flag off", func(t *testing.T) {
+			featuresFlagOff := featuremgmt.WithFeatures()
+			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+			require.NoError(t, err)
+			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+
+			serviceWithFlagOff := &Service{
+				cfg:                  cfg,
+				log:                  log.New("test-folder-service"),
+				dashboardStore:       dashStore,
+				dashboardFolderStore: folderStore,
+				store:                nestedFolderStore,
+				features:             featuresFlagOff,
+				bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+				db:                   db,
+				registry:             make(map[string]folder.RegistryService),
+			}
+
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantsOff", createCmd)
+
+			q := folder.GetDescendantsQuery{
+				UID:          ancestorUIDs[0],
+				OrgID:        orgID,
+				SignedInUser: &signedInUser,
+			}
+			r, err := serviceWithFlagOff.GetDescendantFolders(context.Background(), q)
+			require.NoError(t, err)
+			require.Zero(t, len(r))
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+				for _, uid := range ancestorUIDs {
+					err := serviceWithFlagOn.store.Delete(context.Background(), uid, orgID)
+					assert.NoError(t, err)
+				}
+			})
+		})
+	})
+
 	t.Run("Should get descendant counts", func(t *testing.T) {
 		ac := acmock.New()
 		folderPermissions := acmock.NewMockedPermissionsService()

@@ -132,6 +132,15 @@ type GetParentsQuery struct {
 	OrgID int64  `xorm:"org_id"`
 }
 
+// GetDescendantsQuery captures the information required by the folder service to
+// return a list of all descendants folders of a given folder.
+type GetDescendantsQuery struct {
+	UID   string `xorm:"uid"`
+	OrgID int64  `xorm:"org_id"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
+}
+
 // GetChildrenQuery captures the information required by the folder service to
 // return a list of child folders of the given folder.
 

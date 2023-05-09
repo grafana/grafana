@@ -5,8 +5,12 @@ import (
 )
 
 type Service interface {
-	// GetChildren returns an array containing all child folders.
-	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
+	// GetChildren returns an array containing all direct child folders.
+	GetChildren(ctx context.Context, q *GetChildrenQuery) ([]*Folder, error)
+
+	// GetDescendantFolders returns an array containing all descendant folders.
+	GetDescendantFolders(ctx context.Context, q GetDescendantsQuery) ([]*Folder, error)
+
 	// GetParents returns an array containing add parent folders if nested folders are enabled
 	// otherwise it returns an empty array
 	GetParents(ctx context.Context, q GetParentsQuery) ([]*Folder, error)
@@ -26,7 +30,7 @@ type Service interface {
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error
-	GetDescendantCounts(ctx context.Context, cmd *GetDescendantCountsQuery) (DescendantCounts, error)
+	GetDescendantCounts(ctx context.Context, q *GetDescendantCountsQuery) (DescendantCounts, error)
 }
 
 // FolderStore is a folder store.

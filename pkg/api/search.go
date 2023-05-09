@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util"
@@ -57,6 +58,21 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		folderID, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
 			folderIDs = append(folderIDs, folderID)
+		}
+
+		f, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, ID: &folderID, SignedInUser: c.SignedInUser})
+		if err != nil {
+			hs.log.Debug("ignoring searching in folder", "folderID", folderID, "err", err)
+			continue
+		}
+
+		descendants, err := hs.folderService.GetDescendantFolders(c.Req.Context(), folder.GetDescendantsQuery{OrgID: c.OrgID, UID: f.UID, SignedInUser: c.SignedInUser})
+		if err != nil {
+			hs.log.Debug("ignoring searching in descendant folders", "err", err)
+			continue
+		}
+		for _, f := range descendants {
+			folderIDs = append(folderIDs, f.ID)
 		}
 	}
 
