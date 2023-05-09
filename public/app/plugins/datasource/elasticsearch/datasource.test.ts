@@ -1432,19 +1432,6 @@ describe('ElasticDatasource using backend', () => {
       });
     });
   });
-  /**
-   * (options: {
-    annotation: {
-      target: ElasticsearchQuery;
-      timeField?: string;
-      timeEndField?: string;
-      titleField?: string;
-      query?: string;
-      index?: string;
-    };
-    range: TimeRange;
-  }
-   */
 
   describe('getDatabaseVersion', () => {
     it('should correctly get db version', async () => {
