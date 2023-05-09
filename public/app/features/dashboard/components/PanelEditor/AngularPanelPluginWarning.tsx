@@ -24,7 +24,7 @@ export function AngularPanelPluginWarning({ plugin }: Props) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Read more on angular deprecation
+                Read more on Angular deprecation
               </a>
             </li>
             <li>
