@@ -34,7 +34,7 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
             return (
               <>
                 <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Raw Document" metric={metric} />
-                <Alert title="The 'Raw Document' query type is deprecated." />
+                <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />
               </>
             );
           default:
