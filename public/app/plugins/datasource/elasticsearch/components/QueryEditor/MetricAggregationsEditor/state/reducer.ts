@@ -36,7 +36,7 @@ export const reducer = (state: ElasticsearchQuery['metrics'], action: Action): E
   if (changeMetricType.match(action)) {
     return state!
       .filter((metric) =>
-        // When the new query type is not `metric` we remove all other metrics from the query
+        // When the new query type is not `metrics` we remove all other metrics from the query
         // leaving only the current one.
         metricAggregationConfig[action.payload.type].impliedQueryType === 'metrics'
           ? true
