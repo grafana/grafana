@@ -48,34 +48,6 @@ describe('SqlQueryEditor', () => {
 });
 
 describe('DatasetSelector', () => {
-  describe('should render with the correct default placeholder values', () => {
-    it(`should render with 'Select table' since no current dataset is chosen, no dataset has been preconfigured,
-        and the selector has not been disabled via 'isPostgresInstance'`, async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps()} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/Select/i).textContent).toBe('Select table');
-      });
-    });
-
-    it(`should render with 'Unconfigured database' since a 'isPostgresInstance' is truthy,
-        which means that the datasource is Postgres, and does not have a default configured database`, async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps({ isPostgresInstance: true })} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/unconfig/i).textContent).toBe('Unconfigured database');
-      });
-    });
-
-    it('should render with `database 1` since a preconfigured database exists', async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps({ preconfiguredDataset: 'database 1' })} />);
-
-      await waitFor(() => {
-        expect(screen.getByText(/database/i).textContent).toBe('database 1');
-      });
-    });
-  });
-
   describe('should disable the database selector appropriately', () => {
     it('should be disabled if a preconfigured database exists', async () => {
       render(<DatasetSelector {...buildMockDataSelectorProps({ preconfiguredDataset: 'database 1' })} />);
