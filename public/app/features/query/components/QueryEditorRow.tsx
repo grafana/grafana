@@ -441,7 +441,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <HorizontalGroup width="auto">
         {hasEditorHelp && (
           <QueryOperationToggleAction
-            title="Toggle data source help"
+            title="Show data source help"
             icon="question-circle"
             onClick={this.onToggleHelp}
             active={showingHelp}
@@ -460,7 +460,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery ? (
           <QueryOperationToggleAction
-            title="Disable/enable query"
+            title="Disable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}

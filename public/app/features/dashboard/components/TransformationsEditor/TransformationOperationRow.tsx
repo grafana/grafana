@@ -89,7 +89,7 @@ export const TransformationOperationRow = ({
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
         <QueryOperationToggleAction
-          title="Show/hide transform help"
+          title="Show transform help"
           icon="info-circle"
           onClick={instrumentToggleCallback(toggleHelp, 'help', showHelp)}
           active={showHelp}
@@ -110,7 +110,7 @@ export const TransformationOperationRow = ({
           active={showDebug}
         />
         <QueryOperationToggleAction
-          title="Disable/Enable transformation"
+          title="Disable transformation"
           icon={disabled ? 'eye-slash' : 'eye'}
           onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
