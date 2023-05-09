@@ -74,7 +74,7 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4
 	github.com/magefile/mage v1.14.0
 	github.com/mattn/go-isatty v0.0.18
-	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/matttproud/golang_protobuf_extensions v1.0.4
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -264,10 +264,13 @@ require (
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a
 	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826
+	github.com/ory/fosite v0.44.0
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.9.0
+	gopkg.in/square/go-jose.v2 v2.5.2-0.20210529014059-a5c7eec3c614
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
 )
 
@@ -285,7 +288,10 @@ require (
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/cristalhq/jwt/v4 v4.0.2 // indirect
+	github.com/dave/jennifer v1.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/digitalocean/godo v1.88.0 // indirect
 	github.com/dnaeon/go-vcr v1.2.0 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
@@ -294,6 +300,8 @@ require (
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/ecordell/optgen v0.0.6 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.3 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.13 // indirect
@@ -304,21 +312,32 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/gophercloud/gophercloud v1.0.0 // indirect
 	github.com/grafana/sqlds/v2 v2.3.10 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.6.8 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/hetznercloud/hcloud-go v1.35.3 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/linode/linodego v1.9.3 // indirect
+	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-ieproxy v0.0.3 // indirect
+	github.com/mattn/goveralls v0.0.6 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
+	github.com/ory/go-acc v0.2.6 // indirect
+	github.com/ory/go-convenience v0.1.0 // indirect
+	github.com/ory/viper v1.7.5 // indirect
+	github.com/ory/x v0.0.214 // indirect
+	github.com/pborman/uuid v1.2.0 // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/perimeterx/marshmallow v1.1.4 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/rueian/rueidis v0.0.100-go1.18 // indirect
@@ -326,7 +345,12 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
+	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
+	github.com/spf13/cobra v1.4.0 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
@@ -422,3 +446,7 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421
 
 // Use 1.10.6 of pq to avoid a change in 1.10.7 that has certificate validation issues. https://github.com/grafana/grafana/issues/65816
 replace github.com/lib/pq => github.com/lib/pq v1.10.6
+
+exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/ory/fosite => github.com/mgyongyosi/fosite v0.0.0-20230508151108-6e4870d272e3
