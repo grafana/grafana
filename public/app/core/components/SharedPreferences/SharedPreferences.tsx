@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { FeatureState, SelectableValue, getBuiltInThemes } from '@grafana/data';
+import { FeatureState, SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -69,7 +69,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
       value: theme.id,
-      label: t(`shared-preferences.theme.${theme.id}-label`, theme.name),
+      label: getTranslatedThemeName(theme),
     }));
 
     // Add default option
@@ -243,3 +243,16 @@ const getStyles = stylesFactory(() => {
     `,
   };
 });
+
+function getTranslatedThemeName(theme: ThemeRegistryItem) {
+  switch (theme.id) {
+    case 'dark':
+      return t('shared.preferences.theme.dark-label', 'Dark');
+    case 'light':
+      return t('shared.preferences.theme.light-label', 'Light');
+    case 'system':
+      return t('shared.preferences.theme.system-label', 'System preference');
+    default:
+      return theme.name;
+  }
+}
