@@ -9,8 +9,9 @@ import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 interface NewsWrapperProps {
   feedUrl: string;
+  children?: React.ReactNode;
 }
-export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
+export function NewsWrapper({ feedUrl, children }: NewsWrapperProps) {
   const styles = useStyles2(getStyles);
   const { state, getNews } = useNewsFeed(feedUrl);
   useEffect(() => {
@@ -37,6 +38,7 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
           {state.value.map((_, index) => (
             <News key={index} index={index} showImage width={width} data={state.value} />
           ))}
+          {children}
         </div>
       )}
     </AutoSizer>

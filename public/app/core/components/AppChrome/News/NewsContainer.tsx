@@ -26,17 +26,16 @@ export function NewsContainer({ className }: NewsContainerProps) {
       <ToolbarButton className={className} onClick={onChildClick} iconOnly icon="rss" aria-label="News" />
       {showNewsDrawer && (
         <Drawer
-          title={
-            <div className={titleWrapper}>
-              <img src="public/img/grot-news.svg" alt="Grot reading news" />
-              <span>{t('news.title', 'Latest from the blog')}</span>
-            </div>
-          }
+          title={t('news.title', 'Latest from the blog')}
           scrollableContent
           onClose={onToggleShowNewsDrawer}
           size="md"
         >
-          <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
+          <NewsWrapper feedUrl={DEFAULT_FEED_URL}>
+            <div className={titleWrapper}>
+              <img src="public/img/grot-news.svg" alt="Grot reading news" />
+            </div>
+          </NewsWrapper>
         </Drawer>
       )}
     </>
@@ -47,12 +46,12 @@ function getStyles(theme: GrafanaTheme2) {
   return css({
     display: `flex`,
     alignItems: `center`,
-    height: `24px`,
-    gap: theme.spacing(1),
+    justifyContent: `center`,
+    padding: theme.spacing(5, 0),
 
     img: {
-      width: `36px`,
-      height: `36px`,
+      width: `186px`,
+      height: `186px`,
     },
   });
 }
