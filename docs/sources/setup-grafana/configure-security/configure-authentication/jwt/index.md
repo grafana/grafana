@@ -36,7 +36,9 @@ header_name = X-JWT-Assertion
 
 ## Configure login claim
 
-To identify the user, some of the claims needs to be selected as a login info. The subject claim called `"sub"` is mandatory and needs to specify a claim that contains either a username or an email of the Grafana user.
+To identify the user, some of the claims needs to be selected as a login info. The subject claim called `"sub"` is mandatory and needs to identify the principal that is the subject of the JWT. 
+
+Typically, the subject claim called `"sub"` would be used as a login but it might also be set to some application specific claim.
 
 ```ini
 # [auth.jwt]
