@@ -91,7 +91,7 @@ You can also specify the SSL/TLS configuration used by the client.
 - Set `tls_client_key` to the path containing the key.
 - Set `tls_client_ca` to the path containing a trusted certificate authority list.
 
-`tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
+`tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If set to `true`, then SSL/TLS accepts any certificate the server presents and any host name in that certificate. _You should only use this for testing_because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
 ### Configure refresh token
 
