@@ -3,13 +3,18 @@ package main
 import "testing"
 
 func TestCommonElement(t *testing.T) {
-	if hasCommonElement([]string{}, []string{}) == true {
-		t.Error("should not return true")
-	}
-	if hasCommonElement([]string{"a", "b"}, []string{"c"}) == true {
-		t.Error("should not return true")
-	}
-	if hasCommonElement([]string{"a"}, []string{"a"}) == false {
-		t.Error("should not return false")
+	for _, test := range []struct {
+		A      []string
+		B      []string
+		Result bool
+	}{
+		{nil, nil, false},
+		{[]string{"a"}, []string{"a"}, true},
+		{[]string{"a", "b"}, []string{"a"}, true},
+		{[]string{"a"}, []string{"b"}, false},
+	} {
+		if hasCommonElement(test.A, test.B) != test.Result {
+			t.Error(test)
+		}
 	}
 }

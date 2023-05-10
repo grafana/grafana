@@ -124,6 +124,17 @@ func modules(args []string) error {
 	return nil
 }
 
+func hasCommonElement(a []string, b []string) bool {
+	for _, u := range a {
+		for _, v := range b {
+			if u == v {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("usage: modowners subcommand go.mod...")
