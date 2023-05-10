@@ -82,7 +82,7 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.Equal(t, folderTitle, ff.Title)
 		assert.Equal(t, folderDsc, ff.Description)
 		assert.Empty(t, ff.ParentUID)
-		assert.NotEmpty(t, f.URL)
+		assert.NotEmpty(t, ff.URL)
 
 		assertAncestorUIDs(t, folderStore, f, []string{folder.GeneralFolderUID})
 	})
