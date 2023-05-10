@@ -110,7 +110,16 @@ export function DataSourceModal({
         },
       ]);
       runQueries();
+
+      reportInteraction(INTERACTION_EVENT_NAME, {
+        item: INTERACTION_ITEM.UPLOAD_FILE,
+        src: analyticsInteractionSrc,
+      });
     });
+
+    if (fileRejections.length < 1) {
+      onDismiss();
+    }
   };
 
   return (
@@ -172,14 +181,7 @@ export function DataSourceModal({
                 maxSize: DFImport.maxFileSize,
                 multiple: false,
                 accept: DFImport.acceptedFiles,
-                onDrop: (...args) => {
-                  onFileDrop(...args);
-                  onDismiss();
-                  reportInteraction(INTERACTION_EVENT_NAME, {
-                    item: INTERACTION_ITEM.UPLOAD_FILE,
-                    src: analyticsInteractionSrc,
-                  });
-                },
+                onDrop: onFileDrop,
               }}
             >
               <FileDropzoneDefaultChildren />
