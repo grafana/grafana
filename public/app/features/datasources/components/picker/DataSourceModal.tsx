@@ -1,10 +1,18 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
 import React, { useState } from 'react';
-import { DropzoneOptions } from 'react-dropzone';
+import { DropEvent, FileRejection } from 'react-dropzone';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import {
+  DataFrame,
+  DataFrameJSON,
+  dataFrameToJSON,
+  DataQuery,
+  DataSourceInstanceSettings,
+  DataSourceRef,
+  GrafanaTheme2,
+} from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Modal,
   FileDropzone,
@@ -15,6 +23,9 @@ import {
   Icon,
 } from '@grafana/ui';
 import * as DFImport from 'app/features/dataframe-import';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+
+import { useDatasource } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceList } from './DataSourceList';
@@ -35,18 +46,18 @@ interface DataSourceModalProps {
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
-  enableFileUpload?: boolean;
-  fileUploadOptions?: DropzoneOptions;
   reportedInteractionFrom?: string;
+  queriesChanged?: (queries: GrafanaQuery[] | DataQuery[]) => void;
+  runQueries?: () => void;
 }
 
 export function DataSourceModal({
-  enableFileUpload,
-  fileUploadOptions,
   onChange,
   current,
   onDismiss,
   reportedInteractionFrom,
+  queriesChanged,
+  runQueries,
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
@@ -72,6 +83,35 @@ export function DataSourceModal({
       }),
     [analyticsInteractionSrc]
   );
+
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  const onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    if (!grafanaDS || !queriesChanged || !runQueries) {
+      return;
+    }
+    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df: DataFrame) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      await onChange(grafanaDS);
+      queriesChanged([
+        {
+          refId: 'A',
+          datasource: {
+            type: 'grafana',
+            uid: 'grafana',
+          },
+          queryType: GrafanaQueryType.Snapshot,
+          snapshot: snapshot,
+          file: next.file,
+        },
+      ]);
+      runQueries();
+    });
+  };
 
   return (
     <Modal
@@ -124,7 +164,7 @@ export function DataSourceModal({
             onChange={onChangeDataSource}
             current={current}
           />
-          {enableFileUpload && (
+          {config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
@@ -132,9 +172,8 @@ export function DataSourceModal({
                 maxSize: DFImport.maxFileSize,
                 multiple: false,
                 accept: DFImport.acceptedFiles,
-                ...fileUploadOptions,
                 onDrop: (...args) => {
-                  fileUploadOptions?.onDrop?.(...args);
+                  onFileDrop(...args);
                   onDismiss();
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.UPLOAD_FILE,

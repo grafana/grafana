@@ -1,20 +1,20 @@
 import React from 'react';
-import { DropzoneOptions } from 'react-dropzone';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 export interface DataSourceDropdownProps {
   onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>) => void;
   current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
-  enableFileUpload?: boolean;
-  fileUploadOptions?: DropzoneOptions;
-  onClickAddCSV?: () => void;
   recentlyUsed?: string[];
+  queriesChanged?: (queries: GrafanaQuery[] | DataQuery[]) => void;
+  runQueries?: () => void;
 }
 
 export interface PickerContentProps extends DataSourceDropdownProps {
+  onClickAddCSV?: () => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;

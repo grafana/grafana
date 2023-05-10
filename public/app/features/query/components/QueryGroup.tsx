@@ -1,12 +1,9 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import { DropEvent, FileRejection } from 'react-dropzone';
 import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrameJSON,
-  dataFrameToJSON,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -21,12 +18,11 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
-import * as DFImport from 'app/features/dataframe-import';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
@@ -282,16 +278,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { isDataSourceModalOpen } = this.state;
 
     const commonProps = {
-      enableFileUpload: config.featureToggles.editPanelCSVDragAndDrop,
-      fileUploadOptions: {
-        onDrop: this.onFileDrop,
-        maxSize: DFImport.maxFileSize,
-        multiple: false,
-        accept: DFImport.acceptedFiles,
-      },
       current: this.props.options.dataSource,
-      onChange: (ds: DataSourceInstanceSettings) => {
-        this.onChangeDataSource(ds);
+      queriesChanged: this.onQueriesChange.bind(this),
+      runQueries: this.props.onRunQueries,
+      onChange: async (ds: DataSourceInstanceSettings) => {
+        await this.onChangeDataSource(ds);
         this.onCloseDataSourceModal();
       },
     };
@@ -301,14 +292,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         {isDataSourceModalOpen && config.featureToggles.advancedDataSourcePicker && (
           <DataSourceModal {...commonProps} onDismiss={this.onCloseDataSourceModal}></DataSourceModal>
         )}
-        <DataSourcePicker
-          {...commonProps}
-          metrics={true}
-          mixed={true}
-          dashboard={true}
-          variables={true}
-          onClickAddCSV={this.onClickAddCSV}
-        />
+        <DataSourcePicker {...commonProps} metrics={true} mixed={true} dashboard={true} variables={true} />
       </>
     );
   };
@@ -326,49 +310,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
-  };
-
-  onClickAddCSV = async () => {
-    const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
-    await this.onChangeDataSource(ds!);
-
-    this.onQueriesChange([
-      {
-        refId: 'A',
-        datasource: {
-          type: 'grafana',
-          uid: 'grafana',
-        },
-        queryType: GrafanaQueryType.Snapshot,
-        snapshot: [],
-      },
-    ]);
-    this.props.onRunQueries();
-  };
-
-  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
-    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
-      const snapshot: DataFrameJSON[] = [];
-      next.dataFrames.forEach((df) => {
-        const dataframeJson = dataFrameToJSON(df);
-        snapshot.push(dataframeJson);
-      });
-      const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
-      await this.onChangeDataSource(ds!);
-      this.onQueriesChange([
-        {
-          refId: 'A',
-          datasource: {
-            type: 'grafana',
-            uid: 'grafana',
-          },
-          queryType: GrafanaQueryType.Snapshot,
-          snapshot: snapshot,
-          file: next.file,
-        },
-      ]);
-      this.props.onRunQueries();
-    });
   };
 
   onQueriesChange = (queries: DataQuery[] | GrafanaQuery[]) => {

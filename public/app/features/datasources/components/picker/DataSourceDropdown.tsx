@@ -10,6 +10,7 @@ import { DataSourceJsonData } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource } from '../../hooks';
 
@@ -29,7 +30,7 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, ...restProps } = props;
+  const { current, onChange, queriesChanged, runQueries, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -66,6 +67,28 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     });
     return () => sub.unsubscribe();
   });
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  const onClickAddCSV = async () => {
+    if (!grafanaDS || !queriesChanged || !runQueries) {
+      return;
+    }
+
+    await onChange(grafanaDS);
+
+    queriesChanged([
+      {
+        refId: 'A',
+        datasource: {
+          type: 'grafana',
+          uid: 'grafana',
+        },
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: [],
+      },
+    ]);
+    runQueries();
+  };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
@@ -157,6 +180,9 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               current={currentDataSourceInstanceSettings}
               style={popper.styles.popper}
               ref={setSelectorElement}
+              onClickAddCSV={onClickAddCSV}
+              queriesChanged={queriesChanged}
+              runQueries={runQueries}
               {...restProps}
               onDismiss={onClose}
             ></PickerContent>
@@ -187,7 +213,7 @@ function getStylesDropdown(theme: GrafanaTheme2) {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, queriesChanged, runQueries, current } = props;
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
@@ -234,10 +260,10 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
-                  enableFileUpload: props.enableFileUpload,
-                  fileUploadOptions: props.fileUploadOptions,
                   reportedInteractionFrom: 'ds_picker',
                   current,
+                  queriesChanged,
+                  runQueries,
                   onDismiss: hideModal,
                   onChange: (ds) => {
                     onChange(ds);
