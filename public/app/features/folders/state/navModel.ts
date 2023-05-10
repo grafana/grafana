@@ -11,7 +11,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     subTitle: 'Manage folder dashboards and permissions',
     url,
     text: folder.title,
-    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
     children: [
       {
         active: false,

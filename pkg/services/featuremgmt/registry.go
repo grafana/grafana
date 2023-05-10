@@ -517,11 +517,25 @@ var (
 			Owner:        awsPluginsSquad,
 		},
 		{
+			Name:         "faroDatasourceSelector",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
+		},
+		{
 			Name:         "enableDatagridEditing",
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "extraThemes",
+			Description:  "Enables extra themes",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaUserEssentialsSquad,
 		},
 	}
 )

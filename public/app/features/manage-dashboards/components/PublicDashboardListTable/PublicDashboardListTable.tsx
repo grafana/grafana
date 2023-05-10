@@ -8,7 +8,10 @@ import { Link, ButtonGroup, LinkButton, Icon, Tag, useStyles2, Tooltip, useTheme
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useListPublicDashboardsQuery } from 'app/features/dashboard/api/publicDashboardApi';
-import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import {
+  generatePublicDashboardConfigUrl,
+  generatePublicDashboardUrl,
+} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
@@ -82,7 +85,7 @@ export const PublicDashboardListTable = () => {
                     <LinkButton
                       fill="text"
                       size={responsiveSize}
-                      href={`/d/${pd.dashboardUid}?shareView=share`}
+                      href={generatePublicDashboardConfigUrl(pd.dashboardUid)}
                       title="Configure public dashboard"
                       disabled={isOrphaned}
                       data-testid={selectors.ListItem.configButton}
