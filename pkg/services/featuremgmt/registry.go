@@ -536,8 +536,8 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
-    },
-    {
+		},
+		{
 			Name:         "extraThemes",
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
