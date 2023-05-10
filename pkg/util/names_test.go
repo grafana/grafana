@@ -13,7 +13,7 @@ func TestIsValidCK8sCRDName(t *testing.T) {
 	require.Equal(t, false, IsValidCK8sCRDName(""))            // too short
 	require.Equal(t, false, IsValidCK8sCRDName("001"))         // numeric first
 	require.Equal(t, false, IsValidCK8sCRDName("XMuLlpZ4k"))   // uppercase not OK
-	require.Equal(t, false, IsValidCK8sCRDName("-a"))          // dash is ok
+	require.Equal(t, false, IsValidCK8sCRDName("-a"))          // can not start with dash
 	require.Equal(t, false, IsValidCK8sCRDName("hello/world")) // punctuation
 	require.Equal(t, false, IsValidCK8sCRDName("hello?world")) // punctuation
 	require.Equal(t, false, IsValidCK8sCRDName("hello world")) // punctuation
