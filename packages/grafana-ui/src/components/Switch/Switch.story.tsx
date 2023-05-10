@@ -22,6 +22,7 @@ const meta: ComponentMeta<typeof Switch> = {
     disabled: false,
     value: false,
     transparent: false,
+    invalid: false,
   },
 };
 
@@ -29,13 +30,13 @@ export const Controlled: ComponentStory<typeof Switch> = (args) => {
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
-        <Field label="Normal switch" description="For horizontal forms">
-          <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} />
+        <Field label="Normal switch" description="For horizontal forms" invalid={args.invalid}>
+          <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} invalid={args.invalid} />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
-          <InlineField label="My switch">
+          <InlineField label="My switch" invalid={args.invalid}>
             <InlineSwitch value={args.value} disabled={args.disabled} transparent={args.transparent} />
           </InlineField>
         </InlineFieldRow>
@@ -49,6 +50,7 @@ export const Controlled: ComponentStory<typeof Switch> = (args) => {
             value={args.value}
             disabled={args.disabled}
             transparent={args.transparent}
+            invalid={args.invalid}
           />
         </span>
       </div>
@@ -62,7 +64,15 @@ export const Uncontrolled: ComponentStory<typeof Switch> = (args) => {
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  return <Switch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />;
+  return (
+    <Switch
+      value={checked}
+      disabled={args.disabled}
+      transparent={args.transparent}
+      onChange={onChange}
+      invalid={args.invalid}
+    />
+  );
 };
 
 export default meta;
