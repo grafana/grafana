@@ -181,15 +181,12 @@ The list of features is already growing and of course we will look into those. S
 <!-- Oscar Kilhed -->
 
 Finally connecting your local data is made easier! Welcome drag & drop in Grafana!
-The drag & drop functionality allows users to connect their csv, excel or numbers files by simply dragging and dropping them on a dashboard, or even into the editor directly.
-
-Once dropped a table will be created by default containing the data that is living in the file itself.
+The drag & drop functionality allows users to connect their csv, excel or numbers files by simply dragging and dropping them into the query editor of the grafana data source.
 
 By default, the drag & drop feature is not available out of the box. In order to utilize this functionality panel you will need to enable the `featuretogglename` feature toggle.
 
 As of now drag & drop supports the following scenarios in G10:
 
-- Drag & drop files on an empty dashboard
 - Drag & drop files into the panel editor
 - Replace files in the panel editor
 - Default table panel creation
