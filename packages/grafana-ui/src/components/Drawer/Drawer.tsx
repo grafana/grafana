@@ -112,27 +112,24 @@ export function Drawer({
           {...dialogProps}
           ref={overlayRef}
         >
-          {typeof title === 'string' && (
-            <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
-              <div className={styles.actions}>
-                <Button
-                  icon="times"
-                  variant="secondary"
-                  fill="text"
-                  onClick={onClose}
-                  aria-label={selectors.components.Drawer.General.close}
-                />
-              </div>
-              <div className={styles.titleWrapper}>
-                <Text as="h3" {...titleProps}>
-                  {title}
-                </Text>
-                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
-                {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
-              </div>
+          <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
+            <div className={styles.actions}>
+              <Button
+                icon="times"
+                variant="secondary"
+                fill="text"
+                onClick={onClose}
+                aria-label={selectors.components.Drawer.General.close}
+              />
             </div>
-          )}
-          {typeof title !== 'string' && title}
+            <div className={styles.titleWrapper}>
+              <Text as="h3" {...titleProps}>
+                {title}
+              </Text>
+              {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
+              {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
+            </div>
+          </div>
           <div className={styles.contentScroll}>
             {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
           </div>
