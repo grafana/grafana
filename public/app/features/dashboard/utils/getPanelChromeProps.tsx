@@ -106,6 +106,10 @@ export function getPanelChromeProps(props: CommonProps) {
 
   const title = props.panel.getDisplayTitle();
 
+  const onOpenMenu = () => {
+    reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
+  };
+
   return {
     hasOverlayHeader,
     onShowPanelDescription,
@@ -118,5 +122,6 @@ export function getPanelChromeProps(props: CommonProps) {
     dragClass,
     title,
     titleItems,
+    onOpenMenu,
   };
 }

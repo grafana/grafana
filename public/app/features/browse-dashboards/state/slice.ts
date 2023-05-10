@@ -8,13 +8,14 @@ import * as allReducers from './reducers';
 const { extraReducerFetchChildrenFulfilled, ...baseReducers } = allReducers;
 
 const initialState: BrowseDashboardsState = {
-  rootItems: [],
+  rootItems: undefined,
   childrenByParentUID: {},
   openFolders: {},
   selectedItems: {
     dashboard: {},
     folder: {},
     panel: {},
+    $all: false,
   },
 };
 
@@ -30,7 +31,7 @@ const browseDashboardsSlice = createSlice({
 
 export const browseDashboardsReducer = browseDashboardsSlice.reducer;
 
-export const { setFolderOpenState, setItemSelectionState } = browseDashboardsSlice.actions;
+export const { setFolderOpenState, setItemSelectionState, setAllSelection } = browseDashboardsSlice.actions;
 
 export default {
   browseDashboards: browseDashboardsReducer,

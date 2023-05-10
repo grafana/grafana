@@ -294,17 +294,26 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
-/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/dataviz-squad
+/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
 /packages/grafana-toolkit/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
-/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/Gauge/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/BarGauge/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/DataLinks/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/ValuePicker/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizLayout/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /plugins-bundled/ @grafana/plugins-platform-frontend
@@ -357,7 +366,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
-/public/app/features/inspector/ @grafana/grafana-frontend-platform
+/public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/library-panels/ @grafana/grafana-frontend-platform
@@ -424,7 +433,6 @@ lerna.json @grafana/frontend-ops
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/dashboards/ @grafana/dashboards-squad
 /public/fonts/ @grafana/alerting-squad-frontend
-/public/emails/ @grafana/grafana-frontend-platform
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
@@ -445,6 +453,7 @@ lerna.json @grafana/frontend-ops
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
+/public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
@@ -473,7 +482,6 @@ lerna.json @grafana/frontend-ops
 /scripts/trigger_docker_build.sh @grafana/grafana-delivery
 /scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
 /scripts/trigger_windows_build.sh @grafana/grafana-delivery
-/scripts/validate-devenv-dashboards.sh @grafana/grafana-delivery
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 
 /scripts/webpack/ @grafana/frontend-ops
@@ -610,6 +618,7 @@ embed.go @grafana/grafana-as-code
 /docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot
+/public/emails/ @grafanabot
 
 # Conf
 /conf/defaults.ini @torkelo

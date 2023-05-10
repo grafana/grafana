@@ -164,7 +164,7 @@ export function getHttpHandlerListScene(): EmbeddedScene {
                 // },
                 title: getFrameDisplayName(frame),
                 options: {
-                  legend: { displayMode: 'hidden' },
+                  legend: { showLegend: false },
                 },
               }),
             }),
@@ -481,19 +481,6 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
-        new SceneFlexItem({
-          body: new VizPanel({
-            pluginId: 'text',
-            title: '',
-            options: {
-              mode: 'markdown',
-              content: `
-  [mupp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mupp)
-  [mapp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mapp)
-  `,
-            },
-          }),
-        }),
         new SceneFlexItem({
           body: new VizPanel({
             $data: logsQuery,

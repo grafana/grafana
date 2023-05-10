@@ -161,77 +161,6 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 	}
 }
 
-func TestService_DeclareFixedRoles_Overrides(t *testing.T) {
-	tests := []struct {
-		name         string
-		registration accesscontrol.RoleRegistration
-		overrides    map[string][]string
-		wantGrants   []string
-		wantErr      bool
-	}{
-		{
-			name: "no grant override",
-			registration: accesscontrol.RoleRegistration{
-				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
-				Grants:              []string{"Admin"},
-				AllowGrantsOverride: true,
-			},
-			wantGrants: []string{"Admin"},
-			wantErr:    false,
-		},
-		{
-			name: "should account for grant overrides",
-			registration: accesscontrol.RoleRegistration{
-				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
-				Grants:              []string{"Admin"},
-				AllowGrantsOverride: true,
-			},
-			overrides:  map[string][]string{"fixed_test_test": {"Viewer", "Grafana Admin"}},
-			wantGrants: []string{"Viewer", "Grafana Admin"},
-			wantErr:    false,
-		},
-		{
-			name: "should not account for grant overrides",
-			registration: accesscontrol.RoleRegistration{
-				Role:                accesscontrol.RoleDTO{Name: "fixed:test:test"},
-				Grants:              []string{"Admin"},
-				AllowGrantsOverride: false,
-			},
-			overrides:  map[string][]string{"fixed_test_test": {"Viewer", "Grafana Admin"}},
-			wantGrants: []string{"Admin"},
-			wantErr:    false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ac := setupTestEnv(t)
-
-			// Reset the registations
-			ac.registrations = accesscontrol.RegistrationList{}
-			ac.cfg.RBACGrantOverrides = tt.overrides
-
-			// Test
-			err := ac.DeclareFixedRoles(tt.registration)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-
-			registrationCnt := 0
-			grants := []string{}
-			ac.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
-				registrationCnt++
-				grants = registration.Grants
-				return true
-			})
-			require.Equal(t, 1, registrationCnt,
-				"expected service registration list to contain the registration")
-			require.ElementsMatch(t, tt.wantGrants, grants)
-		})
-	}
-}
-
 func TestService_DeclarePluginRoles(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -808,6 +737,91 @@ func TestPermissionCacheKey(t *testing.T) {
 			str, err := permissionCacheKey(tc.signedInUser)
 			require.Equal(t, tc.expectedErr, err)
 			assert.Equal(t, tc.expected, str)
+		})
+	}
+}
+
+func TestService_SaveExternalServiceRole(t *testing.T) {
+	type run struct {
+		cmd     accesscontrol.SaveExternalServiceRoleCommand
+		wantErr bool
+	}
+	tests := []struct {
+		name string
+		runs []run
+	}{
+		{
+			name: "can create a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "can update a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions: []accesscontrol.Permission{
+							{Action: "users:write", Scope: "users:id:1"},
+							{Action: "users:write", Scope: "users:id:2"},
+						},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "test command validity - no service account ID",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: true,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+			for _, r := range tt.runs {
+				err := ac.SaveExternalServiceRole(ctx, r.cmd)
+				if r.wantErr {
+					require.Error(t, err)
+					continue
+				}
+				require.NoError(t, err)
+
+				// Check that the permissions and assignment are stored correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+			}
 		})
 	}
 }

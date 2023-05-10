@@ -1,8 +1,14 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
-import { PanelDataErrorViewProps } from '@grafana/runtime';
+import {
+  CoreApp,
+  GrafanaTheme2,
+  PanelDataSummary,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestion,
+} from '@grafana/data';
+import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
@@ -21,6 +27,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const { dataSummary } = builder;
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
+  const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
 
   const openVizPicker = () => {
     store.setObject(LS_VISUALIZATION_SELECT_TAB_KEY, VisualizationSelectPaneTab.Suggestions);
@@ -28,7 +35,6 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   };
 
   const switchToTable = () => {
-    const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
     if (!panel) {
       return;
     }
@@ -41,11 +47,37 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     );
   };
 
+  const loadSuggestion = (s: VisualizationSuggestion) => {
+    if (!panel) {
+      return;
+    }
+    dispatch(
+      changePanelPlugin({
+        ...s, // includes panelId, config, etc
+        panel,
+      })
+    );
+    if (s.transformations) {
+      setTimeout(() => {
+        locationService.partial({ tab: 'transform' });
+      }, 100);
+    }
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.message}>{message}</div>
-      {context.app === CoreApp.PanelEditor && dataSummary.hasData && (
+      {context.app === CoreApp.PanelEditor && dataSummary.hasData && panel && (
         <div className={styles.actions}>
+          {props.suggestions && (
+            <>
+              {props.suggestions.map((v) => (
+                <CardButton key={v.name} icon="process" onClick={() => loadSuggestion(v)}>
+                  {v.name}
+                </CardButton>
+              ))}
+            </>
+          )}
           <CardButton icon="table" onClick={switchToTable}>
             Switch to table
           </CardButton>

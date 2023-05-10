@@ -15,7 +15,9 @@ import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
+import { CreateNewButton } from './components/CreateNewButton';
 import { SearchView } from './components/SearchView';
+import { getFolderPermissions } from './permissions';
 import { useHasSelection } from './state';
 
 export interface BrowseDashboardsPageRouteParams {
@@ -48,8 +50,22 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
   const hasSelection = useHasSelection();
 
+  const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
+
   return (
-    <Page navId="dashboards/browse" pageNav={navModel}>
+    <Page
+      navId="dashboards/browse"
+      pageNav={navModel}
+      actions={
+        (canCreateDashboards || canCreateFolder) && (
+          <CreateNewButton
+            inFolder={folderUID}
+            canCreateDashboard={canCreateDashboards}
+            canCreateFolder={canCreateFolder}
+          />
+        )
+      }
+    >
       <Page.Contents className={styles.pageContents}>
         <FilterInput
           placeholder={getSearchPlaceholder(searchState.includePanels)}
@@ -64,9 +80,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView width={width} height={height} />
+                <SearchView canSelect={canEditInFolder} width={width} height={height} />
               ) : (
-                <BrowseView width={width} height={height} folderUID={folderUID} />
+                <BrowseView canSelect={canEditInFolder} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

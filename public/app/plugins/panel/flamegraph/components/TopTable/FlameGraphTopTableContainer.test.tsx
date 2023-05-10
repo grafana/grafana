@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, MutableDataFrame } from '@grafana/data';
+import { CoreApp, createDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer, nestedSetToLevels } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
@@ -14,7 +14,7 @@ describe('FlameGraphTopTableContainer', () => {
     const [search, setSearch] = useState('');
     const [selectedView, _] = useState(SelectedView.Both);
 
-    const flameGraphData = new MutableDataFrame(data);
+    const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData);
     const levels = nestedSetToLevels(container);
 

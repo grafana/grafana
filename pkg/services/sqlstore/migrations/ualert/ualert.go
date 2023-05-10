@@ -293,6 +293,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for _, da := range dashAlerts {
 		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
+		l.Debug("migrating alert rule to Unified Alerting")
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -376,7 +377,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
@@ -455,6 +456,9 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 	if err != nil {
 		return err
 	}
+
+	// remove an existing configuration, which could have been left during switching back to legacy alerting
+	_, _ = m.sess.Delete(AlertConfiguration{OrgID: orgID})
 
 	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{

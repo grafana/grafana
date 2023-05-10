@@ -22,8 +22,6 @@ import { lastUsedDatasourceKeyForOrgId } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 
-import { RICH_HISTORY_KEY, RichHistoryLocalStorageDTO } from '../../../../core/history/RichHistoryLocalStorage';
-import { RICH_HISTORY_SETTING_KEYS } from '../../../../core/history/richHistoryLocalStorageUtils';
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
@@ -195,19 +193,4 @@ export const tearDown = () => {
 export const withinExplore = (exploreId: ExploreId) => {
   const container = screen.getAllByTestId('data-testid Explore');
   return within(container[exploreId === ExploreId.left ? 0 : 1]);
-};
-
-export const localStorageHasAlreadyBeenMigrated = () => {
-  window.localStorage.setItem(RICH_HISTORY_SETTING_KEYS.migrated, 'true');
-};
-
-export const setupLocalStorageRichHistory = (dsName: string) => {
-  const richHistoryDTO: RichHistoryLocalStorageDTO = {
-    ts: Date.now(),
-    datasourceName: dsName,
-    starred: true,
-    comment: '',
-    queries: [{ refId: 'A' }],
-  };
-  window.localStorage.setItem(RICH_HISTORY_KEY, JSON.stringify([richHistoryDTO]));
 };

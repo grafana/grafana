@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
@@ -26,6 +26,7 @@ import {
   toDataFrame,
   transformDataFrame,
   preProcessPanelData,
+  ApplyFieldOverrideOptions,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -91,7 +92,9 @@ export class PanelQueryRunner {
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
     let structureRev = 1;
-    let lastData: DataFrame[] = [];
+    let lastFieldConfig: ApplyFieldOverrideOptions | undefined = undefined;
+    let lastProcessedFrames: DataFrame[] = [];
+    let lastRawFrames: DataFrame[] = [];
     let isFirstPacket = true;
     let lastConfigRev = -1;
 
@@ -105,97 +108,103 @@ export class PanelQueryRunner {
     }
 
     return this.subject.pipe(
-      this.getTransformationsStream(withTransforms),
-      map((data: PanelData) => {
-        let processedData = data;
-        let streamingPacketWithSameSchema = false;
+      mergeMap((data: PanelData) => {
+        let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
 
-        if (withFieldConfig && data.series?.length) {
-          if (lastConfigRev === this.dataConfigSource.configRev) {
-            const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
-              | StreamingDataFrame
-              | undefined;
+        if (data.series === lastRawFrames && lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig) {
+          return of({ ...data, structureRev, series: lastProcessedFrames });
+        }
+
+        lastFieldConfig = fieldConfig;
+        lastRawFrames = data.series;
+        let dataWithTransforms = of(data);
+
+        if (withTransforms) {
+          dataWithTransforms = this.applyTransformations(data);
+        }
+
+        return dataWithTransforms.pipe(
+          map((data: PanelData) => {
+            let processedData = data;
+            let streamingPacketWithSameSchema = false;
+
+            if (withFieldConfig && data.series?.length) {
+              if (lastConfigRev === this.dataConfigSource.configRev) {
+                const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
+                  | StreamingDataFrame
+                  | undefined;
+
+                if (
+                  streamingDataFrame &&
+                  !streamingDataFrame.packetInfo.schemaChanged &&
+                  // TODO: remove the condition below after fixing
+                  // https://github.com/grafana/grafana/pull/41492#issuecomment-970281430
+                  lastProcessedFrames[0].fields.length === streamingDataFrame.fields.length
+                ) {
+                  processedData = {
+                    ...processedData,
+                    series: lastProcessedFrames.map((frame, frameIndex) => ({
+                      ...frame,
+                      length: data.series[frameIndex].length,
+                      fields: frame.fields.map((field, fieldIndex) => ({
+                        ...field,
+                        values: data.series[frameIndex].fields[fieldIndex].values,
+                        state: {
+                          ...field.state,
+                          calcs: undefined,
+                          range: undefined,
+                        },
+                      })),
+                    })),
+                  };
+
+                  streamingPacketWithSameSchema = true;
+                }
+              }
+
+              if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
+                lastConfigRev = this.dataConfigSource.configRev!;
+                processedData = {
+                  ...processedData,
+                  series: applyFieldOverrides({
+                    timeZone: data.request?.timezone ?? 'browser',
+                    data: processedData.series,
+                    ...fieldConfig!,
+                  }),
+                };
+                isFirstPacket = false;
+              }
+            }
 
             if (
-              streamingDataFrame &&
-              !streamingDataFrame.packetInfo.schemaChanged &&
-              // TODO: remove the condition below after fixing
-              // https://github.com/grafana/grafana/pull/41492#issuecomment-970281430
-              lastData[0].fields.length === streamingDataFrame.fields.length
+              !streamingPacketWithSameSchema &&
+              !compareArrayValues(lastProcessedFrames, processedData.series, compareDataFrameStructures)
             ) {
-              processedData = {
-                ...processedData,
-                series: lastData.map((frame, frameIndex) => ({
-                  ...frame,
-                  length: data.series[frameIndex].length,
-                  fields: frame.fields.map((field, fieldIndex) => ({
-                    ...field,
-                    values: data.series[frameIndex].fields[fieldIndex].values,
-                    state: {
-                      ...field.state,
-                      calcs: undefined,
-                      range: undefined,
-                    },
-                  })),
-                })),
-              };
-
-              streamingPacketWithSameSchema = true;
+              structureRev++;
             }
-          }
 
-          // Apply field defaults and overrides
-          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+            lastProcessedFrames = processedData.series;
 
-          if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
-            lastConfigRev = this.dataConfigSource.configRev!;
-            processedData = {
-              ...processedData,
-              series: applyFieldOverrides({
-                timeZone: data.request?.timezone ?? 'browser',
-                data: processedData.series,
-                ...fieldConfig!,
-              }),
-            };
-            isFirstPacket = false;
-          }
-        }
-
-        if (
-          !streamingPacketWithSameSchema &&
-          !compareArrayValues(lastData, processedData.series, compareDataFrameStructures)
-        ) {
-          structureRev++;
-        }
-        lastData = processedData.series;
-
-        return { ...processedData, structureRev };
+            return { ...processedData, structureRev };
+          })
+        );
       })
     );
   }
 
-  private getTransformationsStream = (withTransforms: boolean): MonoTypeOperatorFunction<PanelData> => {
-    return (inputStream) =>
-      inputStream.pipe(
-        mergeMap((data) => {
-          if (!withTransforms) {
-            return of(data);
-          }
+  private applyTransformations(data: PanelData): Observable<PanelData> {
+    const transformations = this.dataConfigSource.getTransformations();
 
-          const transformations = this.dataConfigSource.getTransformations();
+    if (!transformations || transformations.length === 0) {
+      return of(data);
+    }
 
-          if (!transformations || transformations.length === 0) {
-            return of(data);
-          }
+    const ctx: DataTransformContext = {
+      interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
+    };
 
-          const ctx: DataTransformContext = {
-            interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
-          };
-
-          return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
-        })
-      );
-  };
+    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+  }
 
   async run(options: QueryRunnerOptions) {
     const {
@@ -216,7 +225,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId, true);
       return;
     }
 
@@ -284,7 +293,7 @@ export class PanelQueryRunner {
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number, skipPreProcess = false) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -299,7 +308,7 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: (data) => {
-        this.lastResult = preProcessPanelData(data, this.lastResult);
+        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },

@@ -835,6 +835,22 @@ export class LokiDatasource
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
     return getQueryHints(query.expr, result);
   }
+
+  getDefaultQuery(app: CoreApp): LokiQuery {
+    const defaults = { refId: 'A', expr: '' };
+
+    if (app === CoreApp.UnifiedAlerting) {
+      return {
+        ...defaults,
+        queryType: LokiQueryType.Instant,
+      };
+    }
+
+    return {
+      ...defaults,
+      queryType: LokiQueryType.Range,
+    };
+  }
 }
 
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions

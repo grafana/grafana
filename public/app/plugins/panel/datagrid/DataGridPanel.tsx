@@ -76,7 +76,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     return getGridCellKind(field, row, hasGridSelection(gridSelection));
   };
 
-  const onCellEdited = async (cell: Item, newValue: EditableGridCell) => {
+  const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
     // if there are rows selected, return early, we don't want to edit any cell
     if (hasGridSelection(gridSelection)) {
       return;
@@ -154,8 +154,29 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       return true;
     }
 
-    if (selection.rows) {
-      updateSnapshot(deleteRows(frame, selection.rows.toArray()), onUpdateData);
+    const rows = selection.rows.toArray();
+    const cols = selection.columns.toArray();
+
+    if (rows.length) {
+      updateSnapshot(deleteRows(frame, rows), onUpdateData);
+      return true;
+    }
+
+    if (cols.length) {
+      const copiedFrame = {
+        ...frame,
+        fields: frame.fields.map((field, index) => {
+          if (cols.includes(index)) {
+            return {
+              ...field,
+              values: new Array(frame.length).fill(null),
+            };
+          }
+
+          return field;
+        }),
+      };
+      updateSnapshot(copiedFrame, onUpdateData);
       return true;
     }
 
@@ -263,7 +284,6 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
         getCellsForSelection={isDatagridEnabled() ? true : undefined}
         showSearch={isDatagridEnabled() ? toggleSearch : false}
         onSearchClose={onSearchClose}
-        onPaste={isDatagridEnabled() ? true : undefined}
         gridSelection={gridSelection}
         onGridSelectionChange={isDatagridEnabled() ? onGridSelectionChange : undefined}
         onRowAppended={isDatagridEnabled() ? addNewRow : undefined}

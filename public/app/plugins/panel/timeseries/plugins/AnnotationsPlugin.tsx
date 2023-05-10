@@ -28,6 +28,11 @@ export const AnnotationsPlugin = ({ annotations, timeZone, config }: Annotations
     }
 
     annotationsRef.current = views;
+
+    return () => {
+      // clear on unmount
+      annotationsRef.current = [];
+    };
   }, [annotations]);
 
   useLayoutEffect(() => {
