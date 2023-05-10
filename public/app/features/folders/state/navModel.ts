@@ -4,12 +4,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
 export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavModelItem {
-  const url = `/dashboards/f/${folder.uid}`;
   const model: NavModelItem = {
     icon: 'folder',
     id: 'manage-folder',
     subTitle: 'Manage folder dashboards and permissions',
-    url,
+    url: folder.url,
     text: folder.title,
     children: [
       {
@@ -17,7 +16,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         icon: 'apps',
         id: `folder-dashboards-${folder.uid}`,
         text: 'Dashboards',
-        url,
+        url: folder.url,
         hideFromBreadcrumbs: true,
       },
     ],
@@ -34,7 +33,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     icon: 'library-panel',
     id: `folder-library-panels-${folder.uid}`,
     text: 'Panels',
-    url: `${url}/library-panels`,
+    url: `${folder.url}/library-panels`,
     hideFromBreadcrumbs: true,
   });
 
@@ -44,7 +43,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       icon: 'bell',
       id: `folder-alerting-${folder.uid}`,
       text: 'Alert rules',
-      url: `${url}/alerting`,
+      url: `${folder.url}/alerting`,
       hideFromBreadcrumbs: true,
     });
   }
@@ -55,7 +54,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       icon: 'lock',
       id: `folder-permissions-${folder.uid}`,
       text: 'Permissions',
-      url: `${url}/permissions`,
+      url: `${folder.url}/permissions`,
       hideFromBreadcrumbs: true,
     });
   }
@@ -66,7 +65,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       icon: 'cog',
       id: `folder-settings-${folder.uid}`,
       text: 'Settings',
-      url: `${url}/settings`,
+      url: `${folder.url}/settings`,
       hideFromBreadcrumbs: true,
     });
   }
