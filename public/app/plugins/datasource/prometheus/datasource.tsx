@@ -54,6 +54,7 @@ import {
 } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
+import { runSplitQuery } from './querySplitting';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
@@ -478,34 +479,58 @@ export class PrometheusDatasource
     return this.interpolateString(query.expr);
   };
 
+  runQuery(request: DataQueryRequest<PromQuery>) {
+    let fullOrPartialRequest: DataQueryRequest<PromQuery>;
+    let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
+    const hasInstantQuery = request.targets.some((target) => target.instant);
+
+    // Don't cache instant queries
+    if (this.hasIncrementalQuery && !hasInstantQuery) {
+      requestInfo = this.cache.requestInfo(request);
+      fullOrPartialRequest = requestInfo.requests[0];
+    } else {
+      fullOrPartialRequest = request;
+    }
+
+    const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
+    const startTime = new Date();
+    return super.query({ ...request, targets: targets.flat() }).pipe(
+      map((response) => {
+        const amendedResponse = {
+          ...response,
+          data: this.cache.procFrames(request, requestInfo, response.data),
+        };
+        return amendedResponse;
+      }),
+      tap((response: DataQueryResponse) => {
+        trackQuery(response, request, startTime);
+      })
+    );
+  }
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-      let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
-      const hasInstantQuery = request.targets.some((target) => target.instant);
+      if (promRequestSupportsSplitting(request.targets)) {
+        return runSplitQuery(this, request).pipe(
+          map((response) => {
+            console.log('runSplitQuery transformV2', response, request);
 
-      // Don't cache instant queries
-      if (this.hasIncrementalQuery && !hasInstantQuery) {
-        requestInfo = this.cache.requestInfo(request);
-        fullOrPartialRequest = requestInfo.requests[0];
-      } else {
-        fullOrPartialRequest = request;
+            if (response.state === LoadingState.Streaming) {
+              // Heatmap bad
+              return response;
+            }
+            return transformV2(response, request, {
+              exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+            });
+          })
+        );
       }
 
-      const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
-      const startTime = new Date();
-      return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
+      return this.runQuery(request).pipe(
         map((response) => {
-          const amendedResponse = {
-            ...response,
-            data: this.cache.procFrames(request, requestInfo, response.data),
-          };
-          return transformV2(amendedResponse, request, {
+          return transformV2(response, request, {
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
-        }),
-        tap((response: DataQueryResponse) => {
-          trackQuery(response, request, startTime);
         })
       );
       // Run queries trough browser/proxy
@@ -530,6 +555,13 @@ export class PrometheusDatasource
     }
   }
 
+  /**
+   * @deprecated
+   * @param queries
+   * @param activeTargets
+   * @param end
+   * @private
+   */
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
 
@@ -556,12 +588,21 @@ export class PrometheusDatasource
         })
       );
 
-      return this.runQuery(query, end, filterAndMapResponse);
+      return this._runQuery(query, end, filterAndMapResponse);
     });
 
     return merge(...subQueries);
   }
 
+  /**
+   * @deprecated
+   * @param queries
+   * @param activeTargets
+   * @param end
+   * @param requestId
+   * @param scopedVars
+   * @private
+   */
   private panelsQuery(
     queries: PromQueryRequest[],
     activeTargets: PromQuery[],
@@ -586,7 +627,7 @@ export class PrometheusDatasource
         })
       );
 
-      return this.runQuery(query, end, filterAndMapResponse);
+      return this._runQuery(query, end, filterAndMapResponse);
     });
 
     return forkJoin(observables).pipe(
@@ -603,7 +644,14 @@ export class PrometheusDatasource
     );
   }
 
-  private runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
+  /**
+   * @deprecated old frontend query patterns
+   * @param query
+   * @param end
+   * @param filter
+   * @private
+   */
+  private _runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
     if (query.instant) {
       return this.performInstantQuery(query, end).pipe(filter);
     }
@@ -708,6 +756,12 @@ export class PrometheusDatasource
     return Math.max(interval * intervalFactor, minInterval, safeInterval);
   }
 
+  /**
+   * @deprecated
+   * @param query
+   * @param start
+   * @param end
+   */
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
     if (start > end) {
       throw { message: 'Invalid time range' };
@@ -739,6 +793,11 @@ export class PrometheusDatasource
     );
   }
 
+  /**
+   * @deprecated
+   * @param query
+   * @param time
+   */
   performInstantQuery(
     query: PromQueryRequest,
     time: number
@@ -1369,4 +1428,13 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+}
+
+export function promRequestSupportsSplitting(allQueries: PromQuery[]) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-chunk'))
+    .filter((query) => query.expr);
+
+  return queries.length > 0;
 }
