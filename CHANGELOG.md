@@ -668,6 +668,11 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 
 <!-- 9.3.7 END -->
 <!-- 9.4.0-beta1 END -->
+<!-- 9.3.14 START -->
+
+# 9.3.14 (2023-05-08)
+
+<!-- 9.3.14 END -->
 <!-- 9.3.6 START -->
 
 # 9.3.6 (2023-01-26)
@@ -1085,6 +1090,11 @@ The following functions and classes related to logs are deprecated in the `grafa
 
 <!-- 9.2.5 END -->
 <!-- 9.3.0-beta1 END -->
+<!-- 9.2.18 START -->
+
+# 9.2.18 (2023-05-08)
+
+<!-- 9.2.18 END -->
 <!-- 9.2.4 START -->
 
 # 9.2.4 (2022-11-07)
