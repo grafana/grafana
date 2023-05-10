@@ -20,7 +20,6 @@ import (
 var walk = util.Walk
 
 var (
-	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
@@ -149,7 +148,7 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 		return plugins.JSONData{}, err
 	}
-	plugin, err := ReadPluginJSON(reader)
+	plugin, err := plugins.ReadPluginJSON(reader)
 	if err != nil {
 		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 		return plugins.JSONData{}, err
