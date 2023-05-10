@@ -62,6 +62,9 @@ role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -142,6 +145,9 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
 ```
 
 ### Configure automatic login
