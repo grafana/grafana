@@ -561,6 +561,10 @@ func ToAbsUrl(relativeUrl string) string {
 }
 
 func RedactedValue(key, value string) string {
+	if value == "" {
+		return ""
+	}
+
 	uppercased := strings.ToUpper(key)
 	// Sensitive information: password, secrets etc
 	for _, pattern := range []string{

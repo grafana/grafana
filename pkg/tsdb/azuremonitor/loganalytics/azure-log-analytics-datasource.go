@@ -162,14 +162,20 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 				}
 			}
 
-			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, resourcesMap)
+			queryResources := make([]string, 0)
+			for resource := range resourcesMap {
+				queryResources = append(queryResources, resource)
+			}
+			sort.Strings(queryResources)
+
+			queryString = buildTracesQuery(operationId, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
 			traceIdVariable := "${__data.fields.traceID}"
 			if operationId == "" {
-				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, resourcesMap)
-				traceLogsExploreQuery = buildTracesLogsQuery(traceIdVariable, resourcesMap)
+				traceExploreQuery = buildTracesQuery(traceIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
+				traceLogsExploreQuery = buildTracesLogsQuery(traceIdVariable, queryResources)
 			} else {
 				traceExploreQuery = queryString
-				traceLogsExploreQuery = buildTracesLogsQuery(operationId, resourcesMap)
+				traceLogsExploreQuery = buildTracesLogsQuery(operationId, queryResources)
 			}
 			traceExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceExploreQuery, "TimeGenerated")
 			if err != nil {
@@ -353,7 +359,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 				ResultFormat *dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormat "json:\"resultFormat,omitempty\""
 				Workspace    *string                                                   "json:\"workspace,omitempty\""
 			}{
-				Resources: queryJSONModel.AzureTraces.Resources,
+				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
 				Query:     &query.TraceLogsExploreQuery,
 			},
 			QueryType: &logsQueryType,
@@ -405,7 +411,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 		"query":    query.Query,
 		"timespan": timespan,
 	}
-	if len(query.Resources) > 1 {
+	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 		body["workspaces"] = query.Resources
 	}
 	jsonValue, err := json.Marshal(body)
@@ -674,7 +680,7 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters, resultFormat *string, resources map[string]bool) string {
+func buildTracesQuery(operationId string, traceTypes []string, filters []types.TracesFilters, resultFormat *string, resources []string) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
@@ -696,7 +702,7 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 	resourcesQuery := strings.Join(filteredTypes, ",")
 	if len(resources) > 0 {
 		intermediate := make([]string, 0)
-		for resource := range resources {
+		for _, resource := range resources {
 			resourceSplit := strings.SplitAfter(resource, "/")
 			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range filteredTypes {
@@ -768,13 +774,13 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 	return baseQuery + whereClause + propertiesStaticQuery + errorProperty + propertiesQuery + filtersClause + projectClause
 }
 
-func buildTracesLogsQuery(operationId string, resources map[string]bool) string {
+func buildTracesLogsQuery(operationId string, resources []string) string {
 	types := Tables
 	sort.Strings(types)
 	selectors := "union " + strings.Join(types, ",\n") + "\n"
 	if len(resources) > 0 {
 		intermediate := make([]string, 0)
-		for resource := range resources {
+		for _, resource := range resources {
 			resourceSplit := strings.SplitAfter(resource, "/")
 			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range types {
