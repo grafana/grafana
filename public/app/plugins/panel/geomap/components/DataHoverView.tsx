@@ -38,7 +38,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     return null;
   }
   const fields = data.fields.map((f, idx) => {
-    return { ...f, highlight: idx === columnIndex };
+    return { ...f, hovered: idx === columnIndex };
   });
   // Put the traceID field in front.
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
@@ -55,7 +55,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
 
   for (let i = 0; i < orderedVisibleFields.length; i++) {
     const f = orderedVisibleFields[i];
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && !f.highlight) {
+    if (mode === TooltipDisplayMode.Single && columnIndex != null && !f.hovered) {
       continue;
     }
     const v = f.values[rowIndex];
@@ -74,7 +74,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       name: getFieldDisplayName(f, data),
       value: v,
       valueString: formattedValueToString(disp),
-      highlight: f.highlight,
+      highlight: f.hovered,
     });
   }
 
