@@ -1,3 +1,17 @@
+<!-- 9.5.2 START -->
+
+# 9.5.2 (2023-05-03)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.4. [#67757](https://github.com/grafana/grafana/issues/67757), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **Explore:** Update table min height  (#67321). [#67332](https://github.com/grafana/grafana/issues/67332), [@adrapereira](https://github.com/adrapereira)
+- **DataLinks:** Encoded URL fixed. [#67291](https://github.com/grafana/grafana/issues/67291), [@juanicabanas](https://github.com/juanicabanas)
+
+<!-- 9.5.2 END -->
 <!-- 9.5.1 START -->
 
 # 9.5.1 (2023-04-26)
