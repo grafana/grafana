@@ -1,9 +1,12 @@
 package folder
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -46,6 +49,16 @@ var GeneralFolder = Folder{ID: 0, Title: "General"}
 
 func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
+}
+
+func (f *Folder) WithURL() *Folder {
+	if f == nil || f.URL != "" {
+		return f
+	}
+
+	// copy of dashboards.GetFolderURL()
+	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
+	return f
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
