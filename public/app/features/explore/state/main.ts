@@ -244,10 +244,14 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   if (typeof exploreId === 'string') {
     return {
       ...state,
-      panes: {
-        ...state.panes,
-        [exploreId]: paneReducer(state.panes[exploreId], action),
-      },
+      panes: Object.entries(state.panes).reduce<ExploreState['panes']>((acc, [id, pane]) => {
+        if (id === exploreId) {
+          acc[id] = paneReducer(pane, action);
+        } else {
+          acc[id as ExploreId] = pane;
+        }
+        return acc;
+      }, {}),
     };
   }
 
