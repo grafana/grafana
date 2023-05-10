@@ -17,6 +17,7 @@ import {
 import * as DFImport from 'app/features/dataframe-import';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
+import { BuiltInDataSourcesList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
 import { matchDataSourceWithSearch } from './utils';
 
@@ -116,14 +117,7 @@ export function DataSourceModal({
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <DataSourceList
-            className={styles.builtInDataSourceList}
-            filter={(ds) => !!ds.meta.builtIn}
-            dashboard
-            mixed
-            onChange={onChangeDataSource}
-            current={current}
-          />
+          <BuiltInDataSourcesList onChange={onChangeDataSource} current={current} />
           {enableFileUpload && (
             <FileDropzone
               readAs="readAsArrayBuffer"
