@@ -31,6 +31,10 @@ load(
 )
 load("scripts/drone/pipelines/github.star", "publish_github_pipeline")
 load("scripts/drone/pipelines/aws_marketplace.star", "publish_aws_marketplace_pipeline")
+load(
+    "scripts/drone/pipelines/windows.star",
+    "windows_test_backend",
+)
 load("scripts/drone/version.star", "version_branch_pipelines")
 load("scripts/drone/events/cron.star", "cronjobs")
 load("scripts/drone/vault.star", "secrets")
@@ -51,6 +55,10 @@ def main(_ctx):
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
+        [windows_test_backend({
+            "event": ["promote"],
+            "target": ["test-windows"],
+        }, "oss", "testing")] +
         artifacts_page_pipeline() +
         version_branch_pipelines() +
         integration_test_pipelines() +
