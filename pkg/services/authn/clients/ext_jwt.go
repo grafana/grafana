@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -21,15 +21,13 @@ import (
 var _ authn.Client = new(ExtendedJWT)
 
 var (
-	timeNow = time.Now
+	acceptedSigningMethods = []string{"RS256", "ES256"}
+	timeNow                = time.Now
 )
 
 const (
-	SigningMethodNone     = jose.SignatureAlgorithm("none")
 	rfc9068ShortMediaType = "at+jwt"
 	rfc9068MediaType      = "application/at+jwt"
-
-	defaultOrgID = 1
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
@@ -55,7 +53,7 @@ type ExtendedJWTClaims struct {
 	Email        string              `json:"email"`
 	Name         string              `json:"name"`
 	Login        string              `json:"login"`
-	Scopes       []string            `json:"scp"`
+	Scopes       []string            `json:"scope"`
 	Entitlements map[string][]string `json:"entitlements"`
 }
 
@@ -75,7 +73,12 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: r.OrgID, UserID: userID})
+	if r.OrgID != s.getDefaultOrgID() {
+		s.log.Error("Failed to verify the Organization: OrgID is not the default")
+		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
+	}
+
+	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: s.getDefaultOrgID(), UserID: userID})
 	if err != nil {
 		s.log.Error("Failed to get user", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
@@ -90,7 +93,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	}
 
-	signedInUser.Permissions[defaultOrgID] = claims.Entitlements
+	signedInUser.Permissions[s.getDefaultOrgID()] = claims.Entitlements
 
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
 }
@@ -158,8 +161,8 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 		return nil, fmt.Errorf("invalid JWT type: %s", jwtType)
 	}
 
-	if parsedHeader.Algorithm == string(SigningMethodNone) {
-		return nil, fmt.Errorf("invalid algorithm: %s", parsedHeader.Algorithm)
+	if !slices.Contains(acceptedSigningMethods, parsedHeader.Algorithm) {
+		return nil, fmt.Errorf("invalid algorithm: %s. Accepted algorithms: %s", parsedHeader.Algorithm, strings.Join(acceptedSigningMethods, ", "))
 	}
 
 	var claims ExtendedJWTClaims
@@ -212,4 +215,12 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims Extended
 	// }
 
 	return nil
+}
+
+func (s *ExtendedJWT) getDefaultOrgID() int64 {
+	orgID := int64(1)
+	if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
+		orgID = int64(s.cfg.AutoAssignOrgId)
+	}
+	return orgID
 }

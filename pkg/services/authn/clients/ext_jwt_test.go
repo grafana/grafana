@@ -67,13 +67,13 @@ func TestExtendedJWTTest(t *testing.T) {
 		{
 			name:           "should return true when Authorization header contains Bearer prefix",
 			cfg:            nil,
-			authHeaderFunc: func() string { return "Bearer " + generateToken(validPayload, pk) },
+			authHeaderFunc: func() string { return "Bearer " + generateToken(validPayload, pk, jose.RS256) },
 			want:           true,
 		},
 		{
 			name:           "should return true when Authorization header only contains the token",
 			cfg:            nil,
-			authHeaderFunc: func() string { return generateToken(validPayload, pk) },
+			authHeaderFunc: func() string { return generateToken(validPayload, pk, jose.RS256) },
 			want:           true,
 		},
 		{
@@ -96,7 +96,7 @@ func TestExtendedJWTTest(t *testing.T) {
 			authHeaderFunc: func() string {
 				payload := validPayload
 				payload.Issuer = "http://unknown-issuer"
-				return generateToken(payload, pk)
+				return generateToken(payload, pk, jose.RS256)
 			},
 			want: false,
 		},
@@ -281,7 +281,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"Authorization": {generateToken(tc.payload, pk)},
+					"Authorization": {generateToken(tc.payload, pk, jose.RS256)},
 				},
 			}
 
@@ -307,6 +307,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	type testCase struct {
 		name    string
 		payload rfc9068Payload
+		alg     jose.SignatureAlgorithm
 	}
 
 	testCases := []testCase{
@@ -433,6 +434,20 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 			},
 		},
+		{
+			name: "unsupported alg",
+			payload: rfc9068Payload{
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:id:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				ClientID: "grafana",
+				Scopes:   []string{"profile", "groups"},
+				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			alg: jose.RS384,
+		},
 	}
 
 	extJwtClient := setupTestCtx(t, nil, nil)
@@ -440,7 +455,10 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tokenToTest := generateToken(tc.payload, pk)
+			if tc.alg == "" {
+				tc.alg = jose.RS256
+			}
+			tokenToTest := generateToken(tc.payload, pk, tc.alg)
 			_, err := extJwtClient.verifyRFC9068Token(context.Background(), tokenToTest)
 			require.Error(t, err)
 		})
@@ -476,8 +494,8 @@ type rfc9068Payload struct {
 	Entitlements interface{}  `json:"entitlements,omitempty"` // By default Entitlements is a map[string][]string; interface{} used for testing purposes
 }
 
-func generateToken(payload rfc9068Payload, signingKey *rsa.PrivateKey) string {
-	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: jose.RS256, Key: signingKey}, &jose.SignerOptions{
+func generateToken(payload rfc9068Payload, signingKey interface{}, alg jose.SignatureAlgorithm) string {
+	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]interface{}{
 			jose.HeaderType: "at+jwt",
 		}})
