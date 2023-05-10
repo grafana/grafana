@@ -17,7 +17,7 @@ import {
   setAllSelection,
   useBrowseLoadingStatus,
 } from '../state';
-import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
+import { BrowseDashboardsState, DashboardTreeSelection, DashboardViewItemCollection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -123,20 +123,13 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
         'color: unset'
       );
 
-      // Continue if overscan range >= flatTree.length - 1
+      // TODO: doesnt work if opening a folder at the top after we've scrolled a lot
+      // TODO: should not attempt to load additional children if a request is already in flight
 
-      // TODO: instead of checking length of flatTree, we've got to check the length of....
-      // the expanded folder that's intersecting with overscanStopIndex? what if our page sizes
-      // are smaller than what's visible on screen?
-      const maybeShouldLoadMore = props.overscanStopIndex >= flatTree.length - 1;
+      // It's not really ideal that we're looping over the flatTree, (rather than the raw data)
+      // but i think its the easiest/only way to convert indexes from DashboardTree to something usable
 
-      if (!maybeShouldLoadMore) {
-        console.log('Already loaded enough for now');
-        console.groupEnd();
-        return;
-      }
-
-      let folderToLoad: DashboardViewItem | undefined;
+      let folderToLoad: DashboardViewItem | DashboardViewItemCollection | undefined;
 
       for (let index = 0; index < props.overscanStopIndex; index++) {
         const viewItem = flatTree[index];
@@ -182,10 +175,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       }
     }
 
-    // TODO: doesnt work if opening a folder at the top after we've scrolled a lot
-    // TODO: should not attempt to load additional children if a request is already in flight
-
-    return throttle(fn, 300);
+    return debounce(fn, 500, { leading: true, trailing: true });
   }, [flatTree, dispatch, folderUID, rootItems, childrenByParentUID]);
 
   if (status === 'pending') {
