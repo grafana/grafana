@@ -129,12 +129,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
   const defaultOld = css`
-    color: ${theme.colors.text.secondary};
-    background-color: ${theme.colors.background.primary};
+    color: ${theme.colors.text.primary};
+    background: ${theme.colors.secondary.main};
 
     &:hover {
       color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
+      background: ${theme.colors.secondary.shade};
+      border: 1px solid ${theme.colors.border.medium};
     }
   `;
 

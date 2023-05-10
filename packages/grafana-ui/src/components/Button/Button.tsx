@@ -212,7 +212,12 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+function getButtonVariantStyles(
+  theme: GrafanaTheme2,
+  color: ThemeRichColor,
+  fill: ButtonFill,
+  borderColor: string
+): CSSObject {
   if (fill === 'outline') {
     return {
       background: 'transparent',
@@ -254,7 +259,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   return {
     background: color.main,
     color: color.contrastText,
-    border: `1px solid transparent`,
+    border: `1px solid ${borderColor}`,
     transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
       duration: theme.transitions.duration.short,
     }),
@@ -287,7 +292,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     return {
       ...disabledStyles,
       background: 'transparent',
-      border: `1px solid ${theme.colors.action.disabledText}`,
+      border: `1px solid ${theme.colors.border.strong}`,
     };
   }
 
@@ -301,17 +306,17 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   switch (variant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.colors.secondary, fill);
+      return getButtonVariantStyles(theme, theme.colors.secondary, fill, theme.colors.border.weak);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.colors.error, fill);
+      return getButtonVariantStyles(theme, theme.colors.error, fill, 'transparent');
 
     case 'success':
-      return getButtonVariantStyles(theme, theme.colors.success, fill);
+      return getButtonVariantStyles(theme, theme.colors.success, fill, 'transparent');
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.colors.primary, fill);
+      return getButtonVariantStyles(theme, theme.colors.primary, fill, 'transparent');
   }
 }
 
