@@ -238,6 +238,7 @@ export * from './SecretTextArea';
 export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
 
+export { EditableText } from './EditableText/EditableText';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export * from './FileDropzone';

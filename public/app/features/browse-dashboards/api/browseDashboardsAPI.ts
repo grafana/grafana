@@ -34,9 +34,22 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 export const browseDashboardsAPI = createApi({
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
+  tagTypes: ['folder'],
   endpoints: (builder) => ({
     getFolder: builder.query<FolderDTO, string>({
+      providesTags: (_result, _error, arg) => [{ type: 'folder', id: arg }],
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+    }),
+    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+      invalidatesTags: (_result, _error, args) => [{ type: 'folder', id: args.uid }],
+      query: (folder) => ({
+        method: 'PUT',
+        url: `/folders/${folder.uid}`,
+        data: {
+          title: folder.title,
+          version: folder.version,
+        },
+      }),
     }),
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
@@ -70,5 +83,5 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
-export const { useGetAffectedItemsQuery, useGetFolderQuery } = browseDashboardsAPI;
+export const { useGetAffectedItemsQuery, useGetFolderQuery, useSaveFolderMutation } = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

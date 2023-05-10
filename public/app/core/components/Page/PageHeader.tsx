@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { EditableText, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -14,13 +14,22 @@ export interface Props {
   actions?: React.ReactNode;
   info?: PageInfoItem[];
   subTitle?: React.ReactNode;
+  onEditTitle?: (newValue: string) => Promise<void>;
 }
 
-export function PageHeader({ navItem, renderTitle, actions, info, subTitle }: Props) {
+export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle }: Props) {
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
-  const titleElement = renderTitle ? renderTitle(navItem.text) : <h1>{navItem.text}</h1>;
+  const titleElement = renderTitle ? (
+    renderTitle(navItem.text)
+  ) : onEditTitle ? (
+    <EditableText as="h1" editLabel="Edit folder name" onEdit={onEditTitle}>
+      {navItem.text}
+    </EditableText>
+  ) : (
+    <h1>{navItem.text}</h1>
+  );
 
   return (
     <div className={styles.pageHeader}>

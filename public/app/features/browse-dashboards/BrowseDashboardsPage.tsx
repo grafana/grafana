@@ -11,7 +11,7 @@ import { buildNavModel } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
+import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
@@ -47,15 +47,33 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
+  const [saveFolder] = useSaveFolderMutation();
   const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
   const hasSelection = useHasSelection();
 
   const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
 
+  const onEditTitle = folderUID
+    ? async (newValue: string) => {
+        if (folderDTO) {
+          const result = await saveFolder({
+            ...folderDTO,
+            title: newValue,
+            // TODO remove this when FolderDTO is correctly returning version
+            version: 1,
+          });
+          if ('error' in result) {
+            throw result.error instanceof Error ? result.error.message : result.error;
+          }
+        }
+      }
+    : undefined;
+
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
+      onEditTitle={onEditTitle}
       actions={
         (canCreateDashboards || canCreateFolder) && (
           <CreateNewButton
