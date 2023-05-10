@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Alert } from '@grafana/ui';
+
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { IconButton } from '../../IconButton';
 import { useQuery } from '../ElasticsearchQueryContext';
@@ -30,12 +32,10 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
             return <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Raw Data" metric={metric} />;
           case 'raw_document':
             return (
-              <QueryEditorSpecialMetricRow
-                key={`${metric.type}-${metric.id}`}
-                name="Raw Document"
-                metric={metric}
-                info="(NOTE: Raw document query type is deprecated)"
-              />
+              <>
+                <QueryEditorSpecialMetricRow key={`${metric.type}-${metric.id}`} name="Raw Document" metric={metric} />
+                <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />
+              </>
             );
           default:
             return (
@@ -48,7 +48,7 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
               >
                 <MetricEditor value={metric} />
 
-                {!metricAggregationConfig[metric.type].isSingleMetric && index === 0 && (
+                {metricAggregationConfig[metric.type].impliedQueryType === 'metrics' && index === 0 && (
                   <IconButton iconName="plus" onClick={() => dispatch(addMetric(nextId))} label="add" />
                 )}
               </QueryEditorRow>

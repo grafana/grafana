@@ -2,10 +2,12 @@ package accesscontrol
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -129,6 +131,10 @@ func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
+func (r *RoleDTO) IsExternalService() bool {
+	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
+}
+
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
@@ -188,11 +194,11 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID      int64
-	UserID     int64
-	Roles      []string
-	TeamIDs    []int64
-	RolePrefix string
+	OrgID        int64
+	UserID       int64
+	Roles        []string
+	TeamIDs      []int64
+	RolePrefixes []string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -245,14 +251,47 @@ type SetResourcePermissionCommand struct {
 	Permission  string `json:"permission"`
 }
 
+type SaveExternalServiceRoleCommand struct {
+	OrgID             int64
+	Global            bool
+	ExternalServiceID string
+	ServiceAccountID  int64
+	Permissions       []Permission
+}
+
+func (cmd *SaveExternalServiceRoleCommand) Validate() error {
+	if cmd.ExternalServiceID == "" {
+		return errors.New("external service id not specified")
+	}
+
+	// slugify the external service id ID for the role to have correct name and uid
+	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
+
+	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
+		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
+	}
+
+	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
+		return errors.New("no permissions provided")
+	}
+
+	if cmd.ServiceAccountID <= 0 {
+		return fmt.Errorf("invalid service account id %d", cmd.ServiceAccountID)
+	}
+
+	return nil
+}
+
 const (
-	GlobalOrgID        = 0
-	FixedRolePrefix    = "fixed:"
-	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "basic:"
-	PluginRolePrefix   = "plugins:"
-	BasicRoleUIDPrefix = "basic_"
-	RoleGrafanaAdmin   = "Grafana Admin"
+	GlobalOrgID                  = 0
+	FixedRolePrefix              = "fixed:"
+	ManagedRolePrefix            = "managed:"
+	BasicRolePrefix              = "basic:"
+	PluginRolePrefix             = "plugins:"
+	ExternalServiceRolePrefix    = "externalservice:"
+	BasicRoleUIDPrefix           = "basic_"
+	ExternalServiceRoleUIDPrefix = "externalservice_"
+	RoleGrafanaAdmin             = "Grafana Admin"
 
 	GeneralFolderUID = "general"
 
