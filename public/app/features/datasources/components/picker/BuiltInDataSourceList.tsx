@@ -14,15 +14,16 @@ const CUSTOM_DESCRIPTIONS_BY_UID: Record<string, string> = {
 };
 
 interface BuiltInDataSourceListProps {
+  className?: string;
   current: DataSourceRef | string | null | undefined;
   onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
-export function BuiltInDataSourcesList({ current, onChange }: BuiltInDataSourceListProps) {
+export function BuiltInDataSourceList({ className, current, onChange }: BuiltInDataSourceListProps) {
   const grafanaDataSources = useDatasources({ mixed: true, dashboard: true, filter: (ds) => !!ds.meta.builtIn });
 
   return (
-    <>
+    <div className={className}>
       {grafanaDataSources.map((ds) => {
         return (
           <DataSourceCard
@@ -34,6 +35,6 @@ export function BuiltInDataSourcesList({ current, onChange }: BuiltInDataSourceL
           />
         );
       })}
-    </>
+    </div>
   );
 }
