@@ -54,7 +54,7 @@ Dashboard insights show the following information:
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 If you've enabled the `publicDashboards` feature toggle, you'll also see a Public dashboards tab in your analytics.
 

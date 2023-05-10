@@ -1304,6 +1304,135 @@ describe('ElasticDatasource using backend', () => {
     console.error = originalConsoleError;
     config.featureToggles.enableElasticsearchBackendQuerying = false;
   });
+  describe('annotationQuery', () => {
+    describe('results processing', () => {
+      it('should return simple annotations using defaults', async () => {
+        const { ds, timeSrv } = getTestContext();
+        ds.postResourceRequest = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@timestamp': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@timestamp': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        const annotations = await ds.annotationQuery({
+          annotation: {},
+          range: timeSrv.timeRange(),
+        });
+
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[1].time).toBe(3);
+      });
+
+      it('should return annotation events using options', async () => {
+        const { ds, timeSrv } = getTestContext();
+        ds.postResourceRequest = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        const annotations = await ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+          },
+          range: timeSrv.timeRange(),
+        });
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe('abc');
+
+        expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe('def');
+      });
+    });
+
+    describe('request processing', () => {
+      it('should process annotation request using options', async () => {
+        const { ds } = getTestContext();
+        const postResourceRequestMock = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        await ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            timeEndField: '@time_end_field',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+          },
+          range: {
+            from: dateTime(1683291160012),
+            to: dateTime(1683291460012),
+          },
+        });
+        expect(postResourceRequestMock).toHaveBeenCalledWith(
+          '_msearch',
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
+        );
+      });
+
+      it('should process annotation request using defaults', async () => {
+        const { ds } = getTestContext();
+        const postResourceRequestMock = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        await ds.annotationQuery({
+          annotation: {},
+          range: {
+            from: dateTime(1683291160012),
+            to: dateTime(1683291460012),
+          },
+        });
+        expect(postResourceRequestMock).toHaveBeenCalledWith(
+          '_msearch',
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
+        );
+      });
+    });
+  });
+
   describe('getDatabaseVersion', () => {
     it('should correctly get db version', async () => {
       const { ds } = getTestContext();
