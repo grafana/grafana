@@ -173,18 +173,6 @@ describe('RichHistoryRemoteStorage', () => {
     } as Partial<UserPreferencesDTO>);
   });
 
-  it('migrates provided rich history items', async () => {
-    const { richHistoryQuery, dto } = setup();
-    fetchMock.mockReturnValue(of({}));
-    await storage.migrate([richHistoryQuery]);
-    expect(fetchMock).toBeCalledWith({
-      url: '/api/query-history/migrate',
-      method: 'POST',
-      data: { queries: [dto] },
-      showSuccessAlert: false,
-    });
-  });
-
   it('stars query history items', async () => {
     const { richHistoryQuery, dto } = setup();
     postMock.mockResolvedValue({

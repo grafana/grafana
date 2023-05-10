@@ -43,7 +43,6 @@ export const Table = memo((props: Props) => {
     data,
     subData,
     height,
-    maxHeight,
     onCellFilterAdded,
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
@@ -121,6 +120,7 @@ export const Table = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
+      autoResetPage: false,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       autoResetFilters: false,
       sortTypes: {
@@ -194,18 +194,6 @@ export const Table = memo((props: Props) => {
   }
 
   const pageSize = Math.round(listHeight / tableStyles.rowHeight) - 1;
-
-  // Make sure we have room to show the sub-table
-  const expandedIndices = Object.keys(extendedState.expanded);
-  if (expandedIndices.length) {
-    const subTablesHeight = expandedIndices.reduce((sum, index) => {
-      const subLength = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === parseInt(index, 10))?.length;
-      return subLength ? sum + tableStyles.rowHeight * (subLength + 1) : sum;
-    }, 0);
-    if (listHeight < subTablesHeight) {
-      listHeight = Math.min(listHeight + subTablesHeight, maxHeight || Number.MAX_SAFE_INTEGER);
-    }
-  }
 
   useEffect(() => {
     // Don't update the page size if it is less than 1
@@ -331,7 +319,14 @@ export const Table = memo((props: Props) => {
   };
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
+    <div
+      {...getTableProps()}
+      className={tableStyles.table}
+      aria-label={ariaLabel}
+      role="table"
+      ref={tableDivRef}
+      style={{ width, height }}
+    >
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (

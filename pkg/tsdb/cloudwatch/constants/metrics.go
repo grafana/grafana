@@ -335,6 +335,7 @@ var NamespaceMetricsMap = map[string][]string{
 	"AWS/Events":               {"DeadLetterInvocations", "Events", "FailedInvocations", "IngestionToInvocationStartLatency", "Invocations", "InvocationsFailedToBeSentToDlq", "InvocationsSentToDlq", "MatchedEvents", "ThrottledRules", "TriggeredRules"},
 	"AWS/FSx":                  {"DataReadBytes", "DataReadOperations", "DataWriteBytes", "DataWriteOperations", "FreeDataStorageCapacity", "FreeStorageCapacity", "MetadataOperations"},
 	"AWS/Firehose":             {"BackupToS3.Bytes", "BackupToS3.DataFreshness", "BackupToS3.Records", "BackupToS3.Success", "DataReadFromKinesisStream.Bytes", "DataReadFromKinesisStream.Records", "DeliveryToElasticsearch.Bytes", "DeliveryToElasticsearch.Records", "DeliveryToElasticsearch.Success", "DeliveryToRedshift.Bytes", "DeliveryToRedshift.Records", "DeliveryToRedshift.Success", "DeliveryToS3.Bytes", "DeliveryToS3.DataFreshness", "DeliveryToS3.Records", "DeliveryToS3.Success", "DeliveryToSplunk.Bytes", "DeliveryToSplunk.DataFreshness", "DeliveryToSplunk.Records", "DeliveryToSplunk.Success", "DescribeDeliveryStream.Latency", "DescribeDeliveryStream.Requests", "ExecuteProcessing.Duration", "ExecuteProcessing.Success", "FailedConversion.Bytes", "FailedConversion.Records", "IncomingBytes", "IncomingRecords", "KinesisMillisBehindLatest", "ListDeliveryStreams.Latency", "ListDeliveryStreams.Requests", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Requests", "PutRecordBatch.Bytes", "PutRecordBatch.Latency", "PutRecordBatch.Records", "PutRecordBatch.Requests", "SucceedConversion.Bytes", "SucceedConversion.Records", "SucceedProcessing.Bytes", "SucceedProcessing.Records", "ThrottledDescribeStream", "ThrottledGetRecords", "ThrottledGetShardIterator", "UpdateDeliveryStream.Latency", "UpdateDeliveryStream.Requests"},
+	"AWS/FraudDetector":        {"GetEventPrediction", "GetEventPrediction4xxError", "GetEventPrediction5xxError", "GetEventPredictionLatency", "ModelInvocation", "ModelInvocationError", "ModelInvocationLatency", "OutcomeReturned", "Prediction", "PredictionError", "PredictionLatency", "RuleEvaluateError", "RuleEvaluateFalse", "RuleEvaluateTrue", "RuleNotEvaluated", "VariableDefaultReturned", "VariableUsed"},
 	"AWS/GameLift":             {"ActivatingGameSessions", "ActiveGameSessions", "ActiveInstances", "ActiveServerProcesses", "AvailableGameSessions", "AverageWaitTime", "CurrentPlayerSessions", "CurrentTickets", "DesiredInstances", "FirstChoiceNotViable", "FirstChoiceOutOfCapacity", "GameSessionInterruptions", "HealthyServerProcesses", "IdleInstances", "InstanceInterruptions", "LowestLatencyPlacement", "LowestPricePlacement", "MatchAcceptancesTimedOut", "MatchesAccepted", "MatchesCreated", "MatchesPlaced", "MatchesRejected", "MaxInstances", "MinInstances", "PercentAvailableGameSessions", "PercentHealthyServerProcesses", "PercentIdleInstances", "Placement", "PlacementsCanceled", "PlacementsFailed", "PlacementsStarted", "PlacementsSucceeded", "PlacementsTimedOut", "PlayerSessionActivations", "PlayersStarted", "QueueDepth", "RuleEvaluationsFailed", "RuleEvaluationsPassed", "ServerProcessAbnormalTerminations", "ServerProcessActivations", "ServerProcessTerminations", "TicketsFailed", "TicketsStarted", "TicketsTimedOut", "TimeToMatch", "TimeToTicketSuccess"},
 	"AWS/GlobalAccelerator":    {"NewFlowCount", "ProcessedBytesIn", "ProcessedBytesOut", "HealthyEndpointCount", "UnhealthyEndpointCount"},
 	"AWS/Glue":                 {"glue.driver.BlockManager.disk.diskSpaceUsed_MB", "glue.driver.ExecutorAllocationManager.executors.numberAllExecutors", "glue.driver.ExecutorAllocationManager.executors.numberMaxNeededExecutors", "glue.driver.aggregate.bytesRead", "glue.driver.aggregate.elapsedTime", "glue.driver.aggregate.numCompletedStages", "glue.driver.aggregate.numCompletedTasks", "glue.driver.aggregate.numFailedTasks", "glue.driver.aggregate.numKilledTasks", "glue.driver.aggregate.recordsRead", "glue.driver.aggregate.shuffleBytesWritten", "glue.driver.aggregate.shuffleLocalBytesRead", "glue.driver.jvm.heap.usage  glue.executorId.jvm.heap.usage  glue.ALL.jvm.heap.usage", "glue.driver.jvm.heap.used  glue.executorId.jvm.heap.used  glue.ALL.jvm.heap.used", "glue.driver.s3.filesystem.read_bytes  glue.executorId.s3.filesystem.read_bytes  glue.ALL.s3.filesystem.read_bytes", "glue.driver.s3.filesystem.write_bytes  glue.executorId.s3.filesystem.write_bytes  glue.ALL.s3.filesystem.write_bytes", "glue.driver.system.cpuSystemLoad  glue.executorId.system.cpuSystemLoad  glue.ALL.system.cpuSystemLoad"},
@@ -453,6 +454,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/Events":                  {"EventBusName", "RuleName"},
 	"AWS/FSx":                     {"FileSystemId"},
 	"AWS/Firehose":                {"DeliveryStreamName"},
+	"AWS/FraudDetector":           {"DetectorID", "DetectorVersionID", "ModelEndpoint", "ModelID", "ModelType", "OutcomeName", "RuleID", "VariableName"},
 	"AWS/GameLift":                {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
 	"AWS/GlobalAccelerator":       {"Accelerator", "Listener", "EndpointGroup", "SourceRegion", "DestinationEdge", "TransportProtocol", "AcceleratorIPAddress"},
 	"AWS/Glue":                    {"JobName", "JobRunId", "Type"},
@@ -523,9 +525,37 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"CloudWatchSynthetics":        {"CanaryName", "StepName"},
 }
 
-var Regions = []string{
-	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
-	"ap-southeast-2", "ap-southeast-3", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-south-1", "eu-west-1",
-	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
-	"us-iso-east-1", "us-isob-east-1", "us-west-1", "us-west-2",
+type RegionsSet map[string]struct{}
+
+func Regions() RegionsSet {
+	return RegionsSet{
+		"af-south-1":     {},
+		"ap-east-1":      {},
+		"ap-northeast-1": {},
+		"ap-northeast-2": {},
+		"ap-northeast-3": {},
+		"ap-south-1":     {},
+		"ap-southeast-1": {},
+		"ap-southeast-2": {},
+		"ap-southeast-3": {},
+		"ca-central-1":   {},
+		"cn-north-1":     {},
+		"cn-northwest-1": {},
+		"eu-central-1":   {},
+		"eu-north-1":     {},
+		"eu-south-1":     {},
+		"eu-west-1":      {},
+		"eu-west-2":      {},
+		"eu-west-3":      {},
+		"me-south-1":     {},
+		"sa-east-1":      {},
+		"us-east-1":      {},
+		"us-east-2":      {},
+		"us-gov-east-1":  {},
+		"us-gov-west-1":  {},
+		"us-iso-east-1":  {},
+		"us-isob-east-1": {},
+		"us-west-1":      {},
+		"us-west-2":      {},
+	}
 }

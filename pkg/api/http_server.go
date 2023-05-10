@@ -95,11 +95,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -144,7 +144,6 @@ type HTTPServer struct {
 	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
-	ThumbService                 thumbs.Service
 	StorageService               store.StorageService
 	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
@@ -197,19 +196,18 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 
-	userService            user.Service
-	tempUserService        tempUser.Service
-	dashboardThumbsService thumbs.DashboardThumbService
-	loginAttemptService    loginAttempt.Service
-	orgService             org.Service
-	teamService            team.Service
-	accesscontrolService   accesscontrol.Service
-	annotationsRepo        annotations.Repository
-	tagService             tag.Service
-	oauthTokenService      oauthtoken.OAuthTokenService
-	statsService           stats.Service
-	authnService           authn.Service
-	starApi                *starApi.API
+	userService          user.Service
+	tempUserService      tempUser.Service
+	loginAttemptService  loginAttempt.Service
+	orgService           org.Service
+	teamService          team.Service
+	accesscontrolService accesscontrol.Service
+	annotationsRepo      annotations.Repository
+	tagService           tag.Service
+	oauthTokenService    oauthtoken.OAuthTokenService
+	statsService         stats.Service
+	authnService         authn.Service
+	starApi              *starApi.API
 }
 
 type ServerOptions struct {
@@ -223,8 +221,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
-	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
@@ -249,10 +246,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
+	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	starApi *starApi.API,
+
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -285,7 +283,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
 		Features:                     features,
-		ThumbService:                 thumbService,
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
@@ -345,7 +342,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PublicDashboardsApi:          publicDashboardsApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,
-		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		teamService:                  teamService,
@@ -506,21 +502,22 @@ func (hs *HTTPServer) configureHttps() error {
 		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
+	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	if err != nil {
+		return err
+	}
+
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTPSScheme))
+	if err != nil {
+		return err
+	}
+
+	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+
 	tlsCfg := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		},
+		MinVersion:   minTlsVersion,
+		CipherSuites: tlsCiphers,
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
@@ -546,20 +543,20 @@ func (hs *HTTPServer) configureHttp2() error {
 		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
 	}
 
+	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	if err != nil {
+		return err
+	}
+
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTP2Scheme))
+
+	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+
 	tlsCfg := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_CHACHA20_POLY1305_SHA256,
-			tls.TLS_AES_128_GCM_SHA256,
-			tls.TLS_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-		},
-		NextProtos: []string{"h2", "http/1.1"},
+		MinVersion:   minTlsVersion,
+		CipherSuites: tlsCiphers,
+		NextProtos:   []string{"h2", "http/1.1"},
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
@@ -607,6 +604,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
+		m.UseMiddleware(middleware.SubPathRedirect(hs.Cfg))
 	}
 
 	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
@@ -621,6 +619,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
+
 	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 	}
@@ -630,7 +629,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
-	m.Use(middleware.HandleNoCacheHeader)
+	m.Use(middleware.HandleNoCacheHeaders)
 
 	if hs.Cfg.CSPEnabled || hs.Cfg.CSPReportOnlyEnabled {
 		m.UseMiddleware(middleware.ContentSecurityPolicy(hs.Cfg, hs.log))
@@ -739,4 +738,39 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 
 func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
 	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
+}
+
+func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []uint16 {
+	if tlsVersion != tls.VersionTLS12 {
+		return nil
+	}
+	if protocol == "https" {
+		return []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		}
+	}
+	if protocol == "h2" {
+		return []uint16{
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		}
+	}
+	return nil
 }

@@ -17,11 +17,10 @@ weight: 500
 By updating settings at runtime, you can update Grafana settings without needing to restart the Grafana server.
 
 Updates that happen at runtime are stored in the database and override
-[settings from the other sources]({{< relref "../../configure-grafana/" >}})
+[settings from other sources]({{< relref "../../configure-grafana/" >}})
 (arguments, environment variables, settings file, etc). Therefore, every time a specific setting key is removed at runtime,
 the value used for that key is the inherited one from the other sources in the reverse order of precedence
-(`arguments > environment variables > settings file`), being the application default the value used when no one provided
-through one of these, at least.
+(`arguments > environment variables > settings file`). When no value is provided through any of these options, then the value used will be the application default
 
 Currently, **it only supports updates on the `auth.saml` section.**
 
@@ -55,7 +54,9 @@ it would enable SAML and disable single logouts. And, if you provide the followi
 
 ```json
 {
-  "auth.saml": ["allow_idp_initiated"]
+  "removals": {
+    "auth.saml": ["allow_idp_initiated"]
+  }
 }
 ```
 
@@ -87,7 +88,7 @@ won't be persisted into the database.
 Grafana Enterprise has a built-in scheduled background job that looks into the database every minute for
 settings updates. If there are updates, it reloads the Grafana services affected by the detected changes.
 
-The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
+The background job synchronizes settings between instances in a highly available set-up. So, after you perform some changes through the
 HTTP API, then the other instances are synchronized through the database and the background job.
 
 ## Control access with role-based access control

@@ -250,9 +250,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		if signedInUser.OrgRole != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW)
-		}
+		builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW)
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
@@ -422,8 +420,19 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		var libraryElements []model.LibraryElement
 		countBuilder := db.SQLBuilder{}
-		countBuilder.Write("SELECT * FROM library_element AS le")
-		countBuilder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id")
+		if folderFilter.includeGeneralFolder {
+			countBuilder.Write(selectLibraryElementDTOWithMeta)
+			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.OrgID)
+			writeKindSQL(query, &countBuilder)
+			writeSearchStringSQL(query, l.SQLStore, &countBuilder)
+			writeExcludeSQL(query, &countBuilder)
+			writeTypeFilterSQL(typeFilter, &countBuilder)
+			countBuilder.Write(" UNION ")
+		}
+		countBuilder.Write(selectLibraryElementDTOWithMeta)
+		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
+		countBuilder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id and le.folder_id<>0")
 		countBuilder.Write(` WHERE le.org_id=?`, signedInUser.OrgID)
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder)

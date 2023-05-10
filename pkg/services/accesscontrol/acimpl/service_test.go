@@ -740,3 +740,88 @@ func TestPermissionCacheKey(t *testing.T) {
 		})
 	}
 }
+
+func TestService_SaveExternalServiceRole(t *testing.T) {
+	type run struct {
+		cmd     accesscontrol.SaveExternalServiceRoleCommand
+		wantErr bool
+	}
+	tests := []struct {
+		name string
+		runs []run
+	}{
+		{
+			name: "can create a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "can update a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions: []accesscontrol.Permission{
+							{Action: "users:write", Scope: "users:id:1"},
+							{Action: "users:write", Scope: "users:id:2"},
+						},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "test command validity - no service account ID",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: true,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+			for _, r := range tt.runs {
+				err := ac.SaveExternalServiceRole(ctx, r.cmd)
+				if r.wantErr {
+					require.Error(t, err)
+					continue
+				}
+				require.NoError(t, err)
+
+				// Check that the permissions and assignment are stored correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+			}
+		})
+	}
+}

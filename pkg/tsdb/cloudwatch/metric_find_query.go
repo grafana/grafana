@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -23,8 +22,6 @@ type suggestData struct {
 	Value string `json:"value"`
 	Label string `json:"label,omitempty"`
 }
-
-var regionCache sync.Map
 
 func parseMultiSelectValue(input string) []string {
 	trimmedInput := strings.TrimSpace(input)
@@ -49,7 +46,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	}
 
 	profile := instance.Settings.Profile
-	if cache, ok := regionCache.Load(profile); ok {
+	if cache, ok := e.regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
 		}
@@ -59,36 +56,33 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	if err != nil {
 		return nil, err
 	}
-	regions := constants.Regions
-	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
+	regions := constants.Regions()
+	ec2Regions, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
 		logger.Error("Failed to get regions", "error", err)
 	} else {
-		for _, region := range r.Regions {
-			exists := false
-
-			for _, existingRegion := range regions {
-				if existingRegion == *region.RegionName {
-					exists = true
-					break
-				}
-			}
-
-			if !exists {
-				regions = append(regions, *region.RegionName)
-			}
-		}
+		mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
 	}
-	sort.Strings(regions)
 
 	result := make([]suggestData, 0)
-	for _, region := range regions {
+	for region := range regions {
 		result = append(result, suggestData{Text: region, Value: region, Label: region})
 	}
-	regionCache.Store(profile, result)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
+	e.regionCache.Store(profile, result)
 
 	return result, nil
+}
+
+func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
+	for _, region := range ec2Regions {
+		if _, ok := regions[*region.RegionName]; !ok {
+			regions[*region.RegionName] = struct{}{}
+		}
+	}
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {

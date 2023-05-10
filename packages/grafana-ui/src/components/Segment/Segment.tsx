@@ -40,6 +40,7 @@ export function Segment<T>({
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -56,7 +57,7 @@ export function Segment<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }

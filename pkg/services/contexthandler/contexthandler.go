@@ -3,6 +3,9 @@ package contexthandler
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -110,6 +113,25 @@ func FromContext(c context.Context) *contextmodel.ReqContext {
 	return nil
 }
 
+func hashUserIdentifier(identifier string, secret string) string {
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(identifier))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func setSignedInUser(reqContext *contextmodel.ReqContext, identity *authn.Identity, intercomSecret string) {
+	reqContext.SignedInUser = identity.SignedInUser()
+	if identity.AuthID != "" {
+		reqContext.SignedInUser.Analytics.Identifier = identity.AuthID
+	} else {
+		reqContext.SignedInUser.Analytics.Identifier = identity.Email + "@" + setting.AppUrl
+	}
+	if intercomSecret != "" {
+		reqContext.SignedInUser.Analytics.IntercomIdentifier = hashUserIdentifier(identity.AuthID, intercomSecret)
+	}
+}
+
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +147,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
-			SkipCache:      false,
+			SkipDSCache:    false,
 			Logger:         log.New("context"),
 		}
 
@@ -151,7 +173,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.LookupTokenErr = err
 			} else {
 				reqContext.UserToken = identity.SessionToken
-				reqContext.SignedInUser = identity.SignedInUser()
+				setSignedInUser(reqContext, identity, h.Cfg.IntercomSecret)
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
@@ -481,8 +503,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Warn("failed to look up session from cookie", "error", err)
-		if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
-			// Burn the cookie in case of invalid, expired or missing token
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			// Burn the cookie in case of invalid or revoked token
 			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		}
 

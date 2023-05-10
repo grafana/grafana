@@ -11,7 +11,7 @@ import 'app/features/all';
 
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import {
   locationUtil,
@@ -51,7 +51,7 @@ import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
-import { PluginPage } from './core/components/PageNew/PluginPage';
+import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
@@ -66,10 +66,10 @@ import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backe
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
-import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
@@ -127,6 +127,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+      initGrafanaLive();
 
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
@@ -209,11 +210,11 @@ export class GrafanaApp {
         config,
       };
 
-      ReactDOM.render(
+      const root = createRoot(document.getElementById('reactRoot')!);
+      root.render(
         React.createElement(AppWrapper, {
           app: this,
-        }),
-        document.getElementById('reactRoot')
+        })
       );
     } catch (error) {
       console.error('Failed to start Grafana', error);
@@ -257,15 +258,6 @@ function initEchoSrv() {
     registerEchoBackend(new PerformanceBackend({}));
   }
 
-  if (config.sentry.enabled) {
-    registerEchoBackend(
-      new SentryEchoBackend({
-        ...config.sentry,
-        user: config.bootData.user,
-        buildInfo: config.buildInfo,
-      })
-    );
-  }
   if (config.grafanaJavascriptAgent.enabled) {
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({

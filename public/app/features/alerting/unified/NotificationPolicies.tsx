@@ -188,9 +188,9 @@ const AmRoutes = () => {
     );
   }
 
-  const readOnly = alertManagerSourceName
-    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
-    : true;
+  const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+  const readOnlyPolicies = vanillaPrometheusAlertManager || isProvisioned;
+  const readOnlyMuteTimings = vanillaPrometheusAlertManager;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
@@ -254,7 +254,7 @@ const AmRoutes = () => {
                       currentRoute={rootRoute}
                       alertGroups={fetchAlertGroups.result}
                       contactPointsState={contactPointsState.receivers}
-                      readOnly={readOnly}
+                      readOnly={readOnlyPolicies}
                       alertManagerSourceName={alertManagerSourceName}
                       onAddPolicy={openAddModal}
                       onEditPolicy={openEditModal}
@@ -270,7 +270,9 @@ const AmRoutes = () => {
                 {alertInstancesModal}
               </>
             )}
-            {muteTimingsTabActive && <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} />}
+            {muteTimingsTabActive && (
+              <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} hideActions={readOnlyMuteTimings} />
+            )}
           </>
         )}
       </TabContent>

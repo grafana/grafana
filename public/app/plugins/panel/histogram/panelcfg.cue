@@ -48,7 +48,7 @@ composableKinds: PanelCfg: {
 							fillOpacity?: uint32 & <=100 | *80
 							// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
 							// Gradient appearance is influenced by the Fill opacity setting.
-							gradientMode?: common.GraphGradientMode | *"none"
+							gradientMode?: common.GraphGradientMode & (*"none" | _)
 						} @cuetsy(kind="interface")
 					},
 				]
