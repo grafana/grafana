@@ -883,7 +883,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	}
 
 	store := NewFakePublicDashboardStore(t)
-	store.On("FindAll", mock.Anything, mock.Anything).
+	store.On("FindAllWithPagination", mock.Anything, mock.Anything).
 		Return(mockedDashboards, nil)
 
 	ac := tests.SetupMockAccesscontrol(t,
@@ -904,10 +904,10 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			ac.EvaluateFunc = tt.evaluateFunc
 
 			got, err := pd.FindAll(tt.args.ctx, tt.args.u, tt.args.orgId)
-			if !tt.wantErr(t, err, fmt.Sprintf("FindAll(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
+			if !tt.wantErr(t, err, fmt.Sprintf("FindAllWithPagination(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "FindAll(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
+			assert.Equalf(t, tt.want, got, "FindAllWithPagination(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
 		})
 	}
 }

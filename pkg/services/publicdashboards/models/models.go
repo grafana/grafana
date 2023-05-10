@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/services/user"
 	"strconv"
 	"time"
 
@@ -85,6 +86,21 @@ type AnnotationEvent struct {
 
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
+}
+
+type PublicDashboardListQuery struct {
+	OrgID int64
+	Query string
+	Page  int
+	Limit int
+	User  *user.SignedInUser
+}
+
+type PublicDashboardListResponseWithPagination struct {
+	PublicDashboards []*PublicDashboardListResponse `json:"publicDashboards"`
+	TotalCount       int64                          `json:"totalCount"`
+	Page             int                            `json:"page"`
+	PerPage          int                            `json:"perPage"`
 }
 
 type PublicDashboardListResponse struct {

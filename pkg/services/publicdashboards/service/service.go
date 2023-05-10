@@ -318,14 +318,19 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	return "", ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard")
 }
 
-// FindAll Returns a list of public dashboards by orgId
-func (pd *PublicDashboardServiceImpl) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error) {
-	publicDashboards, err := pd.store.FindAll(ctx, orgId)
+// FindAllWithPagination Returns a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+	resp, err := pd.store.FindAllWithPagination(ctx, query)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindAll: %w", err)
+		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: %w", err)
 	}
 
-	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
+	resp.Page = query.Page
+	resp.PerPage = query.Limit
+	filteredPubdashes, err := pd.filterDashboardsByPermissions(ctx, query.User, resp.PublicDashboards)
+	resp.PublicDashboards = filteredPubdashes
+
+	return resp, err
 }
 
 func (pd *PublicDashboardServiceImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
@@ -414,8 +419,8 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 }
 
 // Filter out dashboards that user does not have read access to
-func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []PublicDashboardListResponse) ([]PublicDashboardListResponse, error) {
-	result := make([]PublicDashboardListResponse, 0)
+func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []*PublicDashboardListResponse) ([]*PublicDashboardListResponse, error) {
+	result := make([]*PublicDashboardListResponse, 0)
 
 	for i := range publicDashboards {
 		hasAccess, err := pd.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(publicDashboards[i].DashboardUid)))

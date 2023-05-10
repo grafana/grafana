@@ -90,7 +90,24 @@ func (api *Api) RegisterAPIEndpoints() {
 // ListPublicDashboards Gets list of public dashboards by orgId
 // GET /api/dashboards/public-dashboards
 func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Response {
-	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &PublicDashboardListQuery{
+		OrgID: c.OrgID,
+		Query: c.Query("query"),
+		Page:  page,
+		Limit: perPage,
+		User:  c.SignedInUser,
+	})
+
 	if err != nil {
 		return response.Err(err)
 	}

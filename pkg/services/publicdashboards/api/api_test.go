@@ -131,7 +131,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindAll", mock.Anything, mock.Anything, mock.Anything).
+			service.On("FindAllWithPagination", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
@@ -155,7 +155,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, "Internal server error", errResp.Message)
 				assert.Equal(t, "publicdashboards.internalServerError", errResp.MessageID)
-				service.AssertNotCalled(t, "FindAll")
+				service.AssertNotCalled(t, "FindAllWithPagination")
 			}
 		})
 	}
