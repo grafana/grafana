@@ -37,6 +37,20 @@ To try out Correlations, you'll need to enable the `correlations` feature toggle
 
 In subsequent releases, we’ll be refining and enhancing the user interface for Correlations, to provide a more streamlined user experience.
 
+## Scenes
+
+<!--Dominik Prokop & Natalia Bernarte -->
+
+_Available in Experimental in all editions of Grafana._
+
+Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
+
+To try it out, please check [@grafana/scenes](https://github.com/grafana/scenes).
+
+<!--
+- TODO: Add link to docs and resources
+-->
+
 ## Subfolders
 
 <!-- Zsofia K. -->
@@ -57,64 +71,15 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 ## Dashboards and visualizations
 
-### Enhanced data source selection experience: simplifying querying for users
+### The Canvas panel is GA
 
-<!-- Ivan Ortega & Natalia Bernarte -->
+<!-- Nathan Marrs -->
 
-_Available in preview in all editions of Grafana._
+We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
-Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
-With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing you to quickly connect to a new one when needed. You can also quickly upload a CSV file.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
-
-To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-### Public dashboards
-
-<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
-
-_Available in preview in all editions of Grafana._
-
-Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
-
-With this update, we've made the following improvements:
-
-- The time picker and annotations can be toggled on or off from the configuration modal
-- You can see a list of all your public dashboards at **Dashboards > Public dashboards**
-- Improved UI: new modal design, paused and not found pages
-- Added support for collapsed rows, hidden queries, and zoom into panels
-
-To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
-
-### Public dashboards insights
-
-<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
-
-_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
-
-The public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
-
-To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-### Email sharing for public dashboards
-
-<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
-
-_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
-
-Our email sharing feature allows you to easily share your public dashboards with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can visualize your data.
-
-We've also added a **Public dashboard users** tab in **Administration > Users** where you can view a list of users who have accessed your public dashboards by way of a email sharing.
-
-To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
-
-### Datagrid
+### New Datagrid panel
 
 <!-- Oscar Kilhed -->
 
@@ -135,7 +100,17 @@ To learn more about the Datagrid panel, please refer to the official documentati
 
 The list of features is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the datagrid.
 
-### Drag and Drop
+### New Trend Panel
+
+<!-- Nathan Marrs -->
+
+_Available in Experimental in all editions of Grafana_
+
+We are excited to introduce a new panel that allows you to display trends where the x axis is not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels.
+
+### Drag and Drop spreadsheets into Grafana
+
+_Available in public preview in all editions of Grafana._
 
 <!-- Oscar Kilhed -->
 
@@ -154,44 +129,122 @@ Data is being stored in the dashboard json and has a 1MB size limit. To learn mo
 
 <!-- TODO: Add docs link above -->
 
-### Canvas GA
+### Select your data source more easily
 
-<!-- Nathan Marrs -->
+<!-- Ivan Ortega & Natalia Bernarte -->
 
-We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+_Available in preview in all editions of Grafana._
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
+Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
 
-### New Trend Panel
+With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing you to quickly connect to a new one when needed. You can also quickly upload a CSV file.
 
-<!-- Nathan Marrs -->
+{{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
 
-_Available in **beta** in all editions of Grafana_
+To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
-We are excited to introduce a new panel that allows you to display trends where the x axis is not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels.
-
-## Authentication and authorization
-
-### No longer possible to disable Role-based access control
-
-<!-- Vardan Torosyan -->
+### Time series time region support
 
 _Generally available in all editions of Grafana._
 
-It is no longer possible to disable [Role-based access control (RBAC)](({{< relref "../administration/roles-and-permissions/access-control/" >}})) using a configuration option in Grafana.
+<!-- Nathan Marrs -->
 
-We understand that this may affect some users who have relied on the ability to disable RBAC in the past. However, we believe that this change is necessary to ensure the best possible security and user experience for our community and customers.
+We have implemented support for adding time regions to the time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday-Friday to display work weeks right alongside your data. Time regions are a useful way to highlight specific parts of a day like night, work hours, or whatever you define for each day. They allow the viewer to quickly orient themselves in parts of the day and/or ignore highlighted parts of the time series.
 
-If you have disabled RBAC for you Grafana instance, refer to our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}) to check if the change is impacting you and what you can do to mitigate any potential issues.
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
-### SAML UI
+### Annotation filtering
+
+_Generally available in all editions of Grafana._
+
+<!-- Nathan Marrs -->
+
+We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
+
+### Redesigned and improved Log Context
+
+_Generally available in all editions of Grafana._
+
+<!-- Sven Grossman -->
+
+We've made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, you can expect the same level of functionality and usability in log context as you would in any other logs panel.
+
+Notably, we've added the following new features that streamline the log context experience:
+
+1. Log details with actions including a **Copy** button to easily copy lines and an eye icon to display only selected labels, allowing users to focus on specific information without leaving the log context panel.
+2. A **Wrap Lines** toggle to automatically wrap long lines of text for easier reading and analysis of log entry context directly in log context.
+3. An **Open in split view** button to execute the context query for a log entry in a split screen in the Explore view.
+4. Only for Loki: A quick filter menu that lets you easily refine the context query by selecting and removing labels.
+
+{{< figure src="/media/docs/grafana/log-context-loki-new-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
+
+These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
+
+### Query multiple data sources in Explore
+
+<!-- Piotr Jamroz -->
+
+_Available in public preview in all editions of Grafana._
+
+You can now query multiple data sources simultaneously in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
+
+Mixed data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the `exploreMixedDatasource` feature toggle.
+
+## Public dashboards
+
+<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
+
+_Available in preview in all editions of Grafana._
+
+Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
+
+With this update, we've made the following improvements:
+
+- The time picker and annotations can be toggled on or off in public dashboard configuration
+- You can see a list of all your public dashboards in **Dashboards > Public dashboards**
+- Improved UI: new modal design, paused and not found pages
+- Added support for collapsed rows, hidden queries, and zoom into panels
+
+To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
+
+### Public dashboards insights
+
+<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
+
+_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+
+Public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
+
+To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+### Email sharing for public dashboards
+
+<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
+
+_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+
+Our email sharing feature allows you to easily share your public dashboards with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can view your public dashboards.
+
+We've also added a **Public dashboard users** tab in **Administration > Users** where you can view a list of users who have accessed your public dashboards by way of a email sharing.
+
+To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
+
+## Authentication and authorization
+
+### Configure your SAML provider in the Grafana UI
 
 <!-- Vardan Torosyan -->
 
 _Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 You can now configure SAML using our new user interface, making the process easier and more convenient than ever before.
-With the new user interface, you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control/" >}}). which makes the process much faster and more efficient.
+With the new user interface, you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control/" >}}), which makes the process much faster and more efficient.
 
 The SAML UI is available in Grafana Enterprise and Grafana Cloud Pro and Advanced. It is intuitive and user-friendly, with clear instructions and helpful prompts to guide you through the process.
 
@@ -210,63 +263,6 @@ From now on, whether you type your username or email address in uppercase, lower
 To help you with dealing with potential user identity conflicts, we have built a [Grafana CLI user identity conflict resolver tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/) which is available since Grafana 9.3.
 
 Note that if you are running Grafana with MySQL as a database, this change does not have any impact as MySQL users were already treated as case-insensitive.
-
-### Time series time region support
-
-<!-- Nathan Marrs -->
-
-We have implemented support for adding time regions to the time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday-Friday to display work weeks right alongside your data. Time regions are a useful way to highlight specific parts of a day like night, work hours, or whatever you define for each day. They allow the viewer to quickly orient themselves in parts of the day and/or ignore highlighted parts of the time series.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
-
-### Annotation filtering
-
-<!-- Nathan Marrs -->
-
-We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
-
-### Redesigned and improved Log Context
-
-<!-- Sven Grossman -->
-
-Our team has recently made enhancements to Grafana's log context feature, resulting in a more seamless and consistent user experience. With the updated user interface, users can expect the same level of functionality and usability in log context as they would in any other logs panel.
-
-Notably, we've added the following new features that streamline the log context experience:
-
-1. Log details with actions including a **Copy** button to easily copy lines and an eye icon to display only selected labels, allowing users to focus on specific information without leaving the log context panel.
-2. A **Wrap Lines** toggle to automatically wrap long lines of text for easier reading and analysis of log entry context directly in log context.
-3. An **Open in split view** button to execute the context query for a log entry in a split screen in the Explore view.
-4. Only for Loki: A quick filter menu that lets you easily refine the context query by selecting and removing labels.
-
-{{< figure src="/media/docs/grafana/log-context-loki-new-whats-new-10-0.png" max-width="750px" caption="Grafana Log Context" >}}
-
-These improvements make working with log context in Grafana more intuitive and efficient, ultimately improving the overall user experience.
-
-## Scenes
-
-<!--Dominik Prokop & Natalia Bernarte -->
-
-_This is an experimental library_
-
-Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
-
-To try it out, please check [@grafana/scenes](https://github.com/grafana/scenes).
-
-<!--
-- TODO: Add link to docs and resources
--->
-
-## Query multiple data sources in Explore
-
-<!-- Piotr Jamroz -->
-
-_Available in preview in all editions of Grafana using the exploreMixedDatasource feature toggle in all editions of Grafana._
-
-You can now query multiple data sources in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
-
-Mixed data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the exploreMixedDatasource feature toggle.
 
 ## Tracing
 
@@ -295,7 +291,7 @@ To try it out, you'll need to enable the `newTraceView` feature toggle. If you�
 
 We have started our work to migrate to OpenTelemetry in Grafana 8.4 and now we are removing OpenTracing and replacing it, for those that still have it configured, with OpenTelemetry under the hood. The changes are made in backwards compatible way so that users of Grafana do not need to change anything and they will continue working in the same way as before.
 
-## Datasources
+## Data sources
 
 ### Azure Monitor data source
 
@@ -319,6 +315,18 @@ This will reduce network load, and speed up now-relative dashboards, especially 
 <!-- Andrej Ocenus -->
 
 As a part of ongoing unification of Phlare and Pyroscope project we are renaming the Phlare data source to Grafana Pyroscope data source. This data source will support both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When creating new instance of the data source, backend type will be autodetected on the config page, or you can select it manually.
+
+### Data plane
+
+<!-- Kyle Brandt -->
+
+Starting with Grafana 10, data types are being defined to create a data plane layer between producers and consumers of data. By defining data types as part of Grafana's platform, plugin and application developers can use these data types to achieve more reliable interoperability across the platform.
+
+Resources:
+
+- [Data Plane Contract - Technical Specification](https://grafana.github.io/dataplane/contract/)
+- [Example Typed Dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
+- [Go library for reading and writing dataplane data](https://github.com/grafana/dataplane/tree/main/sdata)
 
 ## Alerting
 
@@ -354,27 +362,14 @@ To use it in enforce mode:
 - Enable `content_security_policy` in the configuration.
 - Add `require-trusted-types-for 'script';` to the `content_security_policy_template`.
 
-## Private data source connect
+### Private data source connect
 
 <!-- Mitch Seaman -->
 
-_Available in Public Preview in Grafana Cloud Pro and Advanced_
+_Available in Public Preview in Grafana Cloud Pro and Advanced._
 
 Some data sources, like MySQL databases, Prometheus instances or Elasticsearch clusters, run in Private Networks, like onprem networks or virtual private clouds (VPCs) running in AWS, GCP, or Azure.
 
 In order to query these data sources from Grafana Cloud, currently you have to open your private network to a range of IP addresses - this is a non-starter for a lot of IT Security teams. So the challenge is, how do you connect to your private data from Grafana Cloud, without exposing your network?
 
 The answer is Private Data Source Connect (PDC), available now in Public Preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, works across public cloud vendors and a wide variety of secure networks. Learn more in our [docs](https://grafana.com/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/).
-
-
-## Data plane
-
-<!-- Kyle Brandt -->
-
-Starting with Grafana 10, data types are being defined to create a data plane layer between producers and consumers of data. By defining data types as part of Grafana's platform, plugin and application developers can use these data types to achieve more reliable interoperability across the platform. Additionally, data consumers in the platform do not have to infer the data type.
-
-Resources:
-
-- [Data Plane Contract - Technical Specification](https://grafana.github.io/dataplane/contract/)
-- [Example Typed Dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
-- [Go library for reading and writing dataplane data](https://github.com/grafana/dataplane/tree/main/sdata)
