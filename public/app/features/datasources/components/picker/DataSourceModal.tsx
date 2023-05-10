@@ -110,11 +110,11 @@ export function DataSourceModal({
         },
       ]);
       runQueries();
+    });
 
-      reportInteraction(INTERACTION_EVENT_NAME, {
-        item: INTERACTION_ITEM.UPLOAD_FILE,
-        src: analyticsInteractionSrc,
-      });
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.UPLOAD_FILE,
+      src: analyticsInteractionSrc,
     });
 
     if (fileRejections.length < 1) {
