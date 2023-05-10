@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -57,6 +58,64 @@ func parseGoMod(name string) ([]Module, error) {
 	return modules, nil
 }
 
+func check(args []string) error {
+	m, err := parseGoMod(args[0])
+	if err != nil {
+		return err // NOTE: propogating the error upwards
+	}
+	fail := false
+	for _, mod := range m {
+		if mod.Indirect == false && len(mod.Owners) == 0 {
+			fmt.Println(mod.Name)
+			fail = true
+		}
+	}
+	if fail {
+		return errors.New("modfile is invalid") // NOTE: simple way to return errors
+	}
+	return nil
+}
+
+// TODO: enhance to take list of modules (specific one, two, or etc)
+// TODO: have indirect flag that prints indirect
+
+// TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
+// TODO: introduce help messages
+// TODO: test with go test
+// TODO: move every subcommand into its own func to keep main small
+
+func owners(args []string) error {
+	m, err := parseGoMod(args[0])
+	if err != nil {
+		return err
+	}
+	owners := map[string]int{}
+	for _, mod := range m {
+		if mod.Indirect == false {
+			for _, owner := range mod.Owners {
+				owners[owner]++
+			}
+		}
+	}
+	for owner, n := range owners {
+		fmt.Println(owner, n)
+	}
+	return nil
+}
+
+func modules(args []string) error { // TODO: optionally print the count
+	m, err := parseGoMod(args[0])
+	if err != nil {
+		return err
+	}
+	for _, mod := range m {
+		if mod.Indirect == false {
+			fmt.Println(mod.Name)
+		}
+	}
+	return nil
+}
+
 func main() {
 	if len(os.Args) < 3 {
 		fmt.Println("usage: modowners subcommand go.mod...")
@@ -64,54 +123,19 @@ func main() {
 	}
 	switch os.Args[1] {
 	case "check":
-		m, err := parseGoMod(os.Args[2])
+		err := check(os.Args[2:]) // NOTE: take everything from second until end of slice
 		if err != nil {
 			log.Fatal(err)
-		}
-		fail := false
-		for _, mod := range m {
-			if mod.Indirect == false && len(mod.Owners) == 0 {
-				fmt.Println(mod.Name)
-				fail = true
-			}
-		}
-		if fail {
-			os.Exit(1)
 		}
 	case "owners": // Print owners for specific dependency(s)
-		// TODO: enhance to take list of modules (specific one, two, or etc)
-		// TODO: have indirect flag that prints indirect
-
-		// TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
-		// TODO: introduce help messages
-		// TODO: test with go test
-		// TODO: move every subcommand into its own func to keep main small
-		m, err := parseGoMod(os.Args[2])
+		err := owners(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
-		owners := map[string]int{}
-		for _, mod := range m {
-			if mod.Indirect == false {
-				for _, owner := range mod.Owners {
-					owners[owner]++
-				}
-			}
-		}
-		for owner, n := range owners {
-			fmt.Println(owner, n)
-		}
-
 	case "modules": // Print all direct dependencies
-		// TODO: optionally print the count
-		m, err := parseGoMod(os.Args[2])
+		err := modules(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
-		}
-		for _, mod := range m {
-			if mod.Indirect == false {
-				fmt.Println(mod.Name)
-			}
 		}
 	default:
 		os.Exit(1)
