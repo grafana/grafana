@@ -662,6 +662,7 @@ export enum TableCellDisplayMode {
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
   Sparkline = 'sparkline',
+  String = 'string',
 }
 
 /**
@@ -733,6 +734,14 @@ export interface TableImageCellOptions {
 }
 
 /**
+ * String cell options
+ */
+export interface TableStringCellOptions {
+  sanitizeHTML: boolean;
+  type: TableCellDisplayMode.String;
+}
+
+/**
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
@@ -769,7 +778,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions | TableStringCellOptions);
 
 /**
  * Use UTC/GMT timezone

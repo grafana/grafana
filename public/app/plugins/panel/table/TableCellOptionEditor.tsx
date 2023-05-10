@@ -10,6 +10,7 @@ import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
+import { StringCellOptionsEditor } from './cells/StringCellOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -70,6 +71,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.Sparkline && (
         <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
+      {cellType === TableCellDisplayMode.String && (
+        <StringCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
     </div>
   );
 };
@@ -87,6 +91,7 @@ const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
+  { value: { type: TableCellDisplayMode.String, sanitizeHTML: false }, label: 'String' },
 ];
 
 const getStyles = (theme: GrafanaTheme2) => ({

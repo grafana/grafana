@@ -32,6 +32,7 @@ import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
 import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
+import { StringCell } from './StringCell';
 import {
   CellComponent,
   TableCellDisplayMode,
@@ -180,6 +181,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return SparklineCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.String:
+      return StringCell;
   }
 
   if (field.type === FieldType.geo) {
