@@ -22,6 +22,7 @@ const (
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeSearch        TempoQueryType = "search"
 	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeTraceId       TempoQueryType = "traceId"
 	TempoQueryTypeTraceql       TempoQueryType = "traceql"
 	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
 	TempoQueryTypeUpload        TempoQueryType = "upload"

@@ -51,7 +51,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 						// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-						#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
+						#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
 
 						// static fields are pre-set in the UI, dynamic fields are added by the user
 						#TraceqlSearchScope: "unscoped" | "resource" | "span" @cuetsy(kind="enum")

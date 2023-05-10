@@ -367,7 +367,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * @private
    */
   handleTraceIdQuery(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
-    const validTargets = targets.filter((t) => t.query).map((t) => ({ ...t, query: t.query.trim() }));
+    const validTargets = targets
+      .filter((t) => t.query)
+      .map((t): TempoQuery => ({ ...t, query: t.query.trim(), queryType: 'traceId' }));
     if (!validTargets.length) {
       return EMPTY;
     }

@@ -55,7 +55,7 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 /**
  * search = Loki search, nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
 
 /**
  * static fields are pre-set in the UI, dynamic fields are added by the user
