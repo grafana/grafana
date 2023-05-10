@@ -364,10 +364,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		SignedInUser: &signedInUser,
 	}
 
+	folderPermissions := acmock.NewMockedPermissionsService()
+	dashboardPermissions := acmock.NewMockedPermissionsService()
+
 	t.Run("Should get descendant counts", func(t *testing.T) {
-		ac := acmock.New()
-		folderPermissions := acmock.NewMockedPermissionsService()
-		dashboardPermissions := acmock.NewMockedPermissionsService()
 		depth := 5
 		t.Run("With nested folder feature flag on", func(t *testing.T) {
 			origNewGuardian := guardian.New
@@ -471,77 +471,199 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 	t.Run("Should delete folders", func(t *testing.T) {
 		t.Run("With nested folder feature flag on", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			t.Run("With force deletion of rules", func(t *testing.T) {
+				origNewGuardian := guardian.New
+				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
+				dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
+				require.NoError(t, err)
 
-			deleteCmd := folder.DeleteFolderCommand{
-				UID:              ancestorUIDs[0],
-				OrgID:            orgID,
-				SignedInUser:     &signedInUser,
-				ForceDeleteRules: true,
-			}
-			err = serviceWithFlagOn.Delete(context.Background(), &deleteCmd)
-			require.NoError(t, err)
+				alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, ac, dashSrv)
+				require.NoError(t, err)
 
-			for i, uid := range ancestorUIDs {
-				// dashboard table
-				_, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
-				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-				// folder table
-				_, err = serviceWithFlagOn.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
-				require.ErrorIs(t, err, folder.ErrFolderNotFound)
-			}
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
+				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "with-force", createCmd)
+
+				parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				require.NoError(t, err)
+				subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+				require.NoError(t, err)
+				_ = createRule(t, alertStore, parent.UID, "parent alert")
+				_ = createRule(t, alertStore, subfolder.UID, "sub alert")
+
+				deleteCmd := folder.DeleteFolderCommand{
+					UID:              ancestorUIDs[0],
+					OrgID:            orgID,
+					SignedInUser:     &signedInUser,
+					ForceDeleteRules: true,
+				}
+				err = serviceWithFlagOn.Delete(context.Background(), &deleteCmd)
+				require.NoError(t, err)
+
+				for i, uid := range ancestorUIDs {
+					// dashboard table
+					_, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+					// folder table
+					_, err = serviceWithFlagOn.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+					require.ErrorIs(t, err, folder.ErrFolderNotFound)
+				}
+				t.Cleanup(func() {
+					guardian.New = origNewGuardian
+				})
+			})
+			t.Run("Without force deletion of rules", func(t *testing.T) {
+				origNewGuardian := guardian.New
+				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+				dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
+				require.NoError(t, err)
+
+				alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, ac, dashSrv)
+				require.NoError(t, err)
+
+				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 3, "without-force", createCmd)
+
+				parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				require.NoError(t, err)
+				subfolder, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[1])
+				require.NoError(t, err)
+				_ = createRule(t, alertStore, parent.UID, "parent alert")
+				_ = createRule(t, alertStore, subfolder.UID, "sub alert")
+
+				deleteCmd := folder.DeleteFolderCommand{
+					UID:              ancestorUIDs[0],
+					OrgID:            orgID,
+					SignedInUser:     &signedInUser,
+					ForceDeleteRules: false,
+				}
+				err = serviceWithFlagOn.Delete(context.Background(), &deleteCmd)
+				require.Error(t, dashboards.ErrFolderContainsAlertRules, err)
+
+				for i, uid := range ancestorUIDs {
+					// dashboard table
+					_, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+					require.NoError(t, err)
+					// folder table
+					_, err = serviceWithFlagOn.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+					require.NoError(t, err)
+				}
+				t.Cleanup(func() {
+					guardian.New = origNewGuardian
+				})
 			})
 		})
 		t.Run("With nested folder feature flag off", func(t *testing.T) {
-			featuresFlagOff := featuremgmt.WithFeatures()
-			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
-			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
-
-			serviceWithFlagOff := &Service{
-				cfg:                  cfg,
-				log:                  log.New("test-folder-service"),
-				dashboardStore:       dashStore,
-				dashboardFolderStore: folderStore,
-				store:                nestedFolderStore,
-				features:             featuresFlagOff,
-				bus:                  b,
-				db:                   db,
-			}
-
-			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-
-			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
-
-			deleteCmd := folder.DeleteFolderCommand{
-				UID:              ancestorUIDs[0],
-				OrgID:            orgID,
-				SignedInUser:     &signedInUser,
-				ForceDeleteRules: true,
-			}
-			err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
-			require.NoError(t, err)
-
-			for i, uid := range ancestorUIDs {
-				// dashboard table
-				_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
-				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-				// folder table
-				_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+			t.Run("With force deletion of rules", func(t *testing.T) {
+				featuresFlagOff := featuremgmt.WithFeatures()
+				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 				require.NoError(t, err)
-			}
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-				for _, uid := range ancestorUIDs {
-					err := serviceWithFlagOff.store.Delete(context.Background(), uid, orgID)
+				nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+
+				dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
+				require.NoError(t, err)
+				alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOn, ac, dashSrv)
+				require.NoError(t, err)
+
+				serviceWithFlagOff := &Service{
+					cfg:                  cfg,
+					log:                  log.New("test-folder-service"),
+					dashboardStore:       dashStore,
+					dashboardFolderStore: folderStore,
+					store:                nestedFolderStore,
+					features:             featuresFlagOff,
+					bus:                  b,
+					db:                   db,
+				}
+
+				origNewGuardian := guardian.New
+				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
+
+				parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				require.NoError(t, err)
+				_ = createRule(t, alertStore, parent.UID, "parent alert")
+
+				deleteCmd := folder.DeleteFolderCommand{
+					UID:              ancestorUIDs[0],
+					OrgID:            orgID,
+					SignedInUser:     &signedInUser,
+					ForceDeleteRules: true,
+				}
+				err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
+				require.NoError(t, err)
+
+				for i, uid := range ancestorUIDs {
+					// dashboard table
+					_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+					// folder table
+					_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
 					require.NoError(t, err)
 				}
+				t.Cleanup(func() {
+					guardian.New = origNewGuardian
+					for _, uid := range ancestorUIDs {
+						err := serviceWithFlagOff.store.Delete(context.Background(), uid, orgID)
+						require.NoError(t, err)
+					}
+				})
+			})
+			t.Run("Without force deletion of rules", func(t *testing.T) {
+				featuresFlagOff := featuremgmt.WithFeatures()
+				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+				require.NoError(t, err)
+				nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+
+				dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
+				require.NoError(t, err)
+				alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOn, ac, dashSrv)
+				require.NoError(t, err)
+
+				serviceWithFlagOff := &Service{
+					cfg:                  cfg,
+					log:                  log.New("test-folder-service"),
+					dashboardStore:       dashStore,
+					dashboardFolderStore: folderStore,
+					store:                nestedFolderStore,
+					features:             featuresFlagOff,
+					bus:                  b,
+					db:                   db,
+				}
+
+				origNewGuardian := guardian.New
+				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+				ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
+
+				parent, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				require.NoError(t, err)
+				_ = createRule(t, alertStore, parent.UID, "parent alert")
+
+				deleteCmd := folder.DeleteFolderCommand{
+					UID:              ancestorUIDs[0],
+					OrgID:            orgID,
+					SignedInUser:     &signedInUser,
+					ForceDeleteRules: false,
+				}
+				err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
+				require.Error(t, dashboards.ErrFolderContainsAlertRules, err)
+
+				for i, uid := range ancestorUIDs {
+					// dashboard table
+					_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+					require.NoError(t, err)
+					// folder table
+					_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+					require.NoError(t, err)
+				}
+				t.Cleanup(func() {
+					guardian.New = origNewGuardian
+					for _, uid := range ancestorUIDs {
+						err := serviceWithFlagOff.store.Delete(context.Background(), uid, orgID)
+						require.NoError(t, err)
+					}
+				})
 			})
 		})
 	})
