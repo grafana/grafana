@@ -1256,7 +1256,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		}
 	})
 
-	t.Run("does not pass multiple resources", func(t *testing.T) {
+	t.Run("does not pass multiple resources for traces queries", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		from := time.Now()
 		to := from.Add(3 * time.Hour)
