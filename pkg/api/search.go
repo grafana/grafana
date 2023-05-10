@@ -73,7 +73,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	if err := concurrency.ForEachJob(c.Req.Context(), len(folderIdsQry), len(folderIdsQry), func(ctx context.Context, idx int) error {
 		folderID, err := strconv.ParseInt(folderIdsQry[idx], 10, 64)
 		if err != nil {
-			hs.log.Debug("failed to parse folder ID", "folderID", folderID, "err", err)
+			hs.log.Debug("failed to parse folder ID", "folderID", folderIdsQry[idx], "err", err)
 			return nil
 		}
 
