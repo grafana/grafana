@@ -782,3 +782,37 @@ func TestAlertingEnabled(t *testing.T) {
 		})
 	}
 }
+
+func TestRedactedValue(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		key      string
+		value    string
+		expected string
+	}{
+		{
+			desc:     "non-sensitive key",
+			key:      "admin_user",
+			value:    "admin",
+			expected: "admin",
+		},
+		{
+			desc:     "sensitive key with non-empty value",
+			key:      "private_key_path",
+			value:    "/path/to/key",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "sensitive key with empty value",
+			key:      "private_key_path",
+			value:    "",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.expected, RedactedValue(tc.key, tc.value))
+		})
+	}
+}
