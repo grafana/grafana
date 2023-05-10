@@ -22,10 +22,15 @@ describe('QueryEditor', () => {
         metrics: [
           {
             id: '1',
-            type: 'raw_data',
+            type: 'count',
           },
         ],
-        bucketAggs: [],
+        bucketAggs: [
+          {
+            type: 'date_histogram',
+            id: '2',
+          },
+        ],
       };
 
       const onChange = jest.fn<void, [ElasticsearchQuery]>();
@@ -51,7 +56,7 @@ describe('QueryEditor', () => {
       expect(onChange.mock.calls[0][0].alias).toBe(newAlias);
     });
 
-    it('Should be disabled if last bucket aggregation is not Date Histogram', () => {
+    it('Should not be shown if last bucket aggregation is not Date Histogram', () => {
       const query: ElasticsearchQuery = {
         refId: 'A',
         query: '',
@@ -66,10 +71,10 @@ describe('QueryEditor', () => {
 
       render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
 
-      expect(screen.getByLabelText('Alias')).toBeDisabled();
+      expect(screen.queryByLabelText('Alias')).toBeNull();
     });
 
-    it('Should be enabled if last bucket aggregation is Date Histogram', () => {
+    it('Should be shown if last bucket aggregation is Date Histogram', () => {
       const query: ElasticsearchQuery = {
         refId: 'A',
         query: '',

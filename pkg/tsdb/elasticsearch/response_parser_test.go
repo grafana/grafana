@@ -50,7 +50,7 @@ func TestProcessLogsResponse(t *testing.T) {
 							  "_type": "_doc",
 							  "_index": "mock-index",
 							  "_source": {
-								"testtime": "2019-06-24T09:51:19.765Z",
+								"testtime": "06/24/2019",
 								"host": "djisaodjsoad",
 								"number": 1,
 								"line": "hello, i am a message",
@@ -58,17 +58,20 @@ func TestProcessLogsResponse(t *testing.T) {
 								"fields": { "lvl": "debug" }
 							  },
 							  "highlight": {
-								"message": [
-								  "@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
-								]
-							  }
+									"message": [
+								  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+									]
+							  },
+								"fields": {
+									"testtime": [ "2019-06-24T09:51:19.765Z" ]
+								}
 							},
 							{
 							  "_id": "kdospaidopa",
 							  "_type": "_doc",
 							  "_index": "mock-index",
 							  "_source": {
-								"testtime": "2019-06-24T09:52:19.765Z",
+								"testtime": "06/24/2019",
 								"host": "dsalkdakdop",
 								"number": 2,
 								"line": "hello, i am also message",
@@ -76,10 +79,13 @@ func TestProcessLogsResponse(t *testing.T) {
 								"fields": { "lvl": "info" }
 							  },
 							  "highlight": {
-								"message": [
-								  "@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
-								]
-							  }
+									"message": [
+								  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+									]
+							  },
+								"fields": {
+									"testtime": [ "2019-06-24T09:52:19.765Z" ]
+								}
 							}
 						  ]
 						}
@@ -141,14 +147,14 @@ func TestProcessLogsResponse(t *testing.T) {
 						"level": "debug",
 						"line": "hello, i am a message",
 						"number": 1,
-						"testtime": "2019-06-24T09:51:19.765Z",
+						"testtime": "06/24/2019",
 						"line": "hello, i am a message"
 					}
 					`
 
 			expectedJson2 := `
 					{
-						"testtime": "2019-06-24T09:52:19.765Z",
+						"testtime": "06/24/2019",
 						"host": "dsalkdakdop",
 						"number": 2,
 						"line": "hello, i am also message",
@@ -179,6 +185,28 @@ func TestProcessLogsResponse(t *testing.T) {
 
 			requireStringAt(t, "debug", field, 0)
 			requireStringAt(t, "error", field, 1)
+		})
+
+		t.Run("gets correct time field from fields", func(t *testing.T) {
+			result, err := queryDataTest(query, response)
+			require.NoError(t, err)
+
+			require.Len(t, result.response.Responses, 1)
+			frames := result.response.Responses["A"].Frames
+			require.Len(t, frames, 1)
+
+			logsFrame := frames[0]
+
+			logsFieldMap := make(map[string]*data.Field)
+			for _, field := range logsFrame.Fields {
+				logsFieldMap[field.Name] = field
+			}
+			t0 := time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC)
+			t1 := time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC)
+			require.Contains(t, logsFieldMap, "testtime")
+			require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
+			require.Equal(t, &t0, logsFieldMap["testtime"].At(0))
+			require.Equal(t, &t1, logsFieldMap["testtime"].At(1))
 		})
 	})
 	t.Run("Empty response", func(t *testing.T) {

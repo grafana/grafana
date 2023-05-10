@@ -61,6 +61,10 @@ load(
     "test_backend",
     "test_backend_enterprise",
 )
+load(
+    "scripts/drone/pipelines/windows.star",
+    "windows_test_backend",
+)
 load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
@@ -202,7 +206,8 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -213,20 +218,10 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         integration_test_steps = []
         volumes = []
 
-    windows_pipeline = pipeline(
-        name = "{}-oss-windows".format(ver_mode),
-        edition = "oss",
-        trigger = trigger,
-        steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
-        platform = "windows",
-        depends_on = [
-            "{}-oss-build-e2e-publish".format(ver_mode),
-            "{}-oss-test-frontend".format(ver_mode),
-            "{}-oss-test-backend".format(ver_mode),
-        ],
-        environment = environment,
-    )
-
+    windows_pipeline_dependencies = [
+        "{}-oss-build-e2e-publish".format(ver_mode),
+        "{}-oss-test-frontend".format(ver_mode),
+    ]
     pipelines = [
         pipeline(
             name = "{}-oss-build-e2e-publish".format(ver_mode),
@@ -242,6 +237,9 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     ]
 
     if ver_mode not in ("release"):
+        pipelines.append(windows_test_backend(trigger, "oss", ver_mode))
+        pipelines.append(windows_test_backend(trigger, "enterprise", ver_mode))
+        windows_pipeline_dependencies.append("{}-oss-test-backend-windows".format(ver_mode))
         pipelines.append(pipeline(
             name = "{}-oss-integration-tests".format(ver_mode),
             edition = "oss",
@@ -258,6 +256,16 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
             environment = environment,
             volumes = volumes,
         ))
+
+    windows_pipeline = pipeline(
+        name = "{}-oss-windows".format(ver_mode),
+        edition = "oss",
+        trigger = trigger,
+        steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
+        platform = "windows",
+        depends_on = windows_pipeline_dependencies,
+        environment = environment,
+    )
 
     pipelines.append(windows_pipeline)
 
@@ -355,7 +363,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -738,7 +747,8 @@ def integration_test_pipelines():
     volumes = integration_test_services_volumes()
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
