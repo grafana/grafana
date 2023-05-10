@@ -78,7 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       overflow: 'hidden',
       [theme.breakpoints.down('sm')]: {
-        minWidth: '60%',
+        minWidth: '50%',
       },
     }),
     pageToolbar: css({
