@@ -2,11 +2,11 @@
 keywords:
   - grafana
   - schema
-title: NewsPanelCfg kind
+title: DatagridPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-## NewsPanelCfg
+## DatagridPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
@@ -19,9 +19,8 @@ title: NewsPanelCfg kind
 
 ### Options
 
-| Property    | Type    | Required | Default | Description                                |
-|-------------|---------|----------|---------|--------------------------------------------|
-| `feedUrl`   | string  | No       |         | empty/missing will default to grafana blog |
-| `showImage` | boolean | No       | `true`  |                                            |
+| Property         | Type    | Required | Default | Description                       |
+|------------------|---------|----------|---------|-----------------------------------|
+| `selectedSeries` | integer | **Yes**  | `0`     | Constraint: `>=0 & <=2147483647`. |
 
 
