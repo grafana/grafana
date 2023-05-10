@@ -149,18 +149,6 @@ function useAutocomplete(datasource: TempoDatasource) {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
-        const tags = datasource.languageProvider.getTags();
-
-        if (tags) {
-          // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
-          // so Tempo doesn't send anything and we inject it here for the autocomplete
-          if (tags.v1) {
-            if (!tags.v1.find((t) => t === 'status')) {
-              tags.v1.push('status');
-            }
-          }
-          providerRef.current.setTags(tags);
-        }
       } catch (error) {
         if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));

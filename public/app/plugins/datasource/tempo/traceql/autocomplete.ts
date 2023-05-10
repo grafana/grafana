@@ -5,9 +5,7 @@ import type { Monaco, monacoTypes } from '@grafana/ui';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
-import { getUnscopedTags } from '../SearchTraceQLEditor/utils';
 import TempoLanguageProvider from '../language_provider';
-import { Scope, Tags } from '../types';
 
 import { intrinsics, scopes } from './traceql';
 
@@ -36,7 +34,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private tags: Tags | undefined;
   private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
@@ -81,10 +78,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       });
       return { suggestions };
     });
-  }
-
-  setTags(tags: Tags) {
-    this.tags = tags;
   }
 
   /**
@@ -180,21 +173,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getTagsCompletions(prepend?: string, scope?: string): Completion[] {
-    let tags: string[] = [];
-    if (this.tags) {
-      if (this.tags.v1) {
-        tags = this.tags.v1;
-      } else if (this.tags.v2) {
-        const s = this.tags.v2.find((s: Scope) => s.name && s.name === scope);
-        // have not typed a scope yet || unscoped (.) typed
-        if (!s) {
-          tags = getUnscopedTags(this.tags.v2);
-        } else {
-          tags = s && s.tags ? s.tags : [];
-        }
-      }
-    }
-
+    const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
     return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
       .map((key) => ({

@@ -8,10 +8,9 @@ import { useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
-import { Scope, Tags } from '../types';
 
 import SearchField from './SearchField';
-import { getUnscopedTags } from './utils';
+import { getFilteredTags } from './utils';
 
 const getStyles = () => ({
   vertical: css`
@@ -32,7 +31,7 @@ interface Props {
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError) => void;
-  tags: Tags | undefined;
+  staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
   hideValues?: boolean;
 }
@@ -42,7 +41,7 @@ const TagsInput = ({
   filters,
   datasource,
   setError,
-  tags,
+  staticTags,
   isTagsLoading,
   hideValues,
 }: Props) => {
@@ -60,18 +59,8 @@ const TagsInput = ({
   }, [filters, handleOnAdd]);
 
   const getTags = (f: TraceqlFilter) => {
-    if (tags) {
-      if (tags.v1) {
-        return tags.v1;
-      } else if (tags.v2) {
-        if (f.scope === TraceqlSearchScope.Unscoped) {
-          return getUnscopedTags(tags.v2);
-        }
-        const scope = tags.v2.find((scope: Scope) => scope.name && scope.name === f.scope);
-        return scope && scope.tags ? scope.tags : [];
-      }
-    }
-    return [];
+    const tags = datasource.languageProvider.getTags(f.scope);
+    return getFilteredTags(tags, staticTags);
   };
 
   return (

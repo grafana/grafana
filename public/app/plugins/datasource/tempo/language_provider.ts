@@ -1,11 +1,14 @@
 import { LanguageProvider, SelectableValue } from '@grafana/data';
 
+import { getAllTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
+import { TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
-import { Tags } from './types';
+import { Scope } from './types';
 
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
-  tags?: Tags;
+  tagsV1?: string[];
+  tagsV2?: Scope[];
   constructor(datasource: TempoDatasource, initialValues?: any) {
     super();
 
@@ -35,14 +38,63 @@ export default class TempoLanguageProvider extends LanguageProvider {
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
-    this.tags = {
-      v1: v2Resp ? undefined : v1Resp.tagNames,
-      v2: v2Resp && v2Resp.scopes ? v2Resp.scopes : undefined,
-    };
+
+    if (v2Resp && v2Resp.scopes) {
+      this.tagsV2 = v2Resp.scopes;
+    } else if (v1Resp) {
+      this.tagsV1 = v1Resp.tagNames;
+    }
   }
 
-  getTags = () => {
-    return this.tags;
+  getTags = (scope?: TraceqlSearchScope) => {
+    if (this.tagsV2 && scope) {
+      if (scope === TraceqlSearchScope.Unscoped) {
+        return getUnscopedTags(this.tagsV2);
+      }
+      return getTagsByScope(this.tagsV2, scope);
+    } else if (this.tagsV1) {
+      // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
+      // so Tempo doesn't send anything and we inject it here for the autocomplete
+      if (!this.tagsV1.find((t) => t === 'status')) {
+        this.tagsV1.push('status');
+      }
+      return this.tagsV1;
+    }
+    return [];
+  };
+
+  getTraceqlAutocompleteTags = (scope?: string) => {
+    if (this.tagsV2) {
+      if (!scope) {
+        // have not typed a scope yet || unscoped (.) typed
+        return getUnscopedTags(this.tagsV2);
+      } else if (scope === TraceqlSearchScope.Unscoped) {
+        return getUnscopedTags(this.tagsV2);
+      }
+      return getTagsByScope(this.tagsV2, scope);
+    } else if (this.tagsV1) {
+      // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
+      // so Tempo doesn't send anything and we inject it here for the autocomplete
+      if (!this.tagsV1.find((t) => t === 'status')) {
+        this.tagsV1.push('status');
+      }
+      return this.tagsV1;
+    }
+    return [];
+  };
+
+  getAutocompleteTags = () => {
+    if (this.tagsV2) {
+      return getAllTags(this.tagsV2);
+    } else if (this.tagsV1) {
+      // This is needed because the /api/search/tag/${tag}/values API expects "status.code" and the v2 API expects "status"
+      // so Tempo doesn't send anything and we inject it here for the autocomplete
+      if (!this.tagsV1.find((t) => t === 'status.code')) {
+        this.tagsV1.push('status.code');
+      }
+      return this.tagsV1;
+    }
+    return [];
   };
 
   async getOptionsV1(tag: string): Promise<Array<SelectableValue<string>>> {
