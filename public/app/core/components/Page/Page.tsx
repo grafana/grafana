@@ -24,7 +24,6 @@ export const Page: PageType = ({
   className,
   info,
   layout = PageLayoutType.Standard,
-  toolbar,
   scrollTop,
   scrollRef,
   ...otherProps
@@ -70,18 +69,10 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.canvasContent}>
-            {toolbar}
-            {children}
-          </div>
+          <div className={styles.canvasContent}>{children}</div>
         </CustomScrollbar>
       )}
-      {layout === PageLayoutType.Custom && (
-        <>
-          {toolbar}
-          {children}
-        </>
-      )}
+      {layout === PageLayoutType.Custom && children}
     </div>
   );
 };

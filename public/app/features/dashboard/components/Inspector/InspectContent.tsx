@@ -68,9 +68,7 @@ export const InspectContent = ({
     <Drawer
       title={title}
       subtitle={data && formatStats(data)}
-      width="50%"
       onClose={onClose}
-      expandable
       scrollableContent
       tabs={
         <TabsBar>

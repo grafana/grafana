@@ -22,7 +22,7 @@ To identify the factors that are contributing to the latency, you must compare a
 
 Use exemplars to help isolate problems within your data distribution by pinpointing query traces exhibiting high latency within a time interval. Once you localize the latency problem to a few exemplar traces, you can combine it with additional system based information or location properties to perform a root cause analysis faster, leading to quick resolutions to performance issues.
 
-Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplar data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source]({{< relref "../../datasources/prometheus/#configuring-exemplars" >}}).
+Support for exemplars is available for the Prometheus data source only. Once you enable the functionality, exemplar data is available by default. For more information on exemplar configuration and how to enable exemplars, refer to [configuring exemplars in the Prometheus data source]({{< relref "../../datasources/prometheus/#configure-exemplars" >}}).
 
 Grafana shows exemplars alongside a metric in the Explore view and in dashboards. Each exemplar displays as a highlighted star. You can hover your cursor over an exemplar to view the unique trace ID, which is a combination of a key value pair. To investigate further, click the blue button next to the `traceID` property.
 

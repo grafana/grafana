@@ -1,10 +1,12 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { BrowseDashboardsState } from '../types';
 
 import { fetchChildren } from './actions';
+import { findItem } from './utils';
 
 type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
 
@@ -12,7 +14,7 @@ export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState,
   const parentUID = action.meta.arg;
   const children = action.payload;
 
-  if (!parentUID) {
+  if (!parentUID || parentUID === GENERAL_FOLDER_UID) {
     state.rootItems = children;
     return;
   }
@@ -76,14 +78,7 @@ export function setItemSelectionState(
       break;
     }
 
-    if (isSelected) {
-      // If we're selecting an item, check all ancestors and see if all their children are
-      // now selected and update them appropriately
-      const children = state.childrenByParentUID[parent.uid];
-
-      const allChildrenSelected = children?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
-      state.selectedItems[parent.kind][parent.uid] = allChildrenSelected;
-    } else {
+    if (!isSelected) {
       // A folder cannot be selected if any of it's children are unselected
       state.selectedItems[parent.kind][parent.uid] = false;
     }
@@ -132,31 +127,4 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
       }
     }
   }
-}
-
-function findItem(
-  rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
-  uid: string
-): DashboardViewItem | undefined {
-  for (const item of rootItems) {
-    if (item.uid === uid) {
-      return item;
-    }
-  }
-
-  for (const parentUID in childrenByUID) {
-    const children = childrenByUID[parentUID];
-    if (!children) {
-      continue;
-    }
-
-    for (const child of children) {
-      if (child.uid === uid) {
-        return child;
-      }
-    }
-  }
-
-  return undefined;
 }

@@ -8,13 +8,13 @@ weight: 8
 
 # Public dashboards
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 This feature is in [public preview](/docs/release-life-cycle/).
 
 {{% /admonition %}}
 
-{{% admonition type="Caution" %}}
+{{% admonition type="caution" %}}
 
 Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-caching" >}}) and/or rate limiting features.
@@ -22,6 +22,8 @@ This can be mitigated by utilizing the enterprise [caching]({{< relref "../../ad
 {{% /admonition %}}
 
 Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
+
+You can see a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
 
 ## Security implications of making your dashboard public
 
@@ -45,7 +47,7 @@ If you are using Docker, use an environment variable to enable public dashboards
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
 
@@ -79,7 +81,7 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 ## Email sharing
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
@@ -89,7 +91,7 @@ Email sharing allows you to share your public dashboard with only specific peopl
 
 ### Enable email sharing
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
 
@@ -135,6 +137,16 @@ Immediately, the viewer no longer has access to the public dashboard, nor can th
 
 The viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
 
+### View public dashboard users
+
+To see a list of users who have accessed your dashboard by way of email sharing, take the following steps:
+
+1. In the main sidebar navigation, click **Administration**.
+1. Click **Users**.
+1. Click the **Public dashboard users** tab.
+
+From here, you can see the earliest time a user has been active in a dashboard, which public dashboards they have access to, and their role.
+
 ### Access limitations
 
 One-time use links use browser cookies, so when a viewer is granted access through one of these links, they will only have access on the browser they used to claim the link.
@@ -145,7 +157,7 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+> **note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
@@ -191,7 +203,7 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ### Unconfirmed:
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
 

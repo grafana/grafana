@@ -810,6 +810,189 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
+  describe('google cloud link', () => {
+    const searchUID = 'searchUID';
+
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {
+            uid: searchUID,
+            name: 'Google Cloud Logging',
+            type: 'googlecloud-logging-datasource',
+          } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('creates link with correct simple query', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: searchUID,
+      });
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(decodeURIComponent(linkDef!.href)).toContain(
+        `datasource":"${searchUID}","queries":[{"query":"cluster=\\"cluster1\\" AND hostname=\\"hostname1\\"","refId":""}]`
+      );
+    });
+
+    it('automatically timeshifts the time range by one second in a query', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: searchUID,
+      });
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toContain(
+        `${encodeURIComponent('{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"}')}`
+      );
+      expect(linkDef!.href).not.toContain(
+        `${encodeURIComponent('{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:00.000Z"}')}`
+      );
+    });
+
+    it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: searchUID,
+          filterByTraceID: true,
+          filterBySpanID: true,
+        },
+        searchUID
+      );
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster=\\"cluster1\\" AND hostname=\\"hostname1\\"","refId":""}]}`
+        )}`
+      );
+    });
+
+    it('formats query correctly if only filterByTraceID is true', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: searchUID,
+          filterByTraceID: true,
+        },
+        searchUID
+      );
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(decodeURIComponent(linkDef!.href)).toBe(
+        `/explore?left={"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"searchUID","queries":[{"query":"\\"7946b05c2e2e4e5a\\"","refId":""}]}`
+      );
+    });
+
+    it('should format one tag correctly', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [{ key: 'ip' }],
+        },
+        searchUID
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [{ key: 'ip', value: '192.168.0.1' }],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"ip=\\"192.168.0.1\\"","refId":""}]}`
+        )}`
+      );
+    });
+
+    it('should format multiple tags correctly', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [{ key: 'ip' }, { key: 'hostname' }],
+        },
+        searchUID
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"hostname=\\"hostname1\\" AND ip=\\"192.168.0.1\\"","refId":""}]}`
+        )}`
+      );
+    });
+
+    it('handles renamed tags', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          tags: [
+            { key: 'service.name', value: 'service' },
+            { key: 'k8s.pod.name', value: 'pod' },
+          ],
+        },
+        searchUID
+      );
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"service=\\"serviceName\\" AND pod=\\"podName\\"","refId":""}]}`
+        )}`
+      );
+    });
+  });
+
   describe('custom query', () => {
     beforeAll(() => {
       setDataSourceSrv({
