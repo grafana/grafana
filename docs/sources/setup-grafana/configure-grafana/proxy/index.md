@@ -18,7 +18,7 @@ To make use of this functionality, you need to deploy a socks5 proxy server that
 ## Known limitations
 
 - You can configure only one socks5 proxy per Grafana instance
-- All built-in core data sources are compatible, but not all external data sources are. For a list of supported data sources, refer to [private data source connect]({{< ref "/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/#known-limitations" >}}).
+- All built-in core data sources are compatible, but not all external data sources are. For a list of supported data sources, refer to [private data source connect](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/#known-limitations).
 
 ## Before you begin
 
