@@ -50,7 +50,7 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
