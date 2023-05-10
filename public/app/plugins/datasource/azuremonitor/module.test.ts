@@ -2,7 +2,7 @@ import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import './module';
-import { AzureMonitorQuery } from './types';
+import { AzureMonitorQuery, AzureQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -48,6 +48,15 @@ jest.mock('@grafana/runtime', () => {
                   },
                 },
                 { queryType: 'Azure Traces', hide: true, azureTraces: { resultFormat: 'trace' } },
+                { queryType: 'Azure Subscriptions' },
+                { queryType: 'Azure Resource Groups' },
+                { queryType: 'Azure Namespaces' },
+                { queryType: 'Azure Resource Names' },
+                { queryType: 'Azure Metric Names' },
+                { queryType: 'Azure Workspaces' },
+                { queryType: 'Azure Regions' },
+                { queryType: 'Grafana Template Variable Function' },
+                { queryType: 'unknown' },
               ] as AzureMonitorQuery[],
             },
           })
@@ -67,14 +76,17 @@ describe('queriesOnInitDashboard', () => {
       azure_monitor_queries: 1,
       azure_monitor_queries_hidden: 1,
       azure_monitor_multiple_resource: 1,
+      azure_monitor_query: 2,
 
       azure_log_analytics_queries: 1,
       azure_log_analytics_queries_hidden: 1,
       azure_log_multiple_resource: 1,
+      azure_log_query: 2,
 
       azure_resource_graph_queries: 1,
       azure_resource_graph_queries_hidden: 1,
       azure_resource_graph_multiple_subscription: 1,
+      azure_resource_graph_query: 2,
 
       azure_traces_queries: 1,
       azure_traces_queries_hidden: 1,
@@ -84,6 +96,17 @@ describe('queriesOnInitDashboard', () => {
       azure_traces_operation_id_specified: 1,
       azure_traces_event_type_specified: 1,
       azure_traces_filters: 1,
+      azure_traces_query: 2,
+
+      azure_subscriptions_query: 1,
+      azure_resource_groups_query: 1,
+      azure_namespaces_query: 1,
+      azure_resource_names_query: 1,
+      azure_metric_names_query: 1,
+      azure_workspaces_query: 1,
+      azure_grafana_template_variable_query: 1,
+      azure_locations_query: 1,
+      azure_unknown_query: 1,
     });
   });
 });

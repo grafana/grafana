@@ -12,38 +12,54 @@ export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureD
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(AzureMonitorQueryEditor);
 
+interface Statistics {
+  hidden: number;
+  visible: number;
+  multiResource: number;
+  count: number;
+  [key: string]: number;
+}
+
 // Track dashboard loads to RudderStack
 getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
   DashboardLoadedEvent,
   ({ payload: { dashboardId, orgId, userId, grafanaVersion, queries } }) => {
     const azureQueries = queries[pluginJson.id];
-    let stats = {
+    const common = {
+      hidden: 0,
+      visible: 0,
+      multiResource: 0,
+      count: 0,
+    };
+    let stats: { [key in AzureQueryType | string]: Statistics } = {
       [AzureQueryType.AzureMonitor]: {
-        hidden: 0,
-        visible: 0,
-        multiResource: 0,
+        ...common,
       },
       [AzureQueryType.LogAnalytics]: {
-        hidden: 0,
-        visible: 0,
-        multiResource: 0,
+        ...common,
       },
       [AzureQueryType.AzureResourceGraph]: {
-        hidden: 0,
-        visible: 0,
-        multiSubscription: 0,
+        ...common,
       },
       [AzureQueryType.AzureTraces]: {
-        hidden: 0,
-        visible: 0,
-        multiResource: 0,
+        ...common,
         table: 0,
         trace: 0,
         operationIdSpecified: 0,
         eventTypesSpecified: 0,
         filtersSpecified: 0,
       },
+      [AzureQueryType.SubscriptionsQuery]: { ...common },
+      [AzureQueryType.ResourceGroupsQuery]: { ...common },
+      [AzureQueryType.NamespacesQuery]: { ...common },
+      [AzureQueryType.ResourceNamesQuery]: { ...common },
+      [AzureQueryType.MetricNamesQuery]: { ...common },
+      [AzureQueryType.WorkspacesQuery]: { ...common },
+      [AzureQueryType.GrafanaTemplateVariableFn]: { ...common },
+      [AzureQueryType.LocationsQuery]: { ...common },
+      unknown: { ...common },
     };
+
     azureQueries.forEach((query) => {
       if (query.queryType === AzureQueryType.AzureMonitor) {
         stats[AzureQueryType.AzureMonitor][query.hide ? 'hidden' : 'visible']++;
@@ -60,7 +76,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
       if (query.queryType === AzureQueryType.AzureResourceGraph) {
         stats[AzureQueryType.AzureResourceGraph][query.hide ? 'hidden' : 'visible']++;
         if (query.subscriptions && query.subscriptions.length > 1) {
-          stats[AzureQueryType.AzureResourceGraph].multiSubscription++;
+          stats[AzureQueryType.AzureResourceGraph].multiResource++;
         }
       }
       if (query.queryType === AzureQueryType.AzureTraces) {
@@ -85,6 +101,25 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
           }
         }
       }
+
+      switch (query.queryType) {
+        case AzureQueryType.AzureMonitor:
+        case AzureQueryType.LogAnalytics:
+        case AzureQueryType.AzureResourceGraph:
+        case AzureQueryType.AzureTraces:
+        case AzureQueryType.SubscriptionsQuery:
+        case AzureQueryType.ResourceGroupsQuery:
+        case AzureQueryType.NamespacesQuery:
+        case AzureQueryType.ResourceNamesQuery:
+        case AzureQueryType.MetricNamesQuery:
+        case AzureQueryType.WorkspacesQuery:
+        case AzureQueryType.GrafanaTemplateVariableFn:
+        case AzureQueryType.LocationsQuery:
+          stats[query.queryType].count++;
+          break;
+        default:
+          stats.unknown.count++;
+      }
     });
 
     if (azureQueries && azureQueries.length > 0) {
@@ -96,16 +131,19 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         azure_monitor_queries: stats[AzureQueryType.AzureMonitor].visible,
         azure_monitor_queries_hidden: stats[AzureQueryType.AzureMonitor].hidden,
         azure_monitor_multiple_resource: stats[AzureQueryType.AzureMonitor].multiResource,
+        azure_monitor_query: stats[AzureQueryType.AzureMonitor].count,
 
         // Logs queries stats
         azure_log_analytics_queries: stats[AzureQueryType.LogAnalytics].visible,
         azure_log_analytics_queries_hidden: stats[AzureQueryType.LogAnalytics].hidden,
         azure_log_multiple_resource: stats[AzureQueryType.LogAnalytics].multiResource,
+        azure_log_query: stats[AzureQueryType.LogAnalytics].count,
 
         // ARG queries stats
         azure_resource_graph_queries: stats[AzureQueryType.AzureResourceGraph].visible,
         azure_resource_graph_queries_hidden: stats[AzureQueryType.AzureResourceGraph].hidden,
-        azure_resource_graph_multiple_subscription: stats[AzureQueryType.AzureResourceGraph].multiSubscription,
+        azure_resource_graph_multiple_subscription: stats[AzureQueryType.AzureResourceGraph].multiResource,
+        azure_resource_graph_query: stats[AzureQueryType.AzureResourceGraph].count,
 
         // Traces queries stats
         azure_traces_queries: stats[AzureQueryType.AzureTraces].visible,
@@ -116,6 +154,20 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         azure_traces_operation_id_specified: stats[AzureQueryType.AzureTraces].operationIdSpecified,
         azure_traces_event_type_specified: stats[AzureQueryType.AzureTraces].eventTypesSpecified,
         azure_traces_filters: stats[AzureQueryType.AzureTraces].filtersSpecified,
+        azure_traces_query: stats[AzureQueryType.AzureTraces].count,
+
+        // Variable queries stats
+        azure_subscriptions_query: stats[AzureQueryType.SubscriptionsQuery].count,
+        azure_resource_groups_query: stats[AzureQueryType.ResourceGroupsQuery].count,
+        azure_namespaces_query: stats[AzureQueryType.NamespacesQuery].count,
+        azure_resource_names_query: stats[AzureQueryType.ResourceNamesQuery].count,
+        azure_metric_names_query: stats[AzureQueryType.MetricNamesQuery].count,
+        azure_workspaces_query: stats[AzureQueryType.WorkspacesQuery].count,
+        azure_grafana_template_variable_query: stats[AzureQueryType.GrafanaTemplateVariableFn].count,
+        azure_locations_query: stats[AzureQueryType.LocationsQuery].count,
+
+        // Unknown query type
+        azure_unknown_query: stats.unknown.count,
       });
     }
   }

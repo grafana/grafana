@@ -29,6 +29,8 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_monitor_queries_hidden: number;
   /** number of Azure Monitor queries using multiple resources */
   azure_monitor_multiple_resource: number;
+  /** number of Azure Monitor queries */
+  azure_monitor_query: number;
 
   /** number of non hidden queries of type Azure Logs Analytics if any  */
   azure_log_analytics_queries: number;
@@ -36,6 +38,8 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_log_analytics_queries_hidden: number;
   /** number of Azure Log Analytics queries using multiple resources */
   azure_log_multiple_resource: number;
+  /** number of Azure Log Analytics queries */
+  azure_log_query: number;
 
   /** number of non hidden queries of type Azure Resource Graph if any  */
   azure_resource_graph_queries: number;
@@ -43,6 +47,8 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_resource_graph_queries_hidden: number;
   /** number of Azure Resource Graph queries using multiple subscriptions */
   azure_resource_graph_multiple_subscription: number;
+  /** number of Azure Resource Graph queries */
+  azure_resource_graph_query: number;
 
   /** number of non hidden queries of type Azure Traces if any  */
   azure_traces_queries: number;
@@ -60,4 +66,17 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_traces_event_type_specified: number;
   /** number of trace queries using filters */
   azure_traces_filters: number;
+  /** number of Azure Traces queries */
+  azure_traces_query: number;
+
+  /** variable query tracking */
+  azure_subscriptions_query: number;
+  azure_resource_groups_query: number;
+  azure_namespaces_query: number;
+  azure_resource_names_query: number;
+  azure_metric_names_query: number;
+  azure_workspaces_query: number;
+  azure_grafana_template_variable_query: number;
+  azure_locations_query: number;
+  azure_unknown_query: number;
 };
