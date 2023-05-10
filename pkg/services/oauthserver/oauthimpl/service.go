@@ -18,7 +18,6 @@ import (
 	"github.com/ory/fosite/storage"
 	"github.com/ory/fosite/token/jwt"
 	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,37 +59,9 @@ type OAuth2ServiceImpl struct {
 	publicKey     interface{}
 }
 
-// Remove this
-type KeyService interface {
-	GetJWKS() (jose.JSONWebKeySet, error)
-	GetJWK(keyID string) (jose.JSONWebKey, error)
-	GetPublicKey(keyID string) (interface{}, error)
-	GetPrivateKey(privateKeyID string) (interface{}, error)
-}
-
-type DummyKeyService struct {
-	skv kvstore.SecretsKVStore
-}
-
-func (ks *DummyKeyService) GetJWKS() (jose.JSONWebKeySet, error) {
-	return jose.JSONWebKeySet{}, nil
-}
-
-func (ks *DummyKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
-	return jose.JSONWebKey{}, nil
-}
-
-func (ks *DummyKeyService) GetPublicKey(keyID string) (interface{}, error) {
-	return nil, nil
-}
-
-func (ks *DummyKeyService) GetPrivateKey(privateKeyID string) (interface{}, error) {
-	return loadServerPrivateKey(ks.skv)
-}
-
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
-	teamSvc team.Service) (*OAuth2ServiceImpl, error) {
+	teamSvc team.Service, keySvc signingkeys.Service) (*OAuth2ServiceImpl, error) {
 
 	// TODO: Make this configurable
 	config := &fosite.Config{
@@ -101,15 +73,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 		ScopeStrategy:     fosite.WildcardScopeStrategy,
 	}
 
-	keyService := &DummyKeyService{
-		skv: skv,
-	}
-
-	// TODO: Replace this part with KeyService.GetServerPrivateKey()
-	privateKey, errLoadKey := keyService.GetPrivateKey(cfg.OAuth2ServerDefaultServerKeyID)
-	if errLoadKey != nil {
-		return nil, errLoadKey
-	}
+	privateKey := keySvc.GetServerPrivateKey()
 
 	var publicKey interface{}
 	switch k := privateKey.(type) {
@@ -160,36 +124,6 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 		compose.OAuth2TokenIntrospectionFactory,
 		compose.OAuth2TokenRevocationFactory,
 	)
-}
-
-func loadServerPrivateKey(skv kvstore.SecretsKVStore) (*rsa.PrivateKey, error) {
-	privatePem, ok, err := skv.Get(context.Background(), oauthserver.TmpOrgID, "OAuthServerPrivatePEM", "oauthserverpem")
-	if err != nil {
-		return nil, err
-	}
-	var privateKey *rsa.PrivateKey
-	if !ok {
-		var errGenKey error
-		privateKey, errGenKey = rsa.GenerateKey(rand.Reader, 2048)
-		if errGenKey != nil {
-			return nil, errGenKey
-		}
-		privateKeyPem := string(pem.EncodeToMemory(&pem.Block{
-			Type:  "RSA PRIVATE KEY",
-			Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-		}))
-		if err = skv.Set(context.Background(), oauthserver.TmpOrgID, "OAuthServerPrivatePEM", "oauthserverpem", privateKeyPem); err != nil {
-			return nil, err
-		}
-	} else {
-		var errParseKey error
-		privateKeyPem, _ := pem.Decode([]byte(privatePem))
-		privateKey, errParseKey = x509.ParsePKCS1PrivateKey(privateKeyPem.Bytes)
-		if errParseKey != nil {
-			return nil, errParseKey
-		}
-	}
-	return privateKey, nil
 }
 
 // GetServerPublicKey returns the public key of the server

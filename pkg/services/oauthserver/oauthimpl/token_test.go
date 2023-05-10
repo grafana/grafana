@@ -257,6 +257,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		{
 			name: "no entitlement without any permission in the impersonate set",
 			initEnv: func(env *TestEnv) {
+				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
 				env.UserService.ExpectedUser = user56
 			},
 			client:  client1,

@@ -505,8 +505,7 @@ type Cfg struct {
 	OktaSkipOrgRoleSync bool
 
 	// OAuth2 Server
-	OAuth2ServerEnabled            bool
-	OAuth2ServerDefaultServerKeyID string
+	OAuth2ServerEnabled bool
 
 	// OAuth2Server supports the two recommended key types from the RFC https://www.rfc-editor.org/rfc/rfc7518#section-3.1: RS256 and ES256
 	OAuth2ServerGeneratedKeyTypeForClient string

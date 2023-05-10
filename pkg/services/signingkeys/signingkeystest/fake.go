@@ -34,8 +34,8 @@ func (s *FakeSigningKeysService) GetPrivateKey(keyID string) (crypto.PrivateKey,
 }
 
 // GetServerPrivateKey returns the private key used to sign tokens
-func (s *FakeSigningKeysService) GetServerPrivateKey() (crypto.PrivateKey, error) {
-	return s.ExpectedServerPrivateKey, s.ExpectedError
+func (s *FakeSigningKeysService) GetServerPrivateKey() crypto.PrivateKey {
+	return s.ExpectedServerPrivateKey
 }
 
 // AddPrivateKey adds a private key to the service

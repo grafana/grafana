@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/oauthtest"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +38,8 @@ type TestEnv struct {
 	TeamService *teamtest.FakeService
 	SAService   *satests.MockServiceAccountService
 }
+
+var pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 
 func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
@@ -59,14 +62,13 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 
 	cfg := setting.NewCfg()
+	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
 
-	// TODO: Replace this part with KeyService.GetServerPrivateKey()
-	var errGenKey error
-	privateKey, errGenKey := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, errGenKey)
+	keySvc := signingkeystest.FakeSigningKeysService{
+		ExpectedServerPrivateKey: pk,
+	}
 
-	// TODO: add feature toggle
-	fmgt := featuremgmt.WithFeatures()
+	privateKey := keySvc.GetServerPrivateKey().(*rsa.PrivateKey)
 
 	s := &OAuth2ServiceImpl{
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
