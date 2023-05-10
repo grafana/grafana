@@ -86,6 +86,11 @@
 - **Tooltips:** Make tooltips in FormField and FormLabel interactive and keyboard friendly. [#57706](https://github.com/grafana/grafana/pull/57706), [@asimpson](https://github.com/asimpson)
 
 <!-- 9.2.5 END -->
+<!-- 9.2.18 START -->
+
+# 9.2.18 (2023-05-08)
+
+<!-- 9.2.18 END -->
 <!-- 9.2.4 START -->
 
 # 9.2.4 (2022-11-07)
