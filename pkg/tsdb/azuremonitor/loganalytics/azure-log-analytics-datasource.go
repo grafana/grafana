@@ -163,7 +163,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			}
 
 			queryResources := make([]string, 0)
-			for resource, _ := range resourcesMap {
+			for resource := range resourcesMap {
 				queryResources = append(queryResources, resource)
 			}
 			sort.Strings(queryResources)
