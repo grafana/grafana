@@ -21,6 +21,155 @@ Welcome to Grafana 10.0! Read on to learn about changes to search and navigation
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
+## Correlations
+
+<!-- Jay Goodson -->
+
+_Available in preview in all editions of Grafana._
+
+You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality and now enables you to link from any data source, to any data source.
+
+Correlations enable you to seamlessly jump from one data source to another. You define relationships between your different data sources, and when Exploring simply click a button next to a related field in one data source and Grafana will run the corresponding query in the other datasource.
+
+Correlations is currently in preview. As such, it is recommended to enable it only on test or development instances, rather than in production environments.
+
+To try out Correlations, you'll need to enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+
+In subsequent releases, we’ll be refining and enhancing the user interface for Correlations, to provide a more streamlined user experience.
+
+## Subfolders
+
+<!-- Zsofia K. -->
+
+_Available in preview in all editions of Grafana._
+
+You can now create subfolders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
+
+You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions will cascade, being inherited from the parent folder, which simplifies access management.
+
+The ability to add subfolders is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
+
+To get started creating subfolders, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Subfolders in Grafana" >}}
+
+## Dashboards and visualizations
+
+### Enhanced data source selection experience: simplifying querying for users
+
+<!-- Ivan Ortega & Natalia Bernarte -->
+
+_Available in preview in all editions of Grafana._
+
+Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
+
+With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing you to quickly connect to a new one when needed. You can also quickly upload a CSV file.
+
+{{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
+
+To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+### Public dashboards
+
+<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
+
+_Available in preview in all editions of Grafana._
+
+Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
+
+With this update, we've made the following improvements:
+
+- The time picker and annotations can be toggled on or off from the configuration modal
+- You can see a list of all your public dashboards at **Dashboards > Public dashboards**
+- Improved UI: new modal design, paused and not found pages
+- Added support for collapsed rows, hidden queries, and zoom into panels
+
+To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
+
+### Public dashboards insights
+
+<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
+
+_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+
+The public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
+
+To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+### Email sharing for public dashboards
+
+<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
+
+_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+
+Our email sharing feature allows you to easily share your public dashboards with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can visualize your data.
+
+We've also added a **Public dashboard users** tab in **Administration > Users** where you can view a list of users who have accessed your public dashboards by way of a email sharing.
+
+To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+
+To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
+
+### Datagrid
+
+<!-- Oscar Kilhed -->
+
+Datagrid is a new beta panel that allows you to edit your data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a datasource or create your own dataset from scratch and use it within your dashboard to update your panels in real time. You can also use the Datagrid as a data source used by other panels to augment other data.
+
+By default, the Datagrid panel will not allow a user to edit data, but only show data like a standard visualization. To make full use of this new panel editing functionality you will need to enable the `enableDatagridEditing` feature toggle.
+But for now the Datagrid Panel will support the following features in G10:
+
+- Creating and deleting rows and columns
+- Data and column header edit or delete
+- Search functionality
+- Column freezing
+- Grid selection actions (copy/paste/delete)
+- Draggable columns and rows
+- Series select when pulling data from a datasource
+
+To learn more about the Datagrid panel, please refer to the official documentation.
+
+The list of features is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the datagrid.
+
+### Drag and Drop
+
+<!-- Oscar Kilhed -->
+
+it's easier than ever to view local data in Grafana - welcome drag & drop!
+The drag & drop functionality allows you to upload your csv, excel or numbers files by simply dragging and dropping them into the query editor of the Grafana data source.
+
+Drag & drop feature is disabled by default. In order to use drag and drop, enable the `editPanelCSVDragAndDrop` feature toggle.
+
+As of Grafana 10, drag & drop supports the following scenarios:
+
+- Drag & drop files into the panel editor
+- Replace files in the panel editor
+- Default table panel creation
+
+Data is being stored in the dashboard json and has a 1MB size limit. To learn more about drag & drop, please refer to the official documentation.
+
+<!-- TODO: Add docs link above -->
+
+### Canvas GA
+
+<!-- Nathan Marrs -->
+
+We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
+
+### New Trend Panel
+
+<!-- Nathan Marrs -->
+
+_Available in **beta** in all editions of Grafana_
+
+We are excited to introduce a new panel that allows you to display trends where the x axis is not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels.
+
 ## Authentication and authorization
 
 ### No longer possible to disable Role-based access control
@@ -61,156 +210,6 @@ From now on, whether you type your username or email address in uppercase, lower
 To help you with dealing with potential user identity conflicts, we have built a [Grafana CLI user identity conflict resolver tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/) which is available since Grafana 9.3.
 
 Note that if you are running Grafana with MySQL as a database, this change does not have any impact as MySQL users were already treated as case-insensitive.
-
-## Creating subfolders
-
-<!-- Zsofia K. -->
-
-_Available in preview in all editions of Grafana._
-
-You can now create subfolders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
-
-You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions will cascade, being inherited from the parent folder, which simplifies access management.
-
-It's worth noting that the the ability to add subfolders is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
-
-To get started with creating subfolders, you'll need to enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Subfolders in Grafana" >}}
-
-## Correlations
-
-<!-- Jay Goodson -->
-
-_Available in preview in all editions of Grafana._
-
-You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality and now enables you to link from any data source, to any data source.
-
-Correlations enable you to seamlessly jump from one data source to another. You define relationships between your different data sources, and when Exploring simply click a button next to a related field in one data source and Grafana will run the corresponding query in the other datasource.
-
-It's worth noting that Correlations is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
-
-To try out Correlations, you'll need to enable the `correlations` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-In subsequent releases, we’ll be refining and enhancing the user interface for Correlations, to provide a more streamlined user experience.
-
-## Dashboards and visualizations
-
-### Enhanced data source selection experience: simplifying querying for users
-
-<!-- Ivan Ortega & Natalia Bernarte -->
-
-_Available in preview in all editions of Grafana._
-
-Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
-
-With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing users to quickly connect to a new one when needed. Additionally, the flow now enables quick uploading of CSV files and access to built-in data sources.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
-
-To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-### Public dashboards
-
-<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
-
-_Available in preview in all editions of Grafana._
-Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
-
-With this update, we've made the following improvements:
-
-- The time picker and annotations can be toggled on or off from the configuration modal
-- You can see a list of all your public dashboards at **Dashboards > Public dashboards**
-- Improved UI: new modal design, paused and not found pages
-- Added support for collapsed rows, hidden queries, and zoom into panels
-
-To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
-
-### Public dashboards insights
-
-<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
-
-_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
-
-The public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
-
-To try it out, you'll need to enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-### Email sharing for public dashboards
-
-<!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
-
-_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
-
-Our email sharing feature allows you to easily share your public dashboards with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can visualize your data.
-
-We've also added a **Public dashboard users** tab in **Administration > Users** where you can view a list of users who have accessed your public dashboards by way of a email sharing.
-
-To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-### Datagrid
-
-<!-- Oscar Kilhed -->
-
-We introduced a new panel, which allows users to edit their data within a Grafana dashboard: The Datagrid
-The Datagrid is a new beta panel that allows users to edit their data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a datasource or create your own dataset from scratch and use it within your dashboard to update your panels in real time.
-
-In combination with other panels using the Datagrid as a datasource, you can enhance the experience even more.
-
-By default, the Datagrid panel will not allow a user to edit data, but only show data like a standard visualization. To make full use of this new panel editing functionality you will need to enable the “enableDatagridEditing” feature toggle.
-But for now the Datagrid Panel will support the following features in G10:
-
-- Creating and deleting rows and columns
-- Data and column header edit or delete
-- Search functionality
-- Column freezing
-- Grid selection actions (copy/paste/delete)
-- Draggable columns and rows
-- Series select when pulling data from a datasource
-
-To learn more about the Datagrid panel, please refer to the official documentation.
-
-The list of features is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the datagrid.
-
-### Drag and Drop
-
-<!-- Oscar Kilhed -->
-
-Finally connecting your local data is made easier! Welcome drag & drop in Grafana!
-The drag & drop functionality allows users to connect their csv, excel or numbers files by simply dragging and dropping them into the query editor of the grafana data source.
-
-By default, the drag & drop feature is not available out of the box. In order to utilize this functionality panel you will need to enable the `featuretogglename` feature toggle.
-
-As of now drag & drop supports the following scenarios in G10:
-
-- Drag & drop files into the panel editor
-- Replace files in the panel editor
-- Default table panel creation
-
-As of now the data is being stored on the dashboard json and has a 1MB size limit. Obviously it’s our mission to increase the limit without decreasing the performance in the near future.
-To learn more about drag & drop, please refer to the official documentation.
-
-The list of requests is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the the drag & drop datasource.
-
-### Canvas GA
-
-<!-- Nathan Marrs -->
-
-We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
-
-### New Trend Panel
-
-<!-- Nathan Marrs -->
-
-_Available in **beta** in all editions of Grafana_
-
-We are excited to introduce a new panel that allows you to display trends where the x axis is not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels.
 
 ### Time series time region support
 
