@@ -260,6 +260,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.onStartScanning) {
       this.props.onStartScanning();
     }
+    reportInteraction('grafana_logs_scanning_start_clicked', {
+      datasourceType: this.props.datasourceType,
+    });
   };
 
   onClickStopScan = (event: React.SyntheticEvent) => {
@@ -267,6 +270,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.onStopScanning) {
       this.props.onStopScanning();
     }
+    reportInteraction('grafana_logs_scanning_stop_clicked', {
+      datasourceType: this.props.datasourceType,
+    });
   };
 
   showField = (key: string) => {

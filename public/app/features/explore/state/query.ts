@@ -590,7 +590,9 @@ export const runQueries = (
               dispatch(runQueries(exploreId));
             } else {
               // We can stop scanning if we have a result
-              dispatch(scanStopAction({ exploreId }));
+              if (data.state === LoadingState.Done || data.state === LoadingState.Error) {
+                dispatch(scanStopAction({ exploreId }));
+              }
             }
           }
         },
