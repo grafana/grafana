@@ -31,7 +31,7 @@ export const Controlled: ComponentStory<typeof Switch> = (args) => {
     <div>
       <div style={{ marginBottom: '32px' }}>
         <Field label="Normal switch" description="For horizontal forms" invalid={args.invalid}>
-          <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} invalid={args.invalid} />
+          <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
