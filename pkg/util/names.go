@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-var validNamePattern = regexp.MustCompile(`^[a-z][-a-z0-9|-]*`).MatchString
+var validNamePattern = regexp.MustCompile(`^[a-z][a-z0-9\-]*$`).MatchString
 
 // IsValidCK8sCRDName checks if a name can be used for a kubernetes CRD resource
 // * contain at most 63 characters
