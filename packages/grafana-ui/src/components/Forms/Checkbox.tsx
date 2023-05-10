@@ -19,10 +19,15 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   htmlValue?: string | number;
   /** Sets the checkbox into a "mixed" state. This is only a visual change and does not affect the value. */
   indeterminate?: boolean;
+  /** Show an invalid state around the input */
+  invalid?: boolean;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, htmlValue, onChange, disabled, className, indeterminate, ...inputProps }, ref) => {
+  (
+    { label, description, value, htmlValue, onChange, disabled, className, indeterminate, invalid, ...inputProps },
+    ref
+  ) => {
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -37,7 +42,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     return (
       <label className={cx(styles.wrapper, className)}>
-        <div className={styles.checkboxWrapper}>
+        <div className={cx(styles.checkboxWrapper, invalid && styles.invalid)}>
           <input
             type="checkbox"
             className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
@@ -207,6 +212,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),
+    invalid: css`
+      input:checked + span {
+        border: 1px solid ${theme.colors.error.border};
+      }
+    `,
   };
 });
 
