@@ -14,6 +14,13 @@ const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
+// esbuild-loader 3.0.0+ requires format to be set to prevent it
+// from defaulting to 'iife' which breaks monaco/loader once minified.
+const esbuildOptions = {
+  target: esbuildTargets,
+  format: undefined,
+};
+
 module.exports = (env = {}) =>
   merge(common, {
     mode: 'production',
@@ -32,9 +39,7 @@ module.exports = (env = {}) =>
           exclude: /node_modules/,
           use: {
             loader: 'esbuild-loader',
-            options: {
-              target: esbuildTargets,
-            },
+            options: esbuildOptions,
           },
         },
         require('./sass.rule.js')({
@@ -46,12 +51,7 @@ module.exports = (env = {}) =>
     optimization: {
       nodeEnv: 'production',
       minimize: parseInt(env.noMinify, 10) !== 1,
-      minimizer: [
-        new EsbuildPlugin({
-          target: esbuildTargets,
-        }),
-        new CssMinimizerPlugin(),
-      ],
+      minimizer: [new EsbuildPlugin(esbuildOptions), new CssMinimizerPlugin()],
     },
 
     // enable persistent cache for faster builds
