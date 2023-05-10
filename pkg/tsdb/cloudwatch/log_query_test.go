@@ -544,52 +544,33 @@ func TestGroupingResultsWithNumericField(t *testing.T) {
 }
 
 func TestGroupingResultsWithRemoveNonNumericTrue(t *testing.T) {
-	timeA, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 15:04:05.000")
-	require.NoError(t, err)
-	timeB, err := time.Parse("2006-01-02 15:04:05.000", "2020-03-02 16:04:05.000")
-	require.NoError(t, err)
-	timeVals := []*time.Time{
-		&timeA, &timeA, &timeA, &timeA, &timeB, &timeB, &timeB, &timeB,
-	}
-	timeField := data.NewField("@timestamp", data.Labels{}, timeVals)
-
 	logField := data.NewField("@log", data.Labels{}, []*string{
 		aws.String("fakelog-a"),
 		aws.String("fakelog-b"),
 		aws.String("fakelog-a"),
 		aws.String("fakelog-b"),
-		aws.String("fakelog-a"),
-		aws.String("fakelog-b"),
-		aws.String("fakelog-a"),
-		aws.String("fakelog-b"),
 	})
 
-	streamField := data.NewField("stream", data.Labels{}, []*string{
-		aws.String("stream-a"),
-		aws.String("stream-a"),
-		aws.String("stream-b"),
-		aws.String("stream-b"),
-		aws.String("stream-a"),
-		aws.String("stream-a"),
-		aws.String("stream-b"),
-		aws.String("stream-b"),
+	streamField := data.NewField("stream", data.Labels{}, []*int32{
+		aws.Int32(1),
+		aws.Int32(1),
+		aws.Int32(1),
+		aws.Int32(1),
 	})
 
 	countField := data.NewField("count", data.Labels{}, []*string{
 		aws.String("100"),
 		aws.String("150"),
-		aws.String("20"),
-		aws.String("34"),
 		aws.String("57"),
 		aws.String("62"),
-		aws.String("105"),
-		aws.String("200"),
 	})
 
+	timeA := time.Time{}
+	timeB := time.Time{}.Add(1 * time.Minute)
 	fakeDataFrame := &data.Frame{
 		Name: "CloudWatchLogsResponse",
 		Fields: []*data.Field{
-			timeField,
+			data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeA, &timeB, &timeB}),
 			logField,
 			streamField,
 			countField,
@@ -597,61 +578,26 @@ func TestGroupingResultsWithRemoveNonNumericTrue(t *testing.T) {
 		RefID: "",
 	}
 
-	groupedTimeVals := []*time.Time{
-		&timeA, &timeB,
-	}
-	groupedTimeField := data.NewField("@timestamp", data.Labels{}, groupedTimeVals)
-
-	groupedCountFieldAA := data.NewField("count", data.Labels{}, []*string{
-		aws.String("100"),
-		aws.String("57"),
-	})
-
-	groupedCountFieldBA := data.NewField("count", data.Labels{}, []*string{
-		aws.String("150"),
-		aws.String("62"),
-	})
-
-	groupedCountFieldAB := data.NewField("count", data.Labels{}, []*string{
-		aws.String("20"),
-		aws.String("105"),
-	})
-
-	groupedCountFieldBB := data.NewField("count", data.Labels{}, []*string{
-		aws.String("34"),
-		aws.String("200"),
-	})
-
 	expectedGroupedFrames := []*data.Frame{
 		{
-			Name: "fakelog-astream-a",
+			Name: "fakelog-a1",
 			Fields: []*data.Field{
-				groupedTimeField,
-				groupedCountFieldAA,
+				data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeB}),
+				data.NewField("count", data.Labels{}, []*string{
+					aws.String("100"),
+					aws.String("57"),
+				}),
 			},
 			RefID: "",
 		},
 		{
-			Name: "fakelog-bstream-a",
+			Name: "fakelog-b1",
 			Fields: []*data.Field{
-				groupedTimeField,
-				groupedCountFieldBA,
-			},
-			RefID: "",
-		},
-		{
-			Name: "fakelog-astream-b",
-			Fields: []*data.Field{
-				groupedTimeField,
-				groupedCountFieldAB,
-			},
-			RefID: "",
-		},
-		{
-			Name: "fakelog-bstream-b",
-			Fields: []*data.Field{
-				groupedTimeField,
-				groupedCountFieldBB,
+				data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeB}),
+				data.NewField("count", data.Labels{}, []*string{
+					aws.String("150"),
+					aws.String("62"),
+				}),
 			},
 			RefID: "",
 		},

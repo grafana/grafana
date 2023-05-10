@@ -170,10 +170,6 @@ func groupResults(results *data.Frame, groupingFieldNames []string, removeNonNum
 	for i, field := range results.Fields {
 		for _, groupingField := range groupingFieldNames {
 			if field.Name == groupingField {
-				// For expressions and alerts to work properly we need to remove non-number grouping fields
-				if removeNonNumeric && !field.Type().Numeric() && !field.Type().Time() {
-					removeFieldIndices = append(removeFieldIndices, i)
-				}
 				// convert numeric grouping field to string field
 				if field.Type().Numeric() {
 					newField, err := numericFieldToStringField(field)
@@ -182,6 +178,10 @@ func groupResults(results *data.Frame, groupingFieldNames []string, removeNonNum
 					}
 					results.Fields[i] = newField
 					field = newField
+				}
+				// For expressions and alerts to work properly we need to remove non-time grouping fields
+				if removeNonNumeric && !field.Type().Time() {
+					removeFieldIndices = append(removeFieldIndices, i)
 				}
 
 				groupingFields = append(groupingFields, field)
