@@ -141,7 +141,8 @@ export function DataSourceModal({
             </FileDropzone>
           )}
         </div>
-        <div className={styles.dsCTAs}>
+        <div className={styles.newDSSection}>
+          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {
@@ -197,11 +198,19 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     builtInDataSourceList: css`
       margin-bottom: ${theme.spacing(4)};
     `,
-    dsCTAs: css`
+    newDSSection: css`
       display: flex;
       flex-direction: row;
       width: 100%;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
+    `,
+    newDSDescription: css`
+      flex: 1 0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      color: ${theme.colors.text.secondary};
     `,
     searchInput: css`
       width: 100%;
