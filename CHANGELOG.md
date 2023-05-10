@@ -668,6 +668,11 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 
 <!-- 9.3.7 END -->
 <!-- 9.4.0-beta1 END -->
+<!-- 9.3.14 START -->
+
+# 9.3.14 (2023-05-08)
+
+<!-- 9.3.14 END -->
 <!-- 9.3.6 START -->
 
 # 9.3.6 (2023-01-26)
