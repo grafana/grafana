@@ -15,9 +15,6 @@ replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8
 
-// contains go generation fixes
-replace github.com/deepmap/oapi-codegen => github.com/spinillos/oapi-codegen v1.12.5-0.20230417081915-2945b61c0b1c
-
 // For some insane reason, client-go seems to have a broken v12.0.0 tag on it that forces us to
 // hoist a replace statement.
 replace k8s.io/client-go => k8s.io/client-go v0.25.3
@@ -143,7 +140,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
-	github.com/deepmap/oapi-codegen v1.12.4
+	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/go-units v0.5.0 // indirect
