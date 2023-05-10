@@ -61,10 +61,6 @@ load(
     "test_backend",
     "test_backend_enterprise",
 )
-load(
-    "scripts/drone/pipelines/windows.star",
-    "windows_test_backend",
-)
 load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
 
 ver_mode = "release"
@@ -234,9 +230,6 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     ]
 
     if ver_mode not in ("release"):
-        pipelines.append(windows_test_backend(trigger, "oss", ver_mode))
-        pipelines.append(windows_test_backend(trigger, "enterprise", ver_mode))
-        windows_pipeline_dependencies.append("{}-oss-test-backend-windows".format(ver_mode))
         pipelines.append(pipeline(
             name = "{}-oss-integration-tests".format(ver_mode),
             edition = "oss",
