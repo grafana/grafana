@@ -1223,6 +1223,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
 			Resources: []string{"r1", "r2"},
 			Query:     "Perf",
+			QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 		})
 		require.NoError(t, err)
 		expectedBody := `{"query":"Perf","timespan":"0001-01-01T00:00:00Z/0001-01-01T00:00:00Z","workspaces":["r1","r2"]}`
@@ -1240,6 +1241,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
 			Resources: []string{"r1", "r2"},
 			Query:     "Perf",
+			QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 			TimeRange: backend.TimeRange{
 				From: from,
 				To:   to,
@@ -1247,6 +1249,27 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		})
 		require.NoError(t, err)
 		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["r1","r2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("does not pass multiple resources for traces queries", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		from := time.Now()
+		to := from.Add(3 * time.Hour)
+		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+			Resources: []string{"r1", "r2"},
+			QueryType: string(dataquery.AzureQueryTypeAzureTraces),
+			TimeRange: backend.TimeRange{
+				From: from,
+				To:   to,
+			},
+		})
+		require.NoError(t, err)
+		expectedBody := fmt.Sprintf(`{"query":"","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {

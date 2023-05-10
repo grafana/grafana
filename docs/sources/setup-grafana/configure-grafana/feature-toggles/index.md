@@ -112,6 +112,7 @@ Alpha features might be changed or removed without prior notice.
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                        |
 | `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                         |
+| `extraThemes`                      | Enables extra themes                                                                                           |
 
 ## Development feature toggles
 

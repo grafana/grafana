@@ -79,3 +79,4 @@ opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
 faroDatasourceSelector,beta,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
 sqlDatasourceDatabaseSelection,beta,@grafana/grafana-bi-squad,false,false,false,true
+extraThemes,alpha,@grafana/user-essentials,false,false,false,true
