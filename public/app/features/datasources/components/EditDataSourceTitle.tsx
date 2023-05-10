@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { IconButton, useStyles2, Input, Tooltip } from '@grafana/ui';
+import { IconButton, useStyles2, Input, Tooltip, Field } from '@grafana/ui';
 
 interface Props {
   dataSource: DataSourceSettings;
@@ -23,12 +23,17 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: P
   };
 
   const handleNameChange = async (name: string) => {
-    setName(name);
     toggleEditMode();
-    try {
-      await onUpdate({ ...initialDataSource, name });
-    } catch (err) {
+    if (name === '') {
+      setName(title);
       return;
+    }
+    if (name !== title) {
+      try {
+        await onUpdate({ ...initialDataSource, name });
+      } catch (err) {
+        return;
+      }
     }
   };
 
@@ -62,17 +67,19 @@ export function EditDataSourceTitle({ dataSource, title, readOnly, onUpdate }: P
         </div>
       ) : (
         <div className={styles.datasourceNameInput}>
-          <Input
-            id="edit-data-source-name"
-            type="text"
-            value={name}
-            placeholder="Name"
-            onChange={(evt: React.FormEvent<HTMLInputElement>) => setName(evt.currentTarget.value)}
-            onBlur={(evt: React.FormEvent<HTMLInputElement>) => handleNameChange(evt.currentTarget.value)}
-            required
-            data-testid={selectors.pages.DataSource.name}
-            autoFocus={isNameEditable}
-          ></Input>
+          <Field invalid={name === ''} error={name === '' ? 'Please enter a data source name' : ''}>
+            <Input
+              id="edit-data-source-name"
+              type="text"
+              value={name}
+              placeholder="Name"
+              onChange={(evt: React.FormEvent<HTMLInputElement>) => setName(evt.currentTarget.value)}
+              onBlur={(evt: React.FormEvent<HTMLInputElement>) => handleNameChange(evt.currentTarget.value)}
+              required
+              data-testid={selectors.pages.DataSource.name}
+              autoFocus={isNameEditable}
+            />
+          </Field>
         </div>
       )}
     </div>
