@@ -52,7 +52,7 @@ To create a Grafana-managed alert rule, complete the following steps.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
-   - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
+   - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
    - Click **Preview** to check the result of running the query at this moment. Preview excludes no data and error handling.
 
      **Note:**
@@ -111,3 +111,9 @@ If your evaluation returns an error, you can set the state on your alert rule to
 | Error    | Creates an alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
 | Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
 | Ok       | Sets alert rule state to `Normal`.                                                                                                              |
+
+### Resolve stale alert instances
+
+An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
+
+Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.

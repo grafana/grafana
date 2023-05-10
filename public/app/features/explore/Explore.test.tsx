@@ -4,7 +4,7 @@ import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
-import { ExploreId } from 'app/types/explore';
+import { ExploreId } from 'app/types';
 
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
@@ -86,7 +86,7 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   showFlameGraph: true,
-  splitOpen: () => {},
+  splitOpen: jest.fn(),
   splitted: false,
   isFromCompactUrl: false,
   eventBus: new EventBusSrv(),

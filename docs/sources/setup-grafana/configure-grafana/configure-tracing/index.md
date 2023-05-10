@@ -9,12 +9,12 @@ weight: 200
 
 # Configure tracing to troubleshoot Grafana
 
-You can set up the `grafana` server process to enable certain diagnostics when it starts. This can be helpful
+You can set up the `grafana-server` process to enable certain diagnostics when it starts. This can be useful
 when investigating certain performance problems. It's _not_ recommended to have these enabled by default.
 
 ## Turn on profiling
 
-The `grafana-server` can be started with the arguments `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
+The `grafana-server` can be started with the command-line option `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
 `-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. For example:
 
 ```bash

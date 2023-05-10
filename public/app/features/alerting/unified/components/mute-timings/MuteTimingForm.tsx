@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerConfig,
   AlertManagerCortexConfig,
@@ -60,7 +60,6 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'sitemap',
-  breadcrumbs: [{ title: 'Notification Policies', url: 'alerting/routes' }],
 };
 
 const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
@@ -152,6 +151,9 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
                 />
               </Field>
               <MuteTimingTimeInterval />
+              <Button type="submit" className={styles.submitButton}>
+                Save mute timing
+              </Button>
               <LinkButton
                 type="button"
                 variant="secondary"
@@ -159,9 +161,6 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
               >
                 Cancel
               </LinkButton>
-              <Button type="submit" className={styles.submitButton}>
-                {muteTiming ? 'Save' : 'Submit'}
-              </Button>
             </FieldSet>
           </form>
         </FormProvider>
@@ -175,7 +174,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 400px;
   `,
   submitButton: css`
-    margin-left: ${theme.spacing(1)};
+    margin-right: ${theme.spacing(1)};
   `,
 });
 

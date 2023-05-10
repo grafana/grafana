@@ -1,18 +1,16 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/textproto"
 	"net/url"
-	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -113,80 +111,8 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 		Body:          body,
 	}
 
-	childCtx, cancel := context.WithCancel(req.Context())
-	defer cancel()
-	stream := newCallResourceResponseStream(childCtx)
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	defer func() {
-		if err := stream.Close(); err != nil {
-			hs.log.Warn("Failed to close plugin resource stream", "err", err)
-		}
-		wg.Wait()
-	}()
-
-	var flushStreamErr error
-	go func() {
-		flushStreamErr = hs.flushStream(stream, w)
-		wg.Done()
-	}()
-
-	if err := hs.pluginClient.CallResource(req.Context(), crReq, stream); err != nil {
-		return err
-	}
-
-	return flushStreamErr
-}
-
-func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w http.ResponseWriter) error {
-	processedStreams := 0
-	for {
-		resp, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			if processedStreams == 0 {
-				return errors.New("received empty resource response")
-			}
-			return nil
-		}
-		if err != nil {
-			if processedStreams == 0 {
-				return fmt.Errorf("%v: %w", "failed to receive response from resource call", err)
-			}
-
-			hs.log.Error("Failed to receive response from resource call", "err", err)
-			return stream.Close()
-		}
-
-		// Expected that headers and status are only part of first stream
-		if processedStreams == 0 {
-			for k, values := range resp.Headers {
-				// Convert the keys to the canonical format of MIME headers.
-				// This ensures that we can safely add/overwrite headers
-				// even if the plugin returns them in non-canonical format
-				// and be sure they won't be present multiple times in the response.
-				k = textproto.CanonicalMIMEHeaderKey(k)
-
-				for _, v := range values {
-					// TODO: Figure out if we should use Set here instead
-					// nolint:gocritic
-					w.Header().Add(k, v)
-				}
-			}
-
-			w.WriteHeader(resp.Status)
-		}
-
-		if _, err := w.Write(resp.Body); err != nil {
-			hs.log.Error("Failed to write resource response", "err", err)
-		}
-
-		if flusher, ok := w.(http.Flusher); ok {
-			flusher.Flush()
-		}
-		processedStreams++
-	}
+	httpSender := httpresponsesender.New(w)
+	return hs.pluginClient.CallResource(req.Context(), crReq, httpSender)
 }
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
@@ -201,58 +127,4 @@ func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
 	}
 
 	reqCtx.JsonApiErr(500, "Failed to call resource", err)
-}
-
-// callResourceClientResponseStream is used for receiving resource call responses.
-type callResourceClientResponseStream interface {
-	Recv() (*backend.CallResourceResponse, error)
-	Close() error
-}
-
-type callResourceResponseStream struct {
-	ctx    context.Context
-	stream chan *backend.CallResourceResponse
-	closed bool
-}
-
-func newCallResourceResponseStream(ctx context.Context) *callResourceResponseStream {
-	return &callResourceResponseStream{
-		ctx:    ctx,
-		stream: make(chan *backend.CallResourceResponse),
-	}
-}
-
-func (s *callResourceResponseStream) Send(res *backend.CallResourceResponse) error {
-	if s.closed {
-		return errors.New("cannot send to a closed stream")
-	}
-
-	select {
-	case <-s.ctx.Done():
-		return errors.New("cancelled")
-	case s.stream <- res:
-		return nil
-	}
-}
-
-func (s *callResourceResponseStream) Recv() (*backend.CallResourceResponse, error) {
-	select {
-	case <-s.ctx.Done():
-		return nil, s.ctx.Err()
-	case res, ok := <-s.stream:
-		if !ok {
-			return nil, io.EOF
-		}
-		return res, nil
-	}
-}
-
-func (s *callResourceResponseStream) Close() error {
-	if s.closed {
-		return errors.New("cannot close a closed stream")
-	}
-
-	close(s.stream)
-	s.closed = true
-	return nil
 }

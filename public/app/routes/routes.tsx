@@ -2,9 +2,9 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
-import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
+import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -140,9 +140,6 @@ export function getAppRoutes(): RouteDescriptor[] {
             )
       ),
     },
-
-    ...(config.featureToggles.nestedFolders ? getNestedFoldersRoutes() : []),
-
     {
       path: '/dashboards',
       component: SafeDynamicImport(
@@ -309,6 +306,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin/authentication',
+      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
       component:
         config.featureToggles.authenticationConfigUI && config.licenseInfo.enabledFeatures?.saml
           ? SafeDynamicImport(
@@ -512,10 +510,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getDataConnectionsRoutes(),
     {
       path: '/*',
-      component: ErrorPage,
+      component: PageNotFound,
     },
-    // TODO[Router]
-    // ...playlistRoutes,
   ].filter(isTruthy);
 }
 
@@ -565,25 +561,6 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes/:name',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
-    },
-  ];
-}
-
-function getNestedFoldersRoutes(): RouteDescriptor[] {
-  return [
-    {
-      path: '/nested-dashboards',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
-    },
-
-    {
-      path: '/nested-dashboards/f/:uid',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
-    },
-
-    {
-      path: '/nested-dashboards/f/:uid/:slug',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
   ];
 }
