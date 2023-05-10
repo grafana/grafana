@@ -24,7 +24,6 @@ export interface Props {
   header?: string;
 }
 
-//string, unknown, string, boolean
 interface DisplayValue {
   name: string;
   value: unknown;
