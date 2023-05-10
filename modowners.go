@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -77,15 +78,14 @@ func check(args []string) error {
 }
 
 // TODO: enhance to take list of modules (specific one, two, or etc)
-// TODO: have indirect flag that prints indirect
-
 // TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
-// TODO: introduce help messages
 // TODO: test with go test
-// TODO: move every subcommand into its own func to keep main small
 
 func owners(args []string) error {
-	m, err := parseGoMod(args[0])
+	fs := flag.NewFlagSet("owners", flag.ExitOnError)
+	count := fs.Bool("c", false, "print count of dependencies per owner")
+	fs.Parse(args)
+	m, err := parseGoMod(fs.Arg(0))
 	if err != nil {
 		return err
 	}
@@ -98,18 +98,26 @@ func owners(args []string) error {
 		}
 	}
 	for owner, n := range owners {
-		fmt.Println(owner, n)
+		if *count {
+			fmt.Println(owner, n)
+		} else {
+			fmt.Println(owner)
+		}
 	}
 	return nil
 }
 
-func modules(args []string) error { // TODO: optionally print the count
-	m, err := parseGoMod(args[0])
+func modules(args []string) error {
+	fs := flag.NewFlagSet("modules", flag.ExitOnError)
+	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
+	modfile := fs.String("m", "go.mod", "use specified modfile")
+	fs.Parse(args)
+	m, err := parseGoMod(*modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
 	if err != nil {
 		return err
 	}
 	for _, mod := range m {
-		if mod.Indirect == false {
+		if *indirect || !mod.Indirect {
 			fmt.Println(mod.Name)
 		}
 	}
@@ -117,27 +125,14 @@ func modules(args []string) error { // TODO: optionally print the count
 }
 
 func main() {
-	if len(os.Args) < 3 {
+	if len(os.Args) < 2 {
 		fmt.Println("usage: modowners subcommand go.mod...")
 		os.Exit(1)
 	}
-	switch os.Args[1] {
-	case "check":
-		err := check(os.Args[2:]) // NOTE: take everything from second until end of slice
-		if err != nil {
-			log.Fatal(err)
-		}
-	case "owners": // Print owners for specific dependency(s)
-		err := owners(os.Args[2:])
-		if err != nil {
-			log.Fatal(err)
-		}
-	case "modules": // Print all direct dependencies
-		err := modules(os.Args[2:])
-		if err != nil {
-			log.Fatal(err)
-		}
-	default:
-		os.Exit(1)
+	cmds := map[string]func([]string) error{"check": check, "owners": owners, "modules": modules}
+	if f, ok := cmds[os.Args[1]]; !ok { // NOTE: both f and ok are visible inside the if / else if statement, but not outside; chaining of ifs very common in go when checking errors and calling multiple funcs
+		log.Fatal("invalid command")
+	} else if err := f(os.Args[2:]); err != nil {
+		log.Fatal(err)
 	}
 }
