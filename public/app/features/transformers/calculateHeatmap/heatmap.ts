@@ -327,7 +327,7 @@ export function calculateHeatmapFromData(frames: DataFrame[], options: HeatmapCa
   };
 
   const heat2d = heatmap(xs, ys, {
-    xSorted: isLikelyAscendingVector(xs),
+    xSorted: isLikelyAscendingVector(new ArrayVector(xs)),
     xTime: xField.type === FieldType.time,
     xMode: xBucketsCfg.mode,
     xSize:
