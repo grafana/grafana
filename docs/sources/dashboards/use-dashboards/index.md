@@ -105,7 +105,7 @@ The following table provides example relative ranges:
 | This Year              | `now/Y`     | `now/Y`     |
 | Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 Grafana Alerting does not support the following syntaxes at this time:
 
@@ -160,7 +160,7 @@ This section also displays recently used absolute ranges.
 
 #### Semi-relative time range
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 Grafana Alerting does not support semi-relative time ranges.
 
