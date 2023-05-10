@@ -29,7 +29,6 @@ const initialFormModel: FormModel = { folderName: '' };
 const pageNav: NavModelItem = {
   text: 'Create a new folder',
   subTitle: 'Folders provide a way to group dashboards and alert rules.',
-  breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
 };
 
 function NewDashboardsFolder({ createNewFolder }: Props) {

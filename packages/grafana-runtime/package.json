@@ -41,7 +41,6 @@
     "@grafana/e2e-selectors": "10.1.0-pre",
     "@grafana/faro-web-sdk": "1.0.2",
     "@grafana/ui": "10.1.0-pre",
-    "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
     "rxjs": "7.8.0",

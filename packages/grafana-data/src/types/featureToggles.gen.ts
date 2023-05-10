@@ -33,7 +33,6 @@ export interface FeatureToggles {
   exploreMixedDatasource?: boolean;
   newTraceViewHeader?: boolean;
   correlations?: boolean;
-  cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
@@ -96,5 +95,6 @@ export interface FeatureToggles {
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
+  faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
 }

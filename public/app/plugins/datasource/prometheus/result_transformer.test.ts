@@ -1,9 +1,9 @@
 import {
+  createDataFrame,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   FieldType,
-  createDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
 
@@ -827,6 +827,60 @@ describe('Prometheus Result Transformer', () => {
       expect(transformedTableDataFrames[1].fields[1].name).toBe('Value #B');
       expect(transformedTableDataFrames[1].fields[1].values).toEqual([]);
       expect(transformedTableDataFrames[1].fields[0].values).toEqual([]);
+    });
+
+    it('transforms dataframes with metadata resolving from their refIds', () => {
+      const value1 = 'value1';
+      const value2 = 'value2';
+      const executedQueryForRefA = 'Expr: avg_over_time(access_evaluation_duration_bucket[15s])\nStep: 15s';
+      const executedQueryForRefB = 'Expr: avg_over_time(access_evaluation_duration_bucket[5m])\nStep: 15s';
+
+      const dataframes = [
+        createDataFrame({
+          refId: 'A',
+          meta: {
+            typeVersion: [0, 1],
+            custom: {
+              resultType: 'vector',
+            },
+            executedQueryString: executedQueryForRefA,
+          },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+        createDataFrame({
+          refId: 'B',
+          meta: {
+            typeVersion: [0, 1],
+            custom: {
+              resultType: 'vector',
+            },
+            executedQueryString: executedQueryForRefB,
+          },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+      ];
+
+      const transformedTableDataFrames = transformDFToTable(dataframes);
+      expect(transformedTableDataFrames[0].meta).toBeTruthy();
+      expect(transformedTableDataFrames[1].meta).toBeTruthy();
+      expect(transformedTableDataFrames[0].meta?.executedQueryString).toEqual(executedQueryForRefA);
+      expect(transformedTableDataFrames[1].meta?.executedQueryString).toEqual(executedQueryForRefB);
     });
   });
 

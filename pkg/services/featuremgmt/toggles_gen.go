@@ -67,10 +67,6 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
-
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
@@ -318,6 +314,10 @@ const (
 	// FlagOpensearchDetectVersion
 	// Enable version detection in OpenSearch
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel

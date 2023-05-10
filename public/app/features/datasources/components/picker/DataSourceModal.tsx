@@ -10,18 +10,13 @@ import {
   FileDropzone,
   FileDropzoneDefaultChildren,
   CustomScrollbar,
-  LinkButton,
   useStyles2,
   Input,
   Icon,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
-import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { AccessControlAction } from 'app/types';
 
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceList } from './DataSourceList';
 import { matchDataSourceWithSearch } from './utils';
 
@@ -30,6 +25,7 @@ const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
   UPLOAD_FILE: 'upload_file',
   CONFIG_NEW_DS: 'config_new_ds',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
   SEARCH: 'search',
   DISMISS: 'dismiss',
 };
@@ -54,11 +50,7 @@ export function DataSourceModal({
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
-  const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
-  const newDataSourceURL = config.featureToggles.dataConnectionsConsole
-    ? CONNECTIONS_ROUTES.DataSourcesNew
-    : DATASOURCES_ROUTES.New;
 
   const onDismissModal = () => {
     onDismiss();
@@ -106,12 +98,19 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
+            className={styles.dataSourceList}
             dashboard={false}
             mixed={false}
             variables
             filter={(ds) => matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
             onChange={onChangeDataSource}
             current={current}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+                src: analyticsInteractionSrc,
+              })
+            }
           />
         </CustomScrollbar>
       </div>
@@ -149,20 +148,16 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.dsCTAs}>
-          <LinkButton
+          <AddNewDataSourceButton
             variant="secondary"
-            href={newDataSourceURL}
-            disabled={!hasCreateRights}
-            tooltip={!hasCreateRights ? 'You do not have permission to configure new data sources' : undefined}
             onClick={() => {
               reportInteraction(INTERACTION_EVENT_NAME, {
                 item: INTERACTION_ITEM.CONFIG_NEW_DS,
                 src: analyticsInteractionSrc,
               });
+              onDismiss();
             }}
-          >
-            Configure a new data source
-          </LinkButton>
+          />
         </div>
       </div>
     </Modal>
@@ -176,11 +171,19 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 80%;
       max-width: 1200px;
       max-height: 900px;
+
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+      }
     `,
     modalContent: css`
       display: flex;
       flex-direction: row;
       height: 100%;
+
+      ${theme.breakpoints.down('md')} {
+        flex-direction: column;
+      }
     `,
     leftColumn: css`
       display: flex;
@@ -189,6 +192,15 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 100%;
       padding-right: ${theme.spacing(4)};
       border-right: 1px solid ${theme.colors.border.weak};
+
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+        height: 47%;
+        border-right: 0;
+        padding-right: 0;
+        border-bottom: 1px solid ${theme.colors.border.weak};
+        padding-bottom: ${theme.spacing(4)};
+      }
     `,
     rightColumn: css`
       display: flex;
@@ -198,10 +210,20 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       justify-items: space-evenly;
       align-items: stretch;
       padding-left: ${theme.spacing(4)};
+
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+        height: 53%;
+        padding-left: 0;
+        padding-top: ${theme.spacing(4)};
+      }
     `,
     builtInDataSources: css`
       flex: 1;
       margin-bottom: ${theme.spacing(4)};
+    `,
+    dataSourceList: css`
+      height: 100%;
     `,
     builtInDataSourceList: css`
       margin-bottom: ${theme.spacing(4)};
@@ -211,6 +233,10 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       flex-direction: row;
       width: 100%;
       justify-content: flex-end;
+
+      ${theme.breakpoints.down('md')} {
+        padding-bottom: ${theme.spacing(3)};
+      }
     `,
     searchInput: css`
       width: 100%;

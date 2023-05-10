@@ -105,13 +105,6 @@ var (
 			Owner:       grafanaExploreSquad,
 		},
 		{
-			Name:        "cloudWatchDynamicLabels",
-			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
-		},
-		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			State:       FeatureStateAlpha,
@@ -522,6 +515,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:         "faroDatasourceSelector",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
 		},
 		{
 			Name:         "enableDatagridEditing",

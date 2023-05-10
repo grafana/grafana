@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"bytes"
 	"embed"
 	"strings"
 	"text/template"
@@ -28,12 +27,6 @@ var tmplFS embed.FS
 // The following group of types, beginning with tvars_*, all contain the set
 // of variables expected by the corresponding named template file under tmpl/
 type (
-	tvars_autogen_header struct {
-		GeneratorPath  string
-		LineagePath    string
-		LineageCUEPath string
-		GenLicense     bool
-	}
 	tvars_gen_header struct {
 		MainGenerator string
 		Using         []codejen.NamedJenny
@@ -45,23 +38,9 @@ type (
 		KindPackagePrefix string
 		Kinds             []kindsys.Core
 	}
-	tvars_coremodel_imports struct {
-		PackageName string
-	}
 	tvars_resource struct {
 		PackageName      string
 		KindName         string
 		SubresourceNames []string
 	}
 )
-
-type HeaderVars = tvars_autogen_header
-
-// GenGrafanaHeader creates standard header elements for generated Grafana files.
-func GenGrafanaHeader(vars HeaderVars) string {
-	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("autogen_header.tmpl").Execute(buf, vars); err != nil {
-		panic(err)
-	}
-	return buf.String()
-}
