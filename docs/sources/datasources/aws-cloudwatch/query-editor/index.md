@@ -195,14 +195,10 @@ If the period field is left blank or set to `auto`, then it calculates automatic
 
 The label field allows you to override the default name of the metric legend using CloudWatch dynamic labels. If you're using a time-based dynamic label such as `${MIN_MAX_TIME_RANGE}`, then the legend value is derived from the current timezone specified in the time range picker. To see the full list of label patterns and the dynamic label limitations, refer to the [CloudWatch dynamic labels](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html) documentation.
 
-> **Alias pattern deprecation:** Since Grafana v9.0, dynamic labels replaced alias patterns in the CloudWatch data source.
+> **Alias pattern deprecation:** Since Grafana v10.0, the alias field has been deprecated and replaced by dynamic
+> labels.
 > Any existing alias pattern is migrated upon upgrade to a corresponding dynamic label pattern.
-> To use alias patterns instead of dynamic labels, set the feature toggle `cloudWatchDynamicLabels` to `false` in the [Grafana configuration file]({{< relref "../../../setup-grafana/configure-grafana/" >}}).
-> This reverts to the alias pattern system and uses the previous alias formatting logic.
-
-The alias field will be deprecated and removed in a release.
-During this interim period, we won't fix bugs related to the alias pattern system.
-For details on why we're changing this feature, refer to [issue #48434](https://github.com/grafana/grafana/issues/48434).
+> For details on this change, refer to [issue #48434](https://github.com/grafana/grafana/issues/48434).
 
 ## Query CloudWatch Logs
 

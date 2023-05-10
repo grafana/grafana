@@ -140,9 +140,6 @@ export function getAppRoutes(): RouteDescriptor[] {
             )
       ),
     },
-
-    ...(config.featureToggles.nestedFolders ? getNestedFoldersRoutes() : []),
-
     {
       path: '/dashboards',
       component: SafeDynamicImport(
@@ -564,25 +561,6 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes/:name',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
-    },
-  ];
-}
-
-function getNestedFoldersRoutes(): RouteDescriptor[] {
-  return [
-    {
-      path: '/nested-dashboards',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
-    },
-
-    {
-      path: '/nested-dashboards/f/:uid',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
-    },
-
-    {
-      path: '/nested-dashboards/f/:uid/:slug',
-      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
   ];
 }

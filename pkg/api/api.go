@@ -126,9 +126,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", middleware.CanAdminPlugins(hs.Cfg), hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 
-	r.Get("/connections/your-datasources", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
-	r.Get("/connections/your-datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
-	r.Get("/connections/your-datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
+	r.Get("/connections/datasources", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
+	r.Get("/connections/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/connections", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/add-new-connection", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
@@ -151,12 +151,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
-
-	// Temporary routes for the work-in-progress new Browse Dashboards views
-	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		r.Get("/nested-dashboards/", reqSignedIn, hs.Index)
-		r.Get("/nested-dashboards/*", reqSignedIn, hs.Index)
-	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
