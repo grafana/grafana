@@ -2,9 +2,6 @@ package oauthimpl
 
 import (
 	"context"
-	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/ory/fosite"
@@ -12,7 +9,7 @@ import (
 	"github.com/ory/fosite/handler/rfc7523"
 	"gopkg.in/square/go-jose.v2"
 
-	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 )
 
 var _ fosite.ClientManager = &OAuth2ServiceImpl{}
@@ -145,7 +142,7 @@ func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer strin
 		return nil, err
 	}
 	// TODO use login instead when it's implemented
-	userID, err := strconv.ParseInt(strings.TrimPrefix(subject, fmt.Sprintf("%s:", authn.NamespaceUser)), 10, 64)
+	userID, err := utils.ParseUserIDFromSubject(subject)
 	if err != nil {
 		return nil, err
 	}

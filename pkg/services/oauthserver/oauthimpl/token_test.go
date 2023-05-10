@@ -195,7 +195,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 					Permissions: map[int64]map[string][]string{oauthserver.TmpOrgID: {}},
 				},
 			},
-			subject: "user:56",
+			subject: "user:id:56",
 			wantErr: true,
 		},
 		{
@@ -204,7 +204,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.UserService.ExpectedError = user.ErrUserNotFound
 			},
 			client:  client1,
-			subject: "user:56",
+			subject: "user:id:56",
 			wantErr: true,
 		},
 		{
@@ -213,7 +213,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.UserService.ExpectedUser = user56
 			},
 			client:  client1,
-			subject: "user:56",
+			subject: "user:id:56",
 		},
 		{
 			name: "profile claims",
@@ -221,7 +221,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.UserService.ExpectedUser = user56
 			},
 			client:  client1,
-			subject: "user:56",
+			subject: "user:id:56",
 			scopes:  []string{"profile"},
 			expectedClaims: map[string]interface{}{
 				"name":       "User 56",
@@ -235,7 +235,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.UserService.ExpectedUser = user56
 			},
 			client:  client1,
-			subject: "user:56",
+			subject: "user:id:56",
 			scopes:  []string{"email"},
 			expectedClaims: map[string]interface{}{
 				"email": "user56@example.org",
@@ -248,7 +248,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.TeamService.ExpectedTeamsByUser = teams
 			},
 			client:  client1,
-			subject: "user:56",
+			subject: "user:id:56",
 			scopes:  []string{"groups"},
 			expectedClaims: map[string]interface{}{
 				"groups": []string{"Team 1", "Team 2"},
@@ -261,7 +261,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.UserService.ExpectedUser = user56
 			},
 			client:  client1,
-			subject: "user:56",
+			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
 				"entitlements": map[string][]string{},
 			},
@@ -279,7 +279,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			client: client1WithPerm([]ac.Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},
 			}),
-			subject: "user:56",
+			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
 				"entitlements": map[string][]string{},
 			},
@@ -300,7 +300,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			client: client1WithPerm([]ac.Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},
 			}),
-			subject: "user:56",
+			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
 				"entitlements": map[string][]string{
 					"datasources:read": {"datasources:uid:1"},
@@ -324,7 +324,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "users:read", Scope: "global.users:self"},
 				{Action: "users.permissions:read", Scope: "users:self"},
 			}),
-			subject: "user:56",
+			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
 				"entitlements": map[string][]string{
 					"users:read":             {"global.users:id:56"},
@@ -348,7 +348,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			client: client1WithPerm([]ac.Permission{
 				{Action: "teams:read", Scope: "teams:self"},
 			}),
-			subject: "user:56",
+			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
 				"entitlements": map[string][]string{
 					"teams:read": {"teams:id:1", "teams:id:2"},
@@ -373,7 +373,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "users:read", Scope: "global.users:*"},
 				{Action: "datasources:read", Scope: "datasources:*"},
 			}),
-			subject: "user:56",
+			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
 				"entitlements": map[string][]string{
 					"users:read": {"global.users:id:*"},

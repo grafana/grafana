@@ -13,6 +13,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -70,7 +71,7 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 }
 
 func getUserIDFromSubject(subject string) (int64, error) {
-	trimmed := strings.TrimPrefix(subject, fmt.Sprintf("%s:", authn.NamespaceUser))
+	trimmed := strings.TrimPrefix(subject, fmt.Sprintf("%s:id:", authn.NamespaceUser))
 	return strconv.ParseInt(trimmed, 10, 64)
 }
 
@@ -102,7 +103,7 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 		return nil
 	}
 
-	userID, err := getUserIDFromSubject(currentOAuthSessionData.Subject)
+	userID, err := utils.ParseUserIDFromSubject(currentOAuthSessionData.Subject)
 	if err != nil {
 		return &fosite.RFC6749Error{
 			DescriptionField: "Could not find the requested subject.",
@@ -279,7 +280,7 @@ func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessR
 	if !accessRequest.GetGrantTypes().ExactOne("client_credentials") {
 		return nil
 	}
-	currentOAuthSessionData.SetSubject(fmt.Sprintf("user:%d", client.ServiceAccountID))
+	currentOAuthSessionData.SetSubject(fmt.Sprintf("user:id:%d", client.ServiceAccountID))
 
 	sa := client.SignedInUser
 	if sa == nil {
