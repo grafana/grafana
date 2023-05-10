@@ -53,8 +53,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  for (let i = 0; i < orderedVisibleFields.length; i++) {
-    const f = orderedVisibleFields[i];
+  for (const f of orderedVisibleFields) {
     if (mode === TooltipDisplayMode.Single && columnIndex != null && !f.hovered) {
       continue;
     }
