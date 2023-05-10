@@ -260,7 +260,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.onStartScanning) {
       this.props.onStartScanning();
     }
-    reportInteraction('grafana_logs_scanning_start_clicked', {
+    reportInteraction('grafana_explore_logs_scanning_start_clicked', {
       datasourceType: this.props.datasourceType,
     });
   };
