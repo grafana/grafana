@@ -1,9 +1,12 @@
 package folder
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -48,10 +51,14 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
-type FolderDTO struct {
-	Folder
+func (f *Folder) WithURL() *Folder {
+	if f == nil || f.URL != "" {
+		return f
+	}
 
-	Children []FolderDTO
+	// copy of dashboards.GetFolderURL()
+	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
+	return f
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -161,13 +168,13 @@ type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *user.SignedInUser
 }
 
-// GetChildrenCountsQuery captures the information required by the folder service
-// to return the count of children in a folder.
-type GetChildrenCountsQuery struct {
+// GetDescendantCountsQuery captures the information required by the folder service
+// to return the count of descendants (direct and indirect) in a folder.
+type GetDescendantCountsQuery struct {
 	UID   *string
 	OrgID int64
 
 	SignedInUser *user.SignedInUser `json:"-"`
 }
 
-type ChildrenCounts map[string]int64
+type DescendantCounts map[string]int64

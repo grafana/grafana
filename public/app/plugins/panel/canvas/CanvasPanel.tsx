@@ -12,7 +12,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
 import { PanelOptions } from './models.gen';
-import { AnchorPoint, CanvasTooltipPayload } from './types';
+import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -27,6 +27,7 @@ interface State {
 export interface InstanceState {
   scene: Scene;
   selected: ElementState[];
+  selectedConnection?: ConnectionState;
 }
 
 export interface SelectionAction {
@@ -113,19 +114,55 @@ export class CanvasPanel extends Component<Props, State> {
       this.subs.add(
         this.scene.selection.subscribe({
           next: (v) => {
+            if (v.length) {
+              activeCanvasPanel = this;
+              activePanelSubject.next({ panel: this });
+            }
+
+            canvasInstances.forEach((canvasInstance) => {
+              if (canvasInstance !== activeCanvasPanel) {
+                canvasInstance.scene.clearCurrentSelection(true);
+                canvasInstance.scene.connections.select(undefined);
+              }
+            });
+
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
               selected: v,
               layer: this.scene.root,
             });
+          },
+        })
+      );
 
-            activeCanvasPanel = this;
-            activePanelSubject.next({ panel: this });
+      this.subs.add(
+        this.scene.connections.selection.subscribe({
+          next: (v) => {
+            if (!this.context.instanceState) {
+              return;
+            }
+
+            this.panelContext.onInstanceStateChange!({
+              scene: this.scene,
+              selected: this.context.instanceState.selected,
+              selectedConnection: v,
+              layer: this.scene.root,
+            });
+
+            if (v) {
+              activeCanvasPanel = this;
+              activePanelSubject.next({ panel: this });
+            }
 
             canvasInstances.forEach((canvasInstance) => {
               if (canvasInstance !== activeCanvasPanel) {
                 canvasInstance.scene.clearCurrentSelection(true);
+                canvasInstance.scene.connections.select(undefined);
               }
+            });
+
+            setTimeout(() => {
+              this.forceUpdate();
             });
           },
         })

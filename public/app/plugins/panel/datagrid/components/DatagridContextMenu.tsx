@@ -2,7 +2,7 @@ import { GridSelection } from '@glideapps/glide-data-grid';
 import { capitalize } from 'lodash';
 import React from 'react';
 
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
@@ -53,10 +53,11 @@ export const DatagridContextMenu = ({
     columnDeletionLabel = `Delete ${selectedColumns.length} columns`;
   }
 
+  // Show delete/clear options on cell right click, but not on header right click, unless header column is specifically selected.
   const showDeleteRow = (row !== undefined && row >= 0) || selectedRows.length;
-  const showDeleteColumn = (column !== undefined && column >= 0) || selectedColumns.length;
+  const showDeleteColumn = (column !== undefined && column >= 0 && row !== undefined) || selectedColumns.length;
   const showClearRow = row !== undefined && row >= 0 && !selectedRows.length;
-  const showClearColumn = column !== undefined && column >= 0 && !selectedColumns.length;
+  const showClearColumn = column !== undefined && column >= 0 && row !== undefined && !selectedColumns.length;
 
   const renderContextMenuItems = () => (
     <>
@@ -85,6 +86,7 @@ export const DatagridContextMenu = ({
                 ...data,
                 fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
               });
+              dispatch({ type: DatagridActionType.gridSelectionCleared });
               return;
             }
 
@@ -111,8 +113,7 @@ export const DatagridContextMenu = ({
           label="Clear column"
           onClick={() => {
             const field = data.fields[column];
-            field.values = new ArrayVector(field.values.toArray().map(() => null));
-
+            field.values = field.values.map(() => null);
             saveData({
               ...data,
             });
@@ -216,19 +217,24 @@ export const DatagridContextMenu = ({
         <MenuItem label="Rename column" onClick={renameColumnClicked} />
         <MenuDivider />
         <MenuItem
-          label={columnDeletionLabel}
+          label="Delete column"
           onClick={() => {
-            if (selectedColumns.length) {
-              saveData({
-                ...data,
-                fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
-              });
-              return;
-            }
-
             saveData({
               ...data,
               fields: data.fields.filter((_, index) => index !== column),
+            });
+
+            // also clear selection since it will change it if the deleted column is selected or if indexes shift
+            dispatch({ type: DatagridActionType.gridSelectionCleared });
+          }}
+        />
+        <MenuItem
+          label="Clear column"
+          onClick={() => {
+            const field = data.fields[column];
+            field.values = field.values.map(() => null);
+            saveData({
+              ...data,
             });
           }}
         />

@@ -13,13 +13,13 @@ weight: 200
 
 Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source version.
 
-Building on everything you already know and love about Grafana open source, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-plugins">}}) and [additional features]({{< relref "#enterprise-features">}}). You also get 24x7x365 support and training from the core Grafana team.
+Building on everything you already know and love about Grafana open source, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-data-sources">}}) and [additional features]({{< relref "#enterprise-features">}}). You also get 24x7x365 support and training from the core Grafana team.
 
 To learn more about Grafana Enterprise, refer to [our product page](https://grafana.com/enterprise).
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable).
+Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable).
 
 ## Authentication
 

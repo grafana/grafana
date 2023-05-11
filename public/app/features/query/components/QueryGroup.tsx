@@ -65,7 +65,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   querySubscription: Unsubscribable | null = null;
 
   state: State = {
-    isDataSourceModalOpen: false,
+    isDataSourceModalOpen: !!locationService.getSearchObject().firstPanel,
     isLoadingHelp: false,
     helpContent: null,
     isPickerOpen: false,
@@ -87,6 +87,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     this.setNewQueriesAndDatasource(options);
+
+    // Clean up the first panel flag since the modal is now open
+    if (!!locationService.getSearchObject().firstPanel) {
+      locationService.partial({ firstPanel: null }, true);
+    }
   }
 
   componentWillUnmount() {
@@ -99,7 +104,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   async componentDidUpdate() {
     const { options } = this.props;
 
-    if (this.state.dataSource && options.dataSource.uid !== this.state.dataSource?.uid) {
+    const currentDS = await getDataSourceSrv().get(options.dataSource);
+    if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
       this.setNewQueriesAndDatasource(options);
     }
   }
@@ -116,16 +122,12 @@ export class QueryGroup extends PureComponent<Props, State> {
         datasource,
         ...q,
       }));
+
       this.setState({
         queries,
         dataSource: ds,
         dsSettings,
         defaultDataSource,
-        // TODO: Detect the first panel added into a new dashboard better.
-        // This is flaky in case the UID is generated differently
-        isDataSourceModalOpen:
-          locationService.getLocation().pathname === '/dashboard/new' &&
-          locationService.getSearchObject().editPanel === '1',
       });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -260,6 +262,10 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.setState({ isHelpOpen: false });
   };
 
+  onCloseDataSourceModal = () => {
+    this.setState({ isDataSourceModalOpen: false });
+  };
+
   renderMixedPicker = () => {
     return (
       <DataSourcePicker
@@ -288,15 +294,14 @@ export class QueryGroup extends PureComponent<Props, State> {
       current: this.props.options.dataSource,
       onChange: (ds: DataSourceInstanceSettings) => {
         this.onChangeDataSource(ds);
-        this.setState({ isDataSourceModalOpen: false });
+        this.onCloseDataSourceModal();
       },
     };
-    const onDismiss = () => this.setState({ isDataSourceModalOpen: false });
 
     return (
       <>
         {isDataSourceModalOpen && config.featureToggles.advancedDataSourcePicker && (
-          <DataSourceModal {...commonProps} onDismiss={onDismiss}></DataSourceModal>
+          <DataSourceModal {...commonProps} onDismiss={this.onCloseDataSourceModal}></DataSourceModal>
         )}
         <DataSourcePicker
           {...commonProps}

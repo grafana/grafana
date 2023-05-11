@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -41,6 +42,7 @@ export const VisualizationButton = ({ panel }: Props) => {
           imgSrc={plugin.meta.info.logos.small}
           isOpen={isVizPickerOpen}
           onClick={onToggleOpen}
+          data-testid={selectors.components.PanelEditor.toggleVizPicker}
           aria-label="Change Visualization"
           variant="canvas"
           fullWidth
@@ -52,6 +54,7 @@ export const VisualizationButton = ({ panel }: Props) => {
           icon={isPanelOptionsVisible ? 'angle-right' : 'angle-left'}
           onClick={onToggleOptionsPane}
           variant="canvas"
+          data-testid={selectors.components.PanelEditor.toggleVizOptions}
           aria-label={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
         />
       </ButtonGroup>

@@ -89,9 +89,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.07)`,
-    medium: `rgba(${this.whiteBase}, 0.15)`,
-    strong: `rgba(${this.whiteBase}, 0.25)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.20)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
@@ -280,7 +280,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
-      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
+      color.transparent = alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);

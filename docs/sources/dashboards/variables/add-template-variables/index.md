@@ -315,6 +315,12 @@ This is used in several places, including:
 - SQL queries in MySQL, Postgres, and MSSQL.
 - The `$__timeFilter` variable is used in the MySQL data source.
 
+### $\_\_timezone
+
+The `$__timezone` variable returns the currently selected time zone, either `utc` or an entry of the IANA time zone database (for example, `America/New_York`).
+
+If the currently selected time zone is _Browser Time_, Grafana will try to determine your browser time zone.
+
 ## Chained variables
 
 _Chained variables_, also called _linked variables_ or _nested variables_, are query variables with one or more other variables in their variable query. This section explains how chained variables work and provides links to example dashboards that use chained variables.

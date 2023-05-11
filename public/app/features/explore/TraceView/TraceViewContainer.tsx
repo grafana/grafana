@@ -47,7 +47,7 @@ export function TraceViewContainer(props: Props) {
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [searchBarSuffix, setSearchBarSuffix] = useState('');
   const datasource = useSelector(
-    (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
+    (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
   );
   const datasourceType = datasource ? datasource?.type : 'unknown';
 

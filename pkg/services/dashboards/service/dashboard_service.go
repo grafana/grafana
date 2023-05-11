@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -29,6 +30,7 @@ var (
 		{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
 		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
+		{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
 	}
 	// DashboardServiceImpl implements the DashboardService interface
 	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)

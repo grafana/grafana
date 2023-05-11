@@ -193,7 +193,7 @@ export class LokiDatasource
         return {
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
-          instant: false,
+          queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
           expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
         };
@@ -206,6 +206,7 @@ export class LokiDatasource
         }
         return {
           ...normalizedQuery,
+          queryType: LokiQueryType.Range,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
@@ -833,6 +834,22 @@ export class LokiDatasource
 
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
     return getQueryHints(query.expr, result);
+  }
+
+  getDefaultQuery(app: CoreApp): LokiQuery {
+    const defaults = { refId: 'A', expr: '' };
+
+    if (app === CoreApp.UnifiedAlerting) {
+      return {
+        ...defaults,
+        queryType: LokiQueryType.Instant,
+      };
+    }
+
+    return {
+      ...defaults,
+      queryType: LokiQueryType.Range,
+    };
   }
 }
 

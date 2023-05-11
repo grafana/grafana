@@ -12,7 +12,8 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   SelectableValue,
-  rangeUtil,
+  dateTime,
+  TimeRange,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
@@ -23,6 +24,7 @@ import { splitOpen } from 'app/features/explore/state/main';
 import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { useDispatch } from 'app/types';
 
+import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
 import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
@@ -154,21 +156,38 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
-    const allRows = [...before, row, ...after].sort((a, b) => a.timeEpochMs - b.timeEpochMs);
-    const first = allRows[0];
-    const last = allRows[allRows.length - 1];
-    return rangeUtil.convertRawToRange(
-      {
-        from: first.timeUtc,
-        to: last.timeUtc,
+    const allRows = sortLogRows([...before, row, ...after], LogsSortOrder.Ascending);
+    const fromMs = allRows[0].timeEpochMs;
+    let toMs = allRows[allRows.length - 1].timeEpochMs;
+    // In case we have a lot of logs and from and to have same millisecond
+    // we add 1 millisecond to toMs to make sure we have a range
+    if (fromMs === toMs) {
+      toMs += 1;
+    }
+    const from = dateTime(fromMs);
+    const to = dateTime(toMs);
+
+    const range: TimeRange = {
+      from,
+      to,
+      raw: {
+        from,
+        to,
       },
-      'utc'
-    );
+    };
+    return range;
   }, [context, row]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
-    setLimit(option.value!);
+    if (option.value) {
+      setLimit(option.value);
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+        new_limit: option.value,
+      });
+    }
   };
 
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
