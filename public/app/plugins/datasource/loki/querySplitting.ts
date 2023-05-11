@@ -18,6 +18,9 @@ import { splitTimeRange as splitLogsTimeRange } from '../loki/logsTimeSplitting'
 import { splitTimeRange as splitMetricsTimeRange } from '../loki/metricTimeSplitting';
 import { isLogsQuery } from '../loki/queryUtils';
 import { combineResponses } from '../loki/responseUtils';
+import { PromQuery } from '../prometheus/types';
+
+import { Loki } from './dataquery.gen';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -52,15 +55,9 @@ export function partitionTimeRange(
   });
 }
 
-/**
- * Based in the state of the current response, if any, adjust target parameters such as `maxLines`.
- * For `maxLines`, we will update it as `maxLines - current amount of lines`.
- * At the end, we will filter the targets that don't need to be executed in the next request batch,
- * becasue, for example, the `maxLines` have been reached.
- */
-type DataQueryWithMaxLines = DataQuery & { maxLines?: number; expr: string; resolution?: string };
+type SupportedQueryTypes = Loki | PromQuery;
 
-function adjustTargetsFromResponseState<T extends DataQueryWithMaxLines>(
+function adjustTargetsFromResponseState<T extends SupportedQueryTypes>(
   targets: T[],
   response: DataQueryResponse | null
 ): T[] {
@@ -70,20 +67,20 @@ function adjustTargetsFromResponseState<T extends DataQueryWithMaxLines>(
 
   return targets
     .map((target) => {
-      if (!target.maxLines || !isLogsQuery(target?.expr)) {
+      if (!target?.maxLines || (target?.expr && !isLogsQuery(target?.expr))) {
         return target;
       }
       const targetFrame = response.data.find((frame) => frame.refId === target.refId);
       if (!targetFrame) {
         return target;
       }
-      const updatedMaxLines = target.maxLines - targetFrame.length;
+      const updatedMaxLines = target?.maxLines - targetFrame.length;
       return {
         ...target,
         maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
       };
     })
-    .filter((target) => target.maxLines === undefined || target.maxLines > 0);
+    .filter((target) => target?.maxLines === undefined || target?.maxLines > 0);
 }
 
 type GroupedRequest<T extends DataQuery> = Array<{ request: DataQueryRequest<T>; partition: TimeRange[] }>;
@@ -92,7 +89,7 @@ type AbstractDataSource<T extends DataQuery, O extends DataSourceJsonData> = Dat
   runQuery: (request: DataQueryRequest<T>) => Observable<DataQueryResponse>;
 };
 
-export function runSplitGroupedQueries<T extends DataQueryWithMaxLines, O extends DataSourceJsonData>(
+export function runSplitGroupedQueries<T extends SupportedQueryTypes, O extends DataSourceJsonData>(
   datasource: AbstractDataSource<T, O>,
   requests: GroupedRequest<T>
 ) {
@@ -189,12 +186,13 @@ function getNextRequestPointers<T extends DataQuery>(
   };
 }
 
-export function runSplitQuery<
-  T extends DataQueryWithMaxLines & { splitDuration?: string },
-  O extends DataSourceJsonData
->(datasource: AbstractDataSource<T, O>, request: DataQueryRequest<T>) {
-  const queries = request.targets.filter((query: DataQueryWithMaxLines) => !query.hide);
-  const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === 'Instant');
+export function runSplitQuery<T extends SupportedQueryTypes & { splitDuration?: string }, O extends DataSourceJsonData>(
+  datasource: AbstractDataSource<T, O>,
+  request: DataQueryRequest<T>,
+  isInstantQuery: (query: SupportedQueryTypes) => boolean
+) {
+  const queries = request.targets.filter((query: SupportedQueryTypes) => !query.hide);
+  const [instantQueries, normalQueries] = partition(queries, (query) => isInstantQuery(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query?.expr));
   request.queryGroupId = uuidv4();
   const oneDayMs = 24 * 60 * 60 * 1000;

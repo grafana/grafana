@@ -284,7 +284,7 @@ export class LokiDatasource
     }
 
     if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
-      return runSplitQuery(this, fixedRequest);
+      return runSplitQuery(this, fixedRequest, (query) => query?.queryType === 'Instant');
     }
 
     return this.runQuery(fixedRequest);

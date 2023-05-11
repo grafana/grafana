@@ -42,6 +42,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import config from '../../../core/config';
+import { runSplitQuery } from '../loki/querySplitting';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -54,7 +55,6 @@ import {
 } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { runSplitQuery } from './querySplitting';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
@@ -480,27 +480,11 @@ export class PrometheusDatasource
   };
 
   runQuery(request: DataQueryRequest<PromQuery>) {
-    let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-    let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
-    const hasInstantQuery = request.targets.some((target) => target.instant);
-
-    // Don't cache instant queries
-    if (this.hasIncrementalQuery && !hasInstantQuery) {
-      requestInfo = this.cache.requestInfo(request);
-      fullOrPartialRequest = requestInfo.requests[0];
-    } else {
-      fullOrPartialRequest = request;
-    }
-
-    const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
+    const targets = request.targets.map((target) => this.processTargetV2(target, request));
     const startTime = new Date();
     return super.query({ ...request, targets: targets.flat() }).pipe(
       map((response) => {
-        const amendedResponse = {
-          ...response,
-          data: this.cache.procFrames(request, requestInfo, response.data),
-        };
-        return amendedResponse;
+        return response;
       }),
       tap((response: DataQueryResponse) => {
         trackQuery(response, request, startTime);
@@ -510,16 +494,34 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      if (promRequestSupportsSplitting(request.targets)) {
-        return runSplitQuery(this, request).pipe(
+      let fullOrPartialRequest: DataQueryRequest<PromQuery>;
+      let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
+      const hasInstantQuery = request.targets.some((target) => target.instant);
+
+      // Don't cache instant queries
+      if (this.hasIncrementalQuery && !hasInstantQuery) {
+        requestInfo = this.cache.requestInfo(request);
+        fullOrPartialRequest = requestInfo.requests[0];
+      } else {
+        fullOrPartialRequest = request;
+      }
+
+      if (promRequestSupportsSplitting(fullOrPartialRequest.targets)) {
+        return runSplitQuery(this, fullOrPartialRequest, (query) => query.instant ?? false).pipe(
           map((response) => {
             console.log('runSplitQuery transformV2', response, request);
 
-            if (response.state === LoadingState.Streaming) {
-              // Heatmap bad
-              return response;
+            const amendedResponse = {
+              ...response,
+              data: this.cache.procFrames(request, requestInfo, response.data),
+            };
+
+            if (!this.hasIncrementalQuery && response.state === LoadingState.Streaming) {
+              // Heatmap isn't valid
+              return amendedResponse;
             }
-            return transformV2(response, request, {
+
+            return transformV2(amendedResponse, fullOrPartialRequest, {
               exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
             });
           })
@@ -528,7 +530,11 @@ export class PrometheusDatasource
 
       return this.runQuery(request).pipe(
         map((response) => {
-          return transformV2(response, request, {
+          const amendedResponse = {
+            ...response,
+            data: this.cache.procFrames(request, requestInfo, response.data),
+          };
+          return transformV2(amendedResponse, request, {
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
         })

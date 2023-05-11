@@ -11,6 +11,8 @@ import { createLokiDatasource, getMockFrames } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { LokiQuery, LokiQueryType } from './types';
 
+const isInstantQuery = (query) => query.type === LokiQueryType.Instant;
+
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
   const range = {
@@ -31,7 +33,7 @@ describe('runSplitQuery()', () => {
   });
 
   test('Splits datasource queries', async () => {
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+    await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
     });
@@ -41,7 +43,7 @@ describe('runSplitQuery()', () => {
     jest
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
-    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
+    await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith((values) => {
       expect(values).toEqual([{ error: { refId: 'A', message: 'Error' }, data: [], state: LoadingState.Streaming }]);
     });
   });
@@ -63,7 +65,7 @@ describe('runSplitQuery()', () => {
       jest.mocked(metricTimeSplit.splitTimeRange).mockRestore();
     });
     test('Ignores hidden queries', async () => {
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         expect(logsTimeSplit.splitTimeRange).toHaveBeenCalled();
         expect(metricTimeSplit.splitTimeRange).not.toHaveBeenCalled();
       });
@@ -80,14 +82,14 @@ describe('runSplitQuery()', () => {
       jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
     });
     test('Stops requesting once maxLines of logs have been received', async () => {
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 2 responses of 2 logs, 2 requests
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
     test('Performs all the requests if maxLines has not been reached', async () => {
       request.targets[0].maxLines = 9999;
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3 responses of 2 logs, 3 requests
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -95,7 +97,7 @@ describe('runSplitQuery()', () => {
     test('Performs all the requests if not a log query', async () => {
       request.targets[0].maxLines = 1;
       request.targets[0].expr = 'count_over_time({a="b"}[1m])';
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3 responses of 2 logs, 3 requests
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -114,7 +116,7 @@ describe('runSplitQuery()', () => {
         ],
         range,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x Metric + 1x Log, 6 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(6);
       });
@@ -127,7 +129,7 @@ describe('runSplitQuery()', () => {
         ],
         range,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x2 Metric, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -140,7 +142,7 @@ describe('runSplitQuery()', () => {
         ],
         range,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x2 Logs, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -153,7 +155,7 @@ describe('runSplitQuery()', () => {
         ],
         range,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // Instant queries are omitted from splitting
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
@@ -170,7 +172,7 @@ describe('runSplitQuery()', () => {
       jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [], refId: 'B' }));
       jest.spyOn(datasource, 'runQuery').mockReturnValueOnce(of({ data: [logFrameA], refId: 'A' }));
 
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x Logs + 3x Metric, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(4);
       });
@@ -184,7 +186,7 @@ describe('runSplitQuery()', () => {
         ],
         range,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant, 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
@@ -208,7 +210,7 @@ describe('runSplitQuery()', () => {
         targets: [{ expr: '{a="b"}', refId: 'A', splitDuration: '30m' }],
         range: range1h,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
@@ -217,7 +219,7 @@ describe('runSplitQuery()', () => {
         targets: [{ expr: '{a="b"}', refId: 'A', splitDuration: '1h' }],
         range: range1h,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
@@ -229,7 +231,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1h,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
@@ -241,7 +243,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1h,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 2 x 30m + 1 x 1h
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -255,7 +257,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1h,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 4 * 15m + 4 * 15m + 1 * 1h
         expect(datasource.runQuery).toHaveBeenCalledTimes(9);
       });
@@ -268,7 +270,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1h,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 2 x 30m + 1 x 1h
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
@@ -292,7 +294,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1d,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // A, B
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
@@ -305,7 +307,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1d,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // A, B
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
@@ -321,7 +323,7 @@ describe('runSplitQuery()', () => {
         ],
         range: range1d,
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // A, B, C, D, E
         expect(datasource.runQuery).toHaveBeenCalledTimes(5);
       });
@@ -337,7 +339,7 @@ describe('runSplitQuery()', () => {
         ],
         range, // 3 days
       });
-      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      await expect(runSplitQuery(datasource, request, isInstantQuery)).toEmitValuesWith(() => {
         // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E
         expect(datasource.runQuery).toHaveBeenCalledTimes(13);
       });
