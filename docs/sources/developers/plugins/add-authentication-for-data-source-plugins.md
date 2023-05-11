@@ -28,8 +28,6 @@ Configure your data source plugin to authenticate against a third-party API in o
 
 Data source plugins have two ways of storing custom configuration: `jsonData` and `secureJsonData`.
 
-### Store configuration in `jsonData`
-
 Users with the Viewer role can access data source configuration such as the contents of `jsonData` in cleartext. If you've enabled anonymous access, anyone who can access Grafana in their browser can see the contents of `jsonData`.
 
 Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](https://grafana.com/docs/grafana/latest/enterprise/datasource_permissions).
@@ -54,13 +52,11 @@ To demonstrate how you can add secrets to a data source plugin, let's add suppor
      apiKey?: string;
    }
    ```
-1. Add type information to your `secureJsonData` object by updating the props for your `ConfigEditor` to accept the interface as a second type parameter:
+1. Add type information to your `secureJsonData` object by updating the props for your `ConfigEditor` to accept the interface as a second type parameter. Access the value of the secret from the `options` prop inside your `ConfigEditor`:
 
    ```ts
    interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
    ```
-
-1. Access the value of the secret from the `options` prop inside your `ConfigEditor`:
 
    ```ts
    const { secureJsonData, secureJsonFields } = options;
@@ -115,8 +111,6 @@ Now that users can configure secrets, the next step is to see how we can add the
 
 ## Authenticate using the data source proxy
 
-> **Note:** The data source proxy supports OAuth 2.0 authentication.
-
 Once the user has saved the configuration for a data source, the secret data source configuration will no longer be available in the browser. Encrypted secrets can only be accessed on the server. So how do you add them to your request?
 
 The Grafana server comes with a proxy that lets you define templates for your requests: _proxy routes_. Grafana sends the proxy route to the server, decrypts the secrets along with other configuration, and adds them to the request before sending it.
@@ -125,7 +119,7 @@ The Grafana server comes with a proxy that lets you define templates for your re
 
 ### Add a proxy route to your plugin
 
-To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [`plugin.json`](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) file.
+To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) file.
 
 1. Add the route to `plugin.json`:
 
@@ -201,7 +195,7 @@ In addition to adding the URL to the proxy route, you can also add headers, URL 
 
 #### Add HTTP headers to a proxy route
 
-Here's an example of an HTTP header added with `name` and `content`:
+Here's an example of adding `name` and `content` as HTTP headers:
 
 ```json
 "routes": [
@@ -220,7 +214,7 @@ Here's an example of an HTTP header added with `name` and `content`:
 
 #### Add URL parameters to a proxy route
 
-Here's an example of URL parameters added with `name` and `content`.:
+Here's an example of adding `name` and `content` as URL parameters:
 
 ```json
 "routes": [
@@ -239,7 +233,7 @@ Here's an example of URL parameters added with `name` and `content`.:
 
 #### Add a request body to a proxy route
 
-Here's an example of a request body added with `username` and `password`:
+Here's an example of adding `username` and `password` to the request body:
 
 ```json
 "routes": [
@@ -350,7 +344,7 @@ You can see a full working plugin example here: [datasource-http-backend](https:
 
 ### Extract a header from an HTTP request
 
-If you need to access the HTTP header information directory, you can also extract that information from the request:
+If you need to access the HTTP header information directly, you can also extract that information from the request:
 
 ```go
 func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

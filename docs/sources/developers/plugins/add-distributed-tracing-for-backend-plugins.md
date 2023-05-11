@@ -36,7 +36,7 @@ Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel)
 
 When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabled for a plugin, the OpenTelemetry endpoint address and propagation format is passed to the plugin during startup. These parameters are used to configure a global tracer.
 
-1. Use `datasource.Manage` or `app.Manage` to run your plugin to automatically configure the global tracer, and specify custom attributes for the default tracer:
+1. Use `datasource.Manage` or `app.Manage` to run your plugin to automatically configure the global tracer. Also, specify custom attributes for the default tracer:
 
    ```go
    func main() {
@@ -90,7 +90,7 @@ When OpenTelemetry tracing is enabled on the main Grafana instance and tracing i
 
 When tracing is enabled, a new span is created automatically for each gRPC call (`QueryData`, `CheckHealth`, etc.), both on Grafana's side and on the plugin's side. The plugin SDK also injects the trace context into the `context.Context` that is passed to those methods.
 
-You can retrieve the [`trace.SpanContext` object](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) with `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
+You can retrieve the [trace.SpanContext](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) with `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
 
 ```go
 func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (backend.DataResponse, error) {
