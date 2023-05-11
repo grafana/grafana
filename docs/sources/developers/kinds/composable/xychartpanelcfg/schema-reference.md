@@ -92,11 +92,11 @@ It extends [ScatterFieldConfig](#scatterfieldconfig).
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
 | `label`             | string                                              | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
 | `lineWidth`         | integer                                             | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>Constraint: `>=0 & <=2147483647`.                                                      |
 | `name`              | string                                              | No       |         |                                                                                                                                                         |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
 | `show`              | string                                              | No       |         | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
@@ -105,21 +105,18 @@ It extends [ScatterFieldConfig](#scatterfieldconfig).
 
 ### ColorDimensionConfig
 
-This is actually an empty interface used mainly for naming?
-
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
-| Property | Type   | Required | Default | Description                                                    |
-|----------|--------|----------|---------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| Property | Type   | Required | Default | Description                                                                                                  |
+|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `fixed`  | string | No       |         |                                                                                                              |
 
 ### BaseDimensionConfig
 
-| Property | Type   | Required | Default | Description |
-|----------|--------|----------|---------|-------------|
-| `fixed`  |        | **Yes**  |         |             |
-| `field`  | string | No       |         |             |
+| Property | Type   | Required | Default | Description                               |
+|----------|--------|----------|---------|-------------------------------------------|
+| `field`  | string | No       |         | fixed: T -- will be added by each element |
 
 ### HideSeriesConfig
 
@@ -144,12 +141,13 @@ TODO docs
 
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
-| Property | Type    | Required | Default | Description                                                    |
-|----------|---------|----------|---------|----------------------------------------------------------------|
-| `fixed`  |         | **Yes**  |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `max`    | integer | **Yes**  |         |                                                                |
-| `min`    | integer | **Yes**  |         |                                                                |
-| `field`  | string  | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| Property | Type   | Required | Default | Description                                                                                                  |
+|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| `max`    | number | **Yes**  |         |                                                                                                              |
+| `min`    | number | **Yes**  |         |                                                                                                              |
+| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `fixed`  | number | No       |         |                                                                                                              |
+| `mode`   | string | No       |         | Possible values are: `linear`, `quad`.                                                                       |
 
 ### ScaleDistributionConfig
 
@@ -178,10 +176,10 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         |                                                                                                                                         |
 | `label`             | string                                              | No       |         | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | This is actually an empty interface used mainly for naming?                                                                             |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       |         | TODO docs                                                                                                                               |
 | `lineWidth`         | integer                                             | No       |         | Constraint: `>=0 & <=2147483647`.                                                                                                       |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | This is actually an empty interface used mainly for naming?                                                                             |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         |                                                                                                                                         |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
 | `show`              | string                                              | No       |         | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
@@ -214,11 +212,11 @@ TODO docs
 
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
-| Property | Type   | Required | Default | Description                                                    |
-|----------|--------|----------|---------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `mode`   | string | **Yes**  |         | Possible values are: `fixed`, `field`, `template`.             |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| Property | Type   | Required | Default | Description                                                                                                  |
+|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| `mode`   | string | **Yes**  |         | Possible values are: `fixed`, `field`, `template`.                                                           |
+| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `fixed`  | string | No       |         |                                                                                                              |
 
 ### XYDimensionConfig
 

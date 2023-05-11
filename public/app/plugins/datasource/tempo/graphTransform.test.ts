@@ -1,4 +1,4 @@
-import { DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, dateTime, createDataFrame } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -116,7 +116,7 @@ describe('mapPromMetricsToServiceMap', () => {
   });
 });
 
-const singleSpanResponse = new MutableDataFrame({
+const singleSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335'] },
     { name: 'spanID', values: ['4322526419282105830'] },
@@ -128,7 +128,7 @@ const singleSpanResponse = new MutableDataFrame({
   ],
 });
 
-const missingSpanResponse = new MutableDataFrame({
+const missingSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335', '04450900759028499335'] },
     { name: 'spanID', values: ['1', '2'] },
@@ -140,7 +140,7 @@ const missingSpanResponse = new MutableDataFrame({
   ],
 });
 
-const totalsPromMetric = new MutableDataFrame({
+const totalsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -153,7 +153,7 @@ const totalsPromMetric = new MutableDataFrame({
   ],
 });
 
-const secondsPromMetric = new MutableDataFrame({
+const secondsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -166,7 +166,7 @@ const secondsPromMetric = new MutableDataFrame({
   ],
 });
 
-const failedPromMetric = new MutableDataFrame({
+const failedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -179,7 +179,7 @@ const failedPromMetric = new MutableDataFrame({
   ],
 });
 
-const invalidFailedPromMetric = new MutableDataFrame({
+const invalidFailedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
