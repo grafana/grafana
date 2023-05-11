@@ -20,7 +20,6 @@ deleteDatasources:
   - name: gdev-elasticsearch-v7-logs
   - name: gdev-elasticsearch-v7-filebeat
   - name: gdev-elasticsearch-v7-metricbeat
-  - name: gdev-tempo
 
 datasources:
   - name: gdev-graphite
@@ -283,4 +282,4 @@ datasources:
     uid: gdev-tempo
     access: proxy
     url: http://localhost:3200
-    editable: true
+    editable: false
