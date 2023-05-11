@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Placement } from '@popperjs/core';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,6 +29,9 @@ const INTERACTION_ITEM = {
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
 };
 
+const MODAL_MARGIN = 20;
+const FLIP_THRESHOLD = 200;
+
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const { current, onChange, ...restProps } = props;
 
@@ -43,6 +47,34 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   };
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+
+  const [modalHeight, setModalHeight] = useState(0);
+  const [placement, setPlacement] = useState<Placement>('bottom-start');
+
+  useEffect(() => {
+    const resize = () => {
+      if (!!markerElement && !!selectorElement) {
+        const inputRect = markerElement?.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+
+        const availableHeight = windowHeight - inputRect.bottom - MODAL_MARGIN;
+        setModalHeight(availableHeight);
+
+        // Flip the modal if the available space is less than the flip threshold
+        if (availableHeight < FLIP_THRESHOLD) {
+          setModalHeight(412);
+          setPlacement('top-start');
+        } else if (availableHeight >= FLIP_THRESHOLD) {
+          setModalHeight(availableHeight);
+          setPlacement('bottom-start');
+        }
+      }
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, [markerElement, selectorElement]);
 
   useEffect(() => {
     const sub = keyboardEvents.subscribe({
@@ -70,7 +102,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const currentDataSourceInstanceSettings = useDatasource(current);
 
   const popper = usePopper(markerElement, selectorElement, {
-    placement: 'bottom-start',
+    placement,
     modifiers: [
       {
         name: 'offset',
@@ -155,7 +187,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               }}
               onClose={onClose}
               current={currentDataSourceInstanceSettings}
-              style={popper.styles.popper}
+              style={{ ...popper.styles.popper, maxHeight: `${modalHeight}px` }}
               ref={setSelectorElement}
               {...restProps}
               onDismiss={onClose}
@@ -263,10 +295,13 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      height: 412px;
       width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
+
+      ${theme.breakpoints.down('sm')} {
+        width: 100%;
+      }
     `,
     picker: css`
       background: ${theme.colors.background.secondary};
@@ -282,6 +317,11 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};
       background-color: ${theme.colors.background.secondary};
+
+      ${theme.breakpoints.down('sm')} {
+        flex-direction: column;
+        gap: ${theme.spacing(1)};
+      }
     `,
   };
 }
