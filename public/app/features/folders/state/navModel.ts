@@ -3,6 +3,12 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
+export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
+export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
+export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
+export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
+export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
+
 export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavModelItem {
   const model: NavModelItem = {
     icon: 'folder',
@@ -14,7 +20,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       {
         active: false,
         icon: 'apps',
-        id: `folder-dashboards-${folder.uid}`,
+        id: getDashboardsTabID(folder.uid),
         text: 'Dashboards',
         url: folder.url,
       },
@@ -30,7 +36,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
   model.children!.push({
     active: false,
     icon: 'library-panel',
-    id: `folder-library-panels-${folder.uid}`,
+    id: getLibraryPanelsTabID(folder.uid),
     text: 'Panels',
     url: `${folder.url}/library-panels`,
   });
@@ -39,7 +45,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     model.children!.push({
       active: false,
       icon: 'bell',
-      id: `folder-alerting-${folder.uid}`,
+      id: getAlertingTabID(folder.uid),
       text: 'Alert rules',
       url: `${folder.url}/alerting`,
     });
@@ -49,7 +55,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     model.children!.push({
       active: false,
       icon: 'lock',
-      id: `folder-permissions-${folder.uid}`,
+      id: getPermissionsTabID(folder.uid),
       text: 'Permissions',
       url: `${folder.url}/permissions`,
     });
@@ -59,7 +65,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     model.children!.push({
       active: false,
       icon: 'cog',
-      id: `folder-settings-${folder.uid}`,
+      id: getSettingsTabID(folder.uid),
       text: 'Settings',
       url: `${folder.url}/settings`,
     });

@@ -7,7 +7,7 @@ import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { buildNavModel } from '../folders/state/navModel';
+import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -53,9 +53,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     }
     const model = buildNavModel(folderDTO);
 
-    // Set the first tab ("Dashboards") as active
-    if (model.children) {
-      model.children[0].active = true;
+    // Set the "Dashboards" tab to active
+    const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
+    const dashboardsTab = model.children?.find((child) => child.id === dashboardsTabID);
+    if (dashboardsTab) {
+      dashboardsTab.active = true;
     }
     return model;
   }, [folderDTO]);
