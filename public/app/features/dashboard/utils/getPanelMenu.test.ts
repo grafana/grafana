@@ -201,6 +201,12 @@ describe('getPanelMenu()', () => {
             },
           },
         ],
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
       });
 
       const dashboard = createDashboardModelFixture({
@@ -237,6 +243,12 @@ describe('getPanelMenu()', () => {
           tags: ['database', 'panel'],
           uid: '123',
           title: 'My dashboard',
+        },
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
         },
       };
 
