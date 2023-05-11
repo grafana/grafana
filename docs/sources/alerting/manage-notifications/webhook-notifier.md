@@ -66,7 +66,8 @@ Example JSON body:
       "dashboardURL": "",
       "panelURL": "",
       "values": {
-        "data-avg": 47043.702386305304
+        "B": 44.23943737541908,
+        "C": 1
       }
     }
   ],
