@@ -112,7 +112,6 @@ func TestExtendedJWTTest(t *testing.T) {
 			}
 
 			actual := extJwtClient.Test(context.Background(), &authn.Request{
-				OrgID:       1,
 				HTTPRequest: validHTTPReq,
 				Resp:        nil,
 			})
@@ -126,6 +125,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 	type testCase struct {
 		name         string
 		payload      rfc9068Payload
+		orgID        int64
 		want         *authn.Identity
 		userSvcSetup func(userSvc *usertest.FakeUserService)
 		wantErr      bool
@@ -134,6 +134,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 		{
 			name:    "successful authentication",
 			payload: validPayload,
+			orgID:   1,
 			userSvcSetup: func(userSvc *usertest.FakeUserService) {
 				userSvc.ExpectedSignedInUser = &user.SignedInUser{
 					UserID:  2,
@@ -199,6 +200,23 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
 				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 			},
+			orgID:   1,
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "should return error when the OrgId is not the ID of the default org",
+			payload: rfc9068Payload{
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:id:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				ClientID: "grafana",
+				Scopes:   []string{"profile", "groups"},
+				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
+				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			},
+			orgID:   0,
 			want:    nil,
 			wantErr: true,
 		},
@@ -214,25 +232,8 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
 				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 			},
-			want: nil,
-			userSvcSetup: func(userSvc *usertest.FakeUserService) {
-				userSvc.ExpectedError = user.ErrUserNotFound
-			},
-			wantErr: true,
-		},
-		{
-			name: "should return error when the user cannot be found",
-			payload: rfc9068Payload{
-				Issuer:   "http://localhost:3000",
-				Subject:  "user:id:2",
-				Audience: jwt.Audience{"http://localhost:3000"},
-				ID:       "1234567890",
-				ClientID: "grafana",
-				Scopes:   []string{"profile", "groups"},
-				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
-				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
-			},
-			want: nil,
+			orgID: 1,
+			want:  nil,
 			userSvcSetup: func(userSvc *usertest.FakeUserService) {
 				userSvc.ExpectedError = user.ErrUserNotFound
 			},
@@ -250,6 +251,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 				Expiry:   time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
 				IssuedAt: time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 			},
+			orgID:   1,
 			want:    nil,
 			wantErr: true,
 		},
@@ -266,6 +268,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 				Expiry:       time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC).Unix(),
 				IssuedAt:     time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC).Unix(),
 			},
+			orgID:   1,
 			want:    nil,
 			wantErr: true,
 		},
@@ -288,7 +291,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 			mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
 
 			id, err := extJwtClient.Authenticate(context.Background(), &authn.Request{
-				OrgID:       1,
+				OrgID:       tc.orgID,
 				HTTPRequest: validHTTPReq,
 				Resp:        nil,
 			})
