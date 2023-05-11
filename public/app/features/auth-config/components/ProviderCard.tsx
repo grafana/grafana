@@ -12,7 +12,7 @@ type Props = {
   providerId: string;
   displayName: string;
   enabled: boolean;
-  enabledInIniFile: boolean;
+  configFoundInIniFile?: boolean;
   configPath?: string;
   authType?: string;
   badges?: JSX.Element[];
@@ -22,7 +22,7 @@ export function ProviderCard({
   providerId,
   displayName,
   enabled,
-  enabledInIniFile,
+  configFoundInIniFile,
   configPath,
   authType,
   badges,
@@ -33,15 +33,17 @@ export function ProviderCard({
   return (
     <Card href={configPath} className={styles.container}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
-      {enabledInIniFile && (
+      {configFoundInIniFile && (
         <>
           <span className={styles.initext}>
             <Tooltip
               content={`Note: Settings enabled in the .ini configuration file will overwritten by the current settings.`}
             >
-              <Icon name="adjust-circle" />
+              <>
+                <Icon name="adjust-circle" />
+                Configuration found in .ini file
+              </>
             </Tooltip>
-            Configuration found in .ini file
           </span>
         </>
       )}
