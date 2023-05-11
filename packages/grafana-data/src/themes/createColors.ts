@@ -185,11 +185,11 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.blackBase}, 0.16)`,
-    shade: `rgba(${this.blackBase}, 0.20)`,
+    main: palette.white,
+    shade: `rgba(${this.blackBase}, 0.04)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.strong,
+    border: this.border.medium,
   };
 
   info = {
