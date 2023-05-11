@@ -183,6 +183,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
       aria-label="Browse metrics"
       className={styles.modal}
     >
+      <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.inputWrapper}>
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
           <EditorField label="Search metrics">
@@ -382,7 +383,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
             }}
           />
         </div>
-        <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       </div>
     </Modal>
   );

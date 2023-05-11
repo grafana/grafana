@@ -13,7 +13,7 @@ export function FeedbackLink({ feedbackUrl }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack gap={1}>
+    <Stack>
       <a
         href={feedbackUrl}
         className={styles.link}
@@ -35,6 +35,7 @@ function getStyles(theme: GrafanaTheme2) {
       ':hover': {
         color: theme.colors.text.link,
       },
+      marginTop: -25,
     }),
   };
 }
