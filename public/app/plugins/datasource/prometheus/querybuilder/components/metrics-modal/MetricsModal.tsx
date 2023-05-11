@@ -55,7 +55,7 @@ const {
   setNameHaystack,
   setMetaHaystack,
   setFullMetaSearch,
-  setExcludeNullMetadata,
+  setIncludeNullMetadata,
   setSelectedTypes,
   setLetterSearch,
   setUseBackend,
@@ -174,6 +174,75 @@ export const MetricsModal = (props: MetricsModalProps) => {
     }
   }
 
+  const additionalSettings = (
+    <Modal
+      title="Additional settings"
+      isOpen={state.showAdditionalSettings}
+      onDismiss={() => dispatch(showAdditionalSettings())}
+      aria-label="Additional settings"
+      className={styles.additionalSettings}
+    >
+      <div className={styles.selectItem}>
+        <Switch
+          data-testid={testIds.searchWithMetadata}
+          value={state.fullMetaSearch}
+          disabled={state.useBackend || !state.hasMetadata}
+          onChange={() => {
+            const newVal = !state.fullMetaSearch;
+            dispatch(setFullMetaSearch(newVal));
+            onChange({ ...query, fullMetaSearch: newVal });
+
+            fuzzySearchCallback(state.fuzzySearchQuery, newVal);
+          }}
+        />
+        <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
+      </div>
+      <div className={styles.selectItem}>
+        <Switch
+          value={state.includeNullMetadata}
+          disabled={state.useBackend || !state.hasMetadata}
+          onChange={() => {
+            dispatch(setIncludeNullMetadata(!state.includeNullMetadata));
+            onChange({ ...query, includeNullMetadata: !state.includeNullMetadata });
+          }}
+        />
+        <p className={styles.selectItemLabel}>{placeholders.includeNullMetadata}</p>
+      </div>
+      <div className={styles.selectItem}>
+        <Switch
+          value={state.disableTextWrap}
+          onChange={() => {
+            dispatch(setDisableTextWrap());
+            onChange({ ...query, disableTextWrap: !state.disableTextWrap });
+          }}
+        />
+        <p className={styles.selectItemLabel}>Disable text wrap</p>
+      </div>
+      <div className={styles.selectItem}>
+        <Switch
+          data-testid={testIds.setUseBackend}
+          value={state.useBackend}
+          onChange={() => {
+            const newVal = !state.useBackend;
+            dispatch(setUseBackend(newVal));
+            onChange({ ...query, useBackend: newVal });
+            if (newVal === false) {
+              // rebuild the metrics metadata if we turn off useBackend
+              updateMetricsMetadata();
+            } else {
+              // check if there is text in the browse search and update
+              if (state.fuzzySearchQuery !== '') {
+                debouncedBackendSearch(state.fuzzySearchQuery);
+              }
+              // otherwise wait for user typing
+            }
+          }}
+        />
+        <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
+      </div>
+    </Modal>
+  );
+
   return (
     <Modal
       data-testid={testIds.metricModal}
@@ -222,6 +291,18 @@ export const MetricsModal = (props: MetricsModalProps) => {
             />
           </EditorField>
         </div>
+        <div className={styles.inputItem}>
+          <Button
+            variant="secondary"
+            fill="text"
+            size="sm"
+            onClick={() => dispatch(showAdditionalSettings())}
+            data-testid={testIds.showAdditionalSettings}
+          >
+            Additional Settings
+          </Button>
+          {state.showAdditionalSettings && additionalSettings}
+        </div>
       </div>
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
@@ -240,93 +321,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 }}
                 letterSearch={state.letterSearch}
               />
-              <Button
-                variant="secondary"
-                fill="text"
-                size="sm"
-                onClick={() => dispatch(showAdditionalSettings())}
-                onKeyDown={(e) => {
-                  keyFunction(e);
-                }}
-                data-testid={testIds.showAdditionalSettings}
-              >
-                Additional Settings
-              </Button>
             </div>
-            {state.showAdditionalSettings && (
-              <>
-                <div className={styles.selectItem}>
-                  <Switch
-                    data-testid={testIds.searchWithMetadata}
-                    value={state.fullMetaSearch}
-                    disabled={state.useBackend || !state.hasMetadata}
-                    onChange={() => {
-                      const newVal = !state.fullMetaSearch;
-                      dispatch(setFullMetaSearch(newVal));
-                      onChange({ ...query, fullMetaSearch: newVal });
-
-                      fuzzySearchCallback(state.fuzzySearchQuery, newVal);
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
-                </div>
-                <div className={styles.selectItem}>
-                  <Switch
-                    value={state.excludeNullMetadata}
-                    disabled={state.useBackend || !state.hasMetadata}
-                    onChange={() => {
-                      dispatch(setExcludeNullMetadata(!state.excludeNullMetadata));
-                      onChange({ ...query, excludeNullMetadata: !state.excludeNullMetadata });
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
-                </div>
-                <div className={styles.selectItem}>
-                  <Switch
-                    value={state.disableTextWrap}
-                    onChange={() => {
-                      dispatch(setDisableTextWrap());
-                      onChange({ ...query, disableTextWrap: !state.disableTextWrap });
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>Disable text wrap</p>
-                </div>
-                <div className={styles.selectItem}>
-                  <Switch
-                    data-testid={testIds.setUseBackend}
-                    value={state.useBackend}
-                    onChange={() => {
-                      const newVal = !state.useBackend;
-                      dispatch(setUseBackend(newVal));
-                      onChange({ ...query, useBackend: newVal });
-                      if (newVal === false) {
-                        // rebuild the metrics metadata if we turn off useBackend
-                        updateMetricsMetadata();
-                      } else {
-                        // check if there is text in the browse search and update
-                        if (state.fuzzySearchQuery !== '') {
-                          debouncedBackendSearch(state.fuzzySearchQuery);
-                        }
-                        // otherwise wait for user typing
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
-                </div>
-              </>
-            )}
           </div>
         </div>
         {query.labels.length > 0 && (

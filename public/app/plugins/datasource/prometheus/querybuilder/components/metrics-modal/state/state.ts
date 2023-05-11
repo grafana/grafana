@@ -63,8 +63,8 @@ export const stateSlice = createSlice({
       state.fullMetaSearch = action.payload;
       state.pageNum = 1;
     },
-    setExcludeNullMetadata: (state, action: PayloadAction<boolean>) => {
-      state.excludeNullMetadata = action.payload;
+    setIncludeNullMetadata: (state, action: PayloadAction<boolean>) => {
+      state.includeNullMetadata = action.payload;
       state.pageNum = 1;
     },
     setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
@@ -78,7 +78,7 @@ export const stateSlice = createSlice({
     setUseBackend: (state, action: PayloadAction<boolean>) => {
       state.useBackend = action.payload;
       state.fullMetaSearch = false;
-      state.excludeNullMetadata = false;
+      state.includeNullMetadata = false;
       state.pageNum = 1;
     },
     setSelectedIdx: (state, action: PayloadAction<number>) => {
@@ -114,7 +114,7 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     pageNum: 1,
     fuzzySearchQuery: '',
     fullMetaSearch: query?.fullMetaSearch ?? false,
-    excludeNullMetadata: query?.excludeNullMetadata ?? false,
+    includeNullMetadata: query?.includeNullMetadata ?? true,
     selectedTypes: [],
     letterSearch: '',
     useBackend: query?.useBackend ?? false,
@@ -162,8 +162,8 @@ export interface MetricsModalState {
   fuzzySearchQuery: string;
   /** Enables the fuzzy meatadata search */
   fullMetaSearch: boolean;
-  /** Excludes results that are missing type and description */
-  excludeNullMetadata: boolean;
+  /** Includes results that are missing type and description */
+  includeNullMetadata: boolean;
   /** Filter by prometheus type */
   selectedTypes: Array<SelectableValue<string>>;
   /** After results are filtered, select a letter to show metrics that start with that letter */
@@ -197,7 +197,7 @@ export function getSettings(visQuery: PromVisualQuery): MetricsModalSettings {
     useBackend: visQuery?.useBackend ?? false,
     disableTextWrap: visQuery?.disableTextWrap ?? false,
     fullMetaSearch: visQuery?.fullMetaSearch ?? false,
-    excludeNullMetadata: visQuery.excludeNullMetadata ?? false,
+    includeNullMetadata: visQuery.includeNullMetadata ?? false,
   };
 }
 
@@ -205,5 +205,5 @@ export type MetricsModalSettings = {
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
-  excludeNullMetadata?: boolean;
+  includeNullMetadata?: boolean;
 };

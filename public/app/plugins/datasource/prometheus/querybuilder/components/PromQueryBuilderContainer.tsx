@@ -45,7 +45,7 @@ export function PromQueryBuilderContainer(props: Props) {
           useBackend: query.useBackend ?? false,
           disableTextWrap: query.disableTextWrap ?? false,
           fullMetaSearch: query.fullMetaSearch ?? false,
-          excludeNullMetadata: query.excludeNullMetadata ?? false,
+          includeNullMetadata: query.includeNullMetadata ?? true,
         })
       );
     }
@@ -103,7 +103,7 @@ const stateSlice = createSlice({
         state.visQuery.useBackend = action.payload.useBackend;
         state.visQuery.disableTextWrap = action.payload.disableTextWrap;
         state.visQuery.fullMetaSearch = action.payload.fullMetaSearch;
-        state.visQuery.excludeNullMetadata = action.payload.excludeNullMetadata;
+        state.visQuery.includeNullMetadata = action.payload.includeNullMetadata;
       }
     },
   },

@@ -106,11 +106,11 @@ export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boole
       // missing type
       const hasNoType = !m.type;
 
-      return matchesSelectedType || (hasNoType && !state.excludeNullMetadata);
+      return matchesSelectedType || (hasNoType && state.includeNullMetadata);
     });
   }
 
-  if (state.excludeNullMetadata) {
+  if (!state.includeNullMetadata) {
     filteredMetrics = filteredMetrics.filter((m: MetricData) => {
       return m.type !== undefined && m.description !== undefined;
     });
@@ -152,6 +152,8 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
 
 /**
  * The backend query that replaces the uFuzzy search when the option 'useBackend' has been selected
+ * this is a regex search either to the series or labels Prometheus endpoint
+ * depending on which the Prometheus type or version supports
  * @param metricText
  * @param labels
  * @param datasource
@@ -205,9 +207,9 @@ export const promTypes: PromFilterOption[] = [
 
 export const placeholders = {
   browse: 'Search metrics by name',
-  metadataSearchSwitch: 'Search by metadata type and description in addition to name',
+  metadataSearchSwitch: 'Include search with type and description',
   type: 'Select...',
   variables: 'Select...',
-  excludeNoMetadata: 'Exclude results with no metadata',
-  setUseBackend: 'Use the backend to browse metrics',
+  includeNullMetadata: 'Include results with no metadata',
+  setUseBackend: 'Enable regex search',
 };

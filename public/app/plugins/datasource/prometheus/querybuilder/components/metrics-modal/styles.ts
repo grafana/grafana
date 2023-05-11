@@ -121,5 +121,21 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     visible: css`
       visibility: visible;
     `,
+    additionalSettings: css`
+      display: block;
+      top: 150px;
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+        left: 0;
+      }
+      ${theme.breakpoints.up('md')} {
+        width: 40%;
+        left: 40%;
+      }
+      ${theme.breakpoints.up('xl')} {
+        width: 400px;
+        left: 25%;
+      }
+    `,
   };
 };

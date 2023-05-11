@@ -22,7 +22,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
-  excludeNullMetadata?: boolean;
+  includeNullMetadata?: boolean;
 }
 
 export enum PrometheusCacheLevel {
