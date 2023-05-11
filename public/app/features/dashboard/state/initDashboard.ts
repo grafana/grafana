@@ -62,13 +62,6 @@ async function fetchDashboard(
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
-        // only the folder API has information about ancestors
-        // get parent folder (if it exists) and put it in the store
-        // this will be used to populate the full breadcrumb trail
-        if (config.featureToggles.nestedFolders && dashDTO.meta.folderUid) {
-          await dispatch(getFolderByUid(dashDTO.meta.folderUid));
-        }
-
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
