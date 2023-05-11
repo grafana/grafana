@@ -110,7 +110,11 @@ export const Services = () => {
         accessor: 'params',
         width: '70px',
         Cell: ({ value, row }) => (
-          <StatusLink strippedServiceId={stripServiceId(row.original.params.serviceId)} agents={value.agents || []} />
+          <StatusLink
+            type="services"
+            strippedId={stripServiceId(row.original.params.serviceId)}
+            agents={value.agents || []}
+          />
         ),
       },
       {
@@ -203,7 +207,8 @@ export const Services = () => {
           {!!agents.length && (
             <DetailsRow.Contents title={Messages.services.details.agents}>
               <StatusBadge
-                strippedServiceId={stripServiceId(row.original.params.serviceId)}
+                strippedId={stripServiceId(row.original.params.serviceId)}
+                type={'services'}
                 agents={row.original.params.agents || []}
               />
             </DetailsRow.Contents>

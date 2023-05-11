@@ -64,8 +64,8 @@ export const fetchServicesAction = createAsyncThunk<Service[], Partial<ListServi
   async (params = {}) => {
     const body = toListServicesBody(params);
     const payload = await ServicesService.getServices(body, params.token);
-
-    return toDbServicesModel(payload);
+    const mappedServices = toDbServicesModel(payload);
+    return mappedServices.sort((a, b) => a.params.serviceName.localeCompare(b.params.serviceName));
   }
 );
 
