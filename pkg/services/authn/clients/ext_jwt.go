@@ -73,12 +73,14 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
 	}
 
-	if r.OrgID != s.getDefaultOrgID() {
+	// FIXME: support multiple organizations
+	defaultOrgID := s.getDefaultOrgID()
+	if r.OrgID != defaultOrgID {
 		s.log.Error("Failed to verify the Organization: OrgID is not the default")
 		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: s.getDefaultOrgID(), UserID: userID})
+	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: defaultOrgID, UserID: userID})
 	if err != nil {
 		s.log.Error("Failed to get user", "error", err)
 		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
