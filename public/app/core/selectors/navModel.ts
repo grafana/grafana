@@ -39,7 +39,9 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
 
 export function getRootSectionForNode(node: NavModelItem): NavModelItem {
   // Don't recurse fully up the tree when nested folders is enabled
-  // I _think_ this is correct/safe, but put the change behind the feature toggle to be safe
+  // This is to handle folder tabs that still use getNavModel
+  // Once we've transitioned those pages to build the nav model directly (as in BrowseDashboardsPage) we won't need this
+  // I _think_ this is correct/safe, but put the change behind the feature toggle just in case
   if (config.featureToggles.nestedFolders) {
     return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? node.parentItem : node;
   } else {
