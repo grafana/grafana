@@ -42,7 +42,8 @@ Example JSON body:
       "dashboardURL": "",
       "panelURL": "",
       "values": {
-        "data-avg": 14151.331895396988
+        "B": 44.23943737541908,
+        "C": 1
       }
     },
     {
