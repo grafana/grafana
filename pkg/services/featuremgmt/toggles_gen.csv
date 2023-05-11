@@ -5,8 +5,8 @@ live-service-web-worker,alpha,@grafana/grafana-app-platform-squad,false,false,fa
 queryOverLive,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 panelTitleSearch,beta,@grafana/grafana-app-platform-squad,false,false,false,false
 prometheusAzureOverrideAudience,beta,@grafana/observability-metrics,false,false,false,false
-publicDashboards,alpha,@grafana/dashboards-squad,false,false,false,false
-publicDashboardsEmailSharing,alpha,@grafana/dashboards-squad,false,true,false,false
+publicDashboards,beta,@grafana/dashboards-squad,false,false,false,false
+publicDashboardsEmailSharing,beta,@grafana/dashboards-squad,false,true,false,false
 lokiLive,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false

@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
@@ -9,7 +9,7 @@ import { InlineFieldRow } from '../Forms/InlineFieldRow';
 
 import mdx from './Switch.mdx';
 
-const meta: ComponentMeta<typeof Switch> = {
+const meta: Meta<typeof Switch> = {
   title: 'Forms/Switch',
   component: Switch,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -25,7 +25,7 @@ const meta: ComponentMeta<typeof Switch> = {
   },
 };
 
-export const Controlled: ComponentStory<typeof Switch> = (args) => {
+export const Controlled: StoryFn<typeof Switch> = (args) => {
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
@@ -56,7 +56,7 @@ export const Controlled: ComponentStory<typeof Switch> = (args) => {
   );
 };
 
-export const Uncontrolled: ComponentStory<typeof Switch> = (args) => {
+export const Uncontrolled: StoryFn<typeof Switch> = (args) => {
   const [checked, setChecked] = useState(args.value);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),

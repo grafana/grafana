@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -9,7 +9,7 @@ import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory
 
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
-const meta: ComponentMeta<typeof Select> = {
+const meta: Meta<typeof Select> = {
   title: 'Forms/Legacy/Select',
   component: Select,
   decorators: [withCenteredStory],
@@ -65,7 +65,7 @@ const options = [
   { label: 'Another label', value: 'Another value ' },
 ];
 
-export const Basic: ComponentStory<typeof Select> = (args) => {
+export const Basic: StoryFn<typeof Select> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <Select
@@ -83,7 +83,7 @@ Basic.args = {
   width: 20,
 };
 
-export const AsyncSelect: ComponentStory<typeof AsyncSelectComponent> = (args) => {
+export const AsyncSelect: StoryFn<typeof AsyncSelectComponent> = (args) => {
   const [, updateArgs] = useArgs();
   const loadAsyncOptions = useCallback(
     (inputValue: string) => {
