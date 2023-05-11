@@ -115,7 +115,7 @@ Example JSON body:
 | labels       | object | Labels that are part of this alert, map of string keys to string values            |
 | annotations  | object | Annotations that are part of this alert, map of string keys to string values       |
 | startsAt     | string | Start time of the alert                                                            |
-| endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`   | 
+| endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`   |
 | values       | object | Values that triggered the current status                                           |
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
