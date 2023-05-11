@@ -11,7 +11,7 @@ keywords:
 
 With the release of Grafana v9.0.0, legacy alerting has been deprecated, meaning that it is no longer actively maintained or supported by Grafana.
 
-Legacy alerting refers to the old alerting system that was used prior to the introduction of the new alerting system in Grafana.
+Legacy alerting refers to the old alerting system that was used prior to the introduction of Grafana Alerting, the new alerting system in Grafana.
 
 The decision to deprecate legacy alerting was made to encourage users to migrate to the new alerting system, which offers a more powerful and flexible alerting experience.
 
