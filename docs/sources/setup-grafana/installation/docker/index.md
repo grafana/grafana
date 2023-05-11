@@ -17,7 +17,7 @@ Grafana Docker images come in two editions:
 
 > **Note:** The recommended and default edition of Grafana is Grafana Enterprise. It is free and includes all the features of the OSS edition. Additionally, you have the option to upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which includes support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
-The default images for Grafana are created using the Alpine Linux project and can be found in the Alpine official image. For instructions on configuring a Docker image for Grafana, refer to [Configure a Grafana Docker image]({{< ref "../../configure-docker/" >}}).
+The default images for Grafana are created using the Alpine Linux project and can be found in the Alpine official image. For instructions on configuring a Docker image for Grafana, refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker" >}}).
 
 ## Run Grafana via Docker CLI
 
@@ -73,7 +73,7 @@ It is recommended to have persistent storage because without it, all data will b
 
 To use persistent storage, complete the following steps:
 
-1. Ceate a Docker volume by running the following commands:
+1. Create a Docker volume by running the following commands:
 
    ```bash
    # create a persistent volume for your data
@@ -109,7 +109,7 @@ grafana/grafana-enterprise
 
 ### Use environment variables
 
-Grafana supports specifying custom configuration settings using [environment variables]({{< relref "../../../setup-grafana/configure-grafana/#override-configuration-with-environment-variables" >}}).
+Grafana supports specifying custom configuration settings using [environment variables]({{< relref "../../../setup-grafana/configure-grafana#override-configuration-with-environment-variables" >}}).
 
 ```bash
 # enabling public dashboard feature
@@ -123,7 +123,7 @@ grafana/grafana-enterprise
 
 You can install plugins in Grafana from the official and community [plugins page](/grafana/plugins) or by using a custom URL to install a private plugin. These plugins allow you to add new visualization types, data sources, and applications to help you better visualize your data.
 
-Grafana currently supports three types of plugins: panel, data source, and app. For more information on managing plugins, refer to [Plugin Management]({{< relref "../../../administration/plugin-management/" >}}).
+Grafana currently supports three types of plugins: panel, data source, and app. For more information on managing plugins, refer to [Plugin Management]({{< relref "../../../administration/plugin-management" >}}).
 
 To install plugins in the Docker container, complete the following steps:
 
@@ -162,7 +162,7 @@ To install plugins in the Docker container, complete the following steps:
 
 ## Example
 
-The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel/) plugin installed.
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
 
 ```bash
 # create a persistent volume for your data
@@ -306,7 +306,7 @@ To use bind mounts, complete the following steps:
 
 ### Example
 
-The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel/) plugin installed.
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
 
 ```bash
 version: "3.8"
@@ -330,12 +330,12 @@ volumes:
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../../../getting-started/build-first-dashboard" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "../../configure-grafana/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../../configure-grafana" >}}) page for details on options for customizing your environment, logging, database, and so on.

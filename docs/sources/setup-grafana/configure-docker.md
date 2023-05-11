@@ -25,7 +25,7 @@ This topic explains how to run Grafana on Docker in complex environments that re
 
 > **Note:** The examples in this topic use the Grafana Enterprise Docker image. You can use the Grafana Open Source edition by changing the Docker image to `grafana/grafana-oss`.
 
-# Supported Docker image variants
+## Supported Docker image variants
 
 You can install and run Grafana using the following official Docker images.
 
@@ -39,7 +39,7 @@ Each edition is available in two variants: Alpine and Ubuntu.
 
 [Alpine Linux](https://alpinelinux.org/about/) is a Linux distribution not affiliated with any commercial entity. It is a versatile operating system that caters to users who prioritize security, efficiency, and user-friendliness. Alpine Linux is much smaller than other distribution base images, allowing for slimmer and more secure images to be created.
 
-By default, the images are built using the widely-used [Alpine Linux project](http://alpinelinux.org/) base image, which can be found in the [Alpine docker repo](https://hub.docker.com/_/alpine).
+By default, the images are built using the widely used [Alpine Linux project](http://alpinelinux.org/) base image, which can be found in the [Alpine docker repo](https://hub.docker.com/_/alpine).
 If you prioritize security and want to minimize the size of your image, it is recommended that you use the Alpine variant. However, it's important to note that the Alpine variant uses [musl libc](http://www.musl-libc.org/) instead of [glibc and others](http://www.etalabs.net/compare_libcs.html). As a result, some software might encounter problems depending on their libc requirements. Nonetheless, most software should not experience any issues, so the Alpine variant is generally reliable.
 
 ## Ubuntu image
@@ -78,9 +78,9 @@ For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.
 
 ## Default paths
 
-Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana) documentation to view all the default configuraiton settings.
+Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana]({{< relref "./configure-grafana" >}}) documentation to view all the default configuration settings.
 
-The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
+The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables]({{< relref "./configure-grafana#override-configuration-with-environment-variables" >}}).
 
 | Setting               | Default value             |
 | --------------------- | ------------------------- |
@@ -207,7 +207,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ## Logging
 
-By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "./configure-grafana/#mode" >}}) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
+By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "./configure-grafana#mode" >}}) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
 
 Example:
 
@@ -233,7 +233,7 @@ The following example demonstrates how to set the admin password:
 
 ### Configure Docker secrets credentials for AWS CloudWatch
 
-Grafana ships with built-in support for the [Amazon CloudWatch datasource]({{< relref "../datasources/aws-cloudwatch/" >}}). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
+Grafana ships with built-in support for the [Amazon CloudWatch datasource]({{< relref "../datasources/aws-cloudwatch" >}}). To configure the data source, you must provide information such as the AWS ID-Key, secret access key, region, and so on. You can use Docker secrets as a way to provide this information.
 
 Example:
 
@@ -262,7 +262,7 @@ Supported variables:
 
 By default, the Grafana log level is set to `INFO`, but you can increase the log level to `DEBUG` mode when you try to reproduce a problem.
 
-For more information about logging, refer to [logs]({{< relref "./configure-grafana/#log" >}}).
+For more information about logging, refer to [logs]({{< relref "./configure-grafana#log" >}}).
 
 ### Increase log level using the Docker run (CLI) command
 
