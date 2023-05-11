@@ -108,7 +108,7 @@ func owners(args []string) error {
 
 func modules(args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
-	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
+	// indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
 	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
@@ -116,15 +116,41 @@ func modules(args []string) error {
 	if err != nil {
 		return err
 	}
+	/*
+		GOAL: print all dependencies for each owner listed in CLI after -o flag
+		check each dependency's owners
+
+			if it match one of the owners in the flag/CLI, print it
+			if not skip
+
+		CURRENT ISSUE: getting all owners listed in CLI flag
+
+		mod.Owners := [bep, as-code, delivery]
+		flag := [gaas, delivery]
+	*/
+
 	for _, mod := range m {
+		// fmt.Println("mod!!", mod)
 		// compare owners
-		if len(*owner) > 1 && hasCommonElement(mod.Owners, fs.Args()) {
-			fmt.Println(mod.Name)
-		} else if mod.Owners[0] == *owner {
-			fmt.Println(mod.Name)
-		}
-		if *indirect || !mod.Indirect {
-			fmt.Println(mod.Name)
+		// fmt.Println("owners from flag", *owner)
+		ownerFlags := strings.Split(*owner, ",")
+		if len(*owner) > 0 {
+			if len(mod.Owners) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
+				// confirm in modfile that the require/dependency/module has an owner to check
+				fmt.Println(mod.Name)
+
+				// below are debugging lines
+				// fmt.Println("NEW MOD", mod)
+				// fmt.Println("mod.Owners", mod.Owners) // owner from modfile
+				// fmt.Println("owners from flag", *owner)
+				// fmt.Println("fs.Args()", fs.Args())
+				// fmt.Println("mod.Name", mod.Name) // name of dependency from modfile
+
+			}
+			// TODO: uncomment to use indirect flag
+			// if *indirect || !mod.Indirect {
+			// 	fmt.Println(mod.Name)
+			// }
 		}
 	}
 	return nil
@@ -142,6 +168,7 @@ func hasCommonElement(a []string, b []string) bool {
 }
 
 func main() {
+	// fmt.Println("HELLO IM IN MAIN")
 	if len(os.Args) < 2 {
 		fmt.Println("usage: modowners subcommand go.mod...")
 		os.Exit(1)
