@@ -9,7 +9,7 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
-  /** Make switch's background and border transparent */
+  /** Make inline switch's background and border transparent */
   transparent?: boolean;
   /** Show an invalid state around the input */
   invalid?: boolean;
@@ -178,6 +178,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
       color: ${theme.colors.text.primary};
     `,
     invalid: css`
+      input + label,
       input:checked + label {
         border: 1px solid ${theme.colors.error.border};
       }
