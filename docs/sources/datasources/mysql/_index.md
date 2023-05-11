@@ -104,8 +104,8 @@ datasources:
     type: mysql
     url: localhost:3306
     user: grafana
+    database: grafana
     jsonData:
-      database: grafana
       maxOpenConns: 100 # Grafana v5.4+
       maxIdleConns: 100 # Grafana v5.4+
       maxIdleConnsAuto: true # Grafana v9.5.1+
@@ -124,9 +124,9 @@ datasources:
     type: mysql
     url: localhost:3306
     user: grafana
+    database: grafana
     jsonData:
       tlsAuth: true
-      database: grafana
       maxOpenConns: 100 # Grafana v5.4+
       maxIdleConns: 100 # Grafana v5.4+
       maxIdleConnsAuto: true # Grafana v9.5.1+
@@ -147,10 +147,10 @@ datasources:
     type: mysql
     url: localhost:3306
     user: grafana
+    database: grafana
     jsonData:
       tlsAuth: true
       skipTLSVerify: true
-      database: grafana
       maxOpenConns: 100 # Grafana v5.4+
       maxIdleConns: 100 # Grafana v5.4+
       maxIdleConnsAuto: true # Grafana v9.5.1+
