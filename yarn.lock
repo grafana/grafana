@@ -7029,6 +7029,39 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@storybook/blocks@patch:@storybook/blocks@npm%3A7.0.10#./.yarn/patches/@storybook-blocks-npm-7.0.10-b101e8dcba.patch::locator=grafana%40workspace%3A.":
+  version: 7.0.10
+  resolution: "@storybook/blocks@patch:@storybook/blocks@npm%3A7.0.10#./.yarn/patches/@storybook-blocks-npm-7.0.10-b101e8dcba.patch::version=7.0.10&hash=3743ae&locator=grafana%40workspace%3A."
+  dependencies:
+    "@storybook/channels": 7.0.10
+    "@storybook/client-logger": 7.0.10
+    "@storybook/components": 7.0.10
+    "@storybook/core-events": 7.0.10
+    "@storybook/csf": ^0.1.0
+    "@storybook/docs-tools": 7.0.10
+    "@storybook/global": ^5.0.0
+    "@storybook/manager-api": 7.0.10
+    "@storybook/preview-api": 7.0.10
+    "@storybook/theming": 7.0.10
+    "@storybook/types": 7.0.10
+    "@types/lodash": ^4.14.167
+    color-convert: ^2.0.1
+    dequal: ^2.0.2
+    lodash: ^4.17.21
+    markdown-to-jsx: ^7.1.8
+    memoizerific: ^1.11.3
+    polished: ^4.2.2
+    react-colorful: ^5.1.2
+    telejson: ^7.0.3
+    ts-dedent: ^2.0.0
+    util-deprecate: ^1.0.2
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 62d56e3289f0b82ed2b7b498553bef90aaa52da7c835d16c11fa5e4064d519b3cc0d0db9f8b55a9fd7bde81a8401877671d44ae26b1248a2009b30312e1d30d9
+  languageName: node
+  linkType: hard
+
 "@storybook/builder-manager@npm:7.0.10":
   version: 7.0.10
   resolution: "@storybook/builder-manager@npm:7.0.10"
