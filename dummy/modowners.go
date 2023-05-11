@@ -106,9 +106,11 @@ func owners(args []string) error {
 	return nil
 }
 
+// NOTE: example CLI command `go run dummy/modowners.go modules -m dummy/go.txd -o @as-code,@delivery`
+
 func modules(args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
-	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
+	// indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
 	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
@@ -147,9 +149,9 @@ func modules(args []string) error {
 			}
 		}
 		// NOTE: if the indirect flag is used OR if dependency is direct; if indirect flag is used print all dependencies or if flga isn't used, print direct dependencies
-		if *indirect || !mod.Indirect {
-			fmt.Println(mod.Name)
-		}
+		// if *indirect || !mod.Indirect {
+		// 	fmt.Println(mod.Name)
+		// }
 	}
 	return nil
 }
