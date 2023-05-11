@@ -179,7 +179,8 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
     `,
     invalid: css`
       input + label,
-      input:checked + label {
+      input:checked + label,
+      input:hover + label {
         border: 1px solid ${theme.colors.error.border};
       }
     `,
