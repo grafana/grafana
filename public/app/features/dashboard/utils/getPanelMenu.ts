@@ -341,5 +341,6 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
       tags: Array.from<string>(dashboard.tags),
     },
     targets: panel.targets,
+    scopedVars: panel.scopedVars,
   };
 }

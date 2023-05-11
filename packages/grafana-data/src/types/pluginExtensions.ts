@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/schema';
 
+import { ScopedVars } from './ScopedVars';
 import { RawTimeRange, TimeZone } from './time';
 
 // Plugin Extensions types
@@ -76,6 +77,7 @@ export type PluginExtensionPanelContext = {
   timeZone: TimeZone;
   dashboard: Dashboard;
   targets: DataQuery[];
+  scopedVars?: ScopedVars;
 };
 
 type Dashboard = {

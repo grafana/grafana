@@ -1,10 +1,10 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { FieldValidationMessage } from './FieldValidationMessage';
 import mdx from './FieldValidationMessage.mdx';
 
-const meta: ComponentMeta<typeof FieldValidationMessage> = {
+const meta: Meta<typeof FieldValidationMessage> = {
   title: 'Forms/FieldValidationMessage',
   component: FieldValidationMessage,
   parameters: {
@@ -24,7 +24,7 @@ const meta: ComponentMeta<typeof FieldValidationMessage> = {
   },
 };
 
-export const Basic: ComponentStory<typeof FieldValidationMessage> = (args) => {
+export const Basic: StoryFn<typeof FieldValidationMessage> = (args) => {
   return <FieldValidationMessage horizontal={args.horizontal}>{args.children}</FieldValidationMessage>;
 };
 

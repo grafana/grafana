@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
@@ -46,7 +46,7 @@ const meta: Meta = {
   },
 };
 
-export const Example: Story = () => {
+export const Example: StoryFn = () => {
   return (
     <VerticalGroup>
       <StoryExample name="Header, paragraph, span and legend elements">
@@ -69,7 +69,7 @@ Example.parameters = {
   },
 };
 
-export const HeadingComponent: Story = (args) => {
+export const HeadingComponent: StoryFn = (args) => {
   return (
     <div style={{ width: '300px' }}>
       <H1 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
@@ -87,7 +87,7 @@ HeadingComponent.args = {
   children: 'This is a H1 component',
 };
 
-export const LegendComponent: Story = (args) => {
+export const LegendComponent: StoryFn = (args) => {
   return (
     <div style={{ width: '300px' }}>
       <Legend variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
@@ -106,7 +106,7 @@ LegendComponent.args = {
   children: 'This is a lengend component',
 };
 
-export const TextModifierComponent: Story = (args) => {
+export const TextModifierComponent: StoryFn = (args) => {
   return (
     <div style={{ width: '300px' }}>
       <H6 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
