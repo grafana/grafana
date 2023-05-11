@@ -50,18 +50,24 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   );
   const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
+  {
+    /* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */
+  }
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      documentation.
+    </a>
+  );
+  const subTitle = <span>Manage your auth settings and configure single sign-on. Find out more in our {docsLink}</span>;
   return (
-    <Page navId="authentication">
+    <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
-        {/* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */}
-        <div className={styles.doclink}>
-          Visit our{' '}
-          <a href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/">
-            documentation
-          </a>{' '}
-          to learn more about SAML configuration.
-        </div>
         {!!enabledProviders?.length && (
           <div className={styles.cardsContainer}>
             {enabledProviders.map((provider) => (
