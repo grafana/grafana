@@ -640,4 +640,3 @@ Latest Version: 1.4.1 | Signature: Community | Last Updated: 2021
 Latest Version: 1.2.2 | Signature: Community | Last Updated: 2021
 
 > **Warning:** Unknown whether migration to react will be undertaken - [migration issue](https://github.com/zuburqan/grafana-parity-report/issues/17).
-

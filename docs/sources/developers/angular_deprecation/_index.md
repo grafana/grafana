@@ -40,4 +40,3 @@ We encourage you to locate the repository of the corresponding plugin and create
 - [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
 - [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
 - [List of current Angular plugins]({{< relref "./angular-plugins/" >}})
-
