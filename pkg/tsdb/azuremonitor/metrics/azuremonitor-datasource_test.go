@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -313,7 +312,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
 			}
 
-			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params", "Dimensions")); diff != "" {
+			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(struct{}{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params", "Dimensions")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
@@ -340,7 +339,7 @@ func TestCustomNamespace(t *testing.T) {
 			{
 				JSON: []byte(`{
 							"azureMonitor": {
-								"customNamespace": "custom/namespace"						
+								"customNamespace": "custom/namespace"
 							}
 						}`),
 			},

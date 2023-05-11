@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,12 +82,8 @@ func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *set
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData, err := simplejson.NewJson(settings.JSONData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
 		jsonDataObj := map[string]any{}
-		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
+		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -99,7 +94,13 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		cloud, err := getAzureCloud(cfg, jsonData)
+		var jsonData types.AzureClientSettings
+		err = json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		cloud, err := getAzureCloud(cfg, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -109,7 +110,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, err
 		}
 
-		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
+		credentials, err := getAzureCredentials(cfg, &jsonData, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}

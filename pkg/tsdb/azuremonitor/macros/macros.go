@@ -1,19 +1,18 @@
 package macros
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 )
 
 const rsIdentifier = `__(timeFilter|timeFrom|timeTo|interval|contains|escapeMulti)`
@@ -75,7 +74,7 @@ func (m *kqlMacroEngine) Interpolate(logger log.Logger, query backend.DataQuery,
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(logger, groups[1], defaultTimeField, args, dsInfo)
+		res, err := m.evaluateMacro(logger, groups[1], defaultTimeField, args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -90,7 +89,12 @@ func (m *kqlMacroEngine) Interpolate(logger log.Logger, query backend.DataQuery,
 	return kql, nil
 }
 
-func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTimeField string, args []string, dsInfo types.DatasourceInfo) (string, error) {
+type queryInterval struct {
+	IntervalMs int64
+	Interval   string
+}
+
+func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTimeField string, args []string) (string, error) {
 	switch name {
 	case "timeFilter":
 		timeColumn := defaultTimeField
@@ -111,14 +115,13 @@ func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTi
 			from := m.timeRange.From.UnixNano()
 			// default to "100 datapoints" if nothing in the query is more specific
 			defaultInterval := time.Duration((to - from) / 60)
-			model, err := simplejson.NewJson(m.query.JSON)
+			var model queryInterval
+			err := json.Unmarshal(m.query.JSON, &model)
 			if err != nil {
 				logger.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
-				it, err = interval.GetIntervalFrom(&datasources.DataSource{
-					JsonData: simplejson.NewFromAny(dsInfo.JSONData),
-				}, model, defaultInterval)
+				it, err = intervalv2.GetIntervalFrom("", model.Interval, model.IntervalMs, defaultInterval)
 				if err != nil {
 					logger.Warn("Unable to get interval from query", "model", model)
 					it = defaultInterval

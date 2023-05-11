@@ -36,6 +36,13 @@ type AzureMonitorSettings struct {
 	AppInsightsAppId             string `json:"appInsightsAppId"`
 }
 
+type AzureClientSettings struct {
+	AzureAuthType string
+	CloudName     string
+	TenantId      string
+	ClientId      string
+}
+
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
 type AzureMonitorCustomizedCloudSettings struct {
 	CustomizedRoutes map[string]AzRoute `json:"customizedRoutes"`
