@@ -2593,6 +2593,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
+    "public/app/features/datasources/components/BasicSettings.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/datasources/components/DataSourceReadOnlyMessage.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],

@@ -6,12 +6,14 @@ import {
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, config } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
 import {
   dataSourceLoaded,
+  setDataSourceName,
+  setIsDefault,
   useDataSource,
   useDataSourceExploreUrl,
   useDataSourceMeta,
@@ -24,6 +26,7 @@ import {
 } from '../state';
 import { DataSourceRights } from '../types';
 
+import { BasicSettings } from './BasicSettings';
 import { ButtonRow } from './ButtonRow';
 import { CloudInfoBox } from './CloudInfoBox';
 import { DataSourceLoadError } from './DataSourceLoadError';
@@ -53,6 +56,8 @@ export function EditDataSource({ uid, pageId }: Props) {
   const onDelete = useDeleteLoadedDataSource();
   const onTest = useTestDataSource(uid);
   const onUpdate = useUpdateDatasource();
+  const onDefaultChange = (value: boolean) => dispatch(setIsDefault(value));
+  const onNameChange = (name: string) => dispatch(setDataSourceName(name));
   const onOptionsChange = (ds: DataSourceSettingsType) => dispatch(dataSourceLoaded(ds));
 
   return (
@@ -64,6 +69,8 @@ export function EditDataSource({ uid, pageId }: Props) {
       dataSourceRights={dataSourceRights}
       exploreUrl={exploreUrl}
       onDelete={onDelete}
+      onDefaultChange={onDefaultChange}
+      onNameChange={onNameChange}
       onOptionsChange={onOptionsChange}
       onTest={onTest}
       onUpdate={onUpdate}
@@ -79,6 +86,8 @@ export type ViewProps = {
   dataSourceRights: DataSourceRights;
   exploreUrl: string;
   onDelete: () => void;
+  onDefaultChange: (isDefault: boolean) => AnyAction;
+  onNameChange: (name: string) => AnyAction;
   onOptionsChange: (dataSource: DataSourceSettingsType) => AnyAction;
   onTest: () => void;
   onUpdate: (dataSource: DataSourceSettingsType) => Promise<DataSourceSettingsType>;
@@ -92,6 +101,8 @@ export function EditDataSourceView({
   dataSourceRights,
   exploreUrl,
   onDelete,
+  onDefaultChange,
+  onNameChange,
   onOptionsChange,
   onTest,
   onUpdate,
@@ -101,6 +112,11 @@ export function EditDataSourceView({
   const hasDataSource = dataSource.id > 0;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
+
+  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+  const dataSourcePageHeader = config.featureToggles.dataSourcePageHeader;
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -141,6 +157,17 @@ export function EditDataSourceView({
       {dataSourceMeta.state && <DataSourcePluginState state={dataSourceMeta.state} />}
 
       <CloudInfoBox dataSource={dataSource} />
+
+      {!dataSourcePageHeader && (
+        <BasicSettings
+          dataSourceName={dataSource.name}
+          isDefault={dataSource.isDefault}
+          onDefaultChange={onDefaultChange}
+          onNameChange={onNameChange}
+          alertingSupported={alertingSupported}
+          disabled={readOnly || !hasWriteRights}
+        />
+      )}
 
       {plugin && (
         <DataSourcePluginContextProvider instanceSettings={dsi}>
