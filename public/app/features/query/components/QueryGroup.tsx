@@ -81,7 +81,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { options, queryRunner } = this.props;
-    // console.log('🚀 ~ file: QueryGroup.tsx:84 ~ QueryGroup ~ componentDidMount ~ options:', options);
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
@@ -104,9 +103,11 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async componentDidUpdate() {
     const { options } = this.props;
-    console.log('🚀 ~ file: QueryGroup.tsx:107 ~ QueryGroup ~ componentDidUpdate ~ options:', options);
+    console.log('🚀 ~ file: QueryGroup.tsx:106 ~ QueryGroup ~ componentDidUpdate ~ options:', options);
 
     const currentDS = await getDataSourceSrv().get(options.dataSource);
+    console.log(currentDS.uid, 'currentDS.uid');
+    console.log(this.state.dataSource, 'this.state.dataSource');
     if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
       this.setNewQueriesAndDatasource(options);
     }
@@ -149,6 +150,9 @@ export class QueryGroup extends PureComponent<Props, State> {
     const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
+    // JEV: maybe this?
+    // JEV: new datasources with the same datasource type (mysql -> mysql) are updating the queries
+    // JEV: but new datasources with a different datasource type (mysql -> postgres) ARE updating the queries
     this.onChange({
       queries,
       dataSource: {
@@ -183,6 +187,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     };
   }
 
+  // JEV: Is this the issue?
   onChange(changedProps: Partial<QueryGroupOptions>) {
     this.props.onOptionsChange({
       ...this.props.options,
@@ -204,7 +209,6 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onUpdateAndRun = (options: QueryGroupOptions) => {
-    // console.log('onUpdateAndRun', options);
     this.props.onOptionsChange(options);
     this.props.onRunQueries();
   };
@@ -236,7 +240,6 @@ export class QueryGroup extends PureComponent<Props, State> {
                   options={options}
                   dataSource={dataSource}
                   data={data}
-                  // Jev
                   onChange={this.onUpdateAndRun}
                 />
               </div>
