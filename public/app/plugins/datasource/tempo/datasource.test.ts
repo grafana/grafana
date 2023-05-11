@@ -30,7 +30,7 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedSpanNanes,
+  getEscapedSpanNames,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
@@ -596,7 +596,7 @@ describe('Tempo service graph view', () => {
       '$type + [test]|HTTP POST - post',
       'server.cluster.local:9090^/sample.test(.*)?',
     ];
-    let escaped = getEscapedSpanNanes(spanNames);
+    let escaped = getEscapedSpanNames(spanNames);
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
