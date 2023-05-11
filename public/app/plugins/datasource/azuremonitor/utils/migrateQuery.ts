@@ -32,6 +32,18 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     workingQuery = migrateResourceGroupAndName(workingQuery);
   }
 
+  if (workingQuery.azureLogAnalytics?.resource) {
+    workingQuery = {
+      ...workingQuery,
+      azureLogAnalytics: {
+        ...workingQuery.azureLogAnalytics,
+        resources: [workingQuery.azureLogAnalytics.resource],
+      },
+    };
+
+    delete workingQuery.azureLogAnalytics?.resource;
+  }
+
   return workingQuery;
 }
 

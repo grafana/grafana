@@ -206,7 +206,7 @@ describe('AzureMonitor: migrateQuery', () => {
     });
   });
 
-  it('should migrate a sigle resource for Logs', () => {
+  it('should migrate a single resource for Logs', () => {
     const q = {
       ...modernMetricsQuery,
       azureLogAnalytics: {
