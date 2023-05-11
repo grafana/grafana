@@ -54,6 +54,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
     <Page navId="authentication">
       <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
+        {/* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */}
         <div className={styles.doclink}>
           Visit our{' '}
           <a href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/">
@@ -128,7 +129,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     doclink: css`
       padding-bottom: 5px;
       padding-top: -5px;
-      text-size: 10px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      a {
+        color: ${theme.colors.info.name}; // use theme link color or any other color
+        text-decoration: underline; // underline or none, as you prefer
+      }
     `,
     settingValue: css`
       white-space: break-spaces;
