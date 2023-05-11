@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -97,6 +97,21 @@ const AmRoutes = () => {
     return;
   }, [config?.route]);
 
+  // useAsync could also work but it's hard to wait until it's done in the tests
+  // Combining with useEffect gives more predictable results because the condition is in useEffect
+  const [{ value: routeAlertGroupsMap }, triggerGetRouteGroupsMap] = useAsyncFn(
+    async (route: RouteWithID, groups: AlertmanagerGroup[]) => {
+      return getRouteGroupsMap(route, groups);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (rootRoute && alertGroups) {
+      triggerGetRouteGroupsMap(rootRoute, alertGroups);
+    }
+  }, [rootRoute, alertGroups, triggerGetRouteGroupsMap]);
+
   // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
     if (!rootRoute) {
@@ -106,13 +121,6 @@ const AmRoutes = () => {
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
-
-  const { value: routeAlertGroupsMap } = useAsync(async () => {
-    if (rootRoute && alertGroups && alertManagerSourceName) {
-      return getRouteGroupsMap(rootRoute, alertGroups);
-    }
-    return undefined;
-  }, [rootRoute, alertGroups]);
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {

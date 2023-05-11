@@ -70,7 +70,6 @@ const Policy: FC<PolicyComponentProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
-  const showMatchingInstances = true; // useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -113,9 +112,6 @@ const Policy: FC<PolicyComponentProps> = ({
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  // const matchingAlertGroups = useMemo(() => {
-  //   return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
-  // }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
   const matchingAlertGroups = routeAlertGroupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
@@ -198,18 +194,16 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              {showMatchingInstances && (
-                <MetaText
-                  icon="layers-alt"
-                  onClick={() => {
-                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
-                  }}
-                  data-testid="matching-instances"
-                >
-                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
-                  <span>{pluralize('instance', numberOfAlertInstances)}</span>
-                </MetaText>
-              )}
+              <MetaText
+                icon="layers-alt"
+                onClick={() => {
+                  matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
+                }}
+                data-testid="matching-instances"
+              >
+                <Strong>{numberOfAlertInstances ?? '-'}</Strong>
+                <span>{pluralize('instance', numberOfAlertInstances)}</span>
+              </MetaText>
               {contactPoint && (
                 <MetaText icon="at" data-testid="contact-point">
                   <span>Delivered to</span>
