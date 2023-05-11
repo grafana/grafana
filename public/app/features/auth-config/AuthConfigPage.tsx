@@ -53,12 +53,14 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   return (
     <Page navId="authentication">
       <Page.Contents isLoading={isLoading}>
-        <div className={styles.doclink}>
-          <a href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/">
-            Documentation
-          </a>
-        </div>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
+        <div className={styles.doclink}>
+          Visit our{' '}
+          <a href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/">
+            documentation
+          </a>{' '}
+          to learn more about SAML configuration.
+        </div>
         {!!enabledProviders?.length && (
           <div className={styles.cardsContainer}>
             {enabledProviders.map((provider) => (
