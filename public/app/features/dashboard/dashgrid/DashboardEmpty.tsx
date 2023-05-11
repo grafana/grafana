@@ -162,27 +162,11 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'library-container',
       padding: theme.spacing.gridSize * 3,
     }),
-    visualizationContent: css({
-      gap: theme.spacing.gridSize * 2,
-    }),
-    headerSection: css({
-      label: 'header-section',
-      fontWeight: theme.typography.fontWeightMedium,
-      textAlign: 'center',
-    }),
     headerBig: css({
       marginBottom: theme.spacing.gridSize * 2,
     }),
     headerSmall: css({
       marginBottom: theme.spacing.gridSize,
-    }),
-    bodySection: css({
-      label: 'body-section',
-      fontWeight: theme.typography.fontWeightRegular,
-      fontSize: theme.typography.body.fontSize,
-      lineHeight: theme.typography.body.lineHeight,
-      color: theme.colors.text.secondary,
-      textAlign: 'center',
     }),
     bodyBig: css({
       maxWidth: '75%',
