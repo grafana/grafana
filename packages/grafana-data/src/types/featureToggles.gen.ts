@@ -96,4 +96,5 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
   enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
 }

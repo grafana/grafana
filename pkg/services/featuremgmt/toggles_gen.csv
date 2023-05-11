@@ -77,3 +77,4 @@ pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,
 advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
 opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
 enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
+dataSourcePageHeader,beta,@grafana/enterprise-datasources,false,false,false,true
