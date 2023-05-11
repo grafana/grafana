@@ -103,11 +103,11 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async componentDidUpdate() {
     const { options } = this.props;
-    console.log('🚀 ~ file: QueryGroup.tsx:106 ~ QueryGroup ~ componentDidUpdate ~ options:', options);
+    // console.log('🚀 ~ file: QueryGroup.tsx:106 ~ QueryGroup ~ componentDidUpdate ~ options:', options);
 
     const currentDS = await getDataSourceSrv().get(options.dataSource);
-    console.log(currentDS.uid, 'currentDS.uid');
-    console.log(this.state.dataSource, 'this.state.dataSource');
+    // console.log(currentDS.uid, 'currentDS.uid');
+    // console.log(this.state.dataSource?.uid, 'this.state.dataSource?.uid');
     if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
       this.setNewQueriesAndDatasource(options);
     }

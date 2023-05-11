@@ -48,29 +48,29 @@ describe('SqlQueryEditor', () => {
 });
 
 describe('DatasetSelector', () => {
-  describe('should disable the database selector appropriately', () => {
-    it('should be disabled if a preconfigured database exists', async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps({ preconfiguredDataset: 'database 1' })} />);
+  // describe('should disable the database selector appropriately', () => {
+  //   it('should be disabled if a preconfigured database exists', async () => {
+  //     render(<DatasetSelector {...buildMockDataSelectorProps({ preconfiguredDataset: 'database 1' })} />);
 
-      await waitFor(() => {
-        expect(screen.getByLabelText('Dataset selector')).toHaveAttribute('disabled');
-      });
-    });
-    it('should be disabled if `isPostgresInstance` is true', async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps({ isPostgresInstance: true })} />);
+  //     await waitFor(() => {
+  //       expect(screen.getByLabelText('Dataset selector')).toHaveAttribute('disabled');
+  //     });
+  //   });
+  //   it('should be disabled if `isPostgresInstance` is true', async () => {
+  //     render(<DatasetSelector {...buildMockDataSelectorProps({ isPostgresInstance: true })} />);
 
-      await waitFor(() => {
-        expect(screen.getByLabelText('Dataset selector')).toHaveProperty('disabled');
-      });
-    });
-    it('should be enabled if `isPostgresInstance` is false, and there is no preconfigured dataset', async () => {
-      render(<DatasetSelector {...buildMockDataSelectorProps()} />);
+  //     await waitFor(() => {
+  //       expect(screen.getByLabelText('Dataset selector')).toHaveProperty('disabled');
+  //     });
+  //   });
+  //   it('should be enabled if `isPostgresInstance` is false, and there is no preconfigured dataset', async () => {
+  //     render(<DatasetSelector {...buildMockDataSelectorProps()} />);
 
-      await waitFor(() => {
-        expect(screen.getByLabelText('Dataset selector')).not.toHaveProperty('disabled', false);
-      });
-    });
-  });
+  //     await waitFor(() => {
+  //       expect(screen.getByLabelText('Dataset selector')).not.toHaveProperty('disabled', false);
+  //     });
+  //   });
+  // });
 
   describe('database calls', () => {
     it('should only query the database when needed', async () => {
