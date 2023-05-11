@@ -2,22 +2,26 @@ import { CancelToken } from 'axios';
 
 import { api } from 'app/percona/shared/helpers/api';
 
-import {
-  CompatibleServiceListPayload,
-  DBServiceList,
-  NodeListDBPayload,
-  RemoveAgentBody,
-  RemoveNodeBody,
-  ServiceAgentListPayload,
-} from './Inventory.types';
+import { NodeListPayload } from '../shared/services/nodes/Nodes.types';
+
+import { DBServiceList, CompatibleServiceListPayload, ServiceAgentListPayload } from './Inventory.types';
 
 const BASE_URL = `/v1/inventory`;
 
+interface RemoveAgentBody {
+  agent_id: string;
+  force: boolean;
+}
+export interface RemoveNodeBody {
+  node_id: string;
+  force: boolean;
+}
+
 export const InventoryService = {
-  getAgents(serviceId: string | undefined, nodeId: string | undefined, token?: CancelToken) {
+  getAgents(serviceId: string, token?: CancelToken) {
     return api.post<ServiceAgentListPayload, object>(
       '/v1/management/Agent/List',
-      { service_id: serviceId, node_id: nodeId },
+      { service_id: serviceId },
       false,
       token
     );
@@ -50,7 +54,7 @@ export const InventoryService = {
     return result;
   },
   getNodes(body = {}, token?: CancelToken) {
-    return api.post<NodeListDBPayload, object>(`/v1/management/Node/List`, body, false, token);
+    return api.post<NodeListPayload, object>(`${BASE_URL}/Nodes/List`, body, false, token);
   },
   removeNode(body: RemoveNodeBody, token?: CancelToken) {
     return api.post<void, RemoveNodeBody>(`${BASE_URL}/Nodes/Remove`, body, false, token);

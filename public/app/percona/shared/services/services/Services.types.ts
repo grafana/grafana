@@ -68,10 +68,9 @@ export type Service = {
   params: DbService & Partial<DbServiceWithAddress>;
 };
 
-export interface DbAgent {
+export interface DbServiceAgent {
   agentId: string;
   status?: ServiceAgentStatus;
-  agentType?: string;
   isConnected?: boolean;
 }
 
@@ -85,7 +84,7 @@ export interface DbService {
   cluster?: string;
   replicationSet?: string;
   customLabels?: Record<string, string>;
-  agents?: DbAgent[];
+  agents?: DbServiceAgent[];
 }
 
 export interface DbServiceWithAddress extends DbService {

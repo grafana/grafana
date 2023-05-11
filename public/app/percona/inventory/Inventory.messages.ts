@@ -17,7 +17,6 @@ export const Messages = {
       agents: 'Agents',
       serviceId: 'Service ID',
       labels: 'Labels',
-      properties: 'Attributes',
     },
     emptyTable: 'No services available',
     forceConfirmation: 'Force mode is going to delete all associated agents',
@@ -27,10 +26,8 @@ export const Messages = {
       `${deletedItems} of ${totalItems} services successfully deleted`,
   },
   agents: {
-    goBackToServices: 'Go back to services',
-    goBackToNodes: 'Go back to nodes',
-    breadcrumbLeftService: (serviceName: string) => `Service ${serviceName}`,
-    breadcrumbLeftNode: (nodeName: string) => `Node ${nodeName}`,
+    goBack: 'Go back to services',
+    breadcrumbLeft: (serviceName: string) => `Service ${serviceName}`,
     breadcrumbRight: ` / Agents`,
     emptyTable: 'No agents available',
     deleteConfirmation: (nrItems: number) =>
@@ -50,23 +47,16 @@ export const Messages = {
   nodes: {
     forceConfirmation: 'Force mode is going to delete all agents and services associated with the nodes',
     emptyTable: 'No nodes available',
-    noServices: 'No services',
     columns: {
       nodeName: 'Node Name',
       nodeId: 'Node ID',
       nodeType: 'Node Type',
       address: 'Address',
-      services: 'Services',
     },
     deleteConfirmation: (nrItems: number) =>
       `Are you sure that you want to permanently delete ${nrItems} node${nrItems ? 's' : ''}`,
     nodesDeleted: (deletedItems: number, totalItems: number) =>
       `${deletedItems} of ${totalItems} nodes successfully deleted`,
-    details: {
-      properties: 'Properties',
-      nodeId: 'Node ID',
-      serviceNames: 'Service Names',
-    },
   },
   delete: 'Delete',
   cancel: 'Cancel',

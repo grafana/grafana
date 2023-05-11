@@ -1,13 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { CancelToken } from 'axios';
 
-import { InventoryService } from 'app/percona/inventory/Inventory.service';
-import { Node, RemoveNodeBody } from 'app/percona/inventory/Inventory.types';
+import { InventoryService, RemoveNodeBody } from 'app/percona/inventory/Inventory.service';
 import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpers/promises';
+import { Node } from 'app/percona/shared/services/nodes/Nodes.types';
 
 import { NodesState, RemoveNodesParams } from './nodes.types';
-import { nodeFromDbMapper } from './nodes.utils';
+import { toDbNodesModel } from './nodes.utils';
 
 const initialState: NodesState = {
   nodes: [],
@@ -38,9 +37,8 @@ const nodesSlice = createSlice({
 export const fetchNodesAction = createAsyncThunk<Node[], { token?: CancelToken }>(
   'percona/fetchNodes',
   async (params = {}) => {
-    const { nodes } = await InventoryService.getNodes(params.token);
-    const mappedNodes = nodeFromDbMapper(nodes);
-    return mappedNodes.sort((a, b) => a.nodeName.localeCompare(b.nodeName));
+    const nodes = await InventoryService.getNodes(params.token);
+    return toDbNodesModel(nodes);
   }
 );
 

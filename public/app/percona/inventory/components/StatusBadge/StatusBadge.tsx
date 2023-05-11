@@ -7,14 +7,14 @@ import { ServiceAgentStatus } from '../../Inventory.types';
 import { getStyles } from './StatusBadge.styles';
 import { StatusBadgeProps } from './StatusBadge.types';
 
-export const StatusBadge: FC<StatusBadgeProps> = ({ agents, type, strippedId }) => {
+export const StatusBadge: FC<StatusBadgeProps> = ({ agents, strippedServiceId }) => {
   const styles = useStyles2(getStyles);
 
   if (!agents.length) {
     return null;
   }
 
-  const link = `/inventory/${type}/${strippedId}/agents`;
+  const link = `/inventory/services/${strippedServiceId}/agents`;
   const totalAgents = agents.length;
   const [good, bad] = agents.reduce(
     (acc, agent) => {

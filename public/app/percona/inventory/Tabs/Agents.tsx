@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
+
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
 import { Column, Row } from 'react-table';
@@ -17,9 +18,8 @@ import { Table } from 'app/percona/shared/components/Elements/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { fetchNodesAction } from 'app/percona/shared/core/reducers/nodes/nodes';
 import { fetchServicesAction } from 'app/percona/shared/core/reducers/services';
-import { getNodes, getServices } from 'app/percona/shared/core/selectors';
+import { getServices } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { getExpandAndActionsCol } from 'app/percona/shared/helpers/getExpandAndActionsCol';
@@ -29,33 +29,24 @@ import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
 import { appEvents } from '../../../core/app_events';
-import { GET_AGENTS_CANCEL_TOKEN, GET_NODES_CANCEL_TOKEN, GET_SERVICES_CANCEL_TOKEN } from '../Inventory.constants';
+import { GET_AGENTS_CANCEL_TOKEN, GET_SERVICES_CANCEL_TOKEN } from '../Inventory.constants';
 import { Messages } from '../Inventory.messages';
 import { InventoryService } from '../Inventory.service';
 
 import { beautifyAgentType, getAgentStatusColor, toAgentModel } from './Agents.utils';
-import { formatNodeId } from './Nodes.utils';
 import { getStyles } from './Tabs.styles';
 
-export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ match }) => {
+export const Agents: FC<GrafanaRouteComponentProps<{ id: string }>> = ({ match }) => {
   const [agentsLoading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Agent[]>([]);
   const [selected, setSelectedRows] = useState<any[]>([]);
-  const serviceId = match.params.serviceId ? formatServiceId(match.params.serviceId) : undefined;
-  const nodeId = match.params.nodeId
-    ? match.params.nodeId === 'pmm-server'
-      ? 'pmm-server'
-      : formatNodeId(match.params.nodeId)
-    : undefined;
-  const navModel = usePerconaNavModel(serviceId ? 'inventory-services' : 'inventory-nodes');
+  const navModel = usePerconaNavModel('inventory-services');
   const [generateToken] = useCancelToken();
   const { isLoading: servicesLoading, services } = useSelector(getServices);
-  const { isLoading: nodesLoading, nodes } = useSelector(getNodes);
   const styles = useStyles2(getStyles);
-
+  const serviceId = formatServiceId(match.params.id);
   const service = services.find((s) => s.params.serviceId === serviceId);
-  const node = nodes.find((s) => s.nodeId === nodeId);
 
   const columns = useMemo(
     (): Array<Column<Agent>> => [
@@ -83,11 +74,8 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const { agents = [] } = await InventoryService.getAgents(
-        serviceId,
-        nodeId,
-        generateToken(GET_AGENTS_CANCEL_TOKEN)
-      );
+      const { agents = [] } = await InventoryService.getAgents(serviceId, generateToken(GET_AGENTS_CANCEL_TOKEN));
+
       setData(toAgentModel(agents));
     } catch (e) {
       if (isApiCancelError(e)) {
@@ -124,14 +112,12 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
   const deletionMsg = useMemo(() => Messages.agents.deleteConfirmation(selected.length), [selected]);
 
   useEffect(() => {
-    if (!service && serviceId) {
+    if (!service) {
       dispatch(fetchServicesAction({ token: generateToken(GET_SERVICES_CANCEL_TOKEN) }));
-    } else if (!node && nodeId) {
-      dispatch(fetchNodesAction({ token: generateToken(GET_NODES_CANCEL_TOKEN) }));
     } else {
       loadData();
     }
-  }, [generateToken, loadData, service, nodeId, serviceId, node]);
+  }, [generateToken, loadData, service]);
 
   const removeAgents = useCallback(
     async (agents: Array<SelectedTableRows<Agent>>, forceMode) => {
@@ -169,22 +155,14 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
       <Page.Contents>
         <FeatureLoader>
           <HorizontalGroup height="auto">
-            <Link href={`${service ? '/inventory/services' : '/inventory/nodes'}`}>
+            <Link href="/inventory/services">
               <Icon name="arrow-left" size="lg" />
-              <span className={styles.goBack}>
-                {service ? Messages.agents.goBackToServices : Messages.agents.goBackToNodes}
-              </span>
+              <span className={styles.goBack}>{Messages.agents.goBack}</span>
             </Link>
           </HorizontalGroup>
           {service && !servicesLoading && (
             <h5 className={styles.agentBreadcrumb}>
-              <span>{Messages.agents.breadcrumbLeftService(service.params.serviceName)}</span>
-              <span>{Messages.agents.breadcrumbRight}</span>
-            </h5>
-          )}
-          {node && !nodesLoading && (
-            <h5 className={styles.agentBreadcrumb}>
-              <span>{Messages.agents.breadcrumbLeftNode(node.nodeName)}</span>
+              <span>{Messages.agents.breadcrumbLeft(service.params.serviceName)}</span>
               <span>{Messages.agents.breadcrumbRight}</span>
             </h5>
           )}
@@ -255,7 +233,7 @@ export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: 
             allRowsSelectionMode="page"
             emptyMessage={Messages.agents.emptyTable}
             emptyMessageClassName={styles.emptyMessage}
-            pendingRequest={agentsLoading || servicesLoading || nodesLoading}
+            pendingRequest={agentsLoading || servicesLoading}
             overlayClassName={styles.overlay}
             renderExpandedRow={renderSelectedSubRow}
             getRowId={useCallback((row: Agent) => row.params.agentId, [])}
