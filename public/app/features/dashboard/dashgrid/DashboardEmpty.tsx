@@ -7,6 +7,9 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
+import { useDispatch, useSelector } from 'app/types';
+
+import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -15,6 +18,8 @@ export interface Props {
 
 export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
+  const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
   return (
     <div className={styles.centeredContent}>
@@ -36,9 +41,10 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             icon="plus"
             aria-label="Add new panel"
             onClick={() => {
+              const id = onCreateNewPanel(dashboard, initialDatasource);
               reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
-              const id = onCreateNewPanel(dashboard);
-              locationService.partial({ editPanel: id });
+              locationService.partial({ editPanel: id, firstPanel: true });
+              dispatch(setInitialDatasource(undefined));
             }}
             disabled={!canCreate}
           >
@@ -101,6 +107,11 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
+      paddingTop: theme.spacing(2),
+
+      [theme.breakpoints.up('sm')]: {
+        paddingTop: theme.spacing(12),
+      },
     }),
     containerBox: css({
       label: 'container-box',

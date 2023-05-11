@@ -65,6 +65,7 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
@@ -645,6 +646,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           hoverHeader={panelChromeProps.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
           onCancelQuery={panelChromeProps.onCancelQuery}
+          onOpenMenu={panelChromeProps.onOpenMenu}
         >
           {(innerWidth, innerHeight) => (
             <>

@@ -28,6 +28,7 @@ interface OwnProps {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   hideMenu?: boolean;
@@ -228,6 +229,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           hoverHeader={panelChromeProps.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
           onCancelQuery={panelChromeProps.onCancelQuery}
+          onOpenMenu={panelChromeProps.onOpenMenu}
         >
           {() => <div ref={(element) => (this.element = element)} className="panel-height-helper" />}
         </PanelChrome>

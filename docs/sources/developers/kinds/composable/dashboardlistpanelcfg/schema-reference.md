@@ -13,23 +13,23 @@ title: DashboardListPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default | Description                              |
-|----------------|-------------------------|----------|---------|------------------------------------------|
-| `PanelLayout`  | string                  | **Yes**  |         | Possible values are: `list`, `previews`. |
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |                                          |
+| Property       | Type                    | Required | Default | Description |
+|----------------|-------------------------|----------|---------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
 
 ### PanelOptions
 
-| Property             | Type     | Required | Default | Description                              |
-|----------------------|----------|----------|---------|------------------------------------------|
-| `maxItems`           | integer  | **Yes**  | `10`    |                                          |
-| `query`              | string   | **Yes**  | ``      |                                          |
-| `showHeadings`       | boolean  | **Yes**  | `true`  |                                          |
-| `showRecentlyViewed` | boolean  | **Yes**  | `false` |                                          |
-| `showSearch`         | boolean  | **Yes**  | `false` |                                          |
-| `showStarred`        | boolean  | **Yes**  | `true`  |                                          |
-| `tags`               | string[] | **Yes**  |         |                                          |
-| `folderId`           | integer  | No       |         |                                          |
-| `layout`             | string   | No       |         | Possible values are: `list`, `previews`. |
+| Property             | Type     | Required | Default | Description |
+|----------------------|----------|----------|---------|-------------|
+| `includeVars`        | boolean  | **Yes**  | `false` |             |
+| `keepTime`           | boolean  | **Yes**  | `false` |             |
+| `maxItems`           | integer  | **Yes**  | `10`    |             |
+| `query`              | string   | **Yes**  | ``      |             |
+| `showHeadings`       | boolean  | **Yes**  | `true`  |             |
+| `showRecentlyViewed` | boolean  | **Yes**  | `false` |             |
+| `showSearch`         | boolean  | **Yes**  | `false` |             |
+| `showStarred`        | boolean  | **Yes**  | `true`  |             |
+| `tags`               | string[] | **Yes**  |         |             |
+| `folderId`           | integer  | No       |         |             |
 
 

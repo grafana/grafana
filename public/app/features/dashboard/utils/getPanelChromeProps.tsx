@@ -17,6 +17,7 @@ interface CommonProps {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   hideMenu?: boolean;
@@ -100,9 +101,14 @@ export function getPanelChromeProps(props: CommonProps) {
 
   const description = props.panel.description ? onShowPanelDescription() : undefined;
 
-  const dragClass = !(props.isViewing || props.isEditing) ? 'grid-drag-handle' : '';
+  const dragClass =
+    !(props.isViewing || props.isEditing) && Boolean(props.isDraggable ?? true) ? 'grid-drag-handle' : '';
 
   const title = props.panel.getDisplayTitle();
+
+  const onOpenMenu = () => {
+    reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
+  };
 
   return {
     hasOverlayHeader,
@@ -116,5 +122,6 @@ export function getPanelChromeProps(props: CommonProps) {
     dragClass,
     title,
     titleItems,
+    onOpenMenu,
   };
 }

@@ -8,18 +8,24 @@ interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
   onClick: () => void;
   selected: boolean;
+  description?: string;
 }
 
-export function DataSourceCard({ ds, onClick, selected }: DataSourceCardProps) {
+export function DataSourceCard({ ds, onClick, selected, description, ...htmlProps }: DataSourceCardProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Card key={ds.uid} onClick={onClick} className={cx(styles.card, selected ? styles.selected : undefined)}>
+    <Card
+      key={ds.uid}
+      onClick={onClick}
+      className={cx(styles.card, selected ? styles.selected : undefined)}
+      {...htmlProps}
+    >
       <Card.Heading className={styles.heading}>
         <div className={styles.headingContent}>
           <span className={styles.name}>{ds.name}</span>
           <span className={styles.separator}>|</span>
-          <small className={styles.type}>{ds.meta.name}</small>
+          <small className={styles.type}>{description || ds.meta.name}</small>
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
@@ -60,6 +66,14 @@ function getStyles(theme: GrafanaTheme2) {
     logo: css`
       width: 32px;
       height: 32px;
+      padding-right: ${theme.spacing(1.5)};
+      display: flex;
+      align-items: center;
+
+      > img {
+        max-height: 100%;
+        min-width: 32px;
+      }
     `,
     name: css`
       color: ${theme.colors.text.primary};

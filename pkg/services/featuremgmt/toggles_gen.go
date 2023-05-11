@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagDatabaseMetrics
-	// Add Prometheus metrics for database tables
-	FlagDatabaseMetrics = "database_metrics"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -59,10 +55,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8S
-	// Explore native k8s integrations
-	FlagK8S = "k8s"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -74,10 +66,6 @@ const (
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
-
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
@@ -327,7 +315,15 @@ const (
 	// Enable version detection in OpenSearch
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
 
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
+
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
 )
