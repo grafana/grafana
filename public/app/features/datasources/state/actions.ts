@@ -1,4 +1,4 @@
-import { DataSourceJsonData, DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import {
   config,
   DataSourceWithBackend,
