@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../basics/timeseries/
 description: Grafana Dashboards Overview
 keywords:
   - grafana
