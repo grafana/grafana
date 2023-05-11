@@ -1,4 +1,4 @@
-import { cloneDeep, find, first as _first, isObject, isString, map as _map } from 'lodash';
+import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 import { SemVer } from 'semver';
@@ -29,6 +29,8 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
   SupplementaryQueryOptions,
+  toUtc,
+  AnnotationEvent,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -49,7 +51,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { trackQuery } from './tracking';
+import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
   BucketAggregation,
@@ -211,8 +213,192 @@ export class ElasticDatasource
     );
   }
 
-  annotationQuery(options: any): Promise<any> {
-    return this.legacyQueryRunner.annotationQuery(options);
+  annotationQuery(options: any): Promise<AnnotationEvent[]> {
+    const payload = this.prepareAnnotationRequest(options);
+    trackAnnotationQuery(options.annotation);
+    const annotationObservable = config.featureToggles.enableElasticsearchBackendQuerying
+      ? // TODO: We should migrate this to use query and not resource call
+        // The plan is to look at this when we start to work on raw query editor for ES
+        // as we will have to explore how to handle any query
+        from(this.postResourceRequest('_msearch', payload))
+      : this.legacyQueryRunner.request('POST', '_msearch', payload);
+
+    return lastValueFrom(
+      annotationObservable.pipe(
+        map((res) => {
+          const hits = res.responses[0].hits.hits;
+          return this.processHitsToAnnotationEvents(options.annotation, hits);
+        })
+      )
+    );
+  }
+
+  private prepareAnnotationRequest(options: {
+    annotation: {
+      target: ElasticsearchQuery;
+      timeField?: string;
+      timeEndField?: string;
+      titleField?: string;
+      query?: string;
+      index?: string;
+    };
+    range: TimeRange;
+  }) {
+    const annotation = options.annotation;
+    const timeField = annotation.timeField || '@timestamp';
+    const timeEndField = annotation.timeEndField || null;
+
+    // the `target.query` is the "new" location for the query.
+    // normally we would write this code as
+    // try-the-new-place-then-try-the-old-place,
+    // but we had the bug at
+    // https://github.com/grafana/grafana/issues/61107
+    // that may have stored annotations where
+    // both the old and the new place are set,
+    // and in that scenario the old place needs
+    // to have priority.
+    const queryString = annotation.query ?? annotation.target?.query ?? '';
+
+    const dateRanges = [];
+    const rangeStart: any = {};
+    rangeStart[timeField] = {
+      from: options.range.from.valueOf(),
+      to: options.range.to.valueOf(),
+      format: 'epoch_millis',
+    };
+    dateRanges.push({ range: rangeStart });
+
+    if (timeEndField) {
+      const rangeEnd: any = {};
+      rangeEnd[timeEndField] = {
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
+        format: 'epoch_millis',
+      };
+      dateRanges.push({ range: rangeEnd });
+    }
+
+    const queryInterpolated = this.interpolateLuceneQuery(queryString);
+    const query: any = {
+      bool: {
+        filter: [
+          {
+            bool: {
+              should: dateRanges,
+              minimum_should_match: 1,
+            },
+          },
+        ],
+      },
+    };
+
+    if (queryInterpolated) {
+      query.bool.filter.push({
+        query_string: {
+          query: queryInterpolated,
+        },
+      });
+    }
+    const data: any = {
+      query,
+      size: 10000,
+    };
+
+    const header: any = {
+      search_type: 'query_then_fetch',
+      ignore_unavailable: true,
+    };
+
+    // @deprecated
+    // Field annotation.index is deprecated and will be removed in the future
+    if (annotation.index) {
+      header.index = annotation.index;
+    } else {
+      header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
+    }
+
+    const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
+    return payload;
+  }
+
+  private processHitsToAnnotationEvents(
+    annotation: {
+      target: ElasticsearchQuery;
+      timeField?: string;
+      titleField?: string;
+      timeEndField?: string;
+      query?: string;
+      tagsField?: string;
+      textField?: string;
+      index?: string;
+    },
+    hits: Array<{ [key: string]: any }>
+  ) {
+    const timeField = annotation.timeField || '@timestamp';
+    const timeEndField = annotation.timeEndField || null;
+    const textField = annotation.textField || 'tags';
+    const tagsField = annotation.tagsField || null;
+    const list: AnnotationEvent[] = [];
+
+    const getFieldFromSource = (source: any, fieldName: any) => {
+      if (!fieldName) {
+        return;
+      }
+
+      const fieldNames = fieldName.split('.');
+      let fieldValue = source;
+
+      for (let i = 0; i < fieldNames.length; i++) {
+        fieldValue = fieldValue[fieldNames[i]];
+        if (!fieldValue) {
+          return '';
+        }
+      }
+
+      return fieldValue;
+    };
+
+    for (let i = 0; i < hits.length; i++) {
+      const source = hits[i]._source;
+      let time = getFieldFromSource(source, timeField);
+      if (typeof hits[i].fields !== 'undefined') {
+        const fields = hits[i].fields;
+        if (isString(fields[timeField]) || isNumber(fields[timeField])) {
+          time = fields[timeField];
+        }
+      }
+
+      const event: AnnotationEvent = {
+        annotation: annotation,
+        time: toUtc(time).valueOf(),
+        text: getFieldFromSource(source, textField),
+      };
+
+      if (timeEndField) {
+        const timeEnd = getFieldFromSource(source, timeEndField);
+        if (timeEnd) {
+          event.timeEnd = toUtc(timeEnd).valueOf();
+        }
+      }
+
+      // legacy support for title field
+      if (annotation.titleField) {
+        const title = getFieldFromSource(source, annotation.titleField);
+        if (title) {
+          event.text = title + '\n' + event.text;
+        }
+      }
+
+      const tags = getFieldFromSource(source, tagsField);
+      if (typeof tags === 'string') {
+        event.tags = tags.split(',');
+      } else {
+        event.tags = tags;
+      }
+
+      list.push(event);
+    }
+    return list;
   }
 
   interpolateLuceneQuery(queryString: string, scopedVars?: ScopedVars) {

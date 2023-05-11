@@ -384,6 +384,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	tests := []struct {
 		name           string
 		siuPermissions map[string][]string
+		searchOption   accesscontrol.SearchOptions
 		ramRoles       map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
 		storedPerms    map[int64][]accesscontrol.Permission // UserID => Permissions
 		storedRoles    map[int64][]string                   // UserID => Roles
@@ -393,6 +394,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "ram only",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -413,6 +415,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "stored only",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -431,6 +434,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "ram and stored",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -459,6 +463,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "view permission on subset of users only",
 			siuPermissions: listSomePerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
@@ -482,6 +487,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "check action filter on RAM permissions works correctly",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionUsersCreate},
@@ -491,6 +497,27 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "check empty action filter on RAM permissions works correctly",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				},
 			},
 		},
 	}
@@ -505,7 +532,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
-			got, err := ac.SearchUsersPermissions(ctx, siu, 2, searchOption)
+			got, err := ac.SearchUsersPermissions(ctx, siu, 2, tt.searchOption)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

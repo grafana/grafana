@@ -8,9 +8,10 @@ interface DataSourceCardProps {
   ds: DataSourceInstanceSettings;
   onClick: () => void;
   selected: boolean;
+  description?: string;
 }
 
-export function DataSourceCard({ ds, onClick, selected, ...htmlProps }: DataSourceCardProps) {
+export function DataSourceCard({ ds, onClick, selected, description, ...htmlProps }: DataSourceCardProps) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -24,7 +25,7 @@ export function DataSourceCard({ ds, onClick, selected, ...htmlProps }: DataSour
         <div className={styles.headingContent}>
           <span className={styles.name}>{ds.name}</span>
           <span className={styles.separator}>|</span>
-          <small className={styles.type}>{ds.meta.name}</small>
+          <small className={styles.type}>{description || ds.meta.name}</small>
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
