@@ -38,12 +38,13 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
 };
 
 export function getRootSectionForNode(node: NavModelItem): NavModelItem {
-  // Special case for nested folders - don't recurse all the way up the tree
-  // TODO find a less hacky way :|
-  if (config.featureToggles.nestedFolders && node.id === 'manage-folder') {
-    return node;
+  // Don't recurse fully up the tree when nested folders is enabled
+  // I _think_ this is correct/safe, but put the change behind the feature toggle to be safe
+  if (config.featureToggles.nestedFolders) {
+    return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? node.parentItem : node;
+  } else {
+    return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
   }
-  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
 }
 
 function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {
