@@ -260,7 +260,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.onStartScanning) {
       this.props.onStartScanning();
     }
-    reportInteraction('grafana_explore_logs_scanning_start_clicked', {
+    reportInteraction('grafana_explore_logs_scanning_button_clicked', {
+      type: 'start',
       datasourceType: this.props.datasourceType,
     });
   };
@@ -270,7 +271,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.onStopScanning) {
       this.props.onStopScanning();
     }
-    reportInteraction('grafana_explore_logs_scanning_stop_clicked', {
+    reportInteraction('grafana_explore_logs_scanning_button_clicked', {
+      type: 'end',
       datasourceType: this.props.datasourceType,
     });
   };
