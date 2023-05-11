@@ -1,3 +1,9 @@
+jest.mock('./api/alertmanager');
+jest.mock('./utils/config');
+jest.mock('app/core/services/context_srv');
+jest.mock('./api/buildInfo');
+jest.mock('./useRouteGroupsMatcher');
+
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -27,11 +33,6 @@ import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-
-jest.mock('./api/alertmanager');
-jest.mock('./utils/config');
-jest.mock('app/core/services/context_srv');
-jest.mock('./api/buildInfo');
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(getAllDataSources),

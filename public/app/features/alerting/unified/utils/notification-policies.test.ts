@@ -11,6 +11,7 @@ describe('findMatchingRoutes', () => {
   const policies: Route = {
     receiver: 'ROOT',
     group_by: ['grafana_folder'],
+    object_matchers: [],
     routes: [
       {
         receiver: 'A',
