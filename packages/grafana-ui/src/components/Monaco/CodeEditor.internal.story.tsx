@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
 
-const meta: ComponentMeta<typeof CodeEditor> = {
+const meta: Meta<typeof CodeEditor> = {
   title: 'CodeEditor',
   component: CodeEditor,
   decorators: [withCenteredStory],
@@ -26,7 +26,7 @@ const meta: ComponentMeta<typeof CodeEditor> = {
   },
 };
 
-export const Basic: ComponentStory<typeof CodeEditor> = (args) => {
+export const Basic: StoryFn<typeof CodeEditor> = (args) => {
   return (
     <CodeEditor
       width={args.width}

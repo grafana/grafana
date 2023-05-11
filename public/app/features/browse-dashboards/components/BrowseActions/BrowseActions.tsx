@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -33,6 +34,8 @@ export function BrowseActions() {
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
   const rootItems = useSelector(rootItemsSelector);
   const childrenByParentUID = useSelector(childrenByParentUIDSelector);
+  const [, stateManager] = useSearchStateManager();
+  const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = (parentsToRefresh: Set<string | undefined>) => {
     dispatch(
@@ -40,8 +43,14 @@ export function BrowseActions() {
         isSelected: false,
       })
     );
-    for (const parentUID of parentsToRefresh) {
-      dispatch(fetchChildren(parentUID));
+    if (isSearching) {
+      // Redo search query
+      stateManager.doSearchWithDebounce();
+    } else {
+      // Refetch parents
+      for (const parentUID of parentsToRefresh) {
+        dispatch(fetchChildren(parentUID));
+      }
     }
   };
 

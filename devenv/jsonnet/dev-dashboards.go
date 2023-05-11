@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"os"
@@ -13,8 +14,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/grafana/codejen"
 	dev_dashboards "github.com/grafana/grafana/devenv/dev-dashboards"
-	"github.com/grafana/grafana/pkg/codegen"
 )
 
 var (
@@ -35,17 +36,21 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	wd := codegen.NewWriteDiffer()
-	wd[OUTPUT_PATH] = []byte(out)
+
+	f := codejen.NewFile(OUTPUT_PATH, []byte(out), dummyJenny{})
+	fs := codejen.NewFS()
+	if err = fs.Add(*f); err != nil {
+		panic(err)
+	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		err = wd.Verify()
+		err = fs.Verify(context.Background(), "")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "generated code is not up to date:\n%s\nrun `make gen-jsonnet` to regenerate\n\n", err)
 			os.Exit(1)
 		}
 	} else {
-		err = wd.Write()
+		err = fs.Verify(context.Background(), "")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
 			os.Exit(1)
@@ -120,4 +125,10 @@ func (g *libjsonnetGen) readDir(dir string) error {
 		})
 	}
 	return nil
+}
+
+type dummyJenny struct{}
+
+func (dummyJenny) JennyName() string {
+	return "dummyJenny"
 }

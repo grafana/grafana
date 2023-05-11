@@ -1,4 +1,4 @@
-import { isNumber, isString, first as _first, cloneDeep } from 'lodash';
+import { first as _first, cloneDeep } from 'lodash';
 import { lastValueFrom, Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
@@ -11,14 +11,13 @@ import {
   LogRowContextOptions,
   LogRowContextQueryDirection,
   LogRowModel,
-  toUtc,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { ElasticResponse } from './ElasticResponse';
 import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
-import { trackAnnotationQuery, trackQuery } from './tracking';
+import { trackQuery } from './tracking';
 import { ElasticsearchQuery, Logs } from './types';
 
 export class LegacyQueryRunner {
@@ -84,160 +83,6 @@ export class LegacyQueryRunner {
           return throwError(err);
         })
       );
-  }
-
-  annotationQuery(options: any) {
-    const annotation = options.annotation;
-    const timeField = annotation.timeField || '@timestamp';
-    const timeEndField = annotation.timeEndField || null;
-
-    // the `target.query` is the "new" location for the query.
-    // normally we would write this code as
-    // try-the-new-place-then-try-the-old-place,
-    // but we had the bug at
-    // https://github.com/grafana/grafana/issues/61107
-    // that may have stored annotations where
-    // both the old and the new place are set,
-    // and in that scenario the old place needs
-    // to have priority.
-    const queryString = annotation.query ?? annotation.target?.query;
-    const tagsField = annotation.tagsField || 'tags';
-    const textField = annotation.textField || null;
-
-    const dateRanges = [];
-    const rangeStart: any = {};
-    rangeStart[timeField] = {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
-      format: 'epoch_millis',
-    };
-    dateRanges.push({ range: rangeStart });
-
-    if (timeEndField) {
-      const rangeEnd: any = {};
-      rangeEnd[timeEndField] = {
-        from: options.range.from.valueOf(),
-        to: options.range.to.valueOf(),
-        format: 'epoch_millis',
-      };
-      dateRanges.push({ range: rangeEnd });
-    }
-
-    const queryInterpolated = this.datasource.interpolateLuceneQuery(queryString);
-    const query: any = {
-      bool: {
-        filter: [
-          {
-            bool: {
-              should: dateRanges,
-              minimum_should_match: 1,
-            },
-          },
-        ],
-      },
-    };
-
-    if (queryInterpolated) {
-      query.bool.filter.push({
-        query_string: {
-          query: queryInterpolated,
-        },
-      });
-    }
-    const data: any = {
-      query,
-      size: 10000,
-    };
-
-    const header: any = {
-      search_type: 'query_then_fetch',
-      ignore_unavailable: true,
-    };
-
-    // @deprecated
-    // Field annotation.index is deprecated and will be removed in the future
-    if (annotation.index) {
-      header.index = annotation.index;
-    } else {
-      header.index = this.datasource.indexPattern.getIndexList(options.range.from, options.range.to);
-    }
-
-    const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
-
-    trackAnnotationQuery(annotation);
-    return lastValueFrom(
-      this.request('POST', '_msearch', payload).pipe(
-        map((res) => {
-          const list = [];
-          const hits = res.responses[0].hits.hits;
-
-          const getFieldFromSource = (source: any, fieldName: any) => {
-            if (!fieldName) {
-              return;
-            }
-
-            const fieldNames = fieldName.split('.');
-            let fieldValue = source;
-
-            for (let i = 0; i < fieldNames.length; i++) {
-              fieldValue = fieldValue[fieldNames[i]];
-              if (!fieldValue) {
-                console.log('could not find field in annotation: ', fieldName);
-                return '';
-              }
-            }
-
-            return fieldValue;
-          };
-
-          for (let i = 0; i < hits.length; i++) {
-            const source = hits[i]._source;
-            let time = getFieldFromSource(source, timeField);
-            if (typeof hits[i].fields !== 'undefined') {
-              const fields = hits[i].fields;
-              if (isString(fields[timeField]) || isNumber(fields[timeField])) {
-                time = fields[timeField];
-              }
-            }
-
-            const event: {
-              annotation: any;
-              time: number;
-              timeEnd?: number;
-              text: string;
-              tags: string | string[];
-            } = {
-              annotation: annotation,
-              time: toUtc(time).valueOf(),
-              text: getFieldFromSource(source, textField),
-              tags: getFieldFromSource(source, tagsField),
-            };
-
-            if (timeEndField) {
-              const timeEnd = getFieldFromSource(source, timeEndField);
-              if (timeEnd) {
-                event.timeEnd = toUtc(timeEnd).valueOf();
-              }
-            }
-
-            // legacy support for title field
-            if (annotation.titleField) {
-              const title = getFieldFromSource(source, annotation.titleField);
-              if (title) {
-                event.text = title + '\n' + event.text;
-              }
-            }
-
-            if (typeof event.tags === 'string') {
-              event.tags = event.tags.split(',');
-            }
-
-            list.push(event);
-          }
-          return list;
-        })
-      )
-    );
   }
 
   async logContextQuery(row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> {
