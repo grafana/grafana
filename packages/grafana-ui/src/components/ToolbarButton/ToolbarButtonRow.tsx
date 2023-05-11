@@ -32,7 +32,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
         isOpen: showOverflowItems,
         shouldCloseOnInteractOutside: (element: Element) => {
           const portalContainer = getPortalContainer();
-          return !portalContainer.contains(element);
+          return !overflowRef.current?.contains(element) && !portalContainer.contains(element);
         },
       },
       overflowItemsRef
