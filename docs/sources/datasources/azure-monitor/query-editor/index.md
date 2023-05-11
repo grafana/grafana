@@ -116,7 +116,7 @@ You can also perform complex analysis of Logs data by using KQL.
 3. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
 
    Alternatively, you can dynamically query all resources under a single resource group or subscription.
-   **Note:** If a timespan is specified in the query the overlap of the timespan between the query and the dashboard will be used as the query timespan. See the [API documentation for details.](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters)
+   **Note:** If a timespan is specified in the query, the overlap of the timespan between the query and the dashboard will be used as the query timespan. See the [API documentation for details.](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters)
 
 4. Enter your KQL query.
 
@@ -305,7 +305,7 @@ Application Insights stores trace data in an underlying Log Analytics workspace 
 
 Running a query of this kind will return all trace data within the timespan specified by the panel/dashboard.
 
-Optionally, you can apply further filtering or select a specific Operation ID to query. The result format can also be switched between a tabular format or the trace format which will return the data in a format that can be used with the Trace visualisation.
+Optionally, you can apply further filtering or select a specific Operation ID to query. The result format can also be switched between a tabular format or the trace format which will return the data in a format that can be used with the Trace visualization.
 
 > **Note:** Selecting the trace format will filter events with the `trace` type.
 
