@@ -155,13 +155,13 @@ class GraphElement {
       onToggleSort: this.ctrl.onToggleSort,
       onColorChange: this.ctrl.onColorChange,
       onToggleAxis: this.ctrl.onToggleAxis,
+      renderCallback: this.renderPanel.bind(this),
     };
 
     const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
 
     // render callback isn't supported in react 18+, see: https://github.com/reactwg/react-18/discussions/5
     this.legendElemRoot.render(legendReactElem);
-    requestIdleCallback(() => this.renderPanel());
   }
 
   onGraphHover(evt: LegacyGraphHoverEventPayload | DataHoverPayload) {

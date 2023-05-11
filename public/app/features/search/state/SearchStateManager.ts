@@ -49,6 +49,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     stateManager.setState({
+      ...initialState,
       ...stateFromUrl,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
@@ -63,8 +64,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
    * Updates internal and url state, then triggers a new search
    */
   setStateAndDoSearch(state: Partial<SearchState>) {
+    const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
+
     // Set internal state
-    this.setState(state);
+    this.setState({ sort, ...state });
 
     // Update url state
     this.updateLocation({
@@ -290,14 +293,13 @@ export function getSearchStateManager() {
   if (!stateManager) {
     const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
     const layout = selectedLayout ?? initialState.layout;
-    const sort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {
       includePanels = false;
     }
 
-    stateManager = new SearchStateManager({ ...initialState, layout, sort, includePanels });
+    stateManager = new SearchStateManager({ ...initialState, layout, includePanels });
   }
 
   return stateManager;

@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
@@ -14,7 +14,7 @@ import { Menu } from '../Menu/Menu';
 
 import mdx from './PanelChrome.mdx';
 
-const meta: ComponentMeta<typeof PanelChrome> = {
+const meta: Meta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
   decorators: [withCenteredStory],
@@ -300,7 +300,7 @@ export const ExamplesHoverHeader = () => {
   );
 };
 
-export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
+export const Basic: StoryFn<typeof PanelChrome> = (args: PanelChromeProps) => {
   const contentStyle = getContentStyle();
 
   return (

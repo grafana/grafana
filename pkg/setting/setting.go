@@ -315,6 +315,11 @@ type Cfg struct {
 	JWTAuthAllowAssignGrafanaAdmin bool
 	JWTAuthSkipOrgRoleSync         bool
 
+	// Extended JWT Auth
+	ExtendedJWTAuthEnabled    bool
+	ExtendedJWTExpectIssuer   string
+	ExtendedJWTExpectAudience string
+
 	// Dataproxy
 	SendUserHeader                 bool
 	DataProxyLogging               bool
@@ -561,6 +566,10 @@ func ToAbsUrl(relativeUrl string) string {
 }
 
 func RedactedValue(key, value string) string {
+	if value == "" {
+		return ""
+	}
+
 	uppercased := strings.ToUpper(key)
 	// Sensitive information: password, secrets etc
 	for _, pattern := range []string{
@@ -1538,6 +1547,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
+	// Extended JWT auth
+	authExtendedJWT := iniFile.Section("auth.extended_jwt")
+	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
+	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
+	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
+
+	// Auth Proxy
 	authProxy := iniFile.Section("auth.proxy")
 	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
