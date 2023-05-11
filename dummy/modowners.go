@@ -77,7 +77,6 @@ func check(args []string) error {
 	return nil
 }
 
-// TODO: enhance to take list of modules (specific one, two, or etc)
 // TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
 // TODO: test with go test
 
@@ -111,12 +110,19 @@ func modules(args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
 	modfile := fs.String("m", "go.mod", "use specified modfile")
+	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
 	m, err := parseGoMod(*modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
 	if err != nil {
 		return err
 	}
 	for _, mod := range m {
+		// compare owners
+		if len(*owner) > 1 && hasCommonElement(mod.Owners, fs.Args()) {
+			fmt.Println(mod.Name)
+		} else if mod.Owners[0] == *owner {
+			fmt.Println(mod.Name)
+		}
 		if *indirect || !mod.Indirect {
 			fmt.Println(mod.Name)
 		}
