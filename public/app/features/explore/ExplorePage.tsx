@@ -168,7 +168,9 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
 const useExplorePageTitle = () => {
   const navModel = useNavModel('explore');
   const datasources = useSelector((state) =>
-    [state.explore.left.datasourceInstance?.name, state.explore.right?.datasourceInstance?.name].filter(isTruthy)
+    [state.explore.panes.left!.datasourceInstance?.name, state.explore.panes.right?.datasourceInstance?.name].filter(
+      isTruthy
+    )
   );
 
   document.title = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;

@@ -58,6 +58,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
+| `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 
 ## Alpha feature toggles
@@ -110,6 +111,7 @@ Alpha features might be changed or removed without prior notice.
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                        |
 | `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                         |
+| `extraThemes`                      | Enables extra themes                                                                                           |
 
 ## Development feature toggles
 

@@ -22,15 +22,16 @@ import (
 )
 
 const (
-	ClientAPIKey    = "auth.client.api-key" // #nosec G101
-	ClientAnonymous = "auth.client.anonymous"
-	ClientBasic     = "auth.client.basic"
-	ClientJWT       = "auth.client.jwt"
-	ClientRender    = "auth.client.render"
-	ClientSession   = "auth.client.session"
-	ClientForm      = "auth.client.form"
-	ClientProxy     = "auth.client.proxy"
-	ClientSAML      = "auth.client.saml"
+	ClientAPIKey      = "auth.client.api-key" // #nosec G101
+	ClientAnonymous   = "auth.client.anonymous"
+	ClientBasic       = "auth.client.basic"
+	ClientJWT         = "auth.client.jwt"
+	ClientExtendedJWT = "auth.client.extended-jwt"
+	ClientRender      = "auth.client.render"
+	ClientSession     = "auth.client.session"
+	ClientForm        = "auth.client.form"
+	ClientProxy       = "auth.client.proxy"
+	ClientSAML        = "auth.client.saml"
 )
 
 const (
@@ -326,6 +327,8 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Teams:          usr.Teams,
 		ClientParams:   params,
 		Permissions:    usr.Permissions,
+		AuthModule:     usr.ExternalAuthModule,
+		AuthID:         usr.ExternalAuthID,
 	}
 }
 

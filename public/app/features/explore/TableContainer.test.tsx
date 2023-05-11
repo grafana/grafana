@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import { DataFrame, FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
-import { ExploreId } from 'app/types/explore';
+import { ExploreId } from 'app/types';
 
 import { TableContainer } from './TableContainer';
 
