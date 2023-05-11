@@ -108,7 +108,7 @@ func owners(args []string) error {
 
 func modules(args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
-	// indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
+	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
 	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
@@ -117,13 +117,21 @@ func modules(args []string) error {
 		return err
 	}
 	/*
-		GOAL: print all dependencies for each owner listed in CLI after -o flag
+		GOAL:
+		1. if no flags, print all direct dependencies
+		2. if -i, print all dependencies (direct + indirect)
+		3. if -o, print dependencies owned by the owner(s) listed
+		4. if -i and -o, print all dependencies owned by the owner(s) listed
+
+		print all dependencies for each owner listed in CLI after -o flag
 		check each dependency's owners
 
 			if it match one of the owners in the flag/CLI, print it
 			if not skip
 
-		CURRENT ISSUE: getting all owners listed in CLI flag
+		CURRENT ISSUE:
+		owner flag logic not working well with indirect flag logic
+		not sure how to check for both flags
 
 		mod.Owners := [bep, as-code, delivery]
 		flag := [gaas, delivery]
@@ -137,10 +145,10 @@ func modules(args []string) error {
 			if len(mod.Owners) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
 				fmt.Println(mod.Name)
 			}
-			// TODO: uncomment to use indirect flag
-			// if *indirect || !mod.Indirect {
-			// 	fmt.Println(mod.Name)
-			// }
+		}
+		// NOTE: if the indirect flag is used OR if dependency is direct; if indirect flag is used print all dependencies or if flga isn't used, print direct dependencies
+		if *indirect || !mod.Indirect {
+			fmt.Println(mod.Name)
 		}
 	}
 	return nil
