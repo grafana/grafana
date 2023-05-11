@@ -47,6 +47,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    // console.log(instanceSettings, 'instanceSettings');
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;

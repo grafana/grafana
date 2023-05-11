@@ -81,6 +81,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { options, queryRunner } = this.props;
+    // console.log('🚀 ~ file: QueryGroup.tsx:84 ~ QueryGroup ~ componentDidMount ~ options:', options);
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
@@ -103,6 +104,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   async componentDidUpdate() {
     const { options } = this.props;
+    console.log('🚀 ~ file: QueryGroup.tsx:107 ~ QueryGroup ~ componentDidUpdate ~ options:', options);
 
     const currentDS = await getDataSourceSrv().get(options.dataSource);
     if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
@@ -202,6 +204,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onUpdateAndRun = (options: QueryGroupOptions) => {
+    // console.log('onUpdateAndRun', options);
     this.props.onOptionsChange(options);
     this.props.onRunQueries();
   };
@@ -233,6 +236,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                   options={options}
                   dataSource={dataSource}
                   data={data}
+                  // Jev
                   onChange={this.onUpdateAndRun}
                 />
               </div>

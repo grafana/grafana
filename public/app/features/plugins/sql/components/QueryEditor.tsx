@@ -45,8 +45,6 @@ export function SqlQueryEditor({
     };
   }, [datasource]);
 
-  const uidIsSame = !!(query.datasource?.uid === datasource.uid);
-
   useEffect(() => {
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       /*
@@ -56,7 +54,7 @@ export function SqlQueryEditor({
         OR 2) there WASN'T a preconfigred database before, but there IS now (updated either through provisioning or the GUI).
         In either case, we need to throw a warning to alert the user that something has changed.
       */
-      if (uidIsSame && !!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
+      if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
         setHasDatabaseConfigIssue(true);
       }
 
@@ -69,7 +67,7 @@ export function SqlQueryEditor({
         setHasNoPostgresDefaultDatabaseConfig(true);
       }
     }
-  }, [datasource, isPostgresInstance, preconfiguredDatabase, query, uidIsSame]);
+  }, [datasource, isPostgresInstance, preconfiguredDatabase, query]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
