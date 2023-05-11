@@ -21,7 +21,7 @@ import {
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -35,7 +35,7 @@ import { getFieldLinksForExplore } from './utils/links';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
-  exploreId: ExploreId;
+  exploreId: string;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
@@ -208,7 +208,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const {

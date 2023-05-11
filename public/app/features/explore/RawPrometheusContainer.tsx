@@ -8,7 +8,7 @@ import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui'
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
-import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
 import RawListContainer from './PrometheusListView/RawListContainer';
@@ -16,7 +16,7 @@ import { getFieldLinksForExplore } from './utils/links';
 
 interface RawPrometheusContainerProps {
   ariaLabel?: string;
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;

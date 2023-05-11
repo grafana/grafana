@@ -5,7 +5,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId } from 'app/types';
 
 import { Explore, Props } from './Explore';
 import { initialExploreState } from './state/main';
@@ -60,7 +59,7 @@ const dummyProps: Props = {
       QueryEditorHelp: {},
     },
   } as DataSourceApi,
-  exploreId: ExploreId.left,
+  exploreId: 'left',
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),

@@ -8,7 +8,7 @@ import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@gr
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { ExploreId, AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
@@ -57,7 +57,7 @@ interface SubmissionError {
 
 interface Props {
   onClose: () => void;
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {

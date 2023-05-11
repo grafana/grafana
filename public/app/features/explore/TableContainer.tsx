@@ -5,14 +5,14 @@ import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, L
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;

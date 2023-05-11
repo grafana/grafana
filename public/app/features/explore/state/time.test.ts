@@ -2,7 +2,7 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime, LoadingState } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId, ExploreItemState } from 'app/types';
+import { ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './helpers';
 import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
@@ -31,7 +31,7 @@ describe('Explore item reducer', () => {
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
       const { dispatch } = configureStore(createDefaultInitialState().defaultInitialState as any);
-      dispatch(updateTime({ exploreId: ExploreId.left }));
+      dispatch(updateTime({ exploreId: 'left' }));
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
     });
@@ -56,7 +56,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
+        .whenActionIsDispatched(changeRefreshInterval({ exploreId: 'left', refreshInterval: 'LIVE' }))
         .thenStateShouldEqual(expectedState);
     });
 
@@ -76,7 +76,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: '' }))
+        .whenActionIsDispatched(changeRefreshInterval({ exploreId: 'left', refreshInterval: '' }))
         .thenStateShouldEqual(expectedState);
     });
   });
@@ -91,7 +91,7 @@ describe('Explore item reducer', () => {
           } as unknown as ExploreItemState)
           .whenActionIsDispatched(
             changeRangeAction({
-              exploreId: ExploreId.left,
+              exploreId: 'left',
               absoluteRange: { from: 1546297200000, to: 1546383600000 },
               range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
             })

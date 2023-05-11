@@ -10,7 +10,7 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
@@ -25,7 +25,7 @@ export interface RichHistoryStarredTabProps {
   loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

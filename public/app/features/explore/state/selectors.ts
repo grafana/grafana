@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { ExploreId, ExploreState, StoreState } from 'app/types';
+import { ExploreState, StoreState } from 'app/types';
 
 export const selectPanes = (state: Pick<StoreState, 'explore'>) => state.explore.panes;
 
@@ -22,5 +22,4 @@ export const selectOrderedExplorePanes = createSelector(selectPanes, (panes) => 
 
 export const isSplit = createSelector(selectPanes, (panes) => Object.keys(panes).length > 1);
 
-export const getExploreItemSelector = (exploreId: ExploreId) =>
-  createSelector(selectPanes, (panes) => panes[exploreId]);
+export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);

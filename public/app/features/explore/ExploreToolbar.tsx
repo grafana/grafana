@@ -10,7 +10,6 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { AccessControlAction } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
@@ -38,7 +37,7 @@ const rotateIcon = css({
 });
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   topOfViewRef: RefObject<HTMLDivElement>;
 }

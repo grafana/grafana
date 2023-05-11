@@ -9,7 +9,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreId, ExploreQueryParams } from 'app/types/explore';
+import { ExploreQueryParams } from 'app/types/explore';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -65,7 +65,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     } else {
       dispatch(
         splitSizeUpdateAction({
-          largerExploreId: size > evenSplitWidth ? ExploreId.right : ExploreId.left,
+          largerExploreId: size > evenSplitWidth ? 'right' : 'left',
         })
       );
     }
@@ -77,7 +77,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   let widthCalc = 0;
   if (hasSplit) {
     if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-      widthCalc = exploreState.maxedExploreId === ExploreId.right ? windowWidth - minWidth : minWidth;
+      widthCalc = exploreState.maxedExploreId === 'right' ? windowWidth - minWidth : minWidth;
     } else if (exploreState.evenSplitPanes) {
       widthCalc = Math.floor(windowWidth / 2);
     } else if (rightPaneWidthRatio !== undefined) {
@@ -87,7 +87,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
 
   return (
     <div className={styles.pageScrollbarWrapper}>
-      <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
+      <ExploreActions exploreIdLeft={'left'} exploreIdRight={'right'} />
 
       <SplitPaneWrapper
         splitOrientation="vertical"
@@ -106,7 +106,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         {Object.keys(panes).map((exploreId) => {
           return (
             <ErrorBoundaryAlert key={exploreId} style="page">
-              <ExplorePaneContainer exploreId={exploreId as ExploreId} />
+              <ExplorePaneContainer exploreId={exploreId} />
             </ErrorBoundaryAlert>
           );
         })}

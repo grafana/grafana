@@ -10,13 +10,13 @@ import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
-import { StoreState, ExploreItemState, ExploreId } from 'app/types';
+import { StoreState, ExploreItemState } from 'app/types';
 
 import { runQueries } from './state/query';
 
 interface DispatchProps {
   width: number;
-  exploreId: ExploreId;
+  exploreId: string;
   timeZone: TimeZone;
   onClose: () => void;
 }
@@ -90,7 +90,7 @@ export function ExploreQueryInspector(props: Props) {
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const { loading, queryResponse } = item;

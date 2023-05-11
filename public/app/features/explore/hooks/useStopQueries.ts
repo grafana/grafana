@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 
+import { isTruthy } from '@grafana/data';
 import { stopQueryState } from 'app/core/utils/explore';
 import { useSelector } from 'app/types';
 
@@ -15,9 +16,10 @@ export function useStopQueries() {
 
   useEffect(() => {
     return () => {
-      for (const [, pane] of Object.entries(panesRef.current)) {
-        stopQueryState(pane.querySubscription);
-      }
+      Object.values(panesRef.current)
+        .filter(isTruthy)
+        .map(({ querySubscription }) => querySubscription)
+        .map(stopQueryState);
     };
   }, []);
 }

@@ -1,15 +1,15 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
-import { ExploreId, useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose } from './state/main';
 import { runQueries } from './state/query';
 import { isSplit } from './state/selectors';
 
 interface Props {
-  exploreIdLeft: ExploreId;
-  exploreIdRight?: ExploreId;
+  exploreIdLeft: string;
+  exploreIdRight?: string;
 }
 
 export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {

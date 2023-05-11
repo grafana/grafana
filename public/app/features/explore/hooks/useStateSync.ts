@@ -15,7 +15,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { clearQueryKeys, getLastUsedDatasourceUID, parseUrlState } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { addListener, ExploreId, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
+import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
 import { changeDatasource } from '../state/datasource';
 import { initializeExplore } from '../state/explorePane';
@@ -69,7 +69,15 @@ export function useStateSync(params: ExploreQueryParams) {
           await delay(200);
 
           const panesQueryParams = Object.entries(getState().explore.panes).reduce<Record<string, string>>(
-            (acc, [id, paneState]) => ({ ...acc, [id]: serializeStateToUrlParam(getUrlStateFromPaneState(paneState)) }),
+            (acc, [id, paneState]) => {
+              if (!paneState) {
+                return acc;
+              }
+              return {
+                ...acc,
+                [id]: serializeStateToUrlParam(getUrlStateFromPaneState(paneState)),
+              };
+            },
             {}
           );
 
@@ -109,7 +117,7 @@ export function useStateSync(params: ExploreQueryParams) {
         dispatch(syncTimesAction({ syncedTimes: false }));
       }
 
-      for (const [exploreId, urlPane] of Object.entries(urlPanes) as Array<[ExploreId, ExploreUrlState]>) {
+      for (const [exploreId, urlPane] of Object.entries(urlPanes)) {
         const { datasource, queries, range, panelsState } = urlPane;
 
         const statePane = statePanes[exploreId];
@@ -158,7 +166,7 @@ export function useStateSync(params: ExploreQueryParams) {
       // ie. because the user has navigated back after opening the split view.
       Object.keys(statePanes)
         .filter((keyInStore) => !Object.keys(urlPanes).includes(keyInStore))
-        .forEach((paneId) => dispatch(splitClose(paneId as ExploreId)));
+        .forEach((paneId) => dispatch(splitClose(paneId)));
     }
 
     // This happens when the user first navigates to explore.
@@ -206,7 +214,7 @@ export function useStateSync(params: ExploreQueryParams) {
                 .then((queries) => {
                   return dispatch(
                     initializeExplore({
-                      exploreId: exploreId as ExploreId,
+                      exploreId,
                       datasource: paneDatasource,
                       queries,
                       range,

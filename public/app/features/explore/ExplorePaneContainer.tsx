@@ -6,7 +6,6 @@ import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import Explore from './Explore';
 
@@ -26,7 +25,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 /*

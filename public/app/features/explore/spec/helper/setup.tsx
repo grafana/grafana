@@ -33,7 +33,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
-import { ExploreId, ExploreQueryParams } from '../../../../types';
+import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import { ExplorePage } from '../../ExplorePage';
 
@@ -232,10 +232,10 @@ function makeDatasourceSetup({
   };
 }
 
-export const waitForExplore = (exploreId: ExploreId = ExploreId.left, multi = false) => {
+export const waitForExplore = (exploreId = 'left', multi = false) => {
   return waitFor(async () => {
     const container = screen.getAllByTestId('data-testid Explore');
-    return within(container[exploreId === ExploreId.left ? 0 : 1]);
+    return within(container[exploreId === 'left' ? 0 : 1]);
   });
 };
 
@@ -243,7 +243,7 @@ export const tearDown = () => {
   window.localStorage.clear();
 };
 
-export const withinExplore = (exploreId: ExploreId) => {
+export const withinExplore = (exploreId: string) => {
   const container = screen.getAllByTestId('data-testid Explore');
-  return within(container[exploreId === ExploreId.left ? 0 : 1]);
+  return within(container[exploreId === 'left' ? 0 : 1]);
 };

@@ -3,12 +3,10 @@ import React from 'react';
 import { LoadingState } from '@grafana/data';
 import { useSelector } from 'app/types';
 
-import { ExploreId } from '../../types';
-
 import { ErrorContainer } from './ErrorContainer';
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 export function ResponseErrorContainer(props: Props) {
   const queryResponse = useSelector((state) => state.explore.panes[props.exploreId]!.queryResponse);

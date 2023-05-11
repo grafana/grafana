@@ -3,15 +3,13 @@ import React, { useCallback } from 'react';
 import { RefreshPicker } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { ExploreId } from '../../types';
-
 import { setPausedStateAction, runQueries, clearLogs } from './state/query';
 import { changeRefreshInterval } from './state/time';
 
 /**
  * Hook that gives you all the functions needed to control the live tailing.
  */
-export function useLiveTailControls(exploreId: ExploreId) {
+export function useLiveTailControls(exploreId: string) {
   const dispatch = useDispatch();
 
   const pause = useCallback(() => {
@@ -52,7 +50,7 @@ export function useLiveTailControls(exploreId: ExploreId) {
 }
 
 type Props = {
-  exploreId: ExploreId;
+  exploreId: string;
   children: (controls: ReturnType<typeof useLiveTailControls>) => React.ReactElement;
 };
 

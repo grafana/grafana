@@ -5,7 +5,6 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
 
 import { makeLogsQueryResponse } from './spec/helper/query';
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
@@ -206,7 +205,7 @@ describe('ExplorePage', () => {
 
       const splitButton = await screen.findByText(/split/i);
       await userEvent.click(splitButton);
-      await waitForExplore(ExploreId.left, true);
+      await waitForExplore('left', true);
 
       expect(await screen.findAllByLabelText('Widen pane')).toHaveLength(2);
       expect(screen.queryByLabelText('Narrow pane')).not.toBeInTheDocument();

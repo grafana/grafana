@@ -19,9 +19,9 @@ import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const { datasourceInstance } = explore.panes[exploreId]!;
   return {
