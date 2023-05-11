@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
@@ -10,7 +10,7 @@ import { VerticalGroup } from '../Layout/Layout';
 import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
-const meta: ComponentMeta<typeof IconButton> = {
+const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
@@ -45,7 +45,7 @@ export const Examples = () => {
   );
 };
 
-export const Basic: ComponentStory<typeof IconButton> = (args: IconButtonProps) => {
+export const Basic: StoryFn<typeof IconButton> = (args: IconButtonProps) => {
   return <IconButton {...args} />;
 };
 
