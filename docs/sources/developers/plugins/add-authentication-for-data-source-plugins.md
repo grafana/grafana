@@ -312,7 +312,7 @@ To allow Grafana to pass the access token to the plugin, update the data source 
 
 When configured, Grafana can forward authorization HTTP headers such as `Authorization` or `X-ID-Token` to a backend data source. This information is available across the `QueryData`, `CallResource` and `CheckHealth` requests.
 
-To get Grafana to forward the headers, create a HTTP client using the [Grafana plugin SDK](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/httpclient). This package exposes request information which can be subsequently forwarded downstream, used directly within the plugin, or both.
+To get Grafana to forward the headers, create a HTTP client using the [Grafana plugin SDK for Go](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/httpclient) and set the `ForwardHTTPHeaders` option to `true` (by default, it's set to `false`). This package exposes request information which can be subsequently forwarded downstream and/or used directly within the plugin.
 
 ```go
 func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -320,7 +320,11 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	if err != nil {
 		return nil, fmt.Errorf("http client options: %w", err)
 	}
+
     // Important: Reuse the same client for each query to avoid using all available connections on a host.
+
+  opts.ForwardHTTPHeaders = true
+
 	cl, err := httpclient.New(opts)
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)

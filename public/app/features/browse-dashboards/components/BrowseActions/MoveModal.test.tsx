@@ -4,6 +4,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
+import { setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
 import * as api from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 
@@ -21,6 +23,14 @@ describe('browse-dashboards MoveModal', () => {
     { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
   ];
   let props: Props;
+
+  beforeAll(() => {
+    setBackendSrv(backendSrv);
+    jest.spyOn(backendSrv, 'get').mockResolvedValue({
+      dashboard: 0,
+      folder: 0,
+    });
+  });
 
   beforeEach(() => {
     props = {

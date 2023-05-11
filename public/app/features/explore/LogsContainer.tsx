@@ -208,10 +208,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const {
     logsResult,
     loading,

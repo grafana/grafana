@@ -433,7 +433,6 @@ lerna.json @grafana/frontend-ops
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/dashboards/ @grafana/dashboards-squad
 /public/fonts/ @grafana/alerting-squad-frontend
-/public/emails/ @grafana/grafana-frontend-platform
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
@@ -618,6 +617,7 @@ embed.go @grafana/grafana-as-code
 /docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot
+/public/emails/ @grafanabot
 
 # Conf
 /conf/defaults.ini @torkelo
