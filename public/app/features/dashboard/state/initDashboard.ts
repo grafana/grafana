@@ -62,7 +62,10 @@ async function fetchDashboard(
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
-        if (dashDTO.meta.folderUid) {
+        // only the folder API has information about ancestors
+        // get parent folder (if it exists) and put it in the store
+        // this will be used to populate the full breadcrumb trail
+        if (config.featureToggles.nestedFolders && dashDTO.meta.folderUid) {
           await dispatch(getFolderByUid(dashDTO.meta.folderUid));
         }
 
@@ -85,7 +88,10 @@ async function fetchDashboard(
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (dashDTO.meta.folderUid) {
+        // only the folder API has information about ancestors
+        // get parent folder (if it exists) and put it in the store
+        // this will be used to populate the full breadcrumb trail
+        if (config.featureToggles.nestedFolders && dashDTO.meta.folderUid) {
           await dispatch(getFolderByUid(dashDTO.meta.folderUid));
         }
         if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
