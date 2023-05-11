@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -39,15 +39,15 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 		return nil, fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
 
-	res, err := toPluginDTO(pluginID, pluginDir)
+	pluginJSON, err := readPluginJSON(pluginID, pluginDir)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to convert to plugin DTO", err)
 	}
 
-	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
+	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", pluginJSON.ID, pluginJSON.Info.Version, pluginDir)
 
-	deps := make([]*Dependency, 0, len(res.Dependencies.Plugins))
-	for _, plugin := range res.Dependencies.Plugins {
+	deps := make([]*Dependency, 0, len(pluginJSON.Dependencies.Plugins))
+	for _, plugin := range pluginJSON.Dependencies.Plugins {
 		deps = append(deps, &Dependency{
 			ID:      plugin.ID,
 			Version: plugin.Version,
@@ -55,8 +55,8 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 	}
 
 	return &ExtractedPluginArchive{
-		ID:           res.ID,
-		Version:      res.Info.Version,
+		ID:           pluginJSON.ID,
+		Version:      pluginJSON.Info.Version,
 		Dependencies: deps,
 		Path:         pluginDir,
 	}, nil
@@ -220,34 +220,26 @@ func removeGitBuildFromName(filename, pluginID string) string {
 	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
 }
 
-func toPluginDTO(pluginID, pluginDir string) (installedPlugin, error) {
-	distPluginDataPath := filepath.Join(pluginDir, "dist", "plugin.json")
+func readPluginJSON(pluginID, pluginDir string) (plugins.JSONData, error) {
+	pluginPath := filepath.Join(pluginDir, "plugin.json")
 
 	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 	// nolint:gosec
-	data, err := os.ReadFile(distPluginDataPath)
+	data, err := os.ReadFile(pluginPath)
 	if err != nil {
-		pluginDataPath := filepath.Join(pluginDir, "plugin.json")
+		pluginPath = filepath.Join(pluginDir, "dist", "plugin.json")
 		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 		// nolint:gosec
-		data, err = os.ReadFile(pluginDataPath)
+		data, err = os.ReadFile(pluginPath)
 		if err != nil {
-			return installedPlugin{}, fmt.Errorf("could not find dist/plugin.json or plugin.json for %s in %s", pluginID, pluginDir)
+			return plugins.JSONData{}, fmt.Errorf("could not find plugin.json or dist/plugin.json for %s in %s", pluginID, pluginDir)
 		}
 	}
 
-	res := installedPlugin{}
-	if err = json.Unmarshal(data, &res); err != nil {
-		return res, err
+	pJSON, err := plugins.ReadPluginJSON(bytes.NewReader(data))
+	if err != nil {
+		return plugins.JSONData{}, err
 	}
 
-	if res.ID == "" {
-		return installedPlugin{}, fmt.Errorf("could not find valid plugin %s in %s", pluginID, pluginDir)
-	}
-
-	if res.Info.Version == "" {
-		res.Info.Version = "0.0.0"
-	}
-
-	return res, nil
+	return pJSON, nil
 }

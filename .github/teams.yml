@@ -7,4 +7,5 @@ test:
 
 # Alerting team
 area/alerting:
-  channel-label: C02B9MXQE0J
+  channel-label: C028MCV4R7C
+  exclude-github-team: alerting-squad

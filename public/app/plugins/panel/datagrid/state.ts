@@ -219,11 +219,10 @@ export const datagridReducer = (state: DatagridState, action: DatagridAction): D
 
       columns = [
         ...updateColumnsPayload.frame.fields.map((field: Field, index: number) => {
-          const displayName = getFieldDisplayName(field, updateColumnsPayload.frame);
-
           // find column by field name and update width in new set. We cannot use index because
           // if a column gets deleted we don't know the correct index anymore
-          const width = state.columns.find((column) => column.title === displayName)?.width;
+          const width = state.columns.find((column) => column.title === field.name)?.width;
+          const displayName = getFieldDisplayName(field, updateColumnsPayload.frame);
 
           return {
             title: displayName,
