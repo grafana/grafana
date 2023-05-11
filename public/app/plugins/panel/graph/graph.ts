@@ -155,13 +155,13 @@ class GraphElement {
       onToggleSort: this.ctrl.onToggleSort,
       onColorChange: this.ctrl.onColorChange,
       onToggleAxis: this.ctrl.onToggleAxis,
+      renderCallback: this.renderPanel.bind(this),
     };
 
     const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
 
     // render callback isn't supported in react 18+, see: https://github.com/reactwg/react-18/discussions/5
     this.legendElemRoot.render(legendReactElem);
-    requestIdleCallback(() => this.renderPanel());
   }
 
   onGraphHover(evt: LegacyGraphHoverEventPayload | DataHoverPayload) {
@@ -321,7 +321,7 @@ class GraphElement {
           field: { config: fieldConfig, type: FieldType.number },
           theme: config.theme2,
           timeZone: this.dashboard.getTimezone(),
-        })(field.values.get(dataIndex));
+        })(field.values[dataIndex]);
         linksSupplier = links.length
           ? getFieldLinksSupplier({
               display: fieldDisplay,
@@ -365,13 +365,13 @@ class GraphElement {
       return dataIndex;
     }
 
-    const field = timeField.values.get(dataIndex);
+    const field = timeField.values[dataIndex];
 
     if (field === ts) {
       return dataIndex;
     }
 
-    const correctIndex = timeField.values.toArray().findIndex((value) => value === ts);
+    const correctIndex = timeField.values.findIndex((value) => value === ts);
     return correctIndex > -1 ? correctIndex : dataIndex;
   }
 

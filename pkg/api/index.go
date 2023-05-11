@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -13,13 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-const (
-	// Themes
-	lightName  = "light"
-	darkName   = "dark"
-	systemName = "system"
 )
 
 func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
@@ -90,6 +84,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
+	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserID,
@@ -104,8 +100,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			Theme:                      prefs.Theme,
-			LightTheme:                 prefs.Theme == lightName,
+			Theme:                      theme.ID,
+			LightTheme:                 theme.Type == "light",
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
 			Locale:                     locale,
@@ -118,7 +114,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			},
 		},
 		Settings:                            settings,
-		Theme:                               prefs.Theme,
+		ThemeType:                           theme.Type,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
@@ -135,10 +131,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
-		Sentry:                              &hs.Cfg.Sentry,
 		Nonce:                               c.RequestNonce,
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
+		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
+	}
+
+	if hs.Cfg.CSPEnabled {
+		data.CSPEnabled = true
+		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 
 	if !hs.AccessControl.IsDisabled() {
@@ -158,16 +159,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.User.Name = data.User.Login
 	}
 
-	themeURLParam := c.Query("theme")
-	if themeURLParam == lightName || themeURLParam == darkName || themeURLParam == systemName {
-		data.User.Theme = themeURLParam
-		data.Theme = themeURLParam
-	}
-
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	// This will remove empty cfg or admin sections and move sections around
-	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture()
+	data.NavTree.ApplyAdminIA()
 	data.NavTree.Sort()
 
 	return &data, nil
@@ -195,4 +189,19 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	}
 
 	c.HTML(404, "index", data)
+}
+
+func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string) *pref.ThemeDTO {
+	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
+		return pref.GetThemeByID(themeURLParam)
+	}
+
+	if pref.IsValidThemeID(themePrefId) {
+		theme := pref.GetThemeByID(themePrefId)
+		if !theme.IsExtra || hs.Features.IsEnabled(featuremgmt.FlagExtraThemes) {
+			return theme
+		}
+	}
+
+	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
 }

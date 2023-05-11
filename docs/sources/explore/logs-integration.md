@@ -118,6 +118,16 @@ Explore replaces these sequences. When it does so, the option will change from "
 By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
 
+## Log context
+
+Log context is a feature that allows you to display additional lines of context surrounding a log entry that matches a particular search query. This can be helpful in understanding the log entry's context, and is similar to the `-C` parameter in the `grep` command.
+
+When using Log context in Grafana, you can configure the number of lines of context to display before and after the matching log entry. By default, the Log context feature will show the log entry itself along with the 50 lines before and after it. However, this can be adjusted as needed depending on the specific use case.
+
+You may encounter long lines of text that make it difficult to read and analyze the context around each log entry. This is where the **Wrap lines** toggle can come in handy. By enabling this toggle, Grafana will automatically wrap long lines of text so that they fit within the visible width of the viewer. This can make it easier to read and understand the log entries.
+
+The **Open in split view** button allows you to execute the context query for a log entry in a split screen in the Explore view. Clicking this button will open a new Explore pane with the context query displayed alongside the log entry, making it easier to analyze and understand the surrounding context.
+
 ## Toggle field visibility
 
 Expand a log line and click the eye icon to show or hide fields.

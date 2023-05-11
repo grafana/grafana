@@ -53,6 +53,10 @@ func (f FakeService) IsDisabled() bool {
 	return f.ExpectedDisabled
 }
 
+func (f FakeService) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	return f.ExpectedErr
+}
+
 var _ accesscontrol.AccessControl = new(FakeAccessControl)
 
 type FakeAccessControl struct {
@@ -92,6 +96,10 @@ func (f FakeStore) GetUsersBasicRoles(ctx context.Context, userFilter []int64, o
 }
 
 func (f FakeStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
+	return f.ExpectedErr
+}
+
+func (f FakeStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
 	return f.ExpectedErr
 }
 

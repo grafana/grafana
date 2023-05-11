@@ -1,16 +1,18 @@
 import { DataFrame, PanelData, Field, getFieldDisplayName, ReducerID } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  ResourceDimensionConfig,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
+  ColorDimensionConfig,
+  ScalarDimensionConfig,
+} from '@grafana/schema';
+import {
   getColorDimension,
   getScaledDimension,
   getTextDimension,
   getResourceDimension,
-  ColorDimensionConfig,
   DimensionSupplier,
-  ResourceDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
-  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 
 import { getScalarDimension } from './scalar';
@@ -125,7 +127,7 @@ export function getLastNotNullFieldValue<T>(field: Field): T {
   const data = field.values;
   let idx = data.length - 1;
   while (idx >= 0) {
-    const v = data.get(idx--);
+    const v = data[idx--];
     if (v != null) {
       return v;
     }

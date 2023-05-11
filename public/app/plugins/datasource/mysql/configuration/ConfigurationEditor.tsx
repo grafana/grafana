@@ -159,7 +159,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </InlineField>
       </FieldSet>
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
+      {config.secureSocksDSProxyEnabled && (
         <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
       )}
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
