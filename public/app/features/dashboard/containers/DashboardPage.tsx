@@ -440,9 +440,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
-  const folderNavModel = folderUid
-    ? getNavModel(navIndex, `folder-dashboards-${folderUid}`, getLoadingNav(1)).main
-    : undefined;
+  const folderNavModel = folderUid ? getNavModel(navIndex, `folder-dashboards-${folderUid}`).main : undefined;
   if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
     pageNav = {
       ...pageNav,
