@@ -150,7 +150,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             value={jsonData.tlsSkipVerify || false}
           ></InlineSwitch>
         </InlineField>
-        <InlineField labelWidth={longWidth} htmlFor="allowCleartextPasswords" label="Allow Cleartext Passwords">
+        <InlineField labelWidth={WIDTH_MEDIUM} htmlFor="allowCleartextPasswords" label="Allow Cleartext Passwords">
           <InlineSwitch
             id="allowCleartextPasswords"
             onChange={onSwitchChanged('allowCleartextPasswords')}
