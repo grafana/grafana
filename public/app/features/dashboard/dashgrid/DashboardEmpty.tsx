@@ -26,14 +26,14 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
-          <div className={cx(styles.headerBig)}>
+          <div className={styles.headerBig}>
             <H1 textAlignment="center" weight="medium">
               <Trans i18nKey="dashboard.empty.add-visualization-header">
                 Start your new dashboard by adding a visualization
               </Trans>
             </H1>
           </div>
-          <div className={cx(styles.bodyBig)}>
+          <div className={styles.bodyBig}>
             <P textAlignment="center" color="secondary">
               <Trans i18nKey="dashboard.empty.add-visualization-body">
                 Select a data source and then query and visualize your data with charts, stats and tables or create
@@ -58,12 +58,12 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <div className={cx(styles.headerSmall)}>
+            <div className={styles.headerSmall}>
               <H3 textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
               </H3>
             </div>
-            <div className={cx(styles.bodySmall)}>
+            <div className={styles.bodySmall}>
               <P textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-row-body">
                   Group your visualizations into expandable sections.
@@ -84,12 +84,12 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <div className={cx(styles.headerSmall)}>
+            <div className={styles.headerSmall}>
               <H3 textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
               </H3>
             </div>
-            <div className={cx(styles.bodySmall)}>
+            <div className={styles.bodySmall}>
               <P textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-import-body">
                   Import visualizations that are shared with other dashboards.
