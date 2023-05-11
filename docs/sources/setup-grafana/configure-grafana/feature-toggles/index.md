@@ -45,6 +45,8 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `trimDefaults`                       | Use cue schema to remove values that will be applied automatically                                                                                                                           |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
+| `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
+| `publicDashboardsEmailSharing`       | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                     |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
 | `exploreMixedDatasource`             | Enable mixed datasource in Explore                                                                                                                                                           |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
@@ -60,7 +62,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
-| `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
 
 ## Alpha feature toggles
 
@@ -71,7 +72,6 @@ Alpha features might be changed or removed without prior notice.
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                               |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                          |
-| `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                       |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                         |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                |
 | `newTraceViewHeader`               | Shows the new trace view header                                                                                |
