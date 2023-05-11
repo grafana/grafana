@@ -4,26 +4,13 @@ import type { StorybookConfig } from '@storybook/react-webpack5';
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
 import { getIconSubDir } from '../src/components/Icon/utils';
 
-const STORY_REGEX = /(.+)?packages\/grafana-ui\/(.+)/;
+// Internal stories should only be visible during development
+const storyGlob =
+  process.env.NODE_ENV === 'production'
+    ? '../src/components/**/!(*.internal).story.tsx'
+    : '../src/components/**/*.story.tsx';
 
-let stories: string[] = [];
-const defaultStories = ['../src/Intro.mdx', '../src/components/**/*.story.tsx'];
-
-// Use the STORY env var to work on an individual story / subset of stories
-// to speed up storybook.
-if (process.env.STORY) {
-  let story = process.env.STORY;
-  if (story.match(STORY_REGEX)) {
-    story = story.replace(STORY_REGEX, '$2');
-  }
-  const storySrc = path.relative(__dirname, story);
-  stories.push(storySrc);
-} else {
-  stories = defaultStories;
-  if (process.env.NODE_ENV !== 'production') {
-    stories.push('../src/**/*.internal.story.@(tsx|mdx)');
-  }
-}
+const stories = ['../src/Intro.mdx', storyGlob];
 
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
