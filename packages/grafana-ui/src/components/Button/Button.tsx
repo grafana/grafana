@@ -216,13 +216,14 @@ function getButtonVariantStyles(
   theme: GrafanaTheme2,
   color: ThemeRichColor,
   fill: ButtonFill,
-  borderColor: string
+  defaultBorderColor = 'transparent',
+  outlineBorderColor = color.border
 ): CSSObject {
   if (fill === 'outline') {
     return {
       background: 'transparent',
       color: color.text,
-      border: `1px solid ${color.border}`,
+      border: `1px solid ${outlineBorderColor}`,
       transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
       }),
@@ -259,7 +260,7 @@ function getButtonVariantStyles(
   return {
     background: color.main,
     color: color.contrastText,
-    border: `1px solid ${borderColor}`,
+    border: `1px solid ${defaultBorderColor}`,
     transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
       duration: theme.transitions.duration.short,
     }),
@@ -306,7 +307,14 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   switch (variant) {
     case 'secondary':
-      return getButtonVariantStyles(theme, theme.colors.secondary, fill, theme.colors.border.weak);
+      // The seconday button has some special handling as it's outline border is it's default color border
+      return getButtonVariantStyles(
+        theme,
+        theme.colors.secondary,
+        fill,
+        theme.colors.secondary.border,
+        theme.colors.border.strong
+      );
 
     case 'destructive':
       return getButtonVariantStyles(theme, theme.colors.error, fill, 'transparent');

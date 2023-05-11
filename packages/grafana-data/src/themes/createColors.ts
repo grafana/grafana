@@ -109,11 +109,11 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.whiteBase}, 0.08)`,
+    main: `rgba(${this.whiteBase}, 0.10)`,
     shade: `rgba(${this.whiteBase}, 0.14)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: this.border.strong,
+    border: this.border.weak,
   };
 
   info = this.primary;
