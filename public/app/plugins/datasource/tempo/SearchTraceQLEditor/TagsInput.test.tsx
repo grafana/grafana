@@ -6,10 +6,11 @@ import { FetchError } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
-import { defaultTags, v2Tags } from '../traceql/autocomplete.test';
-import { Tags } from '../types';
+import TempoLanguageProvider from '../language_provider';
+import { Scope } from '../types';
 
 import TagsInput from './TagsInput';
+import { v1Tags, v2Tags } from './utils.test';
 
 describe('TagsInput', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -27,7 +28,7 @@ describe('TagsInput', () => {
 
   describe('should render correct tags', () => {
     it('for API v1 tags', async () => {
-      renderTagsInput(defaultTags);
+      renderTagsInput(v1Tags);
 
       const tag = screen.getByText('Select tag');
       expect(tag).toBeInTheDocument();
@@ -40,7 +41,7 @@ describe('TagsInput', () => {
     });
 
     it('for API v2 tags with scope of resource', async () => {
-      renderTagsInput(v2Tags);
+      renderTagsInput(undefined, v2Tags, TraceqlSearchScope.Resource);
 
       const tag = screen.getByText('Select tag');
       expect(tag).toBeInTheDocument();
@@ -53,7 +54,7 @@ describe('TagsInput', () => {
     });
 
     it('for API v2 tags with scope of span', async () => {
-      renderTagsInput(v2Tags, TraceqlSearchScope.Span);
+      renderTagsInput(undefined, v2Tags, TraceqlSearchScope.Span);
 
       const tag = screen.getByText('Select tag');
       expect(tag).toBeInTheDocument();
@@ -65,7 +66,7 @@ describe('TagsInput', () => {
     });
 
     it('for API v2 tags with scope of unscoped', async () => {
-      renderTagsInput(v2Tags, TraceqlSearchScope.Unscoped);
+      renderTagsInput(undefined, v2Tags, TraceqlSearchScope.Unscoped);
 
       const tag = screen.getByText('Select tag');
       expect(tag).toBeInTheDocument();
@@ -79,12 +80,20 @@ describe('TagsInput', () => {
     });
   });
 
-  const renderTagsInput = (tags: Tags, scope: TraceqlSearchScope = TraceqlSearchScope.Resource) => {
+  const renderTagsInput = (tagsV1?: string[], tagsV2?: Scope[], scope?: TraceqlSearchScope) => {
     const datasource: TempoDatasource = {
       search: {
         filters: [],
       },
     } as unknown as TempoDatasource;
+
+    const lp = new TempoLanguageProvider(datasource);
+    if (tagsV1) {
+      lp.setV1Tags(tagsV1);
+    } else if (tagsV2) {
+      lp.setV2Tags(tagsV2);
+    }
+    datasource.languageProvider = lp;
 
     const filter: TraceqlFilter = {
       id: 'id',
@@ -101,7 +110,7 @@ describe('TagsInput', () => {
         setError={function (error: FetchError): void {
           throw error;
         }}
-        tags={tags || []}
+        staticTags={[]}
         isTagsLoading={false}
       />
     );

@@ -40,11 +40,19 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
 
     if (v2Resp && v2Resp.scopes) {
-      this.tagsV2 = v2Resp.scopes;
+      this.setV2Tags(v2Resp.scopes);
     } else if (v1Resp) {
-      this.tagsV1 = v1Resp.tagNames;
+      this.setV1Tags(v1Resp.tagNames);
     }
   }
+
+  setV1Tags = (tags: string[]) => {
+    this.tagsV1 = tags;
+  };
+
+  setV2Tags = (tags: Scope[]) => {
+    this.tagsV2 = tags;
+  };
 
   getTags = (scope?: TraceqlSearchScope) => {
     if (this.tagsV2 && scope) {

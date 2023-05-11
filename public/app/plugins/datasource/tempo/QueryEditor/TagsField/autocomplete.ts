@@ -118,7 +118,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private getTagsCompletions(): Completion[] {
     const tags = this.languageProvider.getAutocompleteTags();
-    return Object.keys(tags)
+    return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
       .map((key) => ({
         label: key,

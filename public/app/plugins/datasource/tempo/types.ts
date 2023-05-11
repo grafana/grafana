@@ -108,8 +108,3 @@ export type Scope = {
   name: string;
   tags: string[];
 };
-
-export type Tags = {
-  v1: string[] | undefined;
-  v2: Scope[] | undefined;
-};
