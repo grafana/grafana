@@ -12,7 +12,25 @@ weight: -1
 
 # Breaking changes in Grafana v10.0
 
-<!-- TO DO add intro text -->
+Following are breaking changes that you should be aware of when upgrading to Grafana v10.0. 
+
+For our purposes, a breaking change is any change that requires users or operators to do something. This includes:
+
+- Changes in one part of the system that could cause other components to fail
+- Deprecations or removal of a feature
+- Changes to an API that could break automation
+- Changes that affect some plugins or functions of Grafana
+- Migrations that can’t be rolled back
+
+For each change, the provided information:
+
+- Helps you determine if you’re affected
+- Describes the change or relevant background information
+- Guides you in how to mitigate for the change or migrate
+- Provides more learning resources
+
+For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10.0/index.md" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
+
 
 <!-- Template below
 ## Feature
