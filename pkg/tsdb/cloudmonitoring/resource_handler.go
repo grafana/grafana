@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/andybalholm/brotli"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
@@ -304,7 +306,11 @@ func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) 
 }
 
 func getResponses(req *http.Request, cli *http.Client, responseFn processResponse) ([]json.RawMessage, http.Header, string, int, error) {
+	timings := ""
+	start := time.Now()
 	result := doRequest(req, cli, responseFn)
+	elapsed := time.Since(start)
+	timings = timings + " " + strconv.FormatFloat(elapsed.Seconds(), 'f', 10, 64)
 	if result.err != nil {
 		return nil, nil, "", result.code, result.err
 	}
@@ -312,17 +318,21 @@ func getResponses(req *http.Request, cli *http.Client, responseFn processRespons
 	token := result.token
 	responses := result.responses
 	for token != "" {
+		start = time.Now()
 		query := req.URL.Query()
 		query.Set("pageToken", token)
 		req.URL.RawQuery = query.Encode()
 
 		loopResult := doRequest(req, cli, responseFn)
+		elapsed = time.Since(start)
+		timings = timings + " " + strconv.FormatFloat(elapsed.Seconds(), 'f', 10, 64)
 		if loopResult.err != nil {
 			return nil, nil, "", loopResult.code, loopResult.err
 		}
 		responses = append(responses, loopResult.responses...)
 		token = loopResult.token
 	}
+	result.header.Set("Server-Timing", fmt.Sprintf("doRequest;dur=%v", timings))
 	return responses, result.header, result.encoding, result.code, nil
 }
 
