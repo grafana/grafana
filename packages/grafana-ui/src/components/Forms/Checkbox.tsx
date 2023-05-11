@@ -213,7 +213,9 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       `
     ),
     invalid: css`
-      input:checked + span {
+      input + span,
+      input:checked + span,
+      input:hover + span {
         border: 1px solid ${theme.colors.error.border};
       }
     `,
