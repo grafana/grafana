@@ -80,7 +80,7 @@ For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.
 
 Grafana comes with default configuration parameters that remain the same among versions regardless of the operating system or the environment (for example, virtual machine, Docker, Kubernetes, etc.). You can refer to the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana) documentation to view all the default configuraiton settings.
 
-The following configurations are set by default when you start the Grafana Docker container. You cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can only modify these configurations using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
+The following configurations are set by default when you start the Grafana Docker container. When running in Docker you cannot change the configurations by editing the `conf/grafana.ini` file. Instead, you can modify the configuration using [environment variables]({{< relref "./configure-grafana/#override-configuration-with-environment-variables" >}}).
 
 | Setting               | Default value             |
 | --------------------- | ------------------------- |
