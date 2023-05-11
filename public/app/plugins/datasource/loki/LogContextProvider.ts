@@ -127,7 +127,7 @@ export class LogContextProvider {
     const query: LokiQuery = {
       expr,
       queryType: LokiQueryType.Range,
-      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
+      refId: REF_ID_STARTER_LOG_ROW_CONTEXT,
       maxLines: limit,
       direction: queryDirection,
       datasource: { uid: this.datasource.uid, type: this.datasource.type },

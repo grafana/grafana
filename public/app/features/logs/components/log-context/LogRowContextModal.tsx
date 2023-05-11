@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAsync, useAsyncFn } from 'react-use';
 
 import {
@@ -11,13 +11,12 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
-  SelectableValue,
   dateTime,
   TimeRange,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
+import { Icon, Button, LoadingBar, Modal, useTheme2, Spinner } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
@@ -27,7 +26,7 @@ import { useDispatch } from 'app/types';
 import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
-import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
+import { LogContextButtons } from './LogContextButtons';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -115,13 +114,17 @@ interface LogRowContextModalProps {
   open: boolean;
   timeZone: TimeZone;
   onClose: () => void;
-  getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options: LogRowContextOptions) => Promise<DataQueryResponse>;
 
   getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
 }
+
+type Source = 'none' | 'top' | 'bottom' | 'center';
+
+const INITIAL_LOAD_LIMIT = 20;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
   row,
@@ -133,27 +136,39 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   onClose,
   getRowContext,
 }) => {
-  const scrollElement = React.createRef<HTMLDivElement>();
-  const entryElement = React.createRef<HTMLTableRowElement>();
+  const scrollElement = useRef<HTMLDivElement | null>(null);
+  const entryElement = useRef<HTMLTableRowElement | null>(null);
   // We can not use `entryElement` to scroll to the right element because it's
   // sticky. That's why we add another row and use this ref to scroll to that
   // first.
-  const preEntryElement = React.createRef<HTMLTableRowElement>();
+  const preEntryElement = useRef<HTMLTableRowElement | null>(null);
+
+  const prevHeightRef = useRef<number | null>(null);
+
+  const topElement = useRef<HTMLDivElement | null>(null);
+  const bottomElement = useRef<HTMLDivElement | null>(null);
 
   const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const [context, setContext] = useState<{ after: LogRowModel[]; before: LogRowModel[] }>({ after: [], before: [] });
-  // LoadMoreOptions[2] refers to 50 lines
-  const defaultLimit = LoadMoreOptions[2];
-  const [limit, setLimit] = useState<number>(defaultLimit.value!);
+  const [context, setContext] = useState<{
+    after: LogRowModel[];
+    before: LogRowModel[];
+    source: Source;
+    hasTop: boolean;
+    hasBottom: boolean;
+  }>({
+    after: [],
+    before: [],
+    source: 'none',
+    hasTop: true,
+    hasBottom: true,
+  });
   const [loadingWidth, setLoadingWidth] = useState(0);
-  const [loadMoreOption, setLoadMoreOption] = useState<SelectableValue<number>>(defaultLimit);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
   const [wrapLines, setWrapLines] = useState(
     store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
   );
-
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
     const allRows = sortLogRows([...before, row, ...after], LogsSortOrder.Ascending);
@@ -178,25 +193,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     return range;
   }, [context, row]);
 
-  const onChangeLimitOption = (option: SelectableValue<number>) => {
-    setLoadMoreOption(option);
-    if (option.value) {
-      setLimit(option.value);
-      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
-        datasourceType: row.datasourceType,
-        logRowUid: row.uid,
-        new_limit: option.value,
-      });
-    }
-  };
-
   const updateContextQuery = async () => {
     const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
     setContextQuery(contextQuery);
   };
 
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
-    if (open && row && limit) {
+    const limit = INITIAL_LOAD_LIMIT;
+    if (open && row) {
       await updateContextQuery();
       const rawResults = await Promise.all([
         getRowContext(row, {
@@ -229,11 +233,56 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         before: beforeRows.filter((r) => {
           return r.timeEpochNs !== row.timeEpochNs || r.entry !== row.entry;
         }),
+        source: 'center',
+        hasTop: true,
+        hasBottom: true,
       });
     } else {
-      setContext({ after: [], before: [] });
+      setContext({ after: [], before: [], source: 'none', hasTop: true, hasBottom: true });
     }
-  }, [row, open, limit]);
+  }, [row, open]);
+
+  const loadMore = async (location: 'top' | 'bottom') => {
+    const { before, after } = context;
+    const refRow = location === 'top' ? after.at(0) : before.at(-1);
+    if (refRow == null) {
+      return;
+    }
+
+    const direction = location === 'top' ? LogRowContextQueryDirection.Forward : LogRowContextQueryDirection.Backward;
+
+    const result = await getRowContext(refRow, { limit: 50, direction });
+    const newRows = dataFrameToLogsModel(result.data).rows;
+
+    if (logsSortOrder === LogsSortOrder.Ascending) {
+      newRows.reverse();
+    }
+
+    if (location === 'top') {
+      const uniqueNewRows = newRows.filter((r) => {
+        return r.timeEpochNs !== refRow.timeEpochNs && r.entry !== refRow.entry;
+      });
+
+      setContext((c) => ({
+        after: [...uniqueNewRows, ...c.after],
+        before: c.before,
+        source: 'top',
+        hasTop: uniqueNewRows.length > 0,
+        hasBottom: c.hasBottom,
+      }));
+    } else {
+      const uniqueNewRows = newRows.filter((r) => {
+        return r.timeEpochNs !== refRow.timeEpochNs && r.entry !== refRow.entry;
+      });
+      setContext((c) => ({
+        after: c.after,
+        before: [...c.before, ...uniqueNewRows],
+        source: 'bottom',
+        hasTop: c.hasTop,
+        hasBottom: uniqueNewRows.length > 0,
+      }));
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -260,19 +309,82 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   };
 
-  useLayoutEffect(() => {
-    if (!loading && entryElement.current && preEntryElement.current) {
-      preEntryElement.current.scrollIntoView({ block: 'center' });
-      entryElement.current.scrollIntoView({ block: 'center' });
+  const onScrollHit = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+    if (entries[0].isIntersecting) {
+      //top FIXME: ugly
+      loadMore('top');
+      // we do not allow both top-and-bottom loading at the same time
+      return;
     }
-  }, [entryElement, preEntryElement, context, loading]);
+
+    if (entries[1].isIntersecting) {
+      loadMore('bottom');
+      // FIXME
+    }
+  };
+
+  useEffect(() => {
+    const scroll = scrollElement.current;
+    const top = topElement.current;
+    const bottom = bottomElement.current;
+
+    if (scroll == null) {
+      //bottom FIXME: ugly
+      // should not happen, but need to make typescript happy
+      return;
+    }
+
+    const observer = new IntersectionObserver(onScrollHit, { root: scroll });
+
+    if (top != null) {
+      observer.observe(top);
+    }
+
+    if (bottom != null) {
+      observer.observe(bottom);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }); // on every render, why not
+
+  useLayoutEffect(() => {
+    const { source } = context;
+    switch (source) {
+      case 'center':
+        preEntryElement.current?.scrollIntoView({ block: 'center' });
+        entryElement.current?.scrollIntoView({ block: 'center' });
+        break;
+      case 'top':
+        const prevHeight = prevHeightRef.current;
+        const scrollE = scrollElement.current;
+        if (scrollE != null) {
+          const currentHeight = scrollE.scrollHeight;
+          prevHeightRef.current = currentHeight;
+          if (prevHeight != null) {
+            const newScrollTop = scrollE.scrollTop + (currentHeight - prevHeight);
+            scrollE.scrollTop = newScrollTop;
+          }
+        }
+        break;
+      case 'bottom':
+        // nothing to do
+        break;
+      case 'none':
+        // nothing to do
+        break;
+      default:
+        throw new Error(`invalid source: ${source}`);
+    }
+  }, [context]);
 
   useLayoutEffect(() => {
     const width = scrollElement?.current?.parentElement?.clientWidth;
     if (width && width > 0) {
       setLoadingWidth(width);
     }
-  }, [scrollElement]);
+  }, []);
 
   useAsync(updateContextQuery, [getRowContextQuery, row]);
 
@@ -292,13 +404,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
         </div>
         <div>
-          <LogContextButtons
-            position="top"
-            wrapLines={wrapLines}
-            onChangeWrapLines={setWrapLines}
-            onChangeOption={onChangeLimitOption}
-            option={loadMoreOption}
-          />
+          <LogContextButtons wrapLines={wrapLines} onChangeWrapLines={setWrapLines} />
         </div>
       </div>
       <div className={loading ? '' : styles.hidden}>
@@ -309,19 +415,24 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           <tbody>
             <tr>
               <td className={styles.noMarginBottom}>
-                <LogRows
-                  logRows={context.after}
-                  dedupStrategy={LogsDedupStrategy.none}
-                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={wrapLines}
-                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                  enableLogDetails={true}
-                  timeZone={timeZone}
-                  displayedFields={displayedFields}
-                  onClickShowField={showField}
-                  onClickHideField={hideField}
-                />
+                <>
+                  <div ref={topElement}>
+                    <LoadingIndicator place="top" />
+                  </div>
+                  <LogRows
+                    logRows={context.after}
+                    dedupStrategy={LogsDedupStrategy.none}
+                    showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                    showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                    wrapLogMessage={wrapLines}
+                    prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                    enableLogDetails={true}
+                    timeZone={timeZone}
+                    displayedFields={displayedFields}
+                    onClickShowField={showField}
+                    onClickHideField={hideField}
+                  />
+                </>
               </td>
             </tr>
             <tr ref={preEntryElement}></tr>
@@ -344,19 +455,24 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
             </tr>
             <tr>
               <td>
-                <LogRows
-                  logRows={context.before}
-                  dedupStrategy={LogsDedupStrategy.none}
-                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                  wrapLogMessage={wrapLines}
-                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                  enableLogDetails={true}
-                  timeZone={timeZone}
-                  displayedFields={displayedFields}
-                  onClickShowField={showField}
-                  onClickHideField={hideField}
-                />
+                <>
+                  <LogRows
+                    logRows={context.before}
+                    dedupStrategy={LogsDedupStrategy.none}
+                    showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                    showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                    wrapLogMessage={wrapLines}
+                    prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                    enableLogDetails={true}
+                    timeZone={timeZone}
+                    displayedFields={displayedFields}
+                    onClickShowField={showField}
+                    onClickHideField={hideField}
+                  />
+                  <div ref={bottomElement}>
+                    <LoadingIndicator place="bottom" />
+                  </div>
+                </>
               </td>
             </tr>
           </tbody>
@@ -418,5 +534,23 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         )}
       </Modal.ButtonRow>
     </Modal>
+  );
+};
+
+const loadingIndicatorStyles = css`
+  display: flex;
+  justify-content: center;
+`;
+
+// ideally we'd use `@grafana/ui/LoadingPlaceholder`, but that
+// one has a large margin-bottom.
+const LoadingIndicator = ({ place }: { place: 'top' | 'bottom' }) => {
+  const text = place === 'top' ? 'Loading newer logs...' : 'Loading older logs...';
+  return (
+    <div className={loadingIndicatorStyles}>
+      <div>
+        {text} <Spinner inline />
+      </div>
+    </div>
   );
 };
