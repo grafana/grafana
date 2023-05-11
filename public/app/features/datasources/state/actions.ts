@@ -149,12 +149,8 @@ export const testDataSource = (
 export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     dispatch(dataSourcesLoad());
-    let response: Array<DataSourceSettings<DataSourceJsonData, {}>> = [];
-    try {
-      response = await api.getDataSources();
-    } finally {
-      dispatch(dataSourcesLoaded(response));
-    }
+    const response = await api.getDataSources();
+    dispatch(dataSourcesLoaded(response));
   };
 }
 
