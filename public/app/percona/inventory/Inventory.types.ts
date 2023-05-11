@@ -1,4 +1,6 @@
 import { Databases } from '../shared/core';
+import { DbNode, NodeType } from '../shared/services/nodes/Nodes.types';
+import { DbService, DbServiceWithAddress } from '../shared/services/services/Services.types';
 
 export interface CompatibleServicePayload {
   service_id: string;
@@ -49,6 +51,11 @@ export enum ServiceAgentStatus {
   UNKNOWN = 'UNKNOWN',
 }
 
+export enum MonitoringStatus {
+  OK = 'OK',
+  FAILED = 'Failed',
+}
+
 export interface ServiceAgentPayload {
   agent_id: string;
   agent_type: AgentType;
@@ -63,15 +70,29 @@ export type ServiceAgentListPayload = {
   agents: ServiceAgentPayload[];
 };
 
-export interface ServiceAgent {
+export type ServiceAgent = {
   agentId: string;
   status?: ServiceAgentStatus;
   customLabels?: Record<string, string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
-}
+};
 
 export interface Agent {
   type: AgentType;
   params: ServiceAgent;
 }
+
+export type FlattenAgent = ServiceAgent & {
+  type: AgentType;
+};
+
+export type FlattenService = DbService &
+  Partial<DbServiceWithAddress> & {
+    type: Databases | 'external';
+    agentsStatus: string;
+  };
+
+export type FlattenNode = DbNode & {
+  type: NodeType;
+};

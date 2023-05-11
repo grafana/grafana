@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
-import { Column, Row } from 'react-table';
+import { Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -13,7 +13,7 @@ import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { DetailsRow } from 'app/percona/shared/components/Elements/DetailsRow/DetailsRow';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { ServiceIconWithText } from 'app/percona/shared/components/Elements/ServiceIconWithText/ServiceIconWithText';
-import { Table } from 'app/percona/shared/components/Elements/Table';
+import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
@@ -28,31 +28,47 @@ import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { getDashboardLinkForService } from 'app/percona/shared/helpers/getDashboardLinkForService';
 import { getExpandAndActionsCol } from 'app/percona/shared/helpers/getExpandAndActionsCol';
 import { logger } from 'app/percona/shared/helpers/logger';
-import { Service, ServiceStatus } from 'app/percona/shared/services/services/Services.types';
+import { ServiceStatus } from 'app/percona/shared/services/services/Services.types';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
 import { appEvents } from '../../../core/app_events';
 import { GET_SERVICES_CANCEL_TOKEN } from '../Inventory.constants';
 import { Messages } from '../Inventory.messages';
+import { FlattenService, MonitoringStatus } from '../Inventory.types';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 import { StatusLink } from '../components/StatusLink/StatusLink';
 
-import { getBadgeColorForServiceStatus, getBadgeIconForServiceStatus } from './Services.utils';
+import {
+  getAgentsMonitoringStatus,
+  getBadgeColorForServiceStatus,
+  getBadgeIconForServiceStatus,
+} from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
 export const Services = () => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selected, setSelectedRows] = useState<Array<Row<Service>>>([]);
-  const [actionItem, setActionItem] = useState<Service | null>(null);
+  const [selected, setSelectedRows] = useState<Array<Row<FlattenService>>>([]);
+  const [actionItem, setActionItem] = useState<FlattenService | null>(null);
   const navModel = usePerconaNavModel('inventory-services');
   const [generateToken] = useCancelToken();
   const dispatch = useAppDispatch();
-  const { isLoading, services } = useSelector(getServices);
+  const { isLoading, services: fetchedServices } = useSelector(getServices);
   const styles = useStyles2(getStyles);
+  const flattenServices = useMemo(
+    () =>
+      fetchedServices.map((value) => {
+        return {
+          type: value.type,
+          ...value.params,
+          agentsStatus: getAgentsMonitoringStatus(value.params.agents ?? []),
+        };
+      }),
+    [fetchedServices]
+  );
 
   const getActions = useCallback(
-    (row: Row<Service>): Action[] => [
+    (row: Row<FlattenService>): Action[] => [
       {
         content: (
           <HorizontalGroup spacing="sm">
@@ -68,13 +84,13 @@ export const Services = () => {
       {
         content: Messages.services.actions.dashboard,
         action: () => {
-          locationService.push(getDashboardLinkForService(row.original.type, row.original.params.serviceName));
+          locationService.push(getDashboardLinkForService(row.original.type, row.original.serviceName));
         },
       },
       {
         content: Messages.services.actions.qan,
         action: () => {
-          locationService.push(`/d/pmm-qan/pmm-query-analytics?var-service_name=${row.original.params.serviceName}`);
+          locationService.push(`/d/pmm-qan/pmm-query-analytics?var-service_name=${row.original.serviceName}`);
         },
       },
     ],
@@ -82,45 +98,79 @@ export const Services = () => {
   );
 
   const columns = useMemo(
-    (): Array<Column<Service>> => [
+    (): Array<ExtendedColumn<FlattenService>> => [
       {
         Header: Messages.services.columns.status,
-        accessor: (row) => row.params.status,
+        accessor: 'status',
         Cell: ({ value }: { value: ServiceStatus }) => (
           <Badge
-            text={capitalizeText(value)}
+            text={value === ServiceStatus.NA ? ServiceStatus.NA : capitalizeText(value)}
             color={getBadgeColorForServiceStatus(value)}
             icon={getBadgeIconForServiceStatus(value)}
           />
         ),
+        type: FilterFieldTypes.DROPDOWN,
+        options: [
+          {
+            label: 'Up',
+            value: ServiceStatus.UP,
+          },
+          {
+            label: 'Down',
+            value: ServiceStatus.DOWN,
+          },
+          {
+            label: 'Unknown',
+            value: ServiceStatus.UNKNOWN,
+          },
+          {
+            label: 'N/A',
+            value: ServiceStatus.NA,
+          },
+        ],
       },
       {
         Header: Messages.services.columns.serviceName,
-        accessor: (row) => row.params.serviceName,
-        Cell: ({ value, row }: { row: Row<Service>; value: string }) => (
+        accessor: 'serviceName',
+        Cell: ({ value, row }: { row: Row<FlattenService>; value: string }) => (
           <ServiceIconWithText text={value} dbType={row.original.type} />
         ),
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.services.columns.nodeName,
-        accessor: (row) => row.params.nodeName,
+        accessor: 'nodeName',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.services.columns.monitoring,
-        accessor: 'params',
+        accessor: 'agentsStatus',
         width: '70px',
         Cell: ({ value, row }) => (
-          <StatusLink strippedServiceId={stripServiceId(row.original.params.serviceId)} agents={value.agents || []} />
+          <StatusLink strippedServiceId={stripServiceId(row.original.serviceId)} agentsStatus={value} />
         ),
+        type: FilterFieldTypes.RADIO_BUTTON,
+        options: [
+          {
+            label: MonitoringStatus.OK,
+            value: MonitoringStatus.OK,
+          },
+          {
+            label: MonitoringStatus.FAILED,
+            value: MonitoringStatus.FAILED,
+          },
+        ],
       },
       {
         Header: Messages.services.columns.address,
-        accessor: (row) => row.params.address,
+        accessor: 'address',
+        type: FilterFieldTypes.TEXT,
       },
       {
         Header: Messages.services.columns.port,
-        accessor: (row) => row.params.port,
+        accessor: 'port',
         width: '100px',
+        type: FilterFieldTypes.TEXT,
       },
       getExpandAndActionsCol(getActions),
     ],
@@ -161,7 +211,7 @@ export const Services = () => {
 
       try {
         const params = servicesToDelete.map((s) => ({
-          serviceId: s.params.serviceId,
+          serviceId: s.serviceId,
           force: forceMode,
         }));
         const successfullyDeleted = await dispatch(removeServicesAction({ services: params })).unwrap();
@@ -188,28 +238,28 @@ export const Services = () => {
     [actionItem, dispatch, loadData, selected]
   );
 
-  const handleSelectionChange = useCallback((rows: Array<Row<Service>>) => {
+  const handleSelectionChange = useCallback((rows: Array<Row<FlattenService>>) => {
     setSelectedRows(rows);
   }, []);
 
   const renderSelectedSubRow = React.useCallback(
-    (row: Row<Service>) => {
-      const labels = row.original.params.customLabels || {};
+    (row: Row<FlattenService>) => {
+      const labels = row.original.customLabels || {};
       const labelKeys = Object.keys(labels);
-      const agents = row.original.params.agents || [];
+      const agents = row.original.agents || [];
 
       return (
         <DetailsRow>
           {!!agents.length && (
             <DetailsRow.Contents title={Messages.services.details.agents}>
               <StatusBadge
-                strippedServiceId={stripServiceId(row.original.params.serviceId)}
-                agents={row.original.params.agents || []}
+                strippedServiceId={stripServiceId(row.original.serviceId)}
+                agents={row.original.agents || []}
               />
             </DetailsRow.Contents>
           )}
           <DetailsRow.Contents title={Messages.services.details.serviceId}>
-            <span>{row.original.params.serviceId}</span>
+            <span>{row.original.serviceId}</span>
           </DetailsRow.Contents>
           {!!labelKeys.length && (
             <DetailsRow.Contents title={Messages.services.details.labels} fullRow>
@@ -293,8 +343,8 @@ export const Services = () => {
           </Modal>
           <Table
             columns={columns}
-            data={services}
-            totalItems={services.length}
+            data={flattenServices}
+            totalItems={flattenServices.length}
             rowSelection
             onRowSelection={handleSelectionChange}
             showPagination
@@ -305,7 +355,8 @@ export const Services = () => {
             overlayClassName={styles.overlay}
             renderExpandedRow={renderSelectedSubRow}
             autoResetSelectedRows={false}
-            getRowId={useCallback((row: Service) => row.params.serviceId, [])}
+            getRowId={useCallback((row: FlattenService) => row.serviceId, [])}
+            showFilter
           />
         </FeatureLoader>
       </OldPage.Contents>

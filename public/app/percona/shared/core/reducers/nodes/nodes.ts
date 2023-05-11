@@ -47,6 +47,7 @@ export const removeNodesAction = createAsyncThunk(
   async (params: RemoveNodesParams): Promise<number> => {
     const bodies: RemoveNodeBody[] = params.nodes.map(({ nodeId, force }) => ({ node_id: nodeId, force }));
     const requests = bodies.map((body) => InventoryService.removeNode(body, params.cancelToken));
+
     const results = await processPromiseResults(requests);
     return results.filter(filterFulfilled).length;
   }

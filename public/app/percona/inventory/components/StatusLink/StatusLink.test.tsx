@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { DbServiceAgent } from 'app/percona/shared/services/services/Services.types';
 
 import { ServiceAgentStatus } from '../../Inventory.types';
+import { getAgentsMonitoringStatus } from '../../Tabs/Services.utils';
 
 import { StatusLink } from './StatusLink';
 
@@ -26,16 +27,15 @@ describe('StatusLink', () => {
       },
     ];
 
+    const agentsStatus = getAgentsMonitoringStatus(agents);
     render(
       <Router history={locationService.getHistory()}>
-        <StatusLink agents={agents} strippedServiceId="service_id_1" />
+        <StatusLink agentsStatus={agentsStatus} strippedServiceId="service_id_1" />
       </Router>
     );
-
     expect(screen.getByText('OK')).toBeInTheDocument();
     expect(screen.queryByText('Failed')).not.toBeInTheDocument();
   });
-
   it('should show "Failed" if some agent is not connected', () => {
     const agents: DbServiceAgent[] = [
       {
@@ -51,17 +51,15 @@ describe('StatusLink', () => {
         isConnected: false,
       },
     ];
-
+    const agentsStatus = getAgentsMonitoringStatus(agents);
     render(
       <Router history={locationService.getHistory()}>
-        <StatusLink agents={agents} strippedServiceId="service_id_1" />
+        <StatusLink agentsStatus={agentsStatus} strippedServiceId="service_id_1" />
       </Router>
     );
-
     expect(screen.queryByText('OK')).not.toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
   });
-
   it('should show "Failed" if some agent is not starting or running', () => {
     const agents: DbServiceAgent[] = [
       {
@@ -77,13 +75,12 @@ describe('StatusLink', () => {
         isConnected: true,
       },
     ];
-
+    const agentsStatus = getAgentsMonitoringStatus(agents);
     render(
       <Router history={locationService.getHistory()}>
-        <StatusLink agents={agents} strippedServiceId="service_id_1" />
+        <StatusLink agentsStatus={agentsStatus} strippedServiceId="service_id_1" />
       </Router>
     );
-
     expect(screen.queryByText('OK')).not.toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
   });
