@@ -44,7 +44,7 @@ If you prioritize security and want to minimize the size of your image, it is re
 
 ## Ubuntu image
 
-The Ubuntu image is maintained by [Canonical](https://launchpad.net/cloud-images). The Grafana Enterprise and OSS images are based on [Ubuntu](https://ubuntu.com/) and can be accessed through the [Ubuntu official image](https://hub.docker.com/_/ubuntu). This is a good option for users who prefer an Ubuntu-based image or require certain tools unavailable on Alpine.
+The Ubuntu-based Grafana Enterprise and OSS images are built using the [Ubuntu](https://ubuntu.com/) base image, which can be found in the [Ubuntu docker repo](https://hub.docker.com/_/ubuntu). An Ubuntu-based image can be a good option for users who prefer an Ubuntu-based image or require certain tools unavailable on Alpine.
 
 - **Grafana Enterprise**: `grafana/grafana-enterprise:<version>-ubuntu`
 
