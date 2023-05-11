@@ -58,7 +58,7 @@ export function partitionTimeRange(
  * At the end, we will filter the targets that don't need to be executed in the next request batch,
  * becasue, for example, the `maxLines` have been reached.
  */
-type DataQueryWithMaxLines = DataQuery & { maxLines?: number };
+type DataQueryWithMaxLines = DataQuery & { maxLines?: number; expr: string; resolution?: string };
 
 function adjustTargetsFromResponseState<T extends DataQueryWithMaxLines>(
   targets: T[],
@@ -70,17 +70,17 @@ function adjustTargetsFromResponseState<T extends DataQueryWithMaxLines>(
 
   return targets
     .map((target) => {
-      // if (!target.maxLines || !isLogsQuery(target.expr)) {
-      //   return target;
-      // }
+      if (!target.maxLines || !isLogsQuery(target?.expr)) {
+        return target;
+      }
       const targetFrame = response.data.find((frame) => frame.refId === target.refId);
       if (!targetFrame) {
         return target;
       }
-      // const updatedMaxLines = target.maxLines - targetFrame.length;
+      const updatedMaxLines = target.maxLines - targetFrame.length;
       return {
         ...target,
-        // maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
+        maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
       };
     })
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
@@ -92,7 +92,7 @@ type AbstractDataSource<T extends DataQuery, O extends DataSourceJsonData> = Dat
   runQuery: (request: DataQueryRequest<T>) => Observable<DataQueryResponse>;
 };
 
-export function runSplitGroupedQueries<T extends DataQuery, O extends DataSourceJsonData>(
+export function runSplitGroupedQueries<T extends DataQueryWithMaxLines, O extends DataSourceJsonData>(
   datasource: AbstractDataSource<T, O>,
   requests: GroupedRequest<T>
 ) {
@@ -189,11 +189,11 @@ function getNextRequestPointers<T extends DataQuery>(
   };
 }
 
-export function runSplitQuery<T extends DataQuery & { splitDuration?: string }, O extends DataSourceJsonData>(
-  datasource: AbstractDataSource<T, O>,
-  request: DataQueryRequest<T>
-) {
-  const queries = request.targets.filter((query) => !query.hide);
+export function runSplitQuery<
+  T extends DataQueryWithMaxLines & { splitDuration?: string },
+  O extends DataSourceJsonData
+>(datasource: AbstractDataSource<T, O>, request: DataQueryRequest<T>) {
+  const queries = request.targets.filter((query: DataQueryWithMaxLines) => !query.hide);
   const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === 'Instant');
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query?.expr));
   request.queryGroupId = uuidv4();
