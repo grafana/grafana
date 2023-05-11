@@ -295,35 +295,37 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
+    const getPanelSaveModel = (p: PanelModel) => {
+      // Clean library panels on save
+      if (p.libraryPanel) {
+        const { id, title, libraryPanel, gridPos } = p;
+        return {
+          id,
+          title,
+          gridPos,
+          libraryPanel: {
+            uid: libraryPanel.uid,
+            name: libraryPanel.name,
+          },
+        };
+      }
+
+      // If we save while editing we should include the panel in edit mode instead of the
+      // unmodified source panel
+      if (this.panelInEdit && this.panelInEdit.id === p.id) {
+        return this.panelInEdit.getSaveModel();
+      }
+
+      return p.getSaveModel();
+    };
+
     // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
       .filter(
         (panel) =>
           this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
       )
-      .map((panel) => {
-        // Clean libarary panels on save
-        if (panel.libraryPanel) {
-          const { id, title, libraryPanel, gridPos } = panel;
-          return {
-            id,
-            title,
-            gridPos,
-            libraryPanel: {
-              uid: libraryPanel.uid,
-              name: libraryPanel.name,
-            },
-          };
-        }
-
-        // If we save while editing we should include the panel in edit mode instead of the
-        // unmodified source panel
-        if (this.panelInEdit && this.panelInEdit.id === panel.id) {
-          return this.panelInEdit.getSaveModel();
-        }
-
-        return panel.getSaveModel();
-      })
+      .map(getPanelSaveModel)
       .map((model: any) => {
         if (this.isSnapshotTruthy()) {
           return model;
@@ -338,7 +340,7 @@ export class DashboardModel implements TimeModel {
             .filter((rowPanel: PanelModel) => !rowPanel.repeatPanelId)
             .map((model: PanelModel) => {
               delete model.scopedVars;
-              return model;
+              return getPanelSaveModel(model);
             });
         }
 
