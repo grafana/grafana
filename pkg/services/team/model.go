@@ -23,6 +23,7 @@ var (
 // Team model
 type Team struct {
 	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
+	UID   string `json:"uid" xorm:"uid"`
 	OrgID int64  `json:"orgId" xorm:"org_id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -82,6 +83,7 @@ type SearchTeamsQuery struct {
 
 type TeamDTO struct {
 	ID            int64                     `json:"id" xorm:"id"`
+	UID           string                    `json:"uid" xorm:"uid"`
 	OrgID         int64                     `json:"orgId" xorm:"org_id"`
 	Name          string                    `json:"name"`
 	Email         string                    `json:"email"`
@@ -145,6 +147,7 @@ type RemoveTeamMemberCommand struct {
 type GetTeamMembersQuery struct {
 	OrgID        int64
 	TeamID       int64
+	TeamUID      string
 	UserID       int64
 	External     bool
 	SignedInUser *user.SignedInUser
@@ -156,6 +159,7 @@ type GetTeamMembersQuery struct {
 type TeamMemberDTO struct {
 	OrgID      int64                     `json:"orgId" xorm:"org_id"`
 	TeamID     int64                     `json:"teamId" xorm:"team_id"`
+	TeamUID    string                    `json:"teamUID" xorm:"uid"`
 	UserID     int64                     `json:"userId" xorm:"user_id"`
 	External   bool                      `json:"-"`
 	AuthModule string                    `json:"auth_module"`
