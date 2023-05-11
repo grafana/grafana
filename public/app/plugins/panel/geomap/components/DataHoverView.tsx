@@ -53,14 +53,14 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
-  for (const f of orderedVisibleFields) {
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && !f.hovered) {
+  for (const field of orderedVisibleFields) {
+    if (mode === TooltipDisplayMode.Single && columnIndex != null && !field.hovered) {
       continue;
     }
-    const v = f.values[rowIndex];
-    const disp = f.display ? f.display(v) : { text: `${v}`, numeric: +v };
-    if (f.getLinks) {
-      f.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).forEach((link) => {
+    const value = field.values[rowIndex];
+    const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+    if (field.getLinks) {
+      field.getLinks({ calculatedValue: fieldDisplay, valueRowIndex: rowIndex }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
         if (!linkLookup.has(key)) {
           links.push(link);
@@ -70,10 +70,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     }
 
     displayValues.push({
-      name: getFieldDisplayName(f, data),
-      value: v,
-      valueString: formattedValueToString(disp),
-      highlight: f.hovered,
+      name: getFieldDisplayName(field, data),
+      value,
+      valueString: formattedValueToString(fieldDisplay),
+      highlight: field.hovered,
     });
   }
 
@@ -113,10 +113,10 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       )}
       <table className={styles.infoWrap}>
         <tbody>
-          {displayValues.map((v, i) => (
-            <tr key={`${i}/${rowIndex}`} className={v.highlight ? styles.highlight : ''}>
-              <th>{v.name}:</th>
-              <td>{renderValue(v.valueString)}</td>
+          {displayValues.map((displayValue, i) => (
+            <tr key={`${i}/${rowIndex}`} className={displayValue.highlight ? styles.highlight : ''}>
+              <th>{displayValue.name}:</th>
+              <td>{renderValue(displayValue.valueString)}</td>
             </tr>
           ))}
           {renderLinks()}
