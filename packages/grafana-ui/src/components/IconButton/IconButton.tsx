@@ -82,28 +82,9 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 IconButton.displayName = 'IconButton';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButtonVariant) => {
-  const padding = (size: string) => {
-    switch (size) {
-      case 'xs':
-        return 4;
-
-      case 'sm':
-        return 4; // TODO: ask Staton
-
-      case 'lg':
-        return 6; // TODO: ask Staton
-
-      case 'xl':
-        return 12;
-
-      case 'md':
-      default:
-        return 6;
-    }
-  };
-
   // overall size of the IconButton on hover
-  const hoverSize = getSvgSize(size) + 2 * padding(size);
+  // the value 8 originates from 2*4px and letting the IconSize generally decide on the hoverSize
+  const hoverSize = getSvgSize(size) + 8;
 
   let iconColor = theme.colors.text.primary;
 
