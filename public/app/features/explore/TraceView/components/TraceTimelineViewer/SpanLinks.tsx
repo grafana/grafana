@@ -24,7 +24,7 @@ const renderMenuItems = (
       onClick={
         link.onClick
           ? (event) => {
-              reportInteraction(`grafana_traces_${link.type}_view_span_link_clicked`, {
+              reportInteraction(`grafana_traces_trace_view_span_link_clicked`, {
                 datasourceType: datasourceType,
                 grafana_version: config.buildInfo.version,
                 type: link.type,

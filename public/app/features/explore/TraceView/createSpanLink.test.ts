@@ -1,4 +1,11 @@
-import { DataSourceInstanceSettings, LinkModel, MutableDataFrame } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  LinkModel,
+  createDataFrame,
+  SupportedTransformationType,
+  DataLinkConfigOrigin,
+  FieldType,
+} from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -12,7 +19,13 @@ import { SpanLinkType } from './components/types/links';
 import { createSpanLinkFactory } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
-const dummyDataFrame = new MutableDataFrame({ fields: [{ name: 'traceId', values: ['trace1'] }] });
+const dummyDataFrame = createDataFrame({ fields: [{ name: 'traceId', values: ['trace1'] }] });
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasAccessToExplore: () => true,
+  },
+}));
 
 describe('createSpanLinkFactory', () => {
   it('returns no links if there is no data source uid', () => {
@@ -162,7 +175,7 @@ describe('createSpanLinkFactory', () => {
       const splitOpenFn = jest.fn();
       const createLink = createSpanLinkFactory({
         splitOpenFn,
-        dataFrame: new MutableDataFrame({
+        dataFrame: createDataFrame({
           fields: [
             { name: 'traceID', values: ['testTraceId'] },
             {
@@ -1220,6 +1233,47 @@ describe('createSpanLinkFactory', () => {
   });
 });
 
+describe('dataFrame links', () => {
+  beforeAll(() => {
+    setDataSourceSrv({
+      getInstanceSettings() {
+        return { uid: 'loki1_uid', name: 'loki1', type: 'loki' } as unknown as DataSourceInstanceSettings;
+      },
+    } as unknown as DataSourceSrv);
+
+    setLinkSrv(new LinkSrv());
+    setTemplateSrv(new TemplateSrv());
+  });
+
+  it('creates multiple span links for the dataframe links', () => {
+    const multiLinkDataFrame = createMultiLinkDataFrame();
+    const splitOpenFn = jest.fn();
+    const createLink = createSpanLinkFactory({
+      splitOpenFn,
+      dataFrame: multiLinkDataFrame,
+      trace: dummyTraceData,
+    });
+
+    const links = createLink!(createTraceSpan());
+    expect(links).toBeDefined();
+    expect(links?.length).toEqual(3);
+    expect(links![0].href).toBe('testSpanId');
+    expect(links![0].type).toBe(SpanLinkType.Unknown);
+    expect(links![1].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"message":"SELECT * FROM superhero WHERE name=host"}]}'
+      )}`
+    );
+    expect(links![1].type).toBe(SpanLinkType.Unknown);
+    expect(links![2].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"go_memstats_heap_inuse_bytes{job=\'host\'}"}]}'
+      )}`
+    );
+    expect(links![2].type).toBe(SpanLinkType.Unknown);
+  });
+});
+
 function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datasourceUid = 'lokiUid') {
   const splitOpenFn = jest.fn();
   return createSpanLinkFactory({
@@ -1276,4 +1330,69 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}) {
     },
     ...overrides,
   } as TraceSpan;
+}
+
+function createMultiLinkDataFrame() {
+  return createDataFrame({
+    fields: [
+      { name: 'traceID', values: ['testTraceId'] },
+      {
+        name: 'spanID',
+        config: { links: [{ title: 'link', url: '${__data.fields.spanID}' }] },
+        values: ['testSpanId'],
+      },
+      {
+        name: 'tags',
+        type: FieldType.other,
+        config: {
+          links: [
+            {
+              internal: {
+                query: {
+                  message: 'SELECT * FROM superhero WHERE name=${job}',
+                },
+                datasourceUid: 'loki1_uid',
+                datasourceName: 'loki1',
+                transformations: [
+                  {
+                    type: SupportedTransformationType.Regex,
+                    expression: '{(?=[^\\}]*\\bkey":"host")[^\\}]*\\bvalue":"(.*?)".*}',
+                    mapValue: 'job',
+                  },
+                ],
+              },
+              url: '',
+              title: 'Test',
+              origin: DataLinkConfigOrigin.Correlations,
+            },
+            {
+              internal: {
+                query: {
+                  expr: "go_memstats_heap_inuse_bytes{job='${job}'}",
+                },
+                datasourceUid: 'loki1_uid',
+                datasourceName: 'loki1',
+                transformations: [
+                  {
+                    type: SupportedTransformationType.Regex,
+                    expression: '{(?=[^\\}]*\\bkey":"host")[^\\}]*\\bvalue":"(.*?)".*}',
+                    mapValue: 'job',
+                  },
+                ],
+              },
+              url: '',
+              title: 'Test2',
+              origin: DataLinkConfigOrigin.Correlations,
+            },
+          ],
+        },
+        values: [
+          {
+            key: 'host',
+            value: 'host',
+          },
+        ],
+      },
+    ],
+  });
 }
