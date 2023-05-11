@@ -17,9 +17,7 @@ Plugin tracing must be enabled manually on a per-plugin basis, by specifying `tr
 tracing = true
 ```
 
-> **Note:** If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
-
-### OpenTelemetry configuration
+## OpenTelemetry configuration in Grafana
 
 Grafana supports [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing), then tracing is disabled in the plugin provided by the SDK and configured when calling `datasource.Manage | app.Manage`.
 
@@ -27,6 +25,8 @@ OpenTelemetry must be enabled and configured for the Grafana instance. Please re
 {{< relref "../../setup-grafana/configure-grafana/#tracingopentelemetry" >}}) for more information.
 
 Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
+
+> **Note:** If tracing is disabled in Grafana, `backend.DefaultTracer()` returns a no-op tracer.
 
 ## Implement tracing in your plugin
 
@@ -61,7 +61,7 @@ When OpenTelemetry tracing is enabled on the main Grafana instance and tracing i
    tracing.DefaultTracer()
    ```
 
-   This returns an OpenTelemetry [`trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) for creating spans.
+   This returns an [OpenTelemetry `trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) for creating spans.
 
    **Example:**
 
@@ -90,7 +90,7 @@ When OpenTelemetry tracing is enabled on the main Grafana instance and tracing i
 
 When tracing is enabled, a new span is created automatically for each gRPC call (`QueryData`, `CheckHealth`, etc.), both on Grafana's side and on the plugin's side. The plugin SDK also injects the trace context into the `context.Context` that is passed to those methods.
 
-You can retrieve the [`trace.SpanContext`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) with `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
+You can retrieve the [`trace.SpanContext` object](https://pkg.go.dev/go.opentelemetry.io/otel/trace#SpanContext) with `tracing.SpanContextFromContext` by passing the original `context.Context` to it:
 
 ```go
 func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (backend.DataResponse, error) {

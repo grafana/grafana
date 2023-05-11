@@ -50,7 +50,7 @@ To extend Explore functionality for your data source, define an Explore-specific
    };
    ```
 
-## Select a preferred visualization option
+## Select a preferred visualization type
 
 By default, Explore should select an appropriate and useful visualization for your data. It can figure out whether the returned data is time series data or logs or something else, and creates the right type of visualization.
 
