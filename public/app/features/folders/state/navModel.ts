@@ -17,7 +17,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         id: `folder-dashboards-${folder.uid}`,
         text: 'Dashboards',
         url: folder.url,
-        hideFromBreadcrumbs: true,
       },
     ],
   };
@@ -34,7 +33,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     id: `folder-library-panels-${folder.uid}`,
     text: 'Panels',
     url: `${folder.url}/library-panels`,
-    hideFromBreadcrumbs: true,
   });
 
   if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
@@ -44,7 +42,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       id: `folder-alerting-${folder.uid}`,
       text: 'Alert rules',
       url: `${folder.url}/alerting`,
-      hideFromBreadcrumbs: true,
     });
   }
 
@@ -55,7 +52,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       id: `folder-permissions-${folder.uid}`,
       text: 'Permissions',
       url: `${folder.url}/permissions`,
-      hideFromBreadcrumbs: true,
     });
   }
 
@@ -66,7 +62,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       id: `folder-settings-${folder.uid}`,
       text: 'Settings',
       url: `${folder.url}/settings`,
-      hideFromBreadcrumbs: true,
     });
   }
 
