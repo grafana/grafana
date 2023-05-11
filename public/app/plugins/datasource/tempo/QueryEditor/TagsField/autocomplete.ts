@@ -82,9 +82,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @private
    */
   private async getCompletions(situation: Situation): Promise<Completion[]> {
-    // if (!Object.keys(this.tags).length) {
-    //   return [];
-    // }
     switch (situation.type) {
       // Not really sure what would make sense to suggest in this case so just leave it
       case 'UNKNOWN': {
