@@ -15,7 +15,7 @@ Along with metrics, Explore allows you to investigate your logs across several d
 - [InfluxDB]({{< relref "../datasources/influxdb/" >}})
 - [Loki]({{< relref "../datasources/loki/" >}})
 
-During monitoring, troubleshooting and incident response, you can dig deeper into the metrics and logs to find the cause of the issue. Explore also allows you to correlate metrics and logs by viewing them side-by-side. 
+During monitoring, troubleshooting, and incident response, you can dig deeper into the metrics and logs to find the cause of the issue. Explore also allows you to correlate metrics and logs by viewing them side-by-side. 
 
 ## Logs visualization
 
