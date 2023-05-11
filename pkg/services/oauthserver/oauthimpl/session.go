@@ -97,7 +97,7 @@ func (s *PluginAuthSession) GetExtraClaims() map[string]interface{} {
 	}
 
 	// We make a clone so that WithScopeField does not change the original value.
-	return s.Clone().(*oauth2.JWTSession).GetJWTClaims().WithScopeField(jwt.JWTScopeFieldString).ToMapClaims()
+	return s.Clone().(*PluginAuthSession).GetJWTClaims().WithScopeField(jwt.JWTScopeFieldString).ToMapClaims()
 }
 
 func (s *PluginAuthSession) SetClientID(clientID string) *jwt.JWTClaims {

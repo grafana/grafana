@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -39,7 +40,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
-	return looksLikeBasicAuthRequest(r)
+	return !strings.HasPrefix(r.HTTPRequest.RequestURI, "/oauth2/introspect") && looksLikeBasicAuthRequest(r)
 }
 
 func (c *Basic) Priority() uint {
