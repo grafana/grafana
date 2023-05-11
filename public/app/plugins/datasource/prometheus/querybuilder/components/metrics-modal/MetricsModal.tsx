@@ -223,10 +223,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
           </EditorField>
         </div>
       </div>
-      {/* <h4 className={styles.resultsHeading}>Results</h4> */}
       <div className={styles.resultsData}>
         <div className={styles.resultsDataCount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} results.{' '}
           <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
           <div className={styles.selectWrapper}>
             <div className={styles.alphabetRow}>
@@ -353,6 +351,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
       <div className={styles.pageSettingsWrapper}>
         <div className={styles.pageSettings}>
+          <div className={styles.resultsAmount}>
+            Showing {state.filteredMetricCount} of {state.totalMetricCount} results
+          </div>
           <InlineField
             label="# results per page"
             tooltip={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}

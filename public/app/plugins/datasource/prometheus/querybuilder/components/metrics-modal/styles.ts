@@ -43,8 +43,10 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       align-self: center;
       color: ${theme.colors.text.secondary};
     `,
-    resultsHeading: css`
-      margin: 0 0 0 0;
+    resultsAmount: css`
+      color: ${theme.colors.text.secondary};
+      font-size: 0.75rem;
+      padding: 0 0 4px 0;
     `,
     resultsData: css`
       margin: 0 0 ${theme.spacing(1)} 0;
