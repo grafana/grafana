@@ -18,6 +18,7 @@ var Versions = VersionMap{
 			ShouldSave: false,
 			Architectures: []Architecture{
 				ArchAMD64,
+				ArchARM64,
 			},
 			Distribution: []Distribution{
 				Alpine,
