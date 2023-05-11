@@ -1,13 +1,11 @@
-import { cloneDeep } from 'lodash';
-
 import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { Label, normalizeMatchers, labelsMatchObjectMatchers } from './matchers';
 
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
-function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
-  let matches: T[] = [];
+function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
+  const matches: Route[] = [];
 
   // If the current node is not a match, return nothing
   // const normalizedMatchers = normalizeMatchers(root);
@@ -18,13 +16,10 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
 
   // If the current node matches, recurse through child nodes
   if (root.routes) {
-    for (let index = 0; index < root.routes.length; index++) {
-      let child = root.routes[index];
-      let matchingChildren = findMatchingRoutes(child, labels);
+    for (const child of root.routes) {
+      const matchingChildren = findMatchingRoutes(child, labels);
 
-      // TODO how do I solve this typescript thingy? It looks correct to me /shrug
-      // @ts-ignore
-      matches = matches.concat(matchingChildren);
+      matches.push(...matchingChildren);
 
       // we have matching children and we don't want to continue, so break here
       if (matchingChildren.length && !child.continue) {
@@ -41,10 +36,10 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
   return matches;
 }
 
-export type NormalizedRoute = Omit<RouteWithID, 'matchers' | 'match' | 'match_re'> & { routes?: NormalizedRoute[] };
+//export type NormalizedRoute = Omit<RouteWithID, 'matchers' | 'match' | 'match_re'> & { routes?: NormalizedRoute[] };
 
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
-export function normalizeRootRoute(rootRoute: RouteWithID): NormalizedRoute {
+export function normalizeRootRoute(rootRoute: RouteWithID): RouteWithID {
   function normalizeRoute(route: RouteWithID) {
     route.object_matchers = normalizeMatchers(route);
     delete route.matchers;
@@ -53,7 +48,7 @@ export function normalizeRootRoute(rootRoute: RouteWithID): NormalizedRoute {
     route.routes?.forEach(normalizeRoute);
   }
 
-  const normalizedRootRoute = cloneDeep(rootRoute);
+  const normalizedRootRoute = structuredClone(rootRoute);
   normalizeRoute(normalizedRootRoute);
 
   return normalizedRootRoute;

@@ -2,13 +2,13 @@ import * as comlink from 'comlink';
 
 import type { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 
-import { findMatchingAlertGroups, NormalizedRoute, normalizeRootRoute } from './utils/notification-policies';
+import { findMatchingAlertGroups, normalizeRootRoute } from './utils/notification-policies';
 
 const routeGroupsMatcher = {
   getRouteGroupsMap(rootRoute: RouteWithID, groups: AlertmanagerGroup[]): Map<string, AlertmanagerGroup[]> {
     const normalizedRootRoute = normalizeRootRoute(rootRoute);
 
-    function addRouteGroups(route: NormalizedRoute, acc: Map<string, AlertmanagerGroup[]>) {
+    function addRouteGroups(route: RouteWithID, acc: Map<string, AlertmanagerGroup[]>) {
       const routeGroups = findMatchingAlertGroups(normalizedRootRoute, route, groups);
       acc.set(route.id, routeGroups);
 

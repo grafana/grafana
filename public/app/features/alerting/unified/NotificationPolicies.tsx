@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import * as comlink from 'comlink';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
@@ -36,9 +35,9 @@ import { Policy } from './components/notification-policies/Policy';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import type { RouteGroupsMatcher } from './routeGroupsMatcherWorker';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
+import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { normalizeMatchers } from './utils/matchers';
@@ -49,9 +48,6 @@ enum ActiveTab {
   NotificationPolicies = 'notification_policies',
   MuteTimings = 'mute_timings',
 }
-
-const worker = new Worker(new URL('./routeGroupsMatcherWorker.ts', import.meta.url), { type: 'module' });
-const engine = comlink.wrap<RouteGroupsMatcher>(worker);
 
 const AmRoutes = () => {
   const dispatch = useDispatch();
@@ -65,6 +61,8 @@ const AmRoutes = () => {
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
+
+  const { getRouteGroupsMap } = useRouteGroupsMatcher();
 
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
@@ -110,16 +108,8 @@ const AmRoutes = () => {
   const isProvisioned = Boolean(config?.route?.provenance);
 
   const { value: routeAlertGroupsMap } = useAsync(async () => {
-    if (rootRoute && alertGroups) {
-      // TODO Log the time it takes to compute the routeGroupMap to Loki
-      console.time('Instances Map Init');
-      const routeGroupMapPromise = engine.getRouteGroupsMap(rootRoute, alertGroups);
-      console.timeEnd('Instances Map Init');
-
-      console.time(`Route Instances Map Algorithm (${rootRoute.id})`);
-      const routeGroupMap = await routeGroupMapPromise;
-      console.timeEnd(`Route Instances Map Algorithm (${rootRoute.id})`);
-      return routeGroupMap;
+    if (rootRoute && alertGroups && alertManagerSourceName) {
+      return getRouteGroupsMap(rootRoute, alertGroups);
     }
     return undefined;
   }, [rootRoute, alertGroups]);
