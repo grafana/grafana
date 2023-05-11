@@ -130,22 +130,12 @@ func modules(args []string) error {
 	*/
 
 	for _, mod := range m {
-		// fmt.Println("mod!!", mod)
-		// compare owners
-		// fmt.Println("owners from flag", *owner)
 		ownerFlags := strings.Split(*owner, ",")
+		// If there are owner flags
 		if len(*owner) > 0 {
+			// Confirm in the modfile's dependency has an owner to compare
 			if len(mod.Owners) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
-				// confirm in modfile that the require/dependency/module has an owner to check
 				fmt.Println(mod.Name)
-
-				// below are debugging lines
-				// fmt.Println("NEW MOD", mod)
-				// fmt.Println("mod.Owners", mod.Owners) // owner from modfile
-				// fmt.Println("owners from flag", *owner)
-				// fmt.Println("fs.Args()", fs.Args())
-				// fmt.Println("mod.Name", mod.Name) // name of dependency from modfile
-
 			}
 			// TODO: uncomment to use indirect flag
 			// if *indirect || !mod.Indirect {
@@ -168,7 +158,6 @@ func hasCommonElement(a []string, b []string) bool {
 }
 
 func main() {
-	// fmt.Println("HELLO IM IN MAIN")
 	if len(os.Args) < 2 {
 		fmt.Println("usage: modowners subcommand go.mod...")
 		os.Exit(1)
