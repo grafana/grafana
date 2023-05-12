@@ -83,26 +83,11 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 {{% admonition type="note" %}}
 
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Only available in Cloud as [public preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud), please contact support to have the feature enabled.
 
 {{% /admonition %}}
 
 Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the public dashboard for **30 days**.
-
-### Enable email sharing
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
-
-{{% /admonition %}}
-
-Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboardsEmailSharing = true
-```
 
 ### Invite a viewer
 
