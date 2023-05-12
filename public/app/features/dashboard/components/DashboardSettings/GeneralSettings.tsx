@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { Page } from 'app/core/components/Page/Page';
@@ -116,9 +117,11 @@ export function GeneralSettingsUnconnected({
             />
           </Field>
 
-          <Field label="Nested Folder">
-            <NestedFolderPicker />
-          </Field>
+          {config.featureToggles.nestedFolderPicker && (
+            <Field label="Nested Folder">
+              <NestedFolderPicker />
+            </Field>
+          )}
 
           <Field
             label="Editable"

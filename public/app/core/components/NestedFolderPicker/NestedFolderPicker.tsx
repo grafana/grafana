@@ -35,7 +35,7 @@ function Row({ index, style, data }: RowProps) {
     <div style={style} className={styles}>
       <input type="radio" value={folder.uid} id={folder.uid} name="folder" />
       <label htmlFor={folder.uid}>
-        <IconButton name={folder.expanded ? 'angle-down' : 'angle-right'} />
+        <IconButton ariaLabel="Open folder" name={folder.expanded ? 'angle-down' : 'angle-right'} />
         <span>{folder.title}</span>
       </label>
     </div>
