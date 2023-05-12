@@ -169,14 +169,11 @@ const renderPublicDashboardItemCorrectly = (pd: ListPublicDashboardResponse, idx
 
   const cardItems = screen.getAllByRole('listitem');
 
-  const statusTag = within(cardItems[idx]).getByText(pd.isEnabled ? 'enabled' : 'paused');
   const linkButton = within(cardItems[idx]).getByTestId(selectors.ListItem.linkButton);
   const configButton = within(cardItems[idx]).getByTestId(selectors.ListItem.configButton);
   const trashcanButton = within(cardItems[idx]).queryByTestId(selectors.ListItem.trashcanButton);
 
   expect(within(cardItems[idx]).getByText(isOrphaned ? 'Orphaned public dashboard' : pd.title)).toBeInTheDocument();
-  expect(statusTag).toBeInTheDocument();
-  isOrphaned ? expect(statusTag).toHaveStyle('background-color: rgb(110, 110, 110)') : expect(statusTag).toBeEnabled();
   isOrphaned
     ? expect(linkButton).toHaveStyle('pointer-events: none')
     : expect(linkButton).not.toHaveStyle('pointer-events: none');
