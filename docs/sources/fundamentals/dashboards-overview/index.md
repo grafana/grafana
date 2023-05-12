@@ -1,6 +1,6 @@
 ---
 aliases:
-description: Grafana Dashboards Overview
+description: Learn how Grafana dashboards are built.
 keywords:
   - grafana
   - dashboards
