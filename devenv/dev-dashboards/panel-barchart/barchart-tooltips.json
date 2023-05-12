@@ -469,7 +469,8 @@
     "tags": [
         "gdev",
         "panel-tests",
-        "barchart"
+        "barchart",
+        "graph-ng"
       ],
     "templating": {
       "list": []
