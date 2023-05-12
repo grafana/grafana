@@ -299,6 +299,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             state={state}
             selectedIdx={state.selectedIdx}
             disableTextWrap={state.disableTextWrap}
+            onFocusRow={(idx: number) => dispatch(setSelectedIdx(idx))}
           />
         )}
       </div>

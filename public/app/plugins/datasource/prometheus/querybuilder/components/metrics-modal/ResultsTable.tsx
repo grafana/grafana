@@ -19,10 +19,11 @@ type ResultsTableProps = {
   state: MetricsModalState;
   selectedIdx: number;
   disableTextWrap: boolean;
+  onFocusRow: (idx: number) => void;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, selectedIdx, disableTextWrap } = props;
+  const { metrics, onChange, onClose, query, state, selectedIdx, disableTextWrap, onFocusRow } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
@@ -107,6 +108,13 @@ export function ResultsTable(props: ResultsTableProps) {
                   key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
                   onClick={() => selectMetric(metric)}
+                  tabIndex={0}
+                  onFocus={() => onFocusRow(idx)}
+                  onKeyDown={(e) => {
+                    if (e.code === 'Enter' && e.currentTarget.classList.contains('selected-row')) {
+                      selectMetric(metric);
+                    }
+                  }}
                 >
                   <td>
                     <Highlighter
