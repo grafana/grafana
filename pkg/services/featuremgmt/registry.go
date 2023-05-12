@@ -538,8 +538,8 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        enterpriseDatasourcesSquad,
-    },
-    {
+		},
+		{
 			Name:         "extraThemes",
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
