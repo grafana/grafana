@@ -4,6 +4,7 @@ import React, { createElement, CSSProperties, useCallback } from 'react';
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export interface TextProps {
   /** Defines what HTML element is defined underneath */
@@ -30,7 +31,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       )
     );
 
-    return createElement(
+    const textElement = createElement(
       as,
       {
         className: styles,
@@ -38,6 +39,8 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       },
       children
     );
+
+    return truncate ? <Tooltip content={children}>{textElement}</Tooltip> : textElement;
   }
 );
 
