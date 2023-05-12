@@ -11,7 +11,7 @@ lokiLive,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
-exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
+exploreMixedDatasource,stable,@grafana/explore-squad,false,false,false,true
 newTraceViewHeader,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
 cloudWatchDynamicLabels,stable,@grafana/aws-plugins,false,false,false,false

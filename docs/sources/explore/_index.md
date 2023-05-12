@@ -75,6 +75,6 @@ The Share shortened link capability allows you to create smaller and simpler URL
 
 ### exploreMixedDatasource
 
-Disabled by default, allows users in Explore to have different data sources for different queries. If compatible, results will be combined.
+Enabled by default, allows users in Explore to have different data sources for different queries. If compatible, results will be combined.
 
 Learn more about how to use [Mixed data source]({{< relref "../datasources/#special-data-sources" >}}).
