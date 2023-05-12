@@ -597,7 +597,7 @@ function errorAndDurationQuery(
   let serviceGraphViewMetrics = [];
   let errorRateBySpanName = '';
   let durationsBySpanName: string[] = [];
-  const spanNames = rateResponse.data[0][0]?.fields[1]?.values ?? [];
+  const spanNames = getEscapedSpanNames(rateResponse.data[0][0]?.fields[1]?.values ?? []);
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
@@ -661,6 +661,10 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
       datasourceName: getDatasourceSrv().getDataSourceSettingsByUid(datasourceUid)?.name ?? '',
     },
   };
+}
+
+export function getEscapedSpanNames(values: string[]) {
+  return values.map((value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(

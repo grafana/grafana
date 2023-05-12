@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
@@ -261,31 +261,28 @@ const ResourcePicker = ({
           renderAdvanced={renderAdvanced}
         />
 
-        <Space v={2} />
+        {errorMessage && (
+          <>
+            <Space v={2} />
+            <Alert severity="error" title="An error occurred while requesting resources from Azure Monitor">
+              {errorMessage}
+            </Alert>
+          </>
+        )}
 
-        <Button
-          disabled={!!errorMessage || !internalSelected.every(isValid)}
-          onClick={handleApply}
-          data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
-        >
-          Apply
-        </Button>
-
-        <Space layout="inline" h={1} />
-
-        <Button onClick={onCancel} variant="secondary">
-          Cancel
-        </Button>
+        <Modal.ButtonRow>
+          <Button onClick={onCancel} variant="secondary" fill="outline">
+            Cancel
+          </Button>
+          <Button
+            disabled={!!errorMessage || !internalSelected.every(isValid)}
+            onClick={handleApply}
+            data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
+          >
+            Apply
+          </Button>
+        </Modal.ButtonRow>
       </div>
-
-      {errorMessage && (
-        <>
-          <Space v={2} />
-          <Alert severity="error" title="An error occurred while requesting resources from Azure Monitor">
-            {errorMessage}
-          </Alert>
-        </>
-      )}
     </div>
   );
 };
