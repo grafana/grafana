@@ -5,12 +5,12 @@ import React from 'react';
 import 'whatwg-fetch';
 import { BrowserRouter } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { getGrafanaContextMock } from '../../../../../test/mocks/getGrafanaContextMock';
 import { ListPublicDashboardResponse } from '../../types';
 
 import { PublicDashboardListTable } from './PublicDashboardListTable';
