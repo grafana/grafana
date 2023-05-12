@@ -127,6 +127,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
+    console.log(request, 'request');
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       /*
         If a preconfigured database exists - or is added/updated, and there are ANY number of db queries
@@ -134,9 +135,9 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       */
       const defaultDatabaseHasIssue = () => {
         if (!!this.preconfiguredDatabase) {
-          const getDatabaseTargets = request.targets.map((t) => t.dataset);
-          for (const targetDatabase of getDatabaseTargets) {
-            if (targetDatabase !== this.preconfiguredDatabase) {
+          for (const target of request.targets) {
+            // Test for database configuration change only if query was made in `builder` mode.
+            if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
               return 'Your default database configuration has been modified. Please update your panel query accordingly.';
             }
           }
