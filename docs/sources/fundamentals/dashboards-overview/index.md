@@ -1,5 +1,4 @@
 ---
-aliases:
 description: Learn how Grafana dashboards are built.
 keywords:
   - grafana
