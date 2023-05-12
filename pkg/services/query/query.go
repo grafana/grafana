@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -244,13 +245,44 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user *use
 	return s.pluginClient.QueryData(ctx, req)
 }
 
+func makeBackendTimeRange(fromString string, toString string, timeFormat string) (backend.TimeRange, error) {
+	if timeFormat == "ns" {
+		fromNum, err := strconv.ParseInt(fromString, 10, 64)
+		if err != nil {
+			return backend.TimeRange{}, err
+		}
+
+		toNum, err := strconv.ParseInt(toString, 10, 64)
+		if err != nil {
+			return backend.TimeRange{}, err
+		}
+
+		return backend.TimeRange{
+			From: time.Unix(0, fromNum),
+			To:   time.Unix(0, toNum),
+		}, nil
+	} else {
+		r := legacydata.NewDataTimeRange(fromString, toString)
+		from := r.GetFromAsTimeUTC()
+		to := r.GetToAsTimeUTC()
+		return backend.TimeRange{
+			From: from,
+			To:   to,
+		}, nil
+	}
+}
+
 // parseRequest parses a request into parsed queries grouped by datasource uid
 func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
 		return nil, ErrNoQueriesFound
 	}
 
-	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
+	timeRange, err := makeBackendTimeRange(reqDTO.From, reqDTO.To, reqDTO.TimeFormat)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &parsedRequest{
 		hasExpression: false,
 		parsedQueries: make(map[string][]parsedQuery),
@@ -289,10 +321,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedI
 		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
-				TimeRange: backend.TimeRange{
-					From: timeRange.GetFromAsTimeUTC(),
-					To:   timeRange.GetToAsTimeUTC(),
-				},
+				TimeRange:     timeRange,
 				RefID:         query.Get("refId").MustString("A"),
 				MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 				Interval:      time.Duration(query.Get("intervalMs").MustInt64(1000)) * time.Millisecond,

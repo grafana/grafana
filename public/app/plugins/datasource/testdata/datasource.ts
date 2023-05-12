@@ -16,6 +16,7 @@ import {
   toDataFrame,
   MutableDataFrame,
   AnnotationQuery,
+  createTimeRangeWithNano,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
@@ -129,6 +130,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     if (backendQueries.length) {
       const backendOpts = {
         ...options,
+        range: createTimeRangeWithNano(options.range.from, options.range.to, 123654, 123654),
         targets: backendQueries,
       };
       streams.push(super.query(backendOpts));

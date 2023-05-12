@@ -8,6 +8,7 @@ import {
   dateTimeParse,
   GrafanaTheme2,
   isDateTime,
+  isISONanoString,
   rangeUtil,
   RawTimeRange,
   TimeRange,
@@ -215,6 +216,10 @@ function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean
 
   if (dateMath.isMathString(value)) {
     return dateMath.isValid(value);
+  }
+
+  if (isISONanoString(value)) {
+    return true;
   }
 
   const parsed = dateTimeParse(value, { roundUp, timeZone });

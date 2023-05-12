@@ -189,6 +189,13 @@ class DataSourceWithBackend<
     if (range) {
       body.from = range.from.valueOf().toString();
       body.to = range.to.valueOf().toString();
+      const fromNano = range.fromNano ?? 0;
+      const toNano = range.toNano ?? 0;
+      if (fromNano !== 0 || toNano !== 0) {
+        body.from += fromNano.toString().padStart(6, '0');
+        body.to += toNano.toString().padStart(6, '0');
+        body.timeFormat = 'ns';
+      }
     }
 
     if (config.featureToggles.queryOverLive) {

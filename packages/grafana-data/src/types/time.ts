@@ -14,7 +14,9 @@ export interface RawTimeRange {
 
 export interface TimeRange {
   from: DateTime;
+  fromNano?: number;
   to: DateTime;
+  toNano?: number;
   raw: RawTimeRange;
 }
 

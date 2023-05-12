@@ -5,7 +5,8 @@ import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, T
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { isDateTime, DateTime, dateTime } from './moment_wrapper';
-import { dateTimeParse } from './parser';
+import { fromISONanoString, isISONanoString } from './nano';
+import { DateTimeOptionsWhenParsing, dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
@@ -198,17 +199,33 @@ export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZ
   return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
 };
 
+function rawTimeToDateTime(raw: string | DateTime, options: DateTimeOptionsWhenParsing): [DateTime, number] {
+  if (typeof raw === 'string' && isISONanoString(raw)) {
+    return fromISONanoString(raw) ?? [dateTimeParse(raw, options), 0];
+  } else {
+    return [dateTimeParse(raw, options), 0];
+  }
+}
+
+function addNanoIfNeeded(range: TimeRange, fromNano: number, toNano: number): TimeRange {
+  if (fromNano === 0 && toNano === 0) {
+    return range;
+  }
+  return { ...range, fromNano, toNano };
+}
+
 export const convertRawToRange = (
   raw: RawTimeRange,
   timeZone?: TimeZone,
   fiscalYearStartMonth?: number,
   format?: string
 ): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
+  const options = { roundUp: false, timeZone, fiscalYearStartMonth, format };
+  const [from, fromNano] = rawTimeToDateTime(raw.from, options);
+  const [to, toNano] = rawTimeToDateTime(raw.to, options);
 
-  if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
-    return { from, to, raw };
+  if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to) || fromNano !== 0 || toNano !== 0) {
+    return addNanoIfNeeded({ from, to, raw }, fromNano, toNano);
   }
 
   return { from, to, raw: { from, to } };

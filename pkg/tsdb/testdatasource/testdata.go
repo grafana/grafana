@@ -2,6 +2,7 @@ package testdatasource
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -57,6 +58,9 @@ type Service struct {
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	r := req.Queries[0].TimeRange
+	fmt.Println("---------- from:", r.From)
+	fmt.Println("----------   to:", r.To)
 	return s.queryMux.QueryData(ctx, req)
 }
 
