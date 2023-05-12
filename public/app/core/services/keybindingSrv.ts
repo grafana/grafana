@@ -38,9 +38,10 @@ export class KeybindingSrv {
     if (!route.chromeless) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
+      this.bind('g d', this.goToDashboards);
+      this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      this.bind('g e', this.goToExplore);
       this.bind('t a', this.makeAbsoluteTime);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
@@ -86,6 +87,10 @@ export class KeybindingSrv {
 
   private openAlerting() {
     this.locationService.push('/alerting');
+  }
+
+  private goToDashboards() {
+    this.locationService.push('/dashboards');
   }
 
   private goToHome() {
