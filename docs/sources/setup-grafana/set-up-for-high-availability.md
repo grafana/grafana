@@ -19,7 +19,9 @@ Grafana uses an embedded sqlite3 database to store users, dashboards, and other 
   <img src="/static/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
 </div>
 
-## Pre-requisite Setup 
+## Before you begin 
+
+Before you complete the following tasks, configure a MySQL or Postgres database to be highly available. Configuring the MySQL or Postgres database for high availability is out of the scope of this guide, but you can find instructions online for each database.
 
 In order to proceed with setting up Grafana for high availability you will need to first configure a MySQL or Postgres database. It is recommended that this database be configured to be highly available. Configuring the database itself for high availability is out of scope for this guide, but instructions can be found online for each database.
 
