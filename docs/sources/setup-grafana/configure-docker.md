@@ -252,7 +252,7 @@ grafana/grafana-enterprise
 
 You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
 
-The following is the list of the supported environment variables:
+The following list includes the supported environment variables:
 
 - `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
 - `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
