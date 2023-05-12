@@ -77,7 +77,12 @@ export const cloudNotifierTypes: NotifierDTO[] = [
     info: '',
     heading: 'Email settings',
     options: [
-      option('to', 'To', 'The email address to send notifications to.', { required: true }),
+      option(
+        'to',
+        'To',
+        'The email address to send notifications to. You can enter multiple addresses using a "," separator',
+        { required: true }
+      ),
       option('from', 'From', 'The sender address.'),
       option('smarthost', 'SMTP host', 'The SMTP host through which emails are sent.'),
       option('hello', 'Hello', 'The hostname to identify to the SMTP server.'),

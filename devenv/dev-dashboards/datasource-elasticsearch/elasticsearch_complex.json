@@ -12,6 +12,23 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "gdev-elasticsearch"
+        },
+        "enable": true,
+        "iconColor": "red",
+        "name": "errors",
+        "tagsField": "metric",
+        "target": {
+          "lines": 10,
+          "query": "level:error",
+          "refId": "Anno",
+          "scenarioId": "annotations"
+        },
+        "textField": "line"
       }
     ]
   },

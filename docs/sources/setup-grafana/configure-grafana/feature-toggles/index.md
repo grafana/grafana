@@ -23,6 +23,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
+| `exploreMixedDatasource`            | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`            | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `internationalization`              | Enables internationalization                                                                                                                                                                        | Yes                |
 | `topnav`                            | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
@@ -45,8 +46,9 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `trimDefaults`                       | Use cue schema to remove values that will be applied automatically                                                                                                                           |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
+| `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
+| `publicDashboardsEmailSharing`       | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                     |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
-| `exploreMixedDatasource`             | Enable mixed datasource in Explore                                                                                                                                                           |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
 | `newDBLibrary`                       | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `validateDashboardsOnSave`           | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
@@ -70,8 +72,6 @@ Alpha features might be changed or removed without prior notice.
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                               |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                          |
-| `publicDashboards`                 | Enables public access to dashboards                                                                            |
-| `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                       |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                         |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                |
 | `newTraceViewHeader`               | Shows the new trace view header                                                                                |
@@ -111,6 +111,7 @@ Alpha features might be changed or removed without prior notice.
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                        |
 | `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                         |
+| `extraThemes`                      | Enables extra themes                                                                                           |
 
 ## Development feature toggles
 

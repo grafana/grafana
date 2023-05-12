@@ -1,4 +1,4 @@
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
@@ -10,7 +10,7 @@ import { Menu } from '../Menu/Menu';
 import { Dropdown } from './Dropdown';
 import mdx from './Dropdown.mdx';
 
-const meta: ComponentMeta<typeof Dropdown> = {
+const meta: Meta<typeof Dropdown> = {
   title: 'Overlays/Dropdown',
   component: Dropdown,
   decorators: [withCenteredStory],
