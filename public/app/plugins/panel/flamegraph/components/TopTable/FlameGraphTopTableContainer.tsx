@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Table, useStyles2 } from '@grafana/ui';
+import { Table, TableSortByFieldState, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL, TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -50,7 +50,7 @@ const FlameGraphTopTableContainer = ({
     }
   };
 
-  const initialSortBy = [{ displayName: 'Self', desc: true }];
+  const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
   return (
     <div className={styles.topTableContainer} data-testid="topTable">
@@ -61,7 +61,17 @@ const FlameGraphTopTableContainer = ({
           }
 
           const frame = buildTableDataFrame(data, width, onSymbolClick);
-          return <Table initialSortBy={initialSortBy} data={frame} width={width} height={height} />;
+          return (
+            <Table
+              initialSortBy={sort}
+              onSortByChange={(s) => {
+                setSort(s);
+              }}
+              data={frame}
+              width={width}
+              height={height}
+            />
+          );
         }}
       </AutoSizer>
     </div>
