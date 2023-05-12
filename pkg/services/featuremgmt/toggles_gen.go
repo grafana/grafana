@@ -326,4 +326,8 @@ const (
 	// FlagNestedFolderPicker
 	// Folder picker for nested folders
 	FlagNestedFolderPicker = "nestedFolderPicker"
+
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
 )

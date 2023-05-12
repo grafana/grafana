@@ -1,11 +1,11 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { FormField } from './FormField';
 
-const meta: ComponentMeta<typeof FormField> = {
+const meta: Meta<typeof FormField> = {
   title: 'Forms/Legacy/FormField',
   component: FormField,
   decorators: [withCenteredStory],
@@ -26,11 +26,11 @@ const meta: ComponentMeta<typeof FormField> = {
   },
 };
 
-export const Basic: ComponentStory<typeof FormField> = (args) => {
+export const Basic: StoryFn<typeof FormField> = (args) => {
   return <FormField {...args} />;
 };
 
-export const WithTooltip: ComponentStory<typeof FormField> = ({ tooltip, ...args }) => {
+export const WithTooltip: StoryFn<typeof FormField> = ({ tooltip, ...args }) => {
   return <FormField {...args} tooltip={tooltip} />;
 };
 
