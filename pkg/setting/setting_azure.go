@@ -36,6 +36,7 @@ func (cfg *Cfg) readAzureSettings() {
 		}
 		if val := azureSection.Key("user_identity_client_id").String(); val != "" {
 			tokenEndpointSettings.ClientId = val
+			tokenEndpointSettings.ClientSecret = ""
 		}
 		if val := azureSection.Key("user_identity_client_secret").String(); val != "" {
 			tokenEndpointSettings.ClientSecret = val
