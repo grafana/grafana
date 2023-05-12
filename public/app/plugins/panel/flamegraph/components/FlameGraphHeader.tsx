@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, CoreApp } from '@grafana/data';
 import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
@@ -56,14 +57,16 @@ const FlameGraphHeader = ({
     setSearch('');
   };
 
+  const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
+
   return (
     <div className={styles.header}>
       <div className={styles.leftContainer}>
         <div className={styles.inputContainer}>
           <Input
-            value={search || ''}
+            value={localSearch || ''}
             onChange={(v) => {
-              setSearch(v.currentTarget.value);
+              setLocalSearch(v.currentTarget.value);
             }}
             placeholder={'Search..'}
             width={44}
@@ -86,6 +89,32 @@ const FlameGraphHeader = ({
     </div>
   );
 };
+
+function useSearchInput(
+  search: string,
+  setSearch: (search: string) => void
+): [string | undefined, (search: string) => void] {
+  const [localSearchState, setLocalSearchState] = useState(search);
+  // Debouncing cause changing parent search triggers rerender on both the flamegraph and table
+  const [isReady] = useDebounce(
+    () => {
+      setSearch(localSearchState);
+    },
+    250,
+    [localSearchState]
+  );
+
+  // Make sure we still handle updates from parent (from clicking on a table item). To make this bidirectional flow
+  // work we have to be checking the state of the debounce cause while debouncing the local state and the parent state
+  // will differ by design. Only if we are not debouncing and the parent state changes we have to update.
+  useEffect(() => {
+    if (isReady() && search !== localSearchState) {
+      setLocalSearchState(search);
+    }
+  }, [search, localSearchState, isReady]);
+
+  return [localSearchState, setLocalSearchState];
+}
 
 const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   header: css`
