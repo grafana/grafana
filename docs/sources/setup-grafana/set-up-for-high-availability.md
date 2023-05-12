@@ -25,7 +25,7 @@ Before you complete the following tasks, configure a MySQL or Postgres database 
 
 ## Configure multiple Grafana servers to use the same database
 
-Once you have either a Postgres or MySQL database available, you can now configure your multiple Grafana instances to use a shared backend database. Grafana has default and custom configuration files and you can update the database settings by updating your custom configuration file as described in the [[database]]({{< relref "configure-grafana/#database" >}}) section of the Grafana configuration. Once configured to use a shared database, your multiple Grafana instances will now persist all long term data in that database. 
+Once you have a Postgres or MySQL database available, you can configure your multiple Grafana instances to use a shared backend database. Grafana has default and custom configuration files, and you can update the database settings by updating your custom configuration file as described in the [[database]]({{< relref "configure-grafana/#database" >}}). Once configured to use a shared database, your multiple Grafana instances will persist all long-term data in that database.
 
 ## Alerting high availability
 
