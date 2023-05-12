@@ -63,6 +63,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 displayName={provider.displayName}
                 authType={provider.type}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
               />
             ))}
@@ -88,6 +89,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 displayName={provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
               />
             ))}

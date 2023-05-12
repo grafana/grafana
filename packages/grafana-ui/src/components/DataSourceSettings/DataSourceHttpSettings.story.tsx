@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
@@ -37,7 +37,7 @@ const settingsMock: DataSourceSettings<any, any> = {
   readOnly: true,
 };
 
-const meta: ComponentMeta<typeof DataSourceHttpSettings> = {
+const meta: Meta<typeof DataSourceHttpSettings> = {
   title: 'Data Source/DataSourceHttpSettings',
   component: DataSourceHttpSettings,
   parameters: {
@@ -54,7 +54,7 @@ const meta: ComponentMeta<typeof DataSourceHttpSettings> = {
   },
 };
 
-export const Basic: ComponentStory<typeof DataSourceHttpSettings> = (args) => {
+export const Basic: StoryFn<typeof DataSourceHttpSettings> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <DataSourceHttpSettings

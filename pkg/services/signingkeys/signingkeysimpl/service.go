@@ -113,3 +113,10 @@ func (s *Service) GetServerPrivateKey() crypto.PrivateKey {
 	pk, _ := s.GetPrivateKey(serverPrivateKeyID)
 	return pk
 }
+
+// GetServerPrivateKey returns the private key used to sign tokens
+func (s *Service) GetServerPublicKey() crypto.PublicKey {
+	// The server public key is always available
+	publicKey, _ := s.GetPublicKey(serverPrivateKeyID)
+	return publicKey
+}

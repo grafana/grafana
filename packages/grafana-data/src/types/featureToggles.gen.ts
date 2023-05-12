@@ -97,4 +97,5 @@ export interface FeatureToggles {
   opensearchDetectVersion?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
+  extraThemes?: boolean;
 }

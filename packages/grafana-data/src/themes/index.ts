@@ -1,4 +1,5 @@
 export { createTheme } from './createTheme';
+export { getThemeById, getBuiltInThemes, type ThemeRegistryItem } from './registry';
 export type { NewThemeOptions } from './createTheme';
 export type { ThemeRichColor, GrafanaTheme2 } from './types';
 export type { ThemeColors } from './createColors';
