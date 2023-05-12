@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
-  InlineField,
   Input,
   Modal,
   MultiSelect,

@@ -87,12 +87,12 @@ export function ResultsTable(props: ResultsTableProps) {
 
   return (
     <table className={styles.table} ref={tableRef}>
-      <thead>
-        <tr className={styles.header}>
-          <th>Name</th>
+      <thead className={styles.stickyHeader}>
+        <tr>
+          <th className={styles.nameWidth}>Name</th>
           {state.hasMetadata && (
             <>
-              <th>Type</th>
+              <th className={styles.typeWidth}>Type</th>
               <th>Description</th>
             </>
           )}
@@ -131,6 +131,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
 
   return {
     table: css`
+      table-layout: fixed;
       border-radius: ${theme.shape.borderRadius()};
       width: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
@@ -141,10 +142,8 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       td,
       th {
         min-width: ${theme.spacing(3)};
+        border-bottom: 1px solid ${theme.colors.border.weak};
       }
-    `,
-    header: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     row: css`
       label: row;
@@ -164,6 +163,17 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       background: inherit;
       color: ${theme.components.textHighlight.text};
       background-color: ${theme.components.textHighlight.background};
+    `,
+    nameWidth: css`
+      width: 40%;
+    `,
+    typeWidth: css`
+      width: 15%;
+    `,
+    stickyHeader: css`
+      position: sticky;
+      top: 0;
+      background-color: ${theme.colors.background.primary};
     `,
   };
 };
