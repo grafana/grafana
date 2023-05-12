@@ -3,14 +3,17 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
-import React, { ReactNode, useState, useEffect } from 'react';
+import React, { ReactNode, useEffect } from 'react';
+import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
+import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { IconButton } from '../IconButton/IconButton';
+//import { IconButton } from '../IconButton/IconButton';
+import { Text } from '../Text/Text';
 
 export interface Props {
   children: ReactNode;
@@ -26,7 +29,9 @@ export interface Props {
    * @deprecated use the size property instead
    **/
   width?: number | string;
-  /** Should the Drawer be expandable to full width */
+  /**
+   * @deprecated use a large size instead if high width is needed
+   **/
   expandable?: boolean;
   /**
    * Specifies the width and min-width.
@@ -52,39 +57,35 @@ export function Drawer({
   subtitle,
   width,
   size = 'md',
-  expandable = false,
   tabs,
 }: Props) {
   const styles = useStyles2(getStyles);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
       isDismissable: false,
-      isOpen,
+      isOpen: true,
       onClose,
     },
     overlayRef
   );
 
-  // RcDrawer v4.x needs to be mounted in advance for animations to play.
-  useEffect(() => {
-    setIsOpen(true);
-  }, []);
+  // Adds body class while open so the toolbar nav can hide some actions while drawer is open
+  useBodyClassWhileOpen();
+  useClickAway(overlayRef, onClose);
 
-  // deprecated width prop now defaults to empty string which make the size prop take over
-  const fixedWidth = isExpanded ? '100%' : width ?? '';
-  const rootClass = cx(styles.drawer, !fixedWidth && styles.sizes[size]);
+  // Apply size styles (unless deprecated width prop is used)
+  const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
   const content = <div className={styles.content}>{children}</div>;
 
   return (
     <RcDrawer
-      open={isOpen}
+      open={true}
       onClose={onClose}
       placement="right"
-      width={fixedWidth}
+      // Important to set this to empty string so that the width can be controlled by the css
+      width={width ?? ''}
       getContainer={'.main-view'}
       className={styles.drawerContent}
       rootClassName={rootClass}
@@ -112,35 +113,21 @@ export function Drawer({
           ref={overlayRef}
         >
           {typeof title === 'string' && (
-            <div className={styles.header}>
+            <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
-                {expandable && !isExpanded && (
-                  <IconButton
-                    name="angle-left"
-                    size="xl"
-                    onClick={() => setIsExpanded(true)}
-                    aria-label={selectors.components.Drawer.General.expand}
-                  />
-                )}
-                {expandable && isExpanded && (
-                  <IconButton
-                    name="angle-right"
-                    size="xl"
-                    onClick={() => setIsExpanded(false)}
-                    aria-label={selectors.components.Drawer.General.contract}
-                  />
-                )}
-                <IconButton
-                  name="times"
-                  size="xl"
+                <Button
+                  icon="times"
+                  variant="secondary"
+                  fill="text"
                   onClick={onClose}
                   aria-label={selectors.components.Drawer.General.close}
                 />
               </div>
               <div className={styles.titleWrapper}>
-                <h3 {...titleProps}>{title}</h3>
-                {typeof subtitle === 'string' && <div className="muted">{subtitle}</div>}
-                {typeof subtitle !== 'string' && subtitle}
+                <Text as="h3" {...titleProps}>
+                  {title}
+                </Text>
+                {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
                 {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>
             </div>
@@ -155,6 +142,20 @@ export function Drawer({
   );
 }
 
+function useBodyClassWhileOpen() {
+  useEffect(() => {
+    if (!document.body) {
+      return;
+    }
+
+    document.body.classList.add('body-drawer-open');
+
+    return () => {
+      document.body.classList.remove('body-drawer-open');
+    };
+  }, []);
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
@@ -164,6 +165,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1 1 0;
     `,
     drawer: css`
+      .main-view & {
+        top: 81px;
+      }
+
+      .main-view--search-bar-hidden & {
+        top: 41px;
+      }
+
       .rc-drawer-content-wrapper {
         box-shadow: ${theme.shadows.z3};
 
@@ -185,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         '.rc-drawer-content-wrapper': {
           label: 'drawer-md',
           width: '50vw',
-          minWidth: theme.spacing(66),
+          minWidth: theme.spacing(60),
         },
       }),
       lg: css({
@@ -233,21 +242,26 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    header: css`
-      background-color: ${theme.colors.background.canvas};
-      flex-grow: 0;
-      padding-top: ${theme.spacing(0.5)};
-    `,
-    actions: css`
-      display: flex;
-      align-items: baseline;
-      justify-content: flex-end;
-    `,
+    header: css({
+      flexGrow: 0,
+      padding: theme.spacing(3, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    headerWithTabs: css({
+      borderBottom: 'none',
+    }),
+    actions: css({
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(2),
+    }),
     titleWrapper: css`
-      margin-bottom: ${theme.spacing(3)};
-      padding: ${theme.spacing(0, 1, 0, 3)};
       overflow-wrap: break-word;
     `,
+    subtitle: css({
+      color: theme.colors.text.secondary,
+      paddingTop: theme.spacing(1),
+    }),
     content: css({
       padding: theme.spacing(2),
       height: '100%',
@@ -259,7 +273,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     tabsWrapper: css({
       paddingLeft: theme.spacing(2),
-      margin: theme.spacing(3, -1, -3, -3),
+      margin: theme.spacing(2, -1, -3, -3),
     }),
   };
 };
