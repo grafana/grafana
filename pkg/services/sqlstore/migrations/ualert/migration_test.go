@@ -612,18 +612,20 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 	})
 
-	t.Run("when normalized groups intersect make them unique", func(t *testing.T) {
+	t.Run("when normalized groups intersect in one folder make them unique", func(t *testing.T) {
 		defer teardown(t, x)
 		alerts := []*models.Alert{
 			createAlert(t, int64(1), int64(1), int64(1), `alert1 test`, []string{}),
 			createAlert(t, int64(1), int64(1), int64(2), `alert1 test`, []string{}),
+			createAlert(t, int64(1), int64(6), int64(1), `alert1 test`, []string{}),
 		}
 		setupLegacyAlertsTables(t, x, nil, alerts)
 		runDashAlertMigrationTestRun(t, x)
 
 		rules := getAlertRules(t, x, int64(1))
-		require.Len(t, rules, 2)
+		require.Len(t, rules, 3)
 		require.NotEqual(t, rules[0].RuleGroup, rules[1].RuleGroup)
+		require.Equal(t, rules[0].RuleGroup, rules[2].RuleGroup)
 	})
 }
 
@@ -803,6 +805,14 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 		*createDashboard(t, 3, 2, "dash3-2"),
 		*createDashboard(t, 4, 2, "dash4-2"),
 	}
+
+	folder := createDashboard(t, 5, 1, "folder1-1")
+	folder.IsFolder = true
+	dashboard3_1 := createDashboard(t, 6, 1, "dash3-1")
+	dashboard3_1.FolderID = 5
+
+	dashboards = append(dashboards, *folder, *dashboard3_1)
+
 	_, errDashboards := x.Insert(dashboards)
 	require.NoError(t, errDashboards)
 

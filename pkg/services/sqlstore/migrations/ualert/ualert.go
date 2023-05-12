@@ -431,12 +431,17 @@ func (m *migration) ensureUniqueGroup(rulesPerOrg map[int64]map[*alertRule][]uid
 	// rule group can be normalized and therefore there is a chance that it can be not unique. Also,  rules in a group must have the same evaluation interval.
 	// Therefore, to enforce the rule that each alert rule is migrated to its own group, make sure that all groups are unique
 	for _, rules := range rulesPerOrg {
-		groupNames := make(map[string]struct{}, len(rules))
+		folderByGroupName := make(map[string]map[string]struct{}, len(rules))
 		for rule := range rules {
-			if _, ok := groupNames[rule.RuleGroup]; ok {
+			folderGroups, ok := folderByGroupName[rule.NamespaceUID]
+			if !ok {
+				folderGroups = make(map[string]struct{})
+				folderByGroupName[rule.NamespaceUID] = folderGroups
+			}
+			if _, ok = folderGroups[rule.RuleGroup]; ok {
 				rule.RuleGroup = addSuffixToName(rule.RuleGroup, rule.UID)
 			}
-			groupNames[rule.RuleGroup] = struct{}{}
+			folderGroups[rule.RuleGroup] = struct{}{}
 		}
 	}
 }
