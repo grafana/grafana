@@ -5,11 +5,12 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { InlineField, Switch, Input, Modal, MultiSelect, Spinner, useTheme2, Pagination, Button } from '@grafana/ui';
+import { InlineField, Input, Modal, MultiSelect, Spinner, useTheme2, Pagination, Button, Toggletip } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
+import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { LetterSearch } from './LetterSearch';
 import { ResultsTable } from './ResultsTable';
@@ -27,7 +28,6 @@ import {
   DEFAULT_RESULTS_PER_PAGE,
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
-  // MetricsModalReducer,
   MetricsModalMetadata,
   stateSlice,
 } from './state/state';
@@ -44,7 +44,7 @@ export type MetricsModalProps = {
   initialMetrics: string[];
 };
 
-// actions
+// actions to update the state
 const {
   setIsLoading,
   buildMetrics,
@@ -135,7 +135,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
     dispatch(setMetaHaystack(haystackData));
   }
 
-  function fuzzySearchCallback(query: string, fullMetaSearchVal: boolean) {
+  function searchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
       // get all metrics data if a user erases everything in the input
       updateMetricsMetadata();
@@ -174,73 +174,41 @@ export const MetricsModal = (props: MetricsModalProps) => {
     }
   }
 
+  /* Settings switches */
   const additionalSettings = (
-    <Modal
-      title="Additional settings"
-      isOpen={state.showAdditionalSettings}
-      onDismiss={() => dispatch(showAdditionalSettings())}
-      aria-label="Additional settings"
-      className={styles.additionalSettings}
-    >
-      <div className={styles.selectItem}>
-        <Switch
-          data-testid={testIds.searchWithMetadata}
-          value={state.fullMetaSearch}
-          disabled={state.useBackend || !state.hasMetadata}
-          onChange={() => {
-            const newVal = !state.fullMetaSearch;
-            dispatch(setFullMetaSearch(newVal));
-            onChange({ ...query, fullMetaSearch: newVal });
+    <AdditionalSettings
+      state={state}
+      onChangeFullMetaSearch={() => {
+        const newVal = !state.fullMetaSearch;
+        dispatch(setFullMetaSearch(newVal));
+        onChange({ ...query, fullMetaSearch: newVal });
 
-            fuzzySearchCallback(state.fuzzySearchQuery, newVal);
-          }}
-        />
-        <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch
-          value={state.includeNullMetadata}
-          disabled={state.useBackend || !state.hasMetadata}
-          onChange={() => {
-            dispatch(setIncludeNullMetadata(!state.includeNullMetadata));
-            onChange({ ...query, includeNullMetadata: !state.includeNullMetadata });
-          }}
-        />
-        <p className={styles.selectItemLabel}>{placeholders.includeNullMetadata}</p>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch
-          value={state.disableTextWrap}
-          onChange={() => {
-            dispatch(setDisableTextWrap());
-            onChange({ ...query, disableTextWrap: !state.disableTextWrap });
-          }}
-        />
-        <p className={styles.selectItemLabel}>Disable text wrap</p>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch
-          data-testid={testIds.setUseBackend}
-          value={state.useBackend}
-          onChange={() => {
-            const newVal = !state.useBackend;
-            dispatch(setUseBackend(newVal));
-            onChange({ ...query, useBackend: newVal });
-            if (newVal === false) {
-              // rebuild the metrics metadata if we turn off useBackend
-              updateMetricsMetadata();
-            } else {
-              // check if there is text in the browse search and update
-              if (state.fuzzySearchQuery !== '') {
-                debouncedBackendSearch(state.fuzzySearchQuery);
-              }
-              // otherwise wait for user typing
-            }
-          }}
-        />
-        <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
-      </div>
-    </Modal>
+        searchCallback(state.fuzzySearchQuery, newVal);
+      }}
+      onChangeIncludeNullMetadata={() => {
+        dispatch(setIncludeNullMetadata(!state.includeNullMetadata));
+        onChange({ ...query, includeNullMetadata: !state.includeNullMetadata });
+      }}
+      onChangeDisableTextWrap={() => {
+        dispatch(setDisableTextWrap());
+        onChange({ ...query, disableTextWrap: !state.disableTextWrap });
+      }}
+      onChangeUseBackend={() => {
+        const newVal = !state.useBackend;
+        dispatch(setUseBackend(newVal));
+        onChange({ ...query, useBackend: newVal });
+        if (newVal === false) {
+          // rebuild the metrics metadata if we turn off useBackend
+          updateMetricsMetadata();
+        } else {
+          // check if there is text in the browse search and update
+          if (state.fuzzySearchQuery !== '') {
+            debouncedBackendSearch(state.fuzzySearchQuery);
+          }
+          // otherwise wait for user typing
+        }
+      }}
+    />
   );
 
   return (
@@ -265,7 +233,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 const value = e.currentTarget.value ?? '';
                 dispatch(setFuzzySearchQuery(value));
 
-                fuzzySearchCallback(value, state.fullMetaSearch);
+                searchCallback(value, state.fullMetaSearch);
               }}
               onKeyDown={(e) => {
                 keyFunction(e);
@@ -273,35 +241,42 @@ export const MetricsModal = (props: MetricsModalProps) => {
             />
           </EditorField>
         </div>
+        {state.hasMetadata && (
+          <div className={styles.inputItem}>
+            <EditorField label="Filter by type">
+              <MultiSelect
+                data-testid={testIds.selectType}
+                inputId="my-select"
+                options={typeOptions}
+                value={state.selectedTypes}
+                placeholder={placeholders.type}
+                onChange={(v) => {
+                  // *** Filter by type
+                  // *** always include metrics without metadata but label it as unknown type
+                  // Consider tabs select instead of actual select or multi select
+                  dispatch(setSelectedTypes(v));
+                }}
+              />
+            </EditorField>
+          </div>
+        )}
         <div className={styles.inputItem}>
-          <EditorField label="Filter by type">
-            <MultiSelect
-              data-testid={testIds.selectType}
-              inputId="my-select"
-              options={typeOptions}
-              value={state.selectedTypes}
-              disabled={!state.hasMetadata || state.useBackend}
-              placeholder={placeholders.type}
-              onChange={(v) => {
-                // *** Filter by type
-                // *** always include metrics without metadata but label it as unknown type
-                // Consider tabs select instead of actual select or multi select
-                dispatch(setSelectedTypes(v));
-              }}
-            />
-          </EditorField>
-        </div>
-        <div className={styles.inputItem}>
-          <Button
-            variant="secondary"
-            fill="text"
-            size="sm"
-            onClick={() => dispatch(showAdditionalSettings())}
-            data-testid={testIds.showAdditionalSettings}
+          <Toggletip
+            aria-label="Additional settings"
+            content={additionalSettings}
+            placement="bottom-end"
+            closeButton={false}
           >
-            Additional Settings
-          </Button>
-          {state.showAdditionalSettings && additionalSettings}
+            <Button
+              variant="secondary"
+              fill="text"
+              size="sm"
+              onClick={() => dispatch(showAdditionalSettings())}
+              data-testid={testIds.showAdditionalSettings}
+            >
+              Additional Settings
+            </Button>
+          </Toggletip>
         </div>
       </div>
       <div className={styles.resultsData}>

@@ -78,7 +78,6 @@ export const stateSlice = createSlice({
     setUseBackend: (state, action: PayloadAction<boolean>) => {
       state.useBackend = action.payload;
       state.fullMetaSearch = false;
-      state.includeNullMetadata = false;
       state.pageNum = 1;
     },
     setSelectedIdx: (state, action: PayloadAction<number>) => {

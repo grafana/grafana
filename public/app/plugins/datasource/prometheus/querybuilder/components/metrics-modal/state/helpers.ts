@@ -98,7 +98,7 @@ export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boole
     });
   }
 
-  if (state.selectedTypes.length > 0 && !state.useBackend) {
+  if (state.selectedTypes.length > 0) {
     filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
       // Matches type
       const matchesSelectedType = state.selectedTypes.some((t) => t.value === m.type);
@@ -176,9 +176,16 @@ export async function getBackendSearchMetrics(
 
   return await results.then((results) => {
     return results.map((result) => {
-      return {
+      const type = getMetadataType(result.text, datasource.languageProvider.metricsMetadata!);
+      const description = getMetadataHelp(result.text, datasource.languageProvider.metricsMetadata!);
+
+      const metricData: MetricData = {
         value: result.text,
+        type: type,
+        description: description,
       };
+
+      return metricData;
     });
   });
 }

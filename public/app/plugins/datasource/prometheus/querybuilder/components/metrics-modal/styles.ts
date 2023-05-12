@@ -33,16 +33,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     selectWrapper: css`
       margin-bottom: ${theme.spacing(1)};
     `,
-    selectItem: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-    `,
-    selectItemLabel: css`
-      margin: 0 0 0 ${theme.spacing(1)};
-      align-self: center;
-      color: ${theme.colors.text.secondary};
-    `,
     resultsAmount: css`
       color: ${theme.colors.text.secondary};
       font-size: 0.75rem;
@@ -107,16 +97,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     loadingSpinner: css`
       display: inline-block;
       visibility: hidden;
-    `,
-    table: css`
-      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
-      td {
-        vertical-align: baseline;
-        padding: 0;
-      }
-    `,
-    tableDiv: css`
-      padding: 8px;
     `,
     visible: css`
       visibility: visible;
