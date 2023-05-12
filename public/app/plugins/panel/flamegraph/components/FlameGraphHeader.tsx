@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import useDebounce from 'react-use/lib/useDebounce';
+import usePrevious from 'react-use/lib/usePrevious';
 
 import { GrafanaTheme2, CoreApp } from '@grafana/data';
 import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
@@ -59,6 +60,8 @@ const FlameGraphHeader = ({
 
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
+  console.log('rendering', localSearch, search);
+
   return (
     <div className={styles.header}>
       <div className={styles.leftContainer}>
@@ -95,8 +98,11 @@ function useSearchInput(
   setSearch: (search: string) => void
 ): [string | undefined, (search: string) => void] {
   const [localSearchState, setLocalSearchState] = useState(search);
+  const prevSearch = usePrevious(search);
+
+  console.log('in useSearchInput', localSearchState, search);
   // Debouncing cause changing parent search triggers rerender on both the flamegraph and table
-  const [isReady] = useDebounce(
+  useDebounce(
     () => {
       setSearch(localSearchState);
     },
@@ -104,14 +110,13 @@ function useSearchInput(
     [localSearchState]
   );
 
-  // Make sure we still handle updates from parent (from clicking on a table item). To make this bidirectional flow
-  // work we have to be checking the state of the debounce cause while debouncing the local state and the parent state
-  // will differ by design. Only if we are not debouncing and the parent state changes we have to update.
+  // Make sure we still handle updates from parent (from clicking on a table item for example). We check if the parent
+  // search value changed to something that isn't our local value.
   useEffect(() => {
-    if (isReady() && search !== localSearchState) {
+    if (prevSearch !== search && search !== localSearchState) {
       setLocalSearchState(search);
     }
-  }, [search, localSearchState, isReady]);
+  }, [search, prevSearch, localSearchState]);
 
   return [localSearchState, setLocalSearchState];
 }
