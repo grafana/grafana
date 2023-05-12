@@ -1390,44 +1390,44 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	return nil
 }
-func readAuthAzureADSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.azuread")
+func readAuthAzureADSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.azuread")
 	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
 	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.grafana_com")
+func readAuthGrafanaComSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
 	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.github")
+func readAuthGithubSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.github")
 	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.google")
+func readAuthGoogleSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.gitlab")
+func readAuthGitlabSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.gitlab")
 	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.generic_oauth")
+func readGenericOAuthSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.generic_oauth")
 	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.okta")
+func readAuthOktaSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.okta")
 	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
@@ -1488,19 +1488,25 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Azure Auth
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
-	readAuthAzureADSettings(iniFile, cfg)
+	readAuthAzureADSettings(cfg)
 
 	// Google Auth
-	readAuthGoogleSettings(iniFile, cfg)
+	readAuthGoogleSettings(cfg)
 
 	// GitLab Auth
-	readAuthGitlabSettings(iniFile, cfg)
+	readAuthGitlabSettings(cfg)
 
 	// Generic OAuth
-	readGenericOAuthSettings(iniFile, cfg)
+	readGenericOAuthSettings(cfg)
 
 	// Okta Auth
-	readAuthOktaSettings(iniFile, cfg)
+	readAuthOktaSettings(cfg)
+
+	// GrafanaCom
+	readAuthGrafanaComSettings(cfg)
+
+	// Github
+	readAuthGithubSettings(cfg)
 
 	// anonymous access
 	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1554,11 +1560,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
-	// GrafanaCom
-	readAuthGrafanaComSettings(iniFile, cfg)
-
-	// Github
-	readAuthGithubSettings(iniFile, cfg)
 	return nil
 }
 
