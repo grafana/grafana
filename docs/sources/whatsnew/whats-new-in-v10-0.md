@@ -204,13 +204,15 @@ To try it out, you'll need to enable the `publicDashboards` feature toggle. If y
 
 <!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
 
-_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+_Available in public preview in Cloud Pro and Cloud Advanced._
 
-Our email sharing feature allows you to easily share your public dashboards with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can view your public dashboards.
+Our email sharing feature allows you to easily share your public dashboards and make them visible only with specific individuals. When you add their email addresses, they will receive a one-time link to access the dashboard. This provides you with greater control over who can view your public dashboards.
 
 We've also added a **Public dashboard users** tab in **Administration > Users** where you can view a list of users who have accessed your public dashboards by way of a email sharing.
 
-To try it out, you'll need to enable the `publicDashboardsEmailSharing` and `publicDashboards` feature toggles. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To try it out, please contact customer support.
+
+This feature will have a cost by active users after being promoted into general availability.
 
 To learn more, check out our public dashboards [documentation]({{< relref "../../dashboards/dashboard-public" >}}).
 
