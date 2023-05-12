@@ -35,7 +35,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     resultsAmount: css`
       color: ${theme.colors.text.secondary};
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       padding: 0 0 4px 0;
     `,
     resultsData: css`
@@ -48,13 +48,13 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       color: ${theme.colors.text.secondary};
       text-align: center;
       border: solid 1px rgba(204, 204, 220, 0.25);
-      padding: 6px;
+      padding: 7px;
     `,
     results: css`
       height: calc(80vh - 280px);
       overflow-y: scroll;
     `,
-    pageSettingsWrapper: css`
+    resultsFooter: css`
       padding-top: ${theme.spacing(1.5)};
       display: flex;
       flex-direction: row;
@@ -62,19 +62,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       justify-content: space-between;
       align-items: center;
       position: sticky;
-    `,
-    pageSettings: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-    `,
-    selAlpha: css`
-      cursor: pointer;
-      color: #6e9fff;
-    `,
-    active: css`
-      cursor: pointer;
     `,
     grey: css`
       color: grey;
@@ -89,6 +76,14 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     settingsBtn: css`
       float: right;
+    `,
+    resultsPerPageLabel: css`
+      color: ${theme.colors.text.secondary};
+      opacity: 75%;
+      padding-top: 5px;
+    `,
+    resultsPerPageWrapper: css`
+      display: flex;
     `,
   };
 };

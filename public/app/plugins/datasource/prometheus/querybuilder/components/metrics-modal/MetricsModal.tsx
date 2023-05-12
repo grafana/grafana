@@ -286,7 +286,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
             <Icon name="info-circle" size="sm" />
-            These metrics have been pre-filtered by labels chosen in the label filters.
+            &nbsp;These metrics have been pre-filtered by labels chosen in the label filters.
           </p>
         )}
       </div>
@@ -303,39 +303,34 @@ export const MetricsModal = (props: MetricsModalProps) => {
           />
         )}
       </div>
+      <div className={styles.resultsFooter}>
+        <div className={styles.resultsAmount}>
+          Showing {state.filteredMetricCount} of {state.totalMetricCount} results
+        </div>
+        <Pagination
+          currentPage={state.pageNum ?? 1}
+          numberOfPages={calculatePageList(state).length}
+          onNavigate={(val: number) => {
+            const page = val ?? 1;
+            dispatch(setPageNum(page));
+          }}
+        />
+        <div className={styles.resultsPerPageWrapper}>
+          <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
+          <Input
+            data-testid={testIds.resultsPerPage}
+            value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
+            placeholder="results per page"
+            width={10}
+            title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
+            onInput={(e) => {
+              const value = +e.currentTarget.value;
 
-      <div className={styles.pageSettingsWrapper}>
-        <div className={styles.pageSettings}>
-          <div className={styles.resultsAmount}>
-            Showing {state.filteredMetricCount} of {state.totalMetricCount} results
-          </div>
-          <InlineField
-            label="# results per page"
-            tooltip={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
-            labelWidth={20}
-          >
-            <Input
-              data-testid={testIds.resultsPerPage}
-              value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-              placeholder="results per page"
-              width={20}
-              onInput={(e) => {
-                const value = +e.currentTarget.value;
+              if (isNaN(value)) {
+                return;
+              }
 
-                if (isNaN(value)) {
-                  return;
-                }
-
-                dispatch(setResultsPerPage(value));
-              }}
-            />
-          </InlineField>
-          <Pagination
-            currentPage={state.pageNum ?? 1}
-            numberOfPages={calculatePageList(state).length}
-            onNavigate={(val: number) => {
-              const page = val ?? 1;
-              dispatch(setPageNum(page));
+              dispatch(setResultsPerPage(value));
             }}
           />
         </div>
