@@ -175,16 +175,21 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		// fetch folder from dashboard store
 		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
 		if err != nil {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
+			s.log.Debug("failed to fetch subfolder from dashboard store", "org", f.OrgID, "folder", q.UID, "subfolder", f.UID, "error", err)
 			continue
 		}
 
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, q.SignedInUser)
 		if err != nil {
-			return nil, err
+			s.log.Debug("failed to create guardian for subfolder", "org", f.OrgID, "folder", q.UID, "subfolder", f.UID, "error", err)
+			continue
 		}
 		canView, err := g.CanView()
-		if err != nil || canView {
+		if err != nil {
+			s.log.Debug("failed to view check access to subfolder", "org", f.OrgID, "folder", q.UID, "subfolder", f.UID, "error", err)
+			continue
+		}
+		if canView {
 			// always expose the dashboard store sequential ID
 			f.ID = dashFolder.ID
 			filtered = append(filtered, f)
@@ -213,17 +218,19 @@ func (s *Service) GetDescendantFolders(ctx context.Context, q folder.GetDescenda
 		// fetch folder from dashboard store
 		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
 		if err != nil {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
+			s.log.Debug("failed to fetch descendant folder from dashboard store", "org", f.OrgID, "folder", q.UID, "descendant", f.UID, "error", err)
 			continue
 		}
 
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, q.SignedInUser)
 		if err != nil {
-			return nil, err
+			s.log.Debug("failed to create guardian for descendant folder", "org", f.OrgID, "folder", q.UID, "descendant", f.UID, "error", err)
+			continue
 		}
 		canView, err := g.CanView()
 		if err != nil {
-			return nil, err
+			s.log.Debug("failed to view check access to descendant folder", "org", f.OrgID, "folder", q.UID, "descendant", f.UID, "error", err)
+			continue
 		}
 		if canView {
 			// always expose the dashboard store sequential ID
