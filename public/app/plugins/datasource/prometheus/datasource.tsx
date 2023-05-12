@@ -195,7 +195,6 @@ export class PrometheusDatasource
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
     httpOptions.headers = {};
     if (this.access === 'proxy') {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
       httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
@@ -867,10 +866,10 @@ export class PrometheusDatasource
       const timeValueTuple: Array<[number, number]> = [];
 
       let idx = 0;
-      valueField.values.toArray().forEach((value: string) => {
+      valueField.values.forEach((value: string) => {
         let timeStampValue: number;
         let valueValue: number;
-        const time = timeField.values.get(idx);
+        const time = timeField.values[idx];
 
         // If we want to use value as a time, we use value as timeStampValue and valueValue will be 1
         if (options.annotation.useValueForTime) {
@@ -1050,45 +1049,6 @@ export class PrometheusDatasource
         </>
       </div>
     );
-  }
-
-  async testDatasource() {
-    const now = new Date().getTime();
-    const request: DataQueryRequest<PromQuery> = {
-      targets: [{ refId: 'test', expr: '1+1', instant: true }],
-      requestId: `${this.id}-health`,
-      scopedVars: {},
-      dashboardId: 0,
-      panelId: 0,
-      interval: '1m',
-      intervalMs: 60000,
-      maxDataPoints: 1,
-      range: {
-        from: dateTime(now - 1000),
-        to: dateTime(now),
-      },
-    } as DataQueryRequest<PromQuery>;
-
-    const buildInfo = await this.getBuildInfo();
-
-    return lastValueFrom(this.query(request))
-      .then((res: DataQueryResponse) => {
-        if (!res || !res.data || res.state !== LoadingState.Done) {
-          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
-        } else {
-          return {
-            status: 'success',
-            message: 'Data source is working',
-            details: buildInfo && {
-              verboseMessage: this.getBuildInfoMessage(buildInfo),
-            },
-          };
-        }
-      })
-      .catch((err: any) => {
-        console.error('Prometheus Error', err);
-        return { status: 'error', message: err.message };
-      });
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
@@ -1302,6 +1262,33 @@ export class PrometheusDatasource
 
   getCacheDurationInMinutes(): number {
     return getClientCacheDurationInMinutes(this.cacheLevel);
+  }
+
+  getDefaultQuery(app: CoreApp): PromQuery {
+    const defaults = {
+      refId: 'A',
+      expr: '',
+      range: true,
+      instant: false,
+    };
+
+    if (app === CoreApp.UnifiedAlerting) {
+      return {
+        ...defaults,
+        instant: true,
+        range: false,
+      };
+    }
+
+    if (app === CoreApp.Explore) {
+      return {
+        ...defaults,
+        instant: true,
+        range: true,
+      };
+    }
+
+    return defaults;
   }
 }
 

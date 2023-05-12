@@ -21,8 +21,7 @@ interface TableContainerProps {
 
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const { loading: loadingInState, tableResult, range } = item;
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, tableResult, range };
@@ -46,7 +45,7 @@ export class TableContainer extends PureComponent<Props> {
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, mainFrame.length * 35) + 35);
+    return Math.min(600, Math.max(mainFrame.length * 36, 300) + 40 + 46);
   }
 
   render() {
@@ -103,7 +102,6 @@ export class TableContainer extends PureComponent<Props> {
                 subData={subFrames}
                 width={innerWidth}
                 height={innerHeight}
-                maxHeight={600}
                 onCellFilterAdded={onCellFilterAdded}
               />
             ) : (

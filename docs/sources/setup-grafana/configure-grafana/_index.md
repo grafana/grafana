@@ -75,7 +75,7 @@ rendering_ignore_https_errors = true
 enable = newNavigation
 ```
 
-You can override them on Linux machines with:
+You can override variables on Linux machines with:
 
 ```bash
 export GF_DEFAULT_INSTANCE_NAME=my-instance
@@ -188,6 +188,11 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 ### protocol
 
 `http`,`https`,`h2` or `socket`
+
+### min_tls_version
+
+The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.
+If you do not specify a version, the system uses TLS1.2.
 
 ### http_addr
 
@@ -403,6 +408,10 @@ This setting applies to `sqlite` only and controls the number of times the syste
 ### transaction_retries
 
 This setting applies to `sqlite` only and controls the number of times the system retries a transaction when the database is locked. The default value is `5`.
+
+### instrument_queries
+
+Set to `true` to add metrics and tracing for database queries. The default value is `false`.
 
 <hr />
 
@@ -679,6 +688,10 @@ List of additional allowed URLs to pass by the CSRF check. Suggested when authen
 
 List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
 
+### csrf_always_check
+
+Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
 ## [snapshots]
 
 ### enabled
@@ -729,6 +742,22 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 > **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
+
+## [sql_datasources]
+
+### max_open_conns_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum number of open connections (default: 100). The value configured in data source settings will be preferred over the default value.
+
+### max_idle_conns_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default allowed number of idle connections (default: 100). The value configured in data source settings will be preferred over the default value.
+
+### max_conn_lifetime_default
+
+For SQL data sources (MySql, Postgres, MSSQL) you can override the default maximum connection lifetime specified in seconds (default: 14400). The value configured in data source settings will be preferred over the default value.
+
+<hr/>
 
 ## [users]
 
@@ -1284,31 +1313,19 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ### enabled
 
-Sentry javascript agent is initialized. Default is `false`.
-
-### provider
-
-Defines which provider to use `sentry` or `grafana`. Default is `sentry`
-
-### sentry_dsn
-
-Sentry DSN if you want to send events to Sentry
+Faro javascript agent is initialized. Default is `false`.
 
 ### custom_endpoint
 
-Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
-
-### sample_rate
-
-Rate of events to be reported between `0` (none) and `1` (all, default), float.
+Custom HTTP endpoint to send events captured by the Faro agent to. Default, `/log-grafana-javascript-agent`, will log the events to stdout.
 
 ### log_endpoint_requests_per_second_limit
 
-Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `3`.
 
 ### log_endpoint_burst_limit
 
-Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
 ### instrumentations_errors_enabled
 

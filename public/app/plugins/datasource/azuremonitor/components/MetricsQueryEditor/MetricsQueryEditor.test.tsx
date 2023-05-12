@@ -13,6 +13,7 @@ import {
   mockGetValidLocations,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import { selectors } from '../../e2e/selectors';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
@@ -45,7 +46,7 @@ export function createMockResourcePickerData() {
   mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
   mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
   mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-  mockResourcePicker.getLogsLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
+  mockResourcePicker.getLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
   return mockResourcePicker;
 }
 
@@ -74,7 +75,9 @@ describe('MetricsQueryEditor', () => {
       />
     );
 
-    expect(await screen.findByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.metricsQueryEditor.container.input)
+    ).toBeInTheDocument();
   });
 
   it('should show the current resource in the ResourcePicker', async () => {

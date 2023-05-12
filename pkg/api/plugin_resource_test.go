@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -60,12 +62,12 @@ func TestCallResource(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	reg := registry.ProvideService()
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
+		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()))
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
@@ -78,7 +80,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
-		hs.cachingService = &caching.OSSCachingService{}
+		hs.log = log.New("test")
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
@@ -117,6 +119,7 @@ func TestCallResource(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
 		hs.pluginClient = pc
+		hs.log = log.New("test")
 	})
 
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {

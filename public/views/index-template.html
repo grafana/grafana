@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    [[ if and .CSPEnabled .IsDevelopmentEnv ]]
+    <!-- Cypress overwrites CSP headers in HTTP requests, so this is required for e2e tests-->
+    <meta  http-equiv="Content-Security-Policy" content="[[.CSPContent]]"/>
+    [[ end ]]
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width" />
@@ -15,9 +19,9 @@
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
     <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
-    [[ if eq .Theme "light" ]]
+    [[ if eq .ThemeType "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
-    [[ else if eq .Theme "dark" ]]
+    [[ else if eq .ThemeType "dark" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
     [[ end ]]
 
@@ -31,7 +35,7 @@
     <meta name="msapplication-config" content="public/img/browserconfig.xml" />
   </head>
 
-  <body class="theme-[[ .Theme ]] [[.AppNameBodyClass]]">
+  <body class="theme-[[ .ThemeType ]] [[.AppNameBodyClass]]">
     <style>
       .preloader {
         height: 100%;

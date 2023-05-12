@@ -1,6 +1,7 @@
 import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
+import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier, TextDimensionConfig, TextDimensionMode } from './types';
+import { DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -42,7 +43,7 @@ export function getTextDimensionForField(
     }
     return {
       field,
-      get: (i) => disp(field.values.get(i)),
+      get: (i) => disp(field.values[i]),
       value: () => disp(getLastNotNullFieldValue(field)),
     };
   }
@@ -59,7 +60,7 @@ export function getTextDimensionForField(
   let disp = (v: unknown) => formattedValueToString(field.display!(v));
   return {
     field,
-    get: (i) => disp(field.values.get(i)),
+    get: (i) => disp(field.values[i]),
     value: () => disp(getLastNotNullFieldValue(field)),
   };
 }

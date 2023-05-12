@@ -1,19 +1,17 @@
 import { css, cx } from '@emotion/css';
+import classNames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { useStyles2, LinkButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { SearchWrapper } from 'app/features/search';
 import { KioskMode } from 'app/types';
 
-import { MegaMenu } from '../MegaMenu/MegaMenu';
-import { NavBar } from '../NavBar/NavBar';
-
-import { NavToolbar } from './NavToolbar';
-import { TopSearchBar } from './TopSearchBar';
+import { MegaMenu } from './MegaMenu/MegaMenu';
+import { NavToolbar } from './NavToolbar/NavToolbar';
+import { SectionNav } from './SectionNav/SectionNav';
+import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export interface Props extends PropsWithChildren<{}> {}
@@ -22,21 +20,6 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
-  if (!config.featureToggles.topnav) {
-    return (
-      <>
-        {!state.chromeless && (
-          <>
-            <NavBar />
-            <SearchWrapper />
-            <CommandPalette />
-          </>
-        )}
-        <main className="main-view">{children}</main>
-      </>
-    );
-  }
 
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
 
@@ -51,29 +34,39 @@ export function AppChrome({ children }: Props) {
   // doesn't get re-mounted when chromeless goes from true to false.
 
   return (
-    <main className="main-view">
+    <div className={classNames('main-view', searchBarHidden && 'main-view--search-bar-hidden')}>
       {!state.chromeless && (
-        <div className={cx(styles.topNav)}>
-          {!searchBarHidden && <TopSearchBar />}
-          <NavToolbar
-            searchBarHidden={searchBarHidden}
-            sectionNav={state.sectionNav}
-            pageNav={state.pageNav}
-            actions={state.actions}
-            onToggleSearchBar={chrome.onToggleSearchBar}
-            onToggleMegaMenu={chrome.onToggleMegaMenu}
-            onToggleKioskMode={chrome.onToggleKioskMode}
-          />
-        </div>
+        <>
+          <LinkButton className={styles.skipLink} href="#pageContent">
+            Skip to main content
+          </LinkButton>
+          <div className={cx(styles.topNav)}>
+            {!searchBarHidden && <TopSearchBar />}
+            <NavToolbar
+              searchBarHidden={searchBarHidden}
+              sectionNav={state.sectionNav.node}
+              pageNav={state.pageNav}
+              actions={state.actions}
+              onToggleSearchBar={chrome.onToggleSearchBar}
+              onToggleMegaMenu={chrome.onToggleMegaMenu}
+              onToggleKioskMode={chrome.onToggleKioskMode}
+            />
+          </div>
+        </>
       )}
-      <div className={contentClass}>{children}</div>
+      <main className={contentClass} id="pageContent">
+        <div className={styles.panes}>
+          {state.layout === PageLayoutType.Standard && state.sectionNav && <SectionNav model={state.sectionNav} />}
+          <div className={styles.pageContainer}>{children}</div>
+        </div>
+      </main>
       {!state.chromeless && (
         <>
           <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
           <CommandPalette />
         </>
       )}
-    </main>
+    </div>
   );
 }
 
@@ -106,6 +99,33 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    panes: css({
+      label: 'page-panes',
+      display: 'flex',
+      height: '100%',
+      width: '100%',
+      flexGrow: 1,
+      minHeight: 0,
+      flexDirection: 'column',
+      [theme.breakpoints.up('md')]: {
+        flexDirection: 'row',
+      },
+    }),
+    pageContainer: css({
+      label: 'page-container',
+      flexGrow: 1,
+      minHeight: 0,
+    }),
+    skipLink: css({
+      position: 'absolute',
+      top: -1000,
+
+      ':focus': {
+        left: theme.spacing(1),
+        top: theme.spacing(1),
+        zIndex: theme.zIndex.portal,
+      },
     }),
   };
 };

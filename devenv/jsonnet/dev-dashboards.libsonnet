@@ -79,6 +79,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('annotation-filtering', import '../dev-dashboards/annotations/annotation-filtering.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('auto_decimals', import '../dev-dashboards/panel-common/auto_decimals.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -128,6 +135,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('canvas-connection-examples', import '../dev-dashboards/panel-canvas/canvas-connection-examples.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('canvas-examples', import '../dev-dashboards/panel-canvas/canvas-examples.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -150,6 +164,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('datadata-macros', import '../dev-dashboards/feature-templating/datadata-macros.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('datagrid_metric_values', import '../dev-dashboards/panel-datagrid/datagrid_metric_values.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -675,6 +696,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeseries-by-value-color-schemes', import '../dev-dashboards/panel-timeseries/timeseries-by-value-color-schemes.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('timeseries-formats', import '../dev-dashboards/panel-timeseries/timeseries-formats.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

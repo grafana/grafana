@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -14,12 +15,13 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
-
+  const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
   // Capture the pointer to keep the widget visible while dragging
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.setPointerCapture(e.pointerId);
@@ -39,7 +41,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
     <div
       className={cx(styles.container, { 'show-on-hover': !menuOpen })}
       style={{ top: `${offset}px` }}
-      data-testid="hover-header-container"
+      data-testid={selectors.container}
     >
       {dragClass && (
         <div
@@ -47,11 +49,12 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           ref={draggableRef}
+          data-testid={selectors.dragIcon}
         >
           <Icon name="expand-arrows" className={styles.draggableIcon} />
         </div>
       )}
-      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
+      {!title && <h6 className={cx(styles.untitled, { [styles.draggable]: !!dragClass }, dragClass)}>Untitled</h6>}
       {children}
       {menu && (
         <PanelMenu
@@ -60,6 +63,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           placement="bottom"
           menuButtonClass={styles.menuButton}
           onVisibleChange={setMenuOpen}
+          onOpenMenu={onOpenMenu}
         />
       )}
     </div>

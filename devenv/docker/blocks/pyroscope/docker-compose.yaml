@@ -1,0 +1,6 @@
+  pyroscope:
+    image: "pyroscope/pyroscope:latest"
+    command:
+      - "server"
+    ports:
+      - "4040:4040"

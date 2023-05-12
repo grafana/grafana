@@ -101,15 +101,18 @@ For more information about log queries and LogQL, refer to the [Loki log queries
 
 ### Show log context
 
-When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
-By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
-log message you're interested in.
+In Explore, you can can retrieve the context surrounding your log results by clicking the `Show Context` button. You'll be able to investigate the logs from the same log stream that came before and after the log message you're interested in.
+
+The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore#loki-specific-features" >}}).
+Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
+
+To start tailing logs click the **Live** button in the top right corner of the Explore view.
+{{< figure src="/static/img/docs/v95/loki_tailing.png" class="docs-image--no-shadow" max-width="80px" >}}
 
 #### Proxying examples
 

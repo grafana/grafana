@@ -1,6 +1,5 @@
 import {
   toDataFrame,
-  ArrayVector,
   DataFrame,
   FieldType,
   toDataFrameDTO,
@@ -85,8 +84,8 @@ describe('Prepare time series transformer', () => {
       frames.map((f) => ({
         name: getFrameDisplayName(f),
         labels: f.fields[1].labels,
-        time: f.fields[0].values.toArray(),
-        values: f.fields[1].values.toArray(),
+        time: f.fields[0].values,
+        values: f.fields[1].values,
       }))
     ).toMatchInlineSnapshot(`
       [
@@ -344,6 +343,7 @@ describe('Prepare time series transformer', () => {
     };
 
     const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
+
     expect(frames).toEqual([
       toEquableDataFrame({
         name: 'wants-to-be-many',
@@ -422,7 +422,6 @@ function toEquableDataFrame(source: any): DataFrame {
     fields: source.fields.map((field: any) => {
       return {
         ...field,
-        values: new ArrayVector(field.values),
         config: {},
       };
     }),

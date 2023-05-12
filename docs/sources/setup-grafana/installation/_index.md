@@ -5,7 +5,7 @@ aliases:
   - ../installation/installation/
   - ../installation/requirements/
   - /docs/grafana/v2.1/installation/install/
-  - ./rpm/
+  - ./installation/rpm/
 description: Installation guide for Grafana
 title: Install Grafana
 weight: 100
@@ -25,7 +25,7 @@ Grafana supports the following operating systems:
 
 - [Debian/Ubuntu]({{< relref "debian/" >}})
 - [Red Hat/RHEL/Fedora]({{< relref "redhat-rhel-fedora/" >}})
-- [SUSE/OpenSUSE]({{< relref "suse-opensuse/" >}})
+- [SUSE/openSUSE]({{< relref "suse-opensuse/" >}})
 - [macOS]({{< relref "mac/" >}})
 - [Windows]({{< relref "windows/" >}})
 

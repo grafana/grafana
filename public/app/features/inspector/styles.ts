@@ -17,6 +17,7 @@ export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
       height: 100%;
       width: 100%;
       flex: 1 1 0;
+      min-height: 0;
     `,
     toolbar: css`
       display: flex;
@@ -32,7 +33,6 @@ export const getPanelInspectorStyles2 = (theme: GrafanaTheme2) => {
     content: css`
       flex-grow: 1;
       height: 100%;
-      overflow: scroll;
     `,
     editor: css`
       font-family: monospace;

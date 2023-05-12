@@ -2,7 +2,6 @@ import { map } from 'rxjs/operators';
 
 import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
 
@@ -90,11 +89,11 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
       if (f.values.length === maxLength) {
         return f;
       }
-      const values = f.values.toArray();
+      const values = f.values;
       values.length = maxLength;
       return {
         ...f,
-        values: new ArrayVector(values),
+        values: values,
       };
     });
   }

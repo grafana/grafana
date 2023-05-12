@@ -179,6 +179,9 @@ type ClientDecoratorTest struct {
 	SubscribeStreamCtx context.Context
 	PublishStreamReq   *backend.PublishStreamRequest
 	PublishStreamCtx   context.Context
+
+	// When CallResource is called, the sender will be called with these values
+	callResourceResponses []*backend.CallResourceResponse
 }
 
 type ClientDecoratorTestOption func(*ClientDecoratorTest)
@@ -197,6 +200,13 @@ func NewClientDecoratorTest(t *testing.T, opts ...ClientDecoratorTestOption) *Cl
 		CallResourceFunc: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			cdt.CallResourceReq = req
 			cdt.CallResourceCtx = ctx
+			if cdt.callResourceResponses != nil {
+				for _, r := range cdt.callResourceResponses {
+					if err := sender.Send(r); err != nil {
+						return err
+					}
+				}
+			}
 			return nil
 		},
 		CheckHealthFunc: func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -260,5 +270,12 @@ func WithMiddlewares(middlewares ...plugins.ClientMiddleware) ClientDecoratorTes
 		}
 
 		cdt.Middlewares = append(cdt.Middlewares, middlewares...)
+	})
+}
+
+// WithResourceResponses can be used to make the test client send simulated resource responses back over the sender stream
+func WithResourceResponses(responses []*backend.CallResourceResponse) ClientDecoratorTestOption {
+	return ClientDecoratorTestOption(func(cdt *ClientDecoratorTest) {
+		cdt.callResourceResponses = responses
 	})
 }
