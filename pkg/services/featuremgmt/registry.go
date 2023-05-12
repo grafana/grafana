@@ -530,5 +530,13 @@ var (
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:            "nestedFolderPicker",
+			Description:     "Folder picker for nested folders",
+			FrontendOnly:    true,
+			State:           FeatureStateAlpha,
+			RequiresDevMode: false,
+			Owner:           grafanaUserEssentialsSquad,
+		},
 	}
 )

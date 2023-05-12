@@ -316,10 +316,14 @@ const (
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
 
 	// FlagFaroDatasourceSelector
-	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagNestedFolderPicker
+	// Folder picker for nested folders
+	FlagNestedFolderPicker = "nestedFolderPicker"
 )
