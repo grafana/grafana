@@ -81,7 +81,6 @@ export const DerivedField = (props: Props) => {
               content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
             />
           }
-          onChange={handleChange('matcherRegex')}
         >
           <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />
         </Field>
