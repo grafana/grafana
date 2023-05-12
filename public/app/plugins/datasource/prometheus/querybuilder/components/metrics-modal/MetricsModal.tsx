@@ -198,6 +198,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
       onChangeDisableTextWrap={() => {
         dispatch(setDisableTextWrap());
         onChange({ ...query, disableTextWrap: !state.disableTextWrap });
+        reportInteraction('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', {
+          disableTextWrap: state.disableTextWrap,
+        });
       }}
       onChangeUseBackend={() => {
         const newVal = !state.useBackend;
