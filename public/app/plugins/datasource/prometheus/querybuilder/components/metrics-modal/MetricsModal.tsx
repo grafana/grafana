@@ -15,6 +15,7 @@ import {
   Button,
   Toggletip,
   ButtonGroup,
+  Icon,
 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
@@ -284,6 +285,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         {query.metric && <i className={styles.grey}>Currently selected: {query.metric}</i>}
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
+            <Icon name="info-circle" size="sm" />
             These metrics have been pre-filtered by labels chosen in the label filters.
           </p>
         )}

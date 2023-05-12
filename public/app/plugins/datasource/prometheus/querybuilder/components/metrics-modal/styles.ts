@@ -45,8 +45,10 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       margin: 0;
     `,
     resultsDataFiltered: css`
-      margin: 0;
-      color: ${theme.colors.warning.text};
+      color: ${theme.colors.text.secondary};
+      text-align: center;
+      border: solid 1px rgba(204, 204, 220, 0.25);
+      padding: 6px;
     `,
     results: css`
       height: calc(80vh - 280px);
@@ -77,6 +79,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     grey: css`
       color: grey;
       opacity: 75%;
+      font-size: 0.75rem;
     `,
     loadingSpinner: css`
       visibility: hidden;
