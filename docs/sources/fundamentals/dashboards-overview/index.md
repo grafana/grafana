@@ -8,7 +8,8 @@ keywords:
   - data source
   - transform
   - query
-title: Grafana Dashboards Overview
+title: Grafana dashboards overview
+menuTitle: Dashboard overview
 weight: 300
 ---
 
