@@ -17,7 +17,7 @@ The decision to deprecate legacy alerting was made to encourage users to migrate
 
 Users who are still using legacy alerting are encouraged to migrate their alerts to the new system as soon as possible to ensure that they continue to receive new features, bug fixes and support.
 
-However, we will still patch CVEs until legacy alerting is completely removed in Grafana 11, honoring our commitment to building and distributing secure software.
+However, we will still patch CVEs until legacy alerting is completely removed in Grafana 11; honoring our commitment to building and distributing secure software.
 
 We have provided [instructions](https://grafana.com/docs/grafana/latest/alerting/migrating-alerts/) on how to migrate to the new alerting system, making the process as easy as possible for users.
 
