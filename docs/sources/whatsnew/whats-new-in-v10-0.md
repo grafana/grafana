@@ -79,27 +79,6 @@ We are promoting the canvas panel out of beta and into general availability. Ove
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
-### New Datagrid panel
-
-<!-- Oscar Kilhed -->
-
-Datagrid is a new beta panel that allows you to edit your data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a datasource or create your own dataset from scratch and use it within your dashboard to update your panels in real time. You can also use the Datagrid as a data source used by other panels to augment other data.
-
-By default, the Datagrid panel will not allow a user to edit data, but only show data like a standard visualization. To make full use of this new panel editing functionality you will need to enable the `enableDatagridEditing` feature toggle.
-But for now the Datagrid Panel will support the following features in G10:
-
-- Creating and deleting rows and columns
-- Data and column header edit or delete
-- Search functionality
-- Column freezing
-- Grid selection actions (copy/paste/delete)
-- Draggable columns and rows
-- Series select when pulling data from a datasource
-
-To learn more about the Datagrid panel, please refer to the official documentation.
-
-The list of features is already growing and of course we will look into those. So stay tuned for more features coming in the near future that will give an even better experience using the datagrid.
-
 ### New Trend Panel
 
 <!-- Nathan Marrs -->
@@ -110,7 +89,7 @@ We are excited to introduce a new panel that allows you to display trends where 
 
 ### Drag and Drop spreadsheets into Grafana
 
-_Available in public preview in all editions of Grafana._
+_Available in Experimental in all editions of Grafana_
 
 <!-- Oscar Kilhed -->
 
