@@ -8,7 +8,6 @@ import {
   GrafanaTheme2,
   LinkModel,
   outerJoinDataFrames,
-  PanelData,
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
@@ -56,17 +55,17 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(
-  data: PanelData,
+  frames: DataFrame[],
+  annotations: DataFrame[] | undefined,
   options: PanelOptions,
   theme: GrafanaTheme2,
   getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
 ): HeatmapData {
-  let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
-  const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
+  const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
   if (getFieldLinks) {
     exemplars?.fields.forEach((field, index) => {

@@ -312,9 +312,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	frame.Meta.ExecutedQueryString = interpolatedQuery
 
-	// If no rows were returned, no point checking anything else.
+	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
+	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
+	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
+	// additionally-needed frame data stays intact and is correctly passed to our visulization.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{}
+		frame.Fields = []*data.Field{}
+		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult
 		return
 	}

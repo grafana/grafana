@@ -97,7 +97,7 @@ export const ConfirmModal = ({
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant={dismissVariant} onClick={onDismiss}>
+        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
           {dismissText}
         </Button>
         <Button

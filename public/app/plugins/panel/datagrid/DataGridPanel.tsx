@@ -154,8 +154,29 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       return true;
     }
 
-    if (selection.rows) {
-      updateSnapshot(deleteRows(frame, selection.rows.toArray()), onUpdateData);
+    const rows = selection.rows.toArray();
+    const cols = selection.columns.toArray();
+
+    if (rows.length) {
+      updateSnapshot(deleteRows(frame, rows), onUpdateData);
+      return true;
+    }
+
+    if (cols.length) {
+      const copiedFrame = {
+        ...frame,
+        fields: frame.fields.map((field, index) => {
+          if (cols.includes(index)) {
+            return {
+              ...field,
+              values: new Array(frame.length).fill(null),
+            };
+          }
+
+          return field;
+        }),
+      };
+      updateSnapshot(copiedFrame, onUpdateData);
       return true;
     }
 
@@ -175,7 +196,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
     dispatch({
       type: DatagridActionType.openHeaderDropdownMenu,
-      payload: { screenPosition, columnIndex: col, value: frame.fields[col].name },
+      payload: { screenPosition, columnIndex: col, value: state.columns[col].title },
     });
   };
 

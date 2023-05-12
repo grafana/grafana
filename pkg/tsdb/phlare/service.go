@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // Make sure PhlareDatasource implements required interfaces. This is important to do
@@ -41,15 +42,15 @@ func (s *Service) getInstance(pluginCtx backend.PluginContext) (*PhlareDatasourc
 	return in, nil
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, ac accesscontrol.AccessControl) *Service {
 	return &Service{
-		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im: datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, ac)),
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider, ac accesscontrol.AccessControl) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewPhlareDatasource(httpClientProvider, settings)
+		return NewPhlareDatasource(httpClientProvider, settings, ac)
 	}
 }
 

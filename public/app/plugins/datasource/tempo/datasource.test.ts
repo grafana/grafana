@@ -30,6 +30,7 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
+  getEscapedSpanNames,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
@@ -587,6 +588,20 @@ describe('Tempo service graph view', () => {
   it('should build link expr correctly', () => {
     let builtQuery = buildLinkExpr('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
+  });
+
+  it('should escape span names correctly', () => {
+    const spanNames = [
+      '/actuator/health/**',
+      '$type + [test]|HTTP POST - post',
+      'server.cluster.local:9090^/sample.test(.*)?',
+    ];
+    let escaped = getEscapedSpanNames(spanNames);
+    expect(escaped).toEqual([
+      '/actuator/health/\\\\*\\\\*',
+      '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
+      'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
+    ]);
   });
 
   it('should get field config correctly', () => {

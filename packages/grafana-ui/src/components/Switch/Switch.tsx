@@ -9,12 +9,14 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
-  /** Make switch's background and border transparent */
+  /** Make inline switch's background and border transparent */
   transparent?: boolean;
+  /** Show an invalid state around the input */
+  invalid?: boolean;
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, onChange, id, label, disabled, ...inputProps }, ref) => {
+  ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
@@ -24,7 +26,7 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
     const switchIdRef = useRef(id ? id : uniqueId('switch-'));
 
     return (
-      <div className={cx(styles.switch)}>
+      <div className={cx(styles.switch, invalid && styles.invalid)}>
         <input
           type="checkbox"
           disabled={disabled}
@@ -49,12 +51,14 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, className, showLabel, label, value, id, ...props }, ref) => {
+  ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
     const theme = useTheme2();
     const styles = getSwitchStyles(theme, transparent);
 
     return (
-      <div className={cx(styles.inlineContainer, className, props.disabled && styles.disabled)}>
+      <div
+        className={cx(styles.inlineContainer, className, props.disabled && styles.disabled, invalid && styles.invalid)}
+      >
         {showLabel && (
           <label
             htmlFor={id}
@@ -172,6 +176,13 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
     `,
     inlineLabelEnabled: css`
       color: ${theme.colors.text.primary};
+    `,
+    invalid: css`
+      input + label,
+      input:checked + label,
+      input:hover + label {
+        border: 1px solid ${theme.colors.error.border};
+      }
     `,
   };
 });
