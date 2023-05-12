@@ -190,7 +190,7 @@ _Generally available in all editions of Grafana._
 
 You can now query multiple data sources simultaneously in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
 
-Mixed data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can disable this feature using the `exploreMixedDatasource` feature toggle.
+The "Mixed" data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source or Enterprise, you can disable this feature using the `exploreMixedDatasource` feature toggle.
 
 ## Public dashboards
 
