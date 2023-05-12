@@ -71,7 +71,7 @@
     "bluebird": "3.7.1",
     "chrome-remote-interface": "0.32.1",
     "commander": "8.3.0",
-    "cypress": "12.11.0",
+    "cypress": "12.12.0",
     "cypress-file-upload": "5.0.8",
     "devtools-protocol": "0.0.1113774",
     "execa": "5.1.1",

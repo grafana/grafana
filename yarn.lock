@@ -3100,7 +3100,7 @@ __metadata:
     bluebird: 3.7.1
     chrome-remote-interface: 0.32.1
     commander: 8.3.0
-    cypress: 12.11.0
+    cypress: 12.12.0
     cypress-file-upload: 5.0.8
     devtools-protocol: 0.0.1113774
     esbuild: 0.16.17
@@ -13958,9 +13958,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:12.11.0":
-  version: 12.11.0
-  resolution: "cypress@npm:12.11.0"
+"cypress@npm:12.12.0":
+  version: 12.12.0
+  resolution: "cypress@npm:12.12.0"
   dependencies:
     "@cypress/request": ^2.88.10
     "@cypress/xvfb": ^1.2.4
@@ -14006,7 +14006,7 @@ __metadata:
     yauzl: ^2.10.0
   bin:
     cypress: bin/cypress
-  checksum: 56e5ebaec59dffca5d19704f2b2674cbb0002f20050c1d624217ede157c528757f58ad42f0899fc67c32c61d5461eef5e2a3a99a6a52b77b152362a025a22599
+  checksum: 5ab0a8bc58c8af90cdb5fea93692422e6e74436ffdaeb41853e91a3fcfcdb7a39ad6ae512537bf0edf25cc3bc3732248a32e8ad3bec3440d5f527f3a3b4650b7
   languageName: node
   linkType: hard
 
@@ -18009,7 +18009,7 @@ __metadata:
     core-js: 3.28.0
     css-loader: 6.7.3
     css-minimizer-webpack-plugin: 4.2.2
-    cypress: 12.11.0
+    cypress: 12.12.0
     d3: 7.8.2
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
