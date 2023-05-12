@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -87,6 +87,28 @@ export function ResultsTable(props: ResultsTableProps) {
     }
   }
 
+  function noMetricsMessages(): ReactElement {
+    let message;
+
+    if (!state.fuzzySearchQuery) {
+      message = 'There are no metrics found in the data source.';
+    }
+
+    if (query.labels.length > 0) {
+      message = 'There are no metrics found. Try to expand your label filters.';
+    }
+
+    if (state.fuzzySearchQuery) {
+      message = 'There are no metrics found. Try to expand your search and filters.';
+    }
+
+    return (
+      <tr className={styles.noResults}>
+        <td colSpan={3}>{message}</td>
+      </tr>
+    );
+  }
+
   return (
     <table className={styles.table} ref={tableRef}>
       <thead className={styles.stickyHeader}>
@@ -102,7 +124,7 @@ export function ResultsTable(props: ResultsTableProps) {
       </thead>
       <tbody>
         <>
-          {metrics &&
+          {metrics.length > 0 &&
             metrics.map((metric: MetricData, idx: number) => {
               return (
                 <tr
@@ -129,6 +151,7 @@ export function ResultsTable(props: ResultsTableProps) {
                 </tr>
               );
             })}
+          {metrics.length === 0 && !state.isLoading && noMetricsMessages()}
         </>
       </tbody>
     </table>
@@ -143,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       table-layout: fixed;
       border-radius: ${theme.shape.borderRadius()};
       width: 100%;
+      height: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
       td {
         padding: ${theme.spacing(1)};
@@ -183,6 +207,10 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       position: sticky;
       top: 0;
       background-color: ${theme.colors.background.primary};
+    `,
+    noResults: css`
+      text-align: center;
+      color: ${theme.colors.text.secondary};
     `,
   };
 };
