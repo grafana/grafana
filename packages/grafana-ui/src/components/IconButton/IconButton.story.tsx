@@ -5,10 +5,14 @@ import React from 'react';
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
+
+interface ScenarioProps {
+  background: 'canvas' | 'primary' | 'secondary';
+}
 
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
@@ -54,7 +58,7 @@ export const ExamplesSizes = () => {
         }
       `}
     >
-      <VerticalGroup spacing="md">
+      <HorizontalGroup spacing="md">
         {variants.map((variant) => {
           return (
             <div key={variant}>
@@ -95,7 +99,7 @@ export const ExamplesSizes = () => {
             </div>
           ))}
         </div>
-      </VerticalGroup>
+      </HorizontalGroup>
     </div>
   );
 };
@@ -110,9 +114,6 @@ export const ExamplesBackground = () => {
   );
 };
 
-interface ScenarioProps {
-  background: 'canvas' | 'primary' | 'secondary';
-}
 const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
   const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
