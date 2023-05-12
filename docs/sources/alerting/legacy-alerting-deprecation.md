@@ -15,7 +15,7 @@ Legacy alerting refers to the old alerting system that was used prior to the int
 
 The decision to deprecate legacy alerting was made to encourage users to migrate to the new alerting system, which offers a more powerful and flexible alerting experience based on Prometheus Alertmanager.
 
-Users who are still using legacy alerting are encouraged to migrate their alerts to the new system as soon as possible to ensure that they continue to receive new features, bug fixes and support.
+Users who are still using legacy alerting are encouraged to migrate their alerts to the new system as soon as possible to ensure that they continue to receive new features, bug fixes, and support.
 
 However, we will still patch CVEs until legacy alerting is completely removed in Grafana 11; honoring our commitment to building and distributing secure software.
 
