@@ -212,13 +212,19 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(
-  theme: GrafanaTheme2,
-  color: ThemeRichColor,
-  fill: ButtonFill,
-  defaultBorderColor = 'transparent',
-  outlineBorderColor = color.border
-): CSSObject {
+function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+  let outlineBorderColor = color.border;
+  let borderColor = 'transparent';
+  let hoverBorderColor = 'transparent';
+
+  // Secondary button has some special rules as we lack theem color token to
+  // specify border color for normal button vs border color for outline button
+  if (color.name === 'secondary') {
+    borderColor = color.border;
+    hoverBorderColor = theme.colors.emphasize(color.border, 0.25);
+    outlineBorderColor = theme.colors.border.strong;
+  }
+
   if (fill === 'outline') {
     return {
       background: 'transparent',
@@ -230,7 +236,7 @@ function getButtonVariantStyles(
 
       '&:hover': {
         background: colorManipulator.alpha(color.main, theme.colors.action.hoverOpacity),
-        borderColor: theme.colors.emphasize(color.border, 0.25),
+        borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
       },
     };
@@ -260,7 +266,7 @@ function getButtonVariantStyles(
   return {
     background: color.main,
     color: color.contrastText,
-    border: `1px solid ${defaultBorderColor}`,
+    border: `1px solid ${borderColor}`,
     transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
       duration: theme.transitions.duration.short,
     }),
@@ -269,6 +275,7 @@ function getButtonVariantStyles(
       background: color.shade,
       color: color.contrastText,
       boxShadow: theme.shadows.z1,
+      borderColor: hoverBorderColor,
     },
   };
 }
@@ -308,23 +315,17 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
   switch (variant) {
     case 'secondary':
       // The seconday button has some special handling as it's outline border is it's default color border
-      return getButtonVariantStyles(
-        theme,
-        theme.colors.secondary,
-        fill,
-        theme.colors.secondary.border,
-        theme.colors.border.strong
-      );
+      return getButtonVariantStyles(theme, theme.colors.secondary, fill);
 
     case 'destructive':
-      return getButtonVariantStyles(theme, theme.colors.error, fill, 'transparent');
+      return getButtonVariantStyles(theme, theme.colors.error, fill);
 
     case 'success':
-      return getButtonVariantStyles(theme, theme.colors.success, fill, 'transparent');
+      return getButtonVariantStyles(theme, theme.colors.success, fill);
 
     case 'primary':
     default:
-      return getButtonVariantStyles(theme, theme.colors.primary, fill, 'transparent');
+      return getButtonVariantStyles(theme, theme.colors.primary, fill);
   }
 }
 

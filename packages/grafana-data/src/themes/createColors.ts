@@ -89,7 +89,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.08)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
     medium: `rgba(${this.whiteBase}, 0.20)`,
     strong: `rgba(${this.whiteBase}, 0.30)`,
   };
@@ -113,7 +113,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     shade: `rgba(${this.whiteBase}, 0.14)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: this.border.weak,
+    border: `rgba(${this.whiteBase}, 0.08)`,
   };
 
   info = this.primary;
@@ -185,11 +185,11 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: palette.white,
-    shade: `rgba(${this.blackBase}, 0.04)`,
+    main: `rgba(${this.blackBase}, 0.08)`,
+    shade: `rgba(${this.blackBase}, 0.15)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.medium,
+    border: this.border.weak,
   };
 
   info = {

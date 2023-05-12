@@ -45,7 +45,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
       </Field>
       <Modal.ButtonRow>
-        <Button onClick={onDismiss} variant="secondary">
+        <Button onClick={onDismiss} variant="secondary" fill="outline">
           Cancel
         </Button>
         <Button disabled={moveTarget === undefined} onClick={onMove} variant="primary">
