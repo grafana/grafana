@@ -3,9 +3,19 @@ import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { InlineField, Input, Modal, MultiSelect, Spinner, useTheme2, Pagination, Button, Toggletip } from '@grafana/ui';
+import {
+  InlineField,
+  Input,
+  Modal,
+  MultiSelect,
+  Spinner,
+  useTheme2,
+  Pagination,
+  Button,
+  Toggletip,
+  ButtonGroup,
+} from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
@@ -223,41 +233,37 @@ export const MetricsModal = (props: MetricsModalProps) => {
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.inputWrapper}>
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
-          <EditorField label="Search metrics">
-            <Input
-              autoFocus={true}
-              data-testid={testIds.searchMetric}
-              placeholder={placeholders.browse}
-              value={state.fuzzySearchQuery}
-              onInput={(e) => {
-                const value = e.currentTarget.value ?? '';
-                dispatch(setFuzzySearchQuery(value));
+          <Input
+            autoFocus={true}
+            data-testid={testIds.searchMetric}
+            placeholder={placeholders.browse}
+            value={state.fuzzySearchQuery}
+            onInput={(e) => {
+              const value = e.currentTarget.value ?? '';
+              dispatch(setFuzzySearchQuery(value));
 
-                searchCallback(value, state.fullMetaSearch);
-              }}
-              onKeyDown={(e) => {
-                keyFunction(e);
-              }}
-            />
-          </EditorField>
+              searchCallback(value, state.fullMetaSearch);
+            }}
+            onKeyDown={(e) => {
+              keyFunction(e);
+            }}
+          />
         </div>
         {state.hasMetadata && (
           <div className={styles.inputItem}>
-            <EditorField label="Filter by type">
-              <MultiSelect
-                data-testid={testIds.selectType}
-                inputId="my-select"
-                options={typeOptions}
-                value={state.selectedTypes}
-                placeholder={placeholders.type}
-                onChange={(v) => {
-                  // *** Filter by type
-                  // *** always include metrics without metadata but label it as unknown type
-                  // Consider tabs select instead of actual select or multi select
-                  dispatch(setSelectedTypes(v));
-                }}
-              />
-            </EditorField>
+            <MultiSelect
+              data-testid={testIds.selectType}
+              inputId="my-select"
+              options={typeOptions}
+              value={state.selectedTypes}
+              placeholder={placeholders.type}
+              onChange={(v) => {
+                // *** Filter by type
+                // *** always include metrics without metadata but label it as unknown type
+                // Consider tabs select instead of actual select or multi select
+                dispatch(setSelectedTypes(v));
+              }}
+            />
           </div>
         )}
         <div className={styles.inputItem}>
@@ -267,15 +273,17 @@ export const MetricsModal = (props: MetricsModalProps) => {
             placement="bottom-end"
             closeButton={false}
           >
-            <Button
-              variant="secondary"
-              fill="text"
-              size="sm"
-              onClick={() => dispatch(showAdditionalSettings())}
-              data-testid={testIds.showAdditionalSettings}
-            >
-              Additional Settings
-            </Button>
+            <ButtonGroup className={styles.settingsBtn}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => dispatch(showAdditionalSettings())}
+                data-testid={testIds.showAdditionalSettings}
+              >
+                Additional Settings
+              </Button>
+              <Button variant="secondary" icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'} />
+            </ButtonGroup>
           </Toggletip>
         </div>
       </div>
