@@ -220,11 +220,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
         }
       ></DataSourceList>
       <div className={styles.footer}>
-        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
-          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
-            Add csv or spreadsheet
-          </Button>
-        )}
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
@@ -252,6 +247,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            Add csv or spreadsheet
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -278,6 +278,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     footer: css`
       flex: 0;
       display: flex;
+      flex-direction: row-reverse;
       justify-content: space-between;
       padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};
