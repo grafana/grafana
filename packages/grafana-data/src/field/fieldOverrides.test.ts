@@ -838,7 +838,10 @@ describe('getLinksSupplier', () => {
               links: [
                 {
                   url: 'should not be ignored',
-                  onClick: onClickSpy,
+                  onClick: (evt) => {
+                    onClickSpy();
+                    evt.replaceVariables?.('${foo}');
+                  },
                   title: 'title to be interpolated',
                 },
                 {
@@ -850,8 +853,8 @@ describe('getLinksSupplier', () => {
           },
         ],
       });
-
-      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const scopedVars = { foo: { text: 'bar', value: 'bar' } };
+      const supplier = getLinksSupplier(f0, f0.fields[0], scopedVars, replaceSpy);
       const links = supplier({});
 
       expect(links.length).toBe(2);
@@ -861,12 +864,15 @@ describe('getLinksSupplier', () => {
       links[0].onClick!({});
 
       expect(onClickSpy).toBeCalledTimes(1);
+      expect(replaceSpy).toBeCalledTimes(4);
+      // check that onClick variable replacer has scoped vars bound to it
+      expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
     });
 
     it('handles links built dynamically', () => {
       const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
       const onBuildUrlSpy = jest.fn();
-
+      const scopedVars = { foo: { text: 'bar', value: 'bar' } };
       const f0 = createDataFrame({
         name: 'A',
         fields: [
@@ -878,8 +884,9 @@ describe('getLinksSupplier', () => {
               links: [
                 {
                   url: 'should be ignored',
-                  onBuildUrl: () => {
+                  onBuildUrl: (evt) => {
                     onBuildUrlSpy();
+                    evt?.replaceVariables?.('${foo}');
                     return 'url to be interpolated';
                   },
                   title: 'title to be interpolated',
@@ -894,12 +901,15 @@ describe('getLinksSupplier', () => {
         ],
       });
 
-      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const supplier = getLinksSupplier(f0, f0.fields[0], scopedVars, replaceSpy);
       const links = supplier({});
 
       expect(onBuildUrlSpy).toBeCalledTimes(1);
       expect(links.length).toBe(2);
       expect(links[0].href).toEqual('url interpolated 10');
+      expect(replaceSpy).toBeCalledTimes(5);
+      // check that onBuildUrl variable replacer has scoped vars bound to it
+      expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
     });
   });
 });
