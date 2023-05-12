@@ -412,7 +412,7 @@ export const getLinksSupplier =
           scopedVars: dataLinkScopedVars,
           field,
           range: link.internal.range ?? ({} as any),
-          replaceVariables: boundReplaceVariables,
+          replaceVariables,
         });
       }
       let href = link.onBuildUrl
