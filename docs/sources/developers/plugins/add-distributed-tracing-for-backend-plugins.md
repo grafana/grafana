@@ -36,7 +36,7 @@ Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel)
 
 When OpenTelemetry tracing is enabled on the main Grafana instance and tracing is enabled for a plugin, the OpenTelemetry endpoint address and propagation format is passed to the plugin during startup. These parameters are used to configure a global tracer.
 
-1. Use `datasource.Manage` or `app.Manage` to run your plugin to automatically configure the global tracer. Also, specify custom attributes for the default tracer:
+1. Use `datasource.Manage` or `app.Manage` to run your plugin to automatically configure the global tracer. Specify any custom attributes for the default tracer using `CustomAttributes`:
 
    ```go
    func main() {
@@ -55,7 +55,7 @@ When OpenTelemetry tracing is enabled on the main Grafana instance and tracing i
    }
    ```
 
-1. Once you have configured tracing, retrieve the global tracer like this:
+1. Once you have configured tracing, use the global tracer like this:
 
    ```go
    tracing.DefaultTracer()

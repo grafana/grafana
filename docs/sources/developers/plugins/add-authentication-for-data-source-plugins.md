@@ -150,7 +150,7 @@ To forward requests through the Grafana proxy, you need to configure one or more
    }
    ```
 
-1. In the `query` method, make a request using `BackendSrv`. The first section of the URL path needs to match the `path` of your proxy route. The data source proxy replaces `this.url + routePath` with the `url` of the route. The following request is made to `https://api.example.com/v1/users`:
+1. In the `query` method, make a request using `BackendSrv`. The first section of the URL path needs to match the `path` of your proxy route. The data source proxy replaces `this.url + routePath` with the `url` of the route. Based on our example, the URL for the request would be `https://api.example.com/v1/users`:
 
    ```ts
    import { getBackendSrv } from '@grafana/runtime';
@@ -169,27 +169,29 @@ To forward requests through the Grafana proxy, you need to configure one or more
 
 Grafana sends the proxy route to the server, where the data source proxy decrypts any sensitive data and interpolates the template variables with the decrypted data before making the request.
 
-1. To add user-defined configuration to your routes, add `{{ .JsonData.projectId }}` to the route, where `projectId` is the name of a property in the `jsonData` object:
+To add user-defined configuration to your routes:
 
-   ```json
-   "routes": [
-     {
-       "path": "example",
-       "url": "https://api.example.com/projects/{{ .JsonData.projectId }}"
-     }
-   ]
-   ```
+- Use `.JsonData` for configuration stored in `jsonData`. For example, where `projectId` is the name of a property in the `jsonData` object:
 
-1. Optional: You can also configure your route to use sensitive data by using `.SecureJsonData`:
+  ```json
+  "routes": [
+    {
+      "path": "example",
+      "url": "https://api.example.com/projects/{{ .JsonData.projectId }}"
+    }
+  ]
+  ```
 
-   ```json
-   "routes": [
-     {
-       "path": "example",
-       "url": "https://{{ .JsonData.username }}:{{ .SecureJsonData.password }}@api.example.com"
-     }
-   ]
-   ```
+- Use `.SecureJsonData` for sensitive data stored in `secureJsonData`. For example, where `password` is the name of a property in the `secureJsonData` object:
+
+  ```json
+  "routes": [
+    {
+      "path": "example",
+      "url": "https://{{ .JsonData.username }}:{{ .SecureJsonData.password }}@api.example.com"
+    }
+  ]
+  ```
 
 In addition to adding the URL to the proxy route, you can also add headers, URL parameters, and a request body.
 
