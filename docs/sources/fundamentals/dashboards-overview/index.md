@@ -29,7 +29,7 @@ The following image illustrates each of the gates, and the following sections de
 
 ## Data source
 
-A data source is any entity that contains data. A data source can be a SQL database, Grafana Loki, Grafana Mimir, or a JSON-based API. A data source can even be a flat CSV file. A dashboard visualization starts with the data source that contains the data you want to see.
+A data source refers to any entity that consists of data. It can be a SQL database, Grafana Loki, Grafana Mimir, or a JSON-based API. It can even be a basic CSV file. The first step in creating a dashboard visualization is selecting the data source that contains the data you need.
 
 Understanding the differences between various data sources can be a challenge because each data source has a unique structure and requires different query methods. To simplify this complexity, Grafana Labs has developed plugins that unify these data sources into one coherent view.
 
@@ -37,7 +37,7 @@ Understanding the differences between various data sources can be a challenge be
 
 A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we will address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the  data from the data source, and reconcile the differences in data models using a unified data structure called a [data frame](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/). The data coming into the plugin from the data source might be many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it is always data frames.
 
-At the time of this writing, there are 155 different kinds of data sources available to use with Grafana.  The most popular options come pre-installed installed and  ready to use. After you determine your needs, first check to see if a data source is already available. Grafana is expanding the list all the time, so if you don’t find what you need, you can [check the plugin catalog](https://grafana.com/grafana/plugins/?type=datasource) or even [build your own plugin](https://grafana.com/tutorials/build-a-data-source-plugin/).
+Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](/tutorials/build-a-data-source-plugin/).
 
 ## Query
 
@@ -56,10 +56,12 @@ Queries are a very powerful way to precisely express the data you want on a dash
 Not all panels will use [transforms](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/). When you are first starting out, you may not need them, but they’re so powerful we have to mention them.  Sometimes the data that comes from your source won’t be shaped correctly.  Common examples include things like:
 
 * **Situation**: you want to combine two fields together, like concatenating Given Name + Family Name into one single full name field; combining/concatenating two fields together
-* **Situation**: you have CSV data, (all text), and you want to convert a field types (such as parsing a date or a number out of a string)
+- You have CSV data (all text), and you want to convert a field types (such as parsing a date or a number out of a string)
 - You want to filter, join, merge, or perform other SQL-like operations that might not be supported by the underlying data source or query language
 
-{{< figure src="/media/docs/grafana/dashboards-overview/example-transforms.png" max-width="750px" caption="Transform Dialog" >}}
+The following image shows the transform dialog.
+
+Transforms are located next to the **Query** tab in the edit dialog for a panel. Select the transform you want, and define the transform. The following image shows that you can have as many transforms as you want, just like queries. For example, you can chain together a series of transforms that make a change to a data type, filter results, organize columns, and sort the result into one data pipeline. Every time the dashboard is refreshed, the transform applies to the latest data from the data source.
 
 Transforms are located next to the **Query** tab in the edit dialog for a panel. Select the transform you want, and define the transform. The following image shows that you can have as many transforms as you want, just like queries. For example, you can chain together a series of transforms that make a change to a data type, filter results, organize columns, and sort the result into one data pipeline. Every time the dashboard is refreshed, the transform applies to the latest data from the data source.
 
