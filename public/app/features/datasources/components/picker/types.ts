@@ -6,11 +6,9 @@ import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 export interface DataSourceDropdownProps {
-  onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>) => void;
+  onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
   current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
   recentlyUsed?: string[];
-  queriesChanged?: (queries: GrafanaQuery[] | DataQuery[]) => void;
-  runQueries?: () => void;
 }
 
 export interface PickerContentProps extends DataSourceDropdownProps {

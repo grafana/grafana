@@ -7,12 +7,12 @@ import {
   DataFrame,
   DataFrameJSON,
   dataFrameToJSON,
-  DataQuery,
   DataSourceInstanceSettings,
   DataSourceRef,
   GrafanaTheme2,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Modal,
   FileDropzone,
@@ -42,23 +42,14 @@ const INTERACTION_ITEM = {
 };
 
 interface DataSourceModalProps {
-  onChange: (ds: DataSourceInstanceSettings) => void;
+  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
   reportedInteractionFrom?: string;
-  queriesChanged?: (queries: GrafanaQuery[] | DataQuery[]) => void;
-  runQueries?: () => void;
 }
 
-export function DataSourceModal({
-  onChange,
-  current,
-  onDismiss,
-  reportedInteractionFrom,
-  queriesChanged,
-  runQueries,
-}: DataSourceModalProps) {
+export function DataSourceModal({ onChange, current, onDismiss, reportedInteractionFrom }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
@@ -87,7 +78,7 @@ export function DataSourceModal({
   const grafanaDS = useDatasource('-- Grafana --');
 
   const onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
-    if (!grafanaDS || !queriesChanged || !runQueries) {
+    if (!grafanaDS) {
       return;
     }
     DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
@@ -96,8 +87,7 @@ export function DataSourceModal({
         const dataframeJson = dataFrameToJSON(df);
         snapshot.push(dataframeJson);
       });
-      await onChange(grafanaDS);
-      queriesChanged([
+      await onChange(grafanaDS, [
         {
           refId: 'A',
           datasource: {
@@ -109,7 +99,6 @@ export function DataSourceModal({
           file: next.file,
         },
       ]);
-      runQueries();
     });
 
     reportInteraction(INTERACTION_EVENT_NAME, {

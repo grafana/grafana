@@ -4,7 +4,6 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultTimeRange,
@@ -13,6 +12,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
@@ -131,13 +131,16 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.setState({ data });
   }
 
-  onChangeDataSource = async (newSettings: DataSourceInstanceSettings) => {
+  onChangeDataSource = async (
+    newSettings: DataSourceInstanceSettings,
+    defaultQueries?: DataQuery[] | GrafanaQuery[]
+  ) => {
     const { dsSettings } = this.state;
     const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
     const nextDS = await getDataSourceSrv().get(newSettings.uid);
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
-    const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
+    const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS));
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
     this.onChange({
@@ -279,10 +282,8 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     const commonProps = {
       current: this.props.options.dataSource,
-      queriesChanged: this.onQueriesChange.bind(this),
-      runQueries: this.props.onRunQueries,
-      onChange: async (ds: DataSourceInstanceSettings) => {
-        await this.onChangeDataSource(ds);
+      onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
+        await this.onChangeDataSource(ds, defaultQueries);
         this.onCloseDataSourceModal();
       },
     };

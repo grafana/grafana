@@ -6,11 +6,11 @@ import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource } from '../../hooks';
 
@@ -30,7 +30,7 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, queriesChanged, runQueries, ...restProps } = props;
+  const { current, onChange, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -69,14 +69,12 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   });
   const grafanaDS = useDatasource('-- Grafana --');
 
-  const onClickAddCSV = async () => {
-    if (!grafanaDS || !queriesChanged || !runQueries) {
+  const onClickAddCSV = () => {
+    if (!grafanaDS) {
       return;
     }
 
-    await onChange(grafanaDS);
-
-    queriesChanged([
+    onChange(grafanaDS, [
       {
         refId: 'A',
         datasource: {
@@ -87,7 +85,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
         snapshot: [],
       },
     ]);
-    runQueries();
   };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
@@ -172,17 +169,18 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             <PickerContent
               keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
-              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+              onChange={(
+                ds: DataSourceInstanceSettings<DataSourceJsonData>,
+                defaultQueries?: DataQuery[] | GrafanaQuery[]
+              ) => {
                 onClose();
-                onChange(ds);
+                onChange(ds, defaultQueries);
               }}
               onClose={onClose}
               current={currentDataSourceInstanceSettings}
               style={popper.styles.popper}
               ref={setSelectorElement}
               onClickAddCSV={onClickAddCSV}
-              queriesChanged={queriesChanged}
-              runQueries={runQueries}
               {...restProps}
               onDismiss={onClose}
             ></PickerContent>
@@ -213,7 +211,7 @@ function getStylesDropdown(theme: GrafanaTheme2) {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, queriesChanged, runQueries, current } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current } = props;
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
@@ -262,11 +260,9 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 showModal(DataSourceModal, {
                   reportedInteractionFrom: 'ds_picker',
                   current,
-                  queriesChanged,
-                  runQueries,
                   onDismiss: hideModal,
-                  onChange: (ds) => {
-                    onChange(ds);
+                  onChange: (ds, defaultQueries) => {
+                    onChange(ds, defaultQueries);
                     hideModal();
                   },
                 });
