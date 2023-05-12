@@ -435,6 +435,7 @@ trigger:
     include:
     - pkg/**
     - packaging/**
+    - .drone.yml
     - conf/**
     - go.sum
     - go.mod
@@ -6536,6 +6537,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 09ac8c69812183afef95e0cfbd00591855498f9427d0153bc49df2a35284784f
+hmac: 427c594a9191f5f7dff1208eff0d64b73312169fa2be91b32d7187d6b74eba5d
 
 ...
