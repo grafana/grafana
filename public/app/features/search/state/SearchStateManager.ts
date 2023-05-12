@@ -39,6 +39,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   updateLocation = debounce((query) => locationService.partial(query, true), 300);
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
+  lastSearchPromise: Promise<void> = Promise.resolve();
 
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
@@ -224,29 +225,23 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     this.setState({ loading: true });
 
-    if (this.state.starred) {
-      getGrafanaSearcher()
-        .starred(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
+    const searcher = getGrafanaSearcher();
+
+    // Issue this search now, but wait until previous searches have resolved to update it in the state
+    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
+
+    this.lastSearchPromise = this.lastSearchPromise
+      .then(() => searchPromise)
+      .then((result) => this.setState({ result, loading: false }))
+      .catch((error) => {
+        reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+          ...trackingInfo,
+          error: error?.message,
         });
-    } else {
-      getGrafanaSearcher()
-        .search(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
-        });
-    }
+        this.setState({ loading: false });
+
+        return Promise.resolve(); // make sure this.lastSearchPromise is always resolved
+      });
   }
 
   // This gets the possible tags from within the query results
