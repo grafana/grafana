@@ -23,7 +23,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
-| `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                                                                                                                               | Yes                |
+| `exploreMixedDatasource`            | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`            | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `internationalization`              | Enables internationalization                                                                                                                                                                        | Yes                |
 | `topnav`                            | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
@@ -49,7 +49,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
 | `publicDashboardsEmailSharing`       | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                     |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
-| `exploreMixedDatasource`             | Enable mixed datasource in Explore                                                                                                                                                           |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
 | `newDBLibrary`                       | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `validateDashboardsOnSave`           | Validate dashboard JSON POSTed to api/dashboards/db                                                                                                                                          |
@@ -61,6 +60,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
+| `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 
 ## Alpha feature toggles
@@ -111,6 +111,7 @@ Alpha features might be changed or removed without prior notice.
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                        |
 | `advancedDataSourcePicker`         | Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                         |
+| `extraThemes`                      | Enables extra themes                                                                                           |
 
 ## Development feature toggles
 
