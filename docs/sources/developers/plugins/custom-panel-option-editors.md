@@ -4,13 +4,14 @@ title: Build a custom panel option editor
 
 # Build a custom panel option editor
 
-The Grafana plugin platform comes with a range of editors that allow your users to customize a panel. The standard editors cover the most common types of options, such as text input and boolean switches. If you don't find the editor you're looking for, you can build your own. 
+The Grafana plugin platform comes with a range of editors that allow your users to customize a panel. The standard editors cover the most common types of options, such as text input and boolean switches. If you don't find the editor you're looking for, you can build your own.
 
 ## Panel option editor basics
 
-The simplest editor is a React component that accepts two props: 
+The simplest editor is a React component that accepts two props:
+
 - **`value`**: the current value of the option
-- **`onChange`**: updates it the option's value
+- **`onChange`**: updates the option's value
 
 The editor in the example below lets the user toggle a boolean value by clicking a button:
 
@@ -26,7 +27,7 @@ export const SimpleEditor = ({ value, onChange }: StandardEditorProps<boolean>) 
 };
 ```
 
-To use a custom panel option editor, use the `addCustomEditor` on the `OptionsUIBuilder` object in your `module.ts` file. To configure the editor, set the `editor` property to the `SimpleEditor` component.
+To use a custom panel option editor, use the `addCustomEditor` on the `OptionsUIBuilder` object in your `module.ts` file and set the `editor` property to the name of your custom editor component.
 
 **module.ts**
 
@@ -43,7 +44,7 @@ export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOption
 
 ## Add settings to your panel option editor
 
-If you're using your custom editor to configure multiple options, you might want to be able to customize it. To add settings to your editor, set the second template variable of `StandardEditorProps` to an interface that contains the settings you want to configure. Access the editor settings through the `item` prop. 
+You can use your custom editor to customize multiple possible settings. To add settings to your editor, set the second template variable of `StandardEditorProps` to an interface that contains the settings you want to configure. Access the editor settings through the `item` prop.
 
 Here's an example of an editor that populates a drop-down with a range of numbers. The `Settings` interface defines the range of the `from` and `to` properties.
 
