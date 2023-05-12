@@ -1,12 +1,17 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
+import { useMedia } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { LinkButton, useStyles2, Spinner, Card, useTheme2, Tooltip, Icon } from '@grafana/ui/src';
+import { reportInteraction } from '@grafana/runtime';
+import { LinkButton, useStyles2, Spinner, Card, useTheme2, Tooltip, Icon, Switch } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useListPublicDashboardsQuery } from 'app/features/dashboard/api/publicDashboardApi';
+import {
+  useListPublicDashboardsQuery,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
 import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
@@ -21,10 +26,27 @@ import { DeletePublicDashboardButton } from './DeletePublicDashboardButton';
 const PublicDashboardCard = ({ pd }: { pd: ListPublicDashboardResponse }) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+
+  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
   const selectors = e2eSelectors.pages.PublicDashboards;
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const isOrphaned = !pd.dashboardUid;
+
+  const onTogglePause = (pd: ListPublicDashboardResponse, isPaused: boolean) => {
+    const req = {
+      dashboard: { uid: pd.dashboardUid },
+      payload: {
+        uid: pd.uid,
+        isEnabled: !isPaused,
+      },
+    };
+
+    update(req);
+  };
+
+  const CardActions = useMemo(() => (isMobile ? Card.Actions : Card.SecondaryActions), [isMobile]);
 
   return (
     <Card className={styles.card} href={!isOrphaned ? `/d/${pd.dashboardUid}` : undefined}>
@@ -40,7 +62,22 @@ const PublicDashboardCard = ({ pd }: { pd: ListPublicDashboardResponse }) => {
           </Tooltip>
         )}
       </Card.Heading>
-      <Card.SecondaryActions className={styles.actions}>
+      <CardActions className={styles.actions}>
+        <div className={styles.pauseSwitch}>
+          <Switch
+            value={!pd.isEnabled}
+            label="Pause sharing"
+            disabled={isUpdateLoading}
+            onChange={(e) => {
+              reportInteraction('grafana_dashboards_public_enable_clicked', {
+                action: e.currentTarget.checked ? 'disable' : 'enable',
+              });
+              onTogglePause(pd, e.currentTarget.checked);
+            }}
+            data-testid={selectors.ListItem.pauseSwitch}
+          />
+          <span>Pause sharing</span>
+        </div>
         <LinkButton
           disabled={isOrphaned}
           fill="text"
@@ -50,7 +87,6 @@ const PublicDashboardCard = ({ pd }: { pd: ListPublicDashboardResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardUrl(pd.accessToken)}
           key="public-dashboard-url"
-          onClick={(e) => e.stopPropagation()}
           tooltip="View public dashboard"
           data-testid={selectors.ListItem.linkButton}
         />
@@ -62,7 +98,6 @@ const PublicDashboardCard = ({ pd }: { pd: ListPublicDashboardResponse }) => {
           color={theme.colors.warning.text}
           href={generatePublicDashboardConfigUrl(pd.dashboardUid)}
           key="public-dashboard-config-url"
-          onClick={(e) => e.stopPropagation()}
           tooltip="Configure public dashboard"
           data-testid={selectors.ListItem.configButton}
         />
@@ -77,7 +112,7 @@ const PublicDashboardCard = ({ pd }: { pd: ListPublicDashboardResponse }) => {
             data-testid={selectors.ListItem.trashcanButton}
           />
         )}
-      </Card.SecondaryActions>
+      </CardActions>
     </Card>
   );
 };
@@ -107,7 +142,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     list-style-type: none;
   `,
   card: css`
-    display: flex;
+    ${theme.breakpoints.up('sm')} {
+      display: flex;
+    }
   `,
   heading: css`
     display: flex;
@@ -121,7 +158,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
   `,
   actions: css`
+    display: flex;
     align-items: center;
     position: relative;
+
+    gap: ${theme.spacing(0.5)};
+    ${theme.breakpoints.up('sm')} {
+      gap: ${theme.spacing(1)};
+    }
+  `,
+  pauseSwitch: css`
+    display: flex;
+    gap: ${theme.spacing(1)};
+    align-items: center;
+    font-size: ${theme.typography.bodySmall.fontSize};
+    margin-bottom: 0;
+    flex: 1;
+
+    ${theme.breakpoints.up('sm')} {
+      padding-right: ${theme.spacing(2)};
+    }
   `,
 });

@@ -25,7 +25,7 @@ func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *Public
 		return ErrInvalidMaxDataPoints.Errorf("ValidateQueryPublicDashboardRequest: maxDataPoints should be greater than 0")
 	}
 
-	if pd.TimeSelectionEnabled {
+	if *pd.TimeSelectionEnabled {
 		timeRange := legacydata.NewDataTimeRange(req.TimeRange.From, req.TimeRange.To)
 
 		_, err := timeRange.ParseFrom()

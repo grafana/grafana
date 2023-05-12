@@ -43,9 +43,9 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		IsFolder:                   false,
 		FolderId:                   dash.FolderID,
 		PublicDashboardAccessToken: pubdash.AccessToken,
-		PublicDashboardEnabled:     pubdash.IsEnabled,
+		PublicDashboardEnabled:     *pubdash.IsEnabled,
 	}
-	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
+	dash.Data.Get("timepicker").Set("hidden", !*pubdash.TimeSelectionEnabled)
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
 

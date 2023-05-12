@@ -112,7 +112,7 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 		return pubdash, dash, err
 	}
 
-	if !pubdash.IsEnabled {
+	if !*pubdash.IsEnabled {
 		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
 	}
 
@@ -242,13 +242,15 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// set default value for time settings
-	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = &TimeSettings{}
-	}
+	//if dto.PublicDashboard.TimeSettings == nil {
+	//	dto.PublicDashboard.TimeSettings = &TimeSettings{}
+	//}
+	//
+	//if dto.PublicDashboard.Share == "" {
+	//	dto.PublicDashboard.Share = existingPubdash.Share
+	//}
 
-	if dto.PublicDashboard.Share == "" {
-		dto.PublicDashboard.Share = existingPubdash.Share
-	}
+	setDefaultConfigurationIfNull(dto.PublicDashboard, existingPubdash)
 
 	// set values to update
 	cmd := SavePublicDashboardCommand{
@@ -406,7 +408,7 @@ func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO Pub
 func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard, u *user.SignedInUser) {
 	if publicDashboardIsEnabledChanged(existingPubdash, newPubdash) {
 		verb := "disabled"
-		if newPubdash.IsEnabled {
+		if *newPubdash.IsEnabled {
 			verb = "enabled"
 		}
 		pd.log.Info("Public dashboard "+verb, "publicDashboardUid", newPubdash.Uid, "dashboardUid", newPubdash.DashboardUid, "user", u.Login)
@@ -435,7 +437,7 @@ func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.
 // Checks to see if PublicDashboard.ExistsEnabledByDashboardUid is true on create or changed on update
 func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true
-	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled
+	newDashCreated := existingPubdash == nil && *newPubdash.IsEnabled
 	// updating dashboard, enabled changed
 	isEnabledChanged := existingPubdash != nil && newPubdash.IsEnabled != existingPubdash.IsEnabled
 	return newDashCreated || isEnabledChanged
@@ -448,4 +450,35 @@ func GenerateAccessToken() (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("%x", token[:]), nil
+}
+
+func setDefaultConfigurationIfNull(pdDTO *PublicDashboard, pd *PublicDashboard) {
+	if pdDTO.TimeSettings == nil {
+		if pd.TimeSettings == nil {
+			pdDTO.TimeSettings = &TimeSettings{}
+		} else {
+			pdDTO.TimeSettings = pd.TimeSettings
+		}
+
+	}
+
+	if pdDTO.TimeSelectionEnabled == nil {
+		pdDTO.TimeSelectionEnabled = pd.TimeSelectionEnabled
+	}
+
+	if pdDTO.IsEnabled == nil {
+		pdDTO.IsEnabled = pd.IsEnabled
+	}
+
+	if pdDTO.AnnotationsEnabled == nil {
+		pdDTO.AnnotationsEnabled = pd.AnnotationsEnabled
+	}
+
+	if pdDTO.Share == "" {
+		pdDTO.Share = pd.Share
+	}
+
+	if pdDTO.Recipients == nil {
+		pdDTO.Recipients = pd.Recipients
+	}
 }
