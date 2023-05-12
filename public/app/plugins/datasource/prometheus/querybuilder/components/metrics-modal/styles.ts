@@ -74,9 +74,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     active: css`
       cursor: pointer;
     `,
-    gray: css`
+    grey: css`
       color: grey;
-      opacity: 50%;
+      opacity: 75%;
     `,
     loadingSpinner: css`
       visibility: hidden;

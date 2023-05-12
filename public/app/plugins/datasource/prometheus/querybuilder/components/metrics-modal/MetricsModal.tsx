@@ -281,6 +281,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
       </div>
       <div className={styles.resultsData}>
+        {query.metric && <i className={styles.grey}>Currently selected: {query.metric}</i>}
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
             These metrics have been pre-filtered by labels chosen in the label filters.
