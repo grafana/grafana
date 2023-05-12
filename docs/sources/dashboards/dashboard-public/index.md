@@ -83,7 +83,7 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 {{% admonition type="note" %}}
 
-Only available in Cloud as [public preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud), please contact support to have the feature enabled.
+Available in [public preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). Please contact support to have the feature enabled.
 
 {{% /admonition %}}
 
