@@ -24,7 +24,11 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
 - If there are no dashboard permissions and the dashboard is under the General folder, then the rule is linked to the `General Alerting` folder, and the rule inherits the default permissions.
 
-3. Since there is no `Keep Last State` option for [`No Data`]({{< relref "../alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) in Grafana Alerting, this option becomes `NoData` during the legacy rules migration. Option "Keep Last State" for [`Error handling`]({{< relref "../alerting-rules/create-grafana-managed-rule/#no-data--error-handling" >}}) is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a silence for each alert rule with a duration of 1 year.
+3. Execution of `NoData` and `Error` is migrated as is to the corresponding settings of unified alerting, expect two situations:
+
+   3.1. Since there is no `Keep Last State` option for `No Data` in Grafana Alerting, this option becomes `NoData`. Option `Keep Last State` for `Error` is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a silence for each alert rule with a duration of 1 year.
+
+   3.2. Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for `NoData` and [`Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule.md#configure-no-data-and-error-handling). In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
 
 4. Notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
