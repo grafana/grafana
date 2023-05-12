@@ -14,7 +14,7 @@ weight: 300
 
 # Grafana Dashboards Overview
 
-What is a dashboard? This term is used widely in the observability space, but what does it actually mean? The term is taken from automobiles where a dashboard provides access to the controls a driver uses to operate a vehicle. The same applies to digital dashboards, except that digital dashboards help us understand and drive systems. The purpose of this topic is to explain how Grafana dashboards work to make it easier for you to build your own.
+Have you ever wondered what a dashboard is? In the observability world, this term is frequently used, but what exactly does it mean? The concept is borrowed from automobiles, where a dashboard gives drivers access to the controls necessary to operate a vehicle. Similarly, digital dashboards help us comprehend and manage systems. This topic explains how Grafana dashboards function, enabling you to create your own with greater ease.
 
 The following image illustrates a sample Grafana dashboard.
 
