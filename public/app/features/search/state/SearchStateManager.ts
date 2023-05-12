@@ -232,7 +232,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     this.lastSearchPromise = this.lastSearchPromise
       .then(() => searchPromise)
-      // searchPromise
       .then((result) => this.setState({ result, loading: false }))
       .catch((error) => {
         reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
