@@ -17,7 +17,7 @@ curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
 go_image = "golang:1.20.4"
-cypress_image = "cypress/included:12.11.0"
+cypress_image = "cypress/included:12.12.0"
 windows_go_image = "grafana/grafana-ci-windows-test:0.1.0"
 
 trigger_oss = {
