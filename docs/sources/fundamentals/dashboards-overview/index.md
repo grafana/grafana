@@ -55,7 +55,6 @@ Queries are a very powerful way to precisely express the data you want on a dash
 Not all panels will use [transforms](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/). When you are first starting out, you may not need them, but they’re so powerful we have to mention them.  Sometimes the data that comes from your source won’t be shaped correctly.  Common examples include things like:
 
 - You want to combine two fields together, for example, concatenating `Given Name` and `Family Name` into a `Full Name` field
-- ```
 - You have CSV data (all text), and you want to convert a field types (such as parsing a date or a number out of a string)
 - You want to filter, join, merge, or perform other SQL-like operations that might not be supported by the underlying data source or query language
 
