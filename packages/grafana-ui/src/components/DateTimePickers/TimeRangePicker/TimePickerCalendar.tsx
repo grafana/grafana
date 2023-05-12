@@ -41,6 +41,7 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
     modal: css`
       box-shadow: ${theme.shadows.z3};
       left: 50%;
+      max-height: 100%;
       position: fixed;
       top: 50%;
       transform: translate(-50%, -50%);
