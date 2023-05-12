@@ -35,7 +35,7 @@ function getStyles(theme: GrafanaTheme2) {
       ':hover': {
         color: theme.colors.text.link,
       },
-      marginTop: -25,
+      margin: `-25px 0 30px 0`,
     }),
   };
 }

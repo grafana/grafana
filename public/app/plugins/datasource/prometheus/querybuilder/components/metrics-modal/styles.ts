@@ -48,22 +48,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       margin: 0;
       color: ${theme.colors.warning.text};
     `,
-    alphabetRow: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      column-gap: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    alphabetRowToggles: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      flex-wrap: wrap;
-      column-gap: ${theme.spacing(1)};
-    `,
     results: css`
       height: calc(80vh - 280px);
       overflow-y: scroll;
@@ -95,7 +79,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       opacity: 50%;
     `,
     loadingSpinner: css`
-      display: inline-block;
       visibility: hidden;
     `,
     visible: css`

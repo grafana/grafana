@@ -75,12 +75,10 @@ export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispa
 }
 
 /**
- * Filter the metrics with all the options, fuzzy, type, letter
- * @param metrics
- * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
+ * Filter the metrics with all the options, fuzzy, type, null metadata
  * @returns
  */
-export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boolean): MetricsData {
+export function filterMetrics(state: MetricsModalState): MetricsData {
   let filteredMetrics: MetricsData = state.metrics;
 
   if (state.fuzzySearchQuery && !state.useBackend) {
@@ -89,13 +87,6 @@ export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boole
     } else {
       filteredMetrics = state.nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
     }
-  }
-
-  if (state.letterSearch && !skipLetterSearch) {
-    filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-      const letters: string[] = [state.letterSearch, state.letterSearch.toLowerCase()];
-      return letters.includes(m.value[0]);
-    });
   }
 
   if (state.selectedTypes.length > 0) {

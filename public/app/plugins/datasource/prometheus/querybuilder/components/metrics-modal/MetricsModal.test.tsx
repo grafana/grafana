@@ -88,20 +88,6 @@ describe('MetricsModal', () => {
     });
   });
 
-  it('filters by alphebetical letter choice', async () => {
-    setup(defaultQuery, listOfMetrics);
-    // pick the letter J
-    const letterJ = screen.getByTestId('letter-J');
-    await userEvent.click(letterJ);
-
-    // check metrics that start with J
-    const metricStartingWithJ = screen.getByText('j');
-    expect(metricStartingWithJ).toBeInTheDocument();
-    // check metrics that don't start with J
-    const metricStartingWithSomethingElse = screen.queryByText('a');
-    expect(metricStartingWithSomethingElse).toBeNull();
-  });
-
   // Pagination
   it('shows metrics within a range by pagination', async () => {
     // default resultsPerPage is 100

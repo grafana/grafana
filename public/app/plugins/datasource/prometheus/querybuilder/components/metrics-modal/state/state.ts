@@ -48,7 +48,6 @@ export const stateSlice = createSlice({
     setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
       state.fuzzySearchQuery = action.payload;
       state.pageNum = 1;
-      state.letterSearch = '';
       state.selectedIdx = 0;
     },
     setNameHaystack: (state, action: PayloadAction<string[][]>) => {
@@ -69,10 +68,6 @@ export const stateSlice = createSlice({
     },
     setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
       state.selectedTypes = action.payload;
-      state.pageNum = 1;
-    },
-    setLetterSearch: (state, action: PayloadAction<string>) => {
-      state.letterSearch = action.payload;
       state.pageNum = 1;
     },
     setUseBackend: (state, action: PayloadAction<boolean>) => {
@@ -115,7 +110,6 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     fullMetaSearch: query?.fullMetaSearch ?? false,
     includeNullMetadata: query?.includeNullMetadata ?? true,
     selectedTypes: [],
-    letterSearch: '',
     useBackend: query?.useBackend ?? false,
     disableTextWrap: query?.disableTextWrap ?? false,
     selectedIdx: 0,
@@ -165,8 +159,6 @@ export interface MetricsModalState {
   includeNullMetadata: boolean;
   /** Filter by prometheus type */
   selectedTypes: Array<SelectableValue<string>>;
-  /** After results are filtered, select a letter to show metrics that start with that letter */
-  letterSearch: string;
   /** Filter by the series match endpoint instead of the fuzzy search */
   useBackend: boolean;
   /** Disable text wrap for descriptions in the results table */

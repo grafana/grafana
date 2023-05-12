@@ -22,13 +22,11 @@ import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
-import { LetterSearch } from './LetterSearch';
 import { ResultsTable } from './ResultsTable';
 import {
   calculatePageList,
   calculateResultsPerPage,
   displayedMetrics,
-  filterMetrics,
   getBackendSearchMetrics,
   setMetrics,
   placeholders,
@@ -67,7 +65,6 @@ const {
   setFullMetaSearch,
   setIncludeNullMetadata,
   setSelectedTypes,
-  setLetterSearch,
   setUseBackend,
   setSelectedIdx,
   setDisableTextWrap,
@@ -178,7 +175,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
         fuzzySearchQuery: state.fuzzySearchQuery,
         fullMetaSearch: state.fullMetaSearch,
         selectedTypes: state.selectedTypes,
-        letterSearch: state.letterSearch,
       });
       onClose();
     }
@@ -241,13 +237,15 @@ export const MetricsModal = (props: MetricsModalProps) => {
             onInput={(e) => {
               const value = e.currentTarget.value ?? '';
               dispatch(setFuzzySearchQuery(value));
-
               searchCallback(value, state.fullMetaSearch);
             }}
             onKeyDown={(e) => {
               keyFunction(e);
             }}
           />
+        </div>
+        <div>
+          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
         </div>
         {state.hasMetadata && (
           <div className={styles.inputItem}>
@@ -257,12 +255,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
               options={typeOptions}
               value={state.selectedTypes}
               placeholder={placeholders.type}
-              onChange={(v) => {
-                // *** Filter by type
-                // *** always include metrics without metadata but label it as unknown type
-                // Consider tabs select instead of actual select or multi select
-                dispatch(setSelectedTypes(v));
-              }}
+              onChange={(v) => dispatch(setSelectedTypes(v))}
             />
           </div>
         )}
@@ -288,25 +281,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
       </div>
       <div className={styles.resultsData}>
-        <div className={styles.resultsDataCount}>
-          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
-          <div className={styles.selectWrapper}>
-            <div className={styles.alphabetRow}>
-              <LetterSearch
-                filteredMetrics={filterMetrics(state, true)}
-                disableTextWrap={state.disableTextWrap}
-                updateLetterSearch={(letter: string) => {
-                  if (state.letterSearch === letter) {
-                    dispatch(setLetterSearch(''));
-                  } else {
-                    dispatch(setLetterSearch(letter));
-                  }
-                }}
-                letterSearch={state.letterSearch}
-              />
-            </div>
-          </div>
-        </div>
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
             These metrics have been pre-filtered by labels chosen in the label filters.

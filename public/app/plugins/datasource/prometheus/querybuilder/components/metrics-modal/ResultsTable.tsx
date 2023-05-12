@@ -43,7 +43,6 @@ export function ResultsTable(props: ResultsTableProps) {
         fuzzySearchQuery: state.fuzzySearchQuery,
         fullMetaSearch: state.fullMetaSearch,
         selectedTypes: state.selectedTypes,
-        letterSearch: state.letterSearch,
       });
       onClose();
     }
