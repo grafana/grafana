@@ -25,7 +25,7 @@ We have provided [instructions](https://grafana.com/docs/grafana/latest/alerting
 
 The new Grafana alerting system is more powerful and flexible than the legacy alerting feature.
 
-The new system is based on Prometheus Alertmanager, which offers a more comprehensive set of features for defining and managing alerts. With the new alerting system, users can create alerts based on complex queries, configure alert notifications via various integrations and set up sophisticated alerting rules with support for conditional expressions, aggregation, and grouping.
+The new system is based on Prometheus Alertmanager, which offers a more comprehensive set of features for defining and managing alerts. With the new alerting system, users can create alerts based on complex queries, configure alert notifications via various integrations, and set up sophisticated alerting rules with support for conditional expressions, aggregation, and grouping.
 
 Overall, the new alerting system in Grafana is a major improvement over the legacy alerting feature, providing users with a more powerful and flexible alerting experience.
 
