@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 
 import { logInfo } from './Analytics';
-import { RouteGroupsMatcher } from './routeGroupsMatcherWorker';
+import type { RouteGroupsMatcher } from './routeGroupsMatcher.worker';
 
 export function useRouteGroupsMatcher() {
-  const workerRef = useRef(new Worker(new URL('./routeGroupsMatcherWorker.ts', import.meta.url), { type: 'module' }));
+  const workerRef = useRef(new Worker(new URL('./routeGroupsMatcher.worker.ts', import.meta.url), { type: 'module' }));
   const routeMatcherRef = useRef(comlink.wrap<RouteGroupsMatcher>(workerRef.current));
 
   useEffect(() => {

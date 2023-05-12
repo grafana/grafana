@@ -114,8 +114,8 @@ type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
   [MatcherOperator.equal]: (lv, mv) => lv === mv,
   [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => Boolean(lv.match(new RegExp(mv))),
-  [MatcherOperator.notRegex]: (lv, mv) => !Boolean(lv.match(new RegExp(mv))),
+  [MatcherOperator.regex]: (lv, mv) => new RegExp(mv).test(lv),
+  [MatcherOperator.notRegex]: (lv, mv) => !new RegExp(mv).test(lv),
 };
 
 function isLabelMatch(matcher: ObjectMatcher, label: Label) {

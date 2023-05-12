@@ -36,10 +36,8 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
   return matches;
 }
 
-//export type NormalizedRoute = Omit<RouteWithID, 'matchers' | 'match' | 'match_re'> & { routes?: NormalizedRoute[] };
-
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
-export function normalizeRootRoute(rootRoute: RouteWithID): RouteWithID {
+export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
   function normalizeRoute(route: RouteWithID) {
     route.object_matchers = normalizeMatchers(route);
     delete route.matchers;
