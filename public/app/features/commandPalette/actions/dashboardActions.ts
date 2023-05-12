@@ -87,9 +87,9 @@ export function useSearchResults(searchQuery: string, isShowing: boolean) {
 
   // Hit dashboards API
   useEffect(() => {
+    const timestamp = Date.now();
     if (isShowing && searchQuery.length > 0) {
       setIsFetchingSearchResults(true);
-      const timestamp = Date.now();
       debouncedSearch(searchQuery).then((resultActions) => {
         // Only update the state if this is the most recent request
         // We don't need to worry about clearing the isFetching state either
@@ -102,6 +102,8 @@ export function useSearchResults(searchQuery: string, isShowing: boolean) {
       });
     } else {
       setSearchResults([]);
+      setIsFetchingSearchResults(false);
+      lastRequestTimestamp.current = timestamp;
     }
   }, [isShowing, searchQuery]);
 
