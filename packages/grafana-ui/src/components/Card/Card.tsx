@@ -51,11 +51,7 @@ export const Card: CardInterface = ({ disabled, href, onClick, children, isSelec
   const hasHeadingComponent = useMemo(
     () =>
       React.Children.toArray(children).some(
-        (c) =>
-          React.isValidElement(c) &&
-          typeof c.type !== 'string' &&
-          'displayName' in c.type &&
-          c.type === Heading.displayName
+        (c) => React.isValidElement(c) && (c.type as any).displayName === Heading.displayName
       ),
     [children]
   );
