@@ -688,7 +688,6 @@ def test_backend_step(image = build_image):
 
 def windows_test_backend_step():
     step = test_backend_step(image = windows_go_image)
-    step["failure"] = "ignore"
     return step
 
 def test_backend_integration_step():
@@ -1369,6 +1368,19 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
                 package_manager,
             ),
         },
+    }
+
+def windows_clone_step():
+    return {
+        "name": "clone",
+        "image": wix_image,
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            'git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .',
+            "git checkout -f $$env:DRONE_COMMIT",
+        ],
     }
 
 def get_windows_steps(edition, ver_mode):

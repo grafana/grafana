@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
@@ -10,7 +10,7 @@ import { ToolbarButton, ToolbarButtonVariant } from './ToolbarButton';
 import mdx from './ToolbarButton.mdx';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 
-const meta: ComponentMeta<typeof ToolbarButton> = {
+const meta: Meta<typeof ToolbarButton> = {
   title: 'Buttons/ToolbarButton',
   component: ToolbarButton,
   decorators: [withCenteredStory],
@@ -50,7 +50,7 @@ const meta: ComponentMeta<typeof ToolbarButton> = {
   },
 };
 
-export const BasicWithText: ComponentStory<typeof ToolbarButton> = (args) => {
+export const BasicWithText: StoryFn<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButton
       variant={args.variant}
@@ -72,7 +72,7 @@ BasicWithText.args = {
   iconOnly: false,
 };
 
-export const BasicWithIcon: ComponentStory<typeof ToolbarButton> = (args) => {
+export const BasicWithIcon: StoryFn<typeof ToolbarButton> = (args) => {
   return (
     <ToolbarButton
       variant={args.variant}
@@ -91,7 +91,7 @@ BasicWithIcon.args = {
   iconOnly: true,
 };
 
-export const Examples: ComponentStory<typeof ToolbarButton> = (args) => {
+export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
   const variants: ToolbarButtonVariant[] = ['default', 'active', 'primary', 'destructive'];
 
   return (
