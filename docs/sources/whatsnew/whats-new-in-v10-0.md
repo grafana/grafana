@@ -112,7 +112,7 @@ Data is being stored in the dashboard json and has a 1MB size limit. To learn mo
 
 <!-- Ivan Ortega & Natalia Bernarte -->
 
-_Available in preview in all editions of Grafana._
+_Generally available in all editions of Grafana._
 
 Concepts like data sources and dashboards panels are hard to grasp and it’s a struggle to go from Grafana’s “empty state” to a working dashboard that displays data. Our latest advancements streamline the process of selecting the ideal data source in Grafana, prioritizing recent usage and providing labels and supplementary descriptions.
 
@@ -120,7 +120,6 @@ With this flow, selecting a data source has been greatly simplified, providing a
 
 {{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
 
-To try it out, you'll need to enable the `advancedDataSourcePicker` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
 ### Time series time region support
 
