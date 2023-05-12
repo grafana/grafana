@@ -17,11 +17,11 @@ if [[ $1 == "jwtbearer" ]]; then
     echo "== Impersonating the user =="
     echo "============================"
     echo "Sending request with the jwtbearer id_token"
-    echo -e "curl -H ${blue}\"Authorization: Bearer $at\"${reset} -X ${blue}GET${reset} ${red}http://localhost:3000/api/user${reset}"
+    echo -e "curl -H ${blue}\"Authorization: Bearer $at\"${reset} -H ${blue}\"X-Grafana-Org-Id: 1\"${reset} -X ${blue}GET${reset} ${red}http://localhost:3000/api/user${reset}"
     
     pause
     
-    curl -H "Authorization: $at" -X GET http://localhost:3000/api/user | jq
+    curl -H "Authorization: $at" -H "X-Grafana-Org-Id: 1" -X GET http://localhost:3000/api/user | jq
 
     pause
 elif [[ $1 == "client_credentials" ]]; then
@@ -36,11 +36,11 @@ echo "=========================="
 echo "== Get User's dashboard =="
 echo "=========================="
 echo "sending request with the $1 id_token"
-echo -e "curl -H ${blue}\"Authorization: Bearer $at\"${reset} -X ${blue}GET${reset} ${red}http://localhost:3000/api/dashboards/uid/s6_cSu04k"${reset}
+echo -e "curl -H ${blue}\"Authorization: Bearer $at\"${reset} -H ${blue}\"X-Grafana-Org-Id: 1\"${reset} -X ${blue}GET${reset} ${red}http://localhost:3000/api/dashboards/uid/s6_cSu04k"${reset}
 
 pause
 
-curl -H "Authorization: $at" -X GET http://localhost:3000/api/dashboards/uid/s6_cSu04k | jq
+curl -H "Authorization: $at" -H "X-Grafana-Org-Id: 1" -X GET http://localhost:3000/api/dashboards/uid/s6_cSu04k | jq
 
 pause 
 
@@ -48,8 +48,8 @@ echo "============================"
 echo "== Get Plugin's dashboard =="
 echo "============================"
 echo "sending request with the $1 id_token"
-echo -e "curl -H ${blue}\"Authorization: Bearer $at\"${reset} -X ${blue}GET${reset} ${red}http://localhost:3000/api/dashboards/uid/JyhVSXA4k"${reset}
+echo -e "curl -H ${blue}\"Authorization: Bearer $at\"${reset} -H ${blue}\"X-Grafana-Org-Id: 1\"${reset} -X ${blue}GET${reset} ${red}http://localhost:3000/api/dashboards/uid/JyhVSXA4k"${reset}
 
 pause
 
-curl -H "Authorization: Bearer $at" -X GET http://localhost:3000/api/dashboards/uid/JyhVSXA4k | jq
+curl -H "Authorization: Bearer $at" -H "X-Grafana-Org-Id: 1" -X GET http://localhost:3000/api/dashboards/uid/JyhVSXA4k | jq

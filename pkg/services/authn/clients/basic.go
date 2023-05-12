@@ -40,6 +40,9 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
+	if r.HTTPRequest == nil {
+		return false
+	}
 	return !strings.HasPrefix(r.HTTPRequest.RequestURI, "/oauth2/introspect") && looksLikeBasicAuthRequest(r)
 }
 
