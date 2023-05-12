@@ -3,9 +3,6 @@ package contexthandler
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -111,13 +108,6 @@ func FromContext(c context.Context) *contextmodel.ReqContext {
 		return reqCtx
 	}
 	return nil
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Middleware provides a middleware to initialize the request context.
