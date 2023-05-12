@@ -22,7 +22,7 @@ The following image illustrates a sample Grafana dashboard.
 
 A Grafana dashboard consists of panels displaying data in beautiful graphs, charts, and other visualizations. These panels are created using components that transform raw data from a data source into visualizations. The process involves passing data through three gates: a plugin, a query, and an optional transformation.
 
-The image below displays all the gates, followed by detailed explanations of their purpose, usage, and significance. The process of creating a visualization starts from the data source and progresses towards a Grafana dashboard.```
+The image below displays all the gates, followed by detailed explanations of their purpose, usage, and significance. The process of creating a visualization starts from the data source and progresses towards a Grafana dashboard.
 
 {{< figure src="/media/docs/grafana/dashboards-overview/dashboard-component-architecture.png" max-width="750px" caption="Dashboard component architecture" >}}
 
