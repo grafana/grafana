@@ -27,7 +27,7 @@ The following image illustrates each of the gates, and the following sections de
 
 {{< figure src="/media/docs/grafana/dashboards-overview/dashboard-component-architecture.png" max-width="750px" caption="Dashboard component architecture" >}}
 
-## Data Source
+## Data source
 
 A data source is any entity that contains data. A data source can be a SQL database, Grafana Loki, Grafana Mimir, or a JSON-based API. A data source can even be a flat CSV file. A dashboard visualization starts with the data source that contains the data you want to see.
 
@@ -41,15 +41,15 @@ At the time of this writing, there are 155 different kinds of data sources avail
 
 ## Query
 
-Query enable you to reduce the data to just a specific dataset, so you aren't trying to visualize the entire thing. A query is an answer to a question you have about your system and operations. For example, if your company has an online presence, you might be interested in understanding how many customers are adding products to the shopping cart. To answer that question, you can write a query that  takes all of the access metrics for a shopping cart service, and aggregates them into how many users per second are accessing the service.
+Queries allow for the reduction of data to a specific dataset, providing a more manageable visualization. They help answer questions you have about system and operational processes. For instance, a company with an online store might want to determine the number of customers who add products to their shopping carts. This can be achieved through a query that aggregates access metrics for the shopping cart service, revealing the number of users accessing the service per second.
 
-It’s important to understand that data sources have their own unique query languages. Prometheus data sources may use [PromQL](/blog/2020/02/04/introduction-to-promql-the-prometheus-query-language/), logs may be queried with [LogQL](https://grafana.com/docs/loki/latest/logql/), and certain databases may use other languages like SQL.  Each time you see a visualization in Grafana, it is backed by a query and an entire dashboard may use several different languages and types of query.
+When working with data sources, it is crucial to recognize that each one has its own distinct query language. For example, Prometheus data sources utilize [PromQL](/blog/2020/02/04/introduction-to-promql-the-prometheus-query-language/), while [LogQL](https://grafana.com/docs/loki/latest/logql/) is used for logs, and particular databases employ SQL. A query supports every visualization in Grafana, and a dashboard might feature a range of query languages and types.
 
-The following image shows the Query Editor associated with the Prometheus data source. The node_cpu_seconds_total query is written in PromQL and requests just one metric.
+The following image shows the Query Editor associated with the Prometheus data source. The `node_cpu_seconds_total` query is written in PromQL and requests just one metric.
 
 {{< figure src="/media/docs/grafana/dashboards-overview/example-query.png" max-width="750px" caption="Example Query" >}}
 
-Queries are a very powerful way to express with precision the data that you want on a dashboard.
+Queries are a very powerful way to precisely express the data you want on a dashboard.
 
 ## Transforms
 
@@ -57,11 +57,11 @@ Not all panels will use [transforms](https://grafana.com/docs/grafana/latest/pan
 
 * **Situation**: you want to combine two fields together, like concatenating Given Name + Family Name into one single full name field; combining/concatenating two fields together
 * **Situation**: you have CSV data, (all text), and you want to convert a field types (such as parsing a date or a number out of a string)
-* **Situation**: you want to do common filtering, joining, merging, or other SQL-like operations which may not be supported by the underlying data source or query language
+- You want to filter, join, merge, or perform other SQL-like operations that might not be supported by the underlying data source or query language
 
 {{< figure src="/media/docs/grafana/dashboards-overview/example-transforms.png" max-width="750px" caption="Transform Dialog" >}}
 
-Transforms are located next to the “Query” tab in the edit dialog for a panel. Select the kind of transform you want, and fill in the details to make the necessary data changes. The following image shows that just like queries, you can have as many transforms as you want. For example you can chain together changing a data type, filtering results, organizing columns, and sorting the result all into one data pipeline. Every time the dashboard is refreshed, it works continuously over fresh data from the data source.
+Transforms are located next to the **Query** tab in the edit dialog for a panel. Select the transform you want, and define the transform. The following image shows that you can have as many transforms as you want, just like queries. For example, you can chain together a series of transforms that make a change to a data type, filter results, organize columns, and sort the result into one data pipeline. Every time the dashboard is refreshed, the transform applies to the latest data from the data source.
 
 {{< figure src="/media/docs/grafana/dashboards-overview/example-transform-chain.png" max-width="750px" caption="Example chain of transforms" >}}
 
