@@ -88,19 +88,13 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		azMonitorSettings := types.AzureMonitorSettings{}
-		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
+		azSettings := types.AzureSettings{}
+		err = json.Unmarshal(settings.JSONData, &azSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		var jsonData types.AzureClientSettings
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
-		cloud, err := getAzureCloud(cfg, &jsonData)
+		cloud, err := getAzureCloud(cfg, &azSettings.AzureClientSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -110,7 +104,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, err
 		}
 
-		credentials, err := getAzureCredentials(cfg, &jsonData, settings.DecryptedSecureJSONData)
+		credentials, err := getAzureCredentials(cfg, &azSettings.AzureClientSettings, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -118,7 +112,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		model := types.DatasourceInfo{
 			Cloud:                   cloud,
 			Credentials:             credentials,
-			Settings:                azMonitorSettings,
+			Settings:                azSettings.AzureMonitorSettings,
 			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,

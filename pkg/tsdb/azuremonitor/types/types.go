@@ -30,6 +30,11 @@ type AzRoute struct {
 	Headers map[string]string
 }
 
+type AzureSettings struct {
+	AzureMonitorSettings
+	AzureClientSettings
+}
+
 type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`

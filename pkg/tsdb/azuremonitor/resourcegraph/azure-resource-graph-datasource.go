@@ -118,10 +118,6 @@ func (e *AzureResourceGraphDatasource) buildQueries(logger log.Logger, queries [
 	return azureResourceGraphQueries, nil
 }
 
-type reqAzureBodySubscriptions struct {
-	subscriptions []string
-}
-
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger log.Logger, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client,
 	dsURL string, tracer tracing.Tracer) backend.DataResponse {
 	dataResponse := backend.DataResponse{}
@@ -142,7 +138,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		dataResponse.Frames = frames
 		return dataResponse
 	}
-	var model reqAzureBodySubscriptions
+	var model dataquery.AzureMonitorQuery
 	err := json.Unmarshal(query.JSON, &model)
 	if err != nil {
 		dataResponse.Error = err

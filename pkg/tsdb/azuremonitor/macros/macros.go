@@ -74,7 +74,7 @@ func (m *kqlMacroEngine) Interpolate(logger log.Logger, query backend.DataQuery,
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(logger, groups[1], defaultTimeField, args)
+		res, err := m.evaluateMacro(logger, groups[1], defaultTimeField, args, dsInfo)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -89,12 +89,12 @@ func (m *kqlMacroEngine) Interpolate(logger log.Logger, query backend.DataQuery,
 	return kql, nil
 }
 
-type queryInterval struct {
+type interval struct {
 	IntervalMs int64
 	Interval   string
 }
 
-func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTimeField string, args []string) (string, error) {
+func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTimeField string, args []string, dsInfo types.DatasourceInfo) (string, error) {
 	switch name {
 	case "timeFilter":
 		timeColumn := defaultTimeField
@@ -115,15 +115,22 @@ func (m *kqlMacroEngine) evaluateMacro(logger log.Logger, name string, defaultTi
 			from := m.timeRange.From.UnixNano()
 			// default to "100 datapoints" if nothing in the query is more specific
 			defaultInterval := time.Duration((to - from) / 60)
-			var model queryInterval
-			err := json.Unmarshal(m.query.JSON, &model)
+			var queryInterval interval
+			err := json.Unmarshal(m.query.JSON, &queryInterval)
 			if err != nil {
 				logger.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
-				it, err = intervalv2.GetIntervalFrom("", model.Interval, model.IntervalMs, defaultInterval)
+				var (
+					dsInterval string
+					ok         bool
+				)
+				if dsInterval, ok = dsInfo.JSONData["interval"].(string); !ok {
+					dsInterval = ""
+				}
+				it, err = intervalv2.GetIntervalFrom(dsInterval, queryInterval.Interval, queryInterval.IntervalMs, defaultInterval)
 				if err != nil {
-					logger.Warn("Unable to get interval from query", "model", model)
+					logger.Warn("Unable to get interval from query", "model", queryInterval)
 					it = defaultInterval
 				}
 			}
