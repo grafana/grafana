@@ -1,22 +1,18 @@
 ---
-title: Add support for Explore queries
+title: Add features to Explore queries
 ---
 
-# Add support for Explore queries
+# Add features for Explore queries
 
-This guide explains how to improve support for [Explore]({{< relref "../../explore/" >}}) in an existing data source plugin.
+[Explore]({{< relref "../../explore/" >}}) allows users can make ad-hoc queries without the use of a dashboard. This is useful when they want to troubleshoot or learn more about the data.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin/).
-
-With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
-
-Your data source supports Explore by default and uses the existing query editor for the data source.
+Your data source supports Explore by default and uses the existing query editor for the data source. This guide explains how to extend functionality for Explore queries in a data source plugin.
 
 ## Add an Explore-specific query editor
 
-To extend Explore functionality for your data source, you can define an Explore-specific query editor.
+To extend Explore functionality for your data source, define an Explore-specific query editor.
 
-1. Create a file `ExploreQueryEditor.tsx` in the `src` directory of your plugin, with the following content:
+1. Create a file `ExploreQueryEditor.tsx` in the `src` directory of your plugin, with content similar to this:
 
    ```ts
    import React from 'react';
@@ -54,13 +50,13 @@ To extend Explore functionality for your data source, you can define an Explore-
    };
    ```
 
-## Selecting preferred visualisation
+## Select a preferred visualization type
 
-Explore should by default select a reasonable visualization for your data so users do not have to tweak and play with the visualizations and just focus on querying. This usually works fairly well and Explore can figure out whether the returned data is time series data or logs or something else.
+By default, Explore should select an appropriate and useful visualization for your data. It can figure out whether the returned data is time series data or logs or something else, and creates the right type of visualization.
 
-If this does not work for you or you want to show some data in a specific visualization, add a hint to your returned data frame using the `preferredVisualisationType` meta attribute.
+However, if you want a custom visualization, you can add a hint to your returned data frame by setting the `meta' attribute to `preferredVisualisationType`.
 
-You can construct a data frame with specific metadata:
+Construct a data frame with specific metadata like this:
 
 ```
 const firstResult = new MutableDataFrame({

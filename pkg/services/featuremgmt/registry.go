@@ -50,13 +50,13 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
 			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
-			State:           FeatureStateAlpha,
+			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
 		},
@@ -87,8 +87,9 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateBeta,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // turned on by default
 			Owner:        grafanaExploreSquad,
 		},
 		{
@@ -504,9 +505,10 @@ var (
 		},
 		{
 			Name:         "advancedDataSourcePicker",
-			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
-			State:        FeatureStateAlpha,
+			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
@@ -529,6 +531,13 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "extraThemes",
+			Description:  "Enables extra themes",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaUserEssentialsSquad,
 		},
 	}
 )

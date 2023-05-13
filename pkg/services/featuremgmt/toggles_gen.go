@@ -308,7 +308,7 @@ const (
 	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
 
 	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
 	// FlagOpensearchDetectVersion
@@ -322,4 +322,8 @@ const (
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
 )

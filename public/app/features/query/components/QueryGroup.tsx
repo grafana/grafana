@@ -65,7 +65,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   querySubscription: Unsubscribable | null = null;
 
   state: State = {
-    isDataSourceModalOpen: false,
+    isDataSourceModalOpen: !!locationService.getSearchObject().firstPanel,
     isLoadingHelp: false,
     helpContent: null,
     isPickerOpen: false,
@@ -87,6 +87,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     this.setNewQueriesAndDatasource(options);
+
+    // Clean up the first panel flag since the modal is now open
+    if (!!locationService.getSearchObject().firstPanel) {
+      locationService.partial({ firstPanel: null }, true);
+    }
   }
 
   componentWillUnmount() {
@@ -117,14 +122,12 @@ export class QueryGroup extends PureComponent<Props, State> {
         datasource,
         ...q,
       }));
+
       this.setState({
         queries,
         dataSource: ds,
         dsSettings,
         defaultDataSource,
-        // TODO: Detect the first panel added into a new dashboard better.
-        // This is flaky in case the UID is generated differently
-        isDataSourceModalOpen: !!locationService.getSearchObject().firstPanel,
       });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -261,7 +264,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onCloseDataSourceModal = () => {
     this.setState({ isDataSourceModalOpen: false });
-    locationService.partial({ firstPanel: null });
   };
 
   renderMixedPicker = () => {
