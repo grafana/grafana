@@ -1,13 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { ButtonSelect } from './ButtonSelect';
 
-const meta: ComponentMeta<typeof ButtonSelect> = {
+const meta: Meta<typeof ButtonSelect> = {
   title: 'Forms/Select/ButtonSelect',
   component: ButtonSelect,
   decorators: [withCenteredStory],
@@ -25,7 +25,7 @@ const meta: ComponentMeta<typeof ButtonSelect> = {
   },
 };
 
-export const Basic: ComponentStory<typeof ButtonSelect> = (args) => {
+export const Basic: StoryFn<typeof ButtonSelect> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <div style={{ marginLeft: '100px', position: 'relative', display: 'inline-block' }}>

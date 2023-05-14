@@ -437,6 +437,7 @@ trigger:
     include:
     - pkg/**
     - packaging/**
+    - .drone.yml
     - conf/**
     - go.sum
     - go.mod
@@ -6995,6 +6996,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 4a99b404fa59910566c088700c4aacf6cc00de65aa8955f58f7dc3e313f932c8
+hmac: 580387ea6dbe3182c71aac875bf9f114e3edc7d8cb8a67e6da7502433f9560be
 
 ...

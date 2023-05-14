@@ -1,13 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { SecretFormField } from './SecretFormField';
 
-const meta: ComponentMeta<typeof SecretFormField> = {
+const meta: Meta<typeof SecretFormField> = {
   title: 'Forms/SecretFormField',
   component: SecretFormField,
   decorators: [withCenteredStory],
@@ -32,7 +32,7 @@ const meta: ComponentMeta<typeof SecretFormField> = {
   },
 };
 
-export const Basic: ComponentStory<typeof SecretFormField> = (args) => {
+export const Basic: StoryFn<typeof SecretFormField> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <SecretFormField

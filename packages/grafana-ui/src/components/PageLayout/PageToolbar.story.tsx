@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { ToolbarButton, VerticalGroup } from '@grafana/ui';
@@ -10,7 +10,7 @@ import { IconButton } from '../IconButton/IconButton';
 
 import { PageToolbar } from './PageToolbar';
 
-const meta: ComponentMeta<typeof PageToolbar> = {
+const meta: Meta<typeof PageToolbar> = {
   title: 'Layout/PageToolbar',
   component: PageToolbar,
   decorators: [withCenteredStory],
