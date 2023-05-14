@@ -35,6 +35,8 @@ weight: 600
 
 The Geomap panel visualization allows you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
 
+> We would love your feedback on Geomap. Please check out the [Github discussion](https://github.com/grafana/grafana/discussions/62159) and join the conversation.
+
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
 ## Map View
