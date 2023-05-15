@@ -34,7 +34,7 @@ Before you can sign a user in, you need to create an Okta application from the O
 
 ## Enable Okta OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
 ```ini
 [auth.okta]
@@ -96,7 +96,7 @@ Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path l
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
 > enable the `skip_org_role_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#authokta-skip-org-role-sync" >}}) for more information.
+> See [Configure Grafana]({{< relref "../../../configure-grafana#authokta" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
@@ -107,7 +107,7 @@ It denies user access if no role or an invalid role is returned.
 > then the user is assigned the role specified by
 > [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 
-Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "./generic-oauth#jmespath-examples" >}}).
+Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth#jmespath-examples" >}}).
 
 #### Map server administrator privileges
 

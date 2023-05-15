@@ -20,7 +20,7 @@ This topic includes the release notes for the Grafana v7.1. For all details, rea
 
 The main highlights are:
 
-- [**Flux and InfluxDB 2.x support in the Influx Datasource**]({{< relref "#influx-datasource" >}})
+- [**Flux and InfluxDB 2.x support in the Influx Datasource**]({{< relref "#influx-data-source" >}})
 - [**Query history search**]({{< relref "#query-history-search" >}})
 - [**Unification of Explore modes**]({{< relref "#explore-modes-unified" >}})
 - [**Elasticsearch- link to another data source from Explore**]({{< relref "#internal-links-for-elasticsearch" >}})
@@ -28,8 +28,8 @@ The main highlights are:
 - [**Stat panel text mode**]({{< relref "#stat-panel-text-mode" >}})
 - [**Time range picker update**]({{< relref "#time-range-picker-update" >}})
 - [**Provisioning of apps**]({{< relref "#provisioning-of-apps" >}})
-- [**Azure Monitor Datasource**]({{< relref "#azure-monitor-datasource" >}})
-- [**Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource**]({{< relref "#deep-linking-for-google-cloud-monitoring-formerly-named-google-stackdriver-datasource" >}})
+- [**Azure Monitor Datasource**]({{< relref "#azure-monitor-data-source" >}})
+- [**Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) datasource**]({{< relref "#deep-linking-for-google-cloud-monitoring-formerly-named-google-stackdriver-data-source" >}})
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
   - [**Secret management with HashiCorp Vault**]({{< relref "#support-for-hashicorp-vault" >}})
   - [**Monthly schedules in reports**]({{< relref "#support-for-monthly-schedules-in-reports" >}})

@@ -35,7 +35,7 @@ The main highlights are:
 - [**Plugins** New plugins platform.]({{< relref "#plugins-platform" >}})
 - [**Tutorials** New tutorials section.]({{< relref "#new-tutorials" >}})
 - [**Cloudwatch** Support for Cloudwatch Logs in Explore and the Logs panel.]({{< relref "#cloudwatch-logs" >}})
-- [**Breaking change** PhantomJS removed.]({{< relref "#breaking-change-phantomjs-removed" >}})
+- [**Breaking change** PhantomJS removed.]({{< relref "#breaking-change---phantomjs-removed" >}})
 - [**Time zones** Time zone support]({{< relref "#time-zone-support" >}})
 
 ## New panel editor and unified data model
