@@ -1,7 +1,7 @@
 import { StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { ComponentSize } from '../../types/size';
+import { ComponentSize } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
@@ -69,12 +69,6 @@ export const Examples: StoryFn<typeof Button> = () => {
         </Button>
       </HorizontalGroup>
       <div />
-      <HorizontalGroup spacing="lg">
-        <div>With icon only</div>
-        <Button icon="cloud" size="sm" />
-        <Button icon="cloud" size="md" />
-        <Button icon="cloud" size="lg" />
-      </HorizontalGroup>
       <div />
       <Button icon="plus" fullWidth>
         Button with fullWidth
