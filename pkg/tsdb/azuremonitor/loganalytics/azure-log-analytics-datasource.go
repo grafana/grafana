@@ -343,8 +343,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			dataResponse.Error = err
 			return dataResponse
 		}
-		linkTitle := "Explore Trace in Azure Portal"
-		AddConfigLinks(*frame, tracesUrl, &linkTitle)
 
 		queryJSONModel := dataquery.AzureMonitorQuery{}
 		err = json.Unmarshal(query.JSON, &queryJSONModel)
@@ -375,27 +373,32 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			QueryType: &logsQueryType,
 		}
 
-		AddCustomDataLink(*frame, data.DataLink{
-			Title: "Explore Trace: ${__data.fields.traceID}",
-			URL:   "",
-			Internal: &data.InternalDataLink{
-				DatasourceUID:  dsInfo.DatasourceUID,
-				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
-			},
-		})
+		if query.ResultFormat == string(dataquery.AzureMonitorQueryAzureTracesResultFormatTable) {
+			AddCustomDataLink(*frame, data.DataLink{
+				Title: "Explore Trace: ${__data.fields.traceID}",
+				URL:   "",
+				Internal: &data.InternalDataLink{
+					DatasourceUID:  dsInfo.DatasourceUID,
+					DatasourceName: dsInfo.DatasourceName,
+					Query:          queryJSONModel,
+				},
+			})
 
-		// Use the parent span query for the parent span data link
-		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
-		AddCustomDataLink(*frame, data.DataLink{
-			Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
-			URL:   "",
-			Internal: &data.InternalDataLink{
-				DatasourceUID:  dsInfo.DatasourceUID,
-				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
-			},
-		})
+			// Use the parent span query for the parent span data link
+			queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
+			AddCustomDataLink(*frame, data.DataLink{
+				Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
+				URL:   "",
+				Internal: &data.InternalDataLink{
+					DatasourceUID:  dsInfo.DatasourceUID,
+					DatasourceName: dsInfo.DatasourceName,
+					Query:          queryJSONModel,
+				},
+			})
+
+			linkTitle := "Explore Trace in Azure Portal"
+			AddConfigLinks(*frame, tracesUrl, &linkTitle)
+		}
 
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Trace Logs",
