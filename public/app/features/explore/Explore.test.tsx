@@ -132,7 +132,7 @@ describe('Explore', () => {
     setup();
 
     // Wait for the Explore component to render
-    await screen.findByLabelText('Data source picker select container');
+    await screen.findByLabelText('data-testid Data source picker select container');
 
     expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
@@ -142,7 +142,7 @@ describe('Explore', () => {
     setup({ queryResponse: queryResp });
 
     // Wait for the Explore component to render
-    await screen.findByLabelText('Data source picker select container');
+    await screen.findByLabelText('data-testid Data source picker select container');
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
@@ -162,7 +162,7 @@ describe('Explore', () => {
     it('should render data source picker', async () => {
       setup();
 
-      const dataSourcePicker = await screen.findByLabelText('Data source picker select container');
+      const dataSourcePicker = await screen.findByLabelText('data-testid Data source picker select container');
 
       expect(dataSourcePicker).toBeInTheDocument();
     });
