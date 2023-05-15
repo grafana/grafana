@@ -113,7 +113,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
-      e2e.components.DataSourcePicker.container().click().type(`${dataSourceName}{enter}`);
+      e2e.components.DataSourcePicker.container().click().type(`${dataSourceName}{downArrow}{enter}`);
     }
 
     // @todo instead wait for '@pluginModule' if not already loaded
