@@ -53,28 +53,45 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   useEffect(() => {
     const resize = () => {
-      if (!!markerElement && !!selectorElement) {
-        const inputRect = markerElement?.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
+      if (isOpen && !!markerElement && !!selectorElement) {
+        window.requestAnimationFrame(() => {
+          const inputRect = markerElement?.getBoundingClientRect();
+          const windowHeight = window.innerHeight;
 
-        const availableHeight = windowHeight - inputRect.bottom - MODAL_MARGIN;
-        setModalHeight(availableHeight);
+          const availableTopHeight = Math.min(inputRect.top - 20, 412);
+          const availableBottomHeight = windowHeight - inputRect.bottom - MODAL_MARGIN;
 
-        // Flip the modal if the available space is less than the flip threshold
-        if (availableHeight < FLIP_THRESHOLD) {
-          setModalHeight(412);
-          setPlacement('top-start');
-        } else if (availableHeight >= FLIP_THRESHOLD) {
-          setModalHeight(availableHeight);
-          setPlacement('bottom-start');
-        }
+          // Flip the modal if the available space is less than the flip threshold
+          if (availableBottomHeight < FLIP_THRESHOLD) {
+            setPlacement('top-start');
+            setModalHeight(availableTopHeight);
+          } else {
+            setPlacement('bottom-start');
+            setModalHeight(availableBottomHeight);
+          }
+        });
       }
     };
 
     resize();
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
-  }, [markerElement, selectorElement]);
+  }, [markerElement, selectorElement, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setModalHeight(0);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      if (popper.forceUpdate) {
+        popper.forceUpdate();
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalHeight, placement]);
 
   useEffect(() => {
     const sub = keyboardEvents.subscribe({
@@ -191,7 +208,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               ref={setSelectorElement}
               {...restProps}
               onDismiss={onClose}
-            ></PickerContent>
+              {...popper.attributes.popper}
+            />
           </div>
         </Portal>
       ) : null}
