@@ -500,7 +500,7 @@ export class PrometheusDatasource
 
       // Don't cache instant queries
       if (this.hasIncrementalQuery && !hasInstantQuery) {
-        requestInfo = this.cache.requestInfo(request);
+        requestInfo = this.cache.requestInfo(request, true);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;

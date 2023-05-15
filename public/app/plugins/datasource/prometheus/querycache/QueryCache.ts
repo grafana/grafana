@@ -225,7 +225,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
   };
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
+  requestInfo(request: DataQueryRequest<T>, forceCache = false): CacheRequestInfo<T> {
     console.log('CACHE STATE', this.cache);
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
@@ -233,7 +233,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     const newTo = request.range.to.valueOf();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
-    const shouldCache = true;
+    const shouldCache = forceCache || request.rangeRaw?.to?.toString() === 'now';
 
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
