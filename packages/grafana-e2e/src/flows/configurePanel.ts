@@ -1,7 +1,6 @@
 import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
 
-import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { TimeRangeConfig } from './setTimeRange';
 
