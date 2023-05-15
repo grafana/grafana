@@ -62,7 +62,7 @@ You may allow users to sign-up via GitHub authentication by setting the
 user successfully authenticating via GitHub authentication will be
 automatically signed up.
 
-You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
+You can also use [variable expansion]({{< relref "../../../configure-grafana#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
 ### GitHub refresh token
 
@@ -130,7 +130,7 @@ You can use GitHub OAuth to map roles. During mapping, Grafana checks for the pr
 
 For the path lookup, Grafana uses JSON obtained from querying GitHub's API [`/api/user`](https://docs.github.com/en/rest/users/users#get-the-authenticated-user=) endpoint and a `groups` key containing all of the user's teams (retrieved from `/api/user/teams`).
 
-The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
@@ -202,7 +202,7 @@ Your GitHub teams can be referenced in two ways:
 
 Example: `@grafana/developers`
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
 
 ## Skip organization role sync
 

@@ -43,7 +43,7 @@ We’re continuing to improve accessibility across Grafana, particularly focusin
 - Navigation: We’ve improved our keyboard navigation support in our main navbar, added focus states, and removed keyboard traps.
 - General components (tooltips, color pickers, modals, dropdowns, and so forth): we’ve ensured they’re keyboard navigable, improved focus trapping, and improved screen reader support.
 - Time series panel: charts are one of our main areas of limited accessibility. As of 8.4, you can also move a panel and make range selections using your keyboard. - Press arrow keys to move the cursor around. - Hold Shift to increase cursor speed. - Hold space to start rage selection.
-  You can read our accessibility statement [here](https://grafana.com/accessibility/) and reach out to us with accessibility issues using our community Slack or our community forums.
+  You can read our accessibility statement [here](/accessibility/) and reach out to us with accessibility issues using our community Slack or our community forums.
 
 #### New option to configure OpenTelemetry
 
@@ -57,7 +57,7 @@ In Grafana 8.3, we upgraded Grafana to use envelope encryption, which adds a lay
 
 As of 8.4, you can rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised.
 
-Envelope encryption is not enabled by default in version 8.4. You can enable it by adding the term `envelopeEncryption` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud.
+Envelope encryption is not enabled by default in version 8.4. You can enable it by adding the term `envelopeEncryption` to the list of feature toggles in your [Grafana configuration](/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud.
 
 {{< figure src="/static/img/docs/encryption/rotate-encryption-8-4.png" max-width="1200px" caption="Rotate encryption" >}}
 
@@ -65,7 +65,7 @@ Envelope encryption is not enabled by default in version 8.4. You can enable it 
 
 #### Support for mute timings
 
-[Mute timings](https://grafana.com/docs/grafana/next/alerting/unified-alerting/notifications/mute-timings/) have been a popular request from the community. They are a powerful addition to the new alerting feature set and allow you to suppress specific alerts on a recurring interval or schedule, [contrary to](https://grafana.com/docs/grafana/next/alerting/unified-alerting/notifications/mute-timings/#mute-timings-vs-silences) Silences.
+[Mute timings](/docs/grafana/next/alerting/unified-alerting/notifications/mute-timings/) have been a popular request from the community. They are a powerful addition to the new alerting feature set and allow you to suppress specific alerts on a recurring interval or schedule, [contrary to](/docs/grafana/next/alerting/unified-alerting/notifications/mute-timings/#mute-timings-vs-silences) Silences.
 
 Paired with the existing Silences, this gives you even more control over when alerts should be sent and contact points notified.
 
@@ -79,7 +79,7 @@ Traditionally alerts in the Alert Panel were grouped by the alert rule that crea
 
 #### WeCom contact point
 
-Starting with Grafana 8.4, you can [configure a WeCom](https://grafana.com/docs/grafana/next/alerting/unified-alerting/contact-points/#wecom) contact point, to send alert notifications to WeCom.
+Starting with Grafana 8.4, you can [configure a WeCom](/docs/grafana/next/alerting/unified-alerting/contact-points/#wecom) contact point, to send alert notifications to WeCom.
 
 ### New panel options
 
@@ -119,19 +119,19 @@ In Grafana 8.4, you can assign roles to teams, which apply to all members of tha
 
 In 8.4 you can also control access to Team and API key functionality itself, like viewing or editing API keys and adding members to certain teams.
 
-Enable role-based access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about role-based access control in the [role-based access control section of the docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
+Enable role-based access control by adding the term `accesscontrol` to the list of feature toggles in your [Grafana configuration](/docs/grafana/next/administration/configuration/#feature_toggles?mdm=email), or by sending a request to support if you use Grafana Cloud. Learn more about role-based access control in the [role-based access control section of the docs](/docs/grafana/next/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/8-4-fine-grain-access-control.png" max-width="1200px" caption="Assign SAML users role" >}}
 
 #### Assign SAML users different roles in different Organizations
 
-You can use Grafana's SAML integration to map organizations in your SAML service to [Organizations]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-organization-mapping" >}}) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
+You can use Grafana's SAML integration to map organizations in your SAML service to [Organizations]({{< relref "../setup-grafana/configure-security/configure-authentication/saml#configure-organization-mapping" >}}) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
 
 Additionally, you can now grant multiple SAML organizations access to Grafana, using the `allowed_organizations` attribute. Previously, you could only map one.
 
 {{< figure src="/static/img/docs/enterprise/8-4-SAML-auth.png" max-width="1200px" caption="Assign SAML users role" >}}
 
-Learn more in our [SAML docs]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}}).
+Learn more in our [SAML docs]({{< relref "../setup-grafana/configure-security/configure-authentication/saml" >}}).
 
 ### Performance improvements
 
@@ -141,10 +141,10 @@ We’ve made stability and usability improvements to Recorded Queries, and remov
 
 #### Measure query cache hit rate and clear the cache
 
-[Query caching](https://grafana.com/blog/2021/09/02/reduce-costs-and-increase-performance-with-query-caching-in-grafana-cloud/) significantly reduces load times and costs of Grafana dashboards, by temporarily storing query results in a cache. Now you can measure the hit rate of your query cache, to see how many queries (and therefore how much time and money) it is saving. You can also use these measurements to tune the cache time to live (TTL), to balance performance and up-to-date data.
+[Query caching](/blog/2021/09/02/reduce-costs-and-increase-performance-with-query-caching-in-grafana-cloud/) significantly reduces load times and costs of Grafana dashboards, by temporarily storing query results in a cache. Now you can measure the hit rate of your query cache, to see how many queries (and therefore how much time and money) it is saving. You can also use these measurements to tune the cache time to live (TTL), to balance performance and up-to-date data.
 
 You can also now manually clear the cache for a given data source in case data becomes stale, so that the next set of queries run against the data source itself.
 
-To learn more, refer to [query caching in the Grafana Enterprise docs](https://grafana.com/docs/grafana/next/enterprise/query-caching/)
+To learn more, refer to [query caching in the Grafana Enterprise docs](/docs/grafana/next/enterprise/query-caching/)
 
 {{< figure src="/static/img/docs/enterprise/8-4-query-caching.png" max-width="1200px" caption="Grafana Enterprise query caching" >}}
