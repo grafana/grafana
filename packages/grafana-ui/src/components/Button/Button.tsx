@@ -5,8 +5,8 @@ import { colorManipulator, GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { ComponentSize } from '../../types';
 import { IconName } from '../../types/icon';
-import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { PopoverContent, Tooltip, TooltipPlacement } from '../Tooltip';
@@ -60,6 +60,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
+    // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
@@ -175,7 +176,7 @@ export const getButtonStyles = (props: StyleProps) => {
       lineHeight: `${theme.spacing.gridSize * height - 2}px`,
       verticalAlign: 'middle',
       cursor: 'pointer',
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       '&:focus': focusStyle,
       '&:focus-visible': focusStyle,
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
