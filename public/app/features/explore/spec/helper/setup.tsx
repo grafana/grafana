@@ -26,7 +26,7 @@ import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
-import { ExplorePage } from '../../ExplorePage';
+import ExplorePage from '../../ExplorePage';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
