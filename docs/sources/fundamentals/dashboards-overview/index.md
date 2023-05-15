@@ -68,15 +68,15 @@ The following image shows the transform dialog.
 
 ## Panel
 
-After the data is sourced, queried, and transformed, it passes to a panel which is the  final gate in the journey to a Grafana visualization.  A panel is a container that displays the visualization and provides you the controls to manipulate the visualization in many different ways.  The panel configuration is where you specify how you want to see the data. For example, it is within the panel that you use a drop-down menu in the top-right to specify the type of visualization you want to see such as a bar chart, pie chart, or histogram.
+After the data is sourced, queried, and transformed, it passes to a panel which is the final gate in the journey to a Grafana visualization. A panel is a container that displays the visualization and provides you with various controls to manipulate it. The panel configuration is where you specify how you want to see the data. For example, you use a drop-down menu in the top-right of the panel to specify the type of visualization you want to see, such as a bar chart, pie chart, or histogram.
 
 The panel options enable you to customize many aspects of the visualization and change them based on the visualization you select. Panels also contain queries that specify the data the panel is visualizing.
 
-The following image shows a table panel being edited, together with the panel settings that let you see the query (bottom of frame) and the panel options (right of frame). This in turn shows how the data source, plugin, query, and panel all come together.
+The following image shows a table panel being edited, the panel settings showing the query at the bottom, and the panel options on the right. In this image, you can see how the data source, plugin, query, and panel all come together.
 
 {{< figure src="/media/docs/grafana/dashboards-overview/example-table-panel.png" max-width="750px" caption="Example table panel" >}}
 
-Selecting the best visualization depends on the data and how you want it presented.  To see examples of dashboards in one place that you can browse and inspect, check out [Grafana Play](https://play.grafana.org/), which has feature showcases and a variety of examples.
+Selecting the best visualization depends on the data and how you want it presented. To see examples of dashboards in one place that you can browse and inspect, refer to [Grafana Play](https://play.grafana.org/), which has feature showcases and a variety of examples.
 
 ## Conclusion
 
@@ -86,4 +86,4 @@ Building a Grafana dashboard is a process that starts with determining your dash
 
 And with the data source identified and the plugin installed, you can write your query, transform the data, and format the visualization to meet your needs.
 
-This component architecture is part of what makes Grafana so powerful and general.  Given the data source plugin and data frame abstraction, any data source you have access to can work with the same general approach.
+This component architecture is part of what makes Grafana so powerful and general. Given the data source plugin and data frame abstraction, any data source you can access can work with the same general approach.
