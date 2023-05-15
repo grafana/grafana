@@ -62,7 +62,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
     }),
     titleInfoContainer: css({
-      alignItems: 'center',
       display: 'flex',
       label: 'title-info-container',
       flex: 1,
