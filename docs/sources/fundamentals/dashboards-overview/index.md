@@ -48,7 +48,6 @@ The following image shows the Query Editor associated with the Prometheus data s
 
 {{< figure src="/media/docs/grafana/dashboards-overview/example-query.png" max-width="750px" caption="Example Query" >}}
 
-Queries are a very powerful way to precisely express the data you want on a dashboard.
 
 ## Transforms
 
