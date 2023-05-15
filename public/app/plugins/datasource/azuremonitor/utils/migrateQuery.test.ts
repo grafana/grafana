@@ -27,6 +27,8 @@ const azureMonitorQueryV9_0 = {
     dimensionFilters: [],
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
+    resourceGroup: 'cloud-datasources',
+    resourceName: 'AppInsightsTestData',
     resourceUri:
       '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/microsoft.insights/components/AppInsightsTestData',
     timeGrain: 'auto',
@@ -203,6 +205,19 @@ describe('AzureMonitor: migrateQuery', () => {
           }),
         })
       );
+    });
+
+    it('correctly remove outdated fields', () => {
+      const result = migrateQuery(azureMonitorQueryV9_0);
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            resources: modernMetricsQuery.azureMonitor!.resources,
+          }),
+        })
+      );
+      expect(result.azureMonitor).not.toHaveProperty('resourceGroup');
+      expect(result.azureMonitor).not.toHaveProperty('resourceName');
     });
   });
 
