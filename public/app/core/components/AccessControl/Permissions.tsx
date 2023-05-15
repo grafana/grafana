@@ -4,11 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { useGetAffectedItemsQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { buildBreakdownString } from 'app/features/browse-dashboards/components/BrowseActions/utils';
+import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
@@ -51,13 +50,6 @@ export const Permissions = ({
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
-
-  const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery({
-    folder: { [resourceId]: true },
-    dashboard: {},
-    panel: {},
-    $all: false,
-  });
 
   const fetchItems = useCallback(() => {
     return getPermissions(resource, resourceId).then((r) => setItems(r));
@@ -141,16 +133,15 @@ export const Permissions = ({
   return (
     <div>
       {config.featureToggles.nestedFolders && resource === 'folders' && (
-        <>
-          This will change permissions for this folder and all its descendants. In total, this will affect:
-          <div className={styles.breakdown}>
-            <>
-              {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
-              {(isFetching || isLoading) && <Spinner size={12} />}
-              {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
-            </>
-          </div>
-        </>
+        <DescendantCount
+          selectedItems={{
+            folder: { [resourceId]: true },
+            dashboard: {},
+            panel: {},
+            $all: false,
+          }}
+          label="This will change permissions for this folder and all its descendants. In total, this will affect:"
+        />
       )}
       {canSetPermissions && (
         <Button
