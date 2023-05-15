@@ -226,7 +226,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
   // can be used to change full range request to partial, split into multiple requests
   requestInfo(request: DataQueryRequest<T>, forceCache = false): CacheRequestInfo<T> {
-    console.log('CACHE STATE', this.cache);
+    // console.log('CACHE STATE', this.cache);
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();

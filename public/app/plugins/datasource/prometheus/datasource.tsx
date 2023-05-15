@@ -509,8 +509,9 @@ export class PrometheusDatasource
       if (promRequestSupportsSplitting(fullOrPartialRequest.targets)) {
         return runSplitQuery(this, fullOrPartialRequest, (query) => query.instant ?? false).pipe(
           map((response) => {
-            console.log('runSplitQuery transformV2', response, request);
+            // console.log('runSplitQuery transformV2', response, request);
 
+            // We have
             const amendedResponse = {
               ...response,
               data: this.cache.procFrames(request, requestInfo, response.data),
