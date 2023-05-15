@@ -17,6 +17,8 @@ If we cannot remove the features without introducing a breaking chance we should
 
 Depending on the size and importance of the feature this can be a design doc or an issue. We want this to be written communication for all parts so we know it's intentional and that did a reasonable attempt to avoid breaking changes unless needed. The size of the feature also means different notice times between Depreciation and disabling as well as disabling and removal. The actual duration will depend on releases of Grafana and this should be seen as guidelines.
 
+Grafana employees can find more details in our internal docs.
+
 ## Duration
 
 | Size   | Duration   | Example                                                          |
