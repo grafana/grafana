@@ -3250,6 +3250,7 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    ${DRONE_TAG}
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -5972,6 +5973,7 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    $$env:DRONE_BRANCH
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -6996,6 +6998,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 580387ea6dbe3182c71aac875bf9f114e3edc7d8cb8a67e6da7502433f9560be
+hmac: 9d20e6c276dba0f91a0082597ccd2ca63c60efcac8fb48bfbd403bbb825bb0c5
 
 ...
