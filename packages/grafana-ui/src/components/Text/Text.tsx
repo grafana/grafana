@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { createElement, CSSProperties, useCallback } from 'react';
+import ReactDomServer from 'react-dom/server';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
@@ -31,6 +32,8 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       )
     );
 
+    const tooltipText = ReactDomServer.renderToString(children);
+
     const textElement = createElement(
       as,
       {
@@ -40,7 +43,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       children
     );
 
-    return truncate ? <Tooltip content={children}>{textElement}</Tooltip> : textElement;
+    return truncate ? <Tooltip content={tooltipText}>{textElement}</Tooltip> : textElement;
   }
 );
 
