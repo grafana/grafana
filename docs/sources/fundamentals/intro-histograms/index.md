@@ -9,7 +9,8 @@ keywords:
   - panel
   - documentation
   - histogram
-title: Histograms and heatmaps
+menuTitle: Histograms and heatmaps
+title: Introduction to histograms and heatmaps
 weight: 700
 ---
 

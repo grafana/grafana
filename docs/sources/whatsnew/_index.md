@@ -58,7 +58,8 @@ cascade:
     products:
       - cloud
       - oss
-title: What's new
+menuTitle: What's new
+title: What's new in Grafana
 weight: 1
 description: Learn about new and changed features in Grafana.
 ---

@@ -10,7 +10,7 @@ title: What's new in Grafana v9.5
 weight: -36
 ---
 
-# What’s new in Grafana v9.5
+# What's new in Grafana v9.5
 
 Welcome to Grafana 9.5! We're excited to share some major updates to Grafana's navigation, tons of usability improvements to Alerting, and some promising experiments to help you query your Prometheus metrics. Also, read on to learn about our continued migration from API keys to service accounts, as well as deprecation of plugins that use Angular and a field in the InfluxDB data source.
 

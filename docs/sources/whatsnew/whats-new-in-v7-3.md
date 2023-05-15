@@ -10,7 +10,7 @@ keywords:
   - documentation
   - '7.3'
   - release notes
-title: What's New in Grafana v7.3
+title: What's new in Grafana v7.3
 weight: -30
 ---
 

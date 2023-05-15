@@ -8,7 +8,8 @@ keywords:
   - rendering
   - plugin
   - troubleshooting
-title: Troubleshooting
+menuTitle: Troubleshooting
+title: Troubleshoot image rendering
 weight: 200
 ---
 

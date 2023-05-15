@@ -20,23 +20,23 @@ We’re excited to announce Grafana v8.4, with a variety of improvements that fo
 
 We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the complete [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-# OSS
+## OSS
 
-## Ease of use
+### Ease of use
 
-### Share playlists
+#### Share playlists
 
 You can now share links to your playlists the same way as with dashboards, to easily set up the same playlist on multiple devices or kiosks.
 
 {{< figure src="/static/img/docs/dashboards/share-playlists-8-4.png" max-width="1200px" caption="Share playlist" >}}
 
-### `$__interval` and `$__interval_ms` in panel title
+#### `$__interval` and `$__interval_ms` in panel title
 
 We’ve expanded the functionality of this existing and popular feature. You can now use `$__interval` and `$__interval_ms` in panel titles. This new function displays the interval that’s used in a specific panel without requiring edit mode.
 
 {{< figure src="/static/img/docs/panels/interval-8-4.png" max-width="1200px" caption="Time intervals" >}}
 
-### Accessibility improvements
+#### Accessibility improvements
 
 We’re continuing to improve accessibility across Grafana, particularly focusing on keyboard navigation and screen readers.
 
@@ -45,13 +45,13 @@ We’re continuing to improve accessibility across Grafana, particularly focusin
 - Time series panel: charts are one of our main areas of limited accessibility. As of 8.4, you can also move a panel and make range selections using your keyboard. - Press arrow keys to move the cursor around. - Hold Shift to increase cursor speed. - Hold space to start rage selection.
   You can read our accessibility statement [here](https://grafana.com/accessibility/) and reach out to us with accessibility issues using our community Slack or our community forums.
 
-### New option to configure OpenTelemetry
+#### New option to configure OpenTelemetry
 
 Grafana is used to visualize traces and metrics, but Grafana itself can be traced as well. For example, users running a Grafana instance can export all the traces of endpoints and database requests to Jaeger, which helps you view all Grafana traffic.
 
 We’re currently using OpenTracing for this, but since the repository is being deprecated, we’ve started our work to migrate to OpenTelemetry and remove OpenTracing. This release is the first step toward this goal. It also adds the option to configure OpenTelemetry instead of OpenTracing.
 
-### Rotate your encryption key
+#### Rotate your encryption key
 
 In Grafana 8.3, we upgraded Grafana to use envelope encryption, which adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys, called data encryption keys (DEKs), to encrypt them. These data encryption keys are themselves encrypted with a single key-encryption key (KEK).
 
@@ -61,15 +61,15 @@ Envelope encryption is not enabled by default in version 8.4. You can enable it 
 
 {{< figure src="/static/img/docs/encryption/rotate-encryption-8-4.png" max-width="1200px" caption="Rotate encryption" >}}
 
-## Alerting
+### Alerting
 
-### Support for mute timings
+#### Support for mute timings
 
 [Mute timings](https://grafana.com/docs/grafana/next/alerting/unified-alerting/notifications/mute-timings/) have been a popular request from the community. They are a powerful addition to the new alerting feature set and allow you to suppress specific alerts on a recurring interval or schedule, [contrary to](https://grafana.com/docs/grafana/next/alerting/unified-alerting/notifications/mute-timings/#mute-timings-vs-silences) Silences.
 
 Paired with the existing Silences, this gives you even more control over when alerts should be sent and contact points notified.
 
-### Custom grouping for the Alert Panel
+#### Custom grouping for the Alert Panel
 
 The new Alert Panel displays your alerts and associated alert instances, and supports grouping by one or more custom labels. You can also display all alert instances in an ungrouped list by choosing the custom grouping mode without any configured labels.
 
@@ -77,13 +77,13 @@ Traditionally alerts in the Alert Panel were grouped by the alert rule that crea
 
 {{< figure src="/static/img/docs/alerting/unified/custom-grouping-8-4.png" max-width="1200px" caption="Custom grouping in alerting" >}}
 
-### WeCom contact point
+#### WeCom contact point
 
 Starting with Grafana 8.4, you can [configure a WeCom](https://grafana.com/docs/grafana/next/alerting/unified-alerting/contact-points/#wecom) contact point, to send alert notifications to WeCom.
 
-## New panel options
+### New panel options
 
-### Bar chart
+#### Bar chart
 
 We’ve expanded the bar chart so that you can:
 
@@ -95,23 +95,23 @@ We’ve expanded the bar chart so that you can:
 
 {{< figure src="/static/img/docs/bar-chart-panel/bar-chart-8-4.png" max-width="1200px" caption="Updated bar chart" >}}
 
-### Geomap
+#### Geomap
 
 Geomap now supports tooltips with data-links across multiple layers.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-tooltips-multiple-layers-8-4.png" max-width="1200px" caption="Assign SAML users role" >}}
 
-## OpenAPI v2 specification
+### OpenAPI v2 specification
 
 The HTTP API details are now [specified](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/papagian/api-spec/public/api-merged.json) using OpenAPI v2.
 
 The grafana server serves a [SwaggerUI](https://swagger.io/tools/swagger-ui/) editor via the /swagger-ui endpoint that enables users to make requests to the HTTP API via the browser. This is disabled by default and it’s enabled when the `swaggerUi` feature toggle is set.
 
-# Grafana Enterprise
+## Grafana Enterprise
 
-## Security improvements
+### Security improvements
 
-### Role-based access control works for teams
+#### Role-based access control works for teams
 
 Occasionally, Viewer, Editor, and Admin roles don’t fit what a certain user needs to do in Grafana. Now you can assign role-based roles directly to users so they can create reports, use Explore mode, create data sources, and perform other specific actions in Grafana. Role-based access control is currently in beta.
 
@@ -123,7 +123,7 @@ Enable role-based access control by adding the term `accesscontrol` to the list 
 
 {{< figure src="/static/img/docs/enterprise/8-4-fine-grain-access-control.png" max-width="1200px" caption="Assign SAML users role" >}}
 
-### Assign SAML users different roles in different Organizations
+#### Assign SAML users different roles in different Organizations
 
 You can use Grafana's SAML integration to map organizations in your SAML service to [Organizations]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-organization-mapping" >}}) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
 
@@ -133,13 +133,13 @@ Additionally, you can now grant multiple SAML organizations access to Grafana, u
 
 Learn more in our [SAML docs]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/" >}}).
 
-## Performance improvements
+### Performance improvements
 
-### Recorded queries is more stable and usable
+#### Recorded queries is more stable and usable
 
 We’ve made stability and usability improvements to Recorded Queries, and removed the feature flag so you can get started with Recorded Queries out of the box.
 
-### Measure query cache hit rate and clear the cache
+#### Measure query cache hit rate and clear the cache
 
 [Query caching](https://grafana.com/blog/2021/09/02/reduce-costs-and-increase-performance-with-query-caching-in-grafana-cloud/) significantly reduces load times and costs of Grafana dashboards, by temporarily storing query results in a cache. Now you can measure the hit rate of your query cache, to see how many queries (and therefore how much time and money) it is saving. You can also use these measurements to tune the cache time to live (TTL), to balance performance and up-to-date data.
 

@@ -8,7 +8,8 @@ keywords:
   - configuration
   - documentation
   - docker
-title: Configure Docker image
+menuTitle: Configure Docker image
+title: Configure a Grafana Docker image
 weight: 1800
 ---
 

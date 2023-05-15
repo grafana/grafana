@@ -8,7 +8,8 @@ keywords:
   - concepts
   - exemplars
   - prometheus
-title: Exemplars
+menuTitle: Exemplars
+title: Introduction to exemplars
 weight: 750
 ---
 
