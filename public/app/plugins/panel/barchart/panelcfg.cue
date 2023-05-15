@@ -24,9 +24,7 @@ composableKinds: PanelCfg: {
 	lineage: {
 		schemas: [{
 			version: [0, 0]
-			schema:
-			// v0.0
-			{
+			schema: {
 				PanelOptions: {
 					common.OptionsWithLegend
 					common.OptionsWithTooltip
