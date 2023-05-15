@@ -3,12 +3,11 @@ package tempo
 import (
 	"encoding/json"
 	"fmt"
+	semconv "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/collector/model/pdata"
-	"go.opentelemetry.io/collector/translator/conventions"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
 )
 
 type KeyValue struct {
@@ -158,14 +157,14 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	attrs := resource.Attributes()
-	serviceName := tracetranslator.ResourceNoServiceName
+	serviceName := ResourceNoServiceName
 	if attrs.Len() == 0 {
 		return serviceName, nil
 	}
 
 	tags := make([]*KeyValue, 0, attrs.Len()-1)
 	attrs.Range(func(key string, attr pdata.AttributeValue) bool {
-		if key == conventions.AttributeServiceName {
+		if key == semconv.AttributeServiceName {
 			serviceName = attr.StringVal()
 		}
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
@@ -186,7 +185,7 @@ func getAttributeVal(attr pdata.AttributeValue) interface{} {
 	case pdata.AttributeValueTypeDouble:
 		return attr.DoubleVal()
 	case pdata.AttributeValueTypeMap, pdata.AttributeValueTypeArray:
-		return tracetranslator.AttributeValueToString(attr)
+		return attr.AsString()
 	default:
 		return nil
 	}
@@ -225,14 +224,14 @@ func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyVa
 	var keyValues []*KeyValue
 	if ilName := il.Name(); ilName != "" {
 		kv := &KeyValue{
-			Key:   conventions.InstrumentationLibraryName,
+			Key:   semconv.InstrumentationLibraryName,
 			Value: ilName,
 		}
 		keyValues = append(keyValues, kv)
 	}
 	if ilVersion := il.Version(); ilVersion != "" {
 		kv := &KeyValue{
-			Key:   conventions.InstrumentationLibraryVersion,
+			Key:   semconv.InstrumentationLibraryVersion,
 			Value: ilVersion,
 		}
 		keyValues = append(keyValues, kv)
@@ -245,28 +244,28 @@ func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
 	var tagStr string
 	switch spanKind {
 	case pdata.SpanKindClient:
-		tagStr = string(tracetranslator.OpenTracingSpanKindClient)
+		tagStr = string(OpenTracingSpanKindClient)
 	case pdata.SpanKindServer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindServer)
+		tagStr = string(OpenTracingSpanKindServer)
 	case pdata.SpanKindProducer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindProducer)
+		tagStr = string(OpenTracingSpanKindProducer)
 	case pdata.SpanKindConsumer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindConsumer)
+		tagStr = string(OpenTracingSpanKindConsumer)
 	case pdata.SpanKindInternal:
-		tagStr = string(tracetranslator.OpenTracingSpanKindInternal)
+		tagStr = string(OpenTracingSpanKindInternal)
 	default:
 		return nil
 	}
 
 	return &KeyValue{
-		Key:   tracetranslator.TagSpanKind,
+		Key:   TagSpanKind,
 		Value: tagStr,
 	}
 }
 
 func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 	return &KeyValue{
-		Key:   tracetranslator.TagStatusCode,
+		Key:   TagStatusCode,
 		Value: int64(statusCode),
 	}
 }
@@ -274,7 +273,7 @@ func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 func getErrorTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 	if statusCode == pdata.StatusCodeError {
 		return &KeyValue{
-			Key:   tracetranslator.TagError,
+			Key:   TagError,
 			Value: true,
 		}
 	}
@@ -286,7 +285,7 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 		return nil
 	}
 	return &KeyValue{
-		Key:   tracetranslator.TagStatusMsg,
+		Key:   TagStatusMsg,
 		Value: statusMsg,
 	}
 }
@@ -294,7 +293,7 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 func getTagFromTraceState(traceState pdata.TraceState) *KeyValue {
 	if traceState != pdata.TraceStateEmpty {
 		return &KeyValue{
-			Key:   tracetranslator.TagW3CTraceState,
+			Key:   TagW3CTraceState,
 			Value: string(traceState),
 		}
 	}
@@ -312,7 +311,7 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 		fields := make([]*KeyValue, 0, event.Attributes().Len()+1)
 		if event.Name() != "" {
 			fields = append(fields, &KeyValue{
-				Key:   tracetranslator.TagMessage,
+				Key:   TagMessage,
 				Value: event.Name(),
 			})
 		}

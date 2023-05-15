@@ -219,23 +219,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
           });
-          subQueries.push(
-            this._request('/api/search', {
-              q: queryValue,
-              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-              start: options.range.from.unix(),
-              end: options.range.to.unix(),
-            }).pipe(
-              map((response) => {
-                return {
-                  data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-                };
-              }),
-              catchError((error) => {
-                return of({ error: { message: error.data.message }, data: [] });
-              })
-            )
-          );
+          subQueries.push(this.handleStreamingSearch(options, targets.traceql));
+
+          // subQueries.push(
+          //   this._request('/api/search', {
+          //     q: queryValue,
+          //     limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+          //     start: options.range.from.unix(),
+          //     end: options.range.to.unix(),
+          //   }).pipe(
+          //     map((response) => {
+          //       return {
+          //         data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+          //       };
+          //     }),
+          //     catchError((error) => {
+          //       return of({ error: { message: error.data.message }, data: [] });
+          //     })
+          //   )
+          // );
         }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
@@ -406,6 +408,34 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     return request;
+  }
+
+  /**
+   * Handles the simplest of the queries where we have just a trace id and return trace data for it.
+   * @param options
+   * @param targets
+   * @private
+   */
+  handleStreamingSearch(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
+    const validTargets = targets.filter((t) => t.query).map((t): TempoQuery => ({ ...t, query: t.query.trim() }));
+    if (!validTargets.length) {
+      return EMPTY;
+    }
+
+    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+
+    return super.query(traceRequest).pipe(
+      map((response) => {
+        console.log(response);
+        return {
+          // data: createTableFrameFromTraceQlQuery(response.data, this.instanceSettings),
+          data: response.data,
+        };
+      }),
+      catchError((error) => {
+        return of({ error: { message: error.data.message }, data: [] });
+      })
+    );
   }
 
   async metadataRequest(url: string, params = {}) {

@@ -4,8 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	"github.com/grafana/tempo/pkg/tempopb"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"net/http"
 
@@ -13,27 +17,29 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"go.opentelemetry.io/collector/model/otlp"
-
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"go.opentelemetry.io/collector/model/otlp"
 )
 
 type Service struct {
-	im   instancemgmt.InstanceManager
-	tlog log.Logger
+	im             instancemgmt.InstanceManager
+	tlog           log.Logger
+	SearchRequests *SearchRequests
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		tlog: log.New("tsdb.tempo"),
-		im:   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tlog:           log.New("tsdb.tempo"),
+		im:             datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		SearchRequests: NewSearchStreams(),
 	}
 }
 
 type TempoDatasource struct {
-	HTTPClient *http.Client
-	URL        string
+	HTTPClient      *http.Client
+	StreamingClient tempopb.StreamingQuerierClient
+	URL             string
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -48,16 +54,23 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
+		clientConn, err := grpc.Dial("localhost:9095", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return nil, err
+		}
+		streamingClient := tempopb.NewStreamingQuerierClient(clientConn)
+
 		model := &TempoDatasource{
-			HTTPClient: client,
-			URL:        settings.URL,
+			HTTPClient:      client,
+			StreamingClient: streamingClient,
+			URL:             settings.URL,
 		}
 		return model, nil
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("QueryData called", "Queries", req.Queries)
+	s.tlog.Info("QueryData called ", "Queries ", req.Queries)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -82,9 +95,49 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 	switch query.QueryType {
 	case string(dataquery.TempoQueryTypeTraceId):
 		return s.getTrace(ctx, pCtx, query)
+	case string(dataquery.TempoQueryTypeTraceql):
+		fallthrough
+	case string(dataquery.TempoQueryTypeTraceqlSearch):
+		return s.streamSearch(ctx, pCtx, query)
 	}
 
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
+}
+
+func (s *Service) streamSearch(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
+	var sr *tempopb.SearchRequest
+	response := &backend.DataResponse{}
+
+	err := json.Unmarshal(query.JSON, &sr)
+	if err != nil {
+		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
+		return response, nil
+	}
+
+	sr.Start = uint32(query.TimeRange.From.Unix())
+	sr.End = uint32(query.TimeRange.To.Unix())
+
+	// generate unique identifier for this stream
+	streamPath := SearchPathPrefix + uuid.NewString()
+
+	s.tlog.Info("Adding request to search requests", "streamPath", streamPath)
+	if err := s.SearchRequests.add(streamPath, sr); err != nil {
+		s.tlog.Error("Error adding request to search requests", "err", err)
+	}
+
+	frame := data.NewFrame("response")
+
+	channel := live.Channel{
+		Scope:     live.ScopeDatasource,
+		Namespace: pCtx.DataSourceInstanceSettings.UID,
+		Path:      streamPath,
+	}
+	frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+	response.Frames = append(response.Frames, frame)
+
+	s.tlog.Info("Return response")
+
+	return response, nil
 }
 
 func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
