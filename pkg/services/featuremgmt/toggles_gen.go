@@ -327,7 +327,7 @@ const (
 	// Apply new pageHeader UI in data source edit page
 	FlagDataSourcePageHeader = "dataSourcePageHeader"
 
-  // FlagExtraThemes
+	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
 )
