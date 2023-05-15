@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TrendPanel
       settings: {
         isClearable: true,
         placeholderText: 'First numeric value',
-        filter: (f: Field) => f.type === FieldType.number,
+        filter: (field: Field) => field.type === FieldType.number,
       },
     });
 
