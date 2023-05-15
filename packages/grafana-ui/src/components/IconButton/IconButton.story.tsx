@@ -1,16 +1,20 @@
 import { css } from '@emotion/css';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
 import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
-const meta: ComponentMeta<typeof IconButton> = {
+interface ScenarioProps {
+  background: 'canvas' | 'primary' | 'secondary';
+}
+
+const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
@@ -35,29 +39,84 @@ const meta: ComponentMeta<typeof IconButton> = {
   },
 };
 
-export const Examples = () => {
+export const Basic: StoryFn<typeof IconButton> = (args: IconButtonProps) => {
+  return <IconButton {...args} />;
+};
+
+export const ExamplesSizes = () => {
+  const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
+  const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
+  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
+
   return (
-    <div>
-      <RenderScenario background="canvas" />
-      <RenderScenario background="primary" />
-      <RenderScenario background="secondary" />
+    <div
+      className={css`
+        button {
+          margin-right: 8px;
+          margin-left: 8px;
+          margin-bottom: 20px;
+        }
+      `}
+    >
+      <HorizontalGroup spacing="md">
+        {variants.map((variant) => {
+          return (
+            <div key={variant}>
+              <p>{variant}</p>
+              {icons.map((icon) => {
+                return (
+                  <div
+                    className={css`
+                      display: flex;
+                    `}
+                    key={icon}
+                  >
+                    {sizes.map((size) => (
+                      <span key={icon + size}>
+                        <IconButton name={icon} size={size} variant={variant} />
+                      </span>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+        <div>
+          <p>disabled</p>
+          {icons.map((icon) => (
+            <div
+              className={css`
+                display: flex;
+              `}
+              key={icon}
+            >
+              {sizes.map((size) => (
+                <span key={icon + size}>
+                  <IconButton name={icon} size={size} disabled />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </HorizontalGroup>
     </div>
   );
 };
 
-export const Basic: ComponentStory<typeof IconButton> = (args: IconButtonProps) => {
-  return <IconButton {...args} />;
+export const ExamplesBackground = () => {
+  return (
+    <div>
+      <RenderBackgroundScenario background="canvas" />
+      <RenderBackgroundScenario background="primary" />
+      <RenderBackgroundScenario background="secondary" />
+    </div>
+  );
 };
 
-interface ScenarioProps {
-  background: 'canvas' | 'primary' | 'secondary';
-}
-
-const RenderScenario = ({ background }: ScenarioProps) => {
+const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme2();
-  const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
-  const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
-  const variants: IconButtonVariant[] = ['secondary', 'primary', 'destructive'];
+  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 
   return (
     <div
@@ -67,25 +126,21 @@ const RenderScenario = ({ background }: ScenarioProps) => {
         button {
           margin-right: 8px;
           margin-left: 8px;
-          margin-bottom: 8px;
         }
       `}
     >
       <VerticalGroup spacing="md">
         <div>{background}</div>
-        {variants.map((variant) => {
-          return (
-            <div key={variant}>
-              {icons.map((icon) => {
-                return sizes.map((size) => (
-                  <span key={icon + size}>
-                    <IconButton name={icon} size={size} variant={variant} />
-                  </span>
-                ));
-              })}
-            </div>
-          );
-        })}
+        <div
+          className={css`
+            display: flex;
+          `}
+        >
+          {variants.map((variant) => {
+            return <IconButton name="times" size="xl" variant={variant} key={variant} />;
+          })}
+          <IconButton name="times" size="xl" disabled />
+        </div>
       </VerticalGroup>
     </div>
   );
