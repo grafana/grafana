@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"testing"
 	"time"
 
@@ -21,10 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/oauthtest"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -274,5 +277,128 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				tt.mockChecks(t, env)
 			}
 		})
+	}
+}
+
+func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
+	dummyClient := func() *oauthserver.Client {
+		return &oauthserver.Client{
+			ExternalServiceName: "my-ext-service",
+			ClientID:            "RANDOMID",
+			Secret:              "RANDOMSECRET",
+			GrantTypes:          "client_credentials",
+			PublicPem:           []byte("-----BEGIN PUBLIC KEY-----"),
+			ServiceAccountID:    1,
+		}
+	}
+	cachedUser := &oauthserver.Client{
+		ExternalServiceName: "my-ext-service",
+		ClientID:            "RANDOMID",
+		Secret:              "RANDOMSECRET",
+		GrantTypes:          "client_credentials",
+		PublicPem:           []byte("-----BEGIN PUBLIC KEY-----"),
+		ServiceAccountID:    1,
+		SelfPermissions:     []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
+		SignedInUser: &user.SignedInUser{
+			UserID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					"users:impersonate": {"users:*"},
+				},
+			},
+		},
+	}
+	testCases := []struct {
+		name       string
+		init       func(*TestEnv)
+		mockChecks func(*testing.T, *TestEnv)
+		wantErr    bool
+	}{
+		{
+			name: "should hit the cache",
+			init: func(env *TestEnv) {
+				env.S.cache.Set("my-ext-service", *cachedUser, time.Minute)
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.OAuthStore.AssertNotCalled(t, "GetExternalService", mock.Anything, mock.Anything)
+			},
+		},
+		{
+			name: "should return error when the client was not found",
+			init: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when the service account was not found",
+			init: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{}, serviceaccounts.ErrServiceAccountNotFound)
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
+				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, 1, 1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return error when the service account has no permissions",
+			init: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{}, nil)
+				env.AcStore.ExpectedErr = fmt.Errorf("some error")
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
+				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, 1, 1)
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return correctly",
+			init: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{Id: 1}, nil)
+				env.AcStore.ExpectedUserPermissions = []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}}
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
+				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, int64(1), int64(1))
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+			if tt.init != nil {
+				tt.init(env)
+			}
+
+			client, err := env.S.GetExternalService(context.Background(), "my-ext-service")
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			if tt.mockChecks != nil {
+				tt.mockChecks(t, env)
+			}
+
+			require.Equal(t, "my-ext-service", client.ExternalServiceName)
+			require.ElementsMatch(t, client.SelfPermissions, []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}})
+			assertArrayInMap(t, client.SignedInUser.Permissions[1], map[string][]string{"users:impersonate": {"users:*"}})
+
+			env.OAuthStore.AssertExpectations(t)
+			env.SAService.AssertExpectations(t)
+		})
+	}
+}
+
+func assertArrayInMap[K comparable, V string](t *testing.T, m1 map[K][]V, m2 map[K][]V) {
+	for k, v := range m1 {
+		require.Contains(t, m2, k)
+		require.ElementsMatch(t, v, m2[k])
 	}
 }
