@@ -250,7 +250,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"timeGrain":        "PT1M",
 				"resources":        []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}, {ResourceGroup: "rg2", ResourceName: "vm2"}},
 				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
-				"top":              "40",
+				"top":              "30",
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
