@@ -65,7 +65,6 @@ func TestAzureSettings(t *testing.T) {
 	})
 
 	t.Run("User Identity", func(t *testing.T) {
-
 		t.Run("should be disabled by default", func(t *testing.T) {
 			cfg := NewCfg()
 
