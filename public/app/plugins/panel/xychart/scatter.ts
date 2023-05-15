@@ -292,7 +292,7 @@ interface DrawBubblesOpts {
     };
     color: {
       values: (u: uPlot, seriesIdx: number) => string[];
-      alpha: (u: uPlot, seriesIdx: number) => string[];
+      alpha: number;
     };
   };
 }
@@ -331,6 +331,7 @@ const prepConfig = (
           rect,
           arc
         ) => {
+          const pxRatio = uPlot.pxRatio;
           const scatterInfo = scatterSeries[seriesIdx - 1];
           let d = u.data[seriesIdx] as unknown as FacetSeries;
 
@@ -364,25 +365,27 @@ const prepConfig = (
           let pointHints = scatterInfo.hints.pointSize;
           const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;
 
-          let maxSize = (pointHints.max ?? pointHints.fixed) * devicePixelRatio;
+          let maxSize = (pointHints.max ?? pointHints.fixed) * pxRatio;
 
           // todo: this depends on direction & orientation
           // todo: calc once per redraw, not per path
           let filtLft = u.posToVal(-maxSize / 2, xKey);
-          let filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + maxSize / 2, xKey);
-          let filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + maxSize / 2, yKey);
+          let filtRgt = u.posToVal(u.bbox.width / pxRatio + maxSize / 2, xKey);
+          let filtBtm = u.posToVal(u.bbox.height / pxRatio + maxSize / 2, yKey);
           let filtTop = u.posToVal(-maxSize / 2, yKey);
 
           let sizes = opts.disp.size.values(u, seriesIdx);
           let pointColors = opts.disp.color.values(u, seriesIdx);
-          let pointAlpha = opts.disp.color.alpha(u, seriesIdx);
+          let pointAlpha = opts.disp.color.alpha;
 
           let linePath: Path2D | null = showLine ? new Path2D() : null;
+
+          let curColor: CanvasRenderingContext2D['fillStyle'] | null = null;
 
           for (let i = 0; i < d[0].length; i++) {
             let xVal = d[0][i];
             let yVal = d[1][i];
-            let size = sizes[i] * devicePixelRatio;
+            let size = sizes[i] * pxRatio;
 
             if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
               let cx = valToPosX(xVal, scaleX, xDim, xOff);
@@ -398,8 +401,11 @@ const prepConfig = (
                 u.ctx.arc(cx, cy, size / 2, 0, deg360);
 
                 if (colorByValue) {
-                  u.ctx.fillStyle = pointAlpha[i];
-                  u.ctx.strokeStyle = pointColors[i];
+                  if (pointColors[i] !== curColor) {
+                    curColor = pointColors[i];
+                    u.ctx.fillStyle = alpha(curColor, pointAlpha);
+                    u.ctx.strokeStyle = curColor;
+                  }
                 }
 
                 u.ctx.fill();
@@ -420,7 +426,7 @@ const prepConfig = (
           if (showLine) {
             let frame = scatterInfo.frame(getData());
             u.ctx.strokeStyle = scatterInfo.lineColor(frame);
-            u.ctx.lineWidth = scatterInfo.lineWidth * devicePixelRatio;
+            u.ctx.lineWidth = scatterInfo.lineWidth * pxRatio;
 
             const { lineStyle } = scatterInfo;
             if (lineStyle && lineStyle.fill !== 'solid') {
@@ -458,9 +464,7 @@ const prepConfig = (
         values: (u, seriesIdx) => {
           return u.data[seriesIdx][3] as any;
         },
-        alpha: (u, seriesIdx) => {
-          return u.data[seriesIdx][4] as any;
-        },
+        alpha: 0.5,
       },
     },
     each: (u, seriesIdx, dataIdx, lft, top, wid, hgt) => {
@@ -477,11 +481,13 @@ const prepConfig = (
     drag: { setScale: true },
     dataIdx: (u, seriesIdx) => {
       if (seriesIdx === 1) {
+        const pxRatio = uPlot.pxRatio;
+
         hRect = null;
 
         let dist = Infinity;
-        let cx = u.cursor.left! * devicePixelRatio;
-        let cy = u.cursor.top! * devicePixelRatio;
+        let cx = u.cursor.left! * pxRatio;
+        let cy = u.cursor.top! * pxRatio;
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -509,7 +515,7 @@ const prepConfig = (
     },
     points: {
       size: (u, seriesIdx) => {
-        return hRect && seriesIdx === hRect.sidx ? hRect.w / devicePixelRatio : 0;
+        return hRect && seriesIdx === hRect.sidx ? hRect.w / uPlot.pxRatio : 0;
       },
       fill: (u, seriesIdx) => 'rgba(255,255,255,0.4)',
     },
@@ -711,21 +717,17 @@ export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: numbe
       const frame = s.frame(data);
 
       let colorValues;
-      let colorAlphaValues;
       const r = s.pointColor(frame);
       if (Array.isArray(r)) {
         colorValues = r;
-        colorAlphaValues = r.map((c) => alpha(c as string, 0.5));
       } else {
         colorValues = Array(frame.length).fill(r);
-        colorAlphaValues = Array(frame.length).fill(alpha(r as string, 0.5));
       }
       return [
         s.x(frame).values, // X
         s.y(frame).values, // Y
         asArray(frame, s.pointSize),
         colorValues,
-        colorAlphaValues,
       ];
     }),
   ];

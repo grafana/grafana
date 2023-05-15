@@ -196,7 +196,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
     dispatch({
       type: DatagridActionType.openHeaderDropdownMenu,
-      payload: { screenPosition, columnIndex: col, value: frame.fields[col].name },
+      payload: { screenPosition, columnIndex: col, value: state.columns[col].title },
     });
   };
 
