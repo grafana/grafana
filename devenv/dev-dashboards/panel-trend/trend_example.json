@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 451,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -30,7 +29,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "blue",
+            "mode": "fixed"
           },
           "custom": {
             "axisCenteredZero": false,
@@ -100,6 +100,13 @@
               {
                 "id": "custom.axisSoftMax",
                 "value": 120
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
               }
             ]
           },
@@ -171,6 +178,6 @@
   "timezone": "",
   "title": "Trend panel example",
   "uid": "b36b5576-2e3d-4b0c-8dce-e79514d99345",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
