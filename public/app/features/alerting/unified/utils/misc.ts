@@ -92,8 +92,9 @@ export function recordToArray(record: Record<string, string>): Array<{ key: stri
   return Object.entries(record).map(([key, value]) => ({ key, value }));
 }
 
-export function makeAMLink(path: string, alertManagerName?: string, options?: Record<string, string>): string {
+export function makeAMLink(path: string, alertManagerName?: string, options?: Record<string, string> | URLSearchParams): string {
   const search = new URLSearchParams(options);
+
   if (alertManagerName) {
     search.append(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
   }

@@ -5,26 +5,20 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertManagerCortexConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteMuteTimingAction } from '../../state/actions';
 import { getNotificationsPermissions } from '../../utils/access-control';
-import {
-  getTimeString,
-  getWeekdayString,
-  getDaysOfMonthString,
-  getMonthsString,
-  getYearsString,
-} from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
+import { renderTimeIntervals } from './util';
 
 interface Props {
   alertManagerSourceName: string;
@@ -137,7 +131,9 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
       {
         id: 'timeRange',
         label: 'Time range',
-        renderCell: ({ data }) => renderTimeIntervals(data.time_intervals),
+        renderCell: ({ data }) => {
+          return renderTimeIntervals(data)
+        },
       },
     ];
     if (showActions) {
@@ -184,26 +180,6 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
     }
     return columns;
   }, [alertManagerSourceName, setMuteTimingName, showActions, permissions]);
-}
-
-function renderTimeIntervals(timeIntervals: TimeInterval[]) {
-  return timeIntervals.map((interval, index) => {
-    const { times, weekdays, days_of_month, months, years } = interval;
-    const timeString = getTimeString(times);
-    const weekdayString = getWeekdayString(weekdays);
-    const daysString = getDaysOfMonthString(days_of_month);
-    const monthsString = getMonthsString(months);
-    const yearsString = getYearsString(years);
-
-    return (
-      <React.Fragment key={JSON.stringify(interval) + index}>
-        {`${timeString} ${weekdayString}`}
-        <br />
-        {[daysString, monthsString, yearsString].join(' | ')}
-        <br />
-      </React.Fragment>
-    );
-  });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

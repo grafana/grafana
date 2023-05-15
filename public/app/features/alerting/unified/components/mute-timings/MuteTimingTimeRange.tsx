@@ -3,17 +3,20 @@ import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, InlineFieldRow, InlineField, Input, Button, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
+import { isValidStartAndEndTime, isvalidTimeFormat } from './util';
 
 interface Props {
   intervalIndex: number;
 }
 
+const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC'
+
 export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
-  const { register, formState } = useFormContext<MuteTimingFields>();
+  const { register, formState, getValues } = useFormContext<MuteTimingFields>();
 
   const {
     fields: timeRanges,
@@ -22,18 +25,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   } = useFieldArray<MuteTimingFields>({
     name: `time_intervals.${intervalIndex}.times`,
   });
-
-  const validateTime = (timeString: string) => {
-    if (!timeString) {
-      return true;
-    }
-    const [hour, minutes] = timeString.split(':').map((x) => parseInt(x, 10));
-    const isHourValid = hour >= 0 && hour < 25;
-    const isMinuteValid = minutes > -1 && minutes < 60;
-    const isTimeValid = hour === 24 ? minutes === 0 : isHourValid && isMinuteValid;
-
-    return isTimeValid || 'Time is invalid';
-  };
 
   const formErrors = formState.errors.time_intervals?.[intervalIndex];
   const timeRangeInvalid = formErrors?.times?.some((value) => value?.start_time || value?.end_time) ?? false;
@@ -45,34 +36,86 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
         label="Time range"
         description="The time inclusive of the starting time and exclusive of the end time in UTC"
         invalid={timeRangeInvalid}
-        error={timeRangeInvalid ? 'Times must be between 00:00 and 24:00 UTC' : ''}
       >
         <>
           {timeRanges.map((timeRange, index) => {
+            const timeRangeErrors = formErrors?.times?.[index];
+            const startTimeKey = `time_intervals.${intervalIndex}.times.${index}.start_time`;
+            const endTimeKey = `time_intervals.${intervalIndex}.times.${index}.end_time`;
+
+            // TODO figure out these TypeScript errors *sigh*
+            const getStartAndEndTime = (): [string | undefined, string | undefined] => {
+              const startTime: string = getValues(startTimeKey);
+              const endTime: string = getValues(endTimeKey);
+
+              return [startTime, endTime];
+            }
+
             return (
               <div className={styles.timeRange} key={timeRange.id}>
                 <InlineFieldRow>
-                  <InlineField label="Start time" invalid={!!formErrors?.times?.[index]?.start_time}>
+                  <InlineField
+                    label="Start time"
+                    invalid={Boolean(timeRangeErrors?.start_time)}
+                    error={timeRangeErrors?.start_time?.message}
+                    validationMessageHorizontalOverflow
+                  >
                     <Input
-                      {...register(`time_intervals.${intervalIndex}.times.${index}.start_time`, {
-                        validate: validateTime,
+                      // @ts-ignore
+                      {...register(startTimeKey, {
+                        validate: (input: string) => {
+                          const validFormat = isvalidTimeFormat(input)
+                          if (!validFormat) {
+                            return INVALID_FORMAT_MESSAGE
+                          }
+
+                          const [startTime, endTime] = getStartAndEndTime();
+
+                          if (isValidStartAndEndTime(startTime, endTime)) {
+                            return
+                          } else {
+                            return 'Start time must be before end time'
+                          }
+                        },
                       })}
                       className={styles.timeRangeInput}
+                      maxLength={5}
+                      suffix={<Icon name="clock-nine" />}
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
                       defaultValue={timeRange.start_time}
-                      placeholder="HH:MM"
+                      placeholder="HH:mm"
                       data-testid="mute-timing-starts-at"
                     />
                   </InlineField>
-                  <InlineField label="End time" invalid={!!formErrors?.times?.[index]?.end_time}>
+                  <InlineField
+                    label="End time"
+                    invalid={Boolean(timeRangeErrors?.end_time)}
+                    error={timeRangeErrors?.end_time?.message}
+                    validationMessageHorizontalOverflow
+                  >
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
-                        validate: validateTime,
+                        validate: (input: string) => {
+                          const validFormat = isvalidTimeFormat(input)
+                          if (!validFormat) {
+                            return INVALID_FORMAT_MESSAGE
+                          }
+
+                          const [startTime, endTime] = getStartAndEndTime();
+
+                          if (isValidStartAndEndTime(startTime, endTime)) {
+                            return
+                          } else {
+                            return 'End time must be after start time'
+                          }
+                        },
                       })}
                       className={styles.timeRangeInput}
+                      maxLength={5}
+                      suffix={<Icon name="clock-nine" />}
                       // @ts-ignore react-hook-form doesn't handle nested field arrays well
                       defaultValue={timeRange.end_time}
-                      placeholder="HH:MM"
+                      placeholder="HH:mm"
                       data-testid="mute-timing-ends-at"
                     />
                   </InlineField>
@@ -113,7 +156,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
   `,
   timeRangeInput: css`
-    width: 120px;
+    width: 90px;
   `,
   deleteTimeRange: css`
     margin: ${theme.spacing(1)} 0 0 ${theme.spacing(0.5)};

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -68,6 +68,8 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 
+  const [updating, setUpdating] = useState(false);
+
   const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const { result = defaultAmCortexConfig, loading } =
@@ -96,15 +98,23 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
       },
     };
 
-    dispatch(
+    const saveAction = dispatch(
       updateAlertManagerConfigAction({
         newConfig,
         oldConfig: result,
         alertManagerSourceName: alertManagerSourceName!,
         successMessage: 'Mute timing saved',
         redirectPath: '/alerting/routes/',
+        redirectSearch: 'tab=mute_timings'
       })
-    );
+    )
+
+    setUpdating(true);
+
+    saveAction.unwrap()
+      .finally(() => {
+        setUpdating(false);
+      });
   };
 
   return (
@@ -127,7 +137,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
             {showError && <Alert title="No matching mute timing found" />}
-            <FieldSet label={'Create mute timing'} disabled={Boolean(provenance)}>
+            <FieldSet label={'Create mute timing'} disabled={Boolean(provenance) || updating}>
               <Field
                 required
                 label="Name"
@@ -143,7 +153,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
                         const existingMuteTiming = config?.mute_time_intervals?.find(({ name }) => value === name);
                         return existingMuteTiming ? `Mute timing already exists for "${value}"` : true;
                       }
-                      return value.length > 0 || 'Name is required';
+                      return
                     },
                   })}
                   className={styles.input}
@@ -151,13 +161,15 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
                 />
               </Field>
               <MuteTimingTimeInterval />
-              <Button type="submit" className={styles.submitButton}>
+              <Button type="submit" className={styles.submitButton} disabled={updating}>
                 Save mute timing
               </Button>
               <LinkButton
                 type="button"
                 variant="secondary"
-                href={makeAMLink('/alerting/routes/', alertManagerSourceName)}
+                fill='outline'
+                href={makeAMLink('/alerting/routes/', alertManagerSourceName, { tab: 'mute_timings' })}
+                disabled={updating}
               >
                 Cancel
               </LinkButton>

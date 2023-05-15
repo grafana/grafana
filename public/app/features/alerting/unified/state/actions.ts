@@ -327,9 +327,9 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
-              dataSourceName: name,
-              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
-            }
+            dataSourceName: name,
+            apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+          }
           : undefined;
 
         return {
@@ -563,12 +563,13 @@ interface UpdateAlertManagerConfigActionOptions {
   newConfig: AlertManagerCortexConfig;
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
+  redirectSearch?: string; // additional redirect query params
   refetch?: boolean; // refetch config on success
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
+  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch, refetch }, thunkAPI): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
@@ -588,7 +589,8 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
           }
           if (redirectPath) {
-            locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
+            const options = new URLSearchParams(redirectSearch ?? '');
+            locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));
           }
         })()
       ),
@@ -876,10 +878,10 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
                 newNamespaceName,
                 group.name === groupName
                   ? {
-                      ...group,
-                      name: newGroupName,
-                      interval: groupInterval,
-                    }
+                    ...group,
+                    name: newGroupName,
+                    interval: groupInterval,
+                  }
                   : group
               );
             }
