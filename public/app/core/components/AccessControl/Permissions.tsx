@@ -133,15 +133,17 @@ export const Permissions = ({
   return (
     <div>
       {config.featureToggles.nestedFolders && resource === 'folders' && (
-        <DescendantCount
-          selectedItems={{
-            folder: { [resourceId]: true },
-            dashboard: {},
-            panel: {},
-            $all: false,
-          }}
-          label="This will change permissions for this folder and all its descendants. In total, this will affect:"
-        />
+        <>
+          This will change permissions for this folder and all its descendants. In total, this will affect:
+          <DescendantCount
+            selectedItems={{
+              folder: { [resourceId]: true },
+              dashboard: {},
+              panel: {},
+              $all: false,
+            }}
+          />
+        </>
       )}
       {canSetPermissions && (
         <Button

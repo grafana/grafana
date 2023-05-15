@@ -28,7 +28,8 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   return (
     <Modal title="Move" onDismiss={onDismiss} {...props}>
       {selectedFolders.length > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
-      <DescendantCount selectedItems={selectedItems} label="This action will move the following content:" />
+      This action will move the following content:
+      <DescendantCount selectedItems={selectedItems} />
       <Field label="Folder name">
         <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
       </Field>

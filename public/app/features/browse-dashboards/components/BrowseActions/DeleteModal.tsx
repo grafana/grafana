@@ -27,7 +27,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <div className={styles.modalBody}>
-          <DescendantCount selectedItems={selectedItems} label="This action will delete the following content:" />
+          This action will delete the following content:
+          <DescendantCount selectedItems={selectedItems} />
         </div>
       }
       confirmationText="Delete"

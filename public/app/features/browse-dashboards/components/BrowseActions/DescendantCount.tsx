@@ -10,24 +10,20 @@ import { DashboardTreeSelection } from '../../types';
 import { buildBreakdownString } from './utils';
 
 export interface Props {
-  label?: string;
   selectedItems: DashboardTreeSelection;
 }
 
-export const DescendantCount = ({ label, selectedItems }: Props) => {
+export const DescendantCount = ({ selectedItems }: Props) => {
   const styles = useStyles2(getStyles);
   const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
 
   return (
-    <div>
-      {label}
-      <div className={styles.breakdown}>
-        <>
-          {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
-          {(isFetching || isLoading) && <Spinner size={12} />}
-          {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
-        </>
-      </div>
+    <div className={styles.breakdown}>
+      <>
+        {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
+        {(isFetching || isLoading) && <Spinner size={12} />}
+        {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
+      </>
     </div>
   );
 };
