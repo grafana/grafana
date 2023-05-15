@@ -113,6 +113,10 @@ export function EditDataSourceView({
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
+  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -158,6 +162,7 @@ export function EditDataSourceView({
         isDefault={dataSource.isDefault}
         onDefaultChange={onDefaultChange}
         onNameChange={onNameChange}
+        alertingSupported={alertingSupported}
         disabled={readOnly || !hasWriteRights}
       />
 
