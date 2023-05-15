@@ -539,5 +539,12 @@ var (
 			State:        FeatureStateAlpha,
 			Owner:        grafanaUserEssentialsSquad,
 		},
+		{
+			Name:         "disablePromIncrQuery",
+			Description:  "Disables Prometheus incremental query cache",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )

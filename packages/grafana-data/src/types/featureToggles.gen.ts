@@ -98,4 +98,5 @@ export interface FeatureToggles {
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
+  disablePromIncrQuery?: boolean;
 }

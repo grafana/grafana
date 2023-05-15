@@ -132,7 +132,10 @@ export class PrometheusDatasource
     // here we "fall back" to this.url to make typescript happy, but it should never happen
     this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
-    this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
+    // disablePromIncrQuery enables disabling feature independent of datasource config value
+    this.hasIncrementalQuery = config.featureToggles?.disablePromIncrQuery
+      ? false
+      : instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;

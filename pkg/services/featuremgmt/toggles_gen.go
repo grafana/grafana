@@ -316,7 +316,7 @@ const (
 	FlagOpensearchDetectVersion = "opensearchDetectVersion"
 
 	// FlagFaroDatasourceSelector
-	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
@@ -326,4 +326,8 @@ const (
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
+
+	// FlagDisablePromIncrQuery
+	// Disables Prometheus incremental query cache
+	FlagDisablePromIncrQuery = "disablePromIncrQuery"
 )
