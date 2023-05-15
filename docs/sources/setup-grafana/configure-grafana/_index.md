@@ -1119,19 +1119,19 @@ Should be set for user-assigned identity and should be empty for system-assigned
 
 ### user_identity_enabled
 
-Specifies whether user identity authentication on behalf of currently signed-in user should be enabled in datasources which support it (may require AAD authentication enabled).
+Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
 
 Disabled by default, needs to be explicitly enabled.
 
 ### user_identity_token_url
 
-Override token URL for given Azure Active Directory.
+Override token URL for Azure Active Directory.
 
 By default is the same as token URL configured for AAD authentication settings.
 
 ### user_identity_client_id
 
-Override ADD application ID which would be used to exchange user's token to an access token to the datasource.
+Override ADD application ID which would be used to exchange users token to an access token for the datasource.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
 
