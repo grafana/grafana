@@ -72,8 +72,8 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:9.4.7
 
 ## Run the Grafana main branch
 
-For every successful build of the main branch, we update the `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-oss-dev:<version>-<build ID>pre` and `grafana/grafana-oss-dev:<version>-<build ID>pre-ubuntu`, where version is the next version of Grafana and build ID is the ID of the corresponding CI build. You can use these Tags to get access to the latest main builds of Grafana.
-When running Grafana main in production, we strongly recommend that you use the `grafana/grafana-oss-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of the most recent commit.
+After every successful build of the main branch, two tags, `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-oss-dev:-pre` and `grafana/grafana-oss-dev:-pre-ubuntu`, where version is the next version of Grafana and build ID is the ID of the corresponding CI build. These tags provide access to the most recent Grafana main builds.
+To ensure stability and consistency, we strongly recommend using the `grafana/grafana-oss-dev:-pre` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce new bugs or issues.
 For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
 
 ## Default paths
