@@ -711,7 +711,7 @@ function migrateHideFrom(panel: {
   }
 }
 
-const getLegendHideFromOverride = (reducer: ReducerID.allIsZero | ReducerID.allIsNull) => {
+function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allIsNull) {
   return {
     matcher: {
       id: FieldMatcherID.byValue,
@@ -732,11 +732,12 @@ const getLegendHideFromOverride = (reducer: ReducerID.allIsZero | ReducerID.allI
       },
     ],
   };
-};
+}
 
-const getStackingFromOverrides = (value: Boolean | string) => {
+function getStackingFromOverrides(value: Boolean | string) {
+  const defaultGroupName = defaultGraphConfig.stacking?.group;
   return {
     mode: value ? StackingMode.Normal : StackingMode.None,
-    group: isString(value) ? value : 'A',
+    group: isString(value) ? value : defaultGroupName,
   };
-};
+}
