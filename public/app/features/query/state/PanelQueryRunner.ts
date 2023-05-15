@@ -95,7 +95,7 @@ export class PanelQueryRunner {
     let lastFieldConfig: ApplyFieldOverrideOptions | undefined = undefined;
     let lastProcessedFrames: DataFrame[] = [];
     let lastRawFrames: DataFrame[] = [];
-    let lastTransfromations: DataTransformerConfig[] | undefined;
+    let lastTransformations: DataTransformerConfig[] | undefined;
     let isFirstPacket = true;
     let lastConfigRev = -1;
 
@@ -116,13 +116,13 @@ export class PanelQueryRunner {
         if (
           data.series === lastRawFrames &&
           lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
-          lastTransfromations === transformations
+          lastTransformations === transformations
         ) {
           return of({ ...data, structureRev, series: lastProcessedFrames });
         }
 
         lastFieldConfig = fieldConfig;
-        lastTransfromations = transformations;
+        lastTransformations = transformations;
         lastRawFrames = data.series;
         let dataWithTransforms = of(data);
 
