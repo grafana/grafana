@@ -30,6 +30,11 @@
 package api
 
 import (
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -51,6 +56,52 @@ import (
 )
 
 var plog = log.New("api")
+
+func handlePluginManifest(w http.ResponseWriter, r *http.Request) {
+	dir, err := os.Getwd()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	filePath := filepath.Join(dir, "public/.well-known/ai-plugin.json")
+	data, err := ioutil.ReadFile(filePath)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Replace PLUGIN_HOSTNAME with the actual host
+	// text := strings.Replace(string(data), "localhost", "https://"+r.Host, -1)
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "text/json")
+	w.Write([]byte(data))
+}
+
+func handleOpenAPIPluginManifest(w http.ResponseWriter, r *http.Request) {
+	dir, err := os.Getwd()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	filePath := filepath.Join(dir, "public/openai-openapi.json")
+	data, err := ioutil.ReadFile(filePath)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// // Replace PLUGIN_HOSTNAME with the actual host
+	// text := strings.Replace(string(data), "localhost", "https://"+r.Host, -1)
+	//
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "text/json")
+	w.Write([]byte(data))
+}
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
@@ -212,6 +263,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/swagger-ui", swaggerUI)
 	r.Get("/openapi3", openapi3)
+
+	// handle the plugin manifest
+	r.Get("/.well-known/ai-plugin.json", handlePluginManifest)
+	// handle the openai json plugin manifest
+	r.Get("openai-openapi.json", handleOpenAPIPluginManifest)
 
 	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
 		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))

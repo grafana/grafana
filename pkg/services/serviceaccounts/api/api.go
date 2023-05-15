@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -65,11 +66,30 @@ func NewServiceAccountsAPI(
 	}
 }
 
+func AllowOptions(c *contextmodel.ReqContext) response.Response {
+	fmt.Printf("AllowOptions\n")
+	if c.Req.Method == "OPTIONS" {
+		c.Resp.Header().Set("Access-Control-Allow-Methods", "POST")
+		c.Resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		c.Resp.Header().Set("Access-Control-Allow-Origin", "*")
+		return response.JSON(http.StatusOK, map[string]string{"message": "OK"})
+	}
+	fmt.Printf("AllowOptions - method: %s\n", c.Req.Method)
+	// You might want to return a different response or error here if the method is not OPTIONS
+	return response.JSON(http.StatusMethodNotAllowed, map[string]string{"message": "Method Not Allowed"})
+}
+
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+
+		//		serviceAccountsRoute.Any("/", AllowOptions)
 		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
+		// TODO: implement OPTIONS for /api/serviceaccounts/
+		// TODO: proxy server for CORS instead
+		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.ListServiceAccounts))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
 		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
@@ -133,7 +153,47 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
+	c.Resp.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	return response.JSON(http.StatusCreated, serviceAccount)
+}
+
+func (api *ServiceAccountsAPI) ListServiceAccounts(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	q := serviceaccounts.SearchOrgServiceAccountsQuery{
+		OrgID:        c.OrgID,
+		Query:        c.Query("query"),
+		Page:         1,
+		Limit:        10,
+		Filter:       "",
+		SignedInUser: c.SignedInUser,
+	}
+	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, &q)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
+	}
+
+	saIDs := map[string]bool{}
+	for i := range serviceAccountSearch.ServiceAccounts {
+		sa := serviceAccountSearch.ServiceAccounts[i]
+		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault("", sa.Name)
+
+		saIDString := strconv.FormatInt(sa.Id, 10)
+		saIDs[saIDString] = true
+		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
+		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
+		tokens, err := api.service.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
+		})
+		if err != nil {
+			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
+		}
+		sa.Tokens = int64(len(tokens))
+	}
+
+	c.Resp.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Resp.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	return response.JSON(http.StatusOK, serviceAccountSearch)
 }
 
 // swagger:route GET /serviceaccounts/{serviceAccountId} service_accounts retrieveServiceAccount

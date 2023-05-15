@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Grafana Plugin",
+  "name_for_model": "grafana",
+  "description_for_human": "Plugin for interacting with Grafana.",
+  "description_for_model": "Plugin for interacting with Grafana.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "http://localhost:80/openai-openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "http://localhost:3000/logo.png",
+  "contact_email": "support@grafana.com",
+  "legal_info_url": "http://www.example.com/legal"
+}
