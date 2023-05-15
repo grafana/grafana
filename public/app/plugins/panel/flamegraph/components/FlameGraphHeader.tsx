@@ -55,12 +55,12 @@ const FlameGraphHeader = ({
     setSelectedBarIndex(0);
     setRangeMin(0);
     setRangeMax(1);
+    // We could set only one and wait them to sync but there is no need to debounce this.
     setSearch('');
+    setLocalSearch('');
   };
 
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
-
-  console.log('rendering', localSearch, search);
 
   return (
     <div className={styles.header}>
@@ -100,7 +100,6 @@ function useSearchInput(
   const [localSearchState, setLocalSearchState] = useState(search);
   const prevSearch = usePrevious(search);
 
-  console.log('in useSearchInput', localSearchState, search);
   // Debouncing cause changing parent search triggers rerender on both the flamegraph and table
   useDebounce(
     () => {
