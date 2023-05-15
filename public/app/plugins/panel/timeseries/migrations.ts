@@ -263,7 +263,7 @@ export function graphToTimeseriesOptions(angular: any): {
           case 'stack':
             rule.properties.push({
               id: 'custom.stacking',
-              value: { mode: StackingMode.Normal, group: v },
+              value: getStackingFromOverrides(v),
             });
             break;
           case 'color':
@@ -711,7 +711,7 @@ function migrateHideFrom(panel: {
   }
 }
 
-function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allIsNull) {
+const getLegendHideFromOverride = (reducer: ReducerID.allIsZero | ReducerID.allIsNull) => {
   return {
     matcher: {
       id: FieldMatcherID.byValue,
@@ -732,4 +732,11 @@ function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allI
       },
     ],
   };
-}
+};
+
+const getStackingFromOverrides = (value: Boolean | string) => {
+  return {
+    mode: value ? StackingMode.Normal : StackingMode.None,
+    group: isString(value) ? value : 'A',
+  };
+};
