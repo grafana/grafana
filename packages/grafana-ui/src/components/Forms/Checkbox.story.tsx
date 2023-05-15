@@ -98,6 +98,8 @@ export const AllStates: ComponentStory<typeof Checkbox> = (args) => {
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
         <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+        <Checkbox value={false} invalid={true} label="Invalid without value" />
+        <Checkbox value={true} invalid={true} label="Invalid with value" />
       </VerticalGroup>
     </div>
   );
