@@ -49,18 +49,21 @@ type ClientDTO struct {
 }
 
 type Client struct {
-	ID                     int64           `xorm:"id pk autoincr"`
-	OrgIDs                 []int64         `xorm:"org_id"`
-	ExternalServiceName    string          `xorm:"app_name"`
-	ClientID               string          `xorm:"client_id"`
-	Secret                 string          `xorm:"secret"`
-	GrantTypes             string          `xorm:"grant_types"` // CSV value
-	PublicPem              []byte          `xorm:"public_pem"`
-	ServiceAccountID       int64           `xorm:"service_account_id"`
-	SelfPermissions        []ac.Permission `xorm:"self_permissions"`
+	ID                  int64   `xorm:"id pk autoincr"`
+	OrgIDs              []int64 `xorm:"org_id"`
+	ExternalServiceName string  `xorm:"app_name"`
+	ClientID            string  `xorm:"client_id"`
+	Secret              string  `xorm:"secret"`
+	GrantTypes          string  `xorm:"grant_types"` // CSV value
+	PublicPem           []byte  `xorm:"public_pem"`
+	ServiceAccountID    int64   `xorm:"service_account_id"`
+	// SelfPermissions are the registered service account permissions (does not include managed permissions)
+	SelfPermissions []ac.Permission `xorm:"self_permissions"`
+	// ImpersonatePermissions is the restriction set of permissions while impersonating
 	ImpersonatePermissions []ac.Permission `xorm:"impersonate_permissions"`
 	RedirectURI            string          `xorm:"redirect_uri"`
 
+	// SignedInUser refers to the current Service Account identity/user
 	SignedInUser      *user.SignedInUser
 	Scopes            []string
 	ImpersonateScopes []string
@@ -128,9 +131,9 @@ func (c *Client) GetOrgScopes() fosite.Arguments {
 }
 
 // GetScopes returns the scopes this client is allowed to request on its behalf.
-func (c *Client) GetScopes() fosite.Arguments {
+func (c *Client) GetScopes() []string {
 	if c.Scopes != nil {
-		return fosite.Arguments(c.Scopes)
+		return c.Scopes
 	}
 
 	ret := c.GetOrgScopes()
@@ -145,7 +148,7 @@ func (c *Client) GetScopes() fosite.Arguments {
 	}
 
 	c.Scopes = ret
-	return fosite.Arguments(ret)
+	return ret
 }
 
 // GetScopes returns the scopes this client is allowed to request on a specific user.
@@ -157,7 +160,7 @@ func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessCon
 	}
 
 	if c.ImpersonateScopes != nil {
-		return fosite.Arguments(c.ImpersonateScopes)
+		return c.ImpersonateScopes
 	}
 
 	// Org Scope
