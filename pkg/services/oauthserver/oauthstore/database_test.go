@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/go-jose/go-jose/v3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -236,6 +237,70 @@ func TestStore_GetExternalServiceByName(t *testing.T) {
 			require.NoError(t, err)
 
 			compareClients(t, stored, tt.want)
+		})
+	}
+}
+
+func TestStore_GetExternalServicePublicKey(t *testing.T) {
+	clientID := "ClientID"
+	createClient := func(clientID string, publicPem string) *oauthserver.Client {
+		return &oauthserver.Client{
+			ExternalServiceName:    "my-external-service",
+			ClientID:               clientID,
+			Secret:                 "Secret",
+			GrantTypes:             "client_credentials",
+			PublicPem:              []byte(publicPem),
+			ServiceAccountID:       2,
+			ImpersonatePermissions: []accesscontrol.Permission{},
+			RedirectURI:            "/whereto",
+		}
+	}
+
+	testCases := []struct {
+		name     string
+		client   *oauthserver.Client
+		clientID string
+		want     *jose.JSONWebKey
+		wantErr  bool
+	}{
+		{
+			name:     "should return an error when clientID is empty",
+			clientID: "",
+			client:   createClient(clientID, ""),
+			want:     nil,
+			wantErr:  true,
+		},
+		{
+			name:     "should return an error when PublicPem is not valid",
+			clientID: clientID,
+			client:   createClient(clientID, ""),
+			want:     nil,
+			wantErr:  true,
+		},
+		{
+			name:     "should return the JSON Web Key",
+			clientID: clientID,
+			client: createClient(clientID, `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
+mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
+-----END PUBLIC KEY-----`),
+			wantErr: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &store{db: db.InitTestDB(t)}
+			require.NoError(t, s.SaveExternalService(context.Background(), tc.client))
+
+			webKey, err := s.GetExternalServicePublicKey(context.Background(), tc.clientID)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			require.Equal(t, oauthserver.ES256, webKey.Algorithm)
+
 		})
 	}
 }
