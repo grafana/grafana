@@ -32,6 +32,7 @@ interface LegendDisplayProps {
   alignAsTable?: boolean;
   rightSide?: boolean;
   sideWidth?: number;
+  renderCallback?: () => void;
 }
 
 interface LegendValuesProps {
@@ -176,6 +177,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       avg,
       current,
       total,
+      renderCallback,
     } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const hiddenSeries = this.state.hiddenSeries;
@@ -205,7 +207,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     };
 
     return (
-      <div className={`graph-legend-content ${legendClass}`} style={legendStyle}>
+      <div className={`graph-legend-content ${legendClass}`} ref={renderCallback} style={legendStyle}>
         {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
       </div>
     );

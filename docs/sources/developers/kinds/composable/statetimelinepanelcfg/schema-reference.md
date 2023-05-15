@@ -50,15 +50,15 @@ TODO docs
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
 
-| Property      | Type                                    | Required | Default | Description                                                                                                     |
-|---------------|-----------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------|
-| `legend`      | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs                                        |
-| `rowHeight`   | number                                  | **Yes**  | `0.9`   | Controls the row height                                                                                         |
-| `showValue`   | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                   |
-| `tooltip`     | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs                                      |
-| `alignValue`  | string                                  | No       |         | Controls the value alignment in the TimelineChart component<br/>Possible values are: `center`, `left`, `right`. |
-| `mergeValues` | boolean                                 | No       | `true`  | Merge equal consecutive values                                                                                  |
-| `timezone`    | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))*                                                |
+| Property      | Type                                    | Required | Default | Description                                                                |
+|---------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------------|
+| `legend`      | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
+| `rowHeight`   | number                                  | **Yes**  | `0.9`   | Controls the row height                                                    |
+| `showValue`   | string                                  | **Yes**  |         | Show timeline values on chart                                              |
+| `tooltip`     | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `alignValue`  | string                                  | No       |         | Controls value alignment on the timelines                                  |
+| `mergeValues` | boolean                                 | No       | `true`  | Merge equal consecutive values                                             |
+| `timezone`    | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))*           |
 
 ### OptionsWithLegend
 

@@ -49,7 +49,7 @@ func logRestartNotice() {
 	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 }
 
-func (cmd Command) installCommand(c utils.CommandLine) error {
+func installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -127,7 +127,7 @@ func osAndArchString() string {
 	return osString + "-" + arch
 }
 
-func supportsCurrentArch(version *models.Version) bool {
+func supportsCurrentArch(version models.Version) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -139,10 +139,10 @@ func supportsCurrentArch(version *models.Version) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *models.Plugin) *models.Version {
+func latestSupportedVersion(plugin models.Plugin) *models.Version {
 	for _, v := range plugin.Versions {
 		ver := v
-		if supportsCurrentArch(&ver) {
+		if supportsCurrentArch(ver) {
 			return &ver
 		}
 	}

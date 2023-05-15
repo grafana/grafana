@@ -98,7 +98,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
   const frame0Ref = useRef<DataFrame>();
   const colorByFieldRef = useRef<Field>();
 
-  const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
+  const info = useMemo(() => prepareBarChartDisplayValues(data.series, theme, options), [data.series, theme, options]);
   const chartDisplay = 'viz' in info ? info : null;
 
   colorByFieldRef.current = chartDisplay?.colorByField;

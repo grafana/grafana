@@ -1,4 +1,4 @@
-import { Meta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { FeatureState } from '@grafana/data';
@@ -45,7 +45,7 @@ const defaultProps: FeatureInfoBoxProps = {
   ),
 };
 
-const InfoBoxTemplate: ComponentStory<typeof InfoBox> = (args) => {
+const InfoBoxTemplate: StoryFn<typeof InfoBox> = (args) => {
   return (
     <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>
@@ -56,7 +56,7 @@ const InfoBoxTemplate: ComponentStory<typeof InfoBox> = (args) => {
 export const infoBox = InfoBoxTemplate.bind({});
 infoBox.args = defaultProps;
 
-const FeatureInfoBoxTemplate: ComponentStory<typeof FeatureInfoBox> = (args) => {
+const FeatureInfoBoxTemplate: StoryFn<typeof FeatureInfoBox> = (args) => {
   return (
     <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>

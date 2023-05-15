@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { Input, Switch } from '..';
@@ -6,7 +6,7 @@ import { Input, Switch } from '..';
 import { Field } from './Field';
 import mdx from './Field.mdx';
 
-const meta: ComponentMeta<typeof Field> = {
+const meta: Meta<typeof Field> = {
   title: 'Forms/Field',
   component: Field,
   argTypes: {
@@ -27,7 +27,7 @@ const meta: ComponentMeta<typeof Field> = {
   },
 };
 
-export const Simple: ComponentStory<typeof Field> = (args) => (
+export const Simple: StoryFn<typeof Field> = (args) => (
   <div>
     <Field {...args}>
       <Input id="thisField" />
@@ -45,7 +45,7 @@ Simple.args = {
   horizontal: false,
 };
 
-export const HorizontalLayout: ComponentStory<typeof Field> = (args) => {
+export const HorizontalLayout: StoryFn<typeof Field> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),

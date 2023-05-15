@@ -12,7 +12,7 @@ import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
-import { LogMessages } from './Analytics';
+import { LogMessages, trackRuleListNavigation } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -76,6 +76,7 @@ const RuleList = withErrorBoundary(
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
+        trackRuleListNavigation();
         await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
     }, [loading, limitAlerts, dispatch]);
