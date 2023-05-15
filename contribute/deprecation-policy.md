@@ -29,6 +29,6 @@ Grafana employees can find more details in our internal docs.
 
 ## Announced deprecations.
 
-| Name                  | Annoucement Date | Disabling date | Removal Date | Description                                                                                                               | Status  |
-| --------------------- | ---------------- | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------- |
-| Support for Mysql 5.7 | 2023-05-15       | October 2023   |              | MySQL 5.7 is getting deprecated in October 2023 and Grafana's policy is to test against the officially supported version. | Planned |
+| Name                                                                     | Annoucement Date | Disabling date | Removal Date | Description                                                                                                               | Status  |
+| ------------------------------------------------------------------------ | ---------------- | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- | ------- |
+| [Support for Mysql 5.7](https://github.com/grafana/grafana/issues/68446) | 2023-05-15       | October 2023   |              | MySQL 5.7 is getting deprecated in October 2023 and Grafana's policy is to test against the officially supported version. | Planned |
