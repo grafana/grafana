@@ -4,8 +4,10 @@ import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { GrafanaTheme2, CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
+import { config } from '../../../../core/config';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
 import { SelectedView } from './types';
@@ -85,6 +87,11 @@ const FlameGraphHeader = ({
           options={viewOptions}
           value={selectedView}
           onChange={(view) => {
+            reportInteraction('grafana_flamegraph_view_selected', {
+              app,
+              grafana_version: config.buildInfo.version,
+              view,
+            });
             setSelectedView(view);
           }}
         />
