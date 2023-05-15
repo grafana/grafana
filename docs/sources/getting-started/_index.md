@@ -2,6 +2,7 @@
 aliases:
   - guides/what-is-grafana/
 title: Get started
+description: Learn how build your first dashboard after you have installed Grafana.
 weight: 9
 ---
 

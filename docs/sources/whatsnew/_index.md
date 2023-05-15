@@ -60,6 +60,7 @@ cascade:
       - oss
 title: What's new
 weight: 1
+description: Learn about new and changed features in Grafana.
 ---
 
 # What's new in Grafana
