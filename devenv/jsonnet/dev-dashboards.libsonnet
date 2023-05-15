@@ -128,6 +128,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('barchart-tooltips', import '../dev-dashboards/panel-barchart/barchart-tooltips.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('candlestick', import '../dev-dashboards/panel-candlestick/candlestick.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
