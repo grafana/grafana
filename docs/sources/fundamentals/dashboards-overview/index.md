@@ -68,7 +68,7 @@ Transforms are located next to the **Query** tab in the edit dialog for a panel.
 
 After the data is sourced, queried, and transformed, it passes to a panel which is the  final gate in the journey to a Grafana visualization.  A panel is a container that displays the visualization and provides you the controls to manipulate the visualization in many different ways.  The panel configuration is where you specify how you want to see the data. For example, it is within the panel that you use a drop-down menu in the top-right to specify the type of visualization you want to see such as a bar chart, pie chart, or histogram.
 
-The Panel options enable you to customize many aspects of the visualization and change based on the visualization you select. Panels also contain queries that specify the data the panel is visualizing.
+The panel options enable you to customize many aspects of the visualization and change them based on the visualization you select. Panels also contain queries that specify the data the panel is visualizing.
 
 The following image shows a table panel being edited, together with the panel settings that let you see the query (bottom of frame) and the panel options (right of frame). This in turn shows how the data source, plugin, query, and panel all come together.
 
