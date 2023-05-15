@@ -80,9 +80,9 @@ Selecting the best visualization depends on the data and how you want it present
 
 ## Conclusion
 
-With this model in mind, of data source -> plugin -> query -> transform -> panel, now you can see right through any Grafana dashboard you encounter, and imagine how to build your own.
+With the data source, plugin, query, transform, and panel model in mind, you can now see right through any Grafana dashboard you encounter, and imagine how to build your own.
 
-Building a Grafana dashboard is a process that starts with determining your dashboard requirements and which data source supports those requirements. If you want to integrate a specialized database with a Grafana dashboard, it would be necessary to ensure the correct plugin is installed, so that you can create a data source to be used with that plugin.
+Building a Grafana dashboard is a process that starts with determining your dashboard requirements and identifying which data sources support those requirements. If you want to integrate a specialized database with a Grafana dashboard, you must ensure the correct plugin is installed so that you can create a data source to use with that plugin.
 
 And with the data source identified and the plugin installed, you can write your query, transform the data, and format the visualization to meet your needs.
 
