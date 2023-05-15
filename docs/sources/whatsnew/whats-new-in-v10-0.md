@@ -75,7 +75,7 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 <!-- Nathan Marrs -->
 
-We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced several enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+We are promoting the canvas panel out of beta and into general availability. Over the past several months we have introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We are excited to include canvas as a first class citizen in Grafana’s core panel library. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}). Also, check out [our latest blog post about canvas](https://grafana.com/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
@@ -85,7 +85,9 @@ We are promoting the canvas panel out of beta and into general availability. Ove
 
 _Available in Experimental in all editions of Grafana_
 
-We are excited to introduce a new panel that allows you to display trends where the x axis is not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels.
+We are excited to introduce a new panel that allows you to display trends where the x axis is numeric and not time. This new beta panel addresses gaps that were not solved by either the Time series or XY Chart panels. For example, you can plot function graphs, rpm / torque curves, supply / demand relationships, and more. To learn more about the Trend panel, refer to [Trend]({{< relref "../panels-visualizations/visualizations/trend" >}}).
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
 
 ### Drag and Drop spreadsheets into Grafana
 
@@ -119,7 +121,6 @@ Concepts like data sources and dashboards panels are hard to grasp and it’s a 
 With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing you to quickly connect to a new one when needed. You can also quickly upload a CSV file.
 
 {{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
-
 
 ### Time series time region support
 
