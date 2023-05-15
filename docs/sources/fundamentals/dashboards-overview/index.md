@@ -51,7 +51,9 @@ The following image shows the Query Editor associated with the Prometheus data s
 
 ## Transforms
 
-Not all panels will use [transforms](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/). When you are first starting out, you may not need them, but they’re so powerful we have to mention them.  Sometimes the data that comes from your source won’t be shaped correctly.  Common examples include things like:
+When the data format in a visualization doesn’t meet your requirements, you can apply a [transformation]({{< relref "../panels-visualizations/query-transform-data/transform-data" >}}) that manipulates the data returned by a query. You might not need to transform data when you are first starting out, but they are powerful and worth mentioning.
+
+Transforming data is useful in the following kinds of situations: 
 
 - You want to combine two fields together, for example, concatenating `Given Name` and `Family Name` into a `Full Name` field
 - You have CSV data (all text), and you want to convert a field types (such as parsing a date or a number out of a string)
