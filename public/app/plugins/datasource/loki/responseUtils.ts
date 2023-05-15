@@ -245,6 +245,10 @@ export function cloneQueryResponse(response: DataQueryResponse): DataQueryRespon
   return newResponse;
 }
 
+/**
+ * shallow clone
+ * @param frame
+ */
 function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
   return {
     ...frame,
