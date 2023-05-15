@@ -74,7 +74,7 @@ Finally, start your plugin in development mode. Go to your plugin's root directo
    yarn start
    ```
 
-   2. Or, with docker-compose in your plugin directory, run:
+   2. Or, with docker-compose, in your plugin directory, run:
 
    ```bash
    docker-compose up
@@ -82,7 +82,7 @@ Finally, start your plugin in development mode. Go to your plugin's root directo
 
 After this, you should be able to see your plugin listed in Grafana, and then you can test your changes.
 
-If you make a change in the fronted, you must refresh your browser. However, changes in the backend may require that you rebuild your plugin binaries and reload the plugin (`mage && mage reloadPlugin` for local development, or run `docker-compose up` again if you are using docker-compose).
+If you make a change in the frontend, you must refresh your browser. However, changes in the backend may require that you rebuild your plugin binaries and reload the plugin (`mage && mage reloadPlugin` for local development, or run `docker-compose up` again if you are using docker-compose).
 
 ## Run your backend plugin with a debugger
 

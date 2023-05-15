@@ -97,8 +97,6 @@ export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOption
 
 Option editors can access the results from the last query. This lets you update your editor dynamically based on the data returned by the data source.
 
-> **Note:** This feature was introduced in 7.0.3. Older versions of Grafana show an error when using your plugin.
-
 The editor context is available through the `context` prop. The data frames returned by the data source are available under `context.data`.
 
 **SimpleEditor.tsx**
@@ -121,5 +119,3 @@ export const SimpleEditor = ({ item, value, onChange, context }: StandardEditorP
   return <Select options={options} value={value} onChange={(selectableValue) => onChange(selectableValue.value)} />;
 };
 ```
-
-Have you built a custom editor that you think would be useful to other plugin developers? Consider [contributing it](https://grafana.com/docs/grafana/latest/developers/contribute/) to have it considered as a standard editor.
