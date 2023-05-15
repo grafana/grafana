@@ -11,7 +11,7 @@ lokiLive,alpha,@grafana/observability-logs,false,false,false,false
 featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
-exploreMixedDatasource,beta,@grafana/explore-squad,false,false,false,true
+exploreMixedDatasource,stable,@grafana/explore-squad,false,false,false,true
 newTraceViewHeader,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
 datasourceQueryMultiStatus,alpha,@grafana/plugins-platform-backend,false,false,false,false
@@ -74,7 +74,7 @@ useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,
 enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
 pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,false
-advancedDataSourcePicker,alpha,@grafana/dashboards-squad,false,false,false,true
+advancedDataSourcePicker,stable,@grafana/dashboards-squad,false,false,false,true
 opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
 faroDatasourceSelector,beta,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
