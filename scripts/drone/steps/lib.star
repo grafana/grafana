@@ -1124,6 +1124,9 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         "GCP_KEY": from_secret("gcp_key"),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
+        "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
+        "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+        "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
     cmd = "./bin/grabpl artifacts docker publish {}--dockerhub-repo {}".format(
