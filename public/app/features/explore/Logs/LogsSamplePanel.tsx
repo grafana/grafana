@@ -17,10 +17,9 @@ import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 
-import { LogRows } from '../logs/components/LogRows';
-
-import { SupplementaryResultError } from './SupplementaryResultError';
-import { SETTINGS_KEYS } from './utils/logs';
+import { LogRows } from '../../logs/components/LogRows';
+import { SupplementaryResultError } from '../SupplementaryResultError';
+import { SETTINGS_KEYS } from '../utils/logs';
 
 type Props = {
   queryResponse: DataQueryResponse | undefined;

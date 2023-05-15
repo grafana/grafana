@@ -3,8 +3,9 @@ import React from 'react';
 
 import { LogRowModel } from '@grafana/data';
 
+import { makeLogs } from '../__mocks__/makeLogs';
+
 import { LiveLogsWithTheme } from './LiveLogs';
-import { makeLogs } from './__mocks__/makeLogs';
 
 const setup = (rows: LogRowModel[]) =>
   render(

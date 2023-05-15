@@ -23,15 +23,20 @@ import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
-import { getTimeZone } from '../profile/state/selectors';
+import { getTimeZone } from '../../profile/state/selectors';
+import {
+  addResultsToCache,
+  clearCache,
+  loadSupplementaryQueryData,
+  setSupplementaryQueryEnabled,
+} from '../state/query';
+import { updateTimeRange } from '../state/time';
+import { LiveTailControls } from '../useLiveTailControls';
+import { LogsCrossFadeTransition } from '../utils/LogsCrossFadeTransition';
+import { getFieldLinksForExplore } from '../utils/links';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadSupplementaryQueryData, setSupplementaryQueryEnabled } from './state/query';
-import { updateTimeRange } from './state/time';
-import { LiveTailControls } from './useLiveTailControls';
-import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
-import { getFieldLinksForExplore } from './utils/links';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
