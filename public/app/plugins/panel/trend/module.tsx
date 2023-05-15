@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { Field, FieldType, PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
@@ -20,6 +20,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TrendPanel
       settings: {
         isClearable: true,
         placeholderText: 'First numeric value',
+        filter: (f: Field) => f.type === FieldType.number,
       },
     });
 
