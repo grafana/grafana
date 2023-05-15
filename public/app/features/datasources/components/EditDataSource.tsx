@@ -6,7 +6,7 @@ import {
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
 } from '@grafana/data';
-import { getDataSourceSrv, config } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -116,7 +116,6 @@ export function EditDataSourceView({
   const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
-  const dataSourcePageHeader = config.featureToggles.dataSourcePageHeader;
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -158,16 +157,14 @@ export function EditDataSourceView({
 
       <CloudInfoBox dataSource={dataSource} />
 
-      {!dataSourcePageHeader && (
-        <BasicSettings
-          dataSourceName={dataSource.name}
-          isDefault={dataSource.isDefault}
-          onDefaultChange={onDefaultChange}
-          onNameChange={onNameChange}
-          alertingSupported={alertingSupported}
-          disabled={readOnly || !hasWriteRights}
-        />
-      )}
+      <BasicSettings
+        dataSourceName={dataSource.name}
+        isDefault={dataSource.isDefault}
+        onDefaultChange={onDefaultChange}
+        onNameChange={onNameChange}
+        alertingSupported={alertingSupported}
+        disabled={readOnly || !hasWriteRights}
+      />
 
       {plugin && (
         <DataSourcePluginContextProvider instanceSettings={dsi}>

@@ -181,10 +181,8 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
       dataSourcePluginName: datasourcePlugin?.name || '',
       active: true,
     },
-    dataSource: dataSource,
     dataSourceHeader: {
       alertingSupported,
-      onUpdate: useUpdateDatasource(),
     },
   };
 };

@@ -26,7 +26,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export interface PageInfoItem {
-  label: string | React.ReactNode;
+  label: string;
   value: React.ReactNode;
 }
 

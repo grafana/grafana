@@ -57,7 +57,6 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     .should('be.visible') // prevents flakiness
     .click();
 
-  e2e.pages.DataSource.nameEditIcon().click();
   e2e.pages.DataSource.name().clear();
   e2e.pages.DataSource.name().type(name);
 

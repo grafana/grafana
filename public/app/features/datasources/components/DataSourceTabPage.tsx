@@ -18,26 +18,15 @@ export function DataSourceTabPage({ uid, pageId, navId }: Props) {
   const nav = useDataSourceSettingsNav(uid, pageId);
 
   const info = useDataSourceInfo({
-    dataSource: nav.dataSource,
     dataSourcePluginName: nav.main.dataSourcePluginName,
-    isDefault: nav.dataSource.isDefault,
-    isReadOnly: nav.dataSource.readOnly,
     alertingSupported: nav.dataSourceHeader.alertingSupported,
-    onUpdate: nav.dataSourceHeader.onUpdate,
   });
 
   return (
     <Page
       navId={navId}
       pageNav={nav.main}
-      renderTitle={(title) => (
-        <EditDataSourceTitle
-          dataSource={nav.dataSource}
-          title={title}
-          readOnly={nav.dataSource.readOnly}
-          onUpdate={nav.dataSourceHeader.onUpdate}
-        />
-      )}
+      renderTitle={(title) => <EditDataSourceTitle title={title} />}
       info={info}
       actions={<EditDataSourceActions uid={uid} />}
     >
