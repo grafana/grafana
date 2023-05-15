@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Table, TableSortByFieldState, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL, TOP_TABLE_COLUMN_WIDTH } from '../../constants';
@@ -41,6 +41,10 @@ const FlameGraphTopTableContainer = ({
     if (search === symbol) {
       setSearch('');
     } else {
+      reportInteraction('grafana_flamegraph_table_item_selected', {
+        app,
+        grafana_version: config.buildInfo.version,
+      });
       setSearch(symbol);
       // Reset selected level in flamegraph when selecting row in top table
       setTopLevelIndex(0);
@@ -65,6 +69,13 @@ const FlameGraphTopTableContainer = ({
             <Table
               initialSortBy={sort}
               onSortByChange={(s) => {
+                if (s && s.length) {
+                  reportInteraction('grafana_flamegraph_table_sort_selected', {
+                    app,
+                    grafana_version: config.buildInfo.version,
+                    sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
+                  });
+                }
                 setSort(s);
               }}
               data={frame}
