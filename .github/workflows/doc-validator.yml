@@ -7,7 +7,7 @@ jobs:
   doc-validator:
     runs-on: "ubuntu-latest"
     container:
-      image: "grafana/doc-validator:v2.0.0"
+      image: "grafana/doc-validator:v1.11.0"
     steps:
       - name: "Checkout code"
         uses: "actions/checkout@v3"
@@ -15,7 +15,7 @@ jobs:
         # Only run doc-validator on specific directories.
         run: >
           doc-validator
-          --skip-checks='^image-.+$'
           --include='^docs/sources/(?:fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew)/.+\.md$'
+          --skip-image-validation
           ./docs/sources
           /docs/grafana/latest
