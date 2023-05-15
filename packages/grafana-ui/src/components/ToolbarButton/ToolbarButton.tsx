@@ -161,7 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius()};
       line-height: ${theme.components.height.md * theme.spacing.gridSize - 2}px;
       font-weight: ${theme.typography.fontWeightMedium};
-      border: 1px solid ${theme.colors.border.weak};
+      border: 1px solid ${theme.colors.secondary.border};
       white-space: nowrap;
       transition: ${theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
