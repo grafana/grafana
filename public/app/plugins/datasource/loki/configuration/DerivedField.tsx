@@ -129,7 +129,7 @@ export const DerivedField = (props: Props) => {
           <Switch
             value={showInternalLink}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              const checked = e.currentTarget.checked;
+              const { checked } = e.currentTarget;
               if (!checked) {
                 onChange({
                   ...value,
