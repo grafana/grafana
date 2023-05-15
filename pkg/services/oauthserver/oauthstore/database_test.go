@@ -246,15 +246,15 @@ func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.Client) {
 	require.NoError(t, err)
 	require.NotNil(t, stored)
 
-	// Reset ID so we can compare
-	// Compare permissions separately
 	compareClients(t, stored, wanted)
 }
 
 func compareClients(t *testing.T, stored *oauthserver.Client, wanted *oauthserver.Client) {
+	// Reset ID so we can compare
 	require.NotZero(t, stored.ID)
 	stored.ID = 0
 
+	// Compare permissions separately
 	wantedPerms := wanted.ImpersonatePermissions
 	storedPerms := stored.ImpersonatePermissions
 	wanted.ImpersonatePermissions = nil
