@@ -367,7 +367,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		// In these cases, the `Database` value is defined (if at all) on the root level of the provisioning config object.
 		// This is done for easier warning/error checking on the front end.
 		if (ds.Type == datasources.DS_MSSQL) || (ds.Type == datasources.DS_MYSQL) || (ds.Type == datasources.DS_POSTGRES) {
-			// Only update is the value isn't already assigned.
+			// Only update if the value isn't already assigned.
 			if dsDTO.JSONData["database"] == nil || dsDTO.JSONData["database"] == "" {
 				dsDTO.JSONData["database"] = ds.Database
 			}
