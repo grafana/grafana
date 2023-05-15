@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, ReactNode, useContext, useEffect } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -13,7 +13,6 @@ import {
   useForceUpdate,
   Tag,
   ToolbarButtonRow,
-  ModalsContext,
   ConfirmModal,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -26,7 +25,6 @@ import { t, Trans } from 'app/core/internationalization';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { AddPanelButton } from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
-import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -36,6 +34,7 @@ import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events
 
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
+import { ShareButton } from './ShareButton';
 
 const mapDispatchToProps = {
   setStarred,
@@ -53,7 +52,6 @@ export interface OwnProps {
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
-  shareModalActiveTab?: string;
   onAddPanel: () => void;
 }
 
@@ -80,7 +78,6 @@ export const DashNav = React.memo<Props>((props) => {
   // this ensures the component rerenders when the location changes
   useLocation();
   const forceUpdate = useForceUpdate();
-  const { showModal, hideModal } = useContext(ModalsContext);
 
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
@@ -164,25 +161,6 @@ export const DashNav = React.memo<Props>((props) => {
     return playlistSrv.isPlaying;
   };
 
-  // Open/Close
-  useEffect(() => {
-    const dashboard = props.dashboard;
-    const shareModalActiveTab = props.shareModalActiveTab;
-    const { canShare } = dashboard.meta;
-
-    if (canShare && shareModalActiveTab) {
-      // automagically open modal
-      showModal(ShareModal, {
-        dashboard,
-        onDismiss: hideModal,
-        activeTab: shareModalActiveTab,
-      });
-    }
-    return () => {
-      hideModal();
-    };
-  }, [showModal, hideModal, props.dashboard, props.shareModalActiveTab]);
-
   const renderLeftActions = () => {
     const { dashboard, kioskMode } = props;
     const { canStar, canShare, isStarred } = dashboard.meta;
@@ -209,23 +187,7 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canShare) {
-      buttons.push(
-        <ModalsController key="button-share">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
-              icon="share-alt"
-              iconSize="lg"
-              onClick={() => {
-                showModal(ShareModal, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      );
+      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
     }
 
     if (dashboard.meta.publicDashboardEnabled) {

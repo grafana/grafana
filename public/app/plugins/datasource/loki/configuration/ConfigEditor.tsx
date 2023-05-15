@@ -47,7 +47,7 @@ export const ConfigEditor = (props: Props) => {
       />
 
       <DerivedFields
-        value={options.jsonData.derivedFields}
+        fields={options.jsonData.derivedFields}
         onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
       />
     </>
