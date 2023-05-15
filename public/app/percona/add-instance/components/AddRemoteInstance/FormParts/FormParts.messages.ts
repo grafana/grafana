@@ -64,6 +64,7 @@ export const Messages = {
         disableEnchancedMetrics: 'Disable Enhanced Metrics',
         tablestatOptions: 'Table statistics limit',
         azureDatabaseExporter: 'Enable Monitoring by Azure Metrics Exporter',
+        disableCommentsParsing: 'Disable comments parsing',
       },
     },
     placeholders: {

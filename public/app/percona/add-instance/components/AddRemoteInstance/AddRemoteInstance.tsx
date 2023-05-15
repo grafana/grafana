@@ -45,6 +45,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
 
   if (type === Databases.mysql) {
     initialValues.qan_mysql_perfschema = true;
+    initialValues.disable_comments_parsing = true;
   }
 
   if (type === Databases.postgresql) {
