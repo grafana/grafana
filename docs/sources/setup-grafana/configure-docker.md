@@ -304,4 +304,4 @@ The chance syntax errors to appear in a YAML file increases as the file becomes 
 docker compose config docker-compose.yaml
 ```
 
-The output of the command highlights errors in specific lines. Else it will output the content of the `docker-compose.yaml` file in detailed YAML format.
+If there are errors in the YAML file, the command output highlights the lines that contain errors. If there are no errors in the YAML file, the output includes the content of the `docker-compose.yaml` file in detailed YAML format.
