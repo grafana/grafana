@@ -247,7 +247,7 @@
           }
         ],
         "responses": {
-          "201": {
+          "202": {
             "description": "postSilencesOKBody",
             "schema": {
               "$ref": "#/definitions/postSilencesOKBody"
