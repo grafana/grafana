@@ -703,10 +703,8 @@ func buildTracesQuery(operationId string, traceTypes []string, filters []types.T
 	if len(resources) > 0 {
 		intermediate := make([]string, 0)
 		for _, resource := range resources {
-			resourceSplit := strings.SplitAfter(resource, "/")
-			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range filteredTypes {
-				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resourceName, table))
+				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resource, table))
 			}
 		}
 		resourcesQuery += "," + strings.Join(intermediate, ",")
@@ -781,10 +779,8 @@ func buildTracesLogsQuery(operationId string, resources []string) string {
 	if len(resources) > 0 {
 		intermediate := make([]string, 0)
 		for _, resource := range resources {
-			resourceSplit := strings.SplitAfter(resource, "/")
-			resourceName := resourceSplit[len(resourceSplit)-1]
 			for _, table := range types {
-				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resourceName, table))
+				intermediate = append(intermediate, fmt.Sprintf("app('%s').%s", resource, table))
 			}
 		}
 		sort.Strings(intermediate)

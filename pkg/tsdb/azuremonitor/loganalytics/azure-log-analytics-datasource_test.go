@@ -933,7 +933,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -947,7 +947,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -959,13 +959,13 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 				},
 			},
@@ -999,7 +999,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
@@ -1012,7 +1012,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1024,13 +1024,13 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 				},
 			},
@@ -1066,7 +1066,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1080,7 +1080,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1092,13 +1092,13 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 				},
 			},
@@ -1134,7 +1134,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests,app('r3').availabilityResults,app('r3').customEvents,app('r3').dependencies,app('r3').exceptions,app('r3').pageViews,app('r3').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1148,7 +1148,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests,app('r3').availabilityResults,app('r3').customEvents,app('r3').dependencies,app('r3').exceptions,app('r3').pageViews,app('r3').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1160,20 +1160,20 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces,\n" +
-						"app('r3').availabilityResults,\n" +
-						"app('r3').customEvents,\n" +
-						"app('r3').dependencies,\n" +
-						"app('r3').exceptions,\n" +
-						"app('r3').pageViews,\n" +
-						"app('r3').requests,\n" +
-						"app('r3').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces,\n" +
+						"app('/subscriptions/r3').availabilityResults,\n" +
+						"app('/subscriptions/r3').customEvents,\n" +
+						"app('/subscriptions/r3').dependencies,\n" +
+						"app('/subscriptions/r3').exceptions,\n" +
+						"app('/subscriptions/r3').pageViews,\n" +
+						"app('/subscriptions/r3').requests,\n" +
+						"app('/subscriptions/r3').traces\n" +
 						"| where operation_Id == \"op-id-non-overlapping\"",
 				},
 			},
