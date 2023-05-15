@@ -1,18 +1,17 @@
 package grafanaplugin
 
 composableKinds: DataSourceCfg: lineage: {
-	seqs: [
+	schemas: [
 		{
-			schemas: [
-				{
-					Options: {
-						foo: string
-					}
-					SecureOptions: {
-						bar: string
-					}
-				},
-			]
+			version: [0, 0]
+			schema: {
+				Options: {
+					foo: string
+				}
+				SecureOptions: {
+					bar: string
+				}
+			}
 		},
 	]
 }

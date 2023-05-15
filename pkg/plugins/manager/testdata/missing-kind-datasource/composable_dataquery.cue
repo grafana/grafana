@@ -1,13 +1,12 @@
 package grafanaplugin
 
 composableKinds: DataQuery: lineage: {
-	seqs: [
+	schemas: [
 		{
-			schemas: [
-				{
-					foo: string
-				},
-			]
+			version: [0, 0]
+			schema: {
+				foo: string
+			}
 		},
 	]
 }
