@@ -62,6 +62,8 @@ Transforming data is useful in the following kinds of situations:
 
 Transforms are located next to the **Query** tab in the edit dialog for a panel. Select the transform you want, and define the transform. The following image shows that you can have as many transforms as you want, just like queries. For example, you can chain together a series of transforms that make a change to a data type, filter results, organize columns, and sort the result into one data pipeline. Every time the dashboard is refreshed, the transform applies to the latest data from the data source.
 
+The following image shows the transform dialog.
+
 {{< figure src="/media/docs/grafana/dashboards-overview/example-transform-chain.png" max-width="750px" caption="Example chain of transforms" >}}
 
 ## Panel
