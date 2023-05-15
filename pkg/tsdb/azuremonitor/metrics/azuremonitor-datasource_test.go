@@ -314,7 +314,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			}
 
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params", "Dimensions")); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+				t.Errorf("Result mismatch (-want +got):\n%s", types.AzureMonitorQuery{}.URL)
 			}
 
 			expectedPortalURL := `http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/` +
