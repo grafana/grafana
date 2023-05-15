@@ -576,6 +576,7 @@ func TestDashAlertMigration(t *testing.T) {
 	})
 
 	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
+		defer teardown(t, x)
 		o := createOrg(t, 1)
 		folder1 := createDashboard(t, 1, o.ID, "folder-1")
 		folder1.IsFolder = true
@@ -809,7 +810,7 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	folder := createDashboard(t, 5, 1, "folder1-1")
 	folder.IsFolder = true
 	dashboard3_1 := createDashboard(t, 6, 1, "dash3-1")
-	dashboard3_1.FolderID = 5
+	dashboard3_1.FolderID = folder.ID
 
 	dashboards = append(dashboards, *folder, *dashboard3_1)
 
