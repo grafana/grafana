@@ -167,6 +167,79 @@ func TestStore_SaveExternalService(t *testing.T) {
 	}
 }
 
+func TestStore_GetExternalServiceByName(t *testing.T) {
+	client1 := oauthserver.Client{
+		ExternalServiceName:    "my-external-service",
+		ClientID:               "ClientID",
+		Secret:                 "Secret",
+		GrantTypes:             "client_credentials",
+		PublicPem:              []byte("test"),
+		ServiceAccountID:       2,
+		ImpersonatePermissions: []accesscontrol.Permission{},
+		RedirectURI:            "/whereto",
+	}
+	client2 := oauthserver.Client{
+		ExternalServiceName: "my-external-service-2",
+		ClientID:            "ClientID2",
+		Secret:              "Secret2",
+		GrantTypes:          "client_credentials,urn:ietf:params:grant-type:jwt-bearer",
+		PublicPem:           []byte("test2"),
+		ServiceAccountID:    3,
+		ImpersonatePermissions: []accesscontrol.Permission{
+			{Action: "dashboards:read", Scope: "folders:*"},
+			{Action: "dashboards:read", Scope: "dashboards:*"},
+		},
+		RedirectURI: "/whereto",
+	}
+	s := &store{db: db.InitTestDB(t)}
+	require.NoError(t, s.SaveExternalService(context.Background(), &client1))
+	require.NoError(t, s.SaveExternalService(context.Background(), &client2))
+
+	tests := []struct {
+		name    string
+		search  string
+		want    *oauthserver.Client
+		wantErr bool
+	}{
+		{
+			name:    "no name provided",
+			search:  "",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "not found",
+			search:  "unknown-external-service",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "search client 1 by name",
+			search:  "my-external-service",
+			want:    &client1,
+			wantErr: false,
+		},
+		{
+			name:    "search client 2 by name",
+			search:  "my-external-service-2",
+			want:    &client2,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stored, err := s.GetExternalServiceByName(context.Background(), tt.search)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			compareClients(t, stored, tt.want)
+		})
+	}
+}
+
 func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.Client) {
 	ctx := context.Background()
 	stored, err := s.GetExternalService(ctx, wanted.ClientID)
@@ -174,10 +247,14 @@ func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.Client) {
 	require.NotNil(t, stored)
 
 	// Reset ID so we can compare
+	// Compare permissions separately
+	compareClients(t, stored, wanted)
+}
+
+func compareClients(t *testing.T, stored *oauthserver.Client, wanted *oauthserver.Client) {
 	require.NotZero(t, stored.ID)
 	stored.ID = 0
 
-	// Compare permissions separately
 	wantedPerms := wanted.ImpersonatePermissions
 	storedPerms := stored.ImpersonatePermissions
 	wanted.ImpersonatePermissions = nil
