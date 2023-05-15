@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -83,17 +83,27 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
 export function useSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
+  const lastRequestTimestamp = useRef<number>();
 
   // Hit dashboards API
   useEffect(() => {
+    const timestamp = Date.now();
     if (isShowing && searchQuery.length > 0) {
       setIsFetchingSearchResults(true);
       debouncedSearch(searchQuery).then((resultActions) => {
-        setSearchResults(resultActions);
-        setIsFetchingSearchResults(false);
+        // Only update the state if this is the most recent request
+        // We don't need to worry about clearing the isFetching state either
+        // If there's a later request in progress, this will clear it for us
+        if (!lastRequestTimestamp.current || timestamp > lastRequestTimestamp.current) {
+          setSearchResults(resultActions);
+          setIsFetchingSearchResults(false);
+          lastRequestTimestamp.current = timestamp;
+        }
       });
     } else {
       setSearchResults([]);
+      setIsFetchingSearchResults(false);
+      lastRequestTimestamp.current = timestamp;
     }
   }, [isShowing, searchQuery]);
 
