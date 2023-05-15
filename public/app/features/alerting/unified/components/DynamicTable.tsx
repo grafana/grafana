@@ -125,9 +125,8 @@ export const DynamicTable = <T extends object>({
                 <div className={cx(styles.cell, styles.expandCell)}>
                   <IconButton
                     aria-label={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
-                    size="lg"
+                    size="md"
                     data-testid="collapse-toggle"
-                    className={styles.expandButton}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
                     onClick={() => toggleExpanded(item)}
                     type="button"
@@ -277,10 +276,6 @@ const getStyles = <T extends unknown>(
         grid-row: auto;
         padding: ${theme.spacing(1)} 0 0 0;
       }
-    `,
-    expandButton: css`
-      margin-right: 0;
-      display: block;
     `,
   });
 };
