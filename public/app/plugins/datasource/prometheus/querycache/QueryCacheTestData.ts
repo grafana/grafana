@@ -1,7 +1,5 @@
 import { clone } from 'lodash';
 
-import { dateTime } from '@grafana/data/src';
-
 /**
  *
  * @param length - Number of values to add
