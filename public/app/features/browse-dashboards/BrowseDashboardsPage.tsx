@@ -38,16 +38,16 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
 
-  useEffect(() => stateManager.initStateFromUrl(folderUID), [folderUID, stateManager]);
-
-  // Clear selected state when folderUID changes
   useEffect(() => {
+    stateManager.initStateFromUrl(folderUID);
+
+    // Clear selected state when folderUID changes
     dispatch(
       setAllSelection({
         isSelected: false,
       })
     );
-  }, [dispatch, folderUID]);
+  }, [dispatch, folderUID, stateManager]);
 
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing
