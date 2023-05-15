@@ -149,7 +149,7 @@ func (c *Client) GetScopes() fosite.Arguments {
 }
 
 // GetScopes returns the scopes this client is allowed to request on a specific user.
-func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessControl, userID int64) fosite.Arguments {
+func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessControl, userID int64) []string {
 	ev := ac.EvalPermission(ac.ActionUsersImpersonate, ac.Scope("users", "id", strconv.FormatInt(userID, 10)))
 	hasAccess, errAccess := accessControl.Evaluate(ctx, c.SignedInUser, ev)
 	if errAccess != nil || !hasAccess {
