@@ -512,13 +512,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "opensearchDetectVersion",
-			Description:  "Enable version detection in OpenSearch",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
-		},
-		{
 			Name:         "faroDatasourceSelector",
 			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
 			State:        FeatureStateBeta,

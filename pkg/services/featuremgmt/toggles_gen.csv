@@ -75,7 +75,6 @@ enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
 pluginsAPIManifestKey,alpha,@grafana/plugins-platform-backend,false,false,false,false
 advancedDataSourcePicker,stable,@grafana/dashboards-squad,false,false,false,true
-opensearchDetectVersion,alpha,@grafana/aws-plugins,false,false,false,true
 faroDatasourceSelector,beta,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
 extraThemes,alpha,@grafana/user-essentials,false,false,false,true

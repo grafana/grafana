@@ -110,7 +110,6 @@ Alpha features might be changed or removed without prior notice.
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                      |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
-| `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                       |
 | `extraThemes`                      | Enables extra themes                                                                                         |
 
 ## Development feature toggles

@@ -311,12 +311,8 @@ const (
 	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
-	// FlagOpensearchDetectVersion
-	// Enable version detection in OpenSearch
-	FlagOpensearchDetectVersion = "opensearchDetectVersion"
-
 	// FlagFaroDatasourceSelector
-	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
