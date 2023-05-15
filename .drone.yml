@@ -1674,6 +1674,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -1694,6 +1700,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-oss
   volumes:
@@ -3379,6 +3391,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key_hg
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-enterprise2
   volumes:
@@ -3479,6 +3497,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -3496,6 +3520,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-oss
   volumes:
@@ -3575,6 +3605,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-enterprise
   volumes:
@@ -3654,6 +3690,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-enterprise
   volumes:
@@ -5884,6 +5926,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key_hg
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-enterprise2
   volumes:
@@ -6538,7 +6586,25 @@ get:
 kind: secret
 name: enterprise2_security_prefix
 ---
+get:
+  name: app-id
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-id
+---
+get:
+  name: app-installation-id
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-installation-id
+---
+get:
+  name: app-private-key
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-private-key
+---
 kind: signature
-hmac: 1602fdaebd9a7772096bc2237e67e4de1f814b7a5a56783e2facf04ff77fb6f2
+hmac: 607991ca52cd443cc9dc4e7774c0d80c7f4b0572dab0695289c0790bc844207b
 
 ...
