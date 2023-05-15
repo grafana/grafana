@@ -497,16 +497,19 @@ export class PrometheusDatasource
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
       let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
       const hasInstantQuery = request.targets.some((target) => target.instant);
+      const querySupportsSplitting = promRequestSupportsSplitting(request.targets);
+      // const queryWillBeSplit = ???
 
       // Don't cache instant queries
       if (this.hasIncrementalQuery && !hasInstantQuery) {
+        // @todo only force the cache when we're doing a split query
         requestInfo = this.cache.requestInfo(request, true);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;
       }
 
-      if (promRequestSupportsSplitting(fullOrPartialRequest.targets)) {
+      if (querySupportsSplitting) {
         return runSplitQuery(this, fullOrPartialRequest, (query) => query.instant ?? false).pipe(
           map((response) => {
             // console.log('runSplitQuery transformV2', response, request);
