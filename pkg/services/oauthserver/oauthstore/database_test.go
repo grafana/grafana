@@ -271,6 +271,13 @@ func TestStore_GetExternalServicePublicKey(t *testing.T) {
 			wantErr:  true,
 		},
 		{
+			name:     "should return an error when the client was not found",
+			clientID: "random",
+			client:   createClient(clientID, ""),
+			want:     nil,
+			wantErr:  true,
+		},
+		{
 			name:     "should return an error when PublicPem is not valid",
 			clientID: clientID,
 			client:   createClient(clientID, ""),
