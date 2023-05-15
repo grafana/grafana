@@ -140,7 +140,7 @@ export const Permissions = ({
 
   return (
     <div>
-      {config.featureToggles.nestedFolders && (
+      {config.featureToggles.nestedFolders && resource === 'folders' && (
         <>
           This will change permissions for this folder and all its descendants. In total, this will affect:
           <div className={styles.breakdown}>
