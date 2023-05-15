@@ -17,6 +17,10 @@ const renderMenuItems = (
   closeMenu: () => void,
   datasourceType: string
 ) => {
+  links.sort(function (linkA, linkB) {
+    return (linkA.title || 'link').toLowerCase().localeCompare((linkB.title || 'link').toLowerCase());
+  });
+
   return links.map((link, i) => (
     <MenuItem
       key={i}

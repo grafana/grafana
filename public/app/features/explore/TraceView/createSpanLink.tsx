@@ -220,7 +220,7 @@ function legacyCreateSpanLinkFactory(
 
           links.push({
             href: link.href,
-            title: 'View linked logs',
+            title: 'Related logs',
             onClick: link.onClick,
             content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
             field,
