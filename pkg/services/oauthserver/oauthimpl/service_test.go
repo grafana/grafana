@@ -55,8 +55,10 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		ScopeStrategy:       fosite.WildcardScopeStrategy,
 	}
 
+	cfg := setting.NewCfg()
+
 	env := &TestEnv{
-		Cfg:         setting.NewCfg(),
+		Cfg:         cfg,
 		AcStore:     &actest.FakeStore{},
 		OAuthStore:  &oauthtest.MockStore{},
 		UserService: usertest.NewUserServiceFake(),
@@ -64,7 +66,6 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		SAService:   &satests.MockServiceAccountService{},
 	}
 
-	cfg := setting.NewCfg()
 	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
 
 	keySvc := signingkeystest.FakeSigningKeysService{
@@ -360,7 +361,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{Id: 1}, nil)
-				env.AcStore.ExpectedUserPermissions = []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}}
+				env.AcStore.ExpectedUserPermissions = []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}}
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
@@ -387,7 +388,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			}
 
 			require.Equal(t, "my-ext-service", client.ExternalServiceName)
-			require.ElementsMatch(t, client.SelfPermissions, []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}})
+			require.ElementsMatch(t, client.SelfPermissions, []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}})
 			assertArrayInMap(t, client.SignedInUser.Permissions[1], map[string][]string{"users:impersonate": {"users:*"}})
 
 			env.OAuthStore.AssertExpectations(t)
