@@ -543,7 +543,7 @@ func TestGroupingResultsWithNumericField(t *testing.T) {
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }
 
-func TestGroupingResultsWithRemoveNonNumericTrue(t *testing.T) {
+func TestGroupingResultsWithRemoveNonTimeTrue(t *testing.T) {
 	logField := data.NewField("@log", data.Labels{}, []*string{
 		aws.String("fakelog-a"),
 		aws.String("fakelog-b"),

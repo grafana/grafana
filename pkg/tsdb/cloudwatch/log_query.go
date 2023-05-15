@@ -163,7 +163,7 @@ func changeToStringField(lengthOfValues int, rows [][]*cloudwatchlogs.ResultFiel
 	return fieldValuesAsStrings
 }
 
-func groupResults(results *data.Frame, groupingFieldNames []string, removeNonNumeric bool) ([]*data.Frame, error) {
+func groupResults(results *data.Frame, groupingFieldNames []string, removeNonTime bool) ([]*data.Frame, error) {
 	groupingFields := make([]*data.Field, 0)
 	removeFieldIndices := make([]int, 0)
 
@@ -180,7 +180,7 @@ func groupResults(results *data.Frame, groupingFieldNames []string, removeNonNum
 					field = newField
 				}
 				// For expressions and alerts to work properly we need to remove non-time grouping fields
-				if removeNonNumeric && !field.Type().Time() {
+				if removeNonTime && !field.Type().Time() {
 					removeFieldIndices = append(removeFieldIndices, i)
 				}
 
