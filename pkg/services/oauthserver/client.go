@@ -131,7 +131,7 @@ func (c *Client) GetOrgScopes() fosite.Arguments {
 }
 
 // GetScopes returns the scopes this client is allowed to request on its behalf.
-func (c *Client) GetScopes() []string {
+func (c *Client) GetScopes() fosite.Arguments {
 	if c.Scopes != nil {
 		return c.Scopes
 	}
