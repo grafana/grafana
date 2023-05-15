@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
@@ -54,6 +54,7 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
+      max-width: calc(100% - 50px);
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -64,6 +65,11 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     queryDescription: css`
       margin-left: ${theme.spacing(0.5)};
+    `,
+    button: css`
+      position: absolute;
+      top: ${theme.spacing(1)};
+      right: ${theme.spacing(1)};
     `,
   };
 }
@@ -83,6 +89,16 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
+
+  const isInitialQuery = useMemo(() => {
+    // Initial query has all regular labels enabled and all parsed labels disabled
+    if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
+      return false;
+    }
+
+    return true;
+  }, [contextFilters, initialized]);
+
   useEffect(() => {
     if (!initialized) {
       return;
@@ -176,18 +192,45 @@ export function LokiContextUi(props: LokiContextUiProps) {
         }}
         label={
           <div className={styles.query}>
-            <RawQuery
-              lang={{ grammar: lokiGrammar, name: 'loki' }}
-              query={logContextProvider.processContextFiltersToExpr(
-                row,
-                contextFilters.filter(({ enabled }) => enabled),
-                origQuery
-              )}
-              className={styles.rawQuery}
-            />
+            {initialized ? (
+              <RawQuery
+                lang={{ grammar: lokiGrammar, name: 'loki' }}
+                query={logContextProvider.processContextFiltersToExpr(
+                  row,
+                  contextFilters.filter(({ enabled }) => enabled),
+                  origQuery
+                )}
+                className={styles.rawQuery}
+              />
+            ) : (
+              <Spinner />
+            )}
             <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
               <Icon name="info-circle" size="sm" className={styles.queryDescription} />
             </Tooltip>
+            <Button
+              icon="history-alt"
+              variant="secondary"
+              className={cx(
+                styles.button,
+                css`
+                  visibility: ${isInitialQuery ? 'hidden' : 'visible'};
+                `
+              )}
+              tooltip="Revert to initial log context query."
+              onClick={(e) => {
+                e.stopPropagation();
+                setContextFilters((contextFilters) => {
+                  return contextFilters.map((contextFilter) => {
+                    return {
+                      ...contextFilter,
+                      // For revert to initial query we need to enable all labels and disable all parsed labels
+                      enabled: !contextFilter.fromParser,
+                    };
+                  });
+                });
+              }}
+            />
           </div>
         }
       >
