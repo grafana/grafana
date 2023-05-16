@@ -26,7 +26,7 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 3. `NoData` and `Error` settings are migrated as is to the corresponding settings in Grafana Alerting, except in two situations:
 
-   3.1. Since there is no `Keep Last State` option for `No Data` in Grafana Alerting, this option becomes `NoData`. Option `Keep Last State` for `Error` is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a silence for each alert rule with a duration of 1 year.
+   3.1. As there is no `Keep Last State` option for `No Data` in Grafana Alerting, this option becomes `NoData`. The `Keep Last State` option for `Error` is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a silence for each alert rule with a duration of 1 year.
 
    3.2. Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for `NoData` and [`Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule.md#configure-no-data-and-error-handling). In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
 
