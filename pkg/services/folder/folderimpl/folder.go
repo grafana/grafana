@@ -155,6 +155,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 
 	// always expose the dashboard store sequential ID
 	f.ID = dashFolder.ID
+	f.Version = dashFolder.Version
 
 	return f, err
 }
@@ -351,6 +352,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	// always expose the dashboard store sequential ID
 	foldr.ID = dashFolder.ID
+	foldr.Version = dashFolder.Version
 
 	return foldr, nil
 }
