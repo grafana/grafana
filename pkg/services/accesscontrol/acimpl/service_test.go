@@ -896,7 +896,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.initCmd != nil {
-				// Check that the permissions and assignment are stored correctly
+				// Check that the permissions and assignment are removed correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.OrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
 				assert.Empty(t, perms)
