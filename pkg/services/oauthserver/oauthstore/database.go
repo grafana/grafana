@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"errors"
 
 	"gopkg.in/square/go-jose.v2"
 
@@ -105,7 +106,8 @@ func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.Cli
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		previous, errFetchExtSvc := getExternalServiceByName(sess, client.ExternalServiceName)
 		if errFetchExtSvc != nil {
-			if srcError, ok := errFetchExtSvc.(errutil.Error); ok {
+			var srcError errutil.Error
+			if errors.As(errFetchExtSvc, &srcError) {
 				if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
 					return errFetchExtSvc
 				}

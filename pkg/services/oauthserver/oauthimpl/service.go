@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -347,7 +348,8 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	// Check if the client already exists in store
 	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.ExternalServiceName)
 	if errFetchExtSvc != nil {
-		if srcError, ok := errFetchExtSvc.(errutil.Error); ok {
+		var srcError errutil.Error
+		if errors.As(errFetchExtSvc, &srcError) {
 			if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
 				s.logger.Error("Error fetching service", "external service", registration.ExternalServiceName, "error", errFetchExtSvc)
 				return nil, errFetchExtSvc
