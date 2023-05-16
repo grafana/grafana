@@ -40,7 +40,7 @@ composableKinds: PanelCfg: {
 							exclude?: [...string]
 						} @cuetsy(kind="interface")
 
-						PanelFieldConfig: {
+						FieldConfig: {
 							common.HideableFieldConfig
 							common.AxisConfig
 
@@ -60,13 +60,13 @@ composableKinds: PanelCfg: {
 						} @cuetsy(kind="interface",TSVeneer="type")
 
 						ScatterSeriesConfig: {
-							PanelFieldConfig
+							FieldConfig
 							x?:    string
 							y?:    string
 							name?: string
 						} @cuetsy(kind="interface")
 
-						PanelOptions: {
+						Options: {
 							common.OptionsWithLegend
 							common.OptionsWithTooltip
 

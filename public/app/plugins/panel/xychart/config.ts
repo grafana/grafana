@@ -12,7 +12,7 @@ import { ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { PanelFieldConfig, ScatterShow, defaultPanelFieldConfig } from './panelcfg.gen';
+import { PanelFieldConfig, ScatterShow, defaultFieldConfig } from './panelcfg.gen';
 
 export function getScatterFieldConfig(cfg: PanelFieldConfig): SetFieldConfigOptionsArgs<PanelFieldConfig> {
   return {
@@ -58,7 +58,7 @@ export function getScatterFieldConfig(cfg: PanelFieldConfig): SetFieldConfigOpti
           {
             path: 'pointSymbol',
             name: 'Point symbol',
-            defaultValue: defaultPanelFieldConfig.pointSymbol ?? {
+            defaultValue: defaultFieldConfig.pointSymbol ?? {
               mode: 'fixed',
               fixed: 'img/icons/marker/circle.svg',
             },
@@ -76,7 +76,7 @@ export function getScatterFieldConfig(cfg: PanelFieldConfig): SetFieldConfigOpti
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: defaultPanelFieldConfig.fillOpacity,
+          defaultValue: defaultFieldConfig.fillOpacity,
           settings: {
             min: 0,
             max: 1,

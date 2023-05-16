@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -11,6 +12,7 @@ import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -33,10 +35,12 @@ import { Policy } from './components/notification-policies/Policy';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
+import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
-import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
+import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
+import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
+import { normalizeMatchers } from './utils/matchers';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
@@ -48,6 +52,7 @@ enum ActiveTab {
 const AmRoutes = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const { useGetAlertmanagerAlertGroupsQuery } = alertmanagerApi;
 
   const [queryParams, setQueryParams] = useQueryParams();
   const { tab } = getActiveTabFromUrl(queryParams);
@@ -56,6 +61,8 @@ const AmRoutes = () => {
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
+
+  const { getRouteGroupsMap } = useRouteGroupsMatcher();
 
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
@@ -68,6 +75,11 @@ const AmRoutes = () => {
       dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
     }
   }, [alertManagerSourceName, dispatch]);
+
+  const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
+    { amSourceName: alertManagerSourceName ?? '' },
+    { skip: !alertManagerSourceName }
+  );
 
   const {
     result,
@@ -82,9 +94,18 @@ const AmRoutes = () => {
     if (config?.route) {
       return addUniqueIdentifierToRoute(config.route);
     }
-
     return;
   }, [config?.route]);
+
+  // useAsync could also work but it's hard to wait until it's done in the tests
+  // Combining with useEffect gives more predictable results because the condition is in useEffect
+  const [{ value: routeAlertGroupsMap }, triggerGetRouteGroupsMap] = useAsyncFn(getRouteGroupsMap, []);
+
+  useEffect(() => {
+    if (rootRoute && alertGroups) {
+      triggerGetRouteGroupsMap(rootRoute, alertGroups);
+    }
+  }, [rootRoute, alertGroups, triggerGetRouteGroupsMap]);
 
   // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
@@ -95,9 +116,6 @@ const AmRoutes = () => {
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
-
-  const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  const fetchAlertGroups = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
@@ -149,7 +167,7 @@ const AmRoutes = () => {
       .unwrap()
       .then(() => {
         if (alertManagerSourceName) {
-          dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+          refetchAlertGroups();
         }
         closeEditModal();
         closeAddModal();
@@ -172,13 +190,6 @@ const AmRoutes = () => {
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
-
-  // fetch AM instances grouping
-  useEffect(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertGroupsAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch]);
 
   if (!alertManagerSourceName) {
     return (
@@ -252,7 +263,7 @@ const AmRoutes = () => {
                       receivers={receivers}
                       routeTree={rootRoute}
                       currentRoute={rootRoute}
-                      alertGroups={fetchAlertGroups.result}
+                      alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
                       readOnly={readOnlyPolicies}
                       alertManagerSourceName={alertManagerSourceName}
@@ -261,6 +272,7 @@ const AmRoutes = () => {
                       onDeletePolicy={openDeleteModal}
                       onShowAlertInstances={showAlertGroupsModal}
                       routesMatchingFilters={routesMatchingFilters}
+                      routeAlertGroupsMap={routeAlertGroupsMap}
                     />
                   )}
                 </Stack>

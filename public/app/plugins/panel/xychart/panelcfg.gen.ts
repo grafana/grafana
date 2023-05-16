@@ -33,7 +33,7 @@ export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
   exclude: [],
 };
 
-export interface PanelFieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
   fillOpacity?: number;
   label?: common.VisibilityMode;
   labelValue?: common.TextDimensionConfig;
@@ -46,24 +46,24 @@ export interface PanelFieldConfig extends common.HideableFieldConfig, common.Axi
   show?: ScatterShow;
 }
 
-export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
+export const defaultFieldConfig: Partial<FieldConfig> = {
   fillOpacity: 0.5,
   label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
 
-export interface ScatterSeriesConfig extends PanelFieldConfig {
+export interface ScatterSeriesConfig extends FieldConfig {
   name?: string;
   x?: string;
   y?: string;
 }
 
-export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   dims: XYDimensionConfig;
   series: Array<ScatterSeriesConfig>;
   seriesMapping?: SeriesMapping;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   series: [],
 };

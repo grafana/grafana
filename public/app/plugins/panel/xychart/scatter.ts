@@ -28,7 +28,7 @@ import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensi
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { isGraphable } from './dims';
-import { PanelFieldConfig, defaultPanelFieldConfig, PanelOptions, ScatterShow } from './panelcfg.gen';
+import { PanelFieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
 import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
@@ -41,7 +41,7 @@ export interface ScatterPanelInfo {
  * This is called when options or structure rev changes
  */
 export function prepScatter(
-  options: PanelOptions,
+  options: Options,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
   ttip: ScatterHoverCallback,
@@ -102,7 +102,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...y.config.custom };
+  const fieldConfig: PanelFieldConfig = { ...defaultFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
@@ -197,7 +197,7 @@ function getScatterSeries(
   };
 }
 
-function prepSeries(options: PanelOptions, frames: DataFrame[]): ScatterSeries[] {
+function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   let seriesIndex = 0;
   if (!frames.length) {
     throw 'Missing data';
@@ -290,7 +290,7 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<PanelOptions> = ({ frames, series, theme }) => {
+//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
 const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],

@@ -26,11 +26,11 @@ import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
-import { PanelOptions, SeriesMapping } from './panelcfg.gen';
+import { Options, SeriesMapping } from './panelcfg.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { ScatterHoverEvent, ScatterSeries } from './types';
 
-type Props = PanelProps<PanelOptions>;
+type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
 
 export const XYChartPanel2 = (props: Props) => {
