@@ -32,6 +32,7 @@ func addAnnotationMig(mg *Migrator) {
 			{Cols: []string{"org_id", "category_id"}, Type: IndexType},
 			{Cols: []string{"org_id", "dashboard_id", "panel_id", "epoch"}, Type: IndexType},
 			{Cols: []string{"org_id", "epoch"}, Type: IndexType},
+			{Cols: []string{"org_id", "dashboard_id"}, Type: IndexType},
 		},
 	}
 
