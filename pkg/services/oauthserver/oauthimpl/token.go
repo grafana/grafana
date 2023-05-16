@@ -6,19 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/ory/fosite"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-const grantTypeJWTBearer = "urn:ietf:params:oauth:grant-type:jwt-bearer"
 
 func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http.Request) {
 	// This context will be passed to all methods.
@@ -73,11 +69,6 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	s.oauthProvider.WriteAccessResponse(ctx, rw, accessRequest, response)
 }
 
-func getUserIDFromSubject(subject string) (int64, error) {
-	trimmed := strings.TrimPrefix(subject, fmt.Sprintf("%s:id:", authn.NamespaceUser))
-	return strconv.ParseInt(trimmed, 10, 64)
-}
-
 func (s *OAuth2ServiceImpl) writeAccessError(ctx context.Context, rw http.ResponseWriter, accessRequest fosite.AccessRequester, err error) {
 	if fositeErr, ok := err.(*fosite.RFC6749Error); ok {
 		s.logger.Error("description", fositeErr.DescriptionField, "hint", fositeErr.HintField, "error", fositeErr.ErrorField)
@@ -102,7 +93,7 @@ func splitOAuthScopes(requestedScopes fosite.Arguments) (map[string]bool, map[st
 }
 
 func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
-	if !accessRequest.GetGrantTypes().ExactOne(grantTypeJWTBearer) {
+	if !accessRequest.GetGrantTypes().ExactOne(string(fosite.GrantTypeJWTBearer)) {
 		return nil
 	}
 

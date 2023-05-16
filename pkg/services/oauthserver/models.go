@@ -20,10 +20,6 @@ const (
 	ScopeTeamsSelf       = "teams:self"
 )
 
-var (
-	allOrgsOAuthScope = "org.*"
-)
-
 type OAuth2Service interface {
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
 	GetExternalService(ctx context.Context, id string) (*Client, error)

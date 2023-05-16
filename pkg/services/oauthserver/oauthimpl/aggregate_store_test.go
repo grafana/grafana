@@ -101,5 +101,4 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 			require.EqualValues(t, tc.expectedScopes, scopes)
 		})
 	}
-
 }

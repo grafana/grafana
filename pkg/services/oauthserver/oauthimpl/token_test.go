@@ -311,7 +311,6 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 						{Action: "datasources:read", Scope: "datasources:uid:1"},
 					},
 				}, nil)
-
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},

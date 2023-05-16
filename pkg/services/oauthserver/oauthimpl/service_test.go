@@ -97,13 +97,15 @@ func setupTestEnv(t *testing.T) *TestEnv {
 }
 
 func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
-	sa1 := sa.ServiceAccountDTO{Id: 1, Name: "my-ext-service", Login: "my-ext-service", OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
-	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: "my-ext-service", Login: "my-ext-service", OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
+	const serviceName = "my-ext-service"
+
+	sa1 := sa.ServiceAccountDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
+	sa1Profile := sa.ServiceAccountProfileDTO{Id: 1, Name: serviceName, Login: serviceName, OrgId: oauthserver.TmpOrgID, IsDisabled: false, Role: "Viewer"}
 	prevSaID := int64(3)
 	// Using a function to prevent modifying the same object in the tests
 	client1 := func() *oauthserver.Client {
 		return &oauthserver.Client{
-			ExternalServiceName: "my-ext-service",
+			ExternalServiceName: serviceName,
 			ClientID:            "RANDOMID",
 			Secret:              "RANDOMSECRET",
 			GrantTypes:          "client_credentials",
@@ -123,19 +125,19 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should create a new client without permissions",
 			init: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: "my-ext-service",
+				ExternalServiceName: serviceName,
 				Key:                 &oauthserver.KeyOption{Generate: true},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
-					return name == "my-ext-service"
+					return name == serviceName
 				}))
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					ok := client.ExternalServiceName == "my-ext-service"
+					ok := client.ExternalServiceName == serviceName
 					ok = ok && client.ClientID != ""
 					ok = ok && client.Secret != ""
 					ok = ok && len(client.GrantTypes) == 0
@@ -149,27 +151,27 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should create a service account",
 			init: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: "my-ext-service",
+				ExternalServiceName: serviceName,
 				Key:                 &oauthserver.KeyOption{Generate: true},
 				Permissions:         []ac.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the client has a service account and the correct grant type
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					return client.ExternalServiceName == "my-ext-service" &&
+					return client.ExternalServiceName == serviceName &&
 						client.GrantTypes == "client_credentials" && client.ServiceAccountID == sa1.Id
 				}))
 				// Check that the service account is created in the correct org with the correct role
 				env.SAService.AssertCalled(t, "CreateServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
 					mock.MatchedBy(func(cmd *sa.CreateServiceAccountForm) bool {
-						return cmd.Name == "my-ext-service" && *cmd.Role == roletype.RoleViewer
+						return cmd.Name == serviceName && *cmd.Role == roletype.RoleViewer
 					}),
 				)
 			},
@@ -184,14 +186,14 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				// TODO MVP also need to test the role has been deleted
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: "my-ext-service",
+				ExternalServiceName: serviceName,
 				Key:                 &oauthserver.KeyOption{Generate: true},
 				Permissions:         []ac.Permission{},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the service has no service account anymore
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					return client.ExternalServiceName == "my-ext-service" && client.ServiceAccountID == oauthserver.NoServiceAccountID
+					return client.ExternalServiceName == serviceName && client.ServiceAccountID == oauthserver.NoServiceAccountID
 				}))
 				// Check that the service account is retrieved with the correct ID
 				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything,
@@ -212,7 +214,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: "my-ext-service",
+				ExternalServiceName: serviceName,
 				Key:                 &oauthserver.KeyOption{Generate: true},
 				Permissions:         []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
 			},
@@ -230,11 +232,11 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should allow jwt bearer grant",
 			init: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
+				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName:    "my-ext-service",
+				ExternalServiceName:    serviceName,
 				Key:                    &oauthserver.KeyOption{Generate: true},
 				ImpersonatePermissions: []ac.Permission{{Action: "users:read", Scope: "global.users:self"}},
 			},
@@ -294,9 +296,11 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 }
 
 func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
+	const serviceName = "my-ext-service"
+
 	dummyClient := func() *oauthserver.Client {
 		return &oauthserver.Client{
-			ExternalServiceName: "my-ext-service",
+			ExternalServiceName: serviceName,
 			ClientID:            "RANDOMID",
 			Secret:              "RANDOMSECRET",
 			GrantTypes:          "client_credentials",
@@ -305,7 +309,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		}
 	}
 	cachedUser := &oauthserver.Client{
-		ExternalServiceName: "my-ext-service",
+		ExternalServiceName: serviceName,
 		ClientID:            "RANDOMID",
 		Secret:              "RANDOMSECRET",
 		GrantTypes:          "client_credentials",
@@ -330,7 +334,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		{
 			name: "should hit the cache",
 			init: func(env *TestEnv) {
-				env.S.cache.Set("my-ext-service", *cachedUser, time.Minute)
+				env.S.cache.Set(serviceName, *cachedUser, time.Minute)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertNotCalled(t, "GetExternalService", mock.Anything, mock.Anything)
@@ -339,7 +343,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		{
 			name: "should return error when the client was not found",
 			init: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 			},
 			wantErr: true,
 		},
@@ -388,7 +392,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 				tt.init(env)
 			}
 
-			client, err := env.S.GetExternalService(context.Background(), "my-ext-service")
+			client, err := env.S.GetExternalService(context.Background(), serviceName)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -399,7 +403,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 				tt.mockChecks(t, env)
 			}
 
-			require.Equal(t, "my-ext-service", client.ExternalServiceName)
+			require.Equal(t, serviceName, client.ExternalServiceName)
 			require.ElementsMatch(t, client.SelfPermissions, []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}})
 			assertArrayInMap(t, client.SignedInUser.Permissions[1], map[string][]string{"users:impersonate": {"users:*"}})
 

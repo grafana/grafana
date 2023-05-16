@@ -62,7 +62,6 @@ type OAuth2ServiceImpl struct {
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service) (*OAuth2ServiceImpl, error) {
-
 	config := &fosite.Config{
 		AccessTokenLifespan: cfg.OAuth2ServerAccessTokenLifespan,
 		TokenURL:            fmt.Sprintf("%voauth2/token", cfg.AppURL),

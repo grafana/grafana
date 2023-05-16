@@ -331,7 +331,6 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 			require.NoError(t, err)
 
 			require.Equal(t, oauthserver.ES256, webKey.Algorithm)
-
 		})
 	}
 }
