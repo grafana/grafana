@@ -182,7 +182,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
   return (
     <div className={styles.wrapper}>
       <Button
-        title="Revert to initial log context query."
+        data-testid="Revert to initial log context query."
         icon="history-alt"
         variant="secondary"
         className={cx(
