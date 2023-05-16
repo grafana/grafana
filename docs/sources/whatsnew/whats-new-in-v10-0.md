@@ -354,3 +354,7 @@ Some data sources, like MySQL databases, Prometheus instances or Elasticsearch c
 In order to query these data sources from Grafana Cloud, currently you have to open your private network to a range of IP addresses - this is a non-starter for a lot of IT Security teams. So the challenge is, how do you connect to your private data from Grafana Cloud, without exposing your network?
 
 The answer is Private Data Source Connect (PDC), available now in Public Preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [docs](https://grafana.com/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/).
+
+## Deprecations
+
+Starting with 10.0, changing the folder UID through the API is deprecated. It will be removed in a future release.
