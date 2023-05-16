@@ -315,10 +315,6 @@ const (
 	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
-	// FlagOpensearchDetectVersion
-	// Enable version detection in OpenSearch
-	FlagOpensearchDetectVersion = "opensearchDetectVersion"
-
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"

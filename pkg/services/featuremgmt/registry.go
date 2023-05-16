@@ -519,13 +519,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "opensearchDetectVersion",
-			Description:  "Enable version detection in OpenSearch",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
-		},
-		{
 			Name:         "enableDatagridEditing",
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,

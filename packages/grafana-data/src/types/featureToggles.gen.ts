@@ -95,6 +95,5 @@ export interface FeatureToggles {
   authenticationConfigUI?: boolean;
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
-  opensearchDetectVersion?: boolean;
   enableDatagridEditing?: boolean;
 }
