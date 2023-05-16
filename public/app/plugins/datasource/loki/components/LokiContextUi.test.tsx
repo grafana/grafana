@@ -206,4 +206,33 @@ describe('LokiContextUi', () => {
       expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
     });
   });
+
+  it('should revert to original query when revert button clicked', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    // In initial query, label3 is not selected
+    await waitFor(() => {
+      expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+
+    // We select parsed label and label3="value3" should appear
+    const parsedLabelsInput = screen.getAllByRole('combobox')[1];
+    await userEvent.click(parsedLabelsInput);
+    await userEvent.type(parsedLabelsInput, '{enter}');
+    expect(screen.getByText('label3="value3"')).toBeInTheDocument();
+
+    // We click on revert button and label3="value3" should disappear
+    const revertButton = screen.getByTestId('revert-button');
+    await userEvent.click(revertButton);
+    await waitFor(() => {
+      expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+  });
 });
