@@ -20,7 +20,7 @@ type azureAccessTokenProvider struct {
 
 func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, authParams *plugins.JWTTokenAuth) (*azureAccessTokenProvider, error) {
 	credentials := getAzureCredentials(cfg.Azure, authParams)
-	tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg.Azure, credentials)
+	tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg.Azure, credentials, false)
 	if err != nil {
 		return nil, err
 	}
