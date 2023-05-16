@@ -9,7 +9,7 @@ You can use the Plugin extensions API with your Grafana app plugins to add links
 
 ## Before you begin
 
-Be sure your plugin meets the following requirements before proceeding: 
+Be sure your plugin meets the following requirements before proceeding:
 
 - It must be an app plugin.
 - It must be [preloaded with metadata]({{< relref "./metadata" >}}) for your plugin.
@@ -25,12 +25,12 @@ An _extension point_ is a location within the Grafana UI where a plugin can inse
 
 Here's how you can add a link to the dashboard panel menus in Grafana via your plugin:
 
-1. Define the link extension in your plugin's `module.ts` file. 
+1. Define the link extension in your plugin's `module.ts` file.
 
-1. Define a new instance of the `AppPlugin` class by using the `configureExtensionLink` method. This method requires: 
-    - an object that describes your link extension, including a `title` property for the link text
-    - an `extensionPointId` method that tells Grafana where the link should appear 
-    - a `path` for the user to go to your plugin
+1. Define a new instance of the `AppPlugin` class by using the `configureExtensionLink` method. This method requires:
+   - an object that describes your link extension, including a `title` property for the link text
+   - an `extensionPointId` method that tells Grafana where the link should appear
+   - a `path` for the user to go to your plugin
 
 ```typescript
 new AppPlugin().configureExtensionLink({
@@ -47,9 +47,9 @@ That's it! Your link will appear in dashboard panel menus. When the user clicks 
 
 ## Add a link extension using context within Grafana
 
-The above example works for simple cases. However, you may want to act on information from the app's panel from which the user is navigating. 
+The above example works for simple cases. However, you may want to act on information from the app's panel from which the user is navigating.
 
-To do this, use the `configureExtensionLink` property which takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin. 
+To do this, use the `configureExtensionLink` property which takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin.
 
 Alternatively, if you need to hide the link for certain scenarios, define the function to return _undefined_:
 
