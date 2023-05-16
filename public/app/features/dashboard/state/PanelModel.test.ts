@@ -195,6 +195,27 @@ describe('PanelModel', () => {
       expect(saveModel.events).toBe(undefined);
     });
 
+    it('getSaveModel should clean libraryPanels from a collapsed row', () => {
+      const newmodelJson = {
+        type: 'row',
+        panels: [
+          {
+            ...modelJson,
+            libraryPanel: {
+              uid: 'BVIBScisnl',
+              model: modelJson,
+              name: 'Library panel title',
+            },
+          },
+          modelJson,
+        ],
+      };
+      const newmodel = new PanelModel(newmodelJson);
+      const saveModel = newmodel.getSaveModel();
+      expect(saveModel.panels[0].tagrets).toBe(undefined);
+      expect(saveModel.panels[1].targets).toBeTruthy();
+    });
+
     describe('variables interpolation', () => {
       beforeEach(() => {
         model.scopedVars = {
