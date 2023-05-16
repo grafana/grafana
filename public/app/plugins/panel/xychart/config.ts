@@ -12,9 +12,9 @@ import { ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { PanelFieldConfig, ScatterShow, defaultFieldConfig } from './panelcfg.gen';
+import { FieldConfig, ScatterShow, defaultFieldConfig } from './panelcfg.gen';
 
-export function getScatterFieldConfig(cfg: PanelFieldConfig): SetFieldConfigOptionsArgs<PanelFieldConfig> {
+export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsArgs<FieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {

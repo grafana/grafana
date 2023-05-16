@@ -28,7 +28,7 @@ import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensi
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { isGraphable } from './dims';
-import { PanelFieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
+import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
 import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
@@ -102,7 +102,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: PanelFieldConfig = { ...defaultFieldConfig, ...y.config.custom };
+  const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
