@@ -229,7 +229,7 @@ describe('LokiContextUi', () => {
     expect(screen.getByText('label3="value3"')).toBeInTheDocument();
 
     // We click on revert button and label3="value3" should disappear
-    const revertButton = screen.getByTestId('Revert to initial log context query.');
+    const revertButton = screen.getByTestId('revert-button');
     await userEvent.click(revertButton);
     await waitFor(() => {
       expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();

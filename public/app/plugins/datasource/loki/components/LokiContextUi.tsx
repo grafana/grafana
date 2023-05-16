@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -181,31 +181,28 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
-      <Button
-        data-testid="Revert to initial log context query."
-        icon="history-alt"
-        variant="secondary"
-        className={cx(
-          styles.iconButton,
-          css`
-            visibility: ${isInitialQuery ? 'hidden' : 'visible'};
-          `
-        )}
-        tooltip="Revert to initial log context query."
-        onClick={(e) => {
-          e.stopPropagation();
-          reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
-            logRowUid: row.uid,
-          });
-          setContextFilters((contextFilters) => {
-            return contextFilters.map((contextFilter) => ({
-              ...contextFilter,
-              // For revert to initial query we need to enable all labels and disable all parsed labels
-              enabled: !contextFilter.fromParser,
-            }));
-          });
-        }}
-      />
+      <Tooltip content={'Revert to initial log context query.'}>
+        <div className={styles.iconButton}>
+          <Button
+            data-testid="revert-button"
+            icon="history-alt"
+            variant="secondary"
+            disabled={isInitialQuery}
+            onClick={(e) => {
+              reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
+                logRowUid: row.uid,
+              });
+              setContextFilters((contextFilters) => {
+                return contextFilters.map((contextFilter) => ({
+                  ...contextFilter,
+                  // For revert to initial query we need to enable all labels and disable all parsed labels
+                  enabled: !contextFilter.fromParser,
+                }));
+              });
+            }}
+          />
+        </div>
+      </Tooltip>
 
       <Collapse
         collapsible={true}
