@@ -505,17 +505,11 @@ var (
 		},
 		{
 			Name:         "advancedDataSourcePicker",
-			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
-			State:        FeatureStateAlpha,
+			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:         "opensearchDetectVersion",
-			Description:  "Enable version detection in OpenSearch",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "faroDatasourceSelector",

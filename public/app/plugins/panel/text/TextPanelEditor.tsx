@@ -10,9 +10,9 @@ import {
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
 
-import { PanelOptions, TextMode } from './panelcfg.gen';
+import { Options, TextMode } from './panelcfg.gen';
 
-export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, PanelOptions>) => {
+export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
   const styles = useStyles2(getStyles);
 
