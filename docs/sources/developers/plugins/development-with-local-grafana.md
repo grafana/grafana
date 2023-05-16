@@ -94,7 +94,7 @@ You can run a backend plugin and attach a debugger to it, which allows you to se
 
 1. Go to your plugin's folder.
 
-1. Make sure that your `go.mod` and `grafana-plugin-sdk-go` are at least on `v0.156.0`
+1. Check your `go.mod` to make sure `grafana-plugin-sdk-go` are at least on `v0.156.0`
    - If not, update it to the latest version:
      ```
      go get -u github.com/grafana/grafana-plugin-sdk-go
