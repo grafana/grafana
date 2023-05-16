@@ -42,7 +42,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import config from '../../../core/config';
-import { runSplitQuery } from '../loki/querySplitting';
+import { partitionTimeRange, runSplitQuery } from '../loki/querySplitting';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -498,21 +498,23 @@ export class PrometheusDatasource
       let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
       const hasInstantQuery = request.targets.some((target) => target.instant);
       const querySupportsSplitting = promRequestSupportsSplitting(request.targets);
-      // const queryWillBeSplit = ???
+      const timeRanges = partitionTimeRange(false, request.range, request.intervalMs, 1, 24 * 60 * 60 * 1000);
+      const queryWillBeSplit = timeRanges.length > 1;
+      console.log('timeRanges', timeRanges);
 
       // Don't cache instant queries
       if (this.hasIncrementalQuery && !hasInstantQuery) {
         // @todo only force the cache when we're doing a split query
-        requestInfo = this.cache.requestInfo(request, true);
+        requestInfo = this.cache.requestInfo(request, queryWillBeSplit);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;
       }
 
-      if (querySupportsSplitting) {
+      if (querySupportsSplitting && queryWillBeSplit) {
         return runSplitQuery(this, fullOrPartialRequest, (query) => query.instant ?? false).pipe(
           map((response) => {
-            // console.log('runSplitQuery transformV2', response, request);
+            console.log('runSplitQuery transformV2', response, request);
 
             // We have
             const amendedResponse = {
