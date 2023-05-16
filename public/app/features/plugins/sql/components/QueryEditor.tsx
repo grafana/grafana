@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  // useRef,
+  // useMemo
+} from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
@@ -35,7 +41,7 @@ export function SqlQueryEditor({
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
 
-  const { preconfiguredDatabase } = datasource;
+  const { preconfiguredDatabase, databaseIssue } = datasource;
   const isPostgresInstance = !!queryHeaderProps?.isPostgresInstance;
   const { loading, error } = useAsync(async () => {
     return () => {
@@ -48,14 +54,17 @@ export function SqlQueryEditor({
   useEffect(() => {
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       /*
-        If there is a preconfigured database (either through the provisioning config file, or the Data Source Configuration component),
+        If there is a preconfigured database (either through the provisioning config file, or the Data Source Configuration GUI),
         AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
         that means either 1) the preconfigured database changed/updated (updated either through provisioning or the GUI),
         OR 2) there WASN'T a preconfigred database before, but there IS now (updated either through provisioning or the GUI).
         In either case, we need to throw a warning to alert the user that something has changed.
       */
-      if (!!preconfiguredDatabase && !!query.dataset && query.dataset !== preconfiguredDatabase) {
+      console.log(!!query.dataset, 'query');
+
+      if (databaseIssue?.type === 'configChange') {
         setHasDatabaseConfigIssue(true);
+        // console.log('should show warning');
       }
 
       /*
@@ -63,11 +72,11 @@ export function SqlQueryEditor({
         then here test for a preconfigured database (either through provisioning or the GUI). Postgres REQUIRES a default database,
         so throw the appropriate warning if none exists.
       */
-      if (isPostgresInstance && !preconfiguredDatabase) {
+      if (databaseIssue?.type === 'postgres') {
         setHasNoPostgresDefaultDatabaseConfig(true);
       }
     }
-  }, [datasource, isPostgresInstance, preconfiguredDatabase, query]);
+  }, [datasource, isPostgresInstance, preconfiguredDatabase, query, databaseIssue]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
@@ -136,17 +145,18 @@ export function SqlQueryEditor({
           title="Default datasource update"
           elevated={true}
           onRemove={() => {
-            // Remove the warning, and reset state with the new database.
+            // Remove the warning, and reset the query with the new database.
+            datasource.databaseIssue = null;
             setHasDatabaseConfigIssue(false);
             resetQuery();
           }}
           buttonContent="Update Database"
         >
           <span>
-            Your default database configuration has been modified. The previous database {<code>{query.dataset}</code>}{' '}
-            is no longer available, and has been updated to {<code>{preconfiguredDatabase}</code>}. Make note of the
-            query you have built before clicking <code>Update Database</code>. Clicking <code>Update Database</code>{' '}
-            will clear your previous query parameters.
+            Your default database configuration has been modified. The previous database is no longer available, and has
+            been updated to {<code>{preconfiguredDatabase}</code>}. Make note of the query you have built before
+            clicking <code>Update Database</code>. Clicking <code>Update Database</code> will clear your previous query
+            parameters.
           </span>
         </Alert>
       )}

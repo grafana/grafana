@@ -41,6 +41,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   interval: string;
   db: DB;
   preconfiguredDatabase: string;
+  databaseIssue: { type: string; message: string } | null;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -63,6 +64,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
     };
+    this.databaseIssue = null;
   }
 
   abstract getDB(dsID?: number): DB;
@@ -129,36 +131,46 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
     console.log(request, 'request');
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
-      /*
-        If a preconfigured database exists - or is added/updated, and there are ANY number of db queries
-        that use a database OTHER than the preconfigured one, this error with throw. 
-      */
-      const defaultDatabaseHasIssue = () => {
-        if (!!this.preconfiguredDatabase) {
-          for (const target of request.targets) {
-            // Test for database configuration change only if query was made in `builder` mode.
-            if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
-              return 'Your default database configuration has been modified. Please update your panel query accordingly.';
-            }
-          }
-        }
+      const databaseIssue = this.checkForDatabaseIssue(this.type, this.preconfiguredDatabase, request);
 
-        if (this.type === 'postgres' && !this.preconfiguredDatabase) {
-          return 'You do not currently have a default database configured for this data source.';
-        }
-
-        return;
-      };
-
-      const issue = defaultDatabaseHasIssue();
-
-      if (!!issue) {
-        const error = new Error(issue);
+      if (!!databaseIssue) {
+        const error = new Error(databaseIssue.message);
+        this.databaseIssue = databaseIssue;
         return throwError(() => error);
       }
     }
 
     return super.query(request);
+  }
+
+  checkForDatabaseIssue(datasourceType: string, preconfiguredDatabase: string, request: DataQueryRequest<SQLQuery>) {
+    // If the datasource is Postgres and there is no default database configured - either never configured or removed - return a database issue.
+    if (datasourceType === 'postgres' && !preconfiguredDatabase) {
+      return {
+        type: 'postgres',
+        message: 'You do not currently have a default database configured for this data source.',
+      };
+    }
+
+    /*
+      If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a 
+      database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
+      The user will need to update their queries to use the preconfigured database.
+    */
+    if (!!this.preconfiguredDatabase) {
+      for (const target of request.targets) {
+        // Test for database configuration change only if query was made in `builder` mode.
+        if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
+          return {
+            type: 'configChange',
+            message:
+              'Your default database configuration has been modified. Please update your panel query accordingly.',
+          };
+        }
+      }
+    }
+
+    return;
   }
 
   async metricFindQuery(query: string, optionalOptions?: MetricFindQueryOptions): Promise<MetricFindValue[]> {
