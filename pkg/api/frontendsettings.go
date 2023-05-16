@@ -198,6 +198,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                  hs.Cfg.Azure.Cloud,
 			ManagedIdentityEnabled: hs.Cfg.Azure.ManagedIdentityEnabled,
+			UserIdentityEnabled:    hs.Cfg.Azure.UserIdentityEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{

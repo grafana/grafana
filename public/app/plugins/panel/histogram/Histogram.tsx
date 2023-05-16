@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
+import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -34,7 +34,7 @@ function incrRoundUp(num: number, incr: number) {
 }
 
 export interface HistogramProps extends Themeable2 {
-  options: PanelOptions; // used for diff
+  options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
   bucketSize: number;
   width: number;
@@ -194,7 +194,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
+    const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);
