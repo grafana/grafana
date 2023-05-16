@@ -194,6 +194,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
         tooltip="Revert to initial log context query."
         onClick={(e) => {
           e.stopPropagation();
+          reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
+            logRowUid: row.uid,
+          });
           setContextFilters((contextFilters) => {
             return contextFilters.map((contextFilter) => ({
               ...contextFilter,
