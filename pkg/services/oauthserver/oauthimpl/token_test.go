@@ -545,10 +545,12 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		{
 			name: "should allow jwt-bearer grant",
 			initEnv: func(env *TestEnv) {
+				// To retrieve the Client, its publicKey and its permissions
 				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
 				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
+				// To retrieve the user to impersonate, its permissions and its teams
 				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{user56.ID: user56Permissions}
 				env.AcStore.ExpectedUsersRoles = map[int64][]string{user56.ID: {"Viewer"}}
 				env.TeamService.ExpectedTeamsByUser = user56Teams
@@ -566,7 +568,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
-					Subject: fmt.Sprintf("user:id:%v", user56.ID), // From client1.ServiceAccountID
+					Subject: fmt.Sprintf("user:id:%v", user56.ID), // To match the assertion
 					Issuer:  "test",                               // From env.S.Config.Issuer
 
 					// TODO: This is not correct, the audience should be the target of the token!
