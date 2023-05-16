@@ -118,13 +118,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
       &:before {
         z-index: -1;
         position: absolute;
+        opacity: 0;
         width: ${hoverSize}px;
         height: ${hoverSize}px;
         border-radius: ${theme.shape.radius.default};
         content: '';
         transition-duration: 0.2s;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-property: transform, opacity;
+        transition-property: opacity;
       }
 
       &:focus,
@@ -141,6 +142,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
           background-color: ${variant === 'secondary'
             ? theme.colors.action.hover
             : colorManipulator.alpha(iconColor, 0.12)};
+          opacity: 1;
         }
       }
     `,
