@@ -103,6 +103,8 @@ export interface Props {
   onToggle?: (isOpen: boolean) => void;
   /** Additional class name for the root element */
   className?: string;
+  /** Additional class name for the label */
+  labelClassName?: string;
 }
 
 export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
@@ -129,6 +131,7 @@ export const Collapse = ({
   collapsible,
   onToggle,
   className,
+  labelClassName,
   children,
 }: React.PropsWithChildren<Props>) => {
   const buttonStyles = useStyles2(clearButtonStyles);
@@ -147,7 +150,7 @@ export const Collapse = ({
     <div className={panelClass}>
       <button type="button" className={cx(buttonStyles, headerClass)} onClick={onClickToggle}>
         {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-down' : 'angle-right'} />}
-        <div className={cx([style.headerLabel])}>{label}</div>
+        <div className={cx([style.headerLabel, labelClassName])}>{label}</div>
       </button>
       {isOpen && (
         <div className={cx([style.collapseBody])}>

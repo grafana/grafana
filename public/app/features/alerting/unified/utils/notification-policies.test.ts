@@ -66,7 +66,7 @@ describe('findMatchingRoutes', () => {
   });
 
   it('should match catch-all route', () => {
-    const policiesWithAll = {
+    const policiesWithAll: Route = {
       ...policies,
       routes: [CATCH_ALL_ROUTE, ...(policies.routes ?? [])],
     };
@@ -77,7 +77,7 @@ describe('findMatchingRoutes', () => {
   });
 
   it('should match multiple routes with continue', () => {
-    const policiesWithAll = {
+    const policiesWithAll: Route = {
       ...policies,
       routes: [
         {
