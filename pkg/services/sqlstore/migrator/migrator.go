@@ -42,17 +42,19 @@ type MigrationLog struct {
 
 func NewMigrator(scope string, engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
 	mg := &Migrator{
-		tableName: "migration_log",
+		Cfg:          cfg,
+		DBEngine:     engine,
+		migrations:   make([]Migration, 0),
+		migrationIds: make(map[string]struct{}),
+		Dialect:      NewDialect(engine),
 	}
-	if scope != "" {
+	if scope == "" {
+		mg.tableName = "migration_log"
+		mg.Logger = log.New("migrator")
+	} else {
 		mg.tableName = scope + "_migration_log"
+		mg.Logger = log.New(scope + " migrator")
 	}
-	mg.DBEngine = engine
-	mg.Logger = log.New("migrator")
-	mg.migrations = make([]Migration, 0)
-	mg.migrationIds = make(map[string]struct{})
-	mg.Dialect = NewDialect(mg.DBEngine)
-	mg.Cfg = cfg
 
 	// Must be the first migration
 	mg.AddMigration("create migration_log table", NewAddTableMigration(Table{
