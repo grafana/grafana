@@ -2,7 +2,10 @@ package oauthimpl
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -20,6 +24,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
@@ -442,6 +447,9 @@ type Claims struct {
 }
 
 func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
+	now := time.Now()
+	client1Key, errGenRsa := rsa.GenerateKey(rand.Reader, 4096)
+	require.NoError(t, errGenRsa)
 	client1Secret := "RANDOMSECRET"
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client1Secret), bcrypt.DefaultCost)
 	require.NoError(t, err)
@@ -449,9 +457,13 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		ExternalServiceName: "testapp",
 		ClientID:            "RANDOMID",
 		Secret:              string(hashedSecret),
-		GrantTypes:          string(fosite.GrantTypeClientCredentials),
+		GrantTypes:          string(fosite.GrantTypeClientCredentials + "," + fosite.GrantTypeJWTBearer),
 		ServiceAccountID:    2,
 		ImpersonatePermissions: []ac.Permission{
+			{Action: "users:read", Scope: oauthserver.ScopeGlobalUsersSelf},
+			{Action: "users.permissions:read", Scope: oauthserver.ScopeUsersSelf},
+			{Action: "teams:read", Scope: oauthserver.ScopeTeamsSelf},
+
 			{Action: "folders:read", Scope: "folders:*"},
 			{Action: "dashboards:read", Scope: "folders:*"},
 			{Action: "dashboards:read", Scope: "dashboards:*"},
@@ -466,22 +478,30 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		Login:      "testapp",
 		OrgId:      oauthserver.TmpOrgID,
 		IsDisabled: false,
-		Created:    time.Now(),
-		Updated:    time.Now(),
+		Created:    now,
+		Updated:    now,
 		Role:       "Viewer",
 	}
 
-	// user56 := &user.User{
-	// 	ID:      56,
-	// 	Email:   "user56@example.org",
-	// 	Login:   "user56",
-	// 	Name:    "User 56",
-	// 	Updated: now,
-	// }
-	// teams := []*team.TeamDTO{
-	// 	{ID: 1, Name: "Team 1", OrgID: 1},
-	// 	{ID: 2, Name: "Team 2", OrgID: 1},
-	// }
+	assertion := genAssertion(t, client1Key, client1.ClientID, "user:id:56", "test/oauth2/token")
+
+	user56 := &user.User{
+		ID:      56,
+		Email:   "user56@example.org",
+		Login:   "user56",
+		Name:    "User 56",
+		Updated: now,
+	}
+	user56Permissions := []ac.Permission{
+		{Action: "users:read", Scope: "global.users:id:56"},
+		{Action: "folders:read", Scope: "folders:uid:UID1"},
+		{Action: "dashboards:read", Scope: "folders:uid:UID1"},
+		{Action: "datasources:read", Scope: "datasoucres:uid:DS_UID2"}, // This one should be ignored when impersonating
+	}
+	user56Teams := []*team.TeamDTO{
+		{ID: 1, Name: "Team 1", OrgID: 1},
+		{ID: 2, Name: "Team 2", OrgID: 1},
+	}
 
 	tests := []struct {
 		name       string
@@ -492,14 +512,14 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		wantClaims *Claims
 	}{
 		{
-			name: "client credentials grant",
+			name: "should allow client credentials grant",
 			initEnv: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
 				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
 			},
 			urlValues: url.Values{
-				"grant_type":    {"client_credentials"},
+				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
 				"scope":         {"profile email groups entitlements"},
@@ -519,6 +539,49 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				// Scopes:       []string{"profile", "email", "groups", "entitlements"}, // TODO SHOULD WE ADD SCOPE TO THE JWT WITH CLIENT_CREDENTIALS?
 				Entitlements: map[string][]string{
 					"users:impersonate": {"users:*"},
+				},
+			},
+		},
+		{
+			name: "should allow jwt-bearer grant",
+			initEnv: func(env *TestEnv) {
+				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
+				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
+				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
+				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{user56.ID: user56Permissions}
+				env.AcStore.ExpectedUsersRoles = map[int64][]string{user56.ID: {"Viewer"}}
+				env.TeamService.ExpectedTeamsByUser = user56Teams
+				env.UserService.ExpectedUser = user56
+			},
+			urlValues: url.Values{
+				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
+				"client_id":     {client1.ClientID},
+				"client_secret": {client1Secret},
+				"assertion":     {assertion},
+				"scope":         {"profile email groups entitlements"},
+				"audience":      {"http://localhost:3000"},
+			},
+			wantCode:  http.StatusOK,
+			wantScope: []string{"profile", "email", "groups", "entitlements"},
+			wantClaims: &Claims{
+				Claims: jwt.Claims{
+					Subject: fmt.Sprintf("user:id:%v", user56.ID), // From client1.ServiceAccountID
+					Issuer:  "test",                               // From env.S.Config.Issuer
+
+					// TODO: This is not correct, the audience should be the target of the token!
+					Audience: jwt.Audience{"test/oauth2/token"},
+				},
+				ClientID: client1.ClientID,
+				Email:    user56.Email,
+				Name:     user56.Name,
+				Login:    user56.Login,
+				Groups:   []string{"Team 1", "Team 2"},
+				// Scopes:   []string{"profile", "email", "groups", "entitlements"}, // TODO scopes have not been added to the jwt
+				Entitlements: map[string][]string{
+					"dashboards:read": {"folders:uid:UID1"},
+					"folders:read":    {"folders:uid:UID1"},
+					"users:read":      {"global.users:id:56"},
 				},
 			},
 		},
@@ -578,4 +641,25 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			require.Equal(t, tt.wantClaims, &claims)
 		})
 	}
+}
+
+func genAssertion(t *testing.T, signKey *rsa.PrivateKey, clientID, sub, audience string) string {
+	key := jose.SigningKey{Algorithm: jose.RS256, Key: signKey}
+	assertion := jwt.Claims{
+		ID:       uuid.New().String(),
+		Issuer:   clientID,
+		Subject:  sub,
+		Audience: jwt.Audience{audience},
+		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		IssuedAt: jwt.NewNumericDate(time.Now()),
+	}
+
+	var signerOpts = jose.SignerOptions{}
+	signerOpts.WithType("JWT")
+	rsaSigner, errSigner := jose.NewSigner(key, &signerOpts)
+	require.NoError(t, errSigner)
+	builder := jwt.Signed(rsaSigner)
+	rawJWT, errSign := builder.Claims(assertion).CompactSerialize()
+	require.NoError(t, errSign)
+	return rawJWT
 }

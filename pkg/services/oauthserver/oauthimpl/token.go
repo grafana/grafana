@@ -209,8 +209,6 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 }
 
 func (s *OAuth2ServiceImpl) filteredUserPermissions(ctx context.Context, userID int64, actionsFilter map[string]bool) ([]ac.Permission, error) {
-	permissions := []ac.Permission{}
-
 	permissions, err := s.acService.SearchUserPermissions(ctx, oauthserver.TmpOrgID, ac.SearchOptions{UserID: userID})
 	if err != nil {
 		return nil, &fosite.RFC6749Error{
