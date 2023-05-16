@@ -170,6 +170,13 @@ function getSettingsPages(dashboard: DashboardModel) {
   return pages;
 }
 
+function applySectionAsParent(node: NavModelItem, parent: NavModelItem): NavModelItem {
+  return {
+    ...node,
+    parentItem: node.parentItem ? applySectionAsParent(node.parentItem, parent) : parent,
+  };
+}
+
 function getSectionNav(
   pageNav: NavModelItem,
   sectionNav: NavModel,
@@ -194,22 +201,9 @@ function getSectionNav(
     subTitle: page.subTitle,
   }));
 
-  if (pageNav.parentItem) {
-    pageNav = {
-      ...pageNav,
-      parentItem: {
-        ...pageNav.parentItem,
-        parentItem: sectionNav.node,
-      },
-    };
-  } else {
-    pageNav = {
-      ...pageNav,
-      parentItem: sectionNav.node,
-    };
-  }
+  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.node);
 
-  main.parentItem = pageNav;
+  main.parentItem = pageNavWithSectionParent;
 
   return {
     main,
