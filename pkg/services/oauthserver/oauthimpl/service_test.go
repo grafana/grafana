@@ -183,7 +183,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
 				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				// TODO MVP also need to test the role has been deleted
+				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
 				ExternalServiceName: serviceName,
@@ -203,6 +203,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.AssertCalled(t, "DeleteServiceAccount", mock.Anything,
 					mock.MatchedBy(func(orgID int64) bool { return orgID == oauthserver.TmpOrgID }),
 					mock.MatchedBy(func(saID int64) bool { return saID == sa1.Id }))
+				// Check that the associated role is deleted
+				env.AcStore.AssertCalled(t, "DeleteExternalServiceRole", mock.Anything,
+					mock.MatchedBy(func(extSvcName string) bool { return extSvcName == serviceName }))
 			},
 		},
 		{

@@ -287,10 +287,13 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 
 	// remove the service account
 	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
-	// TODO MVP delete the role and its assignment as well
 	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
 		return oauthserver.NoServiceAccountID, err
 	}
+	if err := s.acService.DeleteExternalServiceRole(ctx, extSvcName); err != nil {
+		return oauthserver.NoServiceAccountID, err
+	}
+
 	return oauthserver.NoServiceAccountID, nil
 }
 
