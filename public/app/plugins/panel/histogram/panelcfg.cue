@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							common.OptionsWithLegend
 							common.OptionsWithTooltip
 
@@ -38,7 +38,7 @@ composableKinds: PanelCfg: {
 							combine?: bool
 						} @cuetsy(kind="interface")
 
-						PanelFieldConfig: {
+						FieldConfig: {
 							common.AxisConfig
 							common.HideableFieldConfig
 

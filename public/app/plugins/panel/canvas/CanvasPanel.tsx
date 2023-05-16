@@ -11,10 +11,10 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
-import { PanelOptions } from './models.gen';
+import { Options } from './models.gen';
 import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
 
-interface Props extends PanelProps<PanelOptions> {}
+interface Props extends PanelProps<Options> {}
 
 interface State {
   refresh: number;

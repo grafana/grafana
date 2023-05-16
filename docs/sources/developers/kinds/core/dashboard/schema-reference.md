@@ -680,7 +680,7 @@ Configuration of the time picker shown at the top of a dashboard.
 
 | Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
 |--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `additionalFields` | [object](#additionalfields)                                                      | **Yes**  |         | additionalFields is reserved for future use                                                                                                                                |
+| `additionalFields` | [object](#additionalfields)                                                      | No       |         | additionalFields is reserved for future use                                                                                                                                |
 | `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
 
 ### AdditionalFields
