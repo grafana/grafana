@@ -140,7 +140,7 @@ _Generally available in all editions of Grafana._
 
 <!-- Nathan Marrs -->
 
-We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
+You can now filter dashboard annotations to apply annotations to all panels, selected panels, or selected panels to exclude.
 
 To learn more, check out annotation filtering [documentation]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#filter-by-panel" >}}).
 
