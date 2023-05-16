@@ -540,6 +540,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/ldap/ @grafana/grafana-authnz-team
 /pkg/services/login/ @grafana/grafana-authnz-team
 /pkg/services/loginattempt/ @grafana/grafana-authnz-team
+/pkg/services/oauthserver/ @grafana-authnz-team
 /pkg/services/oauthtoken/ @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts/ @grafana/grafana-authnz-team
 /pkg/services/teamguardian/ @grafana/grafana-authnz-team
