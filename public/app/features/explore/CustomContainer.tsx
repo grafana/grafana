@@ -13,7 +13,7 @@ export interface Props {
   state: LoadingState;
 }
 
-export function ExplorePanel({ width, height, timeZone, state, frame, absoluteRange }: Props) {
+export function CustomContainer({ width, height, timeZone, state, frame, absoluteRange }: Props) {
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),

@@ -40,7 +40,7 @@ import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import { ExplorePanel } from './ExplorePanel';
+import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraphExploreContainer';
@@ -291,7 +291,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return queryResponse?.customFrames.map((frame, index) => {
       return (
-        <ExplorePanel
+        <CustomContainer
           key={index}
           timeZone={timeZone}
           frame={frame}
