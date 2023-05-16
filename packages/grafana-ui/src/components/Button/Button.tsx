@@ -301,7 +301,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     return {
       ...disabledStyles,
       background: 'transparent',
-      border: `1px solid ${theme.colors.border.strong}`,
+      border: `1px solid ${theme.colors.border.weak}`,
     };
   }
 
