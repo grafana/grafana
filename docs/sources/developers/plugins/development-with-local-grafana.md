@@ -29,7 +29,9 @@ Here's how to clone and run Grafana locally:
 
 Another option is to run Grafana with docker-compose so that it runs in a container. To do so, create the `docker-compose` file in your plugin directory.
 
-> **Note:**: If your plugin already includes a docker-compose file, then skip this step.
+{{% admonition type="note" %}}
+If your plugin already includes a docker-compose file, then skip this step.
+{{% /admonition %}}
 
 ```yaml
 version: '3.7'
