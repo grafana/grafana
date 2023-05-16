@@ -195,13 +195,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
         onClick={(e) => {
           e.stopPropagation();
           setContextFilters((contextFilters) => {
-            return contextFilters.map((contextFilter) => {
-              return {
-                ...contextFilter,
-                // For revert to initial query we need to enable all labels and disable all parsed labels
-                enabled: !contextFilter.fromParser,
-              };
-            });
+            return contextFilters.map((contextFilter) => ({
+              ...contextFilter,
+              // For revert to initial query we need to enable all labels and disable all parsed labels
+              enabled: !contextFilter.fromParser,
+            }));
           });
         }}
       />
