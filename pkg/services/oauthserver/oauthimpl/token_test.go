@@ -471,6 +471,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		SelfPermissions: []ac.Permission{
 			{Action: "users:impersonate", Scope: "users:*"},
 		},
+		Audiences: "https://oauth.test/",
 	}
 	sa1 := &serviceaccounts.ServiceAccountProfileDTO{
 		Id:         client1.ServiceAccountID,
@@ -523,8 +524,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
 				"scope":         {"profile email groups entitlements"},
-				// TODO MVP change the audience with the cfg one.
-				"audience": {"http://localhost:3000/"},
+				"audience":      {"https://oauth.test/"},
 			},
 			wantCode:  http.StatusOK,
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
@@ -532,7 +532,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				Claims: jwt.Claims{
 					Subject:  "user:id:2", // From client1.ServiceAccountID
 					Issuer:   "test",      // From env.S.Config.Issuer
-					Audience: jwt.Audience{"http://localhost:3000/", "https://oauth.test/"},
+					Audience: jwt.Audience{"https://oauth.test/"},
 				},
 				ClientID: client1.ClientID,
 				Name:     "testapp",

@@ -361,6 +361,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		client = &oauthserver.Client{
 			ExternalServiceName: registration.ExternalServiceName,
 			ServiceAccountID:    oauthserver.NoServiceAccountID,
+			Audiences:           s.cfg.AppURL,
 		}
 	}
 

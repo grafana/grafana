@@ -53,14 +53,16 @@ type Client struct {
 	ExternalServiceName string `xorm:"app_name"`
 	ClientID            string `xorm:"client_id"`
 	Secret              string `xorm:"secret"`
+	RedirectURI         string `xorm:"redirect_uri"`
 	GrantTypes          string `xorm:"grant_types"` // CSV value
+	Audiences           string `xorm:"audiences"`   // CSV value
 	PublicPem           []byte `xorm:"public_pem"`
 	ServiceAccountID    int64  `xorm:"service_account_id"`
 	// SelfPermissions are the registered service account permissions (does not include managed permissions)
-	SelfPermissions []ac.Permission `xorm:"self_permissions"`
+	SelfPermissions []ac.Permission
 	// ImpersonatePermissions is the restriction set of permissions while impersonating
-	ImpersonatePermissions []ac.Permission `xorm:"impersonate_permissions"`
-	RedirectURI            string          `xorm:"redirect_uri"`
+	ImpersonatePermissions []ac.Permission
+	// Audiences is the list of targets the client is allowed to request access to
 
 	// SignedInUser refers to the current Service Account identity/user
 	SignedInUser      *user.SignedInUser
@@ -102,7 +104,7 @@ func (c *Client) GetRedirectURIs() []string {
 
 // GetGrantTypes returns the client's allowed grant types.
 func (c *Client) GetGrantTypes() fosite.Arguments {
-	return fosite.Arguments(strings.Split(c.GrantTypes, ","))
+	return strings.Split(c.GrantTypes, ",")
 }
 
 // GetResponseTypes returns the client's allowed response types.
@@ -170,7 +172,7 @@ func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessCon
 	}
 
 	c.ImpersonateScopes = ret
-	return fosite.Arguments(ret)
+	return ret
 }
 
 // IsPublic returns true, if this client is marked as public.
@@ -181,5 +183,5 @@ func (c *Client) IsPublic() bool {
 // GetAudience returns the allowed audience(s) for this client.
 func (c *Client) GetAudience() fosite.Arguments {
 	// TODO: This is to be inline with the PoC, check what we should really return here
-	return fosite.Arguments{"http://localhost:3000"}
+	return strings.Split(c.Audiences, ",")
 }

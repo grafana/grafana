@@ -43,17 +43,17 @@ func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) 
 
 func registerExternalService(sess *db.Session, client *oauthserver.Client) error {
 	insertQuery := []interface{}{
-		`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		client.ExternalServiceName,
 		client.ClientID,
 		client.Secret,
 		client.GrantTypes,
+		client.Audiences,
 		client.ServiceAccountID,
 		client.PublicPem,
 		client.RedirectURI,
 	}
-	_, err := sess.Exec(insertQuery...)
-	if err != nil {
+	if _, err := sess.Exec(insertQuery...); err != nil {
 		return err
 	}
 
@@ -68,8 +68,7 @@ func (s *store) RegisterExternalService(ctx context.Context, client *oauthserver
 
 func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
 	deletePermQuery := `DELETE FROM oauth_impersonate_permission WHERE client_id = ?`
-	_, errDelPerm := sess.Exec(deletePermQuery, prevClientID)
-	if errDelPerm != nil {
+	if _, errDelPerm := sess.Exec(deletePermQuery, prevClientID); errDelPerm != nil {
 		return errDelPerm
 	}
 
@@ -82,21 +81,20 @@ func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Client
 
 func updateExternalService(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
 	updateQuery := []interface{}{
-		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE app_name = ?`,
+		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, audiences = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE app_name = ?`,
 		client.ClientID,
 		client.Secret,
 		client.GrantTypes,
+		client.Audiences,
 		client.ServiceAccountID,
 		client.PublicPem,
 		client.RedirectURI,
 		client.ExternalServiceName,
 	}
-	_, err := sess.Exec(updateQuery...)
-	if err != nil {
+	if _, err := sess.Exec(updateQuery...); err != nil {
 		return err
 	}
 
-	// TODO rethink this maybe recreating isn't performant enough
 	return recreateImpersonatePermissions(sess, client, prevClientID)
 }
 
@@ -128,7 +126,7 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		getClientQuery := `SELECT
-		id, app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri
+		id, app_name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
 		FROM oauth_client
 		WHERE client_id = ?`
 		found, err := sess.SQL(getClientQuery, id).Get(res)
@@ -205,7 +203,7 @@ func (s *store) GetExternalServiceByName(ctx context.Context, app string) (*oaut
 func getExternalServiceByName(sess *db.Session, app string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	getClientQuery := `SELECT
-		id, app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri
+		id, app_name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
 		FROM oauth_client
 		WHERE app_name = ?`
 	found, err := sess.SQL(getClientQuery, app).Get(res)
@@ -218,5 +216,6 @@ func getExternalServiceByName(sess *db.Session, app string) (*oauthserver.Client
 
 	impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`
 	errPerm := sess.SQL(impersonatePermQuery, res.ClientID).Find(&res.ImpersonatePermissions)
+
 	return res, errPerm
 }
