@@ -62,7 +62,7 @@ The preceding example shows a component that renders `<LinkButton />` components
 
 Create links for other plugins in the same way you [extend the Grafana application UI]({{< relref "./extend-the-grafana-ui-with-links" >}}) with a link. Don't specify a `grafana/...` extension point. Instead, specify the plugin extension point `plugin/<pluginId>/<extensionPointId>`.
 
-Given the example above, use a plugin link such as the following:
+Given the preceding example, use a plugin link such as the following:
 
 ```typescript
 new AppPlugin().configureExtensionLink({
