@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Modal, useStyles2, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import {
   fetchServerInfoAction,
   fetchServerSaasHostAction,
@@ -18,6 +18,7 @@ import { useAppDispatch } from 'app/store/store';
 
 import { Telemetry } from '../../../ui-events/components/Telemetry';
 import usePerconaTour from '../../core/hooks/tour';
+import { isPmmAdmin } from '../../helpers/permissions';
 
 import { Messages } from './PerconaBootstrapper.messages';
 import { getStyles } from './PerconaBootstrapper.styles';
@@ -32,7 +33,8 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
   const [modalIsOpen, setModalIsOpen] = useState(true);
   const [showTour, setShowTour] = useState(false);
   const styles = useStyles2(getStyles);
-  const isLoggedIn = contextSrv.user.isSignedIn;
+  const { user } = config.bootData;
+  const { isSignedIn } = user;
   const theme = useTheme2();
 
   const dismissModal = () => {
@@ -73,28 +75,31 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
     };
 
     const bootstrap = async () => {
-      await getSettings();
+      if (isPmmAdmin(user)) {
+        await getSettings();
+        await dispatch(fetchUserStatusAction());
+        await dispatch(fetchAdvisors({ disableNotifications: true }));
+      }
+
       await getUserDetails();
-      await dispatch(fetchUserStatusAction());
       await dispatch(fetchServerInfoAction());
       await dispatch(fetchServerSaasHostAction());
-      await dispatch(fetchAdvisors({ disableNotifications: true }));
       onReady();
     };
 
-    if (isLoggedIn) {
+    if (isSignedIn) {
       bootstrap();
     } else {
       onReady();
     }
-  }, [dispatch, isLoggedIn, setSteps, onReady]);
+  }, [dispatch, isSignedIn, setSteps, onReady, user]);
 
   return (
     <>
-      {isLoggedIn && <Telemetry />}
+      {isSignedIn && <Telemetry />}
       <PerconaNavigation />
       <PerconaTourBootstrapper />
-      {isLoggedIn && showTour && (
+      {isSignedIn && showTour && (
         <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
           <div className={styles.iconContainer}>
             <Icon type="mono" name={theme.isLight ? 'pmm-logo-light' : 'pmm-logo'} className={styles.svg} />

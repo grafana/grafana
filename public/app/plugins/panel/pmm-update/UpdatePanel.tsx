@@ -1,8 +1,8 @@
 import React, { FC, MouseEvent, useEffect, useState } from 'react';
 
 import { Button, IconName, Spinner } from '@grafana/ui';
-import { SettingsService } from 'app/percona/settings/Settings.service';
-import { logger } from 'app/percona/shared/helpers/logger';
+import { getPerconaUser, getPerconaSettings } from 'app/percona/shared/core/selectors';
+import { useSelector } from 'app/types';
 
 import { Messages } from './UpdatePanel.messages';
 import * as styles from './UpdatePanel.styles';
@@ -14,9 +14,8 @@ export const UpdatePanel: FC<{}> = () => {
   const [forceUpdate, setForceUpdate] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [updatesDisabled, setUpdatesDisabled] = useState(false);
-  const [isLoadingSettings, setLoadingSettings] = useState(true);
-  const [hasNoAccess, setHasNoAccess] = useState(false);
+  const { isAuthorized } = useSelector(getPerconaUser);
+  const { result: settings, loading: isLoadingSettings } = useSelector(getPerconaSettings);
   const [
     { installedVersionDetails, lastCheckDate, nextVersionDetails, isUpdateAvailable },
     fetchVersionErrorMessage,
@@ -27,25 +26,6 @@ export const UpdatePanel: FC<{}> = () => {
   const [output, updateErrorMessage, isUpdated, updateFailed, launchUpdate] = usePerformUpdate();
   const isLoading = isLoadingVersionDetails || isLoadingSettings;
 
-  const getSettings = async () => {
-    setLoadingSettings(true);
-
-    try {
-      const { updatesDisabled } = await SettingsService.getSettings(undefined, true);
-
-      setUpdatesDisabled(!!updatesDisabled);
-    } catch (e) {
-      // @ts-ignore
-      if (e.response?.status === 401) {
-        setHasNoAccess(true);
-      }
-
-      logger.error(e);
-    }
-
-    setLoadingSettings(false);
-  };
-
   const handleCheckForUpdates = (e: MouseEvent) => {
     if (e.altKey) {
       setForceUpdate(true);
@@ -53,10 +33,6 @@ export const UpdatePanel: FC<{}> = () => {
 
     getCurrentVersionDetails({ force: true });
   };
-
-  useEffect(() => {
-    getSettings();
-  }, []);
 
   useEffect(() => {
     setErrorMessage(fetchVersionErrorMessage || updateErrorMessage);
@@ -79,7 +55,7 @@ export const UpdatePanel: FC<{}> = () => {
     <>
       <div className={styles.panel}>
         <CurrentVersion installedVersionDetails={installedVersionDetails} />
-        {isUpdateAvailable && !isDefaultView && !updatesDisabled && !hasNoAccess && !isLoading && isOnline ? (
+        {isUpdateAvailable && !isDefaultView && !settings?.updatesDisabled && isAuthorized && !isLoading && isOnline ? (
           <AvailableUpdate nextVersionDetails={nextVersionDetails} />
         ) : null}
         {isLoading ? (
@@ -88,7 +64,7 @@ export const UpdatePanel: FC<{}> = () => {
           </div>
         ) : (
           <>
-            {(isUpdateAvailable || forceUpdate) && !updatesDisabled && !hasNoAccess && isOnline ? (
+            {(isUpdateAvailable || forceUpdate) && !settings?.updatesDisabled && isAuthorized && isOnline ? (
               <div className={styles.middleSectionWrapper}>
                 {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
                 <Button onClick={handleUpdate} icon={'fa fa-download' as IconName} variant="secondary">
@@ -98,15 +74,15 @@ export const UpdatePanel: FC<{}> = () => {
             ) : (
               <InfoBox
                 upToDate={!isDefaultView && !forceUpdate}
-                hasNoAccess={hasNoAccess}
-                updatesDisabled={updatesDisabled}
+                hasNoAccess={!isAuthorized}
+                updatesDisabled={settings?.updatesDisabled}
                 isOnline={isOnline}
               />
             )}
           </>
         )}
         <LastCheck
-          disabled={isLoading || updatesDisabled || !isOnline}
+          disabled={isLoading || settings?.updatesDisabled || !isOnline}
           onCheckForUpdates={handleCheckForUpdates}
           lastCheckDate={lastCheckDate}
         />
