@@ -14,35 +14,37 @@ weight: 300
 
 # Prometheus query editor
 
-This topic explains querying specific to the Prometheus data source.
+Grafana provides a query editor for the Prometheus data source.
+
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
-
-## Choose a query editing mode
-
-You can switch the Prometheus query editor between two modes:
-
-- [Code mode](#code-mode), which provides a feature-rich editor for writing queries
-- [Builder mode](#builder-mode), which provides a visual query designer
-
-{{< figure src="/static/img/docs/prometheus/editing-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Query editor mode" >}}
-
-To switch between the editor modes, select the corresponding **Builder** and **Code** tabs.
-
-To run a query, select **Run query** in the upper right of the editor.
-
-Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations.
-
-Builder mode doesn't yet support some complex queries.
-When you switch from Code mode to Builder mode with such a query, the editor displays a popup that explains how you might lose parts of the query if you continue.
-You can then decide whether you still want to switch to Builder mode.
-
-You can also use the [Explain feature]({{< relref "#use-explain-mode-to-understand-queries" >}}) to help understand how a query works, and augment queries by using [template variables]({{< relref "./template-variables/" >}}).
 
 For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
+## Choose a query editing mode
+
+The Prometheus query editor has two modes:
+
+- [Code mode](#code-mode)
+- [Builder mode](#builder-mode)
+
+To switch between editor modes, select the corresponding **Builder** and **Code** tabs.
+
+{{< figure src="/static/img/docs/prometheus/editing-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Query editor mode" >}}
+
+Both modes are synchronized, so you can switch between them without losing your work.
+
+## Toolbar options
+
+The toolbar contains the following elements:
+
+| Name                      | Description                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| **Kick start your query** | A list of operation patterns that help you quickly add multiple operations to your query. |
+| **Explain**               | Displays a step-by-step explanation of all query parts and its operations.                |
+
 ## Configure common options
 
-You can configure Prometheus-specific options in the query editor by setting several options regardless of its mode.
+You can configure Prometheus-specific options in the query editor by setting several options regardless of mode.
 
 {{< figure src="/static/img/docs/prometheus/options.png" max-width="500px" class="docs-image--no-shadow" caption="Options" >}}
 
@@ -68,43 +70,43 @@ You can switch between **Table**, **Time series**, and **Heatmap** options by co
 
 | Option          | Description                                                                                                                                                                                                                         |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Table**       | This works only in a [Table panel]({{< relref "../../../panels-visualizations/visualizations/table" >}}).                                                                                                                           |
 | **Time series** | Uses the default time series format.                                                                                                                                                                                                |
+| **Table**       | This works only in a [Table panel]({{< relref "../../../panels-visualizations/visualizations/table" >}}).                                                                                                                           |
 | **Heatmap**     | Displays metrics of the Histogram type on a [Heatmap panel]({{< relref "../../../panels-visualizations/visualizations/heatmap" >}}) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. |
 
 ### Type
 
-The **Type** setting selects the query type.
+The **Type** setting sets the query type.
 
-- A **Range** query returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series.
-- An **Instant** query returns only the latest value that Prometheus has scraped for the requested time series. Instant queries can return results much faster than normal range queries and are well suited to look up label sets.
-
-  Instant query results are comprised of only one data point per series and can be shown in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown.
-
-  For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
-
+- The **Both** query option is the default option and returns results for both a **Range** query and an **Instant** query.
+- A **Range** query returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
+- An **Instant** query returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results can be shown in a table or as raw data.
 - An **Exemplars** query runs with the regular query and shows exemplars in the graph.
+
+For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step.
 > This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
 ## Code mode
 
+**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about Prometheus's query language (PromQL), see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
-In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
-It also contains a [Metrics browser]({{< relref "#metrics-browser" >}}) to further help you write queries.
+The user interface (UI) also lets you select metrics, label filter and operations.
 
-For more information about Prometheus's query language (PromQL), see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+<!-- You can also use the [Explain feature]({{< relref "#use-explain-mode-to-understand-queries" >}}) to help understand how a query works, and augment queries by using [template variables]({{< relref "./template-variables/" >}}). -->
+
+You can write complex queries using the text editor with autocompletion features and syntax highlighting.
+It also contains a [Metrics browser]({{< relref "#metrics-browser" >}}) to further help you write queries.
 
 ### Use autocompletion
 
-Code mode's autocompletion feature works automatically while typing.
-
-The query editor can autocomplete static functions, aggregations, keywords, and also dynamic items like metrics and labels.
+Code mode's autocompletion feature works automatically while typing. The query editor can autocomplete static functions, aggregations, keywords, and also dynamic items like metrics and labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-To run a query in [Explore]({{< relref "../../../explore/" >}}), use the keyboard shortcut <key>Shift</key> + <key>Enter</key>.
+<!-- To run a query in [Explore]({{< relref "../../../explore/" >}}), use the keyboard shortcut <key>Shift</key> + <key>Enter</key>. -->
 
 ### Metrics browser
 
@@ -125,27 +127,20 @@ The values section has only one search field, and its filtering applies to all l
 
 For example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
 
-Once you are satisfied with your query, click "Use query" to run the query. The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
-The "Validate selector" button will check with Prometheus how many time series are available for that selector.
+Once you are satisfied with your query, click **Run query**.
+
+<!-- The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
+The "Validate selector" button will check with Prometheus how many time series are available for that selector. -->
 
 ## Builder mode
 
-In **Builder mode**, you can build queries using a visual interface.
+**Builder mode** helps you build queries using a visual interface. This option is best for users who do not have previous experience working with Prometheus and PromQL.
 
 This video demonstrates how to use the visual Prometheus query builder available since Grafana v9.0:
 
 {{< vimeo 720004179 >}}
 
 </br>
-
-### Toolbar
-
-In addition to the **Run query** button and mode switcher, Builder mode includes additional elements:
-
-| Name                      | Description                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------- |
-| **Kick start your query** | A list of operation patterns that help you quickly add multiple operations to your query. |
-| **Explain**               | Displays a step-by-step explanation of all query parts and its operations.                |
 
 ### Metric and labels
 
@@ -213,3 +208,7 @@ Prometheus supports two ways to query annotations.
 - A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/#inspecting-alerts-during-runtime))
 
 The step option is useful to limit the number of events returned from your query.
+
+extras
+
+To run a query, select **Run query** in the upper right of the editor.
