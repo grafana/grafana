@@ -25,6 +25,7 @@ public/app/plugins/datasource/tempo
 public/app/features/explore/TraceView/components
 public/img/icons/solid/
 public/img/icons/unicons/
+k6/
 ```
 
 The following directories and their subdirectories are licensed under their original upstream licenses:

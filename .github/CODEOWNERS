@@ -144,6 +144,7 @@
 /pkg/tsdb/sqleng/ @grafana/backend-platform
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
+/k6 @grafana/backend-platform
 
 /pkg/services/grpcserver/ @grafana/backend-platform
 /pkg/infra/kvstore/ @grafana/backend-platform
