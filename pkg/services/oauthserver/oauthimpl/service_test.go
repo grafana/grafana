@@ -454,7 +454,17 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 		})
 	}
 
-	t.Run("should generate key when generate key option is specified", func(t *testing.T) {
+	t.Run("should generate an ECDSA key pair (default) when generate key option is specified", func(t *testing.T) {
+		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
+
+		require.NoError(t, err)
+		require.NotNil(t, result.PrivatePem)
+		require.NotNil(t, result.PublicPem)
+		require.True(t, result.Generated)
+	})
+
+	t.Run("should generate an RSA key pair when generate key option is specified", func(t *testing.T) {
+		env.S.cfg.OAuth2ServerGeneratedKeyTypeForClient = "RSA"
 		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
 
 		require.NoError(t, err)
