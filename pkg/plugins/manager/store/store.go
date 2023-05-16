@@ -36,6 +36,12 @@ func New(pluginRegistry registry.Service) *Service {
 func (s *Service) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
 	p, exists := s.plugin(ctx, pluginID)
 	if !exists {
+		// fallback to an alias lookup
+		for _, v := range s.Plugins(ctx) {
+			if v.Alias == pluginID {
+				return v, true
+			}
+		}
 		return plugins.PluginDTO{}, false
 	}
 

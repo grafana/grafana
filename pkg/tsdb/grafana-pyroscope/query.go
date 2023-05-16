@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope/kinds/dataquery"
 	"github.com/xlab/treeprint"
 	"golang.org/x/sync/errgroup"
 )

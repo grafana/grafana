@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	phlare "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -44,7 +44,7 @@ const (
 	MySQL           = "mysql"
 	MSSQL           = "mssql"
 	Grafana         = "grafana"
-	Phlare          = "phlare"
+	Pyroscope       = "grafana-pyroscope"
 	Parca           = "parca"
 )
 
@@ -84,7 +84,7 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 		MySQL:           asBackendPlugin(my),
 		MSSQL:           asBackendPlugin(ms),
 		Grafana:         asBackendPlugin(graf),
-		Phlare:          asBackendPlugin(phlare),
+		Pyroscope:       asBackendPlugin(phlare),
 		Parca:           asBackendPlugin(parca),
 	})
 }
