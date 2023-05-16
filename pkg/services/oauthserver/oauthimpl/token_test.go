@@ -9,23 +9,25 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/ory/fosite"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
@@ -428,7 +430,12 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			}
 			require.Len(t, sessionData.JWTClaims.Extra, len(tt.expectedClaims))
 			for k, v := range tt.expectedClaims {
-				require.Equal(t, v, sessionData.JWTClaims.Extra[k])
+				if k == "entitlements" {
+					// Hack to compare entitlements and prevent test to randomly fail
+					require.True(t, reflect.DeepEqual(v, sessionData.JWTClaims.Extra[k]))
+				} else {
+					require.Equal(t, v, sessionData.JWTClaims.Extra[k])
+				}
 			}
 
 			env.AcStore.AssertExpectations(t)
