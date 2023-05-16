@@ -242,7 +242,7 @@
 /pkg/tsdb/graphite/ @grafana/observability-metrics
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
-/pkg/tsdb/phlare/ @grafana/observability-traces-and-profiling
+/pkg/tsdb/grafana-pyroscope/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/parca/ @grafana/observability-traces-and-profiling
 
 # BI backend code
@@ -516,7 +516,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/tempo/ @grafana/observability-traces-and-profiling
-/public/app/plugins/datasource/phlare/ @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/grafana-pyroscope/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
