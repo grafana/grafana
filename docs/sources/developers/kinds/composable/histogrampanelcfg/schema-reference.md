@@ -13,30 +13,30 @@ title: HistogramPanelCfg kind
 
 
 
-| Property           | Type                        | Required | Default | Description |
-|--------------------|-----------------------------|----------|---------|-------------|
-| `PanelFieldConfig` | [object](#panelfieldconfig) | **Yes**  |         |             |
-| `PanelOptions`     | [object](#paneloptions)     | **Yes**  |         |             |
+| Property      | Type                   | Required | Default | Description |
+|---------------|------------------------|----------|---------|-------------|
+| `FieldConfig` | [object](#fieldconfig) | **Yes**  |         |             |
+| `Options`     | [object](#options)     | **Yes**  |         |             |
 
-### PanelFieldConfig
+### FieldConfig
 
 It extends [AxisConfig](#axisconfig) and [HideableFieldConfig](#hideablefieldconfig).
 
-| Property            | Type                                                | Required | Default | Description                                                                                                                             |
-|---------------------|-----------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisLabel`         | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisPlacement`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisSoftMin`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisWidth`         | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `fillOpacity`       | integer                                             | No       | `80`    | Controls the fill opacity of the bars.<br/>Constraint: `>=0 & <=100`.                                                                   |
-| `gradientMode`      | string                                              | No       |         | TODO docs<br/>Possible values are: `none`, `opacity`, `hue`, `scheme`.                                                                  |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
-| `lineWidth`         | integer                                             | No       | `1`     | Controls line width of the bars.<br/>Constraint: `>=0 & <=10`.                                                                          |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
+| Property            | Type                                                | Required | Default | Description                                                                                                                                                                                                      |
+|---------------------|-----------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                                                                                            |
+| `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisLabel`         | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisPlacement`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.                                                                          |
+| `axisSoftMax`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisSoftMin`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisWidth`         | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `fillOpacity`       | integer                                             | No       | `80`    | Controls the fill opacity of the bars.<br/>Constraint: `>=0 & <=100`.                                                                                                                                            |
+| `gradientMode`      | string                                              | No       |         | Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.<br/>Gradient appearance is influenced by the Fill opacity setting. |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                                                                                                     |
+| `lineWidth`         | integer                                             | No       | `1`     | Controls line width of the bars.<br/>Constraint: `>=0 & <=10`.                                                                                                                                                   |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                                                                                                       |
 
 ### AxisConfig
 
@@ -82,7 +82,7 @@ TODO docs
 |------------|---------------------------------------|----------|---------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
-### PanelOptions
+### Options
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 

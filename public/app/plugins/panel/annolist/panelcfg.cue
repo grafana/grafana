@@ -22,7 +22,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							onlyFromThisDashboard: bool | *false
 							onlyInTimeRange:       bool | *false
 							tags: [...string]

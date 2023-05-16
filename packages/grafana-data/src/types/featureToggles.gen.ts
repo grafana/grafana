@@ -94,6 +94,7 @@ export interface FeatureToggles {
   authenticationConfigUI?: boolean;
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
-  opensearchDetectVersion?: boolean;
+  faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
+  extraThemes?: boolean;
 }
