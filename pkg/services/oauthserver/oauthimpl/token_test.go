@@ -603,10 +603,12 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
-				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
+				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
 				// To retrieve the user to impersonate, its permissions and its teams
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{user56.ID: user56Permissions}
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{user56.ID: {"Viewer"}}
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
+					user56.ID: user56Permissions}, nil)
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					user56.ID: {"Viewer"}}, nil)
 				env.TeamService.ExpectedTeamsByUser = user56Teams
 				env.UserService.ExpectedUser = user56
 			},
