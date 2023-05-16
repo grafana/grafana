@@ -112,7 +112,6 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 }
 
 func TestClient_Index(t *testing.T) {
-
 	tt := []struct {
 		name                string
 		indexInDatasource   string
@@ -207,7 +206,6 @@ func TestClient_Index(t *testing.T) {
 
 			assert.Equal(t, test.indexInRequest, jHeader.Get("index").MustStringArray())
 		})
-
 	}
 }
 
