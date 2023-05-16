@@ -2,12 +2,9 @@ package models
 
 import (
 	"encoding/json"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // PublicDashboardErr represents a dashboard error.
@@ -108,25 +105,6 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 	return json.Marshal(ts)
 }
 
-// BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
-func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
-	from := dashboard.Data.GetPath("time", "from").MustString()
-	to := dashboard.Data.GetPath("time", "to").MustString()
-
-	if pd.TimeSelectionEnabled {
-		from = reqDTO.TimeRange.From
-		to = reqDTO.TimeRange.To
-	}
-
-	timeRange := legacydata.NewDataTimeRange(from, to)
-
-	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
-	return TimeSettings{
-		From: strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10),
-		To:   strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10),
-	}
-}
-
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
 	DashboardUid    string
@@ -135,11 +113,17 @@ type SavePublicDashboardDTO struct {
 	PublicDashboard *PublicDashboard
 }
 
+type TimeRangeDTO struct {
+	From     string `json:"from"`
+	To       string `json:"to"`
+	Location string `json:"location"`
+}
+
 type PublicDashboardQueryDTO struct {
 	IntervalMs      int64
 	MaxDataPoints   int64
 	QueryCachingTTL int64
-	TimeRange       TimeSettings
+	TimeRange       TimeRangeDTO
 }
 
 type AnnotationsQueryDTO struct {

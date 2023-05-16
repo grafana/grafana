@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // FindAnnotations returns annotations for a public dashboard
@@ -159,7 +162,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
 	}
 
-	ts := publicDashboard.BuildTimeSettings(dashboard, reqDTO)
+	ts := buildTimeSettings(dashboard, reqDTO, publicDashboard)
 
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
@@ -318,4 +321,55 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 			}
 		}
 	}
+}
+
+// NewDataTimeRange declared to be able to stub this function in tests
+var NewDataTimeRange = legacydata.NewDataTimeRange
+
+// BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
+func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard) models.TimeSettings {
+	from := d.Data.GetPath("time", "from").MustString()
+	to := d.Data.GetPath("time", "to").MustString()
+	tz := d.Data.GetPath("timezone").MustString()
+
+	location := getLocation(reqDTO, tz)
+	if pd.TimeSelectionEnabled && reqDTO.TimeRange.From != "" && reqDTO.TimeRange.To != "" {
+		from = reqDTO.TimeRange.From
+		to = reqDTO.TimeRange.To
+	}
+
+	timeRange := NewDataTimeRange(from, to)
+
+	timeFrom, _ := timeRange.ParseFrom(
+		legacydata.WithLocation(location),
+	)
+	timeTo, _ := timeRange.ParseTo(
+		legacydata.WithLocation(location),
+	)
+	timeToAsEpoch := timeTo.UnixMilli()
+	timeFromAsEpoch := timeFrom.UnixMilli()
+
+	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which want the time range in epoch milliseconds.
+	return models.TimeSettings{
+		From: strconv.FormatInt(timeFromAsEpoch, 10),
+		To:   strconv.FormatInt(timeToAsEpoch, 10),
+	}
+}
+
+// getLocation returns the location from the request or the default location
+func getLocation(reqDTO models.PublicDashboardQueryDTO, dashboardLocation string) *time.Location {
+	// if the Location is blank or there is an error default is UTC
+	location, err := time.LoadLocation(dashboardLocation)
+	if err != nil {
+		location = time.UTC
+	}
+
+	if reqDTO.TimeRange.Location != "" {
+		userLocation, err := time.LoadLocation(reqDTO.TimeRange.Location)
+		if err == nil {
+			location = userLocation
+		}
+	}
+
+	return location
 }
