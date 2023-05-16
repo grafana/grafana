@@ -24,7 +24,9 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
       <>
         <Indent level={level} />
         <span className={styles.folderButtonSpacer} />
-        <em>Empty folder</em>
+        <em>
+          <TextModifier color="secondary">No items</TextModifier>
+        </em>
       </>
     );
   }
