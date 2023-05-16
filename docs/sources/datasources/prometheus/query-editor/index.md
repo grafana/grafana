@@ -88,6 +88,8 @@ For more information, refer to the [Time Series Transform option documentation](
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step.
 > This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
+To run a query, select **Run query** in the upper right-hand corner of the query editor.
+
 ## Code mode
 
 **Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about Prometheus's query language (PromQL), see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
@@ -134,7 +136,7 @@ The "Validate selector" button will check with Prometheus how many time series a
 
 ## Builder mode
 
-**Builder mode** helps you build queries using a visual interface. This option is best for users who do not have previous experience working with Prometheus and PromQL.
+**Builder mode** helps you build queries using a visual interface. This option is best for users who have limited or no previous experience working with Prometheus and PromQL.
 
 This video demonstrates how to use the visual Prometheus query builder available since Grafana v9.0:
 
@@ -208,7 +210,3 @@ Prometheus supports two ways to query annotations.
 - A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/#inspecting-alerts-during-runtime))
 
 The step option is useful to limit the number of events returned from your query.
-
-extras
-
-To run a query, select **Run query** in the upper right of the editor.
