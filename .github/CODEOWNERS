@@ -446,6 +446,10 @@ lerna.json @grafana/frontend-ops
 /public/app/features/explore/Logs/Logs.tsx @grafana/observability-logs
 /public/app/features/explore/Logs/LogsContainer.tsx @grafana/observability-logs
 
+/public/app/features/explore/RawPrometheus/ @grafana/observability-metrics
+
+/public/app/features/explore/NodeGraph/ @grafana/observability-traces-and-profiling
+/public/app/features/explore/FlameGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
 
 /public/api-merged.json @grafana/backend-platform
