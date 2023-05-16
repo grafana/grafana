@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, Input, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
@@ -11,6 +11,7 @@ import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } fro
 import { Stack } from '@grafana/experimental';
 import { concat, uniq, upperFirst, without } from 'lodash';
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
+import { TimezoneSelect } from './timezones';
 
 export const MuteTimingTimeInterval = () => {
   const styles = useStyles2(getStyles);
@@ -22,6 +23,8 @@ export const MuteTimingTimeInterval = () => {
   } = useFieldArray<MuteTimingFields>({
     name: 'time_intervals',
   });
+
+  console.log("intervals", timeIntervals);
 
   return (
     <FieldSet label="Time intervals">
@@ -39,6 +42,23 @@ export const MuteTimingTimeInterval = () => {
             return (
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
                 <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
+                <Field
+                  label="Location"
+                  invalid={Boolean(errors.location)}
+                  error={errors.location?.message}
+                  validationMessageHorizontalOverflow
+                >
+                  <TimezoneSelect
+                    prefix={<Icon name="map-marker" />}
+                    width={50}
+                    onChange={(selectedTimezone) => {
+                      setValue(`time_intervals.${timeIntervalIndex}.location`, selectedTimezone.value)
+                    }}
+                    // @ts-ignore react-hook-form doesn't handle nested field arrays well
+                    defaultValue={{ label: timeInterval.location, value: timeInterval.location }}
+                    data-testid="mute-timing-location"
+                  />
+                </Field>
                 <Field label="Days of the week">
                   <DaysOfTheWeek
                     onChange={daysOfWeek => {
@@ -66,7 +86,7 @@ export const MuteTimingTimeInterval = () => {
                           'Invalid day'
                         ),
                     })}
-                    className={styles.input}
+                    width={50}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.days_of_month}
                     placeholder="Example: 1, 14:16, -1"
@@ -88,7 +108,7 @@ export const MuteTimingTimeInterval = () => {
                           'Invalid month'
                         ),
                     })}
-                    className={styles.input}
+                    width={50}
                     placeholder="Example: 1:3, may:august, december"
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.months}
@@ -104,7 +124,7 @@ export const MuteTimingTimeInterval = () => {
                     {...register(`time_intervals.${timeIntervalIndex}.years`, {
                       validate: (value) => validateArrayField(value, (year) => /^\d{4}$/.test(year), 'Invalid year'),
                     })}
-                    className={styles.input}
+                    width={50}
                     placeholder="Example: 2021:2022, 2030"
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.years}

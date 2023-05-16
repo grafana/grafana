@@ -45,10 +45,11 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
     const intervals = muteTiming.time_intervals.map((interval) => ({
       times: interval.times ?? defaultTimeInterval.times,
-      weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
-      days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
-      months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
-      years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
+      weekdays: interval.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
+      days_of_month: interval.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
+      months: interval.months?.join(', ') ?? defaultTimeInterval.months,
+      years: interval.years?.join(', ') ?? defaultTimeInterval.years,
+      location: interval.location ?? defaultTimeInterval.location,
     }));
 
     return {
@@ -77,6 +78,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
 
   const config: AlertmanagerConfig = result?.alertmanager_config ?? {};
   const defaultValues = useDefaultValues(muteTiming);
+  console.dir(defaultValues);
   const formApi = useForm({ defaultValues });
 
   const onSubmit = (values: MuteTimingFields) => {
