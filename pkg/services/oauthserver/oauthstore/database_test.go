@@ -9,11 +9,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 )
 
 func TestStore_RegisterAndGetClient(t *testing.T) {
-	s := &store{db: db.InitTestDB(t)}
+	s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
 	tests := []struct {
 		name    string
 		client  oauthserver.Client
@@ -176,7 +177,7 @@ func TestStore_SaveExternalService(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &store{db: db.InitTestDB(t)}
+			s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
 			for i := range tt.runs {
 				err := s.SaveExternalService(context.Background(), &tt.runs[i])
 				if tt.wantErr {
@@ -216,7 +217,7 @@ func TestStore_GetExternalServiceByName(t *testing.T) {
 		},
 		RedirectURI: "/whereto",
 	}
-	s := &store{db: db.InitTestDB(t)}
+	s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
 	require.NoError(t, s.SaveExternalService(context.Background(), &client1))
 	require.NoError(t, s.SaveExternalService(context.Background(), &client2))
 
@@ -320,7 +321,7 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &store{db: db.InitTestDB(t)}
+			s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
 			require.NoError(t, s.SaveExternalService(context.Background(), tc.client))
 
 			webKey, err := s.GetExternalServicePublicKey(context.Background(), tc.clientID)
