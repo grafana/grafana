@@ -5,6 +5,7 @@ import { CellProps } from 'react-table';
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Link, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
+import { Span, TextModifier } from '@grafana/ui/src/unstable';
 
 import { DashboardsTreeItem } from '../types';
 
@@ -45,13 +46,15 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
         <span className={styles.folderButtonSpacer} />
       )}
 
-      {item.url ? (
-        <Link href={item.url} className={styles.link}>
-          {item.title}
-        </Link>
-      ) : (
-        item.title
-      )}
+      <Span variant="body" truncate>
+        {item.url ? (
+          <Link href={item.url} className={styles.link}>
+            {item.title}
+          </Link>
+        ) : (
+          item.title
+        )}
+      </Span>
     </>
   );
 }
