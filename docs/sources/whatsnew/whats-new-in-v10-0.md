@@ -130,6 +130,8 @@ _Generally available in all editions of Grafana._
 
 We have implemented support for adding time regions to the time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday-Friday to display work weeks right alongside your data. Time regions are a useful way to highlight specific parts of a day like night, work hours, or whatever you define for each day. They allow the viewer to quickly orient themselves in parts of the day and/or ignore highlighted parts of the time series.
 
+To learn more, check out time region [documentation]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#add-time-region" >}}).
+
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
 ### Annotation filtering
@@ -139,6 +141,8 @@ _Generally available in all editions of Grafana._
 <!-- Nathan Marrs -->
 
 We’ve improved the way you can configure annotations by adding the possibility to apply annotations to all panels, selected panels or to select the panels by exclusion.
+
+To learn more, check out annotation filtering [documentation]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#filter-by-panel" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
