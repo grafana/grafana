@@ -10,9 +10,9 @@ import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
 import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
-import { MetaInfoText } from './MetaInfoText';
-import RawListContainer from './PrometheusListView/RawListContainer';
-import { getFieldLinksForExplore } from './utils/links';
+import { MetaInfoText } from '../MetaInfoText';
+import RawListContainer from '../PrometheusListView/RawListContainer';
+import { getFieldLinksForExplore } from '../utils/links';
 
 interface RawPrometheusContainerProps {
   ariaLabel?: string;

@@ -50,7 +50,7 @@ import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
 import { QueryRows } from './QueryRows';
-import RawPrometheusContainer from './RawPrometheusContainer';
+import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
