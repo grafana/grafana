@@ -51,11 +51,11 @@ export const ExamplesSizes = () => {
   return (
     <div
       className={css`
-        button {
-          margin-right: 8px;
-          margin-left: 8px;
-          margin-bottom: 20px;
-        }
+        //button {
+        //  margin-right: 8px;
+        //  margin-left: 8px;
+        //  margin-bottom: 20px;
+        //}
       `}
     >
       <HorizontalGroup spacing="md">
@@ -72,7 +72,14 @@ export const ExamplesSizes = () => {
                     key={icon}
                   >
                     {sizes.map((size) => (
-                      <span key={icon + size}>
+                      <span
+                        key={icon + size}
+                        className={css`
+                          margin-right: 4px;
+                          margin-left: 4px;
+                          margin-bottom: 20px;
+                        `}
+                      >
                         <IconButton name={icon} size={size} variant={variant} />
                       </span>
                     ))}
@@ -92,7 +99,14 @@ export const ExamplesSizes = () => {
               key={icon}
             >
               {sizes.map((size) => (
-                <span key={icon + size}>
+                <span
+                  key={icon + size}
+                  className={css`
+                    margin-right: 4px;
+                    margin-left: 4px;
+                    margin-bottom: 20px;
+                  `}
+                >
                   <IconButton name={icon} size={size} disabled />
                 </span>
               ))}
@@ -123,10 +137,6 @@ const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
       className={css`
         padding: 30px;
         background: ${theme.colors.background[background]};
-        button {
-          margin-right: 8px;
-          margin-left: 8px;
-        }
       `}
     >
       <VerticalGroup spacing="md">
@@ -137,9 +147,27 @@ const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
           `}
         >
           {variants.map((variant) => {
-            return <IconButton name="times" size="xl" variant={variant} key={variant} />;
+            return (
+              <div
+                key={variant}
+                className={css`
+                  margin-right: 4px;
+                  margin-left: 4px;
+                `}
+              >
+                {' '}
+                <IconButton name="times" size="xl" variant={variant} key={variant} />{' '}
+              </div>
+            );
           })}
-          <IconButton name="times" size="xl" disabled />
+          <div
+            className={css`
+              margin-right: 4px;
+              margin-left: 4px;
+            `}
+          >
+            <IconButton name="times" size="xl" disabled />
+          </div>
         </div>
       </VerticalGroup>
     </div>
