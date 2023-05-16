@@ -141,7 +141,6 @@ func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer strin
 	if err != nil {
 		return nil, err
 	}
-	// TODO use login instead when it's implemented
 	userID, err := utils.ParseUserIDFromSubject(subject)
 	if err != nil {
 		return nil, err

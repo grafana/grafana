@@ -63,14 +63,12 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service) (*OAuth2ServiceImpl, error) {
 
-	// TODO: Make this configurable
 	config := &fosite.Config{
 		AccessTokenLifespan: cfg.OAuth2ServerAccessTokenLifespan,
-		// GlobalSecret:        []byte("some-cool-secret-that-is-32bytes"),
-		TokenURL:          fmt.Sprintf("%voauth2/token", cfg.AppURL),
-		AccessTokenIssuer: cfg.AppURL,
-		IDTokenIssuer:     cfg.AppURL,
-		ScopeStrategy:     fosite.WildcardScopeStrategy,
+		TokenURL:            fmt.Sprintf("%voauth2/token", cfg.AppURL),
+		AccessTokenIssuer:   cfg.AppURL,
+		IDTokenIssuer:       cfg.AppURL,
+		ScopeStrategy:       fosite.WildcardScopeStrategy,
 	}
 
 	privateKey := keySvc.GetServerPrivateKey()
@@ -163,7 +161,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, i
 	}
 
 	// If the app has impersonate permissions, it can use the JWT bearer grant type
-	// TODO should we also check if the app has users:impersonate permissions?
+	// TODO MVP: with the registration form change, check the enabled boolean
 	if len(impersonatePermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))
 	}
@@ -227,7 +225,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 		}, nil
 	}
 
-	// TODO allow specifying a URL to get the public key
+	// TODO MVP allow specifying a URL to get the public key
 	// if registration.Key.URL != "" {
 	// 	return &oauthserver.KeyResult{
 	// 		URL: registration.Key.URL,
@@ -285,7 +283,7 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 
 	// remove the service account
 	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
-	// TODO check that it's also deleting the role and its assignment
+	// TODO MVP delete the role and its assignment as well
 	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
 		return oauthserver.NoServiceAccountID, err
 	}
@@ -295,7 +293,8 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 // createServiceAccount creates a service account with the given permissions
 // and returns the ID of the service account
 // When no permission is given, the account isn't created and NoServiceAccountID is returned
-// TODO we should use a single transaction for the whole service account creation process
+// This first design does not use a single transaction for the whole service account creation process => database consistency is not guaranteed.
+// Consider changing this in the future.
 func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
 	if len(permissions) == 0 {
 		// No permissions, no service account
@@ -312,8 +311,6 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 
 	slug := slugify.Slugify(extSvcName)
 
-	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
-	// FIXME currently using orgID 1
 	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
 	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
 		Name:       slug,
@@ -338,7 +335,9 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	return sa.Id, nil
 }
 
-// TODO it would be great to create the service account in the same DB session as the client
+// SaveExternalService creates or updates an external service in the database, it ensures that the associated
+// service account has the correct permissions
+// Database consistency is not guaranteed, consider changing this in the future.
 func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
@@ -431,7 +430,6 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		return nil, err
 	}
 
-	// TODO Handle case where the external service does not have a service account
 	// Retrieve self permissions and generate a signed in user
 	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
 	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
@@ -454,9 +452,6 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		return nil, err
 	}
 	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
-
-	// TODO: Retrieve org memberships
-	app.OrgIDs = []int64{oauthserver.TmpOrgID}
 
 	s.cache.Set(id, *app, cacheExpirationTime)
 

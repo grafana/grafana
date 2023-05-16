@@ -483,7 +483,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		Role:       "Viewer",
 	}
 
-	assertion := genAssertion(t, client1Key, client1.ClientID, "user:id:56", "test/oauth2/token")
+	assertion := genAssertion(t, client1Key, client1.ClientID, "user:id:56", "test/oauth2/token", "https://oauth.test/")
 
 	user56 := &user.User{
 		ID:      56,
@@ -523,7 +523,8 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
 				"scope":         {"profile email groups entitlements"},
-				"audience":      {"http://localhost:3000"},
+				// TODO MVP change the audience with the cfg one.
+				"audience": {"http://localhost:3000/"},
 			},
 			wantCode:  http.StatusOK,
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
@@ -531,7 +532,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				Claims: jwt.Claims{
 					Subject:  "user:id:2", // From client1.ServiceAccountID
 					Issuer:   "test",      // From env.S.Config.Issuer
-					Audience: jwt.Audience{"http://localhost:3000"},
+					Audience: jwt.Audience{"http://localhost:3000/", "https://oauth.test/"},
 				},
 				ClientID: client1.ClientID,
 				Name:     "testapp",
@@ -562,17 +563,14 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"client_secret": {client1Secret},
 				"assertion":     {assertion},
 				"scope":         {"profile email groups entitlements"},
-				"audience":      {"http://localhost:3000"},
 			},
 			wantCode:  http.StatusOK,
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
-					Subject: fmt.Sprintf("user:id:%v", user56.ID), // To match the assertion
-					Issuer:  "test",                               // From env.S.Config.Issuer
-
-					// TODO: This is not correct, the audience should be the target of the token!
-					Audience: jwt.Audience{"test/oauth2/token"},
+					Subject:  fmt.Sprintf("user:id:%v", user56.ID), // To match the assertion
+					Issuer:   "test",                               // From env.S.Config.Issuer
+					Audience: jwt.Audience{"test/oauth2/token", "https://oauth.test/"},
 				},
 				ClientID: client1.ClientID,
 				Email:    user56.Email,
@@ -631,7 +629,6 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			var claims Claims
 			require.NoError(t, parsedToken.Claims(pk.Public(), &claims))
 			// Check times and remove them
-			// TODO: Should we validate times?
 			require.Positive(t, claims.IssuedAt.Time())
 			require.Positive(t, claims.Expiry.Time())
 			claims.IssuedAt = jwt.NewNumericDate(time.Time{})
@@ -645,13 +642,13 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 	}
 }
 
-func genAssertion(t *testing.T, signKey *rsa.PrivateKey, clientID, sub, audience string) string {
+func genAssertion(t *testing.T, signKey *rsa.PrivateKey, clientID, sub string, audience ...string) string {
 	key := jose.SigningKey{Algorithm: jose.RS256, Key: signKey}
 	assertion := jwt.Claims{
 		ID:       uuid.New().String(),
 		Issuer:   clientID,
 		Subject:  sub,
-		Audience: jwt.Audience{audience},
+		Audience: audience,
 		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		IssuedAt: jwt.NewNumericDate(time.Now()),
 	}

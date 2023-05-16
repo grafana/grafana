@@ -57,6 +57,9 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 		return
 	}
 
+	// All tokens we generate in this service should target Grafana's API.
+	accessRequest.GrantAudience(s.cfg.AppURL)
+
 	// Next we create a response for the access request. Again, we iterate through the TokenEndpointHandlers
 	// and aggregate the result in response.
 	response, err := s.oauthProvider.NewAccessResponse(ctx, accessRequest)
@@ -109,6 +112,18 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 			DescriptionField: "Could not find the requested subject.",
 			ErrorField:       "not_found",
 			CodeField:        http.StatusBadRequest,
+		}
+	}
+
+	// Check audiences list only contains the AppURL and the token endpoint
+	for _, aud := range accessRequest.GetRequestedAudience() {
+		if aud != fmt.Sprintf("%voauth2/token", s.cfg.AppURL) && aud != s.cfg.AppURL {
+			return &fosite.RFC6749Error{
+				DescriptionField: "Client is not allowed to target this Audience.",
+				HintField:        "The audience must be the AppURL or the token endpoint.",
+				ErrorField:       "invalid_request",
+				CodeField:        http.StatusForbidden,
+			}
 		}
 	}
 

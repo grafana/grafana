@@ -49,14 +49,13 @@ type ClientDTO struct {
 }
 
 type Client struct {
-	ID                  int64   `xorm:"id pk autoincr"`
-	OrgIDs              []int64 `xorm:"org_id"`
-	ExternalServiceName string  `xorm:"app_name"`
-	ClientID            string  `xorm:"client_id"`
-	Secret              string  `xorm:"secret"`
-	GrantTypes          string  `xorm:"grant_types"` // CSV value
-	PublicPem           []byte  `xorm:"public_pem"`
-	ServiceAccountID    int64   `xorm:"service_account_id"`
+	ID                  int64  `xorm:"id pk autoincr"`
+	ExternalServiceName string `xorm:"app_name"`
+	ClientID            string `xorm:"client_id"`
+	Secret              string `xorm:"secret"`
+	GrantTypes          string `xorm:"grant_types"` // CSV value
+	PublicPem           []byte `xorm:"public_pem"`
+	ServiceAccountID    int64  `xorm:"service_account_id"`
 	// SelfPermissions are the registered service account permissions (does not include managed permissions)
 	SelfPermissions []ac.Permission `xorm:"self_permissions"`
 	// ImpersonatePermissions is the restriction set of permissions while impersonating
@@ -118,27 +117,13 @@ func (c *Client) GetOpenIDScope() fosite.Arguments {
 	return fosite.Arguments([]string{"openid"})
 }
 
-func (c *Client) GetOrgScopes() fosite.Arguments {
-	ret := []string{}
-	for _, orgID := range c.OrgIDs {
-		if orgID == ac.GlobalOrgID {
-			ret = append(ret, allOrgsOAuthScope)
-		} else {
-			ret = append(ret, fmt.Sprintf("org.%v", orgID))
-		}
-	}
-	return fosite.Arguments(ret)
-}
-
-// GetScopes returns the scopes this client is allowed to request on its behalf.
+// GetScopes returns the scopes this client is allowed to request on its own behalf.
 func (c *Client) GetScopes() fosite.Arguments {
 	if c.Scopes != nil {
 		return c.Scopes
 	}
 
-	ret := c.GetOrgScopes()
-	ret = append(ret, "profile", "email", "groups", "entitlements")
-
+	ret := []string{"profile", "email", "groups", "entitlements"}
 	if c.SignedInUser != nil && c.SignedInUser.Permissions != nil {
 		perms := c.SignedInUser.Permissions[TmpOrgID]
 		for action := range perms {
@@ -163,9 +148,7 @@ func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessCon
 		return c.ImpersonateScopes
 	}
 
-	// Org Scope
-	ret := c.GetOrgScopes()
-
+	ret := []string{}
 	if c.ImpersonatePermissions != nil {
 		perms := c.ImpersonatePermissions
 		for i := range perms {

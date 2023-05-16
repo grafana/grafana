@@ -57,6 +57,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 
 	cfg := setting.NewCfg()
+	cfg.AppURL = "https://oauth.test/"
 
 	env := &TestEnv{
 		Cfg:         cfg,
@@ -180,7 +181,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
 				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				// TODO also need to test the role has been deleted
+				// TODO MVP also need to test the role has been deleted
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
 				ExternalServiceName: "my-ext-service",
