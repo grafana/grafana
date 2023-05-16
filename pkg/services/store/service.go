@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/entity/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -92,7 +93,7 @@ type standardStorageService struct {
 }
 
 func ProvideService(
-	sql db.DB,
+	sql *sqlstore.SQLStore, // also db.DB
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
@@ -101,6 +102,10 @@ func ProvideService(
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
+	}
+
+	if err := migrations.CheckEntityStoreMigrations(sql, features); err != nil {
+		return nil, err
 	}
 
 	// always exists

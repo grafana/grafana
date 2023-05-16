@@ -136,7 +136,7 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrator := migrator.NewMigrator("", ss.engine, ss.Cfg)
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
@@ -477,6 +477,10 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
 	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
+}
+
+func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
+	return ss.dbCfg.MigrationLockAttemptTimeout
 }
 
 func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {

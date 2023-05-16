@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func getLatinPathColumn(name string) *migrator.Column {
@@ -18,7 +17,7 @@ func getLatinPathColumn(name string) *migrator.Column {
 	}
 }
 
-func addEntityStoreMigrations(mg *migrator.Migrator) {
+func initEntityTables(mg *migrator.Migrator) {
 	grnLength := 256 // len(tenant)~8 + len(kind)!16 + len(kind)~128 = 256
 	tables := []migrator.Table{}
 	tables = append(tables, migrator.Table{
@@ -181,14 +180,6 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
 		},
 	})
-
-	// !!! This should not run in production!
-	// The object store SQL schema is still in active development and this
-	// will only be called when the feature toggle is enabled
-	// this check should not be necessary, but is added as an extra check
-	if setting.Env == setting.Prod {
-		return
-	}
 
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
