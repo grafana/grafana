@@ -113,7 +113,11 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         intervalMs,
         maxDataPoints,
         queryCachingTTL,
-        timeRange: { from: fromRange.valueOf().toString(), to: toRange.valueOf().toString() },
+        timeRange: {
+          from: fromRange.valueOf().toString(),
+          to: toRange.valueOf().toString(),
+          location: this.getBrowserLocation(),
+        },
       };
 
       return getBackendSrv()
@@ -154,5 +158,25 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  // Try to get the browser location otherwise return blank
+  getBrowserLocation(): string {
+    // Older browser does not the internationalization API
+    if (!window.Intl) {
+      return '';
+    }
+
+    const dateFormat = window.Intl.DateTimeFormat();
+    if (!dateFormat.resolvedOptions) {
+      return '';
+    }
+
+    const options = dateFormat.resolvedOptions();
+    if (!options.timeZone) {
+      return '';
+    }
+
+    return options.timeZone;
   }
 }
