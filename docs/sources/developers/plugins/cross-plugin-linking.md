@@ -56,7 +56,7 @@ function AppExtensionPointExample() {
 }
 ```
 
-The above example shows a component that renders `<LinkButton />` components for all link extensions that other plugins registered for the `plugin/another-app-plugin/menu` extension point ID. The context is passed as the second parameter to `getPluginExtensions`, which uses `Object.freeze` to make the context immutable before passing it to other plugins.
+The preceding example shows a component that renders `<LinkButton />` components for all link extensions that other plugins registered for the `plugin/another-app-plugin/menu` extension point ID. The context is passed as the second parameter to `getPluginExtensions`, which uses `Object.freeze` to make the context immutable before passing it to other plugins.
 
 ## Insert links into another plugin
 
