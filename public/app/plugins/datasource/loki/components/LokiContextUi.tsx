@@ -33,6 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       flex: 1;
       gap: ${theme.spacing(0.5)};
+      position: relative;
     `,
     textWrapper: css`
       display: flex;
@@ -50,11 +51,11 @@ function getStyles(theme: GrafanaTheme2) {
         margin: ${theme.spacing(2)} 0;
       }
     `,
-    query: css`
+    rawQueryContainer: css`
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
-      max-width: calc(100% - 50px);
+      width: calc(100% - 20px);
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -66,10 +67,11 @@ function getStyles(theme: GrafanaTheme2) {
     queryDescription: css`
       margin-left: ${theme.spacing(0.5)};
     `,
-    button: css`
+    iconButton: css`
       position: absolute;
       top: ${theme.spacing(1)};
       right: ${theme.spacing(1)};
+      z-index: ${theme.zIndex.navbarFixed};
     `,
   };
 }
@@ -179,6 +181,31 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
+      <Button
+        title="Revert to initial log context query."
+        icon="history-alt"
+        variant="secondary"
+        className={cx(
+          styles.iconButton,
+          css`
+            visibility: ${isInitialQuery ? 'hidden' : 'visible'};
+          `
+        )}
+        tooltip="Revert to initial log context query."
+        onClick={(e) => {
+          e.stopPropagation();
+          setContextFilters((contextFilters) => {
+            return contextFilters.map((contextFilter) => {
+              return {
+                ...contextFilter,
+                // For revert to initial query we need to enable all labels and disable all parsed labels
+                enabled: !contextFilter.fromParser,
+              };
+            });
+          });
+        }}
+      />
+
       <Collapse
         collapsible={true}
         isOpen={isOpen}
@@ -191,46 +218,25 @@ export function LokiContextUi(props: LokiContextUiProps) {
           });
         }}
         label={
-          <div className={styles.query}>
+          <div className={styles.rawQueryContainer}>
             {initialized ? (
-              <RawQuery
-                lang={{ grammar: lokiGrammar, name: 'loki' }}
-                query={logContextProvider.processContextFiltersToExpr(
-                  row,
-                  contextFilters.filter(({ enabled }) => enabled),
-                  origQuery
-                )}
-                className={styles.rawQuery}
-              />
+              <>
+                <RawQuery
+                  lang={{ grammar: lokiGrammar, name: 'loki' }}
+                  query={logContextProvider.processContextFiltersToExpr(
+                    row,
+                    contextFilters.filter(({ enabled }) => enabled),
+                    origQuery
+                  )}
+                  className={styles.rawQuery}
+                />
+                <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
+                  <Icon name="info-circle" size="sm" className={styles.queryDescription} />
+                </Tooltip>
+              </>
             ) : (
               <Spinner />
             )}
-            <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
-              <Icon name="info-circle" size="sm" className={styles.queryDescription} />
-            </Tooltip>
-            <Button
-              icon="history-alt"
-              variant="secondary"
-              className={cx(
-                styles.button,
-                css`
-                  visibility: ${isInitialQuery ? 'hidden' : 'visible'};
-                `
-              )}
-              tooltip="Revert to initial log context query."
-              onClick={(e) => {
-                e.stopPropagation();
-                setContextFilters((contextFilters) => {
-                  return contextFilters.map((contextFilter) => {
-                    return {
-                      ...contextFilter,
-                      // For revert to initial query we need to enable all labels and disable all parsed labels
-                      enabled: !contextFilter.fromParser,
-                    };
-                  });
-                });
-              }}
-            />
           </div>
         }
       >
