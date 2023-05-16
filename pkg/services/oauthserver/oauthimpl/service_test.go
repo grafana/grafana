@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -219,10 +218,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
-					mock.MatchedBy(func(cmd accesscontrol.SaveExternalServiceRoleCommand) bool {
+					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == sa1.Id &&
 							len(cmd.Permissions) == 1 &&
-							cmd.OrgID == int64(accesscontrol.GlobalOrgID) &&
+							cmd.OrgID == int64(ac.GlobalOrgID) &&
 							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"} &&
 							cmd.ExternalServiceID == client1().ExternalServiceName
 					}))
