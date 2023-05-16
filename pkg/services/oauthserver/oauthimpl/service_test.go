@@ -48,16 +48,16 @@ var pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
 
-	config := &fosite.Config{
-		AccessTokenLifespan: time.Hour,
-		TokenURL:            "test/oauth2/token",
-		AccessTokenIssuer:   "test",
-		IDTokenIssuer:       "test",
-		ScopeStrategy:       fosite.WildcardScopeStrategy,
-	}
-
 	cfg := setting.NewCfg()
 	cfg.AppURL = "https://oauth.test/"
+
+	config := &fosite.Config{
+		AccessTokenLifespan: time.Hour,
+		TokenURL:            fmt.Sprintf("%voauth2/token", cfg.AppURL),
+		AccessTokenIssuer:   cfg.AppURL,
+		IDTokenIssuer:       cfg.AppURL,
+		ScopeStrategy:       fosite.WildcardScopeStrategy,
+	}
 
 	env := &TestEnv{
 		Cfg:         cfg,

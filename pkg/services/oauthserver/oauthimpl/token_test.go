@@ -484,8 +484,6 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		Role:       "Viewer",
 	}
 
-	assertion := genAssertion(t, client1Key, client1.ClientID, "user:id:56", "test/oauth2/token", "https://oauth.test/")
-
 	user56 := &user.User{
 		ID:      56,
 		Email:   "user56@example.org",
@@ -530,8 +528,8 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
-					Subject:  "user:id:2", // From client1.ServiceAccountID
-					Issuer:   "test",      // From env.S.Config.Issuer
+					Subject:  "user:id:2",           // From client1.ServiceAccountID
+					Issuer:   "https://oauth.test/", // From env.S.Config.Issuer
 					Audience: jwt.Audience{"https://oauth.test/"},
 				},
 				ClientID: client1.ClientID,
@@ -561,16 +559,18 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
-				"assertion":     {assertion},
-				"scope":         {"profile email groups entitlements"},
+				"assertion": {
+					genAssertion(t, client1Key, client1.ClientID, "user:id:56", "https://oauth.test/oauth2/token", "https://oauth.test/"),
+				},
+				"scope": {"profile email groups entitlements"},
 			},
 			wantCode:  http.StatusOK,
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
 					Subject:  fmt.Sprintf("user:id:%v", user56.ID), // To match the assertion
-					Issuer:   "test",                               // From env.S.Config.Issuer
-					Audience: jwt.Audience{"test/oauth2/token", "https://oauth.test/"},
+					Issuer:   "https://oauth.test/",                // From env.S.Config.Issuer
+					Audience: jwt.Audience{"https://oauth.test/oauth2/token", "https://oauth.test/"},
 				},
 				ClientID: client1.ClientID,
 				Email:    user56.Email,
@@ -584,6 +584,32 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 					"users:read":      {"global.users:id:56"},
 				},
 			},
+		},
+		{
+			name: "should deny jwt-bearer grant with wrong audience",
+			initEnv: func(env *TestEnv) {
+				// To retrieve the Client, its publicKey and its permissions
+				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
+				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
+				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
+				// To retrieve the user to impersonate, its permissions and its teams
+				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{user56.ID: user56Permissions}
+				env.AcStore.ExpectedUsersRoles = map[int64][]string{user56.ID: {"Viewer"}}
+				env.TeamService.ExpectedTeamsByUser = user56Teams
+				env.UserService.ExpectedUser = user56
+			},
+			urlValues: url.Values{
+				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
+				"client_id":     {client1.ClientID},
+				"client_secret": {client1Secret},
+				"assertion": {
+					genAssertion(t, client1Key, client1.ClientID, "user:id:56", "https://oauth.test/oauth2/token", "invalid_audience"),
+				},
+				"scope": {"profile email groups entitlements"},
+			},
+			wantCode:  http.StatusForbidden,
+			wantScope: []string{"profile", "email", "groups", "entitlements"},
 		},
 	}
 	for _, tt := range tests {

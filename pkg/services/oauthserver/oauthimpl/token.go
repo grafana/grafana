@@ -116,7 +116,7 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 	}
 
 	// Check audiences list only contains the AppURL and the token endpoint
-	for _, aud := range accessRequest.GetRequestedAudience() {
+	for _, aud := range accessRequest.GetGrantedAudience() {
 		if aud != fmt.Sprintf("%voauth2/token", s.cfg.AppURL) && aud != s.cfg.AppURL {
 			return &fosite.RFC6749Error{
 				DescriptionField: "Client is not allowed to target this Audience.",
