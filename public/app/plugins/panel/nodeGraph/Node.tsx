@@ -76,24 +76,11 @@ export const Node = memo(function Node(props: {
   }
 
   return (
-    <g
-      data-node-id={node.id}
-      className={styles.mainGroup}
-      onMouseEnter={() => {
-        onMouseEnter(node.id);
-      }}
-      onMouseLeave={() => {
-        onMouseLeave(node.id);
-      }}
-      onClick={(event) => {
-        onClick(event, node);
-      }}
-      aria-label={`Node: ${node.title}`}
-    >
+    <g data-node-id={node.id} className={styles.mainGroup} aria-label={`Node: ${node.title}`}>
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       {isHovered && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ColorCircle node={node} />
-      <g className={styles.text}>
+      <g className={styles.text} style={{ pointerEvents: 'none' }}>
         <NodeContents node={node} hovering={hovering} />
         <foreignObject
           x={node.x - (isHovered ? 100 : 50)}
@@ -108,6 +95,27 @@ export const Node = memo(function Node(props: {
           </div>
         </foreignObject>
       </g>
+      <rect
+        data-testid={`node-click-rect-${node.id}`}
+        onMouseEnter={() => {
+          onMouseEnter(node.id);
+        }}
+        onMouseLeave={() => {
+          onMouseLeave(node.id);
+        }}
+        onClick={(event) => {
+          onClick(event, node);
+        }}
+        style={{
+          fill: 'none',
+          stroke: 'none',
+          pointerEvents: 'fill',
+        }}
+        x={node.x - nodeR - 5}
+        y={node.y - nodeR - 5}
+        width={nodeR * 2 + 10}
+        height={nodeR * 2 + 50}
+      />
     </g>
   );
 });
