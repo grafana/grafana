@@ -120,7 +120,7 @@ Concepts like data sources and dashboards panels are hard to grasp and it’s a 
 
 With this flow, selecting a data source has been greatly simplified, providing a clear overview of available data sources and allowing you to quickly connect to a new one when needed. You can also quickly upload a CSV file.
 
-{{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10.mp4" max-width="750px" caption="Datasource picker flow" >}}
+{{< video-embed src="/media/docs/grafana/screen-recording-ds-picker-whats-new-10-final.mp4" max-width="750px" caption="Datasource picker flow" >}}
 
 ### Time series time region support
 
