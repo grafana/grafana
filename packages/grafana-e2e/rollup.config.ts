@@ -9,7 +9,8 @@ const pkg = require('./package.json');
 export default [
   {
     input: 'src/index.ts',
-    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild({ target: 'node16' })],
+    // We need to target es2015 because cypress complains that it needs a loader for it.
+    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild({ target: 'es2015' })],
     output: [
       {
         format: 'cjs',

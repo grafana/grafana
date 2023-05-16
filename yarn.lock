@@ -3089,7 +3089,6 @@ __metadata:
     "@cypress/webpack-preprocessor": 5.17.0
     "@grafana/e2e-selectors": 10.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-node-resolve": 15.0.1
     "@types/chrome-remote-interface": 0.31.9
     "@types/lodash": 4.14.191
@@ -5004,15 +5003,6 @@ __metadata:
   peerDependencies:
     react: ">=16"
   checksum: f45fe779556e6cd9a787f711274480e0638b63c460f192ebdcd77cc07ffa61e23c98cb46dd46e577093e1cb4997a232a848d1fb0ba850ae204422cf603add524
-  languageName: node
-  linkType: hard
-
-"@mochajs/json-file-reporter@npm:^1.2.0":
-  version: 1.3.0
-  resolution: "@mochajs/json-file-reporter@npm:1.3.0"
-  peerDependencies:
-    mocha: 6.x || 7.x || 8.x
-  checksum: b916b4ba048b2935026e61c09a84043f2f345c8f245a8505eb3e645fe300969fa9262fed6fc1391b25f1ea4e2120e5bfae35b33b49038d0306a44b86ef9675a3
   languageName: node
   linkType: hard
 

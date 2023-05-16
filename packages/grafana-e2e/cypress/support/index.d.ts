@@ -1,5 +1,10 @@
 /// <reference types="cypress" />
 
+interface CompareScreenshotsConfig {
+  name: string;
+  threshold?: number;
+}
+
 declare namespace Cypress {
   interface Chainable {
     compareScreenshots(config: CompareScreenshotsConfig | string): Chainable;

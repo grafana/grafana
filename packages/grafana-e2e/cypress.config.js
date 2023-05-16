@@ -1,14 +1,13 @@
+const { defineConfig } = require('cypress');
 const fs = require('fs');
 const path = require('path');
 
 const benchmarkPlugin = require('./cypress/plugins/benchmark/index');
 const compareScreenshots = require('./cypress/plugins/compareScreenshots');
-// Used by plugin developers.
-const extendConfig = require('./cypress/plugins/extendConfig');
 const readProvisions = require('./cypress/plugins/readProvisions');
 const typescriptPreprocessor = require('./cypress/plugins/typescriptPreprocessor');
 
-module.exports = {
+module.exports = defineConfig({
   projectId: 'zb7k1c',
   videoCompression: 20,
   viewportWidth: 1920,
@@ -28,12 +27,15 @@ module.exports = {
         benchmarkPlugin.initialize(on, config);
       }
 
-      on('task', { compareScreenshots, readProvisions });
+      on('task', {
+        compareScreenshots,
+        readProvisions: (filePaths) => readProvisions({ CWD: process.cwd(), filePaths }),
+      });
 
       on('task', {
         getJSONFilesFromDir: async (relativePath) => {
           // CWD is set for plugins in the cli but not for the main grafana repo: https://github.com/grafana/grafana/blob/main/packages/grafana-e2e/cli.js#L12
-          const projectPath = config.env.CWD || config.parentTestsFolder || process.cwd();
+          const projectPath = config.env.CWD || config.fileServerFolder || process.cwd();
           const directoryPath = path.join(projectPath, relativePath);
           const jsonFiles = fs.readdirSync(directoryPath);
           return jsonFiles
@@ -76,9 +78,6 @@ module.exports = {
         // IMPORTANT: return the updated browser launch options
         return launchOptions;
       });
-
-      const customConfig = extendConfig(config);
-      return customConfig;
     },
   },
-};
+});

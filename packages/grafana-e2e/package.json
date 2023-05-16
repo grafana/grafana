@@ -15,7 +15,14 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-e2e"
   },
-  "main": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./dist/index.js"
+    },
+    "./cypress.config.js": "./cypress.config.js",
+    "./cypress/support": "./cypress/support/e2e.js"
+  },
   "types": "src/index.ts",
   "bin": {
     "grafana-e2e": "bin/grafana-e2e.js"
@@ -65,7 +72,6 @@
     "@cypress/webpack-preprocessor": "5.17.0",
     "@grafana/e2e-selectors": "10.1.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",
-    "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "9.1.2",
     "blink-diff": "1.0.13",
     "bluebird": "3.7.1",

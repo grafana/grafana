@@ -2,7 +2,7 @@
 // >> /Users/hugo/go/src/github.com/grafana/grafana/node_modules/stringmap/stringmap.js:99
 // >>             throw new Error("StringMap expected string key");
 // require('cypress-failed-log');
-import './commands';
+require('./commands');
 
 Cypress.Screenshot.defaults({
   screenshotOnRunFailure: false,
