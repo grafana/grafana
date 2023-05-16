@@ -18,7 +18,7 @@ Here's how to clone and run Grafana locally:
    ln -s <plugin-path>/dist data/plugins/<plugin-name>
    ```
 
-3. Optional: If the step above doesn't work for you (for example, if you are running on Windows), then modify the default path in the Grafana configuration. Find the default path at `conf/custom.ini`) and point it to your plugin's directory:
+3. Optional: If the preceding step doesn't work for you (for example, if you are running on Windows), then modify the default path in the Grafana configuration. Find the default path at `conf/custom.ini`) and point it to your plugin's directory:
 
    ```ini
    [paths]
