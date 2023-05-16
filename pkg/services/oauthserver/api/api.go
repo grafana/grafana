@@ -25,17 +25,18 @@ func NewAPI(
 	}
 }
 
-// privateKey is used to sign JWT tokens. The default strategy uses RS256 (RSA Signature with SHA-256)
-
 func (a *api) RegisterAPIEndpoints() {
 	// authorize := ac.Middleware(a.ac)
 	a.router.Group("/oauth2", func(oauthRouter routing.RouteRegister) {
+		// oauthRouter.Get("/clients/", middleware.ReqGrafanaAdmin, a.getClients)
 		// oauthRouter.Get("/client/:id", middleware.ReqGrafanaAdmin, a.getClient)
+		// oauthRouter.Delete("/client/:id", middleware.ReqGrafanaAdmin, a.removeClient)
+
+		// TODO: protect register endpoint
 		oauthRouter.Post("/register", a.register) // Register'd be done by plugin install actually
-		// oauthRouter.Post("/unregister", a.unregister) // Unregister'd be done by plugin uninstall actually
 		oauthRouter.Post("/introspect", a.handleIntrospectionRequest)
 		oauthRouter.Post("/token", a.handleTokenRequest)
-	}) // TODO: add oauth feature check
+	})
 }
 
 func (a *api) register(c *contextmodel.ReqContext) response.Response {
