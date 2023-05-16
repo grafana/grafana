@@ -42,13 +42,13 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
-import { FlameGraphExploreContainer } from './FlameGraphExploreContainer';
+import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
 import LogsContainer from './Logs/LogsContainer';
 import { LogsSamplePanel } from './Logs/LogsSamplePanel';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { NodeGraphContainer } from './NodeGraphContainer';
+import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
 import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
