@@ -1,6 +1,6 @@
 import { FieldConfigSource, PanelModel } from '@grafana/data';
 
-import { TextMode, PanelOptions } from './panelcfg.gen';
+import { TextMode, Options } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 describe('textPanelMigrationHandler', () => {
@@ -38,7 +38,7 @@ describe('textPanelMigrationHandler', () => {
 
   describe('when invoked and previous version was not old Angular text panel', () => {
     it('then should just pass options through', () => {
-      const panel: PanelModel<PanelOptions> = {
+      const panel: PanelModel<Options> = {
         id: 1,
         type: 'text',
         fieldConfig: {} as unknown as FieldConfigSource,
@@ -64,7 +64,7 @@ describe('textPanelMigrationHandler', () => {
   describe('when invoked and previous version was using text mode', () => {
     it('then should switch to markdown', () => {
       const mode = 'text' as unknown as TextMode;
-      const panel: PanelModel<PanelOptions> = {
+      const panel: PanelModel<Options> = {
         id: 1,
         type: 'text',
         fieldConfig: {} as unknown as FieldConfigSource,

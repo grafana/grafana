@@ -17,6 +17,7 @@ import React from 'react';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 import { Trace } from '../types';
+import { formatDuration } from '../utils/date';
 
 import SpanTreeOffset from './SpanTreeOffset';
 import VirtualizedTraceView, { VirtualizedTraceViewProps } from './VirtualizedTraceView';
@@ -69,15 +70,8 @@ describe('<VirtualizedTraceViewImpl>', () => {
     expect(screen.getAllByText(trace.spans[0].operationName)).toBeTruthy();
     expect(screen.getAllByText(trace.spans[1].operationName)).toBeTruthy();
 
-    let durationSpan0 = trace.spans[0].duration;
-
-    if (trace.spans[0].duration >= 1_000_000) {
-      durationSpan0 = Math.floor(trace.spans[0].duration / 1000000);
-    } else if (trace.spans[0].duration >= 1000) {
-      durationSpan0 = Math.floor(trace.spans[0].duration / 1000);
-    }
-
-    expect(screen.getAllByText(durationSpan0, { exact: false })).toBeTruthy();
+    let durationSpan = formatDuration(trace.spans[0].duration);
+    expect(screen.getAllByText(durationSpan)).toBeTruthy();
   });
 
   it('renders without exploding', () => {

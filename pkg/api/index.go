@@ -1,6 +1,11 @@
 package api
 
 import (
+	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/login"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -92,7 +99,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.Email,
-			ExternalUserId:             c.SignedInUser.ExternalAuthID,
 			Name:                       c.Name,
 			OrgCount:                   c.OrgCount,
 			OrgId:                      c.OrgID,
@@ -108,10 +114,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
-			Analytics: dtos.AnalyticsSettings{
-				Identifier:         c.SignedInUser.Analytics.Identifier,
-				IntercomIdentifier: c.SignedInUser.Analytics.IntercomIdentifier,
-			},
+			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
@@ -165,6 +168,35 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	data.NavTree.Sort()
 
 	return &data, nil
+}
+
+func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser *user.SignedInUser) dtos.AnalyticsSettings {
+	identifier := signedInUser.Email + "@" + setting.AppUrl
+
+	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: signedInUser.UserID})
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		hs.log.Error("Failed to get auth info for analytics", "error", err)
+	}
+
+	if authInfo != nil && authInfo.AuthModule == login.GrafanaComAuthModule {
+		identifier = authInfo.AuthId
+	}
+
+	return dtos.AnalyticsSettings{
+		Identifier:         identifier,
+		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+	}
+}
+
+func hashUserIdentifier(identifier string, secret string) string {
+	if secret == "" {
+		return ""
+	}
+
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(identifier))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
