@@ -417,7 +417,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 }
 
 function updateStatePageNavFromProps(props: Props, state: State): State {
-  const { dashboard } = props;
+  const { dashboard, navIndex } = props;
 
   if (!dashboard) {
     return state;
@@ -439,13 +439,11 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
+  const folderNavModel = folderUid ? getNavModel(navIndex, `folder-dashboards-${folderUid}`).main : undefined;
   if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
     pageNav = {
       ...pageNav,
-      parentItem: {
-        text: folderTitle,
-        url: `/dashboards/f/${dashboard.meta.folderUid}`,
-      },
+      parentItem: folderNavModel,
     };
   }
 

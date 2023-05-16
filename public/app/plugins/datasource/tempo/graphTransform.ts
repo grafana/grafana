@@ -307,7 +307,6 @@ function convertToDataFrames(
   edgesMap: Record<string, EdgeObject>,
   range: TimeRange
 ): { nodes: DataFrame; edges: DataFrame } {
-  const rangeMs = range.to.valueOf() - range.from.valueOf();
   const [nodes, edges] = createServiceMapDataFrames();
   for (const nodeId of Object.keys(nodesMap)) {
     const node = nodesMap[nodeId];
@@ -317,7 +316,7 @@ function convertToDataFrames(
       // NaN will not be shown in the node graph. This happens for a root client node which did not process
       // any requests itself.
       [Fields.mainStat]: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN, // Average response time
-      [Fields.secondaryStat]: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
+      [Fields.secondaryStat]: node.total ? Math.round(node.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
       [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
       [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
     });
@@ -329,7 +328,7 @@ function convertToDataFrames(
       [Fields.source]: edge.source,
       [Fields.target]: edge.target,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
-      [Fields.secondaryStat]: edge.total ? Math.round((edge.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
+      [Fields.secondaryStat]: edge.total ? Math.round(edge.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
 
