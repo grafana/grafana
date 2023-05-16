@@ -49,15 +49,21 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     const styles = getStyles(theme, size, variant);
     const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
+    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <button ref={ref} aria-label={ariaLabel || tooltipString} {...restProps} className={cx(styles.button, className)}>
+      <button
+        ref={tooltip ? undefined : ref}
+        aria-label={ariaLabel || tooltipString}
+        {...restProps}
+        className={cx(styles.button, className)}
+      >
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );
 
     if (tooltip) {
       return (
-        <Tooltip content={tooltip} placement={tooltipPlacement}>
+        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
           {button}
         </Tooltip>
       );
