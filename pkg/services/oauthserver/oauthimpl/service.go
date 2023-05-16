@@ -173,7 +173,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, i
 
 func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
 	if keyOption == nil {
-		return nil, nil
+		return nil, fmt.Errorf("keyOption is nil")
 	}
 
 	var publicPem, privatePem string
@@ -235,13 +235,17 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 	// }
 
 	if keyOption.PublicPEM != "" {
-		_, err := oauthserver.ParsePublicKeyPem([]byte(keyOption.PublicPEM))
+		pemEncoded, err := base64.StdEncoding.DecodeString(keyOption.PublicPEM)
+		if err != nil {
+			s.logger.Error("cannot decode base64 encoded PEM string", "error", err)
+		}
+		_, err = oauthserver.ParsePublicKeyPem(pemEncoded)
 		if err != nil {
 			s.logger.Error("cannot parse PEM encoded string", "error", err)
 			return nil, err
 		}
 		return &oauthserver.KeyResult{
-			PublicPem: keyOption.PublicPEM,
+			PublicPem: string(pemEncoded),
 		}, nil
 	}
 

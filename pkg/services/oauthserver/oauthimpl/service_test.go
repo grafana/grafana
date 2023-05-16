@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/base64"
 	"fmt"
 	"testing"
 	"time"
@@ -402,4 +403,63 @@ func assertArrayInMap[K comparable, V string](t *testing.T, m1 map[K][]V, m2 map
 		require.Contains(t, m2, k)
 		require.ElementsMatch(t, v, m2[k])
 	}
+}
+
+func TestTestOAuth2ServiceImpl_handleKeyOptions(t *testing.T) {
+	testCases := []struct {
+		name           string
+		keyOption      *oauthserver.KeyOption
+		expectedResult *oauthserver.KeyResult
+		wantErr        bool
+	}{
+		{
+			name:    "should return error when the key option is nil",
+			wantErr: true,
+		},
+		{
+			name:      "should return error when the key option is empty",
+			keyOption: &oauthserver.KeyOption{},
+			wantErr:   true,
+		},
+		{
+			name: "should return successfully when PublicPEM is specified",
+			keyOption: &oauthserver.KeyOption{
+				PublicPEM: base64.StdEncoding.EncodeToString([]byte(`-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
+mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
+-----END PUBLIC KEY-----`)),
+			},
+			wantErr: false,
+			expectedResult: &oauthserver.KeyResult{
+				PublicPem: `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
+mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
+-----END PUBLIC KEY-----`,
+				Generated:  false,
+				PrivatePem: "",
+				URL:        "",
+			},
+		},
+	}
+	env := setupTestEnv(t)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := env.S.handleKeyOptions(context.Background(), tc.keyOption)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedResult, result)
+		})
+	}
+
+	t.Run("should generate key when generate key option is specified", func(t *testing.T) {
+		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
+
+		require.NoError(t, err)
+		require.NotNil(t, result.PrivatePem)
+		require.NotNil(t, result.PublicPem)
+		require.True(t, result.Generated)
+	})
 }

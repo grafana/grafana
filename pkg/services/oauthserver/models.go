@@ -43,6 +43,7 @@ type Store interface {
 
 type KeyOption struct {
 	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL (to a .jwks file) to fetch the key from
+	// PublicPEM contains the Base64 encoded public key in PEM format
 	PublicPEM string `json:"public_pem,omitempty"`
 	Generate  bool   `json:"generate,omitempty"`
 }
