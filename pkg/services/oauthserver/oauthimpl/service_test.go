@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -35,7 +36,7 @@ import (
 type TestEnv struct {
 	S           *OAuth2ServiceImpl
 	Cfg         *setting.Cfg
-	AcStore     *actest.FakeStore
+	AcStore     *actest.MockStore
 	OAuthStore  *oauthtest.MockStore
 	UserService *usertest.FakeUserService
 	TeamService *teamtest.FakeService
@@ -60,7 +61,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 
 	env := &TestEnv{
 		Cfg:         cfg,
-		AcStore:     &actest.FakeStore{},
+		AcStore:     &actest.MockStore{},
 		OAuthStore:  &oauthtest.MockStore{},
 		UserService: usertest.NewUserServiceFake(),
 		TeamService: teamtest.NewFakeService(),
@@ -152,6 +153,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
+				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
 				ExternalServiceName: "my-ext-service",
@@ -208,12 +210,22 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(client1(), nil)
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
-				// TODO should we also mock the acStore to check the role has been updated?
+				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
 				ExternalServiceName: "my-ext-service",
 				Key:                 &oauthserver.KeyOption{Generate: true},
 				Permissions:         []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
+					mock.MatchedBy(func(cmd accesscontrol.SaveExternalServiceRoleCommand) bool {
+						return cmd.ServiceAccountID == sa1.Id &&
+							len(cmd.Permissions) == 1 &&
+							cmd.OrgID == int64(accesscontrol.GlobalOrgID) &&
+							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"} &&
+							cmd.ExternalServiceID == client1().ExternalServiceName
+					}))
 			},
 		},
 		{
@@ -349,7 +361,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{}, nil)
-				env.AcStore.ExpectedErr = fmt.Errorf("some error")
+				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("some error"))
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
@@ -362,7 +374,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{Id: 1}, nil)
-				env.AcStore.ExpectedUserPermissions = []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}}
+				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return([]ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}}, nil)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)

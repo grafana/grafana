@@ -269,7 +269,8 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		{
 			name: "no entitlement without any permission in the impersonate set",
 			initEnv: func(env *TestEnv) {
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{}, nil)
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{56: {"Viewer"}}, nil)
 				env.UserService.ExpectedUser = user56
 			},
 			client:  client1,
@@ -283,10 +284,11 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			name: "no entitlement without permission intersection",
 			initEnv: func(env *TestEnv) {
 				env.UserService.ExpectedUser = user56
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					56: {"Viewer"}}, nil)
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
 					56: {{Action: "dashboards:read", Scope: "dashboards:uid:1"}},
-				}
+				}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},
@@ -301,13 +303,15 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			name: "entitlements contains only the intersection of permissions",
 			initEnv: func(env *TestEnv) {
 				env.UserService.ExpectedUser = user56
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					56: {"Viewer"}}, nil)
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
 					56: {
 						{Action: "dashboards:read", Scope: "dashboards:uid:1"},
 						{Action: "datasources:read", Scope: "datasources:uid:1"},
 					},
-				}
+				}, nil)
+
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "datasources:read", Scope: "datasources:*"},
@@ -324,13 +328,14 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			name: "entitlements have correctly translated users:self permissions",
 			initEnv: func(env *TestEnv) {
 				env.UserService.ExpectedUser = user56
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					56: {"Viewer"}}, nil)
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
 					56: {
 						{Action: "users:read", Scope: "global.users:id:*"},
 						{Action: "users.permissions:read", Scope: "users:id:*"},
 					},
-				}
+				}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "users:read", Scope: "global.users:self"},
@@ -350,12 +355,13 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			initEnv: func(env *TestEnv) {
 				env.UserService.ExpectedUser = user56
 				env.TeamService.ExpectedTeamsByUser = teams
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					56: {"Viewer"}}, nil)
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
 					56: {
 						{Action: "teams:read", Scope: "teams:*"},
 					},
-				}
+				}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "teams:read", Scope: "teams:self"},
@@ -373,13 +379,14 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			initEnv: func(env *TestEnv) {
 				env.UserService.ExpectedUser = user56
 				env.TeamService.ExpectedTeamsByUser = teams
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{56: {"Viewer"}}
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					56: {"Viewer"}}, nil)
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
 					56: {
 						{Action: "users:read", Scope: "global.users:id:*"},
 						{Action: "datasources:read", Scope: "datasources:uid:1"},
 					},
-				}
+				}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "users:read", Scope: "global.users:*"},
@@ -424,6 +431,8 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			for k, v := range tt.expectedClaims {
 				require.Equal(t, v, sessionData.JWTClaims.Extra[k])
 			}
+
+			env.AcStore.AssertExpectations(t)
 		})
 	}
 }
@@ -515,7 +524,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			initEnv: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
-				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
+				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
 			},
 			urlValues: url.Values{
 				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
@@ -548,10 +557,12 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
 				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
-				env.AcStore.ExpectedUserPermissions = client1.SelfPermissions
+				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
 				// To retrieve the user to impersonate, its permissions and its teams
-				env.AcStore.ExpectedUsersPermissions = map[int64][]ac.Permission{user56.ID: user56Permissions}
-				env.AcStore.ExpectedUsersRoles = map[int64][]string{user56.ID: {"Viewer"}}
+				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
+					user56.ID: user56Permissions}, nil)
+				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+					user56.ID: {"Viewer"}}, nil)
 				env.TeamService.ExpectedTeamsByUser = user56Teams
 				env.UserService.ExpectedUser = user56
 			},

@@ -57,6 +57,7 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 	return s
 }
 
+//go:generate  mockery --name store --structname MockStore --outpkg actest --filename store_mock.go --output ../actest/
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
 	SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
