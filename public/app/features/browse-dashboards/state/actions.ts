@@ -3,11 +3,16 @@ import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { createAsyncThunk, DashboardDTO } from 'app/types';
 
-import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
+import { listDashboards, listFolders } from '../api/services';
+
+interface FetchChildrenPayload {
+  parentUID: string | undefined;
+  pageSize: number;
+}
 
 export const fetchChildren = createAsyncThunk(
   'browseDashboards/fetchChildren',
-  async (parentUID: string | undefined, thunkAPI) => {
+  async ({ parentUID, pageSize }: FetchChildrenPayload, thunkAPI) => {
     // Need to handle the case where the parentUID is the root
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
@@ -23,21 +28,21 @@ export const fetchChildren = createAsyncThunk(
       // no previous data for this uid, so get folders first
       const page = 1;
       return {
-        children: await listFolders(uid, undefined, page),
+        children: await listFolders(uid, undefined, page, pageSize),
         page,
       };
     }
 
-    if (collection.lastFetched === 'folder' && collection.lastFetchedSize >= PAGE_SIZE) {
+    if (collection.lastFetched === 'folder' && collection.lastFetchedSize >= pageSize) {
       const page = collection.lastFetchedPage + 1;
       return {
-        children: await listFolders(uid, undefined, page),
+        children: await listFolders(uid, undefined, page, pageSize),
         page,
       };
     } else {
       const page = collection.lastFetched === 'folder' ? 1 : (collection.lastFetchedPage ?? 1) + 1;
       return {
-        children: await listDashboards(uid, page),
+        children: await listDashboards(uid, page, pageSize),
         page,
       };
     }

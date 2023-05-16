@@ -7,6 +7,7 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
 
+import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
@@ -33,7 +34,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
-  const rootItems = useSelector((wholeState) => wholeState.browseDashboards.rootItems);
   const childrenByParentUID = useChildrenByParentUIDState();
 
   const handleFolderClick = useCallback(
@@ -41,14 +41,14 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       dispatch(setFolderOpenState({ folderUID: clickedFolderUID, isOpen }));
 
       if (isOpen) {
-        dispatch(fetchChildren(clickedFolderUID));
+        dispatch(fetchChildren({ parentUID: clickedFolderUID, pageSize: PAGE_SIZE }));
       }
     },
     [dispatch]
   );
 
   useEffect(() => {
-    dispatch(fetchChildren(folderUID));
+    dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
   }, [handleFolderClick, dispatch, folderUID]);
 
   const handleItemSelectionChange = useCallback(
@@ -104,8 +104,10 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   const handleItemsRendered = useMemo(() => {
     function fn(props: ListOnItemsRenderedProps) {
+      const itemsRemaining = flatTree.length - 1 - props.overscanStopIndex;
+
       console.group(
-        'Visible range: %c%d%c - %c%d%c. Overscan range: %c%d%c - %c%d%c. flatTree last index %c%d%c',
+        'Visible range: %c%d%c - %c%d%c. Overscan range: %c%d%c - %c%d%c. flatTree last index %c%d%c. Remaining %d',
         'color: #3498db',
         props.visibleStartIndex,
         'color: unset',
@@ -120,63 +122,21 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
         'color: unset',
         'color: #3498db',
         flatTree.length - 1,
-        'color: unset'
+        'color: unset',
+        itemsRemaining
       );
 
-      // TODO: doesnt work if opening a folder at the top after we've scrolled a lot
-      // TODO: should not attempt to load additional children if a request is already in flight
-
-      // It's not really ideal that we're looping over the flatTree, (rather than the raw data)
-      // but i think its the easiest/only way to convert indexes from DashboardTree to something usable
-
-      let folderToLoad: DashboardViewItem | DashboardViewItemCollection | undefined;
-
-      for (let index = 0; index < props.overscanStopIndex; index++) {
-        const viewItem = flatTree[index];
-        const { isOpen, item } = viewItem;
-
-        if (item.kind !== 'folder' || !isOpen) {
-          continue;
-        }
-
-        const collection = childrenByParentUID[item.uid];
-        if (!collection) {
-          // should never happen
-          continue;
-        }
-
-        const isFullyLoaded = collection.lastFetched === 'dashboard' && collection.lastFetchedSize < 50;
-        if (isFullyLoaded) {
-          continue;
-        }
-
-        console.log(item, 'is first open folder to load');
-        folderToLoad = item;
-        break;
+      // TODO: Check if we've loaded all root items or not
+      if (itemsRemaining <= 5) {
+        console.log('Fetch more children from root', folderUID);
+        dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
       }
 
-      if (folderToLoad) {
-        console.log('load more children from', folderToLoad);
-        dispatch(fetchChildren(folderToLoad.uid));
-      } else {
-        console.log('see if we need to load more root items');
-
-        const rootCollection = folderUID ? childrenByParentUID[folderUID] : rootItems;
-        if (!rootCollection) {
-          console.groupEnd();
-          return;
-        }
-        const isFullyLoaded = rootCollection.lastFetched === 'dashboard' && rootCollection.lastFetchedSize < 50;
-        if (!isFullyLoaded) {
-          dispatch(fetchChildren(folderUID));
-        }
-
-        console.groupEnd();
-      }
+      console.groupEnd();
     }
 
-    return debounce(fn, 500, { leading: true, trailing: true });
-  }, [flatTree, dispatch, folderUID, rootItems, childrenByParentUID]);
+    return debounce(fn, 500, { leading: false, trailing: true });
+  }, [dispatch, flatTree.length, folderUID]);
 
   if (status === 'pending') {
     return <Spinner />;

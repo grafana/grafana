@@ -11,14 +11,16 @@ import { findItem } from './utils';
 type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
 
 export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState, action: FetchChildrenAction) {
-  const parentUID = action.meta.arg === GENERAL_FOLDER_UID ? undefined : action.meta.arg;
+  const { parentUID: parentUIDArg } = action.meta.arg;
+
+  const parentUID = parentUIDArg === GENERAL_FOLDER_UID ? undefined : parentUIDArg;
   const { page, children } = action.payload;
 
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
   const newCollection = {
     items: prevItems.concat(children),
-    lastFetched: children[0].kind as 'dashboard', // TODO don't cast this // TODO: this doesn't work if there's no children
+    lastFetched: children[0]?.kind as 'dashboard', // TODO don't cast this // TODO: this doesn't work if there's no children
     lastFetchedSize: children.length,
     lastFetchedPage: page,
   };

@@ -3,7 +3,10 @@ import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
-export const PAGE_SIZE = 50;
+export const ROOT_PAGE_SIZE = 50;
+export const PAGE_SIZE = 999;
+
+const requestHistory: Record<string, boolean> = {};
 
 export async function listFolders(
   parentUID?: string,
@@ -11,6 +14,12 @@ export async function listFolders(
   page = 1,
   pageSize = PAGE_SIZE
 ): Promise<DashboardViewItem[]> {
+  const historyKey = 'folder|' + JSON.stringify(parentUID || null) + '|' + page;
+  if (requestHistory[historyKey]) {
+    console.warn('Already requested ' + historyKey);
+  }
+  requestHistory[historyKey] = true;
+
   const backendSrv = getBackendSrv();
 
   const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
@@ -30,6 +39,12 @@ export async function listFolders(
 }
 
 export async function listDashboards(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<DashboardViewItem[]> {
+  const historyKey = 'dashboard|' + JSON.stringify(parentUID || null) + '|' + page;
+  if (requestHistory[historyKey]) {
+    console.warn('Already requested ' + historyKey);
+  }
+  requestHistory[historyKey] = true;
+
   const searcher = getGrafanaSearcher();
 
   const dashboardsResults = await searcher.search({
