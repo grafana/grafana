@@ -24,7 +24,7 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 - If there are no dashboard permissions and the dashboard is under a folder, then the rule is linked to this folder and inherits its permissions.
 - If there are no dashboard permissions and the dashboard is under the General folder, then the rule is linked to the `General Alerting` folder, and the rule inherits the default permissions.
 
-3. Execution of `NoData` and `Error` is migrated as is to the corresponding settings of unified alerting, expect two situations:
+3. `NoData` and `Error` settings are migrated as is to the corresponding settings in Grafana Alerting, except in two situations:
 
    3.1. Since there is no `Keep Last State` option for `No Data` in Grafana Alerting, this option becomes `NoData`. Option `Keep Last State` for `Error` is migrated to a new option `Error`. To match the behavior of the `Keep Last State`, in both cases, during the migration Grafana automatically creates a silence for each alert rule with a duration of 1 year.
 
