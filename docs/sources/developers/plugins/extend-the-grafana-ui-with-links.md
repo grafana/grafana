@@ -12,7 +12,7 @@ You can use the Plugin extensions API with your Grafana app plugins to add links
 Be sure your plugin meets the following requirements before proceeding: 
 
 - It must be an app plugin.
-- It must be [preloaded]({{< relref "./metadata" >}}) with metadata for your plugin.
+- It must be [preloaded with metadata]({{< relref "./metadata" >}}) for your plugin.
 - It must be installed and enabled.
 
 ## Available extension points within Grafana
@@ -82,7 +82,7 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-This example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configureExtensionLink` function returns _undefined_ and the link isn't rendered.
+The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configureExtensionLink` function returns _undefined_. When this happens, Grafana doesn't render the link.
 
 > **Note**: The context passed to the `configureExtensionLink` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.
 
@@ -127,4 +127,4 @@ const SampleModal = ({ onDismiss, pluginId }: Props) => {
 };
 ```
 
-As you can see, the plugin extensions API allows you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. This feature can also be used for [cross-plugin linking]({{< relref "./cross-plugin-linking" >}}).
+As you can see, the plugin extensions API allows you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. The plugins extension API can also be used for [cross-plugin linking]({{< relref "./cross-plugin-linking" >}}).
