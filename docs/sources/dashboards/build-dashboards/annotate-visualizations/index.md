@@ -78,6 +78,12 @@ In Grafana v5.3+ it's possible to use template variables in the tag query. So if
 
 {{< figure src="/static/img/docs/annotations/annotation_tag_filter_variable-8-1-0.png" max-width="600px" >}}
 
+### Filter by panel
+
+You can configure to which panels to apply the annotations by choosing an option from the _Show in_ section. You can apply the annotations to `All panels` that support annotations, or filter specific panels by choosing `Selected panels` or `All panels except`. The annotations will be displayed accordingly.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
+
 ## Querying other data sources
 
 Annotation events are fetched via annotation queries. To add a new annotation query to a dashboard
