@@ -225,7 +225,7 @@ describe('LokiContextUi', () => {
     // We select parsed label and label3="value3" should appear
     const parsedLabelsInput = screen.getAllByRole('combobox')[1];
     await userEvent.click(parsedLabelsInput);
-    fireEvent.keyDown(parsedLabelsInput, { key: 'Enter' });
+    await userEvent.type(parsedLabelsInput, '{enter}');
     expect(screen.getByText('label3="value3"')).toBeInTheDocument();
 
     // We click on revert button and label3="value3" should disappear
