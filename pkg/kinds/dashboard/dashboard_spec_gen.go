@@ -279,7 +279,7 @@ type FieldConfig struct {
 	// TODO docs
 	Color *FieldColor `json:"color,omitempty"`
 
-	// custom is specified by the PanelFieldConfig field
+	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	Custom map[string]interface{} `json:"custom,omitempty"`
 
@@ -422,7 +422,7 @@ type Panel struct {
 	// TODO docs
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
 
-	// options is specified by the PanelOptions field in panel
+	// options is specified by the Options field in panel
 	// plugin schemas.
 	Options map[string]interface{} `json:"options"`
 
