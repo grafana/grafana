@@ -95,8 +95,9 @@ var (
 		{
 			Name:         "newTraceViewHeader",
 			Description:  "Shows the new trace view header",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
@@ -369,8 +370,9 @@ var (
 		{
 			Name:         "traceqlSearch",
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
-			State:        FeatureStateAlpha,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{

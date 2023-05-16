@@ -24,6 +24,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
 | `exploreMixedDatasource`            | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
+| `newTraceViewHeader`                | Shows the new trace view header                                                                                                                                                                     | Yes                |
 | `dataConnectionsConsole`            | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `internationalization`              | Enables internationalization                                                                                                                                                                        | Yes                |
 | `topnav`                            | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
@@ -34,6 +35,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `disablePrometheusExemplarSampling` | Disable Prometheus exemplar sampling                                                                                                                                                                |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                                                                                                                                | Yes                |
 | `logsContextDatasourceUi`           | Allow datasource to provide custom UI for context view                                                                                                                                              | Yes                |
+| `traceqlSearch`                     | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                                           | Yes                |
 | `prometheusDataplane`               | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. | Yes                |
 | `lokiMetricDataplane`               | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
 | `dataplaneFrontendFallback`         | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
@@ -75,7 +77,6 @@ Alpha features might be changed or removed without prior notice.
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                        |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                       |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                              |
-| `newTraceViewHeader`               | Shows the new trace view header                                                                              |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                             |
 | `traceToMetrics`                   | Enable trace to metrics links                                                                                |
 | `prometheusWideSeries`             | Enable wide series responses in the Prometheus datasource                                                    |
@@ -96,7 +97,6 @@ Alpha features might be changed or removed without prior notice.
 | `lokiQuerySplittingConfig`         | Give users the option to configure split durations for Loki queries                                          |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                               |
 | `onlyExternalOrgRoleSync`          | Prohibits a user from changing organization roles synced with external auth providers                        |
-| `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries    |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component         |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                   |
 | `prometheusResourceBrowserCache`   | Displays browser caching options in Prometheus data source configuration                                     |

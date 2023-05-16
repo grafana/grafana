@@ -12,7 +12,7 @@ featureHighlights,stable,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,beta,@grafana/backend-platform,false,false,false,false
 storage,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 exploreMixedDatasource,stable,@grafana/explore-squad,false,false,false,true
-newTraceViewHeader,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
+newTraceViewHeader,stable,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,beta,@grafana/explore-squad,false,false,false,false
 datasourceQueryMultiStatus,alpha,@grafana/plugins-platform-backend,false,false,false,false
 traceToMetrics,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
@@ -53,7 +53,7 @@ lokiQuerySplitting,alpha,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,alpha,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,alpha,@grafana/backend-platform,false,false,false,false
 onlyExternalOrgRoleSync,alpha,@grafana/grafana-authnz-team,false,false,false,false
-traceqlSearch,alpha,@grafana/observability-traces-and-profiling,false,false,false,true
+traceqlSearch,stable,@grafana/observability-traces-and-profiling,false,false,false,true
 prometheusMetricEncyclopedia,alpha,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,alpha,@grafana/app-o11y,false,false,false,true
 prometheusResourceBrowserCache,alpha,@grafana/observability-metrics,false,false,false,true
