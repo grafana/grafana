@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
 	"github.com/grafana/grafana/pkg/services/oauthserver/oauthstore"
@@ -62,7 +63,10 @@ type OAuth2ServiceImpl struct {
 
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
-	teamSvc team.Service, keySvc signingkeys.Service) (*OAuth2ServiceImpl, error) {
+	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
+	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		return nil, nil
+	}
 	config := &fosite.Config{
 		AccessTokenLifespan: cfg.OAuth2ServerAccessTokenLifespan,
 		TokenURL:            fmt.Sprintf("%voauth2/token", cfg.AppURL),

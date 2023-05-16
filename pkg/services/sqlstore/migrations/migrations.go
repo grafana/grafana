@@ -97,8 +97,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
-
-	oauthserver.AddMigration(mg)
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagExternalServiceAuth) {
+			oauthserver.AddMigration(mg)
+		}
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
