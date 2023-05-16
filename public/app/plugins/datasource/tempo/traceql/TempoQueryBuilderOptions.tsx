@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { AutoSizeInput } from '@grafana/ui';
+import { AutoSizeInput, Checkbox } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { DEFAULT_LIMIT } from '../datasource';
@@ -21,6 +21,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
     onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
   };
 
+  const onStreamingChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, streaming: e.currentTarget.checked });
+  };
+
   return (
     <>
       <EditorRow>
@@ -35,6 +39,9 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               onCommitChange={onLimitChange}
               value={query.limit}
             />
+          </EditorField>
+          <EditorField label="Stream response" tooltip="Stream the query response to receive partial results sooner">
+            <Checkbox value={query.streaming} onChange={onStreamingChange} />
           </EditorField>
         </QueryOptionGroup>
       </EditorRow>

@@ -23,6 +23,7 @@ import {
   reportInteraction,
   TemplateSrv,
   getTemplateSrv,
+  getGrafanaLiveSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -219,25 +220,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
           });
-          subQueries.push(this.handleStreamingSearch(options, targets.traceql));
 
-          // subQueries.push(
-          //   this._request('/api/search', {
-          //     q: queryValue,
-          //     limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-          //     start: options.range.from.unix(),
-          //     end: options.range.to.unix(),
-          //   }).pipe(
-          //     map((response) => {
-          //       return {
-          //         data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-          //       };
-          //     }),
-          //     catchError((error) => {
-          //       return of({ error: { message: error.data.message }, data: [] });
-          //     })
-          //   )
-          // );
+          if (targets.traceql[0].streaming) {
+            subQueries.push(this.handleStreamingSearch(options, targets.traceql));
+          } else {
+            subQueries.push(
+              this._request('/api/search', {
+                q: queryValue,
+                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                start: options.range.from.unix(),
+                end: options.range.to.unix(),
+              }).pipe(
+                map((response) => {
+                  return {
+                    data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                  };
+                }),
+                catchError((error) => {
+                  return of({ error: { message: error.data.message }, data: [] });
+                })
+              )
+            );
+          }
         }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
@@ -422,20 +426,48 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return EMPTY;
     }
 
-    const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
+    const request: DataQueryRequest<TempoQuery> = { ...options, targets: validTargets };
 
-    return super.query(traceRequest).pipe(
-      map((response) => {
-        console.log(response);
-        return {
-          // data: createTableFrameFromTraceQlQuery(response.data, this.instanceSettings),
-          data: response.data,
-        };
-      }),
-      catchError((error) => {
-        return of({ error: { message: error.data.message }, data: [] });
+    const queries = validTargets.map((q) => {
+      let datasource = this.getRef();
+      let datasourceId = this.id;
+      let shouldApplyTemplateVariables = true;
+
+      return {
+        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars) : q),
+        datasource,
+        datasourceId, // deprecated!
+        intervalMs: request.intervalMs,
+        maxDataPoints: request.maxDataPoints,
+        queryCachingTTL: request.queryCachingTTL,
+      };
+    });
+
+    const body: any = { queries };
+
+    if (request.range) {
+      body.range = request.range;
+      body.from = request.range.from.valueOf().toString();
+      body.to = request.range.to.valueOf().toString();
+    }
+
+    return getGrafanaLiveSrv()
+      .getQueryData({
+        request,
+        body,
       })
-    );
+      .pipe(
+        map((response) => {
+          console.log(response);
+          return {
+            // data: createTableFrameFromTraceQlQuery(response.data, this.instanceSettings),
+            data: response.data,
+          };
+        }),
+        catchError((error) => {
+          return of({ error: { message: error.data.message }, data: [] });
+        })
+      );
   }
 
   async metadataRequest(url: string, params = {}) {

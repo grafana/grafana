@@ -46,6 +46,10 @@ export interface TempoQuery extends common.DataQuery {
    * Query traces by span name
    */
   spanName?: string;
+  /**
+   * Use the streaming API to get partial results as they are available
+   */
+  streaming?: boolean;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {

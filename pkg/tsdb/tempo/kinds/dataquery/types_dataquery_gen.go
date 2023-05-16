@@ -109,6 +109,9 @@ type TempoQuery struct {
 
 	// Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
+
+	// Use the streaming API to get partial results as they are available
+	Streaming *bool `json:"streaming,omitempty"`
 }
 
 // The scope of the filter, can either be unscoped/all scopes, resource or span
