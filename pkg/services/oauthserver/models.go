@@ -28,6 +28,8 @@ type OAuth2Service interface {
 	GetServerPublicKey() interface{}
 }
 
+//go:generate mockery --name Store --structname MockStore --outpkg oauthtest --filename store_mock.go --output ./oauthtest/
+
 type Store interface {
 	RegisterExternalService(ctx context.Context, client *Client) error
 	SaveExternalService(ctx context.Context, client *Client) error
