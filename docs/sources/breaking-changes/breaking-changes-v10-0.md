@@ -12,7 +12,7 @@ weight: -1
 
 # Breaking changes in Grafana v10.0
 
-Following are breaking changes that you should be aware of when upgrading to Grafana v10.0. 
+Following are breaking changes that you should be aware of when upgrading to Grafana v10.0.
 
 For our purposes, a breaking change is any change that requires users or operators to do something. This includes:
 
@@ -31,7 +31,6 @@ For each change, the provided information:
 
 For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10.0/index.md" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
 
-
 <!-- Template below
 ## Feature
 
@@ -44,7 +43,7 @@ For release highlights and deprecations, refer to our [v10.0 What’s new]({{< r
 
 #### You are affected if
 
-You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the list of Angular plugins here.
+You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the list of Angular plugins [here]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}).
 
 #### Background
 
@@ -54,11 +53,11 @@ Angular plugin support in Grafana is deprecated, meaning it will be removed in a
 
 #### Change in Grafana v10
 
-Angular will be disabled by default for all new Grafana Cloud stacks.
+Angular will be disabled by default for all new Grafana Cloud stacks. Existing stacks in Grafana Cloud, Grafana Enterprise on-premise instances, and Grafana OSS instances will not be automatically impacted.
 
 #### How to mitigate
 
-If you are using Angular plugins in Grafana, try an alternative panel or data source that does not use Angular. Here is a list of the most-used Angular plugins, and their alternatives where they exist.
+If you are using Angular plugins in Grafana, try an alternative panel or data source that does not use Angular. Here is a list of detected [Angular plugins](({{< relref "../developers/angular_deprecation/angular-plugins/" >}})), and their alternatives where they exist.
 
 If you are a developer maintaining a plugin that uses Angular, we recommend you refactor or rewrite its frontend using React.js instead. The team at Grafana is ready to help and provide tools and guidance; you can reach us here.
 
