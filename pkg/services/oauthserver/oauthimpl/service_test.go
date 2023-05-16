@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/oauthtest"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
@@ -337,7 +336,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return error when the service account was not found",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{}, serviceaccounts.ErrServiceAccountNotFound)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{}, sa.ErrServiceAccountNotFound)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
@@ -349,7 +348,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return error when the service account has no permissions",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{}, nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{}, nil)
 				env.AcStore.ExpectedErr = fmt.Errorf("some error")
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
@@ -362,7 +361,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			name: "should return correctly",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(dummyClient(), nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&serviceaccounts.ServiceAccountProfileDTO{Id: 1}, nil)
+				env.SAService.On("RetrieveServiceAccount", mock.Anything, int64(1), int64(1)).Return(&sa.ServiceAccountProfileDTO{Id: 1}, nil)
 				env.AcStore.ExpectedUserPermissions = []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}}
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
