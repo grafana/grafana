@@ -15,7 +15,9 @@ An extension point is a location in another plugin's UI where your plugin can in
 
 Use the `getPluginExtensions` method in `@grafana/runtime` to create an extension point within your plugin. An extension point is a way to specify where in the plugin UI other plugins links are rendered.
 
-> **Note:** Creating an extension point in a plugin creates a public interface for other plugins to interact with. Changes to the extension point ID or its context could break any plugin that attempts to register a link inside your plugin.
+{{% admonition type="note" %}}
+Creating an extension point in a plugin creates a public interface for other plugins to interact with. Changes to the extension point ID or its context could break any plugin that attempts to register a link inside your plugin.
+{{% /admonition %}}
 
 The `getPluginExtensions` method takes an object consisting of the `extensionPointId`, which must begin `plugin/<pluginId>`, and any contextual information that you want to provide. The `getPluginExtensions` method returns a list of `extensionLinks` that your program can loop over:
 
