@@ -32,7 +32,7 @@ export const DatasetSelector = ({
     this component will become disabled.
   */
   // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
-  // OR if 2) the datasource is Postgres, in which case this component should be disabled by default.
+  // OR if 2) the datasource is Postgres. In either case the only option available to the user is the preconfigured database.
   const hasPreconfigCondition = !!preconfiguredDataset || isPostgresInstance;
 
   const state = useAsync(async () => {

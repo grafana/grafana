@@ -233,8 +233,7 @@ export function QueryHeader({
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                // JEV do we need this preconfiguredDataset?
-                dataset={query.dataset}
+                dataset={query.dataset || preconfiguredDataset}
                 table={query.table}
                 onChange={onTableChange}
               />

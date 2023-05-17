@@ -13,7 +13,7 @@ import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-export interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
+interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
   queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance'>;
 }
 
@@ -25,8 +25,6 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
-  // console.log(query, 'query');
-  // console.log(datasource, 'datasource');
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
 

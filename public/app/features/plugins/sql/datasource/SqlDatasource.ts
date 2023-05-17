@@ -47,7 +47,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    // console.log(instanceSettings, 'instanceSettings');
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;
@@ -127,9 +126,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
-    console.log(request, 'request');
-
-    // This logic reenables the previous SQL behavior regaurding what databases are available for the user to query.
+    // This logic reenables the previous SQL behavior regarding what databases are available for the user to query.
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       const databaseIssue = this.checkForDatabaseIssue(request);
 
@@ -146,8 +143,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     // If the datasource is Postgres and there is no default database configured - either never configured or removed - return a database issue.
     if (this.type === 'postgres' && !this.preconfiguredDatabase) {
       return `You do not currently have a default database configured for this data source. Postgres requires a default
-      database with which to connect. Please configure one through the Data Sources Configuration page, or if you
-      are using a provisioning file, update that configuration file with a default database.`;
+             database with which to connect. Please configure one through the Data Sources Configuration page, or if you
+             are using a provisioning file, update that configuration file with a default database.`;
     }
 
     // No need to check for database change/update issues if the datasource is being used in Explore.
@@ -162,8 +159,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           // Test for database configuration change only if query was made in `builder` mode.
           if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
             return `The configuration for this Panel's data source has been modified. The previous database used in this Panel's
-                saved query is no longer available. Please update the query to use the new database option.
-                Previous query parameters will be preserved until the query is updated.`;
+                   saved query is no longer available. Please update the query to use the new database option.
+                   Previous query parameters will be preserved until the query is updated.`;
           }
         }
       }
