@@ -474,8 +474,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       kind: LogsMetaKind.LabelsMap,
     });
   }
-  // Data sources that set up searchWords on backend use meta.custom.limit
-  // Data sources that set up searchWords trough frontend can use meta.limit
+  // Data sources that set up searchWords on backend use meta.custom.limit.
+  // Data sources that set up searchWords through frontend can use meta.limit.
   const limits = logSeries.filter((series) => series?.meta?.custom?.limit ?? series?.meta?.limit);
   const lastLimitPerRef = limits.reduce<Record<string, number>>((acc, elem) => {
     acc[elem.refId ?? ''] = elem.meta?.custom?.limit ?? elem.meta?.limit ?? 0;
