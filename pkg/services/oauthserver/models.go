@@ -45,12 +45,21 @@ type KeyOption struct {
 	Generate  bool   `json:"generate,omitempty"`
 }
 
+type SelfCfg struct {
+	Enabled     bool                       `json:"enabled"`
+	Permissions []accesscontrol.Permission `json:"permissions,omitempty"`
+}
+type ImpersonationCfg struct {
+	Enabled     bool                       `json:"enabled"`
+	Groups      bool                       `json:"groups"`
+	Permissions []accesscontrol.Permission `json:"permissions,omitempty"`
+}
 type ExternalServiceRegistration struct {
-	ExternalServiceName    string                     `json:"name"`
-	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
-	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
-	RedirectURI            *string                    `json:"redirectUri,omitempty"`
-	Key                    *KeyOption                 `json:"key,omitempty"`
+	ExternalServiceName string           `json:"name"`
+	RedirectURI         *string          `json:"redirectUri,omitempty"`
+	Impersonation       ImpersonationCfg `json:"impersonation"`
+	Self                SelfCfg          `json:"self"`
+	Key                 *KeyOption       `json:"key,omitempty"`
 }
 
 const (
