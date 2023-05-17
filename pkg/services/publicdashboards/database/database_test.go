@@ -42,14 +42,14 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 
 	var orgId int64 = 1
 
-	aDash := insertTestDashboard(t, dashboardStore, "a", orgId, 0, true)
 	bDash := insertTestDashboard(t, dashboardStore, "b", orgId, 0, true)
+	aDash := insertTestDashboard(t, dashboardStore, "a", orgId, 0, true)
 	cDash := insertTestDashboard(t, dashboardStore, "c", orgId, 0, true)
 
 	// these are in order of how they should be returned from ListPUblicDashboards
-	a := insertPublicDashboard(t, publicdashboardStore, bDash.UID, orgId, true, PublicShareType)
-	b := insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, PublicShareType)
-	c := insertPublicDashboard(t, publicdashboardStore, aDash.UID, orgId, false, PublicShareType)
+	a := insertPublicDashboard(t, publicdashboardStore, aDash.UID, orgId, false, PublicShareType)
+	b := insertPublicDashboard(t, publicdashboardStore, bDash.UID, orgId, true, PublicShareType)
+	c := insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, PublicShareType)
 
 	// this is case that can happen as of now, however, postgres and mysql sort
 	// null in the exact opposite fashion and there is no shared syntax to sort
