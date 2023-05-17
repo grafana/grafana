@@ -60,8 +60,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
+    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <button className={cx(styles.button, className)} type={type} {...otherProps} ref={ref}>
+      <button className={cx(styles.button, className)} type={type} {...otherProps} ref={tooltip ? undefined : ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
@@ -69,7 +70,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (tooltip) {
       return (
-        <Tooltip content={tooltip} placement={tooltipPlacement}>
+        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
           {button}
         </Tooltip>
       );
@@ -122,8 +123,9 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       className
     );
 
+    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={ref}>
+      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={tooltip ? undefined : ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
@@ -131,7 +133,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
     if (tooltip) {
       return (
-        <Tooltip content={tooltip} placement={tooltipPlacement}>
+        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
           {button}
         </Tooltip>
       );
