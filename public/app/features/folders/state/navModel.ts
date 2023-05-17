@@ -51,14 +51,16 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     });
   }
 
-  if (folder.canAdmin) {
-    model.children!.push({
-      active: false,
-      icon: 'lock',
-      id: getPermissionsTabID(folder.uid),
-      text: 'Permissions',
-      url: `${folder.url}/permissions`,
-    });
+  if (!config.featureToggles.nestedFolders) {
+    if (folder.canAdmin) {
+      model.children!.push({
+        active: false,
+        icon: 'lock',
+        id: getPermissionsTabID(folder.uid),
+        text: 'Permissions',
+        url: `${folder.url}/permissions`,
+      });
+    }
   }
 
   if (folder.canSave) {

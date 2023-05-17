@@ -153,7 +153,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
     },
-    {
+    !config.featureToggles.nestedFolders && {
       path: '/dashboards/f/:uid/:slug/permissions',
       component: config.rbacEnabled
         ? SafeDynamicImport(
