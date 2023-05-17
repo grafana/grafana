@@ -8,7 +8,7 @@ interface Props {
   title: string;
 }
 
-export function EditDataSourceTitle({ title }: Props) {
+export function DataSourceTitle({ title }: Props) {
   const styles = useStyles2(getStyles);
 
   return (

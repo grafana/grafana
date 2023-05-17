@@ -4,9 +4,10 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { EditDataSource } from '../components/EditDataSource';
 import { EditDataSourceActions } from '../components/EditDataSourceActions';
-import { EditDataSourceTitle } from '../components/EditDataSourceTitle';
 import { useDataSourceInfo } from '../components/useDataSourceInfo';
 import { useDataSourceSettingsNav } from '../state';
+
+import { DataSourceTitle } from './DataSourceTitle';
 
 export interface Props {
   uid: string;
@@ -26,7 +27,7 @@ export function DataSourceTabPage({ uid, pageId, navId }: Props) {
     <Page
       navId={navId}
       pageNav={nav.main}
-      renderTitle={(title) => <EditDataSourceTitle title={title} />}
+      renderTitle={(title) => <DataSourceTitle title={title} />}
       info={info}
       actions={<EditDataSourceActions uid={uid} />}
     >

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { config } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
+import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
@@ -20,10 +20,10 @@ export function EditDataSourceActions({ uid }: Props) {
   return (
     <>
       {hasExploreRights && (
-        <Button
-          type="button"
-          size="sm"
+        <LinkButton
           variant="secondary"
+          size="sm"
+          href={constructDataSourceExploreUrl(dataSource)}
           onClick={() => {
             trackExploreClicked({
               grafana_version: config.buildInfo.version,
@@ -31,16 +31,15 @@ export function EditDataSourceActions({ uid }: Props) {
               plugin_name: dataSource.typeName,
               path: location.pathname,
             });
-            location.href = constructDataSourceExploreUrl(dataSource);
           }}
         >
           Explore data
-        </Button>
+        </LinkButton>
       )}
-      <Button
-        type="button"
+      <LinkButton
         size="sm"
         variant="secondary"
+        href={`dashboard/new-with-ds/${dataSource.uid}`}
         onClick={() => {
           trackCreateDashboardClicked({
             grafana_version: config.buildInfo.version,
@@ -48,11 +47,10 @@ export function EditDataSourceActions({ uid }: Props) {
             plugin_name: dataSource.typeName,
             path: location.pathname,
           });
-          location.href = `dashboard/new-with-ds/${dataSource.uid}`;
         }}
       >
         Build a dashboard
-      </Button>
+      </LinkButton>
     </>
   );
 }
