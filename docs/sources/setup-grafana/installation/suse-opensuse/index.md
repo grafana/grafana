@@ -1,13 +1,13 @@
 ---
-description: Install guide for Grafana on SUSE or OpenSUSE.
-title: Install Grafana on SUSE or OpenSUSE
+description: Install guide for Grafana on SUSE or openSUSE.
+title: Install Grafana on SUSE or openSUSE
 menuTitle: SUSE or openSUSE
 weight: 450
 ---
 
-# Install Grafana on SUSE or OpenSUSE
+# Install Grafana on SUSE or openSUSE
 
-This topic explains how to install Grafana dependencies, install Grafana on SUSE or OpenSUSE and start the Grafana server on your system.
+This topic explains how to install Grafana dependencies, install Grafana on SUSE or openSUSE and start the Grafana server on your system.
 
 You can install Grafana using a YUM repository, using RPM, or by downloading a binary `.tar.gz` file.
 

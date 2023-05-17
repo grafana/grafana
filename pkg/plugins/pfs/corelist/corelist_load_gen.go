@@ -66,7 +66,6 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/panel/graph", "graph", rt),
 		parsePluginOrPanic("public/app/plugins/panel/heatmap", "heatmap", rt),
 		parsePluginOrPanic("public/app/plugins/panel/histogram", "histogram", rt),
-		parsePluginOrPanic("public/app/plugins/panel/icon", "icon", rt),
 		parsePluginOrPanic("public/app/plugins/panel/live", "live", rt),
 		parsePluginOrPanic("public/app/plugins/panel/logs", "logs", rt),
 		parsePluginOrPanic("public/app/plugins/panel/news", "news", rt),
