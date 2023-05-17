@@ -114,10 +114,6 @@ func (c *Client) GetResponseTypes() fosite.Arguments {
 	return fosite.Arguments{"code"}
 }
 
-func (c *Client) GetOpenIDScope() fosite.Arguments {
-	return fosite.Arguments([]string{"openid"})
-}
-
 // GetScopes returns the scopes this client is allowed to request on its own behalf.
 func (c *Client) GetScopes() fosite.Arguments {
 	if c.Scopes != nil {
