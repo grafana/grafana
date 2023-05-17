@@ -34,7 +34,7 @@ It can be difficult to understand the distinctions between different data source
 
 ## Plugins
 
-A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we will address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the  data from the data source, and reconcile the differences in data models using a unified data structure called a [data frame](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/). The data coming into the plugin from the data source might be many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it is always data frames.
+A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we will address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the data from the data source, and reconcile the differences in data models using a unified data structure called a [data frame](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/). The data coming into the plugin from the data source might be many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it is always data frames.
 
 Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](/tutorials/build-a-data-source-plugin/).
 
@@ -48,17 +48,15 @@ The following image shows the Query Editor associated with the Prometheus data s
 
 {{< figure src="/media/docs/grafana/dashboards-overview/example-query.png" max-width="750px" caption="Example Query" >}}
 
-
 ## Transforms
 
 When the data format in a visualization doesn’t meet your requirements, you can apply a [transformation]({{< relref "../panels-visualizations/query-transform-data/transform-data" >}}) that manipulates the data returned by a query. You might not need to transform data when you are first starting out, but they are powerful and worth mentioning.
 
-Transforming data is useful in the following kinds of situations: 
+Transforming data is useful in the following kinds of situations:
 
 - You want to combine two fields together, for example, concatenating `Given Name` and `Family Name` into a `Full Name` field
 - You have CSV data (all text), and you want to convert a field types (such as parsing a date or a number out of a string)
 - You want to filter, join, merge, or perform other SQL-like operations that might not be supported by the underlying data source or query language
-
 
 Transforms are located next to the **Query** tab in the edit dialog for a panel. Select the transform you want, and define the transform. The following image shows that you can have as many transforms as you want, just like queries. For example, you can chain together a series of transforms that make a change to a data type, filter results, organize columns, and sort the result into one data pipeline. Every time the dashboard is refreshed, the transform applies to the latest data from the data source.
 
