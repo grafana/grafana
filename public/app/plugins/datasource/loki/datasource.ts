@@ -287,17 +287,18 @@ export class LokiDatasource
       return runSplitQuery(this, fixedRequest);
     }
 
-    return this.runQuery(fixedRequest);
+    const startTime = new Date();
+    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
   }
 
   runQuery(fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] }) {
-    const startTime = new Date();
-    return super.query(fixedRequest).pipe(
-      map((response) =>
-        transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-      ),
-      tap((response) => trackQuery(response, fixedRequest, startTime))
-    );
+    return super
+      .query(fixedRequest)
+      .pipe(
+        map((response) =>
+          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+        )
+      );
   }
 
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
