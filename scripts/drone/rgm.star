@@ -11,10 +11,10 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "rgm_dagger_token",
     "rgm_destination",
     "rgm_gcp_key_base64",
     "rgm_github_token",
-    "rgm_dagger_token",
 )
 
 rgm_env_secrets = {
