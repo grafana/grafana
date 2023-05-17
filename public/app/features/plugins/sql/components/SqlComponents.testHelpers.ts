@@ -3,7 +3,7 @@ import { TimeRange, PluginType } from '@grafana/data';
 import { DB, SQLQuery, SQLSelectableValue, ValidationResults } from '../types';
 
 import { DatasetSelectorProps } from './DatasetSelector';
-import { SqlQueryEditorProps } from './QueryEditor';
+import { TableSelectorProps } from './TableSelector';
 
 const buildMockDB = (): DB => ({
   datasets: jest.fn(() => Promise.resolve(['dataset1', 'dataset2'])),
@@ -72,24 +72,23 @@ export const buildMockDatasource = (hasDefaultDatabaseConfigured?: boolean) => {
   };
 };
 
-export function buildSqlQueryEditorProps(overrides?: Partial<SqlQueryEditorProps>): SqlQueryEditorProps {
+export function buildMockDatasetSelectorProps(overrides?: Partial<DatasetSelectorProps>): DatasetSelectorProps {
   return {
+    db: buildMockDB(),
+    dataset: '',
+    isPostgresInstance: false,
     onChange: jest.fn(),
-    query: { refId: '123', dataset: 'chosen database' },
-    onRunQuery: jest.fn(),
-    // @ts-ignore
-    datasource: buildMockDatasource(),
+    preconfiguredDataset: '',
     ...overrides,
   };
 }
 
-export function buildMockDataSelectorProps(overrides?: Partial<DatasetSelectorProps>): DatasetSelectorProps {
+export function buildMockTableSelectorProps(overrides?: Partial<TableSelectorProps>): TableSelectorProps {
   return {
-    dataset: '',
     db: buildMockDB(),
-    isPostgresInstance: false,
+    dataset: '',
+    table: '',
     onChange: jest.fn(),
-    preconfiguredDataset: '',
     ...overrides,
   };
 }

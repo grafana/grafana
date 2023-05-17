@@ -234,7 +234,7 @@ export function QueryHeader({
               <TableSelector
                 db={db}
                 // JEV do we need this preconfiguredDataset?
-                dataset={query.dataset || preconfiguredDataset}
+                dataset={query.dataset}
                 table={query.table}
                 onChange={onTableChange}
               />
