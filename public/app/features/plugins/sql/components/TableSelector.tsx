@@ -11,10 +11,9 @@ interface TableSelectorProps extends ResourceSelectorProps {
   table: string | undefined;
   dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
-  hasConfigIssue?: boolean;
 }
 
-export const TableSelector = ({ db, dataset, table, className, onChange, hasConfigIssue }: TableSelectorProps) => {
+export const TableSelector = ({ db, dataset, table, className, onChange }: TableSelectorProps) => {
   const state = useAsync(async () => {
     // No need to attempt to fetch tables for an unknown dataset.
     if (!dataset) {
@@ -28,7 +27,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange, hasConf
   return (
     <Select
       className={className}
-      disabled={state.loading || hasConfigIssue}
+      disabled={state.loading}
       aria-label="Table selector"
       value={table}
       options={state.value}

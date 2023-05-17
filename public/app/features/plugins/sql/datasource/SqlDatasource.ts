@@ -41,7 +41,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   interval: string;
   db: DB;
   preconfiguredDatabase: string;
-  databaseIssue: { type: string; message: string } | null;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -64,7 +63,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
     };
-    this.databaseIssue = null;
   }
 
   abstract getDB(dsID?: number): DB;
@@ -130,12 +128,13 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
   query(request: DataQueryRequest<SQLQuery>): Observable<DataQueryResponse> {
     console.log(request, 'request');
+
+    // This logic reenables the previous SQL behavior regaurding what databases are available for the user to query.
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
-      const databaseIssue = this.checkForDatabaseIssue(this.type, this.preconfiguredDatabase, request);
+      const databaseIssue = this.checkForDatabaseIssue(request);
 
       if (!!databaseIssue) {
-        const error = new Error(databaseIssue.message);
-        this.databaseIssue = databaseIssue;
+        const error = new Error(databaseIssue);
         return throwError(() => error);
       }
     }
@@ -143,29 +142,29 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return super.query(request);
   }
 
-  checkForDatabaseIssue(datasourceType: string, preconfiguredDatabase: string, request: DataQueryRequest<SQLQuery>) {
-    // If the datasource is Postgres and there is no default database configured - either never configured or removed - return a database issue.
-    if (datasourceType === 'postgres' && !preconfiguredDatabase) {
-      return {
-        type: 'postgres',
-        message: 'You do not currently have a default database configured for this data source.',
-      };
-    }
+  private checkForDatabaseIssue(request: DataQueryRequest<SQLQuery>) {
+    // No need to check for database issues if the datasource is being used in Explore.
+    if (request.app !== 'explore') {
+      // If the datasource is Postgres and there is no default database configured - either never configured or removed - return a database issue.
+      if (this.type === 'postgres' && !this.preconfiguredDatabase) {
+        return `You do not currently have a default database configured for this data source. Postgres requires a default
+            database with which to connect. Please configure one through the Data Sources Configuration page, or if you
+            are using a provisioning file, update that configuration file with a default database.`;
+      }
 
-    /*
-      If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a 
-      database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
-      The user will need to update their queries to use the preconfigured database.
-    */
-    if (!!this.preconfiguredDatabase) {
-      for (const target of request.targets) {
-        // Test for database configuration change only if query was made in `builder` mode.
-        if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
-          return {
-            type: 'configChange',
-            message:
-              'Your default database configuration has been modified. Please update your panel query accordingly.',
-          };
+      /*
+        If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a 
+        database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
+        The user will need to update their queries to use the preconfigured database.
+      */
+      if (!!this.preconfiguredDatabase) {
+        for (const target of request.targets) {
+          // Test for database configuration change only if query was made in `builder` mode.
+          if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
+            return `The configuration for this Panel's data source has been modified.
+                The previous database used in this Panel's saved query is no longer available.
+                Please update the query to use the new database option.`;
+          }
         }
       }
     }

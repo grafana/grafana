@@ -9,14 +9,12 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps } from '@grafana/data';
 import { EditorMode, Space } from '@grafana/experimental';
-import { Alert } from '@grafana/ui';
 
 import { SqlDatasource } from '../datasource/SqlDatasource';
 import { applyQueryDefaults } from '../defaults';
 import { SQLQuery, QueryRowFilter, SQLOptions } from '../types';
 import { haveColumns } from '../utils/sql.utils';
 
-import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
@@ -33,15 +31,12 @@ export function SqlQueryEditor({
   range,
   queryHeaderProps,
 }: SqlQueryEditorProps) {
-  console.log(query, 'query');
-  console.log(datasource, 'datasource');
-  const [hasDatabaseConfigIssue, setHasDatabaseConfigIssue] = useState<boolean>(false);
-  const [hasNoPostgresDefaultDatabaseConfig, setHasNoPostgresDefaultDatabaseConfig] = useState<boolean>(false);
-
+  // console.log(query, 'query');
+  // console.log(datasource, 'datasource');
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
 
-  const { preconfiguredDatabase, databaseIssue } = datasource;
+  const { preconfiguredDatabase } = datasource;
   const isPostgresInstance = !!queryHeaderProps?.isPostgresInstance;
   const { loading, error } = useAsync(async () => {
     return () => {
@@ -50,33 +45,6 @@ export function SqlQueryEditor({
       }
     };
   }, [datasource]);
-
-  useEffect(() => {
-    if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
-      /*
-        If there is a preconfigured database (either through the provisioning config file, or the Data Source Configuration GUI),
-        AND there is also a previously-chosen dataset via the dataset selector dropdown, AND those 2 values DON'T match,
-        that means either 1) the preconfigured database changed/updated (updated either through provisioning or the GUI),
-        OR 2) there WASN'T a preconfigred database before, but there IS now (updated either through provisioning or the GUI).
-        In either case, we need to throw a warning to alert the user that something has changed.
-      */
-      console.log(!!query.dataset, 'query');
-
-      if (databaseIssue?.type === 'configChange') {
-        setHasDatabaseConfigIssue(true);
-        // console.log('should show warning');
-      }
-
-      /*
-        If the data source is Postgres (Postgres data source Query Editors are passed a default prop `isPostgresInstance = true`),
-        then here test for a preconfigured database (either through provisioning or the GUI). Postgres REQUIRES a default database,
-        so throw the appropriate warning if none exists.
-      */
-      if (databaseIssue?.type === 'postgres') {
-        setHasNoPostgresDefaultDatabaseConfig(true);
-      }
-    }
-  }, [datasource, isPostgresInstance, preconfiguredDatabase, query, databaseIssue]);
 
   const queryWithDefaults = applyQueryDefaults(query);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
@@ -122,53 +90,12 @@ export function SqlQueryEditor({
     onChange(q);
   };
 
-  const resetQuery = () => {
-    const updatedQuery = {
-      ...query,
-      dataset: preconfiguredDatabase,
-      table: undefined,
-      sql: undefined,
-      rawSql: '',
-    };
-    onChange(updatedQuery);
-  };
-
   if (loading || error) {
     return null;
   }
 
   return (
     <>
-      {hasDatabaseConfigIssue && (
-        <Alert
-          severity="warning"
-          title="Default datasource update"
-          elevated={true}
-          onRemove={() => {
-            // Remove the warning, and reset the query with the new database.
-            datasource.databaseIssue = null;
-            setHasDatabaseConfigIssue(false);
-            resetQuery();
-          }}
-          buttonContent="Update Database"
-        >
-          <span>
-            Your default database configuration has been modified. The previous database is no longer available, and has
-            been updated to {<code>{preconfiguredDatabase}</code>}. Make note of the query you have built before
-            clicking <code>Update Database</code>. Clicking <code>Update Database</code> will clear your previous query
-            parameters.
-          </span>
-        </Alert>
-      )}
-
-      {hasNoPostgresDefaultDatabaseConfig && (
-        <Alert severity="error" title="Default datasource error" elevated={true}>
-          You do not currently have a default database configured for this data source. Postgres requires a default
-          database with which to connect. Please configure one through the Data Sources Configuration page, or if you
-          are using a provisioning file, update that configuration file with a default database.
-        </Alert>
-      )}
-
       <QueryHeader
         db={db}
         preconfiguredDataset={preconfiguredDatabase}
@@ -179,8 +106,6 @@ export function SqlQueryEditor({
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
         isPostgresInstance={isPostgresInstance}
-        // This will disable any downstream children buttons/dropdowns until the error/warning is handled.
-        hasConfigIssue={hasDatabaseConfigIssue || hasNoPostgresDefaultDatabaseConfig}
       />
 
       <Space v={0.5} />

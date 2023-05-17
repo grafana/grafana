@@ -14,7 +14,6 @@ export interface DatasetSelectorProps extends ResourceSelectorProps {
   preconfiguredDataset: string;
   isPostgresInstance: boolean | undefined;
   onChange: (v: SelectableValue) => void;
-  hasConfigIssue?: boolean;
 }
 
 export const DatasetSelector = ({
@@ -23,7 +22,6 @@ export const DatasetSelector = ({
   isPostgresInstance,
   onChange,
   preconfiguredDataset,
-  hasConfigIssue,
 }: DatasetSelectorProps) => {
   /* 
     The behavior of this component - for MSSQL and MySQL datasources - is based on whether the user chose to create a datasource
@@ -55,7 +53,7 @@ export const DatasetSelector = ({
       value={dataset}
       options={state.value}
       onChange={onChange}
-      disabled={hasConfigIssue || state.loading}
+      disabled={state.loading}
       isLoading={state.loading}
       menuShouldPortal={true}
     />

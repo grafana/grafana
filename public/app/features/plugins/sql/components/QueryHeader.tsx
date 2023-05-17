@@ -15,7 +15,6 @@ import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  hasConfigIssue?: boolean;
   isPostgresInstance?: boolean;
   isQueryRunnable: boolean;
   onChange: (query: SQLQuery) => void;
@@ -33,7 +32,6 @@ const editorModes = [
 
 export function QueryHeader({
   db,
-  hasConfigIssue,
   isPostgresInstance,
   isQueryRunnable,
   onChange,
@@ -172,7 +170,7 @@ export function QueryHeader({
         <FlexItem grow={1} />
 
         {isQueryRunnable ? (
-          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()} disabled={hasConfigIssue}>
+          <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
             Run query
           </Button>
         ) : (
@@ -186,13 +184,7 @@ export function QueryHeader({
             }
             placement="top"
           >
-            <Button
-              icon="exclamation-triangle"
-              variant="secondary"
-              size="sm"
-              onClick={() => onRunQuery()}
-              disabled={hasConfigIssue}
-            >
+            <Button icon="exclamation-triangle" variant="secondary" size="sm" onClick={() => onRunQuery()}>
               Run query
             </Button>
           </Tooltip>
@@ -235,17 +227,16 @@ export function QueryHeader({
                   isPostgresInstance={isPostgresInstance}
                   preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
-                  hasConfigIssue={hasConfigIssue}
                 />
               </EditorField>
             )}
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
+                // JEV do we need this preconfiguredDataset?
                 dataset={query.dataset || preconfiguredDataset}
                 table={query.table}
                 onChange={onTableChange}
-                hasConfigIssue={hasConfigIssue}
               />
             </EditorField>
           </EditorRow>
