@@ -43,7 +43,7 @@ composableKinds: PanelCfg: {
 							// Unit for the secondary stat to override what ever is set in the data frame.
 							secondaryStatUnit?: string
 						}
-						PanelOptions: {
+						Options: {
 							nodes?: NodeOptions
 							edges?: EdgeOptions
 						} @cuetsy(kind="interface")

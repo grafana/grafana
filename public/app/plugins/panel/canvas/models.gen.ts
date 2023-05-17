@@ -7,13 +7,13 @@ import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export interface PanelOptions {
+export interface Options {
   inlineEditing: boolean;
   showAdvancedTypes: boolean;
   root: CanvasFrameOptions;
 }
 
-export const defaultPanelOptions: PanelOptions = {
+export const defaultOptions: Options = {
   inlineEditing: true,
   showAdvancedTypes: false,
   root: {

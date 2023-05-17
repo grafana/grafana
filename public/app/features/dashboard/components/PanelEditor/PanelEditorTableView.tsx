@@ -4,7 +4,7 @@ import { RefreshEvent } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
-import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
+import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 
 import PanelHeaderCorner from '../../dashgrid/PanelHeader/PanelHeaderCorner';
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -21,7 +21,7 @@ export interface Props {
 
 export function PanelEditorTableView({ width, height, panel, dashboard }: Props) {
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, false);
-  const [options, setOptions] = useState<PanelOptions>({
+  const [options, setOptions] = useState<Options>({
     frameIndex: 0,
     showHeader: true,
     showTypeIcons: true,

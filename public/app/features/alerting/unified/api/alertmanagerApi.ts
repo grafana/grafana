@@ -2,6 +2,7 @@ import {
   AlertmanagerAlert,
   AlertmanagerChoice,
   AlertManagerCortexConfig,
+  AlertmanagerGroup,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagers,
   ExternalAlertmanagersResponse,
@@ -59,6 +60,12 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           params,
         };
       },
+    }),
+
+    getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string }>({
+      query: ({ amSourceName }) => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
+      }),
     }),
 
     getAlertmanagerChoiceStatus: build.query<AlertmanagersChoiceResponse, void>({
