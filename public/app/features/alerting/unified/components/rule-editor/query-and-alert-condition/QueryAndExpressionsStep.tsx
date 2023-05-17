@@ -57,12 +57,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     queries: getValues('queries'),
   };
 
-  // Most data sources triggers onChange and onRunQueries consecutively
-  // It means our reducer state is always one step behind when runQueries is invoked
-  // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
-  // No matter if we use query or getValues('queries') their state is always stale when we invoke runQueries
-  // As a workaround we use this ref which is updated immediately in onChange and used in runQueries
-  const queriesToPreviewRef = useRef<AlertQuery[]>([]);
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
@@ -73,8 +67,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(() => {
-    runQueries(queriesToPreviewRef.current);
-  }, [runQueries]);
+    runQueries(getValues('queries'));
+  }, [runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -139,7 +133,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
-      queriesToPreviewRef.current = updatedQueries;
+      // Most data sources triggers onChange and onRunQueries consecutively
+      // It means our reducer state is always one step behind when runQueries is invoked
+      // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
+      // No matter if we use query or getValues('queries') their state is always stale when we invoke runQueries
+      // As a workaround we use this ref which is updated immediately in onChange and used in runQueries
+      setValue('queries', updatedQueries, { shouldValidate: false });
 
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
@@ -153,7 +152,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         }
       });
     },
-    [queries]
+    [queries, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -171,6 +170,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       const expression = query.model.expr;
 
+      setValue('queries', updatedQueries, { shouldValidate: false });
       setValue('dataSourceName', dataSourceSettings.name);
       setValue('expression', expression);
 
@@ -228,7 +228,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <RecordingRuleEditor
             dataSourceName={dataSourceName}
             queries={queries}
-            runQueries={runQueries}
+            runQueries={runQueriesPreview}
             onChangeQuery={onChangeRecordingRulesQueries}
             panelData={queryPreviewData}
           />
