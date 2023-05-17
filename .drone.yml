@@ -4317,6 +4317,8 @@ steps:
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_main.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -4365,6 +4367,8 @@ steps:
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -6558,16 +6562,58 @@ kind: secret
 name: aws_secret_access_key
 ---
 get:
+  name: bucket
+  path: infra/data/ci/grafana-release-eng/security-bucket
+kind: secret
+name: security_dest_bucket
+---
+get:
   name: static_asset_editions
   path: infra/data/ci/grafana-release-eng/artifact-publishing
 kind: secret
 name: static_asset_editions
 ---
 get:
+  name: security_prefix
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: enterprise2_security_prefix
+---
+get:
   name: cdn_path
   path: infra/data/ci/grafana-release-eng/enterprise2
 kind: secret
 name: enterprise2-cdn-path
+---
+get:
+  name: security_prefix
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: enterprise2_security_prefix
+---
+get:
+  name: gcp_service_account_base64
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: gcp_key_base64
+---
+get:
+  name: destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: destination
+---
+get:
+  name: dagger_token
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: dagger_token
+---
+get:
+  name: pat
+  path: infra/data/ci/github/grafanabot
+kind: secret
+name: github_token
 ---
 get:
   name: app-id
@@ -6587,25 +6633,7 @@ get:
 kind: secret
 name: delivery-bot-app-private-key
 ---
-get:
-  name: gcp_service_account_base64
-  path: infra/data/ci/grafana-release-eng/rgm
-kind: secret
-name: gcp_key_base64
----
-get:
-  name: destination
-  path: infra/data/ci/grafana-release-eng/rgm
-kind: secret
-name: destination
----
-get:
-  name: pat
-  path: infra/data/ci/github/grafanabot
-kind: secret
-name: github_token
----
 kind: signature
-hmac: 0519a595f2e7354fb1030657406e6a5298063027284a05d6b5fcb70b0d2dc5c3
+hmac: 8d9042382cefda22afc44455c4d007327a252b65842c2873f08945244b0553d9
 
 ...
