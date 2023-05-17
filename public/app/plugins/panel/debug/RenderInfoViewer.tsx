@@ -11,9 +11,9 @@ import {
 } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
-import { PanelOptions, UpdateConfig } from './panelcfg.gen';
+import { Options, UpdateConfig } from './panelcfg.gen';
 
-type Props = PanelProps<PanelOptions>;
+type Props = PanelProps<Options>;
 
 type UpdateCounters = {
   [K in keyof UpdateConfig]: number;
