@@ -27,27 +27,34 @@ interface NotificationPreviewProps {
   condition: string;
 }
 
-export function NotificationPreview({ alertQueries, customLabels, condition }: NotificationPreviewProps) {
-  const styles = useStyles2(getStyles);
-
-  // Get the potential labels
-  // once we have them we need to 'merge' with customLabels
+export const useGetPotentialInstances = (alertQueries: AlertQuery[], condition: string) => {
+  // todo: we asume merge with custom labels will be done at the BE side adding a param in the eval query
+  // we asume the eval endpoint is going to receive an additional parameter the list of custom labels,
+  // and the response will return this merged labels with the resulting instances
 
   const { useEvalQuery } = alertRuleApi;
   const { data } = useEvalQuery({ alertQueries: alertQueries });
 
-  // convert data to list of labels]
-
+  // convert data to list of labels: are the represetnation of the potential instances
   const conditionFrames = (data?.results && data.results[condition]?.frames) ?? [];
   const potentialInstances = compact(conditionFrames.map((frame) => frame.schema?.fields[0]?.labels));
-  // todo: we asume merge with custom labels will be done at the BE side adding a param in the eval query
+  return potentialInstances;
+};
 
-  // get the AM configuration
+export function NotificationPreview({ alertQueries, customLabels, condition }: NotificationPreviewProps) {
+  const styles = useStyles2(getStyles);
+
+  // Get the potential labels
+  const potentialInstances = useGetPotentialInstances(alertQueries, condition);
+
+  // get the AM configuration to get the routes
   const { value: AMConfig } = useAsync(async () => {
     const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(GRAFANA_RULES_SOURCE_NAME);
     return AMConfig;
   }, []);
 
+  // todo: get the alert manager list where alerts are going to be sent
+  // to create the list of matching contact points
   // get the rootRoute and receivers from the AMConfig
   const { rootRoute, receivers } = useMemo(() => {
     if (!AMConfig) {
@@ -77,23 +84,35 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
     ? matchInstancesToPolicyTree(rootRoute, potentialInstances)
     : new Map();
 
+  const matchingPoliciesFound = matchingMap.size > 0;
+
   return (
     <Stack gap={1} direction="column">
       <h3>Alert instance routing preview</h3>
-      <div className={styles.textMuted}>
-        Based on the labels you have added above and the labels that have been automatically assigned, alert instances
-        are being route to notification policies in the way listed bellow
-      </div>
-      <Stack gap={1} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instances]) => {
-          const route = routesByIdMap.get(routeId);
-          const receiver = route?.receiver && receiversByName.get(route.receiver);
-          if (!route || !receiver) {
-            return null;
-          }
-          return <NotificationRoute instances={instances} route={route} receiver={receiver} key={routeId} />;
-        })}
-      </Stack>
+      {matchingPoliciesFound ? (
+        <>
+          <div className={styles.textMuted}>
+            Based on the labels you have added above and the labels that have been automatically assigned, alert
+            instances are being route to notification policies in the way listed bellow. Expand the notification
+            policies to see the instances which are going to be routed to them.
+          </div>
+          <Stack gap={1} direction="column">
+            {Array.from(matchingMap.entries()).map(([routeId, instances]) => {
+              const route = routesByIdMap.get(routeId);
+              const receiver = route?.receiver && receiversByName.get(route.receiver);
+              if (!route || !receiver) {
+                return null;
+              }
+              return <NotificationRoute instances={instances} route={route} receiver={receiver} key={routeId} />;
+            })}
+          </Stack>
+        </>
+      ) : (
+        <div className={styles.textMuted}>
+          Based on the labels you have added above and the labels that have been automatically assigned, there will be
+          no alert instances being route to notification policies
+        </div>
+      )}
     </Stack>
   );
 }
@@ -132,9 +151,13 @@ function NotificationRoute({ route, instances, receiver }: NotificationRouteProp
       labelClassName={styles.collapseLabel}
     >
       <Stack gap={1} direction="column">
-        {instances.map((instance) => (
-          <TagList tags={labelsToTags(instance)} key={JSON.stringify(instance)} />
-        ))}
+        <div className={styles.routeInstances}>
+          {instances.map((instance) => (
+            <div className={styles.tagListCard} key={JSON.stringify(instance)}>
+              <TagList tags={labelsToTags(instance)} className={styles.labelList} />
+            </div>
+          ))}
+        </div>
       </Stack>
     </Collapse>
   );
@@ -187,5 +210,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   collapseLabel: css`
     flex: 1;
+  `,
+  labelList: css`
+    justify-content: flex-start;
+  `,
+  tagListCard: css`
+    flex: 1;
+    position: relative;
+    background: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(1)};
+    margin: ${theme.spacing(1)};
+
+    border-radius: ${theme.shape.borderRadius(2)};
+    border: solid 1px ${theme.colors.border.weak};
+  `,
+  routeInstances: css`
+    margin-left: ${theme.spacing(4)};
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      height: calc(100% - 10px);
+
+      border-left: solid 1px ${theme.colors.border.weak};
+
+      margin-top: 0;
+      margin-left: -20px;
+    }
   `,
 });
