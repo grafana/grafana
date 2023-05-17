@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { DataQuery } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
@@ -9,9 +11,10 @@ import { RawTimeRange, TimeZone } from './time';
 
 export enum PluginExtensionTypes {
   link = 'link',
+  component = 'component',
 }
 
-export type PluginExtension = {
+export type PluginExtensionBase = {
   id: string;
   type: PluginExtensionTypes;
   title: string;
@@ -19,18 +22,25 @@ export type PluginExtension = {
   pluginId: string;
 };
 
-export type PluginExtensionLink = PluginExtension & {
+export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
 };
 
+export type PluginExtensionComponent = PluginExtensionBase & {
+  type: PluginExtensionTypes.component;
+  component: React.ComponentType;
+};
+
+export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
+
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
 
-export type PluginExtensionConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
-  PluginExtension,
-  'title' | 'description'
+export type PluginExtensionBaseConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
+  PluginExtensionBase,
+  'title' | 'description' | 'type'
 > &
   ExtraProps & {
     // The unique identifier of the Extension Point
@@ -43,13 +53,22 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
     ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
   };
 
-export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
+export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionBaseConfig<
   Context,
   Pick<PluginExtensionLink, 'path'> & {
     type: PluginExtensionTypes.link;
     onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   }
 >;
+
+export type PluginExtensionComponentConfig<Context extends object = object> = PluginExtensionBaseConfig<
+  Context,
+  Pick<PluginExtensionComponent, 'component'> & {
+    type: PluginExtensionTypes.component;
+  }
+>;
+
+export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
 
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
@@ -68,6 +87,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  DataSourceConfig = 'grafana/datasources/config',
 }
 
 export type PluginExtensionPanelContext = {

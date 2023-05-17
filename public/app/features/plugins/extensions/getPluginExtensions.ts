@@ -1,8 +1,10 @@
 import {
   type PluginExtension,
   PluginExtensionTypes,
-  PluginExtensionLink,
-  PluginExtensionLinkConfig,
+  type PluginExtensionLink,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionComponent,
+  type PluginExtensionComponentConfig,
 } from '@grafana/data';
 
 import type { PluginExtensionRegistry } from './types';
@@ -12,8 +14,15 @@ import {
   logWarning,
   generateExtensionId,
   getEventHelpers,
+  isPluginExtensionComponentConfig,
 } from './utils';
-import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
+import {
+  assertComponentIsValid,
+  assertIsNotPromise,
+  assertLinkPathIsValid,
+  assertStringProps,
+  isPromise,
+} from './validators';
 
 type GetExtensions = ({
   context,
@@ -36,10 +45,12 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
     try {
       const extensionConfig = registryItem.config;
 
+      // LINK
       if (isPluginExtensionLinkConfig(extensionConfig)) {
+        // Run the configure() function with the current context, and apply the ovverides
         const overrides = getLinkExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
 
-        // Hide (configure() has returned `undefined`)
+        // configure() returned an `undefined` -> hide the extension
         if (extensionConfig.configure && overrides === undefined) {
           continue;
         }
@@ -54,6 +65,30 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           title: overrides?.title || extensionConfig.title,
           description: overrides?.description || extensionConfig.description,
           path: overrides?.path || extensionConfig.path,
+        };
+
+        extensions.push(extension);
+      }
+
+      // ELEMENT
+      if (isPluginExtensionComponentConfig(extensionConfig)) {
+        // Run the configure() function with the current context, and apply the ovverides
+        const overrides = getComponentExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
+
+        // configure() returned an `undefined` -> hide the extension
+        if (extensionConfig.configure && overrides === undefined) {
+          continue;
+        }
+
+        const extension: PluginExtensionComponent = {
+          id: generateExtensionId(registryItem.pluginId, extensionConfig),
+          type: PluginExtensionTypes.component,
+          pluginId: registryItem.pluginId,
+
+          // Configurable properties
+          title: overrides?.title || extensionConfig.title,
+          description: overrides?.description || extensionConfig.description,
+          component: overrides?.component || extensionConfig.component,
         };
 
         extensions.push(extension);
@@ -99,6 +134,49 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       title,
       description,
       path,
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      logWarning(error.message);
+    }
+
+    // If there is an error, we hide the extension
+    // (This seems to be safest option in case the extension is doing something wrong.)
+    return undefined;
+  }
+}
+
+function getComponentExtensionOverrides(pluginId: string, config: PluginExtensionComponentConfig, context?: object) {
+  try {
+    const overrides = config.configure?.(context);
+
+    // Hiding the extension
+    if (overrides === undefined) {
+      return undefined;
+    }
+
+    let { title = config.title, description = config.description, component = config.component, ...rest } = overrides;
+
+    assertIsNotPromise(
+      overrides,
+      `The configure() function for "${config.title}" returned a promise, skipping updates.`
+    );
+
+    component && assertComponentIsValid(component);
+    assertStringProps({ title, description }, ['title', 'description']);
+
+    if (Object.keys(rest).length > 0) {
+      throw new Error(
+        `Invalid extension "${config.title}". Trying to override not-allowed properties: ${Object.keys(rest).join(
+          ', '
+        )}`
+      );
+    }
+
+    return {
+      title,
+      description,
+      component,
     };
   } catch (error) {
     if (error instanceof Error) {

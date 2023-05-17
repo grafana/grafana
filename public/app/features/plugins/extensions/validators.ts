@@ -1,4 +1,9 @@
-import type { PluginExtension, PluginExtensionLink, PluginExtensionLinkConfig } from '@grafana/data';
+import type {
+  PluginExtension,
+  PluginExtensionConfig,
+  PluginExtensionLink,
+  PluginExtensionLinkConfig,
+} from '@grafana/data';
 import { isPluginExtensionLink } from '@grafana/runtime';
 
 import { isPluginExtensionLinkConfig, logWarning } from './utils';
@@ -29,7 +34,12 @@ export function assertLinkPathIsValid(pluginId: string, path: string) {
   }
 }
 
-export function assertExtensionPointIdIsValid(extension: PluginExtensionLinkConfig) {
+export function assertComponentIsValid(component: React.ComponentType) {
+  // TODO: somehow assert if it is a valid React node?
+  return true;
+}
+
+export function assertExtensionPointIdIsValid(extension: PluginExtensionConfig) {
   if (!isExtensionPointIdValid(extension)) {
     throw new Error(
       `Invalid extension "${extension.title}". The extensionPointId should start with either "grafana/" or "plugins/" (currently: "${extension.extensionPointId}"). Skipping the extension.`
@@ -37,7 +47,7 @@ export function assertExtensionPointIdIsValid(extension: PluginExtensionLinkConf
   }
 }
 
-export function assertConfigureIsValid(extension: PluginExtensionLinkConfig) {
+export function assertConfigureIsValid(extension: PluginExtensionConfig) {
   if (!isConfigureFnValid(extension)) {
     throw new Error(
       `Invalid extension "${extension.title}". The "configure" property must be a function. Skipping the extension.`
@@ -65,13 +75,13 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isExtensionPointIdValid(extension: PluginExtensionLinkConfig) {
+export function isExtensionPointIdValid(extension: PluginExtensionConfig) {
   return Boolean(
     extension.extensionPointId?.startsWith('grafana/') || extension.extensionPointId?.startsWith('plugins/')
   );
 }
 
-export function isConfigureFnValid(extension: PluginExtensionLinkConfig) {
+export function isConfigureFnValid(extension: PluginExtensionConfig) {
   return extension.configure ? typeof extension.configure === 'function' : true;
 }
 
@@ -79,7 +89,7 @@ export function isStringPropValid(prop: unknown) {
   return typeof prop === 'string' && prop.length > 0;
 }
 
-export function isPluginExtensionConfigValid(pluginId: string, extension: PluginExtensionLinkConfig): boolean {
+export function isPluginExtensionConfigValid(pluginId: string, extension: PluginExtensionConfig): boolean {
   try {
     assertStringProps(extension, ['title', 'description', 'extensionPointId']);
     assertExtensionPointIdIsValid(extension);

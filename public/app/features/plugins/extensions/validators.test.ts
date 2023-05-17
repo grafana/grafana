@@ -84,7 +84,6 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          path: '...',
           extensionPointId: 'wrong-extension-point-id',
         });
       }).toThrowError();
@@ -96,7 +95,6 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          path: '...',
           extensionPointId: 'grafana/some-page/extension-point-a',
         });
 
@@ -104,7 +102,6 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          path: '...',
           extensionPointId: 'plugins/my-super-plugin/some-page/extension-point-a',
         });
       }).not.toThrowError();
