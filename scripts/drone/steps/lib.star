@@ -8,7 +8,7 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.34"
+grabpl_version = "v3.0.35"
 build_image = "grafana/build-container:1.7.4"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -1153,6 +1153,15 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         cmd = "./bin/build artifacts docker publish-enterprise2 --dockerhub-repo {}".format(
             docker_repo,
         )
+
+    if ver_mode == "pr":
+        environment = {
+            "DOCKER_USER": from_secret("docker_username_pr"),
+            "DOCKER_PASSWORD": from_secret("docker_password_pr"),
+            "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
+            "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+            "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
+        }
 
     step = {
         "name": "publish-images-{}".format(name),
