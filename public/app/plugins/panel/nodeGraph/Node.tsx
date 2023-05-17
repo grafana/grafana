@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
 
   text: css`
     fill: ${theme.colors.text.primary};
+    pointer-events: none;
   `,
 
   titleText: css`
@@ -56,6 +57,12 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     & span {
       background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.8).toHex8String()};
     }
+  `,
+
+  clickTarget: css`
+    fill: none;
+    stroke: none;
+    pointer-events: fill;
   `,
 });
 
@@ -106,11 +113,7 @@ export const Node = memo(function Node(props: {
         onClick={(event) => {
           onClick(event, node);
         }}
-        style={{
-          fill: 'none',
-          stroke: 'none',
-          pointerEvents: 'fill',
-        }}
+        className={styles.clickTarget}
         x={node.x - nodeR - 5}
         y={node.y - nodeR - 5}
         width={nodeR * 2 + 10}
