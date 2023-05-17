@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Collapse, TagList, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Modal, TagList, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { ObjectMatcher } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery, Labels } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
@@ -14,6 +15,7 @@ import { fetchAlertManagerConfig } from '../../../api/alertmanager';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
+import { normalizeMatchers } from '../../../utils/matchers';
 import { findMatchingRoutes } from '../../../utils/notification-policies';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
@@ -72,7 +74,7 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
   }, [AMConfig]);
 
   // create maps for routes to be get by id
-  const routesByIdMap: Map<string, RouteWithID> = rootRoute ? getRoutesByIdMap(rootRoute) : new Map();
+  const routesByIdMap: Map<string, RouteWithPath> = rootRoute ? getRoutesByIdMap(rootRoute) : new Map();
   // create map for receivers to be get by name
   const receiversByName =
     receivers?.reduce((map, receiver) => {
@@ -103,7 +105,15 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
               if (!route || !receiver) {
                 return null;
               }
-              return <NotificationRoute instances={instances} route={route} receiver={receiver} key={routeId} />;
+              return (
+                <NotificationRoute
+                  instances={instances}
+                  route={route}
+                  receiver={receiver}
+                  key={routeId}
+                  routesByIdMap={routesByIdMap}
+                />
+              );
             })}
           </Stack>
         </>
@@ -117,8 +127,93 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
   );
 }
 
-function NotificationRouteHeader({ route, receiver }: { route: RouteWithID; receiver: Receiver }) {
+// function to convert ObjectMatchers to a array of strings
+const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
+  return matchers.map((matcher) => {
+    const [name, operator, value] = matcher;
+    return `${name}${operator}${value}`;
+  });
+};
+
+function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithID }) {
   const styles = useStyles2(getStyles);
+  const routePathIds = routesByIdMap.get(route.id)?.path ?? [];
+  const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
+
+  return (
+    <div className={styles.policyPath}>
+      <div className={styles.defaultPolicy}>Default policy</div>
+      {routePathObjects.map((route_, index) => {
+        return (
+          <div key={route_.id}>
+            <div className={styles.policyInPath(index)}>
+              <Matchers matchers={route_.object_matchers ?? []} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function NotificationRouteDetailsModal({
+  onClose,
+  route,
+  receiver,
+  routesByIdMap,
+}: {
+  onClose: () => void;
+  route: RouteWithID;
+  receiver: Receiver;
+  routesByIdMap: Map<string, RouteWithPath>;
+}) {
+  const styles = useStyles2(getStyles);
+  const matchers = normalizeMatchers(route);
+  const stringMatchers = objectMatchersToString(matchers);
+
+  return (
+    <Modal
+      className={styles.detailsModal}
+      isOpen={true}
+      title={<h3>Alert routing details</h3>}
+      onDismiss={onClose}
+      onClickBackdrop={onClose}
+    >
+      <Stack gap={1} direction="column">
+        <div className={styles.textMuted}>Preview how this alert will be routed while firing.</div>
+        <div>Policy Routing</div>
+        <div className={styles.textMuted}>Matching labels for this policy</div>
+        <TagList tags={stringMatchers} className={styles.tagsInDetails} />
+        <div className={styles.separator} />
+        <div className={styles.textMuted}>Notification policy path</div>
+        <PolicyPath route={route} routesByIdMap={routesByIdMap} />
+        Contact point:
+        <span className={styles.textMuted}>{receiver.name}</span>
+        <div className={styles.button}>
+          <Button variant="primary" type="button" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </Stack>
+    </Modal>
+  );
+}
+
+function NotificationRouteHeader({
+  route,
+  receiver,
+  routesByIdMap,
+}: {
+  route: RouteWithID;
+  receiver: Receiver;
+  routesByIdMap: Map<string, RouteWithPath>;
+}) {
+  const styles = useStyles2(getStyles);
+  const [showDetails, setShowDetails] = useState(false);
+
+  const onClickDetails = () => {
+    setShowDetails(true);
+  };
 
   return (
     <div className={styles.routeHeader}>
@@ -128,6 +223,17 @@ function NotificationRouteHeader({ route, receiver }: { route: RouteWithID; rece
       <div>
         <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
       </div>
+      <Button type="button" onClick={onClickDetails} variant="secondary">
+        See details
+      </Button>
+      {showDetails && (
+        <NotificationRouteDetailsModal
+          onClose={() => setShowDetails(false)}
+          route={route}
+          receiver={receiver}
+          routesByIdMap={routesByIdMap}
+        />
+      )}
     </div>
   );
 }
@@ -135,15 +241,16 @@ interface NotificationRouteProps {
   route: RouteWithID;
   receiver: Receiver;
   instances: Labels[];
+  routesByIdMap: Map<string, RouteWithPath>;
 }
 
-function NotificationRoute({ route, instances, receiver }: NotificationRouteProps) {
+function NotificationRoute({ route, instances, receiver, routesByIdMap }: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
 
   return (
     <Collapse
-      label={<NotificationRouteHeader route={route} receiver={receiver} />}
+      label={<NotificationRouteHeader route={route} receiver={receiver} routesByIdMap={routesByIdMap} />}
       className={styles.collapsableSection}
       onToggle={setExpandRoute}
       collapsible={true}
@@ -163,17 +270,19 @@ function NotificationRoute({ route, instances, receiver }: NotificationRouteProp
   );
 }
 
-// we traverse the whole tree and we create a map with <id , RouteWithID>
-function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithID> {
-  const map = new Map<string, RouteWithID>();
+interface RouteWithPath extends RouteWithID {
+  path: string[]; // path from root route to this route
+}
+// we traverse the whole tree and we create a map with <id , RouteWithPath>
+function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithPath> {
+  const map = new Map<string, RouteWithPath>();
 
-  function addRoutesToMap(route: RouteWithID) {
-    map.set(route.id, route);
-    route.routes?.forEach((r) => addRoutesToMap(r));
+  function addRoutesToMap(route: RouteWithID, path: string[] = []) {
+    map.set(route.id, { ...route, path: path });
+    route.routes?.forEach((r) => addRoutesToMap(r, [...path, route.id]));
   }
-
-  addRoutesToMap(rootRoute);
-
+  addRoutesToMap(rootRoute, []);
+  console.log('map', map);
   return map;
 }
 
@@ -239,4 +348,46 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-left: -20px;
     }
   `,
+  detailsModal: css`
+    max-width: 560px;
+  `,
+  button: css`
+    margin-top: ${theme.spacing(2)};
+    justify-content: flex-end;
+    display: flex;
+  `,
+  separator: css`
+    width: 100%;
+    height: 1px;
+    background-color: ${theme.colors.secondary.main};
+  `,
+  tagsInDetails: css`
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: ${theme.spacing(2)};
+  `,
+  policyPath: css`
+    display: flex;
+    flex-direction: column;
+    margin-top: ${theme.spacing(2)};
+  `,
+  policyPathItemMatchers: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(1)};
+  `,
+  defaultPolicy: css`
+    border: solid 1px ${theme.colors.border.weak};
+    padding: ${theme.spacing(1)};
+    width: fit-content;
+  `,
+  policyInPath: (index = 0) => css`
+    margin-left: ${30 + index * 30}px;
+    padding: ${theme.spacing(1)};
+    margin-top: ${theme.spacing(1)};
+    border: solid 1px ${theme.colors.border.weak};
+    width: fit-content;
+}
+`,
 });
