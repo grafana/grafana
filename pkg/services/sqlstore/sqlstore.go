@@ -406,6 +406,9 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		// If not, create a new engine with a compatible connection string.
 		if ss.dbCfg.Type == migrator.MySQL {
 			engine, err = ss.verifyConnectionStringSystemVars(engine, connectionString)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
