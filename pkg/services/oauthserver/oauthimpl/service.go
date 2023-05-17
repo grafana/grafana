@@ -160,7 +160,6 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfAccessEnabled, impersonationEn
 	}
 
 	// If the app has impersonate permissions, it can use the JWT bearer grant type
-	// TODO MVP: with the registration form change, check the enabled boolean
 	if impersonationEnabled {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))
 	}
