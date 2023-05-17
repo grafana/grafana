@@ -402,10 +402,10 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		if err != nil {
 			return err
 		}
-		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system vars for transaction isolation.
+		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
 		// If not, create a new engine with a compatible connection string.
 		if ss.dbCfg.Type == migrator.MySQL {
-			engine, err = ss.verifyConnectionStringSystemVars(engine, connectionString)
+			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connectionString)
 			if err != nil {
 				return err
 			}
@@ -431,7 +431,9 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	return nil
 }
 
-func (ss *SQLStore) verifyConnectionStringSystemVars(engine *xorm.Engine, connectionString string) (*xorm.Engine, error) {
+// The transaction_isolation system variable isn't compatible with MySQL < 5.7.20 or MariaDB. If we get an error saying this
+// system variable is unknown, then replace it with it's older version tx_isolation which is compatible with MySQL < 5.7.20 and MariaDB.
+func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine, connectionString string) (*xorm.Engine, error) {
 	var result string
 	_, err := engine.SQL("SELECT 1").Get(&result)
 
