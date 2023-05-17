@@ -11,10 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func MigrateEntityStore(
-	sql *sqlstore.SQLStore, // also db.DB
-	features featuremgmt.FeatureToggles) error {
-
+func MigrateEntityStore(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
 	if !features.IsEnabled(featuremgmt.FlagEntityStore) {
 		return nil
@@ -28,9 +25,9 @@ func MigrateEntityStore(
 		return nil
 	}
 
-	marker := "Initalize entity tables (v0)" // changing this key wipe the entity tables
+	marker := "Initalize entity tables (v0)" // changing this key wipe+rewrite everything
 	mg := migrator.NewMigrator(sql.GetEngine(), sql.Cfg, "entity")
-	mg.AddMigration(marker, &migrator.RawSQLMigration{}) // SELECT 0
+	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 	initEntityTables(mg)
 
 	// While this feature is under development, we can completly wipe and recreate
