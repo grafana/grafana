@@ -59,6 +59,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     panelData: {},
   };
 
+  // Most data sources triggers onChange and onRunQueries consecutively
+  // It means our reducer state is always one step behind when runQueries is invoked
+  // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
+  // No matter if we use query or getValues('queries') their state is always stale when we invoke runQueries
+  // As a workaround we use this ref which is updated immediately in onChange and used in runQueries
+  const queriesToPreviewRef = useRef<AlertQuery[]>([]);
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
@@ -73,8 +79,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, []);
 
   const runQueries = useCallback(() => {
-    runner.current.run(getValues('queries'));
-  }, [getValues]);
+    runner.current.run(queriesToPreviewRef.current);
+  }, []);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -154,6 +160,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
+      queriesToPreviewRef.current = updatedQueries;
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
       // check if we need to rewire expressions
