@@ -16,9 +16,9 @@ import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
-import { isTimeoutErrorResponse } from '../utils/logsVolumeResponse';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;

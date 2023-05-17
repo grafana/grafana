@@ -32,11 +32,11 @@ import {
 } from '../state/query';
 import { updateTimeRange } from '../state/time';
 import { LiveTailControls } from '../useLiveTailControls';
-import { LogsCrossFadeTransition } from '../utils/LogsCrossFadeTransition';
 import { getFieldLinksForExplore } from '../utils/links';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
+import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
