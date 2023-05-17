@@ -402,6 +402,9 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		if err != nil {
 			return err
 		}
+		// Verify we can connect with the current connection string's system vars for transaction isolation.
+		// If not, create a new engine with a compatible connection string.
+		engine, err = ss.verifyConnectionStringSystemVars(engine, connectionString)
 	}
 
 	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
@@ -421,6 +424,29 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 
 	ss.engine = engine
 	return nil
+}
+
+func (ss *SQLStore) verifyConnectionStringSystemVars(engine *xorm.Engine, connectionString string) (*xorm.Engine, error) {
+	var result string
+	_, err := engine.SQL("SELECT 1").Get(&result)
+
+	var mysqlError *mysql.MySQLError
+	if errors.As(err, &mysqlError) {
+		// if there was an error due to transaction isolation
+		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
+			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
+		} else if strings.Contains(mysqlError.Message, "Unknown system variable 'tx_isolation'") {
+			connectionString = strings.Replace(connectionString, "&tx_isolation", "&transaction_isolation", -1)
+		}
+
+		// recreate the xorm engine with connection string that has compatible system var for transaction isolation
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return engine, nil
 }
 
 // readConfig initializes the SQLStore from its configuration.
