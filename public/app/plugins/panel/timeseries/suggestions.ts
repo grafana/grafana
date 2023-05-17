@@ -8,7 +8,7 @@ import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation,
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -18,7 +18,7 @@ export class TimeSeriesSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<PanelOptions, GraphFieldConfig>({
+    const list = builder.getListAppender<Options, GraphFieldConfig>({
       name: SuggestionName.LineChart,
       pluginId: 'timeseries',
       options: {

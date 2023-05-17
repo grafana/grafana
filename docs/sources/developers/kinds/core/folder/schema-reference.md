@@ -74,7 +74,7 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 | Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
 |--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `additionalFields` | [object](#additionalfields)                                                      | **Yes**  |         | additionalFields is reserved for future use                                                                                                                                |
+| `additionalFields` | [object](#additionalfields)                                                      | No       |         | additionalFields is reserved for future use                                                                                                                                |
 | `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
 
 ### AdditionalFields
