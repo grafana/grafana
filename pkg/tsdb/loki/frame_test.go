@@ -83,10 +83,10 @@ func TestAdjustFrame(t *testing.T) {
 			require.Equal(t, "id", idField.Name)
 			require.Equal(t, data.FieldTypeString, idField.Type())
 			require.Equal(t, 4, idField.Len())
-			require.Equal(t, "1641092645000000006_a36f4e1b_A", idField.At(0))
-			require.Equal(t, "1641092705000000006_1d77c9ca_A", idField.At(1))
-			require.Equal(t, "1641092705000000006_1d77c9ca_1_A", idField.At(2))
-			require.Equal(t, "1641092765000000006_948c1a7d_A", idField.At(3))
+			require.Equal(t, "1641092645000000006_a36f4e1b", idField.At(0))
+			require.Equal(t, "1641092705000000006_1d77c9ca", idField.At(1))
+			require.Equal(t, "1641092705000000006_1d77c9ca_1", idField.At(2))
+			require.Equal(t, "1641092765000000006_948c1a7d", idField.At(3))
 		}
 
 		frame := makeFrame()

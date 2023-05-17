@@ -188,6 +188,17 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     ) as Promise<MetricDescriptor[]>;
   }
 
+  async filterMetricsByType(projectName: string, filter: string): Promise<MetricDescriptor[]> {
+    if (!projectName) {
+      return [];
+    }
+
+    return this.getResource(
+      `metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`,
+      { filter: `metric.type : "${filter}"` }
+    );
+  }
+
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
     return this.getResource(`services/v3/projects/${this.templateSrv.replace(projectName)}/services?pageSize=1000`);
   }

@@ -77,7 +77,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: ['db', 'app', 'lb'] },
       { name: 'title', values: ['db', 'app', 'lb'] },
       { name: 'mainstat', values: [1000, 2000, NaN] },
-      { name: 'secondarystat', values: [0.17, 0.33, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0.8, 0.25, 1] },
       { name: 'arc__failed', values: [0.2, 0.75, 0] },
     ]);
@@ -86,7 +86,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'source', values: ['app', 'lb'] },
       { name: 'target', values: ['db', 'app'] },
       { name: 'mainstat', values: [1000, 2000] },
-      { name: 'secondarystat', values: [0.17, 0.33] },
+      { name: 'secondarystat', values: [10, 20] },
     ]);
   });
 
@@ -109,7 +109,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: ['db', 'app', 'lb'] },
       { name: 'title', values: ['db', 'app', 'lb'] },
       { name: 'mainstat', values: [1000, 2000, NaN] },
-      { name: 'secondarystat', values: [0.17, 0.33, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0, 0, 1] },
       { name: 'arc__failed', values: [1, 1, 0] },
     ]);

@@ -102,7 +102,7 @@ composableKinds: PanelCfg: {
 							// Controls tick alignment when not calculating from data
 							layout?: ui.HeatmapCellLayout
 						} @cuetsy(kind="interface")
-						PanelOptions: {
+						Options: {
 							// Controls if the heatmap should be calculated from data
 							calculate?: bool | *false
 							// Calculation options for the heatmap
@@ -153,7 +153,7 @@ composableKinds: PanelCfg: {
 								color: "rgba(255,0,255,0.7)"
 							}
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: {
+						FieldConfig: {
 							ui.HideableFieldConfig
 
 							scaleDistribution?: ui.ScaleDistributionConfig

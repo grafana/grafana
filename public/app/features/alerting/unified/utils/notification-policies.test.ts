@@ -1,6 +1,8 @@
-import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { findMatchingRoutes } from './notification-policies';
+import { findMatchingRoutes, normalizeRoute } from './notification-policies';
+
+import 'core-js/stable/structured-clone';
 
 const CATCH_ALL_ROUTE: Route = {
   receiver: 'ALL',
@@ -11,6 +13,7 @@ describe('findMatchingRoutes', () => {
   const policies: Route = {
     receiver: 'ROOT',
     group_by: ['grafana_folder'],
+    object_matchers: [],
     routes: [
       {
         receiver: 'A',
@@ -115,5 +118,42 @@ describe('findMatchingRoutes', () => {
     const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
     expect(matches).toHaveLength(1);
     expect(matches[0]).toHaveProperty('receiver', 'PARENT');
+  });
+});
+
+describe('normalizeRoute', () => {
+  it('should map matchers property to object_matchers', function () {
+    const route: RouteWithID = {
+      id: '1',
+      matchers: ['foo=bar', 'foo=~ba.*'],
+    };
+
+    const normalized = normalizeRoute(route);
+
+    expect(normalized.object_matchers).toHaveLength(2);
+    expect(normalized.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'bar']);
+    expect(normalized.object_matchers).toContainEqual(['foo', MatcherOperator.regex, 'ba.*']);
+    expect(normalized).not.toHaveProperty('matchers');
+  });
+
+  it('should map match and match_re properties to object_matchers', function () {
+    const route: RouteWithID = {
+      id: '1',
+      match: {
+        foo: 'bar',
+      },
+      match_re: {
+        team: 'op.*',
+      },
+    };
+
+    const normalized = normalizeRoute(route);
+
+    expect(normalized.object_matchers).toHaveLength(2);
+    expect(normalized.object_matchers).toContainEqual(['foo', MatcherOperator.equal, 'bar']);
+    expect(normalized.object_matchers).toContainEqual(['team', MatcherOperator.regex, 'op.*']);
+
+    expect(normalized).not.toHaveProperty('match');
+    expect(normalized).not.toHaveProperty('match_re');
   });
 });
