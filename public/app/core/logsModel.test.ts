@@ -354,6 +354,48 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('given one series with limit as custom meta property should return correct limit', () => {
+    const series: DataFrame[] = [
+      new MutableDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+        ],
+        meta: {
+          custom: {
+            limit: 1000,
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![1]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `1000 (2 returned)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
   it('given one series with labels-field should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
