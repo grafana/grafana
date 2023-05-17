@@ -11,7 +11,6 @@ import { dispatch } from 'app/store/store';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType } from '../../../types/rule-form';
-import { useRulesAccess } from '../../../utils/accessControlHooks';
 
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
 import { MimirFlavoredType } from './MimirOrLokiAlert';
