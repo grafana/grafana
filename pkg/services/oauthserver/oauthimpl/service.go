@@ -344,6 +344,9 @@ func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserve
 	selfPermissions := []ac.Permission{}
 	impersonatePermissions := []ac.Permission{}
 
+	if registration.Self.Enabled {
+		selfPermissions = append(selfPermissions, registration.Self.Permissions...)
+	}
 	if registration.Impersonation.Enabled {
 		requiredForToken := []ac.Permission{
 			{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf},
@@ -352,15 +355,8 @@ func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserve
 		if registration.Impersonation.Groups {
 			requiredForToken = append(requiredForToken, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
 		}
-		impersonatePermissions = registration.Impersonation.Permissions
-		impersonatePermissions = append(impersonatePermissions, requiredForToken...)
-		selfPermissions = append(selfPermissions, ac.Permission{
-			Action: ac.ActionUsersImpersonate,
-			Scope:  ac.ScopeUsersAll,
-		})
-	}
-	if registration.Self.Enabled {
-		selfPermissions = append(selfPermissions, registration.Self.Permissions...)
+		impersonatePermissions = append(requiredForToken, registration.Impersonation.Permissions...)
+		selfPermissions = append(selfPermissions, ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll})
 	}
 	return selfPermissions, impersonatePermissions
 }
