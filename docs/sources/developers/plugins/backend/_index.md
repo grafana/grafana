@@ -54,14 +54,14 @@ Grafana's backend plugin system exposes several key capabilities, or building bl
 - Health checks
 - Collect metrics
 
-### Query data
+#### Query data
 
 The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/" >}}), [Explore]({{< relref "../../../explore/" >}}) or [Grafana Alerting]({{< relref "../../../alerting/" >}}). The response contains [data frames]({{< relref "../data-frames/" >}}), which are used to visualize metrics, logs, and traces. 
 
 {{% admonition type="note" %}} Backend data source plugins are required to implement the query data capability.{{%
 /admonition %}}
 
-### Resources
+#### Resources
 
 The resources capability allows a backend plugin to handle custom HTTP requests sent to the Grafana HTTP API and respond with custom HTTP responses. Here, the request and response formats can vary. For example, you can use JSON, plain text, HTML or static resources such as images and files, and so on.
 
@@ -79,13 +79,13 @@ Examples of use cases for implementing resources:
 - Extend Grafana's HTTP API with custom resources, methods and actions.
 - Use [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding) to return large data responses in chunks or to enable certain streaming capabilities.
 
-### Health checks
+#### Health checks
 
 The health checks capability allows a backend plugin to return the status of the plugin. For data source backend plugins, the health check is automatically called when a user edits a data source by selecting _Save & Test_ in the UI. 
 
 A plugin's health check endpoint is exposed in the Grafana HTTP API and allows external systems to continuously poll the plugin's health to make sure that it's running and working as expected.
 
-### Collect metrics
+#### Collect metrics
 
 A backend plugin can collect and return runtime, process and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you’re using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in. This SDK  gives you Go runtime metrics and process metrics out of the box. You can use the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) to add custom metrics to instrument your backend plugin.
 

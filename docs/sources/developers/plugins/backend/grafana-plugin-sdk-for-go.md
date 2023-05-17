@@ -12,7 +12,7 @@ title: Grafana Plugin SDK for Go
 
 # Grafana plugin SDK for Go
 
-The [Grafana plugin SDK for God](https://pkg.go.dev/mod/github.com/grafana/grafana-plugin-sdk-go?tab=overview) is a [Go](https://golang.org/) module that provides a set of [packages](https://pkg.go.dev/mod/github.com/grafana/grafana-plugin-sdk-go?tab=packages) that you can use to implement a backend plugin.
+The [Grafana plugin SDK for Go](https://pkg.go.dev/mod/github.com/grafana/grafana-plugin-sdk-go?tab=overview) is a [Go](https://golang.org/) module that provides a set of [packages](https://pkg.go.dev/mod/github.com/grafana/grafana-plugin-sdk-go?tab=packages) that you can use to implement a backend plugin.
 
 The plugin SDK provides a high-level framework with APIs, utilities, and tooling. By using the SDK, you can avoid the need to learn the details of the [plugin protocol]({{< relref "plugin-protocol/" >}}) and RPC communication protocol, so you don't have to manage either one.
 
