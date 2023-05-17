@@ -34,9 +34,10 @@ export function assertLinkPathIsValid(pluginId: string, path: string) {
   }
 }
 
-export function assertComponentIsValid(component: React.ComponentType) {
-  // TODO: somehow assert if it is a valid React node?
-  return true;
+export function assertIsReactComponent(component: React.ComponentType) {
+  if (!isReactComponent(component)) {
+    throw new Error(`Invalid component extension, the "component" property needs to be a valid React component.`);
+  }
 }
 
 export function assertExtensionPointIdIsValid(extension: PluginExtensionConfig) {
@@ -120,4 +121,10 @@ export function isPromise(value: unknown): value is Promise<unknown> {
   return (
     value instanceof Promise || (typeof value === 'object' && value !== null && 'then' in value && 'catch' in value)
   );
+}
+
+export function isReactComponent(component: unknown): component is React.ComponentType {
+  // We currently don't have any strict runtime-checking for this.
+  // (The main reason is that we don't want to start depending on React implementation details.)
+  return typeof component === 'function';
 }

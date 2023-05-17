@@ -17,7 +17,7 @@ import {
   isPluginExtensionComponentConfig,
 } from './utils';
 import {
-  assertComponentIsValid,
+  assertIsReactComponent,
   assertIsNotPromise,
   assertLinkPathIsValid,
   assertStringProps,
@@ -162,7 +162,7 @@ function getComponentExtensionOverrides(pluginId: string, config: PluginExtensio
       `The configure() function for "${config.title}" returned a promise, skipping updates.`
     );
 
-    component && assertComponentIsValid(component);
+    component && assertIsReactComponent(component);
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
