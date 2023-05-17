@@ -16,8 +16,3 @@ export type DataSourcesRoutes = {
 };
 
 export type DataSourceTestStatus = 'success' | 'warning' | 'error';
-
-export type DataSourceInfo = {
-  dataSourcePluginName: string;
-  alertingSupported: boolean;
-};

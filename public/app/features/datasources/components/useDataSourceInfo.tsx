@@ -3,7 +3,10 @@ import React from 'react';
 import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 
-import { DataSourceInfo } from '../types';
+type DataSourceInfo = {
+  dataSourcePluginName: string;
+  alertingSupported: boolean;
+};
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
   const info: PageInfoItem[] = [];
