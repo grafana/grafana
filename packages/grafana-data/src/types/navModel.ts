@@ -52,7 +52,7 @@ export interface NavModel {
   node: NavModelItem;
 }
 
-export type NavIndex = { [s: string]: NavModelItem | undefined };
+export type NavIndex = { [s: string]: NavModelItem };
 
 export enum PageLayoutType {
   Standard,
