@@ -440,4 +440,4 @@ replace github.com/lib/pq => github.com/lib/pq v1.10.6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
-replace github.com/ory/fosite => github.com/mgyongyosi/fosite v0.0.0-20230508151108-6e4870d272e3
+replace github.com/ory/fosite => github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f

@@ -1345,12 +1345,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0 h1:jELbsqee5kRz9vD1hZeP8+984xMZDU/M6uGv0RhOR34=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
-github.com/grafana/kindsys v0.0.0-20230323180930-c2a9ced5c751 h1:X5jwaMcpUMQ+xv7fKhs9U+oBxfo2x+x8GpHWybDSgk0=
-github.com/grafana/kindsys v0.0.0-20230323180930-c2a9ced5c751/go.mod h1:213a3clTiegHfheYcLPLeEyHv/azK/fAF67OEbzuLzw=
-github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a h1:i2YhC6eTyDp+7Ftv5c6VZDUQskmKX4oIPGf38qfiZiU=
-github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
-github.com/grafana/kindsys v0.0.0-20230508172648-19fc432f045a h1:L8Qph5iUyVnLGinQzPmtJYUtPDG4TyT6vGDFT9EdCTU=
-github.com/grafana/kindsys v0.0.0-20230508172648-19fc432f045a/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/kindsys v0.0.0-20230508175818-7ad73516220b h1:x3gw5zsWZ2vxQ0GYucB2PFQ6eISAoWkba5MrQd8ZK0E=
 github.com/grafana/kindsys v0.0.0-20230508175818-7ad73516220b/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 h1:bBzCezZNRyYlJpXTkyZdY4fpPxHZUdyeyRWzhtw/P6I=
@@ -1802,8 +1796,6 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5
 github.com/matttproud/golang_protobuf_extensions v1.0.4 h1:mmDVorXM7PCGKw94cs5zkfA9PSy5pEvNWRP0ET0TIVo=
 github.com/matttproud/golang_protobuf_extensions v1.0.4/go.mod h1:BSXmuO+STAnVfrANrmjBb36TMTDstsz7MSK+HVaYKv4=
 github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
-github.com/mgyongyosi/fosite v0.0.0-20230508151108-6e4870d272e3 h1:DuTGiP1Mai0NUd8DNSTq8bDiZK4zkVTElWJBbZOKah4=
-github.com/mgyongyosi/fosite v0.0.0-20230508151108-6e4870d272e3/go.mod h1:N0WZtyPBAuXedTpwzbKl4tSYU8wpjlMQoxnKcL2m8dU=
 github.com/microcosm-cc/bluemonday v1.0.1/go.mod h1:hsXNsILzKxV+sX77C5b8FSuKF00vh2OMYv+xgHpAMF4=
 github.com/microcosm-cc/bluemonday v1.0.2/go.mod h1:iVP4YcDBq+n/5fb23BhYFvIMq/leAFZyRl6bYmGDlGc=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
@@ -1979,6 +1971,8 @@ github.com/ory/analytics-go/v4 v4.0.0/go.mod h1:FMx9cLRD9xN+XevPvZ5FDMfignpmcqPP
 github.com/ory/dockertest v3.3.5+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnhNrne+V0E6LAcBILJdPs=
 github.com/ory/dockertest/v3 v3.5.4/go.mod h1:J8ZUbNB2FOhm1cFZW9xBpDsODqsSWcyYgtJYVPcnF70=
 github.com/ory/dockertest/v3 v3.6.3/go.mod h1:EFLcVUOl8qCwp9NyDAcCDtq/QviLtYswW/VbWzUnTNE=
+github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f h1:OFA3y3TJ2qsBXCBMXUNvTzHNBS8/kXdk4cHpJGzBKO4=
+github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f/go.mod h1:N0WZtyPBAuXedTpwzbKl4tSYU8wpjlMQoxnKcL2m8dU=
 github.com/ory/go-acc v0.0.0-20181118080137-ddc355013f90/go.mod h1:sxnvPCxChFuSmTJGj8FdMupeq1BezCiEpDjTUXQ4hf4=
 github.com/ory/go-acc v0.2.6 h1:YfI+L9dxI7QCtWn2RbawqO0vXhiThdXu/RgizJBbaq0=
 github.com/ory/go-acc v0.2.6/go.mod h1:4Kb/UnPcT8qRAk3IAxta+hvVapdxTLWtrr7bFLlEgpw=
