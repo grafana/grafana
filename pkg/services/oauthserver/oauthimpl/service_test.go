@@ -138,14 +138,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 					return name == serviceName
 				}))
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					ok := client.ExternalServiceName == serviceName
-					ok = ok && client.ClientID != ""
-					ok = ok && client.Secret != ""
-					ok = ok && len(client.GrantTypes) == 0
-					ok = ok && len(client.PublicPem) > 0
-					ok = ok && client.ServiceAccountID == 0
-					ok = ok && len(client.ImpersonatePermissions) == 0
-					return ok
+					return client.ExternalServiceName == serviceName && client.ClientID != "" && client.Secret != "" &&
+						len(client.GrantTypes) == 0 && len(client.PublicPem) > 0 && client.ServiceAccountID == 0 &&
+						len(client.ImpersonatePermissions) == 0
 				}))
 			},
 		},
@@ -233,11 +228,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
-						return cmd.ServiceAccountID == sa1.Id &&
-							len(cmd.Permissions) == 1 &&
-							cmd.OrgID == int64(ac.GlobalOrgID) &&
-							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"} &&
-							cmd.ExternalServiceID == client1().ExternalServiceName
+						return cmd.ServiceAccountID == sa1.Id && cmd.ExternalServiceID == client1().ExternalServiceName &&
+							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"}
 					}))
 			},
 		},
@@ -246,7 +239,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
-				// Impersonation permission is given by default
+				// The service account needs to be created with a permission to impersonate users
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
@@ -260,24 +253,18 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
-				// Check that the service has no service account anymore
+				// Check that the external service impersonate permissions contains the default permissions required to populate the access token
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
 					impPerm := client.ImpersonatePermissions
-					ok := client.ExternalServiceName == serviceName && client.ServiceAccountID == sa1.Id &&
-						slices.Contains(impPerm, ac.Permission{Action: "dashboards:read", Scope: "dashboards:*"}) &&
+					return slices.Contains(impPerm, ac.Permission{Action: "dashboards:read", Scope: "dashboards:*"}) &&
 						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf}) &&
 						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf}) &&
 						slices.Contains(impPerm, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
-					return ok
-				}),
-				)
+				}))
+				// Check that despite no credential_grants the service account still has a permission to impersonate users
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
-						return cmd.ServiceAccountID == sa1.Id &&
-							len(cmd.Permissions) == 1 &&
-							cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll} &&
-							cmd.OrgID == int64(ac.GlobalOrgID) &&
-							cmd.ExternalServiceID == client1().ExternalServiceName
+						return len(cmd.Permissions) == 1 && cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}
 					}))
 			},
 		},
