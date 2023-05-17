@@ -62,6 +62,7 @@ role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+use_pkce = true
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -142,7 +143,26 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+use_pkce = true
 ```
+
+### PKCE
+
+> Available in Grafana v8.3 and later versions.
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which introduces
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> **Note:** Grafana v10.1 and newer use `use_pkce = true` by default,
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.gitlab]` section.
+
+```
+use_pkce = true
+```
+
+Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
 ### Configure automatic login
 

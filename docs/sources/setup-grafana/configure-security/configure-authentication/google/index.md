@@ -41,6 +41,7 @@ auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
 allowed_domains = mycompany.com mycompany.org
 hosted_domain = mycompany.com
+use_pkce = true
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -57,6 +58,18 @@ automatically signed up.
 
 You may specify a domain to be passed as `hd` query parameter accepted by Google's
 OAuth 2.0 authentication API. Refer to Google's OAuth [documentation](https://developers.google.com/identity/openid-connect/openid-connect#hd-param).
+
+### PKCE
+
+> Available in Grafana v8.3 and later versions.
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which introduces
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> **Note:** Grafana v10.1 and newer use `use_pkce = true` by default,
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.google]` section.
 
 ### Configure refresh token
 
