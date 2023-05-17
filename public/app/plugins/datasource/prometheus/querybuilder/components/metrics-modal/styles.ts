@@ -54,7 +54,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       overflow-y: scroll;
     `,
     resultsFooter: css`
-      padding-top: ${theme.spacing(1.5)};
+      margin-top: 24px;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
