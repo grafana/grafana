@@ -160,33 +160,44 @@ Use the `+` button to add a label, and the `x` button to remove a label.
 
 {{< figure src="/static/img/docs/prometheus/operations.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" >}}
 
-Select the `+ Operations` button to add operations to your query.
+Select the **+ Operations** button to add operations to your query.
 The query editor groups operations into related sections, and you can type while the operations dropdown is open to search and filter the list.
 
-The query editor displays a query's operations as boxes in the operations section.
-Each operation's header displays its name, and additional action buttons appear when you hover your cursor over the header:
+The following operations are available:
 
-| Button | Action                                                            |
+- Aggregations
+- Range functions
+- Functions
+- Binary operations
+- Trigonometric
+- Time functions
+
+<!-- The query editor displays a query's operations as boxes in the operations section.
+Each operation's header displays its name, and additional action buttons appear when you hover your cursor over the header: -->
+
+<!-- | Button | Action                                                            |
 | ------ | ----------------------------------------------------------------- |
 | `v`    | Replaces the operation with different operation of the same type. |
 | `info` | Opens the operation's description tooltip.                        |
-| `x`    | Removes the operation.                                            |
+| `x`    | Removes the operation.                                            | -->
 
-Some operations have additional parameters under the operation header.
-For details about each operation, use the `info` button to view the operation's description, or refer to the Prometheus documentation on [query functions](https://prometheus.io/docs/prometheus/latest/querying/functions/).
+All operations have function parameters under the operation header. For details about each operation refer to Prometheus documentation on [Functions](https://prometheus.io/docs/prometheus/latest/querying/functions/).
+
+<!-- For details about each operation, use the `info` button to view the operation's description, or refer to the Prometheus documentation on [query functions](https://prometheus.io/docs/prometheus/latest/querying/functions/). -->
 
 Some operations make sense only when used in a specific order.
 If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
-To re-order operations manually, drag the operation box by its name and drop it into the desired place.
+
+<!-- To re-order operations manually, drag the operation box by its name and drop it into the desired place. -->
 
 #### Hints
 
 {{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
 
 The query editor can detect which operations are most appropriate for some selected metrics.
-If it does, it displays a hint next to the `+ Operations` button.
+If it does, it displays a hint next to the **+ Operations** button.
 
-To add the operation to your query, click the `hint`.
+To add the operation to your query, click the **Hint**.
 
 ## Use Explain mode to understand queries
 
