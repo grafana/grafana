@@ -130,7 +130,7 @@ export function MetricSelect({
       return (
         <div
           {...props.innerProps}
-          className="metric-encyclopedia-open"
+          className={`${styles.customOptionWidth} metric-encyclopedia-open`}
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
@@ -265,6 +265,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   focus: css`
     background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+  `,
+  customOptionWidth: css`
+    min-width: 400px;
   `,
 });
 
