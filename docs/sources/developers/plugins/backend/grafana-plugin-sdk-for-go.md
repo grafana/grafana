@@ -18,7 +18,7 @@ The plugin SDK provides a high-level framework with APIs, utilities, and tooling
 
 ## Versioning
 
-The Grafana plugin Go SDK is still in development. It is based on the [plugin protocol]({{< relref "plugin-protocol/" >}}), which is  versioned separately and is considered stable. However, from time to time we might introduce breaking changes in the SDK. 
+The Grafana plugin Go SDK is still in development. It is based on the [plugin protocol]({{< relref "plugin-protocol/" >}}), which is versioned separately and is considered stable. However, from time to time we might introduce breaking changes in the SDK.
 
 When we update the plugin SDK, those plugins that use an older version of the SDK should still work with Grafana. However, these older plugins might lose out on new features and capabilities that we introduce in updated SDK versions.
 
