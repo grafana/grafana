@@ -362,11 +362,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "datasourceOnboarding",
-			Description: "Enable data source onboarding page",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
