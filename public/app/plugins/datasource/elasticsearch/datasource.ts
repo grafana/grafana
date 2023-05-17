@@ -631,6 +631,13 @@ export class ElasticDatasource
     return this.legacyQueryRunner.query(request);
   }
 
+  filterQuery(query: ElasticsearchQuery): boolean {
+    if (query.hide) {
+      return false;
+    }
+    return true;
+  }
+
   isMetadataField(fieldName: string) {
     return ELASTIC_META_FIELDS.includes(fieldName);
   }
