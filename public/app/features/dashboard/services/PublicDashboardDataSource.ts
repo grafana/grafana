@@ -162,21 +162,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
   // Try to get the browser location otherwise return blank
   getBrowserLocation(): string {
-    // Older browser does not the internationalization API
-    if (!window.Intl) {
-      return '';
-    }
-
-    const dateFormat = window.Intl.DateTimeFormat();
-    if (!dateFormat.resolvedOptions) {
-      return '';
-    }
-
-    const options = dateFormat.resolvedOptions();
-    if (!options.timeZone) {
-      return '';
-    }
-
-    return options.timeZone;
+    return window.Intl?.DateTimeFormat().resolvedOptions()?.timeZone || ''
+ 
   }
 }
