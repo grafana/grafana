@@ -111,6 +111,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   secondary = {
     main: `rgba(${this.whiteBase}, 0.10)`,
     shade: `rgba(${this.whiteBase}, 0.14)`,
+    transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
     border: `rgba(${this.whiteBase}, 0.08)`,
@@ -187,6 +188,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   secondary = {
     main: `rgba(${this.blackBase}, 0.08)`,
     shade: `rgba(${this.blackBase}, 0.15)`,
+    transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
     border: this.border.weak,

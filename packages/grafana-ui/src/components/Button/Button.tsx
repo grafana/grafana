@@ -1,7 +1,7 @@
 import { css, CSSObject, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
-import { colorManipulator, GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -236,7 +236,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       }),
 
       '&:hover': {
-        background: colorManipulator.alpha(color.main, theme.colors.action.hoverOpacity),
+        background: color.transparent,
         borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
       },
@@ -258,7 +258,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       },
 
       '&:hover': {
-        background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
+        background: color.transparent,
         textDecoration: 'none',
       },
     };
