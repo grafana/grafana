@@ -35,9 +35,8 @@ type staticIndexPattern struct {
 }
 
 func (ip *staticIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string, error) {
-	name := ip.indexName
-	if name != "" {
-		return []string{name}, nil
+	if ip.indexName != "" {
+		return []string{ip.indexName}, nil
 	} else {
 		return []string{}, nil
 	}
