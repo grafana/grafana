@@ -40,10 +40,14 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const fields = data.fields.map((f, idx) => {
     return { ...f, hovered: idx === columnIndex };
   });
-  // Put the traceID field in front.
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
-  const orderedVisibleFields = [traceIDField, ...visibleFields.filter((field) => traceIDField !== field)];
+  const orderedVisibleFields = [];
+  // Only include traceID if it's visible and put it in front.
+  if (visibleFields.filter((field) => traceIDField === field).length > 0) {
+    orderedVisibleFields.push(traceIDField);
+  }
+  orderedVisibleFields.push(...visibleFields.filter((field) => traceIDField !== field));
 
   if (orderedVisibleFields.length === 0) {
     return null;
