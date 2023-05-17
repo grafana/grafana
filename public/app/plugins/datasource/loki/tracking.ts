@@ -12,7 +12,7 @@ import {
 } from './datasource';
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate, parseToNodeNamesArray } from './queryUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -132,23 +132,7 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
   return false;
 };
 
-export function trackQuery(
-  response: DataQueryResponse,
-  request: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] },
-  startTime: Date
-): void {
-  // We only want to track usage for these specific apps
-  const { app, targets: queries } = request;
-
-  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
-    return;
-  }
-
-  // TODO: We need to re-think this for split queries
-  if (config.featureToggles.lokiQuerySplitting) {
-    return;
-  }
-
+const calculateTotalBytes = (response: DataQueryResponse): number => {
   let totalBytes = 0;
   for (const frame of response.data) {
     const byteKey = frame.meta?.custom?.lokiQueryStatKey;
@@ -157,6 +141,23 @@ export function trackQuery(
         frame.meta?.stats?.find((stat: { displayName: string }) => stat.displayName === byteKey)?.value ?? 0;
     }
   }
+  return totalBytes;
+};
+
+export function trackQuery(
+  response: DataQueryResponse,
+  request: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] },
+  startTime: Date,
+  extraPayload: Record<string, unknown> = {}
+): void {
+  // We only want to track usage for these specific apps
+  const { app, targets: queries } = request;
+
+  if (app === CoreApp.Dashboard || app === CoreApp.PanelViewer) {
+    return;
+  }
+
+  let totalBytes = calculateTotalBytes(response);
 
   for (const query of queries) {
     if (shouldNotReportBasedOnRefId(query.refId)) {
@@ -182,6 +183,27 @@ export function trackQuery(
       time_range_to: request?.range?.to?.toISOString(),
       time_taken: Date.now() - startTime.getTime(),
       bytes_processed: totalBytes,
+      ...extraPayload,
+    });
+  }
+}
+
+export function trackGroupedQueries(
+  response: DataQueryResponse,
+  requests: LokiGroupedRequest[],
+  startTime: Date
+): void {
+  const splittingPayload = {
+    splitting_groups: requests.length,
+    splitting_max_requests: Math.max(...requests.map(({ partition }) => partition.length)),
+    splitting_total_requests: requests.reduce((total, { partition }) => total + partition.length, 0),
+  };
+
+  for (const group of requests) {
+    const splitting_partition_size = group.partition.length;
+    trackQuery(response, group.request, startTime, {
+      ...splittingPayload,
+      splitting_partition_size,
     });
   }
 }
