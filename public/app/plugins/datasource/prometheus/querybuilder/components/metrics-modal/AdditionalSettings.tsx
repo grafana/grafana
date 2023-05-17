@@ -69,6 +69,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: flex;
       flex-direction: row;
       align-items: center;
+      padding: 4px 0;
     `,
     selectItemLabel: css`
       margin: 0 0 0 ${theme.spacing(1)};
