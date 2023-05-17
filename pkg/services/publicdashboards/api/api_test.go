@@ -613,7 +613,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 			url := fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid)
 			body := strings.NewReader(fmt.Sprintf(`{ "uid": "%s"}`, test.PublicDashboardUid))
 
-			response := callAPI(testServer, http.MethodPut, url, body, t)
+			response := callAPI(testServer, http.MethodPatch, url, body, t)
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			// check whether service called

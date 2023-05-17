@@ -688,12 +688,13 @@ func TestGetQueryDataResponse(t *testing.T) {
 			}}
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
+		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			OrgId:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboard{
-				IsEnabled:    true,
+			PublicDashboard: &PublicDashboardDTO{
+				IsEnabled:    &isEnabled,
 				DashboardUid: "NOTTHESAME",
 				OrgId:        9999999,
 				TimeSettings: timeSettings,
@@ -1199,11 +1200,12 @@ func TestBuildMetricRequest(t *testing.T) {
 		MaxDataPoints: int64(200),
 	}
 
+	isEnabled := true
 	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
 		OrgId:        publicDashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled:    true,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled:    &isEnabled,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
 			TimeSettings: timeSettings,
@@ -1213,11 +1215,12 @@ func TestBuildMetricRequest(t *testing.T) {
 	publicDashboardPD, err := service.Create(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
+	isEnabled = false
 	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
 		OrgId:        nonPublicDashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled:    false,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled:    &isEnabled,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
 			TimeSettings: defaultPubdashTimeSettings,

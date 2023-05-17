@@ -10,14 +10,14 @@ import (
 
 func TestValidatePublicDashboard(t *testing.T) {
 	t.Run("Returns no error when valid shareType value is received", func(t *testing.T) {
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{Share: EmailShareType}}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: EmailShareType}}
 
 		err := ValidatePublicDashboard(dto)
 		require.NoError(t, err)
 	})
 
 	t.Run("Returns error when invalid shareType value", func(t *testing.T) {
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{Share: "invalid"}}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: "invalid"}}
 
 		err := ValidatePublicDashboard(dto)
 		require.Error(t, err)
