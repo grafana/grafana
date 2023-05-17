@@ -82,7 +82,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 
 	logger.Info("Plugin Request Completed")
 
-	updateMetrics(pluginCtx.PluginID, endpoint, string(cfg.Target), elapsed, status, "none")
+	updateMetrics(pluginCtx.PluginID, endpoint, string(cfg.Target), elapsed, status, noneSource)
 	logDatasourceRequests(ctx, cfg, pluginCtx, endpoint, status, elapsed, timeBeforePluginRequest, err)
 
 	return err
