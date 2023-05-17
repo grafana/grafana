@@ -459,7 +459,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         entry,
         raw: message,
         labels: labels || {},
-        // Append refId to uid to make it unique across all series in a case when series contain duplicates
+        // prepend refId to uid to make it unique across all series in a case when series contain duplicates
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
       });
