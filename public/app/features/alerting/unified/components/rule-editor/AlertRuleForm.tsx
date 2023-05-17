@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
@@ -81,6 +81,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
+  const { type: ruleType } = useParams<{ type?: RuleFormType }>();
+
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -101,10 +103,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       queries: getDefaultQueries(),
       condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
-      type: RuleFormType.grafana,
+      type: ruleType || RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
     };
-  }, [existing, prefill, queryParams, evaluateEvery]);
+  }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',

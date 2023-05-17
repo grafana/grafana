@@ -236,6 +236,17 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/new/:type',
+    pageClass: 'page-alerting',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite],
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin] // Needs to include viewer because there may be Viewers with Edit permissions in folders
+    ),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+    ),
+  },
+  {
     path: '/alerting/:id/edit',
     pageClass: 'page-alerting',
     roles: evaluateAccess(

@@ -5,6 +5,7 @@ import { urlUtil } from '@grafana/data';
 import { Button, Dropdown, Icon, LinkButton, Menu, MenuItem } from '@grafana/ui';
 
 import { logInfo, LogMessages } from './Analytics';
+import { RuleFormType } from './types/rule-form';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { createUrl } from './utils/url';
 
@@ -17,7 +18,9 @@ export function CreateRuleButtons({}: Props) {
     <Menu>
       {(canCreateGrafanaRules || canCreateCloudRules) && (
         <MenuItem
-          url={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
+          url={urlUtil.renderUrl(`alerting/new/${RuleFormType.cloudRecording}`, {
+            returnTo: location.pathname + location.search,
+          })}
           label="New recording rule"
         />
       )}

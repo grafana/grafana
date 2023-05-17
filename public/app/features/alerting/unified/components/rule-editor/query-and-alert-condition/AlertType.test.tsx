@@ -2,8 +2,10 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 import { byText } from 'testing-library-selector';
 
+import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
@@ -28,7 +30,9 @@ function renderAlertTypeStep() {
 
   render(
     <Provider store={store}>
-      <AlertType editingExistingRule={false} />
+      <Router history={locationService.getHistory()}>
+        <AlertType editingExistingRule={false} />
+      </Router>
     </Provider>,
     { wrapper: FormProviderWrapper }
   );
