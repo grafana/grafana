@@ -1170,6 +1170,10 @@ export class ElasticDatasource
   };
 }
 
+/**
+ * Modifies dataframe and adds dataLinks from the config.
+ * Exported for tests.
+ */
 export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
   if (limit) {
     dataFrame.meta = {
