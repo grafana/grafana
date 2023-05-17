@@ -20,6 +20,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -28,8 +29,6 @@ var XormDriverMu sync.RWMutex
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
-
-var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -108,6 +107,7 @@ type DataSourceHandler struct {
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
+	cfg                    *setting.Cfg
 }
 
 type QueryJson struct {
@@ -127,13 +127,13 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		logger.Error("Query error", "err", err)
-		return ErrConnectionFailed
+		return fmt.Errorf("failed to connect to server - %s", e.cfg.UserFacingDefaultError)
 	}
 
 	return e.queryResultTransformer.TransformQueryError(logger, err)
 }
 
-func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+func NewQueryDataHandler(cfg *setting.Cfg, config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (*DataSourceHandler, error) {
 	log.Debug("Creating engine...")
 	defer func() {
@@ -147,6 +147,7 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		log:                    log,
 		dsInfo:                 config.DSInfo,
 		rowLimit:               config.RowLimit,
+		cfg:                    cfg,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -265,8 +266,8 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
-	if err != nil {
-		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
+	if true {
+		errAppendDebug("interpolation failed", fmt.Errorf("failed to connect to server - %s", e.cfg.UserFacingDefaultError), interpolatedQuery)
 		return
 	}
 

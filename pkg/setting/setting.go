@@ -524,6 +524,9 @@ type Cfg struct {
 
 	CustomResponseHeaders map[string]string
 
+	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
+	UserFacingDefaultError string
+
 	// DatabaseInstrumentQueries is used to decide if database queries
 	// should be instrumented with metrics, logs and traces.
 	// This needs to be on the global object since its used in the
@@ -1204,6 +1207,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+
+	logSection := iniFile.Section("log")
+	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	return nil
 }
