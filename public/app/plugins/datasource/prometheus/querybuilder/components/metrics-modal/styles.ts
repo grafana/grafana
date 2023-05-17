@@ -18,7 +18,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       flex-direction: row;
       flex-wrap: wrap;
       gap: ${theme.spacing(2)};
-      margin-bottom: ${theme.spacing(2)};
     `,
     inputItemFirst: css`
       flex-basis: 40%;
@@ -39,7 +38,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       padding: 0 0 4px 0;
     `,
     resultsData: css`
-      margin: 0 0 ${theme.spacing(1)} 0;
+      margin: 4px 0 ${theme.spacing(2)} 0;
     `,
     resultsDataCount: css`
       margin: 0;
@@ -63,7 +62,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       align-items: center;
       position: sticky;
     `,
-    grey: css`
+    currentlySelected: css`
       color: grey;
       opacity: 75%;
       font-size: 0.75rem;

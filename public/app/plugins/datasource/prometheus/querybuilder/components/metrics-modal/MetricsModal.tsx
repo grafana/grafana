@@ -284,7 +284,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         </div>
       </div>
       <div className={styles.resultsData}>
-        {query.metric && <i className={styles.grey}>Currently selected: {query.metric}</i>}
+        {query.metric && <i className={styles.currentlySelected}>Currently selected: {query.metric}</i>}
         {query.labels.length > 0 && (
           <p className={styles.resultsDataFiltered}>
             <Icon name="info-circle" size="sm" />
