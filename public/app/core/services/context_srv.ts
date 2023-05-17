@@ -63,8 +63,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
 }
 
 export class ContextSrv {
-  pinned: any;
-  version: any;
   user: User;
   isSignedIn: boolean;
   isGrafanaAdmin: boolean;

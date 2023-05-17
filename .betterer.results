@@ -1458,9 +1458,6 @@ exports[`better eslint`] = {
     "public/app/core/components/ForgottenPassword/ChangePassword.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/core/components/Login/LoginCtrl.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/core/components/Login/LoginForm.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
@@ -1474,89 +1471,82 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Do not use any type assertions.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Do not use any type assertions.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Do not use any type assertions.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Do not use any type assertions.", "19"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
-      [0, 0, 0, "Do not use any type assertions.", "21"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
-      [0, 0, 0, "Do not use any type assertions.", "23"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
-      [0, 0, 0, "Do not use any type assertions.", "25"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
-      [0, 0, 0, "Do not use any type assertions.", "27"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Do not use any type assertions.", "29"],
+      [0, 0, 0, "Do not use any type assertions.", "14"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
+      [0, 0, 0, "Do not use any type assertions.", "16"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
+      [0, 0, 0, "Do not use any type assertions.", "18"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
+      [0, 0, 0, "Do not use any type assertions.", "20"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
+      [0, 0, 0, "Do not use any type assertions.", "22"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
+      [0, 0, 0, "Do not use any type assertions.", "24"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "25"],
+      [0, 0, 0, "Do not use any type assertions.", "26"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
+      [0, 0, 0, "Do not use any type assertions.", "28"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
       [0, 0, 0, "Do not use any type assertions.", "31"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "33"],
-      [0, 0, 0, "Do not use any type assertions.", "34"],
+      [0, 0, 0, "Do not use any type assertions.", "33"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "34"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "35"],
       [0, 0, 0, "Do not use any type assertions.", "36"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "37"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "38"],
-      [0, 0, 0, "Do not use any type assertions.", "39"],
+      [0, 0, 0, "Do not use any type assertions.", "38"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "39"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "40"],
       [0, 0, 0, "Do not use any type assertions.", "41"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "42"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "43"],
-      [0, 0, 0, "Do not use any type assertions.", "44"],
+      [0, 0, 0, "Do not use any type assertions.", "43"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "44"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "45"],
       [0, 0, 0, "Do not use any type assertions.", "46"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "47"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "48"],
-      [0, 0, 0, "Do not use any type assertions.", "49"],
+      [0, 0, 0, "Do not use any type assertions.", "48"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
       [0, 0, 0, "Do not use any type assertions.", "51"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "52"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
-      [0, 0, 0, "Do not use any type assertions.", "54"],
+      [0, 0, 0, "Do not use any type assertions.", "53"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "54"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "55"],
       [0, 0, 0, "Do not use any type assertions.", "56"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "57"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "58"],
-      [0, 0, 0, "Do not use any type assertions.", "59"],
+      [0, 0, 0, "Do not use any type assertions.", "58"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "59"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "60"],
       [0, 0, 0, "Do not use any type assertions.", "61"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "62"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "63"],
-      [0, 0, 0, "Do not use any type assertions.", "64"],
+      [0, 0, 0, "Do not use any type assertions.", "63"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "64"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "65"],
       [0, 0, 0, "Do not use any type assertions.", "66"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "67"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "68"],
-      [0, 0, 0, "Do not use any type assertions.", "69"],
+      [0, 0, 0, "Do not use any type assertions.", "68"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "69"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "70"],
       [0, 0, 0, "Do not use any type assertions.", "71"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "72"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "73"],
-      [0, 0, 0, "Do not use any type assertions.", "74"],
+      [0, 0, 0, "Do not use any type assertions.", "73"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "74"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "75"],
       [0, 0, 0, "Do not use any type assertions.", "76"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "77"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "78"],
-      [0, 0, 0, "Do not use any type assertions.", "79"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "80"],
-      [0, 0, 0, "Do not use any type assertions.", "81"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "82"],
-      [0, 0, 0, "Do not use any type assertions.", "83"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "84"],
-      [0, 0, 0, "Do not use any type assertions.", "85"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "86"]
-    ],
-    "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "78"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "79"],
+      [0, 0, 0, "Do not use any type assertions.", "80"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "81"],
+      [0, 0, 0, "Do not use any type assertions.", "82"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "83"]
     ],
     "public/app/core/components/PasswordField/PasswordField.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -1577,40 +1567,25 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "public/app/core/components/TagFilter/TagOption.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/core/components/TimelineChart/TimelineChart.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/components/connectWithCleanUp.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/core/components/modals/AngularModalProxy.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/core/navigation/GrafanaRoute.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/core/navigation/__mocks__/routeProps.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/navigation/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/reducers/root.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/services/ResponseQueue.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/services/backend_srv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1633,10 +1608,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"]
     ],
     "public/app/core/services/context_srv.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/services/echo/backends/analytics/ApplicationInsightsBackend.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1681,9 +1654,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/core/utils/acl.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/core/utils/connectWithReduxStore.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1706,13 +1676,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/core/utils/fetch.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1728,16 +1693,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ],
     "public/app/core/utils/flatten.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
-    ],
-    "public/app/core/utils/kbn.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/utils/object.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2078,24 +2034,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
-    "public/app/features/canvas/elements/droneFront.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/features/canvas/elements/droneSide.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/features/canvas/elements/droneTop.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/features/canvas/elements/notFound.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/canvas/elements/windTurbine.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/canvas/runtime/element.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2192,9 +2132,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard/components/HelpWizard/randomizer.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/dashboard/components/Inspector/PanelInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2250,9 +2187,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
-    "public/app/features/dashboard/components/SaveDashboard/SaveDashboardErrorProxy.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -2263,12 +2197,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/useDashboardSave.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareExport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2287,12 +2219,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
-    ],
-    "public/app/features/dashboard/components/VersionHistory/__mocks__/dashboardHistoryMocks.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/features/dashboard/components/VersionHistory/useDashboardRestore.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2318,9 +2244,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/dashgrid/DashboardPanel.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard/dashgrid/LazyLoader.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/dashboard/dashgrid/PanelChromeAngular.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -2341,24 +2264,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
-    ],
-    "public/app/features/dashboard/services/DashboardSrv.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "public/app/features/dashboard/services/PublicDashboardDataSource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard/services/TimeSrv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/state/DashboardMigrator.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5075,10 +4988,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "9"],
       [0, 0, 0, "Do not use any type assertions.", "10"],
       [0, 0, 0, "Do not use any type assertions.", "11"]
-    ],
-    "public/app/plugins/panel/canvas/CanvasPanel.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/panel/canvas/InlineEdit.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
