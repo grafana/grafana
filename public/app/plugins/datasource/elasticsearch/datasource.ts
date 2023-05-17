@@ -690,7 +690,15 @@ export class ElasticDatasource
     const { enableElasticsearchBackendQuerying } = config.featureToggles;
     if (enableElasticsearchBackendQuerying) {
       const start = new Date();
-      return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
+      return super.query(request).pipe(
+        tap((response) => trackQuery(response, request, start)),
+        map((response) => {
+          response.data.forEach((dataFrame) => {
+            enhanceDataFrameWithDataLinks(dataFrame, this.dataLinks);
+          });
+          return response;
+        })
+      );
     }
     let payload = '';
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
@@ -1162,10 +1170,6 @@ export class ElasticDatasource
   };
 }
 
-/**
- * Modifies dataframe and adds dataLinks from the config.
- * Exported for tests.
- */
 export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
   if (limit) {
     dataFrame.meta = {
@@ -1173,7 +1177,10 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
       limit,
     };
   }
+  enhanceDataFrameWithDataLinks(dataFrame, dataLinks);
+}
 
+export function enhanceDataFrameWithDataLinks(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {
   if (!dataLinks.length) {
     return;
   }
