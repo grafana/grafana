@@ -62,7 +62,6 @@ type Client struct {
 	SelfPermissions []ac.Permission
 	// ImpersonatePermissions is the restriction set of permissions while impersonating
 	ImpersonatePermissions []ac.Permission
-	// Audiences is the list of targets the client is allowed to request access to
 
 	// SignedInUser refers to the current Service Account identity/user
 	SignedInUser      *user.SignedInUser
@@ -182,6 +181,5 @@ func (c *Client) IsPublic() bool {
 
 // GetAudience returns the allowed audience(s) for this client.
 func (c *Client) GetAudience() fosite.Arguments {
-	// TODO: This is to be inline with the PoC, check what we should really return here
 	return strings.Split(c.Audiences, ",")
 }
