@@ -17,6 +17,7 @@ import {
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 interface AdhocQuery {
   datasource: DataSourceRef;
@@ -142,7 +143,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     if (target.queryType === AzureQueryType.AzureTraces && target.azureTraces) {
       item = target.azureTraces;
       const templateSrv = getTemplateSrv();
-      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      const resources = this.expandResourcesForMultipleVariables(item.resources, scopedVars, templateSrv);
       const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
       const traceTypes = item.traceTypes?.map((t) => templateSrv.replace(t, scopedVars));
       const filters = (item.filters ?? [])
@@ -172,6 +173,22 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return target;
+  }
+
+  private expandResourcesForMultipleVariables(resources: string[] | undefined, scopedVars: ScopedVars, templateSrv: TemplateSrv): string[] | undefined {
+    if (!resources) {
+      return undefined;
+    }
+    const expandedResources: Array<string> = [];
+    resources.forEach((r: string) => {
+      const tempVars = templateSrv.replace(r, scopedVars, "raw" ) as string;
+      const values = tempVars.split(',');
+      values.forEach((value) => {
+        expandedResources.push(value);
+      });
+    });
+  
+    return expandedResources;
   }
 
   /*
