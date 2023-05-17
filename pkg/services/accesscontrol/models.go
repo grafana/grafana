@@ -279,7 +279,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 	dedup := make([]Permission, 0, len(cmd.Permissions))
 	for i := range cmd.Permissions {
 		if len(cmd.Permissions[i].Action) == 0 {
-			return errors.New("external service %v requests a permission with no Action")
+			return fmt.Errorf("external service %v requests a permission with no Action", cmd.ExternalServiceID)
 		}
 		if dedupMap[cmd.Permissions[i]] {
 			continue
