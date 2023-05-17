@@ -977,7 +977,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -987,7 +987,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Preferences"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -998,16 +998,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/QueryHistoryDeleteQueryResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getQueryHistoryMigrationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryHistoryMigrationResponse"
             }
           }
         },
@@ -1747,7 +1737,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -2664,6 +2654,10 @@
       "AlertingRule": {
         "description": "adapted from cortex",
         "properties": {
+          "activeAt": {
+            "format": "date-time",
+            "type": "string"
+          },
           "alerts": {
             "items": {
               "$ref": "#/components/schemas/Alert"
@@ -2704,6 +2698,20 @@
             "description": "State can be \"pending\", \"firing\", \"inactive\".",
             "type": "string"
           },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "totalsFiltered": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
           "type": {
             "$ref": "#/components/schemas/RuleType"
           }
@@ -2715,7 +2723,7 @@
           "type",
           "state",
           "annotations",
-          "alerts"
+          "activeAt"
         ],
         "type": "object"
       },
@@ -6738,15 +6746,12 @@
             "type": "integer"
           },
           "interval": {
-            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
             "type": "string"
           },
           "name": {
-            "description": "Name of the playlist.",
             "type": "string"
           },
           "uid": {
-            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
             "type": "string"
           }
         },
@@ -7159,35 +7164,6 @@
         },
         "type": "object"
       },
-      "Preferences": {
-        "properties": {
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "title": "Preferences defines model for Preferences.",
-        "type": "object"
-      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -7589,27 +7565,6 @@
           }
         },
         "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
-        "type": "object"
-      },
-      "QueryToMigrate": {
-        "properties": {
-          "comment": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "datasourceUid": {
-            "type": "string"
-          },
-          "queries": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "starred": {
-            "type": "boolean"
-          }
-        },
         "type": "object"
       },
       "QuotaDTO": {
@@ -8028,6 +7983,13 @@
               "$ref": "#/components/schemas/RuleGroup"
             },
             "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -8061,6 +8023,13 @@
               "$ref": "#/components/schemas/AlertingRule"
             },
             "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -8749,6 +8718,35 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "Spec": {
+        "properties": {
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "theme": {
+            "description": "Theme light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "title": "Spec defines model for Spec.",
+        "type": "object"
+      },
       "State": {
         "type": "string"
       },
@@ -8883,6 +8881,9 @@
           },
           "permission": {
             "$ref": "#/components/schemas/PermissionType"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8944,6 +8945,9 @@
           "teamId": {
             "format": "int64",
             "type": "integer"
+          },
+          "teamUID": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",
@@ -9135,6 +9139,77 @@
           },
           "grafana_alert_instances": {
             "$ref": "#/components/schemas/AlertInstancesResponse"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesConfigBodyParams": {
+        "properties": {
+          "alerts": {
+            "description": "Alerts to use as data when testing the template.",
+            "items": {
+              "$ref": "#/components/schemas/postableAlert"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the template file.",
+            "type": "string"
+          },
+          "template": {
+            "description": "Template string to test.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesErrorResult": {
+        "properties": {
+          "kind": {
+            "description": "Kind of template error that occurred.",
+            "enum": [
+              "invalid_template",
+              "execution_error"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "description": "Error message.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesResult": {
+        "properties": {
+          "name": {
+            "description": "Name of the associated template definition for this result.",
+            "type": "string"
+          },
+          "text": {
+            "description": "Interpolated value of the template.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesResults": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/TestTemplatesErrorResult"
+            },
+            "type": "array"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TestTemplatesResult"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -9675,7 +9750,7 @@
             "type": "string"
           },
           "uid": {
-            "description": "NewUID it's an optional parameter used for overriding the existing folder UID",
+            "description": "NewUID it's an optional parameter used for overriding the existing folder UID\nStarting with 10.0, this is deprecated. It will be removed in a future release.\nPlease avoid using it because it can result in folder loosing its permissions.",
             "type": "string"
           },
           "version": {
@@ -10263,7 +10338,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10448,13 +10522,13 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10510,7 +10584,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10654,7 +10727,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10692,6 +10764,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",

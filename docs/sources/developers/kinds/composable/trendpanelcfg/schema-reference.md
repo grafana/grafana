@@ -13,10 +13,10 @@ title: TrendPanelCfg kind
 
 
 
-| Property           | Type                                  | Required | Default | Description                                                          |
-|--------------------|---------------------------------------|----------|---------|----------------------------------------------------------------------|
-| `PanelFieldConfig` | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs                                                            |
-| `PanelOptions`     | [object](#paneloptions)               | **Yes**  |         | Identical to timeseries... except it does not have timezone settings |
+| Property      | Type                                  | Required | Default | Description                                                          |
+|---------------|---------------------------------------|----------|---------|----------------------------------------------------------------------|
+| `FieldConfig` | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs                                                            |
+| `Options`     | [object](#options)                    | **Yes**  |         | Identical to timeseries... except it does not have timezone settings |
 
 ### GraphFieldConfig
 
@@ -178,7 +178,7 @@ TODO docs
 | `group`  | string | No       |         |                                                                 |
 | `mode`   | string | No       |         | TODO docs<br/>Possible values are: `none`, `normal`, `percent`. |
 
-### PanelOptions
+### Options
 
 Identical to timeseries... except it does not have timezone settings
 
