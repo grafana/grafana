@@ -201,7 +201,8 @@ func TestClient_ToDTO(t *testing.T) {
 		ClientID:            "test",
 		Secret:              "testsecret",
 		RedirectURI:         "http://localhost:3000",
-		GrantTypes:          "client_credentials, urn:ietf:params:oauth:grant-type:jwt-bearer",
+		GrantTypes:          "client_credentials,urn:ietf:params:oauth:grant-type:jwt-bearer",
+		Audiences:           "https://example.org,https://second.example.org",
 		PublicPem:           []byte("pem_encoded_public_key"),
 	}
 
@@ -211,6 +212,7 @@ func TestClient_ToDTO(t *testing.T) {
 	require.Equal(t, client.ExternalServiceName, dto.ExternalServiceName)
 	require.Equal(t, client.RedirectURI, dto.RedirectURI)
 	require.Equal(t, client.GrantTypes, dto.GrantTypes)
+	require.Equal(t, client.Audiences, dto.Audiences)
 	require.Equal(t, client.PublicPem, []byte(dto.KeyResult.PublicPem))
 	require.Empty(t, dto.KeyResult.PrivatePem)
 	require.Empty(t, dto.KeyResult.URL)

@@ -43,7 +43,8 @@ type ClientDTO struct {
 	ExternalServiceName string     `json:"name"`
 	ID                  string     `json:"clientId"`
 	Secret              string     `json:"clientSecret"`
-	GrantTypes          string     `xorm:"grant_types"` // CSV value
+	GrantTypes          string     `json:"grantTypes"` // CSV value
+	Audiences           string     `json:"audiences"`  // CSV value
 	RedirectURI         string     `json:"redirectUri,omitempty"`
 	KeyResult           *KeyResult `json:"key,omitempty"`
 }
@@ -75,6 +76,7 @@ func (c *Client) ToDTO() *ClientDTO {
 		ID:                  c.ClientID,
 		Secret:              c.Secret,
 		GrantTypes:          c.GrantTypes,
+		Audiences:           c.Audiences,
 		RedirectURI:         c.RedirectURI,
 	}
 	if len(c.PublicPem) > 0 {
