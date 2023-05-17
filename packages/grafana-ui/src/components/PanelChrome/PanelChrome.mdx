@@ -1,13 +1,13 @@
-import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { css } from '@emotion/css';
+import { Meta } from '@storybook/addon-docs/blocks';
 import { PanelChrome } from './PanelChrome';
-import { LoadingIndicator } from './LoadingIndicator';
 
 import { action } from '@storybook/addon-actions';
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { HorizontalGroup } from '../Layout/Layout';
 import { LoadingState } from '@grafana/data';
-import { Button } from '../Button/Button.tsx';
+import { Button } from '../Button';
 import { Menu } from '../Menu/Menu';
+import { IconButton } from '../IconButton/IconButton';
 
 <Meta title="MDX|PanelChrome" component={PanelChrome} />
 
@@ -306,10 +306,17 @@ Component used for rendering content wrapped in the same style as grafana panels
 <PanelChrome
   title="My awesome panel title"
   titleItems={
-    <div>
-      <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
-      <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
-    </div>
+    <>
+      <IconButton
+        className={css`
+          margin-right: 10px;
+        `}
+        name="github"
+        variant="secondary"
+        tooltip="extra content to render"
+      />
+      <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
+    </>
   }
   actions={
     <Button size="sm" variant="secondary" key="A">
@@ -342,10 +349,17 @@ Component used for rendering content wrapped in the same style as grafana panels
   <PanelChrome
     title="My awesome panel title"
     titleItems={
-      <div>
-        <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
-        <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
-      </div>
+      <>
+        <IconButton
+          className={css`
+            margin-right: 10px;
+          `}
+          name="github"
+          variant="secondary"
+          tooltip="extra content to render"
+        />
+        <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
+      </>
     }
     actions={
       <Button size="sm" variant="secondary" key="A">

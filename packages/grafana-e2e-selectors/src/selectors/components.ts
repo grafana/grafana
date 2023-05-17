@@ -301,7 +301,7 @@ export const Components = {
     container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
-    container: 'Data source picker select container',
+    container: 'data-testid Data source picker select container',
     /**
      * @deprecated use inputV2 instead
      */

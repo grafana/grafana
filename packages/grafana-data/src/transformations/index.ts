@@ -16,6 +16,6 @@ export {
 } from './matchers/nameMatcher';
 export type { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 /** @deprecated -- will be removed in future versions */
-export { joinDataFrames as outerJoinDataFrames } from './transformers/joinDataFrames';
+export { joinDataFrames as outerJoinDataFrames, isLikelyAscendingVector } from './transformers/joinDataFrames';
 export * from './transformers/histogram';
 export { ensureTimeField } from './transformers/convertFieldType';
