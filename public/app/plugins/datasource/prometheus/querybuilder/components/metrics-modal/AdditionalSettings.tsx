@@ -74,6 +74,7 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0 0 0 ${theme.spacing(1)};
       align-self: center;
       color: ${theme.colors.text.secondary};
+      font-size: 12px;
     `,
   };
 }
