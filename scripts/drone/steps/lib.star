@@ -6,6 +6,9 @@ load(
     "scripts/drone/vault.star",
     "from_secret",
     "prerelease_bucket",
+    'updater_app_id',
+    'updater_app_installation_id',
+    'updater_app_private_key',
 )
 
 grabpl_version = "v3.0.34"
@@ -1158,7 +1161,9 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         environment = {
             "DOCKER_USER": from_secret("docker_username_pr"),
             "DOCKER_PASSWORD": from_secret("docker_password_pr"),
-            "GITHUB_TOKEN": from_secret("github_token_pr"),
+            "GITHUB_APP_ID": from_secret(updater_app_id),
+            "GITHUB_APP_INSTALLATION_ID": from_secret(updater_app_installation_id),
+            "GITHUB_APP_PRIVATE_KEY": from_secret(updater_app_private_key),
         }
 
     step = {
