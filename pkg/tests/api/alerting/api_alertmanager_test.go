@@ -1042,7 +1042,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: failed to build query 'A': data source not found",
+				expectedMessage: "failed to update rule group: invalid alert rule 'AlwaysFiring': failed to build query 'A': data source not found",
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -1072,7 +1072,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: condition B does not exist, must be one of [A]",
+				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: condition B does not exist, must be one of [A]",
 			},
 		}
 
