@@ -25,7 +25,6 @@ type OAuth2Service interface {
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
-	GetServerPublicKey() interface{}
 }
 
 //go:generate mockery --name Store --structname MockStore --outpkg oauthtest --filename store_mock.go --output ./oauthtest/

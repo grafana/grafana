@@ -128,11 +128,6 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 	)
 }
 
-// GetServerPublicKey returns the public key of the server
-func (s *OAuth2ServiceImpl) GetServerPublicKey() interface{} {
-	return s.publicKey
-}
-
 // RandString generates a a cryptographically secure random string of n bytes
 func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 	res := make([]byte, n)

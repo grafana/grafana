@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,20 +31,22 @@ const (
 	rfc9068MediaType      = "application/at+jwt"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
+func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service, oauthService oauthserver.OAuth2Service) *ExtendedJWT {
 	return &ExtendedJWT{
-		cfg:         cfg,
-		log:         log.New(authn.ClientExtendedJWT),
-		userService: userService,
-		signingKeys: signingKeys,
+		cfg:          cfg,
+		log:          log.New(authn.ClientExtendedJWT),
+		userService:  userService,
+		signingKeys:  signingKeys,
+		oauthService: oauthService,
 	}
 }
 
 type ExtendedJWT struct {
-	cfg         *setting.Cfg
-	log         log.Logger
-	userService user.Service
-	signingKeys signingkeys.Service
+	cfg          *setting.Cfg
+	log          log.Logger
+	userService  user.Service
+	signingKeys  signingkeys.Service
+	oauthService oauthserver.OAuth2Service
 }
 
 type ExtendedJWTClaims struct {
@@ -211,10 +214,9 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims Extended
 		return fmt.Errorf("missing 'client_id' claim")
 	}
 
-	// TODO: Implement the validation for client_id when the OAuth server is ready.
-	// if _, err := s.oauthService.GetExternalService(ctx, clientId); err != nil {
-	// 	return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
-	// }
+	if _, err := s.oauthService.GetExternalService(ctx, claims.ClientID); err != nil {
+		return fmt.Errorf("invalid 'client_id' claim: %s", claims.ClientID)
+	}
 
 	return nil
 }
