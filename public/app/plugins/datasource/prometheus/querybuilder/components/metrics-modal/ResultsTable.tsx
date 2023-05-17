@@ -113,11 +113,11 @@ export function ResultsTable(props: ResultsTableProps) {
     <table className={styles.table} ref={tableRef}>
       <thead className={styles.stickyHeader}>
         <tr>
-          <th className={styles.nameWidth}>Name</th>
+          <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>Name</th>
           {state.hasMetadata && (
             <>
-              <th className={styles.typeWidth}>Type</th>
-              <th>Description</th>
+              <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>Type</th>
+              <th className={styles.tableHeaderPadding}>Description</th>
             </>
           )}
         </tr>
@@ -188,6 +188,9 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       :hover {
         background-color: ${rowHoverBg};
       }
+    `,
+    tableHeaderPadding: css`
+      padding: 8px;
     `,
     selectedRow: css`
       background-color: ${rowHoverBg};
