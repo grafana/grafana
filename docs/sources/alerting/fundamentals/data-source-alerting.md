@@ -10,7 +10,7 @@ There are a number of data sources that are compatible with Grafana Alerting. Ea
 
 If you are creating your own data source plugin, make sure it is a backend plugin as Grafana Alerting requires this in order to be able to evaluate rules using the data source. Frontend data sources are not supported, because the evaluation engine runs on the backend.
 
-Specifying { "alerting": true, “backend”: true } in the plugin.json file indicates that the data source plugin is compatible with Grafana Alerting and includes the backend data-fetching code. For more information, refer to [Build a data source backend plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/).
+Specifying `{ "alerting": true, "backend": true }` in the plugin.json file indicates that the data source plugin is compatible with Grafana Alerting and includes the backend data-fetching code. For more information, refer to [Build a data source backend plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/).
 
 These are the data sources that are compatible with and supported by Grafana Alerting.
 
