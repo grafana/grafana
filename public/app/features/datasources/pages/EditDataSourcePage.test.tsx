@@ -116,8 +116,8 @@ describe('<EditDataSourcePage>', () => {
     await waitFor(() => {
       // Buttons
       expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
-      expect(screen.queryByRole('button', { name: /Build a dashboard/i })).toBeVisible();
-      expect(screen.queryAllByRole('button', { name: /Explore data/i })).toHaveLength(1);
+      expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
+      expect(screen.queryAllByRole('link', { name: /Explore data/i })).toHaveLength(1);
     });
   });
 });
