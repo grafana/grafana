@@ -46,7 +46,6 @@ accessControlOnCall,beta,@grafana/grafana-authnz-team,false,false,false,false
 nestedFolders,alpha,@grafana/backend-platform,true,false,false,false
 accessTokenExpirationCheck,stable,@grafana/grafana-authnz-team,false,false,false,false
 elasticsearchBackendMigration,alpha,@grafana/observability-logs,false,false,false,false
-datasourceOnboarding,alpha,@grafana/dashboards-squad,false,false,false,false
 emptyDashboardPage,stable,@grafana/dashboards-squad,false,false,false,true
 secureSocksDatasourceProxy,alpha,@grafana/hosted-grafana-team,false,false,false,false
 authnService,alpha,@grafana/grafana-authnz-team,false,false,false,false
