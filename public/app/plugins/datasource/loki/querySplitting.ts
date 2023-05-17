@@ -1,5 +1,5 @@
 import { groupBy, partition } from 'lodash';
-import { Observable, Subscriber, Subscription } from 'rxjs';
+import { last, Observable, Subscriber, Subscription, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -17,7 +17,8 @@ import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery } from './queryUtils';
 import { combineResponses } from './responseUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { trackGroupedQueries } from './tracking';
+import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -80,8 +81,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
     })
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
-
-export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
+export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
@@ -153,7 +153,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   return response;
 }
 
-function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
+function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: number, requestN: number) {
   // There's a pending request from the next group:
   for (let i = requestGroup + 1; i < requests.length; i++) {
     const group = requests[i];
@@ -185,7 +185,7 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
   );
 
-  const requests: LokiGroupedRequest = [];
+  const requests: LokiGroupedRequest[] = [];
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {
     const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
     for (const resolution in resolutionPartition) {
@@ -225,5 +225,9 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     });
   }
 
-  return runSplitGroupedQueries(datasource, requests);
+  const startTime = new Date();
+  return runSplitGroupedQueries(datasource, requests).pipe(
+    last(),
+    tap((response) => trackGroupedQueries(response, requests, startTime))
+  );
 }
