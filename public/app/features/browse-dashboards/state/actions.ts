@@ -1,6 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk, DashboardDTO } from 'app/types';
 
 import { listDashboards, listFolders } from '../api/services';
@@ -10,44 +11,68 @@ interface FetchChildrenPayload {
   pageSize: number;
 }
 
+interface FetchChildrenFulfilledPayload {
+  children: DashboardViewItem[];
+  kind: 'folder' | 'dashboard';
+  page: number;
+  lastPageOfKind: boolean;
+}
+
 export const fetchChildren = createAsyncThunk(
   'browseDashboards/fetchChildren',
-  async ({ parentUID, pageSize }: FetchChildrenPayload, thunkAPI) => {
-    // Need to handle the case where the parentUID is the root
-    const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
-
+  async (
+    { parentUID, pageSize }: FetchChildrenPayload,
+    thunkAPI
+  ): Promise<undefined | FetchChildrenFulfilledPayload> => {
     if (process.env.NODE_ENV !== 'production' && parentUID === GENERAL_FOLDER_UID) {
-      const err = new Error("fetchChildren called with a parentUID of 'general' instead of undefined");
-      console.error(err);
+      console.error(new Error("fetchChildren called with a parentUID of 'general' instead of undefined"));
     }
+
+    const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     const state = thunkAPI.getState().browseDashboards;
     const collection = uid ? state.childrenByParentUID[uid] : state.rootItems;
 
+    let page = 1;
+    let fetchKind: DashboardViewItemKind | undefined = undefined;
+
+    // Folder children do not come from a single API, so we need to do a bunch of logic to determine
+    // which page of which kind to load
+
     if (!collection) {
-      // no previous data for this uid, so get folders first
-      const page = 1;
-      return {
-        children: await listFolders(uid, undefined, page, pageSize),
-        page,
-      };
-    }
-
-    if (collection.lastFetched === 'folder' && collection.lastFetchedSize >= pageSize) {
-      const page = collection.lastFetchedPage + 1;
-      return {
-        children: await listFolders(uid, undefined, page, pageSize),
-        page,
-      };
+      // No previous data in store, fetching first page of folders
+      page = 1;
+      fetchKind = 'folder';
+    } else if (collection.lastFetchedKind === 'dashboard' && !collection.hasMoreChildren) {
+      // There's nothing to load at all
+      console.warn(`FetchedChildren called for ${uid} but that collection is fully loaded`);
+      // return;
+    } else if (collection.lastFetchedKind === 'folder' && collection.hasMoreChildren) {
+      // Load additional pages of folders
+      page = collection.lastFetchedPage + 1;
+      fetchKind = 'folder';
     } else {
-      const page = collection.lastFetched === 'folder' ? 1 : (collection.lastFetchedPage ?? 1) + 1;
-      return {
-        children: await listDashboards(uid, page, pageSize),
-        page,
-      };
+      // We've already checked if there's more folders to load, so if the last fetched is folder
+      // then we fetch first page of dashboards
+      page = collection.lastFetchedKind === 'folder' ? 1 : collection.lastFetchedPage + 1;
+      fetchKind = 'dashboard';
     }
 
-    // return await getFolderChildren(uid, undefined, true);
+    if (!fetchKind) {
+      return;
+    }
+
+    const children =
+      fetchKind === 'folder'
+        ? await listFolders(uid, undefined, page, pageSize)
+        : await listDashboards(uid, page, pageSize);
+
+    return {
+      children,
+      lastPageOfKind: children.length < pageSize,
+      page,
+      kind: fetchKind,
+    };
   }
 );
 

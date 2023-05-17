@@ -1,6 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { BrowseDashboardsState } from '../types';
@@ -11,18 +10,24 @@ import { findItem } from './utils';
 type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
 
 export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState, action: FetchChildrenAction) {
-  const { parentUID: parentUIDArg } = action.meta.arg;
+  const payload = action.payload;
+  if (!payload) {
+    // If not additional pages to load, the action returns undefined
+    return;
+  }
 
-  const parentUID = parentUIDArg === GENERAL_FOLDER_UID ? undefined : parentUIDArg;
-  const { page, children } = action.payload;
+  const { children, page, kind, lastPageOfKind } = payload;
+  const { parentUID } = action.meta.arg;
 
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
+
   const newCollection = {
     items: prevItems.concat(children),
-    lastFetched: children[0]?.kind as 'dashboard', // TODO don't cast this // TODO: this doesn't work if there's no children
-    lastFetchedSize: children.length,
+    lastFetchedKind: kind,
     lastFetchedPage: page,
+    hasMoreChildren: !lastPageOfKind,
+    isFullyLoaded: kind === 'dashboard' && !lastPageOfKind,
   };
 
   if (!parentUID) {

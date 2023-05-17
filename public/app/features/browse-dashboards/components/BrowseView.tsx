@@ -1,11 +1,9 @@
-import { debounce, throttle } from 'lodash';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { ListOnItemsRenderedProps } from 'react-window';
+import React, { useCallback, useEffect } from 'react';
 
 import { Spinner } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch } from 'app/types';
 
 import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
 import {
@@ -18,7 +16,7 @@ import {
   setAllSelection,
   useBrowseLoadingStatus,
 } from '../state';
-import { BrowseDashboardsState, DashboardTreeSelection, DashboardViewItemCollection, SelectionState } from '../types';
+import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -102,42 +100,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [selectedItems, childrenByParentUID]
   );
 
-  const handleItemsRendered = useMemo(() => {
-    function fn(props: ListOnItemsRenderedProps) {
-      const itemsRemaining = flatTree.length - 1 - props.overscanStopIndex;
-
-      console.group(
-        'Visible range: %c%d%c - %c%d%c. Overscan range: %c%d%c - %c%d%c. flatTree last index %c%d%c. Remaining %d',
-        'color: #3498db',
-        props.visibleStartIndex,
-        'color: unset',
-        'color: #3498db',
-        props.visibleStopIndex,
-        'color: unset',
-        'color: #3498db',
-        props.overscanStartIndex,
-        'color: unset',
-        'color: #3498db',
-        props.overscanStopIndex,
-        'color: unset',
-        'color: #3498db',
-        flatTree.length - 1,
-        'color: unset',
-        itemsRemaining
-      );
-
-      // TODO: Check if we've loaded all root items or not
-      if (itemsRemaining <= 5) {
-        console.log('Fetch more children from root', folderUID);
-        dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-      }
-
-      console.groupEnd();
-    }
-
-    return debounce(fn, 500, { leading: false, trailing: true });
-  }, [dispatch, flatTree.length, folderUID]);
-
   if (status === 'pending') {
     return <Spinner />;
   }
@@ -169,7 +131,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       onFolderClick={handleFolderClick}
       onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
       onItemSelectionChange={handleItemSelectionChange}
-      onItemsRendered={handleItemsRendered}
     />
   );
 }

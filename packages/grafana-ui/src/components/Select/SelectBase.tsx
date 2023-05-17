@@ -167,7 +167,9 @@ export function SelectBase<T>({
       menuPlacement === 'auto'
     ) {
       const distance = window.innerHeight - reactSelectRef.current.controlRef.getBoundingClientRect().bottom;
-      setCloseToBottom(distance < maxMenuHeight);
+      const vvv = distance < maxMenuHeight;
+      console.log('setting closeToBottom', { closeToBottom: vvv, distance, maxMenuHeight });
+      setCloseToBottom(vvv);
     }
   }, [maxMenuHeight, menuPlacement, loadOptions, isOpen]);
 

@@ -8,10 +8,11 @@ export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string
 
 export type DashboardViewItemCollection = {
   items: DashboardViewItem[];
-} & (
-  | { lastFetched: 'folder' | 'dashboard'; lastFetchedSize: number; lastFetchedPage: number }
-  | { lastFetched: undefined; lastFetchedSize: undefined; lastFetchedPage: undefined }
-);
+  lastFetchedKind: 'folder' | 'dashboard';
+  lastFetchedPage: number;
+  hasMoreChildren: boolean;
+  isFullyLoaded: boolean;
+};
 
 export interface BrowseDashboardsState {
   rootItems: DashboardViewItemCollection | undefined;
