@@ -42,10 +42,3 @@ export const moveDashboard = createAsyncThunk(
     });
   }
 );
-
-export const moveFolder = createAsyncThunk(
-  'browseDashboards/moveFolder',
-  async ({ folderUID, destinationUID }: { folderUID: string; destinationUID: string }) => {
-    return getBackendSrv().post(`/api/folders/${folderUID}/move`, { parentUID: destinationUID });
-  }
-);

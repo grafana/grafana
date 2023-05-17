@@ -8,13 +8,13 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { useMoveFolderMutation } from '../../api/browseDashboardsAPI';
 import {
   childrenByParentUIDSelector,
   deleteDashboard,
   deleteFolder,
   fetchChildren,
   moveDashboard,
-  moveFolder,
   rootItemsSelector,
   setAllSelection,
   useActionSelectionState,
@@ -33,6 +33,7 @@ export function BrowseActions() {
   const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
   const rootItems = useSelector(rootItemsSelector);
+  const [moveFolder] = useMoveFolderMutation();
   const childrenByParentUID = useSelector(childrenByParentUIDSelector);
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
@@ -84,7 +85,7 @@ export function BrowseActions() {
     // Move all the folders sequentially
     // TODO error handling here
     for (const folderUID of selectedFolders) {
-      await dispatch(moveFolder({ folderUID, destinationUID }));
+      await moveFolder({ folderUID, destinationUID });
       // find the parent folder uid and add it to parentsToRefresh
       const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
       parentsToRefresh.add(folder?.parentUID);

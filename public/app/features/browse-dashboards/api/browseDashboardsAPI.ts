@@ -32,11 +32,13 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 }
 
 export const browseDashboardsAPI = createApi({
+  tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     getFolder: builder.query<FolderDTO, string>({
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+      providesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg }],
     }),
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
@@ -67,8 +69,16 @@ export const browseDashboardsAPI = createApi({
         return { data: totalCounts };
       },
     }),
+    moveFolder: builder.mutation<void, { folderUID: string; destinationUID: string }>({
+      query: ({ folderUID, destinationUID }) => ({
+        url: `/folders/${folderUID}/move`,
+        method: 'POST',
+        data: { parentUID: destinationUID },
+      }),
+      invalidatesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg.folderUID }],
+    }),
   }),
 });
 
-export const { useGetAffectedItemsQuery, useGetFolderQuery } = browseDashboardsAPI;
+export const { useGetAffectedItemsQuery, useGetFolderQuery, useMoveFolderMutation } = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

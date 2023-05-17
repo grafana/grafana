@@ -132,38 +132,40 @@ export const Permissions = ({
 
   return (
     <div>
-      {config.featureToggles.nestedFolders && resource === 'folders' && (
+      {canSetPermissions && (
         <>
-          This will change permissions for this folder and all its descendants. In total, this will affect:
-          <DescendantCount
-            selectedItems={{
-              folder: { [resourceId]: true },
-              dashboard: {},
-              panel: {},
-              $all: false,
-            }}
-          />
+          {config.featureToggles.nestedFolders && resource === 'folders' && (
+            <>
+              This will change permissions for this folder and all its descendants. In total, this will affect:
+              <DescendantCount
+                selectedItems={{
+                  folder: { [resourceId]: true },
+                  dashboard: {},
+                  panel: {},
+                  $all: false,
+                }}
+              />
+            </>
+          )}
+          <Button
+            className={styles.addPermissionButton}
+            variant={'primary'}
+            key="add-permission"
+            onClick={() => setIsAdding(true)}
+          >
+            {buttonLabel}
+          </Button>
+          <SlideDown in={isAdding}>
+            <AddPermission
+              title={addPermissionTitle}
+              onAdd={onAdd}
+              permissions={desc.permissions}
+              assignments={desc.assignments}
+              onCancel={() => setIsAdding(false)}
+            />
+          </SlideDown>
         </>
       )}
-      {canSetPermissions && (
-        <Button
-          className={styles.addPermissionButton}
-          variant={'primary'}
-          key="add-permission"
-          onClick={() => setIsAdding(true)}
-        >
-          {buttonLabel}
-        </Button>
-      )}
-      <SlideDown in={isAdding}>
-        <AddPermission
-          title={addPermissionTitle}
-          onAdd={onAdd}
-          permissions={desc.permissions}
-          assignments={desc.assignments}
-          onCancel={() => setIsAdding(false)}
-        />
-      </SlideDown>
       {items.length === 0 && (
         <table className="filter-table gf-form-group">
           <tbody>
