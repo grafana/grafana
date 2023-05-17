@@ -26,7 +26,7 @@ export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState,
     items: prevItems.concat(children),
     lastFetchedKind: kind,
     lastFetchedPage: page,
-    hasMoreChildren: !lastPageOfKind,
+    lastKindHasMoreItems: !lastPageOfKind,
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 

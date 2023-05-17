@@ -10,7 +10,7 @@ export type DashboardViewItemCollection = {
   items: DashboardViewItem[];
   lastFetchedKind: 'folder' | 'dashboard';
   lastFetchedPage: number;
-  hasMoreChildren: boolean;
+  lastKindHasMoreItems: boolean;
   isFullyLoaded: boolean;
 };
 

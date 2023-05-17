@@ -43,11 +43,11 @@ export const fetchChildren = createAsyncThunk(
       // No previous data in store, fetching first page of folders
       page = 1;
       fetchKind = 'folder';
-    } else if (collection.lastFetchedKind === 'dashboard' && !collection.hasMoreChildren) {
+    } else if (collection.lastFetchedKind === 'dashboard' && !collection.lastKindHasMoreItems) {
       // There's nothing to load at all
       console.warn(`FetchedChildren called for ${uid} but that collection is fully loaded`);
       // return;
-    } else if (collection.lastFetchedKind === 'folder' && collection.hasMoreChildren) {
+    } else if (collection.lastFetchedKind === 'folder' && collection.lastKindHasMoreItems) {
       // Load additional pages of folders
       page = collection.lastFetchedPage + 1;
       fetchKind = 'folder';
