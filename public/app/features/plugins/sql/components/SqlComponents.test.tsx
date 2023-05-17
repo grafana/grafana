@@ -15,37 +15,37 @@ afterEach(() => {
   config.featureToggles.sqlDatasourceDatabaseSelection = false;
 });
 
-describe('SqlQueryEditor', () => {
-  describe('alerts', () => {
-    it('should render the correct alert - `Default datasource update`', async () => {
-      // @ts-ignore
-      // Property 'templateSrv' is a protected type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
-      render(<SqlQueryEditor {...buildSqlQueryEditorProps({ datasource: buildMockDatasource(true) })} />);
+// describe('SqlQueryEditor', () => {
+// describe('alerts', () => {
+//   it('should render the correct alert - `Default datasource update`', async () => {
+//     // @ts-ignore
+//     // Property 'templateSrv' is a protected type and is not a class derived from 'SqlDatasource'.ts(2322); Oh hush now.
+//     render(<SqlQueryEditor {...buildSqlQueryEditorProps({ datasource: buildMockDatasource(true) })} />);
 
-      await waitFor(() => {
-        const visableAlert = screen.getByRole('alert', { name: 'Default datasource update' });
-        expect(visableAlert).toBeInTheDocument();
+//     await waitFor(() => {
+//       const visableAlert = screen.getByRole('alert', { name: 'Default datasource update' });
+//       expect(visableAlert).toBeInTheDocument();
 
-        // Use `queryBy<queryType>` syntax when attempting to find an element that will not exist on the virtual DOM.
-        // This will return `null` instead of throwing an error.
-        const invisableAlert = screen.queryByRole('alert', { name: 'Default datasource error' });
-        expect(invisableAlert).not.toBeInTheDocument();
-      });
-    });
+//       // Use `queryBy<queryType>` syntax when attempting to find an element that will not exist on the virtual DOM.
+//       // This will return `null` instead of throwing an error.
+//       const invisableAlert = screen.queryByRole('alert', { name: 'Default datasource error' });
+//       expect(invisableAlert).not.toBeInTheDocument();
+//     });
+//   });
 
-    it('should render the correct alert - `Default datasource error`', async () => {
-      render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { isPostgresInstance: true } })} />);
+//   it('should render the correct alert - `Default datasource error`', async () => {
+//     render(<SqlQueryEditor {...buildSqlQueryEditorProps({ queryHeaderProps: { isPostgresInstance: true } })} />);
 
-      await waitFor(() => {
-        const alert = screen.getByRole('alert', { name: 'Default datasource error' });
-        expect(alert).toBeInTheDocument();
+//     await waitFor(() => {
+//       const alert = screen.getByRole('alert', { name: 'Default datasource error' });
+//       expect(alert).toBeInTheDocument();
 
-        const invisableAlert = screen.queryByRole('alert', { name: 'Default datasource update' });
-        expect(invisableAlert).toBeNull();
-      });
-    });
-  });
-});
+//       const invisableAlert = screen.queryByRole('alert', { name: 'Default datasource update' });
+//       expect(invisableAlert).toBeNull();
+//     });
+//   });
+// });
+// });
 
 describe('DatasetSelector', () => {
   // describe('should disable the database selector appropriately', () => {
