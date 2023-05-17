@@ -339,6 +339,33 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	return sa.Id, nil
 }
 
+// handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default
+// permissions when impersonation is requested
+func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserver.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
+	selfPermissions := []ac.Permission{}
+	impersonatePermissions := []ac.Permission{}
+
+	if registration.Impersonation.Enabled {
+		requiredForToken := []ac.Permission{
+			{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf},
+			{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf},
+		}
+		if registration.Impersonation.Groups {
+			requiredForToken = append(requiredForToken, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
+		}
+		impersonatePermissions = registration.Impersonation.Permissions
+		impersonatePermissions = append(impersonatePermissions, requiredForToken...)
+		selfPermissions = append(selfPermissions, ac.Permission{
+			Action: ac.ActionUsersImpersonate,
+			Scope:  ac.ScopeUsersAll,
+		})
+	}
+	if registration.Self.Enabled {
+		selfPermissions = append(selfPermissions, registration.Self.Permissions...)
+	}
+	return selfPermissions, impersonatePermissions
+}
+
 // SaveExternalService creates or updates an external service in the database, it ensures that the associated
 // service account has the correct permissions
 // Database consistency is not guaranteed, consider changing this in the future.
@@ -370,9 +397,8 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		}
 	}
 
-	if registration.Impersonation.Enabled {
-		client.ImpersonatePermissions = registration.Impersonation.Permissions
-	}
+	// Parse registration form to compute required permissions for the client
+	client.SelfPermissions, client.ImpersonatePermissions = s.handleRegistrationPermissions(registration)
 
 	if registration.RedirectURI != nil {
 		client.RedirectURI = *registration.RedirectURI
@@ -387,7 +413,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 
 	s.logger.Debug("Handle service account save")
 	// TODO don't use registration.Self.Permissions but a new slice with permissions to impersonate as well.
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.ExternalServiceName, client.ServiceAccountID, registration.Self.Permissions)
+	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.ExternalServiceName, client.ServiceAccountID, client.SelfPermissions)
 	if errSaveServiceAccount != nil {
 		return nil, errSaveServiceAccount
 	}

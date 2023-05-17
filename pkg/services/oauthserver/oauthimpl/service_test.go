@@ -13,6 +13,7 @@ import (
 	"github.com/ory/fosite/storage"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -241,18 +242,43 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			},
 		},
 		{
-			name: "should allow jwt bearer grant",
+			name: "should allow jwt bearer grant and set default permissions",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
+				// Impersonation permission is given by default
+				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
+				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
 				ExternalServiceName: serviceName,
 				Key:                 &oauthserver.KeyOption{Generate: true},
 				Impersonation: oauthserver.ImpersonationCfg{
 					Enabled:     true,
-					Permissions: []ac.Permission{{Action: "users:read", Scope: "global.users:self"}},
+					Groups:      true,
+					Permissions: []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
 				},
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				// Check that the service has no service account anymore
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
+					impPerm := client.ImpersonatePermissions
+					ok := client.ExternalServiceName == serviceName && client.ServiceAccountID == sa1.Id &&
+						slices.Contains(impPerm, ac.Permission{Action: "dashboards:read", Scope: "dashboards:*"}) &&
+						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf}) &&
+						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf}) &&
+						slices.Contains(impPerm, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
+					return ok
+				}),
+				)
+				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
+					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
+						return cmd.ServiceAccountID == sa1.Id &&
+							len(cmd.Permissions) == 1 &&
+							cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll} &&
+							cmd.OrgID == int64(ac.GlobalOrgID) &&
+							cmd.ExternalServiceID == client1().ExternalServiceName
+					}))
 			},
 		},
 	}
