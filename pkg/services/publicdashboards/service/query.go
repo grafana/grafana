@@ -358,18 +358,16 @@ func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQue
 
 // getLocation returns the location from the request or the default location
 func getLocation(reqDTO models.PublicDashboardQueryDTO, dashboardLocation string) *time.Location {
-	// if the Location is blank or there is an error default is UTC
-	location, err := time.LoadLocation(dashboardLocation)
-	if err != nil {
-		location = time.UTC
-	}
-
 	if reqDTO.TimeRange.Location != "" {
-		userLocation, err := time.LoadLocation(reqDTO.TimeRange.Location)
-		if err == nil {
-			location = userLocation
+		if userLocation, err := time.LoadLocation(reqDTO.TimeRange.Location); err == nil {
+			return userLocation
 		}
 	}
-
+	
+	// if the Location is blank or there is an error default is UTC
+	if location, err := time.LoadLocation(dashboardLocation); err != nil {
+        return time.UTC
+	}
+	
 	return location
 }
