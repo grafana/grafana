@@ -443,8 +443,7 @@ lerna.json @grafana/frontend-ops
 /public/testdata/ @grafana/grafana-frontend-platform
 /public/views/ @grafana/grafana-frontend-platform
 
-/public/app/features/explore/Logs/Logs.tsx @grafana/observability-logs
-/public/app/features/explore/Logs/LogsContainer.tsx @grafana/observability-logs
+/public/app/features/explore/Logs/ @grafana/observability-logs
 
 /public/app/features/explore/RawPrometheus/ @grafana/observability-metrics
 
