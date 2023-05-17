@@ -64,15 +64,10 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
-| Property        | Type               | Required | Default | Description                                              |
-|-----------------|--------------------|----------|---------|----------------------------------------------------------|
-| `memberCount`   | integer            | **Yes**  |         | MemberCount is the number of the team members.           |
-| `name`          | string             | **Yes**  |         | Name of the team.                                        |
-| `orgId`         | integer            | **Yes**  |         | OrgId is the ID of an organisation the team belongs to.  |
-| `permission`    | integer            | **Yes**  |         | Possible values are: `0`, `1`, `2`, `4`.                 |
-| `accessControl` | map[string]boolean | No       |         | AccessControl metadata associated with a given resource. |
-| `avatarUrl`     | string             | No       |         | AvatarUrl is the team's avatar URL.                      |
-| `email`         | string             | No       |         | Email of the team.                                       |
+| Property | Type   | Required | Default | Description        |
+|----------|--------|----------|---------|--------------------|
+| `name`   | string | **Yes**  |         | Name of the team.  |
+| `email`  | string | No       |         | Email of the team. |
 
 ### Status
 

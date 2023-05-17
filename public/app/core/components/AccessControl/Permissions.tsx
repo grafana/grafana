@@ -1,9 +1,13 @@
+import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Button } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
@@ -42,6 +46,7 @@ export const Permissions = ({
   canSetPermissions,
   addPermissionTitle,
 }: Props) => {
+  const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
@@ -127,63 +132,74 @@ export const Permissions = ({
 
   return (
     <div>
-      <div className="page-action-bar">
-        <h3 className="page-sub-heading">{title}</h3>
-        <div className="page-action-bar__spacer" />
-        {canSetPermissions && (
-          <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
-            {buttonLabel}
-          </Button>
-        )}
-      </div>
-
-      <div>
-        <SlideDown in={isAdding}>
-          <AddPermission
-            title={addPermissionTitle}
-            onAdd={onAdd}
-            permissions={desc.permissions}
-            assignments={desc.assignments}
-            onCancel={() => setIsAdding(false)}
+      {config.featureToggles.nestedFolders && resource === 'folders' && (
+        <>
+          This will change permissions for this folder and all its descendants. In total, this will affect:
+          <DescendantCount
+            selectedItems={{
+              folder: { [resourceId]: true },
+              dashboard: {},
+              panel: {},
+              $all: false,
+            }}
           />
-        </SlideDown>
-        {items.length === 0 && (
-          <table className="filter-table gf-form-group">
-            <tbody>
-              <tr>
-                <th>{emptyLabel}</th>
-              </tr>
-            </tbody>
-          </table>
-        )}
-        <PermissionList
-          title="Role"
-          items={builtInRoles}
-          compareKey={'builtInRole'}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canSet={canSetPermissions}
+        </>
+      )}
+      {canSetPermissions && (
+        <Button
+          className={styles.addPermissionButton}
+          variant={'primary'}
+          key="add-permission"
+          onClick={() => setIsAdding(true)}
+        >
+          {buttonLabel}
+        </Button>
+      )}
+      <SlideDown in={isAdding}>
+        <AddPermission
+          title={addPermissionTitle}
+          onAdd={onAdd}
+          permissions={desc.permissions}
+          assignments={desc.assignments}
+          onCancel={() => setIsAdding(false)}
         />
-        <PermissionList
-          title="User"
-          items={users}
-          compareKey={'userLogin'}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canSet={canSetPermissions}
-        />
-        <PermissionList
-          title="Team"
-          items={teams}
-          compareKey={'team'}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canSet={canSetPermissions}
-        />
-      </div>
+      </SlideDown>
+      {items.length === 0 && (
+        <table className="filter-table gf-form-group">
+          <tbody>
+            <tr>
+              <th>{emptyLabel}</th>
+            </tr>
+          </tbody>
+        </table>
+      )}
+      <PermissionList
+        title="Role"
+        items={builtInRoles}
+        compareKey={'builtInRole'}
+        permissionLevels={desc.permissions}
+        onChange={onChange}
+        onRemove={onRemove}
+        canSet={canSetPermissions}
+      />
+      <PermissionList
+        title="User"
+        items={users}
+        compareKey={'userLogin'}
+        permissionLevels={desc.permissions}
+        onChange={onChange}
+        onRemove={onRemove}
+        canSet={canSetPermissions}
+      />
+      <PermissionList
+        title="Team"
+        items={teams}
+        compareKey={'team'}
+        permissionLevels={desc.permissions}
+        onChange={onChange}
+        onRemove={onRemove}
+        canSet={canSetPermissions}
+      />
     </div>
   );
 };
@@ -217,3 +233,14 @@ const setPermission = (
   permission: string
 ): Promise<void> =>
   getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}`, { permission });
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  breakdown: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
+  }),
+  addPermissionButton: css({
+    marginBottom: theme.spacing(2),
+  }),
+});

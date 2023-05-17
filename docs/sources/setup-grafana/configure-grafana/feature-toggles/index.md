@@ -88,7 +88,6 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                         |
 | `showTraceId`                      | Show trace ids for requests                                                                                  |
-| `datasourceOnboarding`             | Enable data source onboarding page                                                                           |
 | `authnService`                     | Use new auth service to perform authentication                                                               |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                |

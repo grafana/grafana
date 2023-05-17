@@ -772,6 +772,37 @@ export enum TableCellHeight {
 export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
+ * TeamDTO represents the team status and associated permissions
+ */
+export interface TeamDTO {
+  /**
+   * AccessControl metadata associated with a given resource.
+   */
+  accessControl?: Record<string, boolean>;
+  /**
+   * AvatarUrl is the team's avatar URL.
+   */
+  avatarUrl?: string;
+  /**
+   * Email of the team.
+   */
+  email?: string;
+  /**
+   * MemberCount is the number of the team members.
+   */
+  memberCount: number;
+  /**
+   * Name of the team.
+   */
+  name: string;
+  /**
+   * OrgId is the ID of an organisation the team belongs to.
+   */
+  orgId: number;
+  permission: TeamPermissionLevel;
+}
+
+/**
  * Use UTC/GMT timezone
  */
 export type TimeZoneUtc = 'utc';
@@ -892,6 +923,13 @@ export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
   inspect: false,
 };
+
+export enum TeamPermissionLevel {
+  Admin = 4,
+  Editor = 2,
+  Member = 0,
+  Viewer = 1,
+}
 
 /**
  * A specific timezone from https://en.wikipedia.org/wiki/Tz_database

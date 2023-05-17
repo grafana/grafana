@@ -1,4 +1,4 @@
-import { Team as TeamBase } from '@grafana/schema';
+import { TeamDTO as TeamBase } from '@grafana/schema/src/common/common.gen';
 
 export interface Team extends TeamBase {
   id: number; // TODO switch to UUID

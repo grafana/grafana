@@ -17,6 +17,7 @@ import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { CreateNewButton } from './components/CreateNewButton';
+import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { setAllSelection, useHasSelection } from './state';
@@ -82,13 +83,16 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       navId="dashboards/browse"
       pageNav={navModel}
       actions={
-        (canCreateDashboards || canCreateFolder) && (
-          <CreateNewButton
-            inFolder={folderUID}
-            canCreateDashboard={canCreateDashboards}
-            canCreateFolder={canCreateFolder}
-          />
-        )
+        <>
+          {folderDTO && <FolderActionsButton folder={folderDTO} />}
+          {(canCreateDashboards || canCreateFolder) && (
+            <CreateNewButton
+              inFolder={folderUID}
+              canCreateDashboard={canCreateDashboards}
+              canCreateFolder={canCreateFolder}
+            />
+          )}
+        </>
       }
     >
       <Page.Contents className={styles.pageContents}>

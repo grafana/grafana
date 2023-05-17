@@ -140,6 +140,3 @@ export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_typ
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
-
-// Raw generated enums and default consts from team kind.
-export { Permission } from './raw/team/x/team_types.gen';
