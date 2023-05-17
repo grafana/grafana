@@ -402,9 +402,11 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		if err != nil {
 			return err
 		}
-		// Verify we can connect with the current connection string's system vars for transaction isolation.
+		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system vars for transaction isolation.
 		// If not, create a new engine with a compatible connection string.
-		engine, err = ss.verifyConnectionStringSystemVars(engine, connectionString)
+		if ss.dbCfg.Type == migrator.MySQL {
+			engine, err = ss.verifyConnectionStringSystemVars(engine, connectionString)
+		}
 	}
 
 	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
