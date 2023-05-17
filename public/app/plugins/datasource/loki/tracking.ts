@@ -146,7 +146,7 @@ const calculateTotalBytes = (response: DataQueryResponse): number => {
 
 export function trackQuery(
   response: DataQueryResponse,
-  request: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] },
+  request: DataQueryRequest<LokiQuery>,
   startTime: Date,
   extraPayload: Record<string, unknown> = {}
 ): void {

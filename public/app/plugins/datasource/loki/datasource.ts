@@ -291,7 +291,7 @@ export class LokiDatasource
     return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
   }
 
-  runQuery(fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] }) {
+  runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {
     return super
       .query(fixedRequest)
       .pipe(
