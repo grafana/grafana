@@ -114,7 +114,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		}
 
 		if publicDashboard != nil {
-			publicDashboardEnabled = *publicDashboard.IsEnabled
+			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
 

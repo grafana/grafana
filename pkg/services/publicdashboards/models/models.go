@@ -50,11 +50,29 @@ type PublicDashboard struct {
 	UpdatedAt    time.Time `json:"updatedAt" xorm:"updated_at"`
 	//config fields
 	TimeSettings         *TimeSettings `json:"timeSettings" xorm:"time_settings"`
-	TimeSelectionEnabled *bool         `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
-	IsEnabled            *bool         `json:"isEnabled" xorm:"is_enabled"`
-	AnnotationsEnabled   *bool         `json:"annotationsEnabled" xorm:"annotations_enabled"`
+	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
+	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
+	AnnotationsEnabled   bool          `json:"annotationsEnabled,omitempty" xorm:"annotations_enabled"`
 	Share                ShareType     `json:"share" xorm:"share"`
 	Recipients           []EmailDTO    `json:"recipients,omitempty" xorm:"-"`
+}
+
+type PublicDashboardDTO struct {
+	Uid          string    `json:"uid"`
+	DashboardUid string    `json:"dashboardUid"`
+	OrgId        int64     `json:"-"` // Don't ever marshal orgId to Json
+	AccessToken  string    `json:"accessToken"`
+	CreatedBy    int64     `json:"createdBy"`
+	UpdatedBy    int64     `json:"updatedBy"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	//config fields
+	TimeSettings         *TimeSettings `json:"timeSettings"`
+	TimeSelectionEnabled *bool         `json:"timeSelectionEnabled"`
+	IsEnabled            *bool         `json:"isEnabled"`
+	AnnotationsEnabled   *bool         `json:"annotationsEnabled"`
+	Share                ShareType     `json:"share"`
+	Recipients           []EmailDTO    `json:"recipients,omitempty"`
 }
 
 type EmailDTO struct {
@@ -114,7 +132,7 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, req
 	from := dashboard.Data.GetPath("time", "from").MustString()
 	to := dashboard.Data.GetPath("time", "to").MustString()
 
-	if *pd.TimeSelectionEnabled {
+	if pd.TimeSelectionEnabled {
 		from = reqDTO.TimeRange.From
 		to = reqDTO.TimeRange.To
 	}
@@ -133,7 +151,7 @@ type SavePublicDashboardDTO struct {
 	DashboardUid    string
 	OrgId           int64
 	UserId          int64
-	PublicDashboard *PublicDashboard
+	PublicDashboard *PublicDashboardDTO
 }
 
 type PublicDashboardQueryDTO struct {

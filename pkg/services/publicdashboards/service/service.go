@@ -112,7 +112,7 @@ func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAc
 		return pubdash, dash, err
 	}
 
-	if !*pubdash.IsEnabled {
+	if !pubdash.IsEnabled {
 		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
 	}
 
@@ -181,14 +181,26 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, err
 	}
 
+	var isEnabled, annotationsEnabled, timeSelectionEnabled bool
+
+	if dto.PublicDashboard.IsEnabled != nil {
+		isEnabled = *dto.PublicDashboard.IsEnabled
+	}
+	if dto.PublicDashboard.AnnotationsEnabled != nil {
+		annotationsEnabled = *dto.PublicDashboard.AnnotationsEnabled
+	}
+	if dto.PublicDashboard.TimeSelectionEnabled != nil {
+		timeSelectionEnabled = *dto.PublicDashboard.TimeSelectionEnabled
+	}
+
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
 			Uid:                  uid,
 			DashboardUid:         dto.DashboardUid,
 			OrgId:                dto.OrgId,
-			IsEnabled:            dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
-			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
+			IsEnabled:            isEnabled,
+			AnnotationsEnabled:   annotationsEnabled,
+			TimeSelectionEnabled: timeSelectionEnabled,
 			TimeSettings:         dto.PublicDashboard.TimeSettings,
 			Share:                dto.PublicDashboard.Share,
 			CreatedBy:            dto.UserId,
@@ -241,24 +253,15 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
 	}
 
-	// set default value for time settings
-	//if dto.PublicDashboard.TimeSettings == nil {
-	//	dto.PublicDashboard.TimeSettings = &TimeSettings{}
-	//}
-	//
-	//if dto.PublicDashboard.Share == "" {
-	//	dto.PublicDashboard.Share = existingPubdash.Share
-	//}
-
 	setDefaultConfigurationIfNull(dto.PublicDashboard, existingPubdash)
 
 	// set values to update
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
 			Uid:                  existingPubdash.Uid,
-			IsEnabled:            dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
-			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
+			IsEnabled:            *dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled:   *dto.PublicDashboard.AnnotationsEnabled,
+			TimeSelectionEnabled: *dto.PublicDashboard.TimeSelectionEnabled,
 			TimeSettings:         dto.PublicDashboard.TimeSettings,
 			Share:                dto.PublicDashboard.Share,
 			UpdatedBy:            dto.UserId,
@@ -408,7 +411,7 @@ func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO Pub
 func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard, u *user.SignedInUser) {
 	if publicDashboardIsEnabledChanged(existingPubdash, newPubdash) {
 		verb := "disabled"
-		if *newPubdash.IsEnabled {
+		if newPubdash.IsEnabled {
 			verb = "enabled"
 		}
 		pd.log.Info("Public dashboard "+verb, "publicDashboardUid", newPubdash.Uid, "dashboardUid", newPubdash.DashboardUid, "user", u.Login)
@@ -437,7 +440,7 @@ func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.
 // Checks to see if PublicDashboard.ExistsEnabledByDashboardUid is true on create or changed on update
 func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true
-	newDashCreated := existingPubdash == nil && *newPubdash.IsEnabled
+	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled
 	// updating dashboard, enabled changed
 	isEnabledChanged := existingPubdash != nil && newPubdash.IsEnabled != existingPubdash.IsEnabled
 	return newDashCreated || isEnabledChanged
@@ -452,33 +455,32 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-func setDefaultConfigurationIfNull(pdDTO *PublicDashboard, pd *PublicDashboard) {
-	if pdDTO.TimeSettings == nil {
+func setDefaultConfigurationIfNull(dto *PublicDashboardDTO, pd *PublicDashboard) {
+	if dto.TimeSettings == nil {
 		if pd.TimeSettings == nil {
-			pdDTO.TimeSettings = &TimeSettings{}
+			dto.TimeSettings = &TimeSettings{}
 		} else {
-			pdDTO.TimeSettings = pd.TimeSettings
+			dto.TimeSettings = pd.TimeSettings
 		}
-
 	}
 
-	if pdDTO.TimeSelectionEnabled == nil {
-		pdDTO.TimeSelectionEnabled = pd.TimeSelectionEnabled
+	if dto.TimeSelectionEnabled == nil {
+		dto.TimeSelectionEnabled = &pd.TimeSelectionEnabled
 	}
 
-	if pdDTO.IsEnabled == nil {
-		pdDTO.IsEnabled = pd.IsEnabled
+	if dto.IsEnabled == nil {
+		dto.IsEnabled = &pd.IsEnabled
 	}
 
-	if pdDTO.AnnotationsEnabled == nil {
-		pdDTO.AnnotationsEnabled = pd.AnnotationsEnabled
+	if dto.AnnotationsEnabled == nil {
+		dto.AnnotationsEnabled = &pd.AnnotationsEnabled
 	}
 
-	if pdDTO.Share == "" {
-		pdDTO.Share = pd.Share
+	if dto.Share == "" {
+		dto.Share = pd.Share
 	}
 
-	if pdDTO.Recipients == nil {
-		pdDTO.Recipients = pd.Recipients
+	if dto.Recipients == nil {
+		dto.Recipients = pd.Recipients
 	}
 }
