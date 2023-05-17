@@ -139,7 +139,7 @@ export function ResultsTable(props: ResultsTableProps) {
                     }
                   }}
                 >
-                  <td>
+                  <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
                       searchWords={state.fullMetaSearch ? state.metaHaystackMatches : state.nameHaystackMatches}
@@ -163,7 +163,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
 
   return {
     table: css`
-      table-layout: fixed;
+      ${disableTextWrap ? '' : 'table-layout: fixed;'}
       border-radius: ${theme.shape.borderRadius()};
       width: 100%;
       height: 100%;
@@ -198,10 +198,13 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       background-color: ${theme.components.textHighlight.background};
     `,
     nameWidth: css`
-      width: 40%;
+      ${disableTextWrap ? '' : 'width: 40%;'}
+    `,
+    nameOverflow: css`
+      ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
     `,
     typeWidth: css`
-      width: 15%;
+      ${disableTextWrap ? '' : 'width: 15%;'}
     `,
     stickyHeader: css`
       position: sticky;
