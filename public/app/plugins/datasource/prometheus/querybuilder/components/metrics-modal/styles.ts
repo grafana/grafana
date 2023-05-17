@@ -80,6 +80,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       color: ${theme.colors.text.secondary};
       opacity: 75%;
       padding-top: 5px;
+      font-size: 0.85rem;
     `,
     resultsPerPageWrapper: css`
       display: flex;
