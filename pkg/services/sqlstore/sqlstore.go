@@ -434,16 +434,16 @@ func (ss *SQLStore) verifyConnectionStringSystemVars(engine *xorm.Engine, connec
 	if errors.As(err, &mysqlError) {
 		// if there was an error due to transaction isolation
 		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
+			// replace with compatible system var for transaction isolation
 			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
-		} else if strings.Contains(mysqlError.Message, "Unknown system variable 'tx_isolation'") {
-			connectionString = strings.Replace(connectionString, "&tx_isolation", "&transaction_isolation", -1)
+			// recreate the xorm engine with new connection string that is compatible
+			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+			if err != nil {
+				return nil, err
+			}
 		}
-
-		// recreate the xorm engine with connection string that has compatible system var for transaction isolation
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
-		if err != nil {
-			return nil, err
-		}
+	} else if err != nil {
+		return nil, err
 	}
 
 	return engine, nil
