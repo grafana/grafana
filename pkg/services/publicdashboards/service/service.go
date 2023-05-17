@@ -253,7 +253,7 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
 	}
 
-	setDefaultConfigurationIfNull(dto.PublicDashboard, existingPubdash)
+	setPersistedValueIfNull(dto.PublicDashboard, existingPubdash)
 
 	// set values to update
 	cmd := SavePublicDashboardCommand{
@@ -455,7 +455,7 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-func setDefaultConfigurationIfNull(dto *PublicDashboardDTO, pd *PublicDashboard) {
+func setPersistedValueIfNull(dto *PublicDashboardDTO, pd *PublicDashboard) {
 	if dto.TimeSettings == nil {
 		if pd.TimeSettings == nil {
 			dto.TimeSettings = &TimeSettings{}
