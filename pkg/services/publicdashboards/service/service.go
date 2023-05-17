@@ -479,8 +479,4 @@ func setPersistedValueIfNull(dto *PublicDashboardDTO, pd *PublicDashboard) {
 	if dto.Share == "" {
 		dto.Share = pd.Share
 	}
-
-	if dto.Recipients == nil {
-		dto.Recipients = pd.Recipients
-	}
 }
