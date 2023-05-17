@@ -11,7 +11,7 @@ load(
     "delivery_bot_app_private_key",
 )
 
-grabpl_version = "v3.0.34"
+grabpl_version = "v3.0.35"
 build_image = "grafana/build-container:1.7.4"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
