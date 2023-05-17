@@ -4393,6 +4393,8 @@ steps:
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_main.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -4441,6 +4443,8 @@ steps:
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -6706,6 +6710,36 @@ kind: secret
 name: enterprise2-cdn-path
 ---
 get:
+  name: security_prefix
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: enterprise2_security_prefix
+---
+get:
+  name: gcp_service_account_base64
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: gcp_key_base64
+---
+get:
+  name: destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: destination
+---
+get:
+  name: dagger_token
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: dagger_token
+---
+get:
+  name: pat
+  path: infra/data/ci/github/grafanabot
+kind: secret
+name: github_token
+---
+get:
   name: app-id
   path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
 kind: secret
@@ -6742,6 +6776,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 6d641ea656401a07a00ba289bdc13c562ed69b216c7f978fdfb6cf2c6eef0509
+hmac: e353f062c00400aeb2a93e1ad10ea3305942b104af4416c14d19584df61d0cad
 
 ...
