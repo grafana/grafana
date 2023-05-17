@@ -187,7 +187,6 @@ class DataSourceWithBackend<
     const body: any = { queries };
 
     if (range) {
-      body.range = range;
       body.from = range.from.valueOf().toString();
       body.to = range.to.valueOf().toString();
     }
