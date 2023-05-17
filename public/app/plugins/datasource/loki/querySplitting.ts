@@ -81,8 +81,6 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
 
-type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
-
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
