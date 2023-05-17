@@ -124,16 +124,6 @@ def secrets():
             "security_prefix",
         ),
         vault_secret(
-            "grafana_upstream_repo_main",
-            "infra/data/ci/grafana-release-eng/grafana-enterprise",
-            "upstream-repo-main",
-        ),
-        vault_secret(
-            "grafana_upstream_repo_tag",
-            "infra/data/ci/grafana-release-eng/grafana-enterprise",
-            "upstream-repo-tag",
-        ),
-        vault_secret(
             rgm_gcp_key_base64,
             "infra/data/ci/grafana-release-eng/rgm",
             "gcp_service_account_base64",

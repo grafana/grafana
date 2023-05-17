@@ -7062,18 +7062,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 get:
-  name: upstream-repo-main
-  path: infra/data/ci/grafana-release-eng/grafana-enterprise
-kind: secret
-name: grafana_upstream_repo_main
----
-get:
-  name: upstream-repo-tag
-  path: infra/data/ci/grafana-release-eng/grafana-enterprise
-kind: secret
-name: grafana_upstream_repo_tag
----
-get:
   name: gcp_service_account_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -7110,6 +7098,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 5b4198f5b6ace2019551d3b17ba33a2bb382dee4a43e2eb83a4cdf40a6774aaf
+hmac: 918dbda2a3a3b0b0c8469778e0f99116e917531a622622739405bbb147a9fb34
 
 ...
