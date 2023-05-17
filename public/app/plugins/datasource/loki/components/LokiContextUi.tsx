@@ -5,7 +5,10 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import store from 'app/core/store';
+import { dispatch } from 'app/store/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { LogContextProvider } from '../LogContextProvider';
@@ -55,7 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
-      width: calc(100% - 20px);
+      padding-right: 20px;
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -77,6 +80,12 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
+const LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS = 'lokiLogContextPreserveSelectedLabels';
+
+type PreservedLabels = {
+  removedLabels: string[];
+  selectedExtractedLabels: string[];
+};
 
 export function LokiContextUi(props: LokiContextUiProps) {
   const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
@@ -125,6 +134,23 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setLoading(true);
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters.filter(({ enabled }) => enabled));
+      // We are storing the removed labels and added extracted labels in local storage so we can use them
+      // in the next log line context selection to preselect the labels in the UI
+      const preservedLabels: PreservedLabels = {
+        removedLabels: [],
+        selectedExtractedLabels: [],
+      };
+
+      contextFilters.forEach(({ enabled, fromParser, label }) => {
+        if (!enabled && !fromParser) {
+          preservedLabels.removedLabels.push(label);
+        }
+        if (enabled && fromParser) {
+          preservedLabels.selectedExtractedLabels.push(label);
+        }
+      });
+
+      store.set(LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS, JSON.stringify(preservedLabels));
       setLoading(false);
     }, 1500);
 
@@ -143,9 +169,41 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
+    let isChanged = false;
     const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
+    const preservedLabelsString = store.get(LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS);
+    if (preservedLabelsString) {
+      let preservedLabels: undefined | PreservedLabels;
+      try {
+        preservedLabels = JSON.parse(preservedLabelsString);
+      } catch (e) {
+        console.error('could not parse preserved labels from local storage');
+      }
+      if (preservedLabels) {
+        if (preservedLabels.removedLabels.length > 0) {
+          contextFilters.forEach((contextFilter) => {
+            if (!contextFilter.fromParser && preservedLabels?.removedLabels.includes(contextFilter.label)) {
+              isChanged = true;
+              contextFilter.enabled = false;
+            }
+          });
+        }
+
+        if (preservedLabels.selectedExtractedLabels.length > 0) {
+          contextFilters.forEach((contextFilter) => {
+            if (contextFilter.fromParser && preservedLabels?.selectedExtractedLabels.includes(contextFilter.label)) {
+              isChanged = true;
+              contextFilter.enabled = true;
+            }
+          });
+        }
+      }
+    }
     setContextFilters(contextFilters);
     setInitialized(true);
+    if (isChanged) {
+      dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
+    }
     setLoading(false);
   });
 
@@ -199,6 +257,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   enabled: !contextFilter.fromParser,
                 }));
               });
+              store.delete(LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS);
             }}
           />
         </div>
