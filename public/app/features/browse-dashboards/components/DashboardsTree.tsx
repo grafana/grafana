@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 import { TableInstance, useTable } from 'react-table';
-import { FixedSizeList as List, ListOnItemsRenderedProps, ListOnScrollProps } from 'react-window';
+import { FixedSizeList as List, ListOnScrollProps } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,16 +28,23 @@ interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
+  canSelect: boolean;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
-  onItemsRendered?: (props: ListOnItemsRenderedProps) => void;
-  canSelect: boolean;
+
+  isItemLoaded: (itemIndex: number) => boolean;
+  requestLoadMore: (startIndex: number, endIndex: number) => void;
 }
 
 const HEADER_HEIGHT = 35;
 const ROW_HEIGHT = 35;
+
+function FixedNumber({ number }: { number?: number }) {
+  const str = number?.toString() ?? '';
+  return <span style={{ fontFamily: 'monospace', whiteSpace: 'pre' }}>{str.padStart(4)}</span>;
+}
 
 export function DashboardsTree({
   items,
@@ -46,12 +54,20 @@ export function DashboardsTree({
   onFolderClick,
   onAllSelectionChange,
   onItemSelectionChange,
-  onItemsRendered,
+  isItemLoaded,
+  requestLoadMore,
   canSelect = false,
 }: DashboardsTreeProps) {
   const styles = useStyles2(getStyles);
 
   const tableColumns = useMemo(() => {
+    const indexColumn: DashboardsTreeColumn = {
+      id: 'index',
+      width: 0,
+      Header: ({}) => <FixedNumber />,
+      Cell: ({ row: { index } }: DashboardsTreeCellProps) => <FixedNumber number={index} />,
+    };
+
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
       width: 0,
@@ -79,7 +95,7 @@ export function DashboardsTree({
       Header: 'Tags',
       Cell: TagsCell,
     };
-    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+    const columns = [indexColumn, canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, canSelect]);
@@ -99,16 +115,18 @@ export function DashboardsTree({
     [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
   );
 
-  const handleScroll = useCallback((props: ListOnScrollProps) => {
-    // console.log('handleScroll', props);
-  }, []);
-
-  const handleItemsRendered = useCallback(
-    (props: ListOnItemsRenderedProps) => {
-      // console.log('handleItemsRendered', props);
-      onItemsRendered?.(props);
+  const handleIsItemLoaded = useCallback(
+    (itemIndex: number) => {
+      return isItemLoaded(itemIndex);
     },
-    [onItemsRendered]
+    [isItemLoaded]
+  );
+
+  const handleLoadMore = useCallback(
+    (startIndex: number, endIndex: number) => {
+      requestLoadMore(startIndex, endIndex);
+    },
+    [requestLoadMore]
   );
 
   return (
@@ -134,17 +152,21 @@ export function DashboardsTree({
       })}
 
       <div {...getTableBodyProps()}>
-        <List
-          height={height - HEADER_HEIGHT}
-          width={width}
-          itemCount={items.length}
-          itemData={virtualData}
-          itemSize={ROW_HEIGHT}
-          onScroll={handleScroll}
-          onItemsRendered={handleItemsRendered}
-        >
-          {VirtualListRow}
-        </List>
+        <InfiniteLoader itemCount={items.length} isItemLoaded={handleIsItemLoaded} loadMoreItems={handleLoadMore}>
+          {({ onItemsRendered, ref }) => (
+            <List
+              ref={ref}
+              height={height - HEADER_HEIGHT}
+              width={width}
+              itemCount={items.length}
+              itemData={virtualData}
+              itemSize={ROW_HEIGHT}
+              onItemsRendered={onItemsRendered}
+            >
+              {VirtualListRow}
+            </List>
+          )}
+        </InfiniteLoader>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { Spinner } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -100,6 +101,28 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [selectedItems, childrenByParentUID]
   );
 
+  const isItemLoaded = useCallback(
+    (itemIndex: number) => {
+      const treeItem = flatTree[itemIndex];
+      if (!treeItem) {
+        return false;
+      }
+      const item = treeItem.item;
+
+      return !(item.kind === 'ui' && item.uiKind === 'loading-placeholder');
+    },
+    [flatTree]
+  );
+
+  const handleLoadMore = useMemo(() => {
+    function loadMore(startIndex: number, endIndex: number) {
+      console.log('loadMoreItems', startIndex, endIndex);
+      dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+    }
+
+    return debounce(loadMore, 300);
+  }, [dispatch, folderUID]);
+
   if (status === 'pending') {
     return <Spinner />;
   }
@@ -131,6 +154,8 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       onFolderClick={handleFolderClick}
       onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
       onItemSelectionChange={handleItemSelectionChange}
+      isItemLoaded={isItemLoaded}
+      requestLoadMore={handleLoadMore}
     />
   );
 }
