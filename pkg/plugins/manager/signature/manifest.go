@@ -339,15 +339,46 @@ func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.B
 		return fmt.Errorf("%v: %w", "failed to parse public key", err)
 	}
 
+	signatureBody, err := io.ReadAll(block.ArmoredSignature.Body)
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to read signature body", err)
+	}
+
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
-		// If the key includes revocations, we can assume that the key was revoked
-		if len(keyring) > 0 && len(keyring[0].Revocations) > 0 {
-			return fmt.Errorf("%s (KeyID: %s): %w", openpgpErrors.ErrKeyRevoked.Error(), keyID, err)
+		bytes.NewBuffer(signatureBody), &packet.Config{}); err != nil {
+		if errors.Is(err, openpgpErrors.ErrKeyRevoked) {
+			valid, err := wasSignedBeforeRevocation(keyring, signatureBody)
+			if err != nil {
+				return err
+			}
+			if valid {
+				s.log.Warn("Plugin signed by a revoked key but was signed before the event", "keyId", keyID)
+				return nil
+			}
 		}
-		return fmt.Errorf("%v: %w", "failed to check signature", err)
+		return fmt.Errorf("%s: %w", "failed to check signature", err)
 	}
 
 	return nil
+}
+
+func wasSignedBeforeRevocation(keyring openpgp.EntityList, signatureBody []byte) (bool, error) {
+	// Check if the signature is prior to the revocation
+	p, err := packet.NewReader(bytes.NewBuffer(signatureBody)).Next()
+	if err != nil {
+		return false, fmt.Errorf("%v: %w", "failed to read signature", err)
+	}
+	sig, ok := p.(*packet.Signature)
+	if !ok {
+		return false, fmt.Errorf("signature is not valid")
+	}
+	for _, key := range keyring {
+		for _, revocation := range key.Revocations {
+			if sig.CreationTime.Before(revocation.CreationTime) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
