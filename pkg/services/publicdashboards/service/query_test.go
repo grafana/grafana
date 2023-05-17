@@ -1232,7 +1232,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1283,7 +1282,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			49,
@@ -1322,7 +1320,6 @@ func TestBuildMetricRequest(t *testing.T) {
 		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,

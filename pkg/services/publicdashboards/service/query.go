@@ -109,7 +109,6 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 	}
 
 	metricReqDTO, err := pd.buildMetricRequest(
-		ctx,
 		dashboard,
 		publicDashboard,
 		panelId,
@@ -154,7 +153,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
@@ -363,11 +362,12 @@ func getLocation(reqDTO models.PublicDashboardQueryDTO, dashboardLocation string
 			return userLocation
 		}
 	}
-	
+
 	// if the Location is blank or there is an error default is UTC
-	if location, err := time.LoadLocation(dashboardLocation); err != nil {
-        return time.UTC
+	location, err := time.LoadLocation(dashboardLocation)
+	if err != nil {
+		return time.UTC
 	}
-	
+
 	return location
 }
