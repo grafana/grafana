@@ -118,7 +118,7 @@ function createFlatTree(
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
-        item: { kind: 'ui-empty-folder', uid: item.uid + '-empty-folder' },
+        item: { kind: 'ui', uiKind: 'empty-folder', uid: item.uid + 'empty-folder' },
       });
     }
 

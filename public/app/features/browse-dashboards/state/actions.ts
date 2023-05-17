@@ -62,14 +62,27 @@ export const fetchChildren = createAsyncThunk(
       return;
     }
 
-    const children =
+    let children =
       fetchKind === 'folder'
         ? await listFolders(uid, undefined, page, pageSize)
         : await listDashboards(uid, page, pageSize);
 
+    let lastPageOfKind = children.length < pageSize;
+
+    // If we've loaded all folders, load the first page of dashboards.
+    // This ensures dashboards are loaded if a folder contains only dashboards.
+    if (fetchKind === 'folder' && lastPageOfKind) {
+      fetchKind = 'dashboard';
+      page = 1;
+
+      const childDashboards = await listDashboards(uid, page, pageSize);
+      lastPageOfKind = childDashboards.length < pageSize;
+      children = children.concat(childDashboards);
+    }
+
     return {
       children,
-      lastPageOfKind: children.length < pageSize,
+      lastPageOfKind: lastPageOfKind,
       page,
       kind: fetchKind,
     };

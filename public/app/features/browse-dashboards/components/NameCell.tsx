@@ -19,7 +19,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
 
-  if (item.kind === 'ui-empty-folder') {
+  if (item.kind === 'ui') {
     return (
       <>
         <Indent level={level} />

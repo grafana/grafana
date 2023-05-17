@@ -77,7 +77,7 @@ jest.mock('app/features/search/service/folders', () => {
   return {
     getFolderChildren(parentUID?: string) {
       const childrenForUID = mockTree
-        .filter((v) => v.item.kind !== 'ui-empty-folder' && v.item.parentUID === parentUID)
+        .filter((v) => v.item.kind !== 'ui' && v.item.parentUID === parentUID)
         .map((v) => v.item);
 
       return Promise.resolve(childrenForUID);

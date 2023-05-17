@@ -27,7 +27,7 @@ export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState,
     lastFetchedKind: kind,
     lastFetchedPage: page,
     hasMoreChildren: !lastPageOfKind,
-    isFullyLoaded: kind === 'dashboard' && !lastPageOfKind,
+    isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
   if (!parentUID) {

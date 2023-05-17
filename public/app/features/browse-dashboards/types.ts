@@ -24,7 +24,8 @@ export interface BrowseDashboardsState {
 }
 
 export interface UIDashboardViewItem {
-  kind: 'ui-empty-folder';
+  kind: 'ui';
+  uiKind: 'empty-folder' | 'loading-placeholder';
   uid: string;
 }
 
