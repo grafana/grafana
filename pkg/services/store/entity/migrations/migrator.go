@@ -1,13 +1,17 @@
 package migrations
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func CheckEntityStoreMigrations(
+func MigrateEntityStore(
 	sql *sqlstore.SQLStore, // also db.DB
 	features featuremgmt.FeatureToggles) error {
 
@@ -24,10 +28,40 @@ func CheckEntityStoreMigrations(
 		return nil
 	}
 
-	migrator := migrator.NewMigrator("entity", sql.GetEngine(), sql.Cfg)
-	initEntityTables(migrator)
+	marker := "Initalize entity tables (v0)" // changing this key wipe the entity tables
+	mg := migrator.NewMigrator(sql.GetEngine(), sql.Cfg, "entity")
+	mg.AddMigration(marker, &migrator.RawSQLMigration{}) // SELECT 0
+	initEntityTables(mg)
 
-	return migrator.Start(
+	// While this feature is under development, we can completly wipe and recreate
+	// The initial plan is to keep the source of truth in existing SQL tables, and mirrot it
+	// to a kubernetes model.  Once the kubernetes model needs to be preserved,
+	// this code should be removed
+	log, err := mg.GetMigrationLog()
+	if err != nil {
+		return err
+	}
+	_, found := log[marker]
+	if !found && len(log) > 0 {
+		// Remove the migration log (and potential other orphan tables)
+		tables := []string{"entity_migration_log"}
+
+		ctx := context.Background()
+		err = sql.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+			for _, t := range tables {
+				_, err := tx.Exec(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", t))
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return mg.Start(
 		features.IsEnabled(featuremgmt.FlagMigrationLocking),
 		sql.GetMigrationLockAttemptTimeout())
 }

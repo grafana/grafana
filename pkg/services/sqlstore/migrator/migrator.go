@@ -40,7 +40,7 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(scope string, engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
@@ -57,7 +57,7 @@ func NewMigrator(scope string, engine *xorm.Engine, cfg *setting.Cfg) *Migrator 
 	}
 
 	// Must be the first migration
-	mg.AddMigration("create migration_log table", NewAddTableMigration(Table{
+	mg.AddMigration("create "+mg.tableName+" table", NewAddTableMigration(Table{
 		Name: mg.tableName,
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},

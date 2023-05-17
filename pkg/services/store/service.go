@@ -104,7 +104,7 @@ func ProvideService(
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
 	}
 
-	if err := migrations.CheckEntityStoreMigrations(sql, features); err != nil {
+	if err := migrations.MigrateEntityStore(sql, features); err != nil {
 		return nil, err
 	}
 
