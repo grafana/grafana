@@ -646,35 +646,54 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	})
 
 	trueBooleanField := true
+	timeSettings := &TimeSettings{From: "now-8", To: "now"}
+	shareType := EmailShareType
+	recipients := []EmailDTO{{Uid: "an-uid", Recipient: "example@example.com"}}
+
 	testCases := []struct {
 		Name                 string
 		IsEnabled            *bool
 		TimeSelectionEnabled *bool
 		AnnotationsEnabled   *bool
+		TimeSettings         *TimeSettings
+		ShareType            ShareType
+		Recipients           []EmailDTO
 	}{
 		{
 			Name:                 "isEnabled",
 			IsEnabled:            nil,
 			TimeSelectionEnabled: &trueBooleanField,
 			AnnotationsEnabled:   &trueBooleanField,
+			TimeSettings:         timeSettings,
+			ShareType:            shareType,
+			Recipients:           recipients,
 		},
 		{
 			Name:                 "timeSelectionEnabled",
 			IsEnabled:            &trueBooleanField,
 			TimeSelectionEnabled: nil,
 			AnnotationsEnabled:   &trueBooleanField,
+			TimeSettings:         timeSettings,
+			ShareType:            shareType,
+			Recipients:           recipients,
 		},
 		{
 			Name:                 "annotationsEnabled",
 			IsEnabled:            &trueBooleanField,
 			TimeSelectionEnabled: &trueBooleanField,
 			AnnotationsEnabled:   nil,
+			TimeSettings:         timeSettings,
+			ShareType:            shareType,
+			Recipients:           recipients,
 		},
 		{
 			Name:                 "isEnabled, timeSelectionEnabled and annotationsEnabled",
 			IsEnabled:            nil,
 			TimeSelectionEnabled: nil,
 			AnnotationsEnabled:   nil,
+			TimeSettings:         nil,
+			ShareType:            "",
+			Recipients:           nil,
 		},
 	}
 
@@ -705,6 +724,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 					AnnotationsEnabled:   &annotationsEnabled,
 					TimeSelectionEnabled: &timeSelectionEnabled,
 					TimeSettings:         timeSettings,
+					Share:                PublicShareType,
+					Recipients:           nil,
 				},
 			}
 
@@ -718,16 +739,17 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				OrgId:        dashboard.OrgID,
 				UserId:       8,
 				PublicDashboard: &PublicDashboardDTO{
-					Uid:          savedPubdash.Uid,
-					OrgId:        9,
-					DashboardUid: "abc1234",
-					CreatedBy:    9,
-					CreatedAt:    time.Time{},
-
+					Uid:                  savedPubdash.Uid,
+					OrgId:                9,
+					DashboardUid:         "abc1234",
+					CreatedBy:            9,
+					CreatedAt:            time.Time{},
 					IsEnabled:            tt.IsEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
-					TimeSettings:         timeSettings,
+					TimeSettings:         tt.TimeSettings,
+					Share:                tt.ShareType,
+					Recipients:           tt.Recipients,
 					AccessToken:          "NOTAREALUUID",
 				},
 			}
@@ -737,6 +759,23 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			assertOldValueIfNull(t, updatedPubdash.IsEnabled, savedPubdash.IsEnabled, dto.PublicDashboard.IsEnabled)
 			assertOldValueIfNull(t, updatedPubdash.AnnotationsEnabled, savedPubdash.AnnotationsEnabled, dto.PublicDashboard.AnnotationsEnabled)
 			assertOldValueIfNull(t, updatedPubdash.TimeSelectionEnabled, savedPubdash.TimeSelectionEnabled, dto.PublicDashboard.TimeSelectionEnabled)
+
+			if dto.PublicDashboard.TimeSettings == nil {
+				assert.Equal(t, updatedPubdash.TimeSettings, savedPubdash.TimeSettings)
+			} else {
+				assert.Equal(t, updatedPubdash.TimeSettings, dto.PublicDashboard.TimeSettings)
+			}
+			if dto.PublicDashboard.Share == "" {
+				assert.Equal(t, updatedPubdash.Share, savedPubdash.Share)
+			} else {
+				assert.Equal(t, updatedPubdash.Share, dto.PublicDashboard.Share)
+			}
+			if dto.PublicDashboard.Recipients == nil {
+				assert.Equal(t, updatedPubdash.Recipients, savedPubdash.Recipients)
+			} else {
+				assert.Equal(t, updatedPubdash.Recipients, dto.PublicDashboard.Recipients)
+			}
+
 		})
 	}
 }
