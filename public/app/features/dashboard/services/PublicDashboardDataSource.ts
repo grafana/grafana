@@ -136,10 +136,12 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         })
         .pipe(
           switchMap((raw) => {
-            return of(toDataQueryResponse(raw, queries));
+            const response = toDataQueryResponse(raw, queries);
+            return this.transform(request, of(response));
           }),
           catchError((err) => {
-            return of(toDataQueryResponse(err));
+            const response = toDataQueryResponse(err);
+            return this.transform(request, of(response));
           })
         );
     }
