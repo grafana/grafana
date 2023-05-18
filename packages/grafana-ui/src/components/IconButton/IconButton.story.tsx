@@ -44,63 +44,50 @@ export const Basic: StoryFn<typeof IconButton> = (args: IconButtonProps) => {
 };
 
 export const ExamplesSizes = () => {
+  const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
   const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 
+  const rowStyle = css`
+    display: flex;
+    gap: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(2)};
+  `;
+
   return (
-    <div
-      className={css`
-        button {
-          margin-right: 8px;
-          margin-left: 8px;
-          margin-bottom: 20px;
-        }
-      `}
-    >
-      <HorizontalGroup spacing="md">
-        {variants.map((variant) => {
-          return (
-            <div key={variant}>
-              <p>{variant}</p>
-              {icons.map((icon) => {
-                return (
-                  <div
-                    className={css`
-                      display: flex;
-                    `}
-                    key={icon}
-                  >
-                    {sizes.map((size) => (
-                      <span key={icon + size}>
-                        <IconButton name={icon} size={size} variant={variant} />
-                      </span>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-        <div>
-          <p>disabled</p>
-          {icons.map((icon) => (
-            <div
-              className={css`
-                display: flex;
-              `}
-              key={icon}
-            >
-              {sizes.map((size) => (
-                <span key={icon + size}>
-                  <IconButton name={icon} size={size} disabled />
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </HorizontalGroup>
-    </div>
+    <HorizontalGroup spacing="md">
+      {variants.map((variant) => {
+        return (
+          <div key={variant}>
+            <p>{variant}</p>
+            {icons.map((icon) => {
+              return (
+                <div className={rowStyle} key={icon}>
+                  {sizes.map((size) => (
+                    <span key={icon + size}>
+                      <IconButton name={icon} size={size} variant={variant} />
+                    </span>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+      <div>
+        <p>disabled</p>
+        {icons.map((icon) => (
+          <div className={rowStyle} key={icon}>
+            {sizes.map((size) => (
+              <span key={icon + size}>
+                <IconButton name={icon} size={size} disabled />
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </HorizontalGroup>
   );
 };
 
@@ -123,10 +110,6 @@ const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
       className={css`
         padding: 30px;
         background: ${theme.colors.background[background]};
-        button {
-          margin-right: 8px;
-          margin-left: 8px;
-        }
       `}
     >
       <VerticalGroup spacing="md">
@@ -134,6 +117,7 @@ const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
         <div
           className={css`
             display: flex;
+            gap: ${theme.spacing(2)};
           `}
         >
           {variants.map((variant) => {
