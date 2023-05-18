@@ -14,11 +14,11 @@ weight: 300
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source.
+Grafana provides a query editor for the Prometheus data source where you can create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
 
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
-For options and functions common to all query editors, refer to [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For options and functions common to all query editors, see [Query editors]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
@@ -31,16 +31,18 @@ To switch between editor modes, select the corresponding **Builder** and **Code*
 
 {{< figure src="/static/img/docs/prometheus/editing-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Query editor mode" >}}
 
-Both modes are synchronized, so you can switch between them without losing your work.
+Both modes are synchronized, so you can switch between them. However, if there is an issue with the query while switching modes, a warning message will appear.
 
-## Toolbar options
+<!-- ## Toolbar options -->
 
-The toolbar contains the following elements:
+## Get started with the query editor
 
-| Name                      | Description                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------- |
-| **Kick start your query** | A list of operation patterns that help you quickly add multiple operations to your query. |
-| **Explain**               | Displays a step-by-step explanation of all query parts and its operations.                |
+Regardless of mode, the query editor has the following:
+
+| Name                      | Description                                                                                              |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Kick start your query** | A list of operation patterns that help you quickly get started adding multiple operations to your query. |
+| **Explain**               | Displays a step-by-step explanation of all parts of a query and their operations.                        |
 
 ## Configure common options
 
@@ -54,7 +56,7 @@ The **Legend** setting defines the time series's name. You can use a predefined 
 
 | Option      | Description                                                                                                                                                                                                           |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Auto**    | Shows the value of a single label for each series with only one label, or displays all labels if a series has multiple labels.                                                                                        |
+| **Auto**    | Displays unique labels. Also displays all overlapping labels if a series has multiple labels.                                                                                                                         |
 | **Verbose** | Displays all label names.                                                                                                                                                                                             |
 | **Custom**  | Uses templating to select which labels will be included.<br/>For example, `{{hostname}}` is replaced by the label value for the label `hostname`.<br/>Clear the input and click outside of it to select another mode. |
 
@@ -80,7 +82,7 @@ The **Type** setting sets the query type.
 
 - The **Both** query option is the default option and returns results for both a **Range** query and an **Instant** query.
 - A **Range** query returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
-- An **Instant** query returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results can be shown in a table or as raw data.
+- An **Instant** query returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results can be shown in table format or as raw data.
 - An **Exemplars** query runs with the regular query and shows exemplars in the graph.
 
 For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
