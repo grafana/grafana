@@ -254,6 +254,18 @@ abstract class DataSourceApi<
   abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
+   * Used when you need to transform the response from the backend, after query method called.
+   * This is really necessary in order to make this query work for public dashboards.
+   * Overwrite this method if you need to make a transformation.
+   */
+  transform(
+    request: DataQueryRequest<DataQuery>,
+    response: Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> {
+    return response;
+  }
+
+  /**
    * Test & verify datasource settings & connection details (returning TestingStatus)
    *
    * When verification fails - errors specific to the data source should be handled here and converted to

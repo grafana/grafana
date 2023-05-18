@@ -195,7 +195,8 @@ export function callQueryMethod(
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
   if (datasource.type === 'public-ds') {
-    return from(datasource.query(request));
+    const response = datasource.query(request);
+    return from(datasource.transform(request, from(response)));
   }
 
   for (const target of request.targets) {

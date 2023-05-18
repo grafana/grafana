@@ -1,7 +1,7 @@
 import { cloneDeep, defaults } from 'lodash';
 import LRU from 'lru-cache';
 import React from 'react';
-import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, switchMap, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
 
@@ -451,6 +451,34 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
+  // @ts-ignore
+  transform(
+    request: DataQueryRequest<PromQuery>,
+    response: Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> {
+    let requestInfo: CacheRequestInfo | undefined = undefined;
+    if (this.hasIncrementalQuery) {
+      requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+    }
+
+    const startTime = new Date();
+
+    return response.pipe(
+      map((response) => {
+        const amendedResponse = {
+          ...response,
+          data: this.cache.procFrames(request, requestInfo, response.data),
+        };
+        return transformV2(amendedResponse, request, {
+          exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+        });
+      }),
+      tap((response: DataQueryResponse) => {
+        trackQuery(response, request, startTime);
+      })
+    );
+  }
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
@@ -463,19 +491,9 @@ export class PrometheusDatasource
       }
 
       const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
-      const startTime = new Date();
       return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
-        map((response) => {
-          const amendedResponse = {
-            ...response,
-            data: this.cache.procFrames(request, requestInfo, response.data),
-          };
-          return transformV2(amendedResponse, request, {
-            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
-          });
-        }),
-        tap((response: DataQueryResponse) => {
-          trackQuery(response, request, startTime);
+        switchMap((response) => {
+          return this.transform(request, of(response));
         })
       );
       // Run queries trough browser/proxy

@@ -22,6 +22,8 @@ export const PUBLIC_DATASOURCE = '-- Public --';
 export const DEFAULT_INTERVAL = '1min';
 
 export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
+  datasource: DataSourceApi | undefined;
+
   constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
     let meta = {} as DataSourcePluginMeta;
     if (PublicDashboardDataSource.isMixedDatasource(datasource)) {
@@ -40,6 +42,9 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     });
 
     this.interval = PublicDashboardDataSource.resolveInterval(datasource);
+    if (datasource instanceof DataSourceApi) {
+      this.datasource = datasource;
+    }
 
     this.annotations = {
       prepareQuery(anno: AnnotationQuery): DataQuery | undefined {
@@ -77,10 +82,16 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     return interval ?? DEFAULT_INTERVAL;
   }
 
+  transform(
+    request: DataQueryRequest<DataQuery>,
+    response: Observable<DataQueryResponse>
+  ): Observable<DataQueryResponse> {
+    return this.datasource ? this.datasource.transform(request, response) : super.transform(request, response);
+  }
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest): Observable<DataQueryResponse> {
     const {
       intervalMs,
       maxDataPoints,
