@@ -61,7 +61,7 @@ class UserSessions extends PureComponent<Props> {
                           size="sm"
                           variant="destructive"
                           onClick={() => revokeUserSession(session.id)}
-                          aria-label={t('user-session.revoke', 'Revoke user session')}
+                          aria-label={t('user-session.revoke', 'Revoke user session') ?? undefined}
                         >
                           <Icon name="power" />
                         </Button>
