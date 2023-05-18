@@ -16,11 +16,7 @@ export const maxSize: Modifier<'maxSize', {}> = {
 
     const widthProp = basePlacement === 'left' ? 'left' : 'right';
     const heightProp = basePlacement === 'top' ? 'top' : 'bottom';
-    console.log('width', width);
-    console.log('height', height);
-    console.log('overflow', overflow);
-    console.log('x', x);
-    console.log('y', y);
+
     state.modifiersData[name] = {
       width: width - overflow[widthProp] - x,
       height: height - overflow[heightProp] - y,
@@ -38,6 +34,5 @@ export const applyMaxSize: Modifier<'applyMaxSize', {}> = {
     state.styles.popper.maxHeight = `${height - MODAL_MARGIN}px`;
     state.styles.popper.minHeight = `${FLIP_THRESHOLD}px`;
     state.styles.popper.maxWidth = width;
-    console.log('state.styles.popper.maxWidth', state.styles.popper.maxWidth);
   },
 };

@@ -75,13 +75,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     placement: 'bottom-start',
     modifiers: [
       {
-        name: 'preventOverflow',
-        options: {
-          boundary: document.querySelector('body'),
-          rootBoundary: 'viewport', // true by default
-        },
-      },
-      {
         name: 'offset',
         options: {
           offset: [0, 4],
