@@ -97,8 +97,8 @@ _Available in Experimental in all editions of Grafana_
 
 Datagrid is a new panel that allows you to edit your data within a Grafana dashboard. Imagine having a spreadsheet-like view where you can fine-tune data pulled from a datasource or create your own dataset from scratch and use it within your dashboard to update your panels in real time. You can also use the Datagrid as a data source used by other panels to augment other data.
 
-By default, the Datagrid panel will not allow a user to edit data, but only show data like a standard visualization. To make full use of this new panel editing functionality you will need to enable the `enableDatagridEditing` feature toggle.
-But for now the Datagrid Panel will support the following features in G10:
+To use this new panel editing functionality you will need to enable the `enableDatagridEditing` feature toggle.
+For now the Datagrid Panel will support the following features in G10:
 
 - Creating and deleting rows and columns
 - Data and column header edit or delete
