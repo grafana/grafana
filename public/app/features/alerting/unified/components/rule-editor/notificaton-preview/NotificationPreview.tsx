@@ -5,14 +5,13 @@ import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Collapse, Modal, TagList, useStyles2 } from '@grafana/ui';
-import { AlertManagerCortexConfig, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { ObjectMatcher } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery, Labels } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchAlertManagerConfig } from '../../../api/alertmanager';
-import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
+import { addUniqueIdentifierToRoute, objectMatchersToString } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
 import { normalizeMatchers } from '../../../utils/matchers';
@@ -45,8 +44,6 @@ export const useGetPotentialInstances = (
   const { data } = useEvalQuery({ alertQueries: alertQueries, condition: condition, customLabels: customLabels });
 
   // convert data to list of labels: are the represetnation of the potential instances
-  //   const conditionFrames = (data?.results && data.results[condition]?.frames) ?? [];
-  //   const potentialInstances = compact(conditionFrames.map((frame) => frame.schema?.fields[0]?.labels));
   const fields = data?.schema?.fields ?? [];
   const potentialInstances = compact(fields.map((field) => field.labels));
   return potentialInstances;
@@ -65,6 +62,7 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
   }, []);
 
   // todo: get the alert manager list where alerts are going to be sent
+
   // to create the list of matching contact points
   // get the rootRoute and receivers from the AMConfig
   const { rootRoute, receivers } = useMemo(() => {
@@ -72,17 +70,15 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
       return {};
     }
 
-    const routes = AMConfig.alertmanager_config.route?.routes;
     const receivers = AMConfig.alertmanager_config.receivers;
-
-    const rootRoute: Route | undefined = routes ? routes[0] : undefined;
+    const rootRoute = AMConfig.alertmanager_config.route;
     return {
       rootRoute: rootRoute ? addUniqueIdentifierToRoute(rootRoute) : undefined,
       receivers,
     };
   }, [AMConfig]);
 
-  // create maps for routes to be get by id
+  // create maps for routes to be get by id, this map also contains the path to the route
   const routesByIdMap: Map<string, RouteWithPath> = rootRoute ? getRoutesByIdMap(rootRoute) : new Map();
   // create map for receivers to be get by name
   const receiversByName =
@@ -90,10 +86,16 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
       return map.set(receiver.name, receiver);
     }, new Map<string, Receiver>()) ?? new Map<string, Receiver>();
 
-  // match labels in the tree => list of notification policies and the alert instances in each one
-  const matchingMap: Map<string, Labels[]> = rootRoute?.id
-    ? matchInstancesToPolicyTree(rootRoute, potentialInstances)
-    : new Map();
+  // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
+  const matchingMapArray = rootRoute?.id
+    ? rootRoute.routes?.map((root) => matchInstancesToPolicyTree(root, potentialInstances)) ?? [
+        new Map<string, Labels[]>(),
+      ]
+    : [new Map<string, Labels[]>()];
+
+  const matchingMap: Map<string, Labels[]> = matchingMapArray.reduce((map, matchingMap) => {
+    return new Map([...map, ...matchingMap]);
+  }, new Map<string, Labels[]>());
 
   const matchingPoliciesFound = matchingMap.size > 0;
 
@@ -136,17 +138,9 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
   );
 }
 
-// function to convert ObjectMatchers to a array of strings
-const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
-  return matchers.map((matcher) => {
-    const [name, operator, value] = matcher;
-    return `${name}${operator}${value}`;
-  });
-};
-
 function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithID }) {
   const styles = useStyles2(getStyles);
-  const routePathIds = routesByIdMap.get(route.id)?.path ?? [];
+  const routePathIds = routesByIdMap.get(route.id)?.path.slice(1) ?? [];
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
 
   return (
