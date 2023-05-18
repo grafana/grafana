@@ -291,7 +291,7 @@ Currently, you can add one or more of the following filters:
 - Duration,
 - Tags (which include tags, process tags, and log fields).
 
-To try it out, you'll need to enable the `newTraceView` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
+To try it out, you'll need to enable the `newTraceViewHeader` feature toggle. This feature is enabled by default in Grafana Cloud. 
 
 ### OpenTelemetry replacing OpenTracing
 
