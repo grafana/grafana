@@ -48,6 +48,7 @@ import {
   LiteralExpr,
   LabelReplaceExpr,
   VectorExpr,
+  VectorOp,
 } from '@grafana/lezer-logql';
 import { getTemplateSrv } from '@grafana/runtime';
 
@@ -69,6 +70,10 @@ export const formatLokiQuery = (query: string): string => {
   tree.iterate({
     enter: (ref): void => {
       const node = ref.node;
+
+      if (node.parent?.type.id !== Expr) {
+        return;
+      }
 
       switch (node.type.id) {
         case MetricExpr:
@@ -103,10 +108,11 @@ const formatMetricExpr = (node: SyntaxNode, query: string): string => {
 
       switch (node.type.id) {
         case RangeAggregationExpr:
-          formatted += formatRangeAggregationExpr(node, query);
+          formatted = formatRangeAggregationExpr(node, query);
           break;
 
         case VectorAggregationExpr:
+          formatted = formatVectorAggregationExpr(node, query);
           break;
 
         case BinOpExpr:
@@ -261,11 +267,47 @@ function formatGrouping(node: SyntaxNode, query: string): string {
 
     switch (node.type.id) {
       case By:
-        response = ` by (${labels.join(', ')})`;
+        response = ` by(${labels.join(', ')})`;
         break;
 
       case Without:
-        response = ` without (${labels.join(', ')})`;
+        response = ` without(${labels.join(', ')})`;
+        break;
+    }
+  });
+
+  return response;
+}
+
+function formatVectorAggregationExpr(node: SyntaxNode, query: string): string {
+  let response = '';
+
+  iterateNode(node, [VectorOp, Number, MetricExpr, Grouping]).forEach((node, _, arr) => {
+    if (node.parent?.type.id !== VectorAggregationExpr) {
+      return;
+    }
+
+    switch (node.type.id) {
+      case VectorOp:
+        response += `${query.substring(node.from, node.to)}`;
+        break;
+
+      case Number:
+        response += `(\n`;
+        response += `${indent(1) + query.substring(node.from, node.to)},\n`;
+        break;
+
+      case MetricExpr:
+        const hasNumber = arr.find((node) => node.type.id === Number && node.parent?.type.id === VectorAggregationExpr);
+        response += hasNumber ? '' : '(\n';
+
+        const metricExpr = query.substring(node.from, node.to);
+        response += indentMultiline(formatMetricExpr({ from: 0, to: metricExpr.length } as SyntaxNode, metricExpr), 1);
+        response += '\n)';
+        break;
+
+      case Grouping:
+        response += formatGrouping(node, query);
         break;
     }
   });
