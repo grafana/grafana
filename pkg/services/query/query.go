@@ -101,7 +101,10 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
 func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
+	// TODO: Temporarily limiting concurrency here to 1 to avoid concurrent map writes in the plugin middleware that crash the app
+	// This is a workaround to mitigate the security issue. We will implement a more thread-safe way of handling concurrent queries as a next step.
+	g.SetLimit(1)
+	// g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
 	rchan := make(chan backend.Responses, len(queriesbyDs))
 
 	// Create panic recovery function for loop below
