@@ -28,11 +28,7 @@ You can enable debug log messages for rendering in the Grafana configuration fil
 filters = rendering:debug
 ```
 
-You can also enable more logs in image renderer service itself by:
-
-- Increasing the [log level]({{< relref "#log-level" >}}).
-- Enabling [verbose logging]({{< relref "#verbose-logging" >}}).
-- [Capturing headless browser output]({{< relref "#capture-browser-output" >}}).
+You can also enable more logs in image renderer service itself by enabling [debug logging]({{< relref "#enable-debug-logging" >}}).
 
 ## Missing libraries
 

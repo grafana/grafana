@@ -197,7 +197,7 @@ HTTP_PORT=0
 
 #### Enable Prometheus metrics
 
-You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [output example]({{< relref "./monitoring#prometheus-metrics-endpoint-output-example" >}}) for details.
+You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint]({{< relref "./monitoring#enable-prometheus-metrics-endpoint" >}}) for details.
 
 Default is `false`.
 

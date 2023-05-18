@@ -24,7 +24,7 @@ For more information and examples, please refer to [InfluxDB Provisioning]({{< r
 
 ### Dashboard previews deprecation notice
 
-We are deprecating the [Dashboard previews]({{< relref "../../search/dashboard-previews" >}}) feature and will remove it in Grafana v10. We've started exploring alternative ways of adding visual previews using the Scenes framework, and we'll share more information about it in the future.
+We are deprecating the dashboard previews feature and will remove it in Grafana v10. We've started exploring alternative ways of adding visual previews using the Scenes framework, and we'll share more information about it in the future.
 
 ### Migrate your API keys to service accounts
 

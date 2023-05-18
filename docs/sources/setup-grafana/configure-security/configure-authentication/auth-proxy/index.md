@@ -240,7 +240,7 @@ headers = "Groups:X-WEBAUTH-GROUPS"
 
 You use the `X-WEBAUTH-GROUPS` header to send the team information for each user. Specifically, the set of Grafana's group IDs that the user belongs to.
 
-First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "../../configure-team-sync#enable-synchronization-for-a-team" >}}) to add groups to a team within Grafana.
+First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "../../configure-team-sync#synchronize-a-grafana-team-with-an-external-group" >}}) to add groups to a team within Grafana.
 
 Once that's done. You can verify your mappings by querying the API.
 

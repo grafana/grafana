@@ -53,7 +53,7 @@ api_key_max_seconds_to_live = -1
 
 ### Anonymous authentication
 
-You can make Grafana accessible without any login required by enabling anonymous access in the configuration file. For more information, refer to [Implications of allowing anonymous access to dashboards]({{< relref "../../configure-authentication#implications-of-enabling-anonymous-access-to-dashboards" >}}).
+You can make Grafana accessible without any login required by enabling anonymous access in the configuration file. For more information, refer to [Anonymous authentication]({{< relref "../../configure-authentication#anonymous-authentication" >}}).
 
 Example:
 

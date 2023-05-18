@@ -25,7 +25,7 @@ For further details about how to operate a Grafana instance with envelope encryp
 > **Note:** Since Grafana v9.0, you can turn envelope encryption off by adding the feature toggle `disableEnvelopeEncryption` to your [Grafana configuration]({{< relref "../../configure-grafana#feature_toggles" >}}).
 
 Instead of encrypting all secrets with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK), configured through the `secret_key` attribute in your
-[Grafana configuration]({{< relref "../../configure-grafana#secret_key" >}}) or with a [key management service (KMS) integration](#kms-integration).
+[Grafana configuration]({{< relref "../../configure-grafana#secret_key" >}}) or by [Encrypting your database with a key from a key management service (KMS)](#encrypting-your-database-with-a-key-from-a-key-management-service-kms).
 
 ### Implicit breaking change
 
@@ -39,7 +39,7 @@ From the database encryption perspective, Grafana administrators can:
 
 - [**Re-encrypt secrets**](#re-encrypt-secrets): re-encrypt secrets with envelope encryption and a fresh data key.
 - [**Roll back secrets**](#roll-back-secrets): decrypt secrets encrypted with envelope encryption and re-encrypt them with legacy encryption.
-- [**Re-encrypt data keys**](#re-encrypt-data-keys): re-encrypt data keys with a fresh key encryption key and a [KMS integration](#kms-integration).
+- [**Re-encrypt data keys**](#re-encrypt-data-keys): re-encrypt data keys with a fresh key encryption key and a KMS integration.
 - [**Rotate data keys**](#rotate-data-keys): disable active data keys and stop using them for encryption in favor of a fresh one.
 
 ### Re-encrypt secrets
@@ -59,7 +59,7 @@ To roll back secrets, use the [Grafana CLI]({{< relref "../../../cli" >}}) by ru
 
 ### Re-encrypt data keys
 
-You can re-encrypt data keys encrypted with a specific key encryption key (KEK). This allows you to either re-encrypt existing data keys with a new KEK version (see [KMS integration](#kms-integration) rotation) or to re-encrypt them with a completely different KEK.
+You can re-encrypt data keys encrypted with a specific key encryption key (KEK). This allows you to either re-encrypt existing data keys with a new KEK version or to re-encrypt them with a completely different KEK.
 
 To re-encrypt data keys, use the [Grafana CLI]({{< relref "../../../cli" >}}) by running the `grafana cli admin secrets-migration re-encrypt-data-keys` command or the `/encryption/reencrypt-data-keys` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin#re-encrypt-data-encryption-keys" >}}). It's safe to run more than once, more recommended under maintenance mode.
 
