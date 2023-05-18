@@ -91,7 +91,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
   /**
    * Ideally final -- any other implementation may not work as expected
    */
-  query(request: DataQueryRequest): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     const {
       intervalMs,
       maxDataPoints,
