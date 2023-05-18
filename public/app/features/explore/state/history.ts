@@ -24,6 +24,7 @@ import {
   richHistoryStorageFullAction,
   richHistoryUpdatedAction,
 } from './main';
+import { selectPanesEntries } from './selectors';
 
 //
 // Actions and Payloads
@@ -118,10 +119,12 @@ export const deleteHistoryItem = (id: string): ThunkResult<void> => {
 };
 
 export const deleteRichHistory = (): ThunkResult<void> => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
     await deleteAllFromRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: 'left' }));
-    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId: 'right' }));
+    selectPanesEntries(getState()).forEach(([exploreId]) => {
+      dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
+      dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
+    });
   };
 };
 

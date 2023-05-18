@@ -22,7 +22,7 @@ import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
 import { cancelQueries, runQueries } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -69,9 +69,11 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
+  const panes = useSelector(selectPanesEntries);
+
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === 'left' && isLargerPane) || (exploreId === 'right' && !isLargerPane),
-    [isLargerPane, exploreId]
+    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
+    [isLargerPane, exploreId, panes]
   );
 
   const onCopyShortLink = () => {

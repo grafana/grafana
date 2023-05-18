@@ -63,25 +63,26 @@ export const setPaneState = createAction<SetPaneStateActionPayload>('explore/set
 export const clearPanes = createAction('explore/clearPanes');
 
 /**
- * Opens a new split pane. It either copies existing state of the left pane
+ * Opens a new split pane. It either copies existing state of an already present pane
  * or uses values from options arg.
  *
  * TODO: this can be improved by better inferring fallback values.
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
-  async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
-    const leftState = getState().explore.panes.left;
+  async (options: SplitOpenOptions | undefined, { getState, dispatch, requestId }) => {
+    // we currently support showing only 2 panes in explore, so if this action is dispatched we know it has been dispatched from the "first" pane.
+    const originState = Object.values(getState().explore.panes)[0];
 
-    const queries = options?.queries ?? (options?.query ? [options?.query] : leftState?.queries || []);
+    const queries = options?.queries ?? (options?.query ? [options?.query] : originState?.queries || []);
 
     await dispatch(
       initializeExplore({
-        exploreId: 'right',
-        datasource: options?.datasourceUid || leftState?.datasourceInstance?.getRef(),
+        exploreId: requestId,
+        datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
-        range: options?.range || leftState?.range.raw || DEFAULT_RANGE,
-        panelsState: options?.panelsState || leftState?.panelsState,
+        range: options?.range || originState?.range.raw || DEFAULT_RANGE,
+        panelsState: options?.panelsState || originState?.panelsState,
       })
     );
   }
@@ -137,9 +138,8 @@ export const initialExploreState: ExploreState = {
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitClose.match(action)) {
-    const panes = {
-      left: action.payload === 'left' ? state.panes.right : state.panes.left,
-    };
+    const panes = { ...state.panes };
+    delete panes[action.payload];
 
     return {
       ...state,
@@ -218,18 +218,23 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       ...state,
       panes: {
         ...state.panes,
-        right: initialExploreItemState,
+        [action.meta.requestId]: initialExploreItemState,
       },
     };
   }
 
   if (initializeExplore.pending.match(action)) {
+    const initialPanes = Object.entries(state.panes);
+    const before = initialPanes.slice(0, action.meta.arg.position);
+    const panes = [
+      ...before,
+      [action.meta.arg.exploreId, initialExploreItemState] as const,
+      ...initialPanes.slice(before.length + 1),
+    ].reduce((acc, [id, pane]) => ({ ...acc, [id]: pane }), {});
+
     return {
       ...state,
-      panes: {
-        ...state.panes,
-        [action.meta.arg.exploreId]: initialExploreItemState,
-      },
+      panes,
     };
   }
 
@@ -244,13 +249,11 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   if (typeof exploreId === 'string') {
     return {
       ...state,
-      panes: Object.entries(state.panes).reduce<ExploreState['panes']>((acc, [id, pane]) => {
-        if (id === exploreId) {
-          acc[id] = paneReducer(pane, action);
-        } else {
-          acc[id] = pane;
-        }
-        return acc;
+      panes: Object.entries(state.panes).reduce((acc, [id, pane]) => {
+        return {
+          ...acc,
+          [id]: id === exploreId ? paneReducer(pane, action) : pane,
+        };
       }, {}),
     };
   }

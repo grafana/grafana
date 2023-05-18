@@ -214,7 +214,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
-    mode: null,
   };
 
   if (!parsed) {

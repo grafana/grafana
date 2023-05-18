@@ -100,6 +100,7 @@ interface InitializeExploreOptions {
   queries: DataQuery[];
   range: RawTimeRange;
   panelsState?: ExplorePanelsState;
+  position?: number;
 }
 /**
  * Initialize Explore state with state from the URL and the React component.

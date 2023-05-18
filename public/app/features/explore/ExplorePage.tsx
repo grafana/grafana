@@ -19,7 +19,7 @@ import { useStateSync } from './hooks/useStateSync';
 import { useStopQueries } from './hooks/useStopQueries';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { splitSizeUpdateAction } from './state/main';
-import { selectOrderedExplorePanes } from './state/selectors';
+import { isSplit, selectPanesEntries } from './state/selectors';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -45,7 +45,8 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const minWidth = 200;
   const exploreState = useSelector((state) => state.explore);
 
-  const panes = useSelector(selectOrderedExplorePanes);
+  const panes = useSelector(selectPanesEntries);
+  const hasSplit = useSelector(isSplit);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -65,7 +66,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     } else {
       dispatch(
         splitSizeUpdateAction({
-          largerExploreId: size > evenSplitWidth ? 'right' : 'left',
+          largerExploreId: size > evenSplitWidth ? panes[1][0] : panes[0][0],
         })
       );
     }
@@ -73,11 +74,10 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
     setRightPaneWidthRatio(size / windowWidth);
   };
 
-  const hasSplit = Object.entries(panes).length > 1;
   let widthCalc = 0;
   if (hasSplit) {
     if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-      widthCalc = exploreState.maxedExploreId === 'right' ? windowWidth - minWidth : minWidth;
+      widthCalc = exploreState.maxedExploreId === panes[1][0] ? windowWidth - minWidth : minWidth;
     } else if (exploreState.evenSplitPanes) {
       widthCalc = Math.floor(windowWidth / 2);
     } else if (rightPaneWidthRatio !== undefined) {
@@ -87,7 +87,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
 
   return (
     <div className={styles.pageScrollbarWrapper}>
-      <ExploreActions exploreIdLeft={'left'} exploreIdRight={'right'} />
+      <ExploreActions />
 
       <SplitPaneWrapper
         splitOrientation="vertical"
@@ -97,13 +97,9 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
         primary="second"
         splitVisible={hasSplit}
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-        onDragFinished={(size) => {
-          if (size) {
-            updateSplitSize(size);
-          }
-        }}
+        onDragFinished={(size) => size && updateSplitSize(size)}
       >
-        {Object.keys(panes).map((exploreId) => {
+        {panes.map(([exploreId]) => {
           return (
             <ErrorBoundaryAlert key={exploreId} style="page">
               <ExplorePaneContainer exploreId={exploreId} />
