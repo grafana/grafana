@@ -116,6 +116,7 @@ const formatMetricExpr = (node: SyntaxNode, query: string): string => {
           break;
 
         case BinOpExpr:
+          formatted = formatBinOpExpr(node, query);
           break;
 
         case LiteralExpr:
@@ -313,6 +314,21 @@ function formatVectorAggregationExpr(node: SyntaxNode, query: string): string {
   });
 
   return response;
+}
+
+function formatBinOpExpr(node: SyntaxNode, query: string): string {
+  let operator: string | undefined;
+
+  const [leftExpr, rightExpr] = iterateNode(node, [Expr]).map((node, idx) => {
+    if (idx === 0) {
+      operator = query.substring(node.nextSibling?.from ?? 0, node.nextSibling?.to);
+    }
+
+    return formatLokiQuery(query.substring(node.from, node.to));
+  });
+
+  console.log(leftExpr + '\n' + operator + '\n' + rightExpr);
+  return leftExpr + '\n' + operator + '\n' + rightExpr;
 }
 
 /* 
