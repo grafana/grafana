@@ -183,6 +183,46 @@ describe('AzureMonitorDatasource', () => {
         },
       });
     });
+
+    it('should migrate legacy properties before interpolation', () => {
+      templateSrv.init([
+        {
+          id: 'resourcegroup',
+          name: 'resourcegroup',
+          current: {
+            value: `test-rg`,
+          },
+        },
+        {
+          id: 'resourcename',
+          name: 'resourcename',
+          current: {
+            value: `test-resource`,
+          },
+        },
+        {
+          id: 'metric',
+          name: 'metric',
+          current: {
+            value: `test-ns`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          metricDefinition: '$metric',
+          resourceGroup: '$resourcegroup',
+          resourceName: '$resourcename',
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          metricNamespace: 'test-ns',
+          resources: [{ resourceGroup: 'test-rg', resourceName: 'test-resource' }],
+        },
+      });
+    });
   });
 
   describe('When performing getMetricNamespaces', () => {

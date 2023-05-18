@@ -10,7 +10,6 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       type: 'grafana-azure-monitor-datasource',
       uid: 'AAAAA11111BBBBB22222CCCC',
     },
-    ...overrides,
 
     azureLogAnalytics: {
       query:
@@ -54,5 +53,7 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       region: '',
       ...overrides?.azureMonitor,
     },
+
+    ...overrides,
   };
 }
