@@ -15,7 +15,15 @@ jobs:
         # Only run doc-validator on specific directories.
         run: >
           doc-validator
-          --include='^docs/sources/(?:fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
-          --skip-image-validation
+          '--include=^docs/sources/(?:fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
+          '--skip-checks=^image'
           ./docs/sources
           /docs/grafana/latest
+          | reviewdog
+          '--efm=ERROR: %f:%l:%c %m'
+          --fail-on-error
+          --filter-mode=nofilter
+          --name=doc-validator
+          --reporter=github-pr-review
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
