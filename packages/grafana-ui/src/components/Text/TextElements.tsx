@@ -19,7 +19,7 @@ function createTextElement(element: TextElement, defaultVariant: keyof ThemeTypo
 
     const styles = useMemo(() => {
       return getTextStyles(theme, {
-        variant,
+        variant: variant ?? defaultVariant,
         weight,
         fontStyle,
         color,
