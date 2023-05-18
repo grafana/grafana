@@ -22,6 +22,11 @@ function getTestFolder(): FolderDTO {
     canAdmin: true,
     canDelete: true,
     version: 0,
+    created: '',
+    createdBy: '',
+    hasAcl: false,
+    updated: '',
+    updatedBy: '',
   };
 }
 
