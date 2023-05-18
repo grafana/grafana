@@ -29,17 +29,26 @@ interface NotificationPreviewProps {
   condition: string;
 }
 
-export const useGetPotentialInstances = (alertQueries: AlertQuery[], condition: string) => {
+export const useGetPotentialInstances = (
+  alertQueries: AlertQuery[],
+  condition: string,
+  customLabels: Array<{
+    key: string;
+    value: string;
+  }>
+) => {
   // todo: we asume merge with custom labels will be done at the BE side adding a param in the eval query
   // we asume the eval endpoint is going to receive an additional parameter the list of custom labels,
   // and the response will return this merged labels with the resulting instances
 
   const { useEvalQuery } = alertRuleApi;
-  const { data } = useEvalQuery({ alertQueries: alertQueries });
+  const { data } = useEvalQuery({ alertQueries: alertQueries, condition: condition, customLabels: customLabels });
 
   // convert data to list of labels: are the represetnation of the potential instances
-  const conditionFrames = (data?.results && data.results[condition]?.frames) ?? [];
-  const potentialInstances = compact(conditionFrames.map((frame) => frame.schema?.fields[0]?.labels));
+  //   const conditionFrames = (data?.results && data.results[condition]?.frames) ?? [];
+  //   const potentialInstances = compact(conditionFrames.map((frame) => frame.schema?.fields[0]?.labels));
+  const fields = data?.schema?.fields ?? [];
+  const potentialInstances = compact(fields.map((field) => field.labels));
   return potentialInstances;
 };
 
@@ -47,7 +56,7 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
   const styles = useStyles2(getStyles);
 
   // Get the potential labels
-  const potentialInstances = useGetPotentialInstances(alertQueries, condition);
+  const potentialInstances = useGetPotentialInstances(alertQueries, condition, customLabels);
 
   // get the AM configuration to get the routes
   const { value: AMConfig } = useAsync(async () => {
