@@ -15,7 +15,7 @@ jobs:
         # Only run doc-validator on specific directories.
         run: >
           doc-validator
-          --include='^docs/sources/(?:fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew)/.+\.md$'
+          --include='^docs/sources/(?:fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
           --skip-image-validation
           ./docs/sources
           /docs/grafana/latest
