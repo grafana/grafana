@@ -266,8 +266,8 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
-	if true {
-		errAppendDebug("interpolation failed", fmt.Errorf("failed to connect to server - %s", e.cfg.UserFacingDefaultError), interpolatedQuery)
+	if err != nil {
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
