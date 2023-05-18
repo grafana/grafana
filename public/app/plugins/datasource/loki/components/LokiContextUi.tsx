@@ -58,7 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
-      padding-right: 20px;
+      margin-right: ${theme.spacing(4)};
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -80,7 +80,7 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
-const LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS = 'lokiLogContextPreserveSelectedLabels';
+export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 
 type PreservedLabels = {
   removedLabels: string[];
@@ -134,23 +134,25 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setLoading(true);
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters.filter(({ enabled }) => enabled));
-      // We are storing the removed labels and added extracted labels in local storage so we can use them
-      // in the next log line context selection to preselect the labels in the UI
+      // We are storing the removed labels and selected extracted labels in local storage so we can
+      // preselect the labels in the UI in the next log context view.
       const preservedLabels: PreservedLabels = {
         removedLabels: [],
         selectedExtractedLabels: [],
       };
 
       contextFilters.forEach(({ enabled, fromParser, label }) => {
+        // We only want to store real labels that were removed from the initial query
         if (!enabled && !fromParser) {
           preservedLabels.removedLabels.push(label);
         }
+        // Or extracted labels that were added to the initial query
         if (enabled && fromParser) {
           preservedLabels.selectedExtractedLabels.push(label);
         }
       });
 
-      store.set(LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS, JSON.stringify(preservedLabels));
+      store.set(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
       setLoading(false);
     }, 1500);
 
@@ -169,41 +171,45 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    let isChanged = false;
-    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
-    const preservedLabelsString = store.get(LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS);
-    if (preservedLabelsString) {
-      let preservedLabels: undefined | PreservedLabels;
-      try {
-        preservedLabels = JSON.parse(preservedLabelsString);
-      } catch (e) {
-        console.error('could not parse preserved labels from local storage');
-      }
-      if (preservedLabels) {
-        if (preservedLabels.removedLabels.length > 0) {
-          contextFilters.forEach((contextFilter) => {
-            if (!contextFilter.fromParser && preservedLabels?.removedLabels.includes(contextFilter.label)) {
-              isChanged = true;
-              contextFilter.enabled = false;
-            }
-          });
+    const initContextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
+
+    let preservedLabels: undefined | PreservedLabels = undefined;
+    try {
+      preservedLabels = JSON.parse(store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS));
+      // Do nothing when error occurs
+    } catch (e) {}
+
+    if (!preservedLabels) {
+      setContextFilters(initContextFilters);
+    } else {
+      // We need to update filters based on preserved labels
+      let arePreservedLabelsUsed = false;
+      const newContextFilters = initContextFilters.map((contextFilter) => {
+        if (preservedLabels && preservedLabels.removedLabels.includes(contextFilter.label)) {
+          arePreservedLabelsUsed = true;
+          return { ...contextFilter, enabled: false };
         }
 
-        if (preservedLabels.selectedExtractedLabels.length > 0) {
-          contextFilters.forEach((contextFilter) => {
-            if (contextFilter.fromParser && preservedLabels?.selectedExtractedLabels.includes(contextFilter.label)) {
-              isChanged = true;
-              contextFilter.enabled = true;
-            }
-          });
+        if (preservedLabels && preservedLabels.selectedExtractedLabels.includes(contextFilter.label)) {
+          arePreservedLabelsUsed = true;
+          return { ...contextFilter, enabled: true };
+        }
+        return { ...contextFilter };
+      });
+
+      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
+      if (!isAtLeastOneRealLabelEnabled) {
+        // If we end up with no real labels enabled, we need to reset the init filters
+        setContextFilters(initContextFilters);
+      } else {
+        // Otherwise use new filters
+        setContextFilters(newContextFilters);
+        if (arePreservedLabelsUsed) {
+          dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
         }
       }
     }
-    setContextFilters(contextFilters);
     setInitialized(true);
-    if (isChanged) {
-      dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
-    }
     setLoading(false);
   });
 
@@ -257,7 +263,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   enabled: !contextFilter.fromParser,
                 }));
               });
-              store.delete(LOKI_LOG_CONTEXT_PRESERVE_SELECTED_LABELS);
+              // We are removing the preserved labels from local storage so we can preselect the labels in the UI
+              store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
             }}
           />
         </div>
