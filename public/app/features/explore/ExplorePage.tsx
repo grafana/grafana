@@ -16,7 +16,6 @@ import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExploreCorrelations } from './hooks/useExploreCorrelations';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useStateSync } from './hooks/useStateSync';
-import { useStopQueries } from './hooks/useStopQueries';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { splitSizeUpdateAction } from './state/main';
 import { isSplit, selectPanesEntries } from './state/selectors';
@@ -32,7 +31,6 @@ const styles = {
 };
 
 export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
-  useStopQueries();
   useTimeSrvFix();
   useStateSync(props.queryParams);
   useExplorePageTitle();
