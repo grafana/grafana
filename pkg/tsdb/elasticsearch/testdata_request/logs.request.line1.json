@@ -27,21 +27,6 @@
         "order": "desc"
       }
     },
-  "aggs": 
-    {
-      "1": {
-        "date_histogram": {
-          "field": "testtime",
-          "fixed_interval": "1000ms",
-          "format": "epoch_millis",
-          "min_doc_count": 0,
-          "extended_bounds": {
-            "min": 1668422437218,
-            "max": 1668422625668
-          }
-        }
-      }
-    },
   "highlight": 
     {
       "pre_tags": [

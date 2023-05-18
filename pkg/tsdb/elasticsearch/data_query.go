@@ -338,21 +338,21 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 		b.AddSearchAfter(value)
 	}
 
-	// For log query, we add a date histogram aggregation
-	aggBuilder := b.Agg()
-	q.BucketAggs = append(q.BucketAggs, &BucketAgg{
-		Type:  dateHistType,
-		Field: defaultTimeField,
-		ID:    "1",
-		Settings: simplejson.NewFromAny(map[string]interface{}{
-			"interval": "auto",
-		}),
-	})
-	bucketAgg := q.BucketAggs[0]
-	bucketAgg.Settings = simplejson.NewFromAny(
-		bucketAgg.generateSettingsForDSL(),
-	)
-	_ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
+	// // For log query, we add a date histogram aggregation
+	// aggBuilder := b.Agg()
+	// q.BucketAggs = append(q.BucketAggs, &BucketAgg{
+	// 	Type:  dateHistType,
+	// 	Field: defaultTimeField,
+	// 	ID:    "1",
+	// 	Settings: simplejson.NewFromAny(map[string]interface{}{
+	// 		"interval": "auto",
+	// 	}),
+	// })
+	// bucketAgg := q.BucketAggs[0]
+	// bucketAgg.Settings = simplejson.NewFromAny(
+	// 	bucketAgg.generateSettingsForDSL(),
+	// )
+	// _ = addDateHistogramAgg(aggBuilder, bucketAgg, from, to, defaultTimeField)
 }
 
 func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {

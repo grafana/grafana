@@ -1313,18 +1313,6 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
 			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
-
-			firstLevel := sr.Aggs[0]
-			require.Equal(t, firstLevel.Key, "1")
-			require.Equal(t, firstLevel.Aggregation.Type, "date_histogram")
-
-			hAgg := firstLevel.Aggregation.Aggregation.(*es.DateHistogramAgg)
-			require.Equal(t, hAgg.ExtendedBounds.Max, toMs)
-			require.Equal(t, hAgg.ExtendedBounds.Min, fromMs)
-			require.Equal(t, hAgg.Field, "@timestamp")
-			require.Equal(t, hAgg.Format, es.DateFormatEpochMS)
-			require.Equal(t, hAgg.FixedInterval, "$__interval_msms")
-			require.Equal(t, hAgg.MinDocCount, 0)
 		})
 
 		t.Run("With log query with limit should return query with correct size", func(t *testing.T) {
