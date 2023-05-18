@@ -22,7 +22,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							keepTime:           bool | *false
 							includeVars:        bool | *false
 							showStarred:        bool | *true
