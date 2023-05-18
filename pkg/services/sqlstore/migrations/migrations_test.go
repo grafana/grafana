@@ -205,7 +205,7 @@ func TestDatabaseLocking(t *testing.T) {
 	err = NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg1 := NewMigrator(x, &setting.Cfg{}, "", "")
+	mg1 := NewMigrator(x, &setting.Cfg{}, "")
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg1)
 	reg := registry{
