@@ -122,7 +122,7 @@ let singletonInstance: EchoSrv;
  * @internal
  */
 export function setEchoSrv(instance: EchoSrv) {
-  // Check if there were any events reported to the FakeEchoSrv (before the main EchoSrv was initialized and track them)
+  // Check if there were any events reported to the FakeEchoSrv (before the main EchoSrv was initialized), and track them
   if (singletonInstance && singletonInstance.events) {
     for (const event of singletonInstance.events) {
       instance.addEvent(event as Omit<EchoEvent, 'meta'>);
