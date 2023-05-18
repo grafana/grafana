@@ -389,18 +389,16 @@ type fakeBacktestingEvaluator struct {
 	evalCallback func(now time.Time) (eval.Results, error)
 }
 
-func (f *fakeBacktestingEvaluator) Eval(_ context.Context, from, to time.Time, interval time.Duration, callback callbackFunc) error {
-	idx := 0
-	for now := from; now.Before(to); now = now.Add(interval) {
+func (f *fakeBacktestingEvaluator) Eval(_ context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error {
+	for idx, now := 0, from; idx < evaluations; idx, now = idx+1, now.Add(interval) {
 		results, err := f.evalCallback(now)
 		if err != nil {
 			return err
 		}
-		err = callback(now, results)
+		err = callback(idx, now, results)
 		if err != nil {
 			return err
 		}
-		idx++
 	}
 	return nil
 }
