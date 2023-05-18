@@ -25,7 +25,7 @@ import (
 type Service struct {
 	im             instancemgmt.InstanceManager
 	tlog           log.Logger
-	SearchRequests *SearchRequests
+	SearchRequests *Streams
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
@@ -40,6 +40,11 @@ type TempoDatasource struct {
 	HTTPClient      *http.Client
 	StreamingClient tempopb.StreamingQuerierClient
 	URL             string
+}
+
+type ExtendedSearchRequest struct {
+	tempopb.SearchRequest
+	Key string
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -105,25 +110,38 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 }
 
 func (s *Service) streamSearch(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	var sr *tempopb.SearchRequest
+	var sr *ExtendedSearchRequest
 	response := &backend.DataResponse{}
+
+	s.tlog.Warn("streamSearch called", "query", string(query.JSON))
 
 	err := json.Unmarshal(query.JSON, &sr)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
 		return response, nil
 	}
-
 	sr.Start = uint32(query.TimeRange.From.Unix())
 	sr.End = uint32(query.TimeRange.To.Unix())
 
 	// generate unique identifier for this stream
-	streamPath := SearchPathPrefix + uuid.NewString()
+	if sr.Key == "" {
+		sr.Key = uuid.NewString()
+	}
+	streamPath := SearchPathPrefix + sr.Key
+
+	traceqlSearch := NewTraceQLSearch(&sr.SearchRequest)
 
 	s.tlog.Info("Adding request to search requests", "streamPath", streamPath)
-	if err := s.SearchRequests.add(streamPath, sr); err != nil {
+	if err := s.SearchRequests.add(streamPath, traceqlSearch); err != nil {
 		s.tlog.Error("Error adding request to search requests", "err", err)
 	}
+
+	tempoDatasource, err := s.getDSInfo(pCtx)
+	if err != nil {
+		return response, err
+	}
+
+	traceqlSearch.Run(ctx, tempoDatasource)
 
 	frame := data.NewFrame("response")
 

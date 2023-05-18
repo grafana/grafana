@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { AutoSizeInput, Checkbox } from '@grafana/ui';
+import { AutoSizeInput, Switch } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { DEFAULT_LIMIT } from '../datasource';
@@ -41,7 +41,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
             />
           </EditorField>
           <EditorField label="Stream response" tooltip="Stream the query response to receive partial results sooner">
-            <Checkbox value={query.streaming} onChange={onStreamingChange} />
+            <Switch value={query.streaming || false} onChange={onStreamingChange} />
           </EditorField>
         </QueryOptionGroup>
       </EditorRow>
