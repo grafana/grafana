@@ -42,11 +42,6 @@ type TempoDatasource struct {
 	URL             string
 }
 
-type ExtendedSearchRequest struct {
-	tempopb.SearchRequest
-	Key string
-}
-
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions()
@@ -110,7 +105,7 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 }
 
 func (s *Service) streamSearch(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	var sr *ExtendedSearchRequest
+	var sr *tempopb.SearchRequest
 	response := &backend.DataResponse{}
 
 	s.tlog.Warn("streamSearch called", "query", string(query.JSON))
@@ -124,12 +119,9 @@ func (s *Service) streamSearch(ctx context.Context, pCtx backend.PluginContext, 
 	sr.End = uint32(query.TimeRange.To.Unix())
 
 	// generate unique identifier for this stream
-	if sr.Key == "" {
-		sr.Key = uuid.NewString()
-	}
-	streamPath := SearchPathPrefix + sr.Key
+	streamPath := SearchPathPrefix + uuid.NewString()
 
-	traceqlSearch := NewTraceQLSearch(&sr.SearchRequest)
+	traceqlSearch := NewTraceQLSearch(sr)
 
 	s.tlog.Info("Adding request to search requests", "streamPath", streamPath)
 	if err := s.SearchRequests.add(streamPath, traceqlSearch); err != nil {

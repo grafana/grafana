@@ -32,12 +32,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	s.tlog.Debug("New stream call", "path", request.Path, "json", string(request.Data))
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
-		tempoDatasource, err := s.getDSInfo(request.PluginContext)
-		if err != nil {
-			return err
-		}
-
-		return s.SearchRequests.runStream(ctx, request, sender, tempoDatasource)
+		return s.SearchRequests.runStream(request, sender)
 	}
 
 	return fmt.Errorf("unknown path %s", request.Path)

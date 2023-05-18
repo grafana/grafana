@@ -1,7 +1,6 @@
 package tempo
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -43,7 +42,7 @@ func NewSearchStreams() *Streams {
 	return s
 }
 
-func (s *Streams) runStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, tempoDatasource *TempoDatasource) error {
+func (s *Streams) runStream(req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	s.logger.Info("Running stream", "path", req.Path, "req", req)
 
 	sr, ok := s.requests[req.Path]
@@ -53,48 +52,46 @@ func (s *Streams) runStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 
 	if sr.State == Done {
-		err := s.sendResponse(sr.Result, sender)
-		if err != nil {
+		s.logger.Info("Stream already done", "result", sr.Result)
+		return s.sendResponse(sr.Result, sender)
+	}
+
+	for {
+		select {
+		case response := <-sr.Updates:
+			err := s.sendResponse(response, sender)
+			if err != nil {
+				return err
+			}
+			if sr.State == Done {
+				return nil
+			}
+		case err := <-sr.Errors:
 			return err
 		}
 	}
-
-	select {
-	case response := <-sr.Updates:
-		err := s.sendResponse(response, sender)
-		if err != nil {
-			return err
-		}
-	case err := <-sr.Errors:
-		return err
-	}
-
-	return nil
 }
 
 func (s *Streams) sendResponse(sr *tempopb.SearchResponse, sender *backend.StreamSender) error {
 	frame := s.createResponseDataFrame()
 
-	tracesAsJson, err := json.Marshal(sr.Traces)
-	if err != nil {
-		return err
-	}
-	tracesRawMessage := json.RawMessage(tracesAsJson)
-	frame.Fields[0].Append(tracesRawMessage)
+	if sr != nil {
+		tracesAsJson, err := json.Marshal(sr.Traces)
+		if err != nil {
+			return err
+		}
+		tracesRawMessage := json.RawMessage(tracesAsJson)
+		frame.Fields[0].Append(tracesRawMessage)
 
-	metricsAsJson, err := json.Marshal(sr.Metrics)
-	if err != nil {
-		return err
-	}
-	metricsRawMessage := json.RawMessage(metricsAsJson)
-	frame.Fields[1].Append(metricsRawMessage)
-
-	err = sender.SendFrame(frame, data.IncludeAll)
-	if err != nil {
-		return err
+		metricsAsJson, err := json.Marshal(sr.Metrics)
+		if err != nil {
+			return err
+		}
+		metricsRawMessage := json.RawMessage(metricsAsJson)
+		frame.Fields[1].Append(metricsRawMessage)
 	}
 
-	return nil
+	return sender.SendFrame(frame, data.IncludeAll)
 }
 
 func (s *Streams) createResponseDataFrame() *data.Frame {
