@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -396,4 +398,17 @@ func FormatStateAndReason(state eval.State, reason string) string {
 		s += fmt.Sprintf(" (%v)", reason)
 	}
 	return s
+}
+
+func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+	extraLabels := make(map[string]string, 4)
+
+	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
+	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
+
+	if includeFolder {
+		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+	return extraLabels
 }

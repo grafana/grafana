@@ -21,7 +21,7 @@ func (f *TestingApiHandler) handleRouteTestRuleConfig(c *contextmodel.ReqContext
 	return f.svc.RouteTestRuleConfig(c, body, dsUID)
 }
 
-func (f *TestingApiHandler) handleRouteTestRuleGrafanaConfig(c *contextmodel.ReqContext, body apimodels.TestRulePayload) response.Response {
+func (f *TestingApiHandler) handleRouteTestRuleGrafanaConfig(c *contextmodel.ReqContext, body apimodels.PostableExtendedRuleNodeExtended) response.Response {
 	return f.svc.RouteTestGrafanaRuleConfig(c, body)
 }
 

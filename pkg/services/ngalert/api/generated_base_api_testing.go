@@ -53,7 +53,7 @@ func (f *TestingApiHandler) RouteTestRuleConfig(ctx *contextmodel.ReqContext) re
 }
 func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
-	conf := apimodels.TestRulePayload{}
+	conf := apimodels.PostableExtendedRuleNodeExtended{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -63,7 +63,7 @@ func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *contextmodel.ReqCont
 func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
-			toMacaronPath("/api/v1/rule/backtest"),
+			toMacaronPath("/api/v1/rule/backtes t"),
 			api.authorize(http.MethodPost, "/api/v1/rule/backtest"),
 			metrics.Instrument(
 				http.MethodPost,

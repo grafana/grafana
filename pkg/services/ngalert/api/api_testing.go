@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/benbjohnson/clock"
+	"github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -16,10 +18,13 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -33,46 +38,65 @@ type TestingApiSrv struct {
 	cfg             *setting.UnifiedAlertingSettings
 	backtesting     *backtesting.Engine
 	featureManager  featuremgmt.FeatureToggles
+	appUrl          *url.URL
 }
 
-func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, body apimodels.TestRulePayload) response.Response {
-	if body.Type() != apimodels.GrafanaBackend || body.GrafanaManagedCondition == nil {
-		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, body.Type().String()))
+func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, body apimodels.PostableExtendedRuleNodeExtended) response.Response {
+	rule, err := validateRuleNode(
+		&body.Rule,
+		"",
+		srv.cfg.BaseInterval,
+		c.OrgID,
+		&folder.Folder{
+			OrgID: c.OrgID,
+			UID:   body.NamespaceUID,
+			Title: body.NamespaceTitle,
+		},
+		func(condition ngmodels.Condition) error {
+			return srv.evaluator.Validate(eval.NewContext(c.Req.Context(), c.SignedInUser), condition)
+		},
+		srv.cfg,
+	)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	queries := AlertQueriesFromApiAlertQueries(body.GrafanaManagedCondition.Data)
-
-	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
+	if !authorizeDatasourceAccessForRule(rule, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}
 
-	evalCond := ngmodels.Condition{
-		Condition: body.GrafanaManagedCondition.Condition,
-		Data:      queries,
-	}
-	ctx := eval.NewContext(c.Req.Context(), c.SignedInUser)
-
-	conditionEval, err := srv.evaluator.Create(ctx, evalCond)
+	evaluator, err := srv.evaluator.Create(eval.NewContext(c.Req.Context(), c.SignedInUser), rule.GetEvalCondition())
 	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid condition")
+		return ErrResp(http.StatusBadRequest, err, "Failed to build evaluator for queries and expressions")
 	}
 
-	now := body.GrafanaManagedCondition.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
-	evalResults, err := conditionEval.Evaluate(c.Req.Context(), now)
+	now := time.Now()
+	results, err := evaluator.Evaluate(c.Req.Context(), now)
 	if err != nil {
-		return ErrResp(500, err, "Failed to evaluate the rule")
+		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries")
 	}
 
-	frame := evalResults.AsDataFrame()
-	return response.JSONStreaming(http.StatusOK, util.DynMap{
-		"instances": []*data.Frame{&frame},
-	})
+	cfg := state.ManagerCfg{
+		Metrics:       nil,
+		ExternalURL:   srv.appUrl,
+		InstanceStore: nil,
+		Images:        &backtesting.NoopImageService{},
+		Clock:         clock.New(),
+		Historian:     nil,
+	}
+	manager := state.NewManager(cfg)
+	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
+	transitions := manager.ProcessEvalResults(
+		c.Req.Context(),
+		now,
+		rule,
+		results,
+		state.GetRuleExtraLabels(rule, body.NamespaceTitle, includeFolder),
+	)
+	alerts := schedule.FromStateTransitionToPostableAlerts(transitions, manager, srv.appUrl)
+	return response.JSON(http.StatusOK, alerts.PostableAlerts)
 }
 
 func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {

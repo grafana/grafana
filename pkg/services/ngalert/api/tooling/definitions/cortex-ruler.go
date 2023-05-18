@@ -273,6 +273,20 @@ const (
 	LoTexManagedRule
 )
 
+type PostableExtendedRuleNodeExtended struct {
+	Rule           PostableExtendedRuleNode `json:"rule"`
+	NamespaceUID   string                   `json:"folderUid"`
+	NamespaceTitle string                   `json:"folderTitle"`
+}
+
+func (n *PostableExtendedRuleNodeExtended) UnmarshalJSON(b []byte) error {
+	type plain PostableExtendedRuleNodeExtended
+	if err := json.Unmarshal(b, (*plain)(n)); err != nil {
+		return err
+	}
+	return nil
+}
+
 type PostableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
