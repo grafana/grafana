@@ -1,3 +1,4 @@
+import { nanoid } from '@reduxjs/toolkit';
 import { omit } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -98,21 +99,21 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       const scopedVars = panel.scopedVars || {};
       state = {
         ...state,
-        datasource: exploreDatasource.name,
+        datasource: exploreDatasource.uid,
         context: 'explore',
         queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
       };
     } else {
       state = {
         ...state,
-        datasource: exploreDatasource.name,
+        datasource: exploreDatasource.uid,
         context: 'explore',
         queries: exploreTargets,
       };
     }
 
-    const exploreState = JSON.stringify(state);
-    url = urlUtil.renderUrl('/explore', { left: exploreState });
+    const exploreState = JSON.stringify({ [nanoid()]: state });
+    url = urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
   }
 
   return url;
