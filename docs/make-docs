@@ -1,6 +1,6 @@
 #!/bin/sh
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs.
-# 1.2.1 (2023-05-05)
+# 2.0.0 (2023-05-18)
 
 set -ef
 
@@ -9,6 +9,7 @@ readonly DOCS_HOST_PORT="${DOCS_HOST_PORT:-3002}"
 readonly DOCS_IMAGE="${DOCS_IMAGE:-grafana/docs-base:latest}"
 
 readonly DOC_VALIDATOR_INCLUDE="${DOC_VALIDATOR_INCLUDE:-.+\.md$}"
+readonly DOC_VALIDATOR_SKIP_CHECKS="${DOC_VALIDATOR_SKIP_CHECKS:-^image-}"
 
 readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
 readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
@@ -343,8 +344,8 @@ case "${image}" in
       --tty \
       ${volumes} \
       "${DOCS_IMAGE}" \
-      --skip-image-validation \
       --include="${DOC_VALIDATOR_INCLUDE}" \
+      --skip-checks="${DOC_VALIDATOR_SKIP_CHECKS}" \
       /hugo/content/docs \
       "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
     ;;
