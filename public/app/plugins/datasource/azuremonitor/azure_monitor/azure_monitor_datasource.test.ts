@@ -213,6 +213,7 @@ describe('AzureMonitorDatasource', () => {
           metricDefinition: '$metric',
           resourceGroup: '$resourcegroup',
           resourceName: '$resourcename',
+          metricNamespace: undefined,
         },
       });
       const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
