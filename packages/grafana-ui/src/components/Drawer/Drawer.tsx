@@ -12,8 +12,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-//import { IconButton } from '../IconButton/IconButton';
-import { Text } from '../Text/Text';
+import { H3 } from '../Text/TextElements';
 
 export interface Props {
   children: ReactNode;
@@ -124,9 +123,7 @@ export function Drawer({
                 />
               </div>
               <div className={styles.titleWrapper}>
-                <Text as="h3" {...titleProps}>
-                  {title}
-                </Text>
+                <H3 {...titleProps}>{title}</H3>
                 {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
                 {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
               </div>

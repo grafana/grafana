@@ -10,3 +10,4 @@
  */
 
 export * from './components/Text/TextElements';
+export * from './components/Text/Text';
