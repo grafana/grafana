@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Alert, Spinner } from '@grafana/ui';
+import { Alert, Spinner, useTheme2 } from '@grafana/ui';
 import { P } from '@grafana/ui/src/unstable';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
@@ -13,6 +13,7 @@ export interface Props {
 }
 
 export const DescendantCount = ({ selectedItems }: Props) => {
+  const theme = useTheme2();
   const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
 
   return (
@@ -21,7 +22,7 @@ export const DescendantCount = ({ selectedItems }: Props) => {
         <P color="secondary">{buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}</P>
       )}
 
-      {(isFetching || isLoading) && <Spinner size={12} />}
+      {(isFetching || isLoading) && <Spinner size={theme.typography.body.fontSize} />}
       {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
     </>
   );
