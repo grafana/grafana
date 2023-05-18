@@ -24,7 +24,7 @@ export function BrowseFolderLibraryPanelsPage({ match }: OwnProps) {
     }
     const model = buildNavModel(folderDTO);
 
-    // Set the "Alerting" tab to active
+    // Set the "Library panels" tab to active
     const libraryPanelsTabID = getLibraryPanelsTabID(folderDTO.uid);
     const libraryPanelsTab = model.children?.find((child) => child.id === libraryPanelsTabID);
     if (libraryPanelsTab) {
