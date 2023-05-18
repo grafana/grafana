@@ -32,7 +32,7 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
           disabled={state.useBackend || !state.hasMetadata}
           onChange={() => onChangeFullMetaSearch()}
         />
-        <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
+        <div className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</div>
       </div>
       <div className={styles.selectItem}>
         <Switch
@@ -40,15 +40,15 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
           disabled={!state.hasMetadata}
           onChange={() => onChangeIncludeNullMetadata()}
         />
-        <p className={styles.selectItemLabel}>{placeholders.includeNullMetadata}</p>
+        <div className={styles.selectItemLabel}>{placeholders.includeNullMetadata}</div>
       </div>
       <div className={styles.selectItem}>
         <Switch value={state.disableTextWrap} onChange={() => onChangeDisableTextWrap()} />
-        <p className={styles.selectItemLabel}>Disable text wrap</p>
+        <div className={styles.selectItemLabel}>Disable text wrap</div>
       </div>
       <div className={styles.selectItem}>
         <Switch data-testid={testIds.setUseBackend} value={state.useBackend} onChange={() => onChangeUseBackend()} />
-        <p className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</p>
+        <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip
           content={'Filter metric names by regex search, using an additional call on the Prometheus API.'}
           placement="bottom-end"
