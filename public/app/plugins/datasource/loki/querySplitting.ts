@@ -4,16 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
   ArrayDataFrame,
-  ArrayVector,
-  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataTopic,
   dateTime,
   durationToMilliseconds,
-  Field,
-  FieldColorModeId,
-  FieldType,
   parseDuration,
   TimeRange,
 } from '@grafana/data';
