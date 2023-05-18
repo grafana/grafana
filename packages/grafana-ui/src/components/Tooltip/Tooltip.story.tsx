@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -7,7 +7,7 @@ import mdx from '../Tooltip/Tooltip.mdx';
 
 import { Tooltip } from './Tooltip';
 
-const meta: ComponentMeta<typeof Tooltip> = {
+const meta: Meta<typeof Tooltip> = {
   title: 'Overlays/Tooltip',
   component: Tooltip,
   decorators: [withCenteredStory],
@@ -56,7 +56,7 @@ const meta: ComponentMeta<typeof Tooltip> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Tooltip> = ({ content, ...args }) => {
+export const Basic: StoryFn<typeof Tooltip> = ({ content, ...args }) => {
   return (
     <Tooltip content={content} {...args}>
       <Button>Hover me for Tooltip </Button>

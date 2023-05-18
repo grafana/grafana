@@ -11,22 +11,22 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-func (cmd Command) upgradeCommand(c utils.CommandLine) error {
+func upgradeCommand(c utils.CommandLine) error {
 	ctx := context.Background()
 	pluginsDir := c.PluginDirectory()
 	pluginID := c.Args().First()
 
-	localPlugin, err := services.ReadPlugin(pluginsDir, pluginID)
+	localPlugin, err := services.GetLocalPlugin(pluginsDir, pluginID)
 	if err != nil {
 		return err
 	}
 
-	plugin, err := cmd.Client.GetPlugin(pluginID, c.PluginRepoURL())
+	plugin, err := services.GetPluginInfoFromRepo(pluginID, c.PluginRepoURL())
 	if err != nil {
 		return err
 	}
 
-	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
+	if shouldUpgrade(localPlugin, plugin) {
 		if err = uninstallPlugin(ctx, pluginID, c); err != nil {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}
