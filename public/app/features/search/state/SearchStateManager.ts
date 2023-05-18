@@ -39,7 +39,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   updateLocation = debounce((query) => locationService.partial(query, true), 300);
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
-  lastSearchPromise: Promise<void> = Promise.resolve();
+
+  lastSearchTimestamp = 0;
 
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
@@ -224,20 +225,24 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     const searcher = getGrafanaSearcher();
 
-    // Issue this search now, but wait until previous searches have resolved to update it in the state
+    const searchTimestamp = Date.now();
     const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
 
-    this.lastSearchPromise = this.lastSearchPromise
-      .then(() => searchPromise)
-      .then((result) => this.setState({ result, loading: false }))
+    searchPromise
+      .then((result) => {
+        // Only keep the results if it's was issued after the most recently resolved search.
+        // This prevents results showing out of order if first request is slower than later ones
+        if (searchTimestamp > this.lastSearchTimestamp) {
+          this.setState({ result, loading: false });
+          this.lastSearchTimestamp = searchTimestamp;
+        }
+      })
       .catch((error) => {
         reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
           ...trackingInfo,
           error: error?.message,
         });
         this.setState({ loading: false });
-
-        return Promise.resolve(); // make sure this.lastSearchPromise is always resolved
       });
   }
 
