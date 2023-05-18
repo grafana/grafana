@@ -516,7 +516,7 @@ export class PrometheusDatasource
           map((response) => {
             console.log('runSplitQuery transformV2', response, request);
 
-            // We have
+            // Glued together
             const amendedResponse = {
               ...response,
               data: this.cache.procFrames(request, requestInfo, response.data),
@@ -534,13 +534,13 @@ export class PrometheusDatasource
         );
       }
 
-      return this.runQuery(request).pipe(
+      return this.runQuery(fullOrPartialRequest).pipe(
         map((response) => {
           const amendedResponse = {
             ...response,
             data: this.cache.procFrames(request, requestInfo, response.data),
           };
-          return transformV2(amendedResponse, request, {
+          return transformV2(amendedResponse, fullOrPartialRequest, {
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
         })
@@ -1443,6 +1443,7 @@ export function prometheusSpecialRegexEscape(value: any) {
 }
 
 export function promRequestSupportsSplitting(allQueries: PromQuery[]) {
+  // combine filters into a single loop
   const queries = allQueries
     .filter((query) => !query.hide)
     .filter((query) => !query.refId.includes('do-not-chunk'))
