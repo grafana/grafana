@@ -1,6 +1,14 @@
+import { Team as TeamDTO } from '@grafana/schema/src/raw/team/x/team_types.gen';
+
 import { TeamPermissionLevel } from './acl';
 
-interface TeamBase {
+// The team resource
+export { TeamDTO };
+
+// This is the team resource with permissions and metadata expanded
+export interface Team {
+  id: number; // TODO switch to UUID
+
   /**
    * AccessControl metadata associated with a given resource.
    */
@@ -30,13 +38,6 @@ interface TeamBase {
    */
   permission: TeamPermissionLevel;
 }
-
-export interface Team extends TeamBase {
-  id: number; // TODO switch to UUID
-}
-
-// Represents the data sent via an API to create a team
-export interface TeamDTO extends Pick<TeamBase, 'name' | 'email'> {}
 
 export interface TeamMember {
   userId: number;
