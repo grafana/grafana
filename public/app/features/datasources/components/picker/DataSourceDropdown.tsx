@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { detectOverflow, ModifierArguments } from '@popperjs/core';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -75,6 +74,13 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
     modifiers: [
+      {
+        name: 'preventOverflow',
+        options: {
+          boundary: document.querySelector('body'),
+          rootBoundary: 'viewport', // true by default
+        },
+      },
       {
         name: 'offset',
         options: {
@@ -161,7 +167,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               }}
               onClose={onClose}
               current={currentDataSourceInstanceSettings}
-              style={{ ...popper.styles.popper }}
+              style={popper.styles.popper}
               ref={setSelectorElement}
               {...restProps}
               onDismiss={onClose}
@@ -271,13 +277,9 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      width: 480px;
+      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-
-      ${theme.breakpoints.down('sm')} {
-        width: 100%;
-      }
     `,
     picker: css`
       background: ${theme.colors.background.secondary};
@@ -294,11 +296,6 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};
       background-color: ${theme.colors.background.secondary};
-
-      ${theme.breakpoints.down('sm')} {
-        flex-direction: column;
-        gap: ${theme.spacing(1)};
-      }
     `,
   };
 }
