@@ -146,7 +146,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	}
 
 	reqBody, err := json.Marshal(map[string]interface{}{
-		"subscriptions": model,
+		"subscriptions": model.Subscriptions,
 		"query":         query.InterpolatedQuery,
 		"options":       map[string]string{"resultFormat": "table"},
 	})

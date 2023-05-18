@@ -1,8 +1,9 @@
 package azuremonitor
 
 import (
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
