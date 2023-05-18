@@ -341,7 +341,7 @@ func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.B
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
 		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
-		return fmt.Errorf("%s: %w", "failed to check signature", err)
+		return fmt.Errorf("failed to check signature: %w", err)
 	}
 
 	return nil
