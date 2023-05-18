@@ -103,3 +103,8 @@ export type SearchResponse = {
   traces: TraceSearchMetadata[];
   metrics: SearchMetrics;
 };
+
+export type Scope = {
+  name: string;
+  tags: string[];
+};

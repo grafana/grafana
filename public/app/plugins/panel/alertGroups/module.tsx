@@ -8,9 +8,9 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<PanelOptions>(AlertGroupsPanel).setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<Options>(AlertGroupsPanel).setPanelOptions((builder) => {
   return builder
     .addCustomEditor({
       name: 'Alertmanager',
