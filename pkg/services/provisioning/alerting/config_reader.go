@@ -11,15 +11,24 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-type rulesConfigReader struct {
-	log log.Logger
+type rulesFile interface {
+	// "map" is a reserved keyword, that's the only reason this is uppercase.
+	Map() (AlertingFile, error)
 }
 
-func newRulesConfigReader(logger log.Logger) rulesConfigReader {
+type rulesConfigReader struct {
+	log               log.Logger
+	datasourceService datasources.DataSourceService
+}
+
+func newRulesConfigReader(logger log.Logger,
+	datasourceService datasources.DataSourceService) rulesConfigReader {
 	return rulesConfigReader{
-		log: logger,
+		log:               logger,
+		datasourceService: datasourceService,
 	}
 }
 
@@ -39,15 +48,14 @@ func (cr *rulesConfigReader) readConfig(ctx context.Context, path string) ([]*Al
 			cr.log.Warn(fmt.Sprintf("file has invalid suffix '%s' (.yaml,.yml,.json accepted), skipping", file.Name()))
 			continue
 		}
-		alertFileV1, err := cr.parseConfig(path, file)
+		ruleFile, err := cr.parseConfig(path, file)
 		if err != nil {
 			return nil, fmt.Errorf("failure to parse file %s: %w", file.Name(), err)
 		}
-		if alertFileV1 != nil {
-			alertFileV1.Filename = file.Name()
-			alertFile, err := alertFileV1.MapToModel()
+		if ruleFile != nil {
+			alertFile, err := ruleFile.Map()
 			if err != nil {
-				return nil, fmt.Errorf("failure to map file %s: %w", alertFileV1.Filename, err)
+				return nil, fmt.Errorf("failure to map file %s: %w", file.Name(), err)
 			}
 			alertFiles = append(alertFiles, &alertFile)
 		}
@@ -63,7 +71,7 @@ func (cr *rulesConfigReader) isJSON(file string) bool {
 	return strings.HasSuffix(file, ".json")
 }
 
-func (cr *rulesConfigReader) parseConfig(path string, file fs.DirEntry) (*AlertingFileV1, error) {
+func (cr *rulesConfigReader) parseConfig(path string, file fs.DirEntry) (rulesFile, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
@@ -71,10 +79,28 @@ func (cr *rulesConfigReader) parseConfig(path string, file fs.DirEntry) (*Alerti
 	if err != nil {
 		return nil, err
 	}
-	var cfg *AlertingFileV1
-	err = yaml.Unmarshal(yamlFile, &cfg)
+	var version *configVersion
+	err = yaml.Unmarshal(yamlFile, &version)
 	if err != nil {
 		return nil, err
 	}
-	return cfg, nil
+	switch version.APIVersion.Value() {
+	case apiVersion1:
+		var cfg *AlertingFileV1
+		if err = yaml.Unmarshal(yamlFile, &cfg); err != nil {
+			return nil, err
+		}
+		return cfg, nil
+	case apiVersion2:
+		var cfg *AlertingFileV2
+		if err = yaml.Unmarshal(yamlFile, &cfg); err != nil {
+			return nil, err
+		}
+		return &fileV2Mapper{
+			datasourceService: cr.datasourceService,
+			file:              cfg,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unkown API version %d in file %s", version.APIVersion.Value(), filename)
+	}
 }

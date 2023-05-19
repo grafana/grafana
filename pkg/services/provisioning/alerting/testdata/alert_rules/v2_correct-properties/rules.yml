@@ -1,0 +1,44 @@
+# opinionated provisioning v2 for simpler rule provisioning
+apiVersion: 2
+groups:
+  - name: team_1
+    folder: SQL Cluster
+    interval: 10s
+    rules:
+    - title: SQL Check Value
+      uid: sql_check_value
+      datasource: sql_cluster_01
+      for: 1m
+      # by default we check the last value and alert if <> 0 value
+      expr: SELECT value, ts as time from my_table
+      annotations:
+        runbook: https://grafana.com
+      labels:
+        team: infra
+        severity: warning
+    - title: SQL Check Value
+      uid: sql_check_value
+      datasource: sql_cluster_01
+      for: 1m
+      expr: SELECT value, ts as time from my_table
+      # optional one can also use an aggregation, which will change the 
+      # the behavior to use the aggregation result instead of the last value
+      aggr: min|max|avg|mean|count|last|first
+      annotations:
+        runbook: https://grafana.com
+      labels:
+        team: infra
+        severity: warning
+    - title: SQL Check Value
+      uid: sql_check_value
+      datasource: sql_cluster_01
+      for: 1m
+      expr: SELECT value, ts as time from my_table
+      # optional one can define a condition that is used instead of just checking
+      # if we get a non zero value
+      condition: gt 10 && lt 20
+      annotations:
+        runbook: https://grafana.com
+      labels:
+        team: infra
+        severity: warning

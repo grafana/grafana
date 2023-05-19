@@ -6,11 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
 type ProvisionerConfig struct {
 	Path                       string
+	DatasourceServcie          datasources.DataSourceService
 	DashboardService           dashboards.DashboardService
 	DashboardProvService       dashboards.DashboardProvisioningService
 	RuleService                provisioning.AlertRuleService
@@ -22,7 +24,7 @@ type ProvisionerConfig struct {
 
 func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	logger := log.New("provisioning.alerting")
-	cfgReader := newRulesConfigReader(logger)
+	cfgReader := newRulesConfigReader(logger, cfg.DatasourceServcie)
 	files, err := cfgReader.readConfig(ctx, cfg.Path)
 	if err != nil {
 		return err
