@@ -83,7 +83,7 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configureExtensionLink` function returns _undefined_. When this happens, Grafana doesn't render the link.
+The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configure()` function returns _undefined_. When this happens, Grafana doesn't render the link.
 
 {{% admonition type="note" %}} The context passed to the `configureExtensionLink` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.{{%
 /admonition %}}
