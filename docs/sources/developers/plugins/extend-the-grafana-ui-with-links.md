@@ -12,7 +12,7 @@ You can use the Plugin extensions API with your Grafana app plugins to add links
 Be sure your plugin meets the following requirements before proceeding:
 
 - It must be an app plugin.
-- It must be [preloaded]({{< relref "./metadata" >}}) for your plugin.
+- It must be preloaded (by setting the [preload property]({{< relref "./metadata" >}}) to `true` in the `plugin.json`
 - It must be installed and enabled.
 
 ## Available extension points within Grafana
@@ -50,7 +50,7 @@ Your link will now appear in dashboard panel menus. When the user clicks the lin
 
 The above example works for simple cases. However, you may want to act on information from the app's panel from which the user is navigating.
 
-To do this, use the `configureExtensionLink` property which takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin.
+To do this, use the `configure` property on the object that is passed to `configureExtensionLink()`. This property takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin.
 
 Alternatively, if you need to hide the link for certain scenarios, define the function to return _undefined_:
 
@@ -83,7 +83,7 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configureExtensionLink` function returns _undefined_. When this happens, Grafana doesn't render the link.
+The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configure()` function returns _undefined_. When this happens, Grafana doesn't render the link.
 
 {{% admonition type="note" %}} The context passed to the `configure()` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.{{%
 /admonition %}}
