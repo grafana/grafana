@@ -12,7 +12,7 @@ You can use the Plugin extensions API with your Grafana app plugins to add links
 Be sure your plugin meets the following requirements before proceeding:
 
 - It must be an app plugin.
-- It must be [preloaded with metadata]({{< relref "./metadata" >}}) for your plugin.
+- It must be [preloaded]({{< relref "./metadata" >}}) for your plugin.
 - It must be installed and enabled.
 
 ## Available extension points within Grafana
@@ -85,7 +85,7 @@ new AppPlugin().configureExtensionLink({
 
 The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configureExtensionLink` function returns _undefined_. When this happens, Grafana doesn't render the link.
 
-{{% admonition type="note" %}} The context passed to the `configureExtensionLink` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.{{%
+{{% admonition type="note" %}} The context passed to the `configure()` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.{{%
 /admonition %}}
 
 ## Add an event handler to a link
