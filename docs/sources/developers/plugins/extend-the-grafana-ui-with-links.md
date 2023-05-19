@@ -41,7 +41,7 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-That's it! Your link will appear in dashboard panel menus. When the user clicks the link, they will be sent to the path that you defined earlier.
+Your link will now appear in dashboard panel menus. When the user clicks the link, they will be sent to the path you defined earlier.
 
 > **Note:** Each plugin is limited to a maximum of two links per extension point.
 
