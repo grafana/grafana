@@ -50,7 +50,7 @@ Your link will now appear in dashboard panel menus. When the user clicks the lin
 
 The above example works for simple cases. However, you may want to act on information from the app's panel from which the user is navigating.
 
-To do this, use the `configureExtensionLink` property which takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin.
+To do this, use the `configure` property on the object that is passed to `configureExtensionLink()`. This property takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin.
 
 Alternatively, if you need to hide the link for certain scenarios, define the function to return _undefined_:
 
