@@ -15,7 +15,7 @@ title: Backend plugins
 
 The Grafana plugin system for backend development allows you to integrate Grafana with virtually anything and offer custom visualizations. This document explains the system's background, use cases, and key features.
 
-# Background
+## Background
 
 Grafana added support for _frontend plugins_ in version 3.0 so that the Grafana community could create custom panels and links to data source. It was wildly successful and has made Grafana much more useful for our user community.
 
@@ -31,7 +31,7 @@ The following examples gives are some common use cases for backend plugins:
 - Connect to SQL database servers and other non-HTTP services that normally can't be connected to from a browser.
 - Keep state between users, for example, by query caching for data sources.
 - Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
-- Use a custom data source request proxy (refer to [Resources]({{< relref "#resources" >}}) for more information.
+- Use a custom data source request proxy (refer to [Resources]({{< relref "#resources" >}}) for more information).
 
 ## Grafana backend plugin system
 
@@ -41,8 +41,8 @@ The Grafana backend plugin system is based on HashiCorp's [Go Plugin System over
 
 Grafana's approach has benefits for developers:
 
-- **Stability:** Plugins can’t crash your Grafana process: a panic in a plugin doesn’t panic the server.
-- **Ease of development:\*** Plugins can be written in any language that supports gRPC (for example, just write a Go application and run `go build`).
+- **Stability:** Plugins can't crash your Grafana process: a panic in a plugin doesn't panic the server.
+- **Ease of development:** Plugins can be written in any language that supports gRPC (for example, just write a Go application and run `go build`).
 - **Security:** Plugins only have access to the interfaces and arguments that are given to it, not to the entire memory space of the process.
 
 ### Capabilities of the backend plugin system
@@ -53,6 +53,7 @@ Grafana's backend plugin system exposes several key capabilities, or building bl
 - Resources
 - Health checks
 - Collect metrics
+- Streaming
 
 #### Query data
 
@@ -87,6 +88,10 @@ A plugin's health check endpoint is exposed in the Grafana HTTP API and allows e
 
 #### Collect metrics
 
-A backend plugin can collect and return runtime, process and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you’re using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in. This SDK gives you Go runtime metrics and process metrics out of the box. You can use the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) to add custom metrics to instrument your backend plugin.
+A backend plugin can collect and return runtime, process and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you're using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in. This SDK gives you Go runtime metrics and process metrics out of the box. You can use the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) to add custom metrics to instrument your backend plugin.
 
-The Grafana HTTP API metrics offers an endpoint (`/api/plugins/<plugin id>/metrics`) that allows you to configure a Prometheus instance to scrape the metrics.
+#### Streaming
+
+The streaming capability allows a backend plugin to handle data source queries that are streaming. For more information, refer to [Build a streaming data source plugin]( ({{<relref  "../build-a-streaming-data-source-plugin.md">}}))
+
+The Grafana HTTP API offers an endpoint (`/api/plugins/<plugin id>/metrics`) that allows you to configure a Prometheus instance to scrape the metrics.
