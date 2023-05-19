@@ -5,7 +5,7 @@ description: Learn how to add links to the Grafana user interface from an app pl
 
 # Use extensions to add links to app plugins
 
-You can use the Plugin extensions API with your Grafana app plugins to add links into the Grafana UI. This feature allows you to send users to your plugin's pages from other spots in the Grafana application.
+You can use the Plugin extensions API with your Grafana app plugins to add links to the Grafana UI. This feature lets you send users to your plugin's pages from other spots in the Grafana application.
 
 ## Before you begin
 
