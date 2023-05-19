@@ -23,7 +23,7 @@ An _extension point_ is a location within the Grafana UI where a plugin can inse
 
 ## Add a link extension within a Grafana dashboard panel menu
 
-Here's how you can add a link to the dashboard panel menus in Grafana via your plugin:
+To add a link extension within a Grafana dashboard panel menu, complete the following steps:
 
 1. Define the link extension in your plugin's `module.ts` file.
 
