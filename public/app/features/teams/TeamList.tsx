@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination,InlineField } from '@grafana/ui';
+import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination, InlineField } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';

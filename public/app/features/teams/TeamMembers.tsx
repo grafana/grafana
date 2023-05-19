@@ -91,7 +91,7 @@ export class TeamMembers extends PureComponent<Props, State> {
         <div className="page-action-bar">
           <InlineField grow="true">
             <FilterInput placeholder="Search members" value={searchMemberQuery} onChange={this.onSearchQueryChange} />
-            </InlineField>
+          </InlineField>
           <Button className="pull-right" onClick={this.onToggleAdding} disabled={isAdding || !isTeamAdmin}>
             Add member
           </Button>
