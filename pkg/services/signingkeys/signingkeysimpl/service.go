@@ -108,6 +108,15 @@ func (s *Service) AddPrivateKey(keyID string, privateKey crypto.PrivateKey) erro
 }
 
 // GetServerPrivateKey returns the private key used to sign tokens
-func (s *Service) GetServerPrivateKey() (crypto.PrivateKey, error) {
-	return s.GetPrivateKey(serverPrivateKeyID)
+func (s *Service) GetServerPrivateKey() crypto.PrivateKey {
+	// The server private key is always available
+	pk, _ := s.GetPrivateKey(serverPrivateKeyID)
+	return pk
+}
+
+// GetServerPrivateKey returns the private key used to sign tokens
+func (s *Service) GetServerPublicKey() crypto.PublicKey {
+	// The server public key is always available
+	publicKey, _ := s.GetPublicKey(serverPrivateKeyID)
+	return publicKey
 }

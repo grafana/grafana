@@ -275,7 +275,7 @@ export async function generateEmptyQuery(
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
   }
 
-  return { refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef, ...defaultQuery };
+  return { ...defaultQuery, refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {

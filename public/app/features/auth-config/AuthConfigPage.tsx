@@ -11,7 +11,7 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { filterAuthSettings, getProviderUrl } from './utils';
+import { getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
 
@@ -20,9 +20,8 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  const { settings, isLoading, providerStatuses } = state.authConfig;
+  const { isLoading, providerStatuses } = state.authConfig;
   return {
-    settings,
     isLoading,
     providerStatuses,
   };
@@ -34,12 +33,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({
-  settings,
-  providerStatuses,
-  isLoading,
-  loadSettings,
-}: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSettings }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -54,11 +48,24 @@ export const AuthConfigPageUnconnected = ({
   const availableProviders = authProviders.filter(
     (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured
   );
-  const authSettings = filterAuthSettings(settings);
   const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
+  {
+    /* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */
+  }
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      documentation.
+    </a>
+  );
+  const subTitle = <span>Manage your auth settings and configure single sign-on. Find out more in our {docsLink}</span>;
   return (
-    <Page navId="authentication">
+    <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
         {!!enabledProviders?.length && (
@@ -70,6 +77,7 @@ export const AuthConfigPageUnconnected = ({
                 displayName={provider.displayName}
                 authType={provider.type}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
               />
             ))}
@@ -95,34 +103,12 @@ export const AuthConfigPageUnconnected = ({
                 displayName={provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
               />
             ))}
           </div>
         )}
-        <div className={styles.settingsSection}>
-          <h3>Settings</h3>
-          {authSettings && (
-            <table className="filter-table">
-              <tbody>
-                {Object.entries(authSettings).map(([sectionName, sectionSettings], i) => (
-                  <React.Fragment key={`section-${i}`}>
-                    <tr>
-                      <td className="admin-settings-section">{sectionName}</td>
-                      <td />
-                    </tr>
-                    {Object.entries(sectionSettings).map(([settingName, settingValue], j) => (
-                      <tr key={`property-${j}`}>
-                        <td className={styles.settingName}>{settingName}</td>
-                        <td className={styles.settingName}>{settingValue}</td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
       </Page.Contents>
     </Page>
   );
@@ -145,6 +131,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     settingName: css`
       padding-left: 25px;
+    `,
+    doclink: css`
+      padding-bottom: 5px;
+      padding-top: -5px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      a {
+        color: ${theme.colors.info.name}; // use theme link color or any other color
+        text-decoration: underline; // underline or none, as you prefer
+      }
     `,
     settingValue: css`
       white-space: break-spaces;

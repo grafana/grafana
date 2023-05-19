@@ -3,6 +3,7 @@ import React, { ComponentType, useEffect, useMemo, memo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import {
   Icon,
   IconName,
@@ -12,7 +13,6 @@ import {
   Tooltip,
   useStyles2,
   FilterInput,
-  InlineField,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -32,6 +32,8 @@ const extraFilters: Array<ComponentType<FilterProps>> = [];
 export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
   extraFilters.push(filter);
 };
+
+const selectors = e2eSelectors.pages.UserListPage.UserListAdminPage;
 
 const mapDispatchToProps = {
   fetchUsers,
@@ -80,7 +82,7 @@ const UserListAdminPageUnConnected = ({
   return (
     <Page.Contents>
       <div className="page-action-bar">
-        <InlineField grow="true">
+        <div className="gf-form gf-form--grow">
           <FilterInput
             placeholder="Search user by login, email, or name."
             autoFocus={true}
@@ -99,7 +101,7 @@ const UserListAdminPageUnConnected = ({
           {extraFilters.map((FilterComponent, index) => (
             <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
           ))}
-        </InlineField>
+        </div>
         {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
           <LinkButton href="admin/users/create" variant="primary">
             New user

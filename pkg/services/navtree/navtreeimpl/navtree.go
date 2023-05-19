@@ -95,7 +95,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		})
 	}
 
-	if c.IsPublicDashboardView || hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate))) {
+	if c.IsPublicDashboardView || hasAccess(ac.ReqSignedIn, ac.EvalAny(
+		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
+		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
+	) {
 		dashboardChildLinks := s.buildDashboardNavLinks(c, hasEditPerm)
 
 		dashboardLink := &navtree.NavLink{
@@ -149,18 +152,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 		}
 	}
 
-	orgAdminNode, err := s.getOrgAdminNode(c)
+	orgAdminNode, err := s.getAdminNode(c)
 
 	if orgAdminNode != nil {
 		treeRoot.AddSection(orgAdminNode)
 	} else if err != nil {
 		return nil, err
-	}
-
-	serverAdminNode := s.getServerAdminNode(c)
-
-	if serverAdminNode != nil {
-		treeRoot.AddSection(serverAdminNode)
 	}
 
 	s.addHelpLinks(treeRoot, c)
@@ -484,29 +481,22 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
 	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
-		// Connect data
+		// Add new connection
 		children = append(children, &navtree.NavLink{
-			Id:        "connections-connect-data",
-			Text:      "Connect data",
-			SubTitle:  "Browse and create new connections",
-			IsSection: true,
-			Url:       s.cfg.AppSubURL + "/connections/connect-data",
-			Children:  []*navtree.NavLink{},
+			Id:       "connections-add-new-connection",
+			Text:     "Add new connection",
+			SubTitle: "Browse and create new connections",
+			Url:      baseUrl + "/add-new-connection",
+			Children: []*navtree.NavLink{},
 		})
 
-		// Your connections
+		// Data sources
 		children = append(children, &navtree.NavLink{
-			Id:       "connections-your-connections",
-			Text:     "Your connections",
-			SubTitle: "Manage your existing connections",
-			Url:      baseUrl + "/your-connections",
-			// Datasources
-			Children: []*navtree.NavLink{{
-				Id:       "connections-your-connections-datasources",
-				Text:     "Data sources",
-				SubTitle: "View and manage your connected data source connections",
-				Url:      baseUrl + "/your-connections/datasources",
-			}},
+			Id:       "connections-datasources",
+			Text:     "Data sources",
+			SubTitle: "View and manage your connected data source connections",
+			Url:      baseUrl + "/datasources",
+			Children: []*navtree.NavLink{},
 		})
 	}
 

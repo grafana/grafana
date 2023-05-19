@@ -3,7 +3,7 @@ import { Observable, Subscription } from 'rxjs';
 
 import { expectObservable, forceObservableCompletion } from './utils';
 
-function tryExpectations(received: any[], expectations: (received: any[]) => void): jest.CustomMatcherResult {
+function tryExpectations(received: unknown[], expectations: (received: unknown[]) => void): jest.CustomMatcherResult {
   try {
     expectations(received);
     return {

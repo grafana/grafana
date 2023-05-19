@@ -62,7 +62,10 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
   includeFrozen?: boolean;
+  index?: string;
 }
+
+export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
 
 interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
@@ -76,7 +79,7 @@ interface MetricConfiguration<T extends MetricAggregationType> {
    */
   versionRange?: string;
   supportsMultipleBucketPaths: boolean;
-  isSingleMetric?: boolean;
+  impliedQueryType: QueryType;
   hasSettings: boolean;
   hasMeta: boolean;
   defaults: Omit<Extract<MetricAggregation, { type: T }>, 'id' | 'type'>;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination,InlineField } from '@grafana/ui';
+import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -81,9 +81,9 @@ export const TeamList = ({
         ) : (
           <>
             <div className="page-action-bar">
-              <InlineField grow="true">
+              <div className="gf-form gf-form--grow">
                 <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
-              </InlineField>
+              </div>
 
               <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
                 New Team
