@@ -88,7 +88,9 @@ If you make a change in the frontend, you must refresh your browser. However, ch
 
 ## Run your backend plugin with a debugger
 
-> Note: The following method only works with a local Grafana instance and currently doesn't work with Docker.
+{{% admonition type="note" %}}
+The following method only works with a local Grafana instance and currently doesn't work with Docker.
+{{% /admonition %}}
 
 Running a backend plugin with a debugger is supported in Visual Studio Code and GoLand out of the box, but it can also work with any other IDE or debugger.
 
@@ -169,6 +171,6 @@ Configure your code editor to run the following steps:
 
 ### Notes
 
-- Grafana prints all logs in the plugin's `stdout` rather than in Grafana logs.
+- All logs are printed in the plugin's `stdout` rather than in Grafana logs.
 - If the backend plugin doesn't serve requests after you turn off debug mode, you can force a reset to the standalone mode. To do so, delete the files `dist/standalone.txt`, `dist/pid.txt`, and the executable file, and then restart Grafana.
 - Grafana doesn't support debugging backend plugins running inside Docker. But this is a [planned enhancement](https://github.com/grafana/grafana-plugin-sdk-go/issues/685).
