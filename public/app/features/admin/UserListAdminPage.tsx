@@ -82,7 +82,7 @@ const UserListAdminPageUnConnected = ({
 
   return (
     <Page.Contents>
-      <div className="page-action-bar">
+      <div className="page-action-bar" data-testid={selectors.container}>
         <InlineField grow="true">
           <FilterInput
             placeholder="Search user by login, email, or name."
