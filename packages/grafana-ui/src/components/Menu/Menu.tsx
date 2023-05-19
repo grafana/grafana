@@ -73,9 +73,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     wrapper: css({
       background: `${theme.colors.background.primary}`,
+      border: `1px solid ${theme.colors.border.weak}`,
       boxShadow: `${theme.shadows.z3}`,
       display: `inline-block`,
-      borderRadius: `${theme.shape.borderRadius()}`,
+      borderRadius: theme.shape.borderRadius(),
       padding: `${theme.spacing(0.5, 0)}`,
     }),
   };
