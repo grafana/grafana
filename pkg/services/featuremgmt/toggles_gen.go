@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagDatabaseMetrics
-	// Add Prometheus metrics for database tables
-	FlagDatabaseMetrics = "database_metrics"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -59,25 +55,17 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8S
-	// Explore native k8s integrations
-	FlagK8S = "k8s"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagNewTraceView
-	// Shows the new trace view design
-	FlagNewTraceView = "newTraceView"
+	// FlagNewTraceViewHeader
+	// Shows the new trace view header
+	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
-
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
@@ -183,10 +171,6 @@ const (
 	// Show trace ids for requests
 	FlagShowTraceId = "showTraceId"
 
-	// FlagDatasourceOnboarding
-	// Enable data source onboarding page
-	FlagDatasourceOnboarding = "datasourceOnboarding"
-
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
@@ -264,8 +248,16 @@ const (
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
-	// Changes responses from Loki to be compliant with the dataplane specification.
+	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
@@ -278,10 +270,6 @@ const (
 	// FlagAlertStateHistoryLokiOnly
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
-
-	// FlagDisableSSEDataplane
-	// Disables dataplane specific processing in server side expressions.
-	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -298,10 +286,6 @@ const (
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
-
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
 
 	// FlagUseCachingService
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
@@ -320,10 +304,18 @@ const (
 	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
 
 	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
-	// FlagOpensearchDetectVersion
-	// Enable version detection in OpenSearch
-	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
+
+	// FlagEnableDatagridEditing
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
 )

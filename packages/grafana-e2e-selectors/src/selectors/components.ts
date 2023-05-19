@@ -77,6 +77,10 @@ export const Components = {
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
       loadingBar: () => `Panel loading bar`,
+      HoverWidget: {
+        container: 'data-test-id hover-header-container',
+        dragIcon: 'data-testid drag-icon',
+      },
     },
     Visualization: {
       Graph: {
@@ -137,8 +141,8 @@ export const Components = {
       content: 'Panel editor data pane content',
     },
     applyButton: 'data-testid Apply changes and go back to dashboard',
-    toggleVizPicker: 'toggle-viz-picker',
-    toggleVizOptions: 'toggle-viz-options',
+    toggleVizPicker: 'data-testid toggle-viz-picker',
+    toggleVizOptions: 'data-testid toggle-viz-options',
     toggleTableView: 'toggle-table-view',
 
     // [Geomap] Map controls
@@ -189,7 +193,7 @@ export const Components = {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title} query operation action`,
+    actionButton: (title: string) => `${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
     container: (refId: string) => `Query editor row ${refId}`,
   },
@@ -297,7 +301,7 @@ export const Components = {
     container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
-    container: 'Data source picker select container',
+    container: 'data-testid Data source picker select container',
     /**
      * @deprecated use inputV2 instead
      */

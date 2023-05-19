@@ -1,7 +1,15 @@
 import React, { useCallback, useState } from 'react';
 
-import { DataFrame, EventBus, AbsoluteTimeRange, TimeZone, SplitOpen, LoadingState } from '@grafana/data';
-import { PanelChrome } from '@grafana/ui';
+import {
+  DataFrame,
+  EventBus,
+  AbsoluteTimeRange,
+  TimeZone,
+  SplitOpen,
+  LoadingState,
+  ThresholdsConfig,
+} from '@grafana/data';
+import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
@@ -10,18 +18,18 @@ import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
 import { loadGraphStyle } from './utils';
 
-interface Props {
+interface Props extends Pick<PanelChromeProps, 'width' | 'height' | 'statusMessage'> {
   loading: boolean;
   data: DataFrame[];
   annotations?: DataFrame[];
   eventBus: EventBus;
-  height: number;
-  width: number;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onChangeTime: (absoluteRange: AbsoluteTimeRange) => void;
   splitOpenFn: SplitOpen;
   loadingState: LoadingState;
+  thresholdsConfig?: ThresholdsConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 
 export const GraphContainer = ({
@@ -34,7 +42,10 @@ export const GraphContainer = ({
   annotations,
   onChangeTime,
   splitOpenFn,
+  thresholdsConfig,
+  thresholdsStyle,
   loadingState,
+  statusMessage,
 }: Props) => {
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
 
@@ -49,6 +60,7 @@ export const GraphContainer = ({
       width={width}
       height={height}
       loadingState={loadingState}
+      statusMessage={statusMessage}
       actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
     >
       {(innerWidth, innerHeight) => (
@@ -63,6 +75,8 @@ export const GraphContainer = ({
           annotations={annotations}
           splitOpenFn={splitOpenFn}
           loadingState={loadingState}
+          thresholdsConfig={thresholdsConfig}
+          thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
         />
       )}

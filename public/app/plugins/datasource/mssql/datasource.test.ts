@@ -7,7 +7,7 @@ import {
   dateTime,
   FieldType,
   MetricFindValue,
-  MutableDataFrame,
+  createDataFrame,
   TimeRange,
 } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -54,7 +54,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                   { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -130,7 +130,7 @@ describe('MSSQLDatasource', () => {
             refId: 'datasets',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'name', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
                 })
               ),
@@ -152,7 +152,7 @@ describe('MSSQLDatasource', () => {
             refId: 'tables',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'schemaAndName', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
                 })
               ),
@@ -175,7 +175,7 @@ describe('MSSQLDatasource', () => {
             refId: 'columns',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
                     { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
@@ -216,7 +216,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: '__value', values: ['value1', 'value2', 'value3'] },
                   { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
@@ -254,7 +254,7 @@ describe('MSSQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'id', values: [1, 2, 3] },
                   { name: 'values', values: ['test1', 'test2', 'test3'] },
@@ -297,7 +297,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
                   { name: '__value', values: ['same', 'same', 'diff'] },
@@ -330,7 +330,7 @@ describe('MSSQLDatasource', () => {
         tempvar: {
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [{ name: 'test', values: ['aTitle'] }],
               })
             ),

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Icon, Label, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
@@ -33,6 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       flex: 1;
       gap: ${theme.spacing(0.5)};
+      position: relative;
     `,
     textWrapper: css`
       display: flex;
@@ -41,17 +42,20 @@ function getStyles(theme: GrafanaTheme2) {
     hidden: css`
       visibility: hidden;
     `,
-    tag: css`
-      padding: ${theme.spacing(0.25)} ${theme.spacing(0.75)};
-    `,
     label: css`
       max-width: 100%;
-      margin: ${theme.spacing(2)} 0;
+      &:first-of-type {
+        margin-bottom: ${theme.spacing(2)};
+      }
+      &:not(:first-of-type) {
+        margin: ${theme.spacing(2)} 0;
+      }
     `,
-    query: css`
+    rawQueryContainer: css`
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
+      width: calc(100% - 20px);
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -62,6 +66,12 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     queryDescription: css`
       margin-left: ${theme.spacing(0.5)};
+    `,
+    iconButton: css`
+      position: absolute;
+      top: ${theme.spacing(1)};
+      right: ${theme.spacing(1)};
+      z-index: ${theme.zIndex.navbarFixed};
     `,
   };
 }
@@ -76,11 +86,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, true));
+  const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, false));
 
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
+
+  const isInitialQuery = useMemo(() => {
+    // Initial query has all regular labels enabled and all parsed labels disabled
+    if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
+      return false;
+    }
+
+    return true;
+  }, [contextFilters, initialized]);
+
   useEffect(() => {
     if (!initialized) {
       return;
@@ -123,7 +143,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels);
+    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
     setContextFilters(contextFilters);
     setInitialized(true);
     setLoading(false);
@@ -161,42 +181,67 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
+      <Tooltip content={'Revert to initial log context query.'}>
+        <div className={styles.iconButton}>
+          <Button
+            data-testid="revert-button"
+            icon="history-alt"
+            variant="secondary"
+            disabled={isInitialQuery}
+            onClick={(e) => {
+              reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
+                logRowUid: row.uid,
+              });
+              setContextFilters((contextFilters) => {
+                return contextFilters.map((contextFilter) => ({
+                  ...contextFilter,
+                  // For revert to initial query we need to enable all labels and disable all parsed labels
+                  enabled: !contextFilter.fromParser,
+                }));
+              });
+            }}
+          />
+        </div>
+      </Tooltip>
+
       <Collapse
         collapsible={true}
         isOpen={isOpen}
         onToggle={() => {
           store.set(IS_LOKI_LOG_CONTEXT_UI_OPEN, !isOpen);
           setIsOpen((isOpen) => !isOpen);
+          reportInteraction('grafana_explore_logs_loki_log_context_toggled', {
+            logRowUid: row.uid,
+            action: !isOpen ? 'open' : 'close',
+          });
         }}
         label={
-          <div className={styles.query}>
-            <RawQuery
-              lang={{ grammar: lokiGrammar, name: 'loki' }}
-              query={logContextProvider.processContextFiltersToExpr(
-                row,
-                contextFilters.filter(({ enabled }) => enabled),
-                origQuery
-              )}
-              className={styles.rawQuery}
-            />
-            <Tooltip content="Initially executed log context query is created from all labels defining the stream for the selected log line. Use editor bellow to customize log context query.">
-              <Icon name="info-circle" size="sm" className={styles.queryDescription} />
-            </Tooltip>
+          <div className={styles.rawQueryContainer}>
+            {initialized ? (
+              <>
+                <RawQuery
+                  lang={{ grammar: lokiGrammar, name: 'loki' }}
+                  query={logContextProvider.processContextFiltersToExpr(
+                    row,
+                    contextFilters.filter(({ enabled }) => enabled),
+                    origQuery
+                  )}
+                  className={styles.rawQuery}
+                />
+                <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
+                  <Icon name="info-circle" size="sm" className={styles.queryDescription} />
+                </Tooltip>
+              </>
+            ) : (
+              <Spinner />
+            )}
           </div>
         }
       >
         <div className={styles.ui}>
-          <Tooltip
-            content={
-              'This feature is experimental and may change in the future. Currently it supports using parser and extracted labels for queries with no more than 1 parser (e.g. logfmt, json). Please report any issues in the Grafana GitHub repository.'
-            }
-            placement="top"
-          >
-            <Tag className={styles.tag} name={'Experimental feature'} colorIndex={1} />
-          </Tooltip>{' '}
           <Label
             className={styles.label}
-            description="By removing some of the selected label filters, you can broaden your search."
+            description="The initial log context query is created from all labels defining the stream for the selected log line. You can broaden your search by removing one or more of the label filters."
           >
             Widen the search
           </Label>
@@ -237,7 +282,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             <>
               <Label
                 className={styles.label}
-                description={`By using parser in your original query, you are able to filter for extracted labels. Refine your search by applying extracted labels from selected log line.`}
+                description={`By using a parser in your original query, you can use filters for extracted labels. Refine your search by applying extracted labels created from the selected log line.`}
               >
                 Refine the search
               </Label>

@@ -13,6 +13,57 @@ title: Dashboard kind
 
 A Grafana dashboard.
 
+| Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
+|------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redefining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
+| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+| `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+
+### Metadata
+
+metadata contains embedded CommonMetadata and can be extended with custom string fields
+TODO: use CommonMetadata instead of redefining here; currently needs to be defined here
+without external reference as using the CommonMetadata reference breaks thema codegen.
+
+It extends [_kubeObjectMetadata](#_kubeobjectmetadata).
+
+| Property            | Type                   | Required | Default | Description                                                                                                                             |
+|---------------------|------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `createdBy`         | string                 | **Yes**  |         |                                                                                                                                         |
+| `creationTimestamp` | string                 | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `extraFields`       | [object](#extrafields) | **Yes**  |         | extraFields is reserved for any fields that are pulled from the API server metadata but do not have concrete fields in the CUE metadata |
+| `finalizers`        | string[]               | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `labels`            | map[string]string      | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `resourceVersion`   | string                 | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `uid`               | string                 | **Yes**  |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+| `updateTimestamp`   | string                 | **Yes**  |         |                                                                                                                                         |
+| `updatedBy`         | string                 | **Yes**  |         |                                                                                                                                         |
+| `deletionTimestamp` | string                 | No       |         | *(Inherited from [_kubeObjectMetadata](#_kubeobjectmetadata))*                                                                          |
+
+### _kubeObjectMetadata
+
+_kubeObjectMetadata is metadata found in a kubernetes object's metadata field.
+It is not exhaustive and only includes fields which may be relevant to a kind's implementation,
+As it is also intended to be generic enough to function with any API Server.
+
+| Property            | Type              | Required | Default | Description |
+|---------------------|-------------------|----------|---------|-------------|
+| `creationTimestamp` | string            | **Yes**  |         |             |
+| `finalizers`        | string[]          | **Yes**  |         |             |
+| `labels`            | map[string]string | **Yes**  |         |             |
+| `resourceVersion`   | string            | **Yes**  |         |             |
+| `uid`               | string            | **Yes**  |         |             |
+| `deletionTimestamp` | string            | No       |         |             |
+
+### ExtraFields
+
+extraFields is reserved for any fields that are pulled from the API server metadata but do not have concrete fields in the CUE metadata
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+
+### Spec
+
 | Property               | Type                                        | Required | Default   | Description                                                                                                                                                                                                                                 |
 |------------------------|---------------------------------------------|----------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `editable`             | boolean                                     | **Yes**  | `true`    | Whether a dashboard is editable or not.                                                                                                                                                                                                     |
@@ -164,7 +215,7 @@ TODO docs
 | Property            | Type                                  | Required | Default | Description                                                                                                                                                                                                                                                                             |
 |---------------------|---------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `color`             | [FieldColor](#fieldcolor)             | No       |         | TODO docs                                                                                                                                                                                                                                                                               |
-| `custom`            | [object](#custom)                     | No       |         | custom is specified by the PanelFieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                          |
+| `custom`            | [object](#custom)                     | No       |         | custom is specified by the FieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                               |
 | `decimals`          | number                                | No       |         | Significant digits (for display)                                                                                                                                                                                                                                                        |
 | `description`       | string                                | No       |         | Human readable field metadata                                                                                                                                                                                                                                                           |
 | `displayNameFromDS` | string                                | No       |         | This can be used by data sources that return and explicit naming structure for values and labels<br/>When this property is configured, this value is used rather than the default naming strategy.                                                                                      |
@@ -288,7 +339,7 @@ TODO docs
 
 ### Custom
 
-custom is specified by the PanelFieldConfig field
+custom is specified by the FieldConfig field
 in panel plugin schemas.
 
 | Property | Type | Required | Default | Description |
@@ -359,7 +410,7 @@ schema; they do not evolve independently.
 | Property          | Type                                              | Required | Default | Description                                                                                                                                                |
 |-------------------|---------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `fieldConfig`     | [FieldConfigSource](#fieldconfigsource)           | **Yes**  |         |                                                                                                                                                            |
-| `options`         | [object](#options)                                | **Yes**  |         | options is specified by the PanelOptions field in panel<br/>plugin schemas.                                                                                |
+| `options`         | [object](#options)                                | **Yes**  |         | options is specified by the Options field in panel<br/>plugin schemas.                                                                                     |
 | `repeatDirection` | string                                            | **Yes**  | `h`     | Direction to repeat in if 'repeat' is set.<br/>"h" for horizontal, "v" for vertical.<br/>TODO this is probably optional<br/>Possible values are: `h`, `v`. |
 | `transformations` | [DataTransformerConfig](#datatransformerconfig)[] | **Yes**  |         |                                                                                                                                                            |
 | `transparent`     | boolean                                           | **Yes**  | `false` | Whether to display the panel without a background.                                                                                                         |
@@ -395,7 +446,7 @@ schema; they do not evolve independently.
 | Property            | Type                                  | Required | Default | Description                                                                                                                                                                                                                                                                             |
 |---------------------|---------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `color`             | [FieldColor](#fieldcolor)             | No       |         | TODO docs                                                                                                                                                                                                                                                                               |
-| `custom`            | [custom](#custom)                     | No       |         | custom is specified by the PanelFieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                          |
+| `custom`            | [custom](#custom)                     | No       |         | custom is specified by the FieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                               |
 | `decimals`          | number                                | No       |         | Significant digits (for display)                                                                                                                                                                                                                                                        |
 | `description`       | string                                | No       |         | Human readable field metadata                                                                                                                                                                                                                                                           |
 | `displayNameFromDS` | string                                | No       |         | This can be used by data sources that return and explicit naming structure for values and labels<br/>When this property is configured, this value is used rather than the default naming strategy.                                                                                      |
@@ -462,7 +513,7 @@ The datasource used in all targets.
 
 ### Options
 
-options is specified by the PanelOptions field in panel
+options is specified by the Options field in panel
 plugin schemas.
 
 | Property | Type | Required | Default | Description |
@@ -516,7 +567,7 @@ schema; they do not evolve independently.
 | Property          | Type                                              | Required | Default | Description                                                                                                                                                |
 |-------------------|---------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `fieldConfig`     | [FieldConfigSource](#fieldconfigsource)           | **Yes**  |         |                                                                                                                                                            |
-| `options`         | [options](#options)                               | **Yes**  |         | options is specified by the PanelOptions field in panel<br/>plugin schemas.                                                                                |
+| `options`         | [options](#options)                               | **Yes**  |         | options is specified by the Options field in panel<br/>plugin schemas.                                                                                     |
 | `repeatDirection` | string                                            | **Yes**  | `h`     | Direction to repeat in if 'repeat' is set.<br/>"h" for horizontal, "v" for vertical.<br/>TODO this is probably optional<br/>Possible values are: `h`, `v`. |
 | `transformations` | [DataTransformerConfig](#datatransformerconfig)[] | **Yes**  |         |                                                                                                                                                            |
 | `transparent`     | boolean                                           | **Yes**  | `false` | Whether to display the panel without a background.                                                                                                         |
@@ -607,5 +658,35 @@ TODO this appears to be spread all over in the frontend. Concepts will likely ne
 | `hidden`            | boolean  | **Yes**  | `false`                               | Whether timepicker is visible or not.   |
 | `refresh_intervals` | string[] | **Yes**  | `[5s 10s 30s 1m 5m 15m 30m 1h 2h 1d]` | Selectable intervals for auto-refresh.  |
 | `time_options`      | string[] | **Yes**  | `[5m 15m 1h 6h 12h 24h 2d 7d 30d]`    | TODO docs                               |
+
+### Status
+
+| Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
+|--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `additionalFields` | [object](#additionalfields)                                                      | No       |         | additionalFields is reserved for future use                                                                                                                                |
+| `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
+
+### AdditionalFields
+
+additionalFields is reserved for future use
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+
+### JoinSchema.Status.#OperatorState
+
+| Property           | Type               | Required | Default | Description                                                                                                                                                                      |
+|--------------------|--------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `lastEvaluation`   | string             | **Yes**  |         | lastEvaluation is the ResourceVersion last evaluated                                                                                                                             |
+| `state`            | string             | **Yes**  |         | state describes the state of the lastEvaluation.<br/>It is limited to three possible states for machine evaluation.<br/>Possible values are: `success`, `in_progress`, `failed`. |
+| `descriptiveState` | string             | No       |         | descriptiveState is an optional more descriptive state field which has no requirements on format                                                                                 |
+| `details`          | [object](#details) | No       |         | details contains any extra information that is operator-specific                                                                                                                 |
+
+### Details
+
+details contains any extra information that is operator-specific
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
 
 

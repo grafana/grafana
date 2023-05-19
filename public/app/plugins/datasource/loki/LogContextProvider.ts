@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash';
 import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
 import {
@@ -13,13 +14,13 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
-import { DataQuery, Labels } from '@grafana/schema';
+import { Labels } from '@grafana/schema';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
-import { getParserFromQuery, isLokiQuery, isQueryWithParser } from './queryUtils';
+import { getParserFromQuery, getStreamSelectorsFromQuery, isQueryWithParser } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -33,14 +34,15 @@ export class LogContextProvider {
     this.appliedContextFilters = [];
   }
 
-  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: DataQuery) {
+  private async getQueryAndRange(row: LogRowModel, options?: LogRowContextOptions, origQuery?: LokiQuery) {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
     const limit = (options && options.limit) || this.datasource.maxLines;
-
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
     if (this.appliedContextFilters.length === 0) {
-      const filters = (await this.getInitContextFiltersFromLabels(row.labels)).filter((filter) => filter.enabled);
+      const filters = (await this.getInitContextFiltersFromLabels(row.labels, origQuery)).filter(
+        (filter) => filter.enabled
+      );
       this.appliedContextFilters = filters;
     }
 
@@ -50,7 +52,7 @@ export class LogContextProvider {
   getLogRowContextQuery = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: DataQuery
+    origQuery?: LokiQuery
   ): Promise<LokiQuery> => {
     const { query } = await this.getQueryAndRange(row, options, origQuery);
 
@@ -60,10 +62,9 @@ export class LogContextProvider {
   getLogRowContext = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: DataQuery
+    origQuery?: LokiQuery
   ): Promise<{ data: DataFrame[] }> => {
     const direction = (options && options.direction) || LogRowContextQueryDirection.Backward;
-
     const { query, range } = await this.getQueryAndRange(row, options, origQuery);
 
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
@@ -98,14 +99,9 @@ export class LogContextProvider {
     row: LogRowModel,
     limit: number,
     direction: LogRowContextQueryDirection,
-    origQuery?: DataQuery
+    origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    let originalLokiQuery: LokiQuery | undefined = undefined;
-    // Type guard for LokiQuery
-    if (origQuery && isLokiQuery(origQuery)) {
-      originalLokiQuery = origQuery;
-    }
-    const expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, originalLokiQuery);
+    const expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
     const queryDirection =
@@ -154,7 +150,7 @@ export class LogContextProvider {
     };
   }
 
-  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, originalQuery?: DataQuery): React.ReactNode {
+  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, origQuery?: LokiQuery): React.ReactNode {
     const updateFilter = (contextFilters: ContextFilter[]) => {
       this.appliedContextFilters = contextFilters;
 
@@ -169,12 +165,6 @@ export class LogContextProvider {
       (() => {
         this.appliedContextFilters = [];
       });
-
-    let origQuery: LokiQuery | undefined = undefined;
-    // Type guard for LokiQuery
-    if (originalQuery && isLokiQuery(originalQuery)) {
-      origQuery = originalQuery;
-    }
 
     return LokiContextUi({
       row,
@@ -218,9 +208,25 @@ export class LogContextProvider {
     return expr;
   };
 
-  getInitContextFiltersFromLabels = async (labels: Labels) => {
-    await this.datasource.languageProvider.start();
-    const allLabels = this.datasource.languageProvider.getLabelKeys();
+  getInitContextFiltersFromLabels = async (labels: Labels, query?: LokiQuery) => {
+    if (!query || isEmpty(labels)) {
+      return [];
+    }
+
+    let allLabels: string[] = [];
+    if (!isQueryWithParser(query.expr).queryWithParser) {
+      // If there is no parser, we use getLabelKeys because it has better caching
+      // and all labels should already be fetched
+      await this.datasource.languageProvider.start();
+      allLabels = this.datasource.languageProvider.getLabelKeys();
+    } else {
+      // If we have parser, we use fetchSeriesLabels to fetch actual labels for selected stream
+      const stream = getStreamSelectorsFromQuery(query.expr);
+      // We are using stream[0] as log query can always have just 1 stream selector
+      const series = await this.datasource.languageProvider.fetchSeriesLabels(stream[0]);
+      allLabels = Object.keys(series);
+    }
+
     const contextFilters: ContextFilter[] = [];
     Object.entries(labels).forEach(([label, value]) => {
       const filter: ContextFilter = {
@@ -229,6 +235,7 @@ export class LogContextProvider {
         enabled: allLabels.includes(label),
         fromParser: !allLabels.includes(label),
       };
+
       contextFilters.push(filter);
     });
 

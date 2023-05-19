@@ -22,6 +22,7 @@ export interface RadioButtonGroupProps<T> {
   className?: string;
   autoFocus?: boolean;
   ariaLabel?: string
+  invalid?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -37,6 +38,7 @@ export function RadioButtonGroup<T>({
   fullWidth = false,
   autoFocus = false,
   ariaLabel
+  invalid = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -128,5 +130,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: ${theme.spacing(2)};
       margin-right: ${theme.spacing(1)};
     `,
+    invalid: css({
+      border: `1px solid ${theme.colors.error.border}`,
+    }),
   };
 };

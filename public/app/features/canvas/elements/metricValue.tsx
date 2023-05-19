@@ -4,14 +4,15 @@ import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
 import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditorsRegistryItem } from '@grafana/data';
+import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { TextDimensionMode } from 'app/features/dimensions';
+import { frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/src/components/MatchersUI/utils';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
-import { getDataLinks } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem, CanvasElementProps, defaultBgColor, defaultTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
@@ -37,12 +38,16 @@ const MetricValueDisplay = (props: CanvasElementProps<TextConfig, TextData>) => 
       return 'Field not found';
     }
 
+    if (panelData && config.text?.field && !data?.text) {
+      return 'No data';
+    }
+
     return data?.text ? data.text : 'Double click to set field';
   };
 
   const fieldNotFound = () => {
-    const field = panelData.filter((series) => series.fields.find((field) => field.name === config.text?.field));
-    return !field.length;
+    const fieldNames = getFrameFieldsDisplayNames(panelData);
+    return !frameHasName(config.text?.field, fieldNames);
   };
 
   if (isEditMode && isSelected) {

@@ -28,9 +28,9 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TooltipView } from './TooltipView';
 import { SeriesMapping } from './models.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
-import { PanelOptions, ScatterHoverEvent, ScatterSeries } from './types';
+import { Options, ScatterHoverEvent, ScatterSeries } from './types';
 
-type Props = PanelProps<PanelOptions>;
+type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
 
 export const XYChartPanel2 = (props: Props) => {
@@ -90,7 +90,7 @@ export const XYChartPanel2 = (props: Props) => {
   useEffect(() => {
     if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {
       initSeries();
-    } else if (oldData !== props.data) {
+    } else if (oldData?.series !== props.data.series) {
       initFacets();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
