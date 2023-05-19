@@ -43,7 +43,8 @@ new AppPlugin().configureExtensionLink({
 
 Your link will now appear in dashboard panel menus. When the user clicks the link, they will be sent to the path you defined earlier.
 
-> **Note:** Each plugin is limited to a maximum of two links per extension point.
+{{% admonition type="note" %}} Each plugin is limited to a maximum of two links per extension point.{{%
+/admonition %}}
 
 ## Add a link extension using context within Grafana
 
@@ -84,13 +85,14 @@ new AppPlugin().configureExtensionLink({
 
 The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configureExtensionLink` function returns _undefined_. When this happens, Grafana doesn't render the link.
 
-> **Note**: The context passed to the `configureExtensionLink` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.
+{{% admonition type="note" %}} The context passed to the `configureExtensionLink` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.{{%
+/admonition %}}
 
 ## Add an event handler to a link
 
 Link extensions give you the means to direct users to a plugin page via href links within the Grafana UI. You can also use them to trigger `onClick` events to perform dynamic actions when clicked.
 
-Your plugin can add an `onClick` event handler to a link in Grafana's dashboard panel menus:
+To add an event handler to a link in a panel menu, complete the following steps:
 
 1. Define the link extension in the plugin's `module.ts` file.
 1. Create a new instance of the `AppPlugin` class, again using the `configureExtensionLink` method. This time, add an `onClick` property which takes a function. This function receives the click event and an object consisting of the `context` and an `openModal` function.
