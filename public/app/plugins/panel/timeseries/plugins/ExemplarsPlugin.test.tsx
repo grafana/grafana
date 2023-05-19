@@ -1,16 +1,15 @@
-import { MutableDataFrame, Field } from '@grafana/data/src';
-import { UPlotConfigBuilder } from '@grafana/ui/src';
+import { createDataFrame } from '@grafana/data';
+import { UPlotConfigBuilder } from '@grafana/ui';
 
 import { getVisibleLabels, VisibleExemplarLabels } from './ExemplarsPlugin';
 
 describe('getVisibleLabels()', () => {
-  const dataFrameSeries1 = new MutableDataFrame({
+  const dataFrameSeries1 = createDataFrame({
     name: 'tns/app',
     fields: [
       {
         name: 'Time',
         values: [1670418750000, 1670418765000, 1670418780000, 1670418795000],
-        entities: {},
       },
       {
         name: 'Value',
@@ -19,16 +18,14 @@ describe('getVisibleLabels()', () => {
         },
         values: [0.018963114754098367, 0.019140624999999974, 0.019718309859154928, 0.020064189189189167],
       },
-    ] as unknown as Field[],
-    length: 4,
+    ],
   });
-  const dataFrameSeries2 = new MutableDataFrame({
+  const dataFrameSeries2 = createDataFrame({
     name: 'tns/db',
     fields: [
       {
         name: 'Time',
         values: [1670418750000, 1670418765000, 1670418780000, 1670418795000],
-        entities: {},
       },
       {
         name: 'Value',
@@ -37,16 +34,14 @@ describe('getVisibleLabels()', () => {
         },
         values: [0.028963114754098367, 0.029140624999999974, 0.029718309859154928, 0.030064189189189167],
       },
-    ] as unknown as Field[],
-    length: 4,
+    ],
   });
-  const dataFrameSeries3 = new MutableDataFrame({
+  const dataFrameSeries3 = createDataFrame({
     name: 'tns/loadgen',
     fields: [
       {
         name: 'Time',
         values: [1670418750000, 1670418765000, 1670418780000, 1670418795000],
-        entities: {},
       },
       {
         name: 'Value',
@@ -55,8 +50,7 @@ describe('getVisibleLabels()', () => {
         },
         values: [0.028963114754098367, 0.029140624999999974, 0.029718309859154928, 0.030064189189189167],
       },
-    ] as unknown as Field[],
-    length: 4,
+    ],
   });
   const frames = [dataFrameSeries1, dataFrameSeries2, dataFrameSeries3];
   const config: UPlotConfigBuilder = {

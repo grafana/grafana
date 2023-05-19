@@ -161,7 +161,7 @@ export const ExemplarMarker = ({
               <table className={styles.exemplarsTable}>
                 <tbody>
                   {orderedDataFrameFields.map((field, i) => {
-                    const value = field.values.get(dataFrameFieldIndex.fieldIndex);
+                    const value = field.values[dataFrameFieldIndex.fieldIndex];
                     const links = field.config.links?.length
                       ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
                       : undefined;

@@ -3,6 +3,7 @@ import React, { ComponentType, useEffect, useMemo, memo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import {
   Icon,
   IconName,
@@ -32,6 +33,8 @@ const extraFilters: Array<ComponentType<FilterProps>> = [];
 export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
   extraFilters.push(filter);
 };
+
+const selectors = e2eSelectors.pages.UserListPage.UserListAdminPage;
 
 const mapDispatchToProps = {
   fetchUsers,

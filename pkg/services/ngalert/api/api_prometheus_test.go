@@ -334,6 +334,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"totals": {
 					"normal": 1
 				},
+				"totalsFiltered": {
+					"normal": 1
+				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
@@ -396,6 +399,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"totals": {
 					"normal": 1
 				},
+				"totalsFiltered": {
+					"normal": 1
+				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value",
 					"__alert_rule_uid__": "RuleUID"
@@ -451,6 +457,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"value": ""
 				}],
 				"totals": {
+					"normal": 1
+				},
+				"totalsFiltered": {
 					"normal": 1
 				},
 				"labels": {
@@ -604,14 +613,17 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		// The first rule should have an alerting and normal alert
 		r1 := rg.Rules[0]
 		require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, r1.Totals)
+		require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, r1.TotalsFiltered)
 		require.Len(t, r1.Alerts, 2)
 		// The second rule should have an alerting alert
 		r2 := rg.Rules[1]
 		require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, r2.Totals)
+		require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, r2.TotalsFiltered)
 		require.Len(t, r2.Alerts, 1)
 		// The last rule should have an error alert
 		r3 := rg.Rules[2]
 		require.Equal(t, map[string]int64{"error": 1}, r3.Totals)
+		require.Equal(t, map[string]int64{"error": 1}, r3.TotalsFiltered)
 		require.Len(t, r3.Alerts, 1)
 	})
 
@@ -851,6 +863,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Len(t, rg.Rules, 1)
 				// Each rule should have two alerts
 				require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+				require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].TotalsFiltered)
 			}
 		})
 
@@ -878,6 +891,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rule := rg.Rules[0]
 			// The rule should have two alerts, but just one should be returned
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rule.Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rule.TotalsFiltered)
 			require.Len(t, rule.Alerts, 1)
 			// Firing alerts should have precedence over normal alerts
 			require.Equal(t, "Alerting", rule.Alerts[0].State)
@@ -965,12 +979,15 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// The first two rules should be firing and the last should be inactive
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].TotalsFiltered)
 			require.Len(t, rg.Rules[0].Alerts, 2)
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].TotalsFiltered)
 			require.Len(t, rg.Rules[1].Alerts, 1)
 			require.Equal(t, "inactive", rg.Rules[2].State)
 			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
+			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].TotalsFiltered)
 			require.Len(t, rg.Rules[2].Alerts, 1)
 		})
 
@@ -1000,12 +1017,16 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// Both firing rules should be returned with their totals unchanged
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+
+			// After filtering the totals for normal are no longer included.
+			require.Equal(t, map[string]int64{"alerting": 1}, rg.Rules[0].TotalsFiltered)
 			// The first rule should have just 1 firing alert as the inactive alert
 			// has been removed by the filter for firing alerts
 			require.Len(t, rg.Rules[0].Alerts, 1)
 
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].TotalsFiltered)
 			require.Len(t, rg.Rules[1].Alerts, 1)
 		})
 
@@ -1035,14 +1056,19 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// The first two rules should be firing and the last should be inactive
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].TotalsFiltered)
 			require.Len(t, rg.Rules[0].Alerts, 2)
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
+			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].TotalsFiltered)
 			require.Len(t, rg.Rules[1].Alerts, 1)
 
-			// The last rule should have 1 alert as the filter includes errors too
+			// The last rule should have 1 alert.
 			require.Equal(t, "inactive", rg.Rules[2].State)
 			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
+
+			// The TotalsFiltered for error will be 0 out as the state filter does not include error.
+			require.Empty(t, rg.Rules[2].TotalsFiltered)
 			// The error alert has been removed as the filters are inactive and firing
 			require.Len(t, rg.Rules[2].Alerts, 0)
 		})
@@ -1120,6 +1146,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rg := res.Data.RuleGroups[0]
 			require.Len(t, rg.Rules, 1)
 			require.Len(t, rg.Rules[0].Alerts, 1)
+
+			require.Equal(t, map[string]int64{"normal": 1, "alerting": 1}, rg.Rules[0].Totals)
+			// There should be a totalFiltered of 1 though since the matcher matched a single instance.
+			require.Equal(t, map[string]int64{"normal": 1}, rg.Rules[0].TotalsFiltered)
 		})
 
 		t.Run("then with URL encoded regex matcher", func(t *testing.T) {
@@ -1186,6 +1216,32 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rg := res.Data.RuleGroups[0]
 			require.Len(t, rg.Rules, 1)
 			require.Len(t, rg.Rules[0].Alerts, 0)
+		})
+
+		t.Run("then with single matcher and limit_alerts", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_alerts=0&matcher={\"name\":\"test\",\"isEqual\":true,\"value\":\"value1\"}", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			// There should be no alerts since we limited to 0.
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Len(t, rg.Rules[0].Alerts, 0)
+
+			require.Equal(t, map[string]int64{"normal": 1, "alerting": 1}, rg.Rules[0].Totals)
+			// There should be a totalFiltered of 1 though since the matcher matched a single instance.
+			require.Equal(t, map[string]int64{"normal": 1}, rg.Rules[0].TotalsFiltered)
 		})
 	})
 }
