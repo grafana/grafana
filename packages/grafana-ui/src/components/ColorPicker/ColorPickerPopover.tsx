@@ -144,7 +144,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius()};
       box-shadow: ${theme.shadows.z3};
       background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
+      border: 1px solid ${theme.colors.border.medium};
 
       .ColorPickerPopover__tab {
         width: 50%;
