@@ -793,3 +793,35 @@ def integration_test_pipelines():
     ))
 
     return pipelines
+
+def verify_release_pipeline():
+    """
+    verify_release runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release
+    process.
+   """
+    step = {
+        "name": "gcp-stat",
+        "image": "google/cloud-sdk",
+        "environment": {
+            "BUCKET": from_secret(prerelease_bucket),
+            "GCP_KEY": from_secret("gcp_key"),
+        },
+        "commands": [
+            "printenv GCP_KEY > /tmp/gcpkey_upload_artifacts.json",
+            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
+            "VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat",
+        ],
+    }
+    return [pipeline(
+        depends_on = [
+            "release-oss-build-e2e-publish",
+            "release-enterprise-build-e2e-publish",
+            "release-enterprise2-build-e2e-publish",
+            "release-oss-windows-publish",
+            "release-enterprise-windows-publish",
+        ],
+        name = "Verify the prerelease assets are where they should be",
+        edition = "all",
+        trigger = release_trigger,
+        steps = [step],
+    )]

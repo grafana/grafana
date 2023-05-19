@@ -4445,6 +4445,51 @@ volumes:
 clone:
   retries: 3
 depends_on:
+- release-oss-build-e2e-publish
+- release-enterprise-build-e2e-publish
+- release-enterprise2-build-e2e-publish
+- release-oss-windows-publish
+- release-enterprise-windows-publish
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: Verify the prerelease assets are where they should be
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - printenv GCP_KEY > /tmp/gcpkey_upload_artifacts.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat
+  environment:
+    BUCKET:
+      from_secret: prerelease_bucket
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: gcp-stat
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
 - main-test-backend
 - main-test-frontend
 image_pull_secrets:
@@ -7108,6 +7153,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 94ce51cca3f202daaecc32aa797fa458bc85aefb1ad9a0c02169817b41eace39
+hmac: 341ede49bd83ca0f14dff174e37453631249da76e26565972cff2a60af5b2c68
 
 ...
