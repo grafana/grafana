@@ -182,10 +182,10 @@ func initEntityTables(mg *migrator.Migrator) {
 
 	// Initialize all tables
 	for t := range tables {
-		mg.AddMigration("drop "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
-		mg.AddMigration("create "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
+		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
+		mg.AddMigration("create table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
-			mg.AddMigration(fmt.Sprintf("add index:%d, %s", i, tables[t].Name), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
+			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
 
