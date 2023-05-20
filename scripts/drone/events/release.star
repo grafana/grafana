@@ -807,6 +807,7 @@ def verify_release_pipeline():
             "GCP_KEY": from_secret("gcp_key"),
         },
         "commands": [
+            "apt-get update && apt-get install -yq gettext",
             "printenv GCP_KEY > /tmp/gcpkey_upload_artifacts.json",
             "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
             "VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat",
