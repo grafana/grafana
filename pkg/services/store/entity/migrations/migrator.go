@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -11,9 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func MigrateEntityStore(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles) error {
+func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
 	if !features.IsEnabled(featuremgmt.FlagEntityStore) {
+		return nil
+	}
+
+	// Migrations depend on upstream xorm implementations
+	sql, ok := xdb.(*sqlstore.SQLStore)
+	if !ok {
 		return nil
 	}
 

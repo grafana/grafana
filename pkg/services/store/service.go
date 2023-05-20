@@ -93,7 +93,7 @@ type standardStorageService struct {
 }
 
 func ProvideService(
-	sql *sqlstore.SQLStore, // also db.DB
+	sql db.DB,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
