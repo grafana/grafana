@@ -794,36 +794,42 @@ def integration_test_pipelines():
 
     return pipelines
 
-def verify_release_pipeline():
+def verify_release_pipeline(
+        name = "verify-prerelease-assets",
+        bucket = from_secret(prerelease_bucket),
+        gcp_key = from_secret("gcp_key"),
+        version = "${DRONE_TAG}",
+        trigger = release_trigger,
+        depends_on = [
+            "release-oss-build-e2e-publish",
+            "release-enterprise-build-e2e-publish",
+            "release-enterprise2-build-e2e-publish",
+            "release-oss-windows-publish",
+            "release-enterprise-windows-publish",
+        ]):
     """
     verify_release runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release
     process.
    """
     step = {
-        "name": "gcp-stat",
+        "name": "gsutil-stat",
         "depends_on": ["clone"],
         "image": "google/cloud-sdk",
         "environment": {
-            "BUCKET": from_secret(prerelease_bucket),
-            "GCP_KEY": from_secret("gcp_key"),
+            "BUCKET": bucket,
+            "GCP_KEY": gcp_key,
         },
         "commands": [
             "apt-get update && apt-get install -yq gettext",
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat",
+            "VERSION={} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat".format(version),
         ],
     }
-    return [pipeline(
-        depends_on = [
-            "release-oss-build-e2e-publish",
-            "release-enterprise-build-e2e-publish",
-            "release-enterprise2-build-e2e-publish",
-            "release-oss-windows",
-            "release-enterprise-windows",
-        ],
-        name = "Verify the prerelease assets are where they should be",
+    return pipeline(
+        depends_on = depends_on,
+        name = name,
         edition = "all",
-        trigger = release_trigger,
+        trigger = trigger,
         steps = [step],
-    )]
+    )

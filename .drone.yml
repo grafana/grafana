@@ -4448,12 +4448,12 @@ depends_on:
 - release-oss-build-e2e-publish
 - release-enterprise-build-e2e-publish
 - release-enterprise2-build-e2e-publish
-- release-oss-windows
-- release-enterprise-windows
+- release-oss-windows-publish
+- release-enterprise-windows-publish
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: Verify the prerelease assets are where they should be
+name: verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -4474,7 +4474,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: gcp-stat
+  name: gsutil-stat
 trigger:
   event:
     exclude:
@@ -4498,8 +4498,7 @@ depends_on:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging
-  to main'
+name: rgm-main-prerelease
 node:
   type: no-parallel
 platform:
@@ -4547,7 +4546,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging'
+name: rgm-tag-prerelease
 node:
   type: no-parallel
 platform:
@@ -4579,6 +4578,49 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat
+  depends_on:
+  - clone
+  environment:
+    BUCKET: grafana-prerelease-dev
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: gsutil-stat
 trigger:
   event:
     exclude:
@@ -7156,6 +7198,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d9af99dd8ca348aa20bfe3ce800bc1226d324e62ce207d45caef0a48baf45160
+hmac: 8573594cbfb99bc925f53df8dddfa847e064b254d6298c284183d28cf73c8d92
 
 ...

@@ -60,7 +60,7 @@ def main(_ctx):
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
-        verify_release_pipeline() +
+        [verify_release_pipeline()] +
         rgm() +
         [windows_test_backend({
             "event": ["promote"],
