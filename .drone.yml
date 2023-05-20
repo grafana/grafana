@@ -4463,9 +4463,11 @@ services: []
 steps:
 - commands:
   - apt-get update && apt-get install -yq gettext
-  - printenv GCP_KEY > /tmp/gcpkey_upload_artifacts.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
   - VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat
+  depends_on:
+  - clone
   environment:
     BUCKET:
       from_secret: prerelease_bucket
@@ -7154,6 +7156,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: a7df8c8b9eef3e336284dbbc1c3374e6350926a70acbaf29381b4f3316ecf968
+hmac: d9af99dd8ca348aa20bfe3ce800bc1226d324e62ce207d45caef0a48baf45160
 
 ...

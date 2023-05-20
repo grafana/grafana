@@ -801,6 +801,7 @@ def verify_release_pipeline():
    """
     step = {
         "name": "gcp-stat",
+        "depends_on": ["clone"],
         "image": "google/cloud-sdk",
         "environment": {
             "BUCKET": from_secret(prerelease_bucket),
@@ -808,8 +809,8 @@ def verify_release_pipeline():
         },
         "commands": [
             "apt-get update && apt-get install -yq gettext",
-            "printenv GCP_KEY > /tmp/gcpkey_upload_artifacts.json",
-            "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
+            "printenv GCP_KEY | base64 -d > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
             "VERSION=${DRONE_TAG} ./scripts/release-artifacts.sh | xargs -n1 gsutil -q stat",
         ],
     }
