@@ -119,6 +119,12 @@ func TestClient_Index(t *testing.T) {
 		indexInRequest      []string
 	}{
 		{
+			name:                "empty string",
+			indexInDatasource:   "",
+			patternInDatasource: "",
+			indexInRequest:      []string{},
+		},
+		{
 			name:                "single string",
 			indexInDatasource:   "logs-*",
 			patternInDatasource: "",
