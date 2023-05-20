@@ -60,8 +60,12 @@ func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Mig
 		mg.tableName = scope + "_migration_log"
 		mg.Logger = log.New(scope + " migrator")
 	}
+	return mg
+}
 
-	// Must be the first migration
+// AddCreateMigration adds the initial migration log table -- this should likely be
+// automatic and first, but enough tests exists that do not expect that we can keep it explicit
+func (mg *Migrator) AddCreateMigration() {
 	mg.AddMigration("create "+mg.tableName+" table", NewAddTableMigration(Table{
 		Name: mg.tableName,
 		Columns: []*Column{
@@ -73,7 +77,6 @@ func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Mig
 			{Name: "timestamp", Type: DB_DateTime},
 		},
 	}))
-	return mg
 }
 
 func (mg *Migrator) MigrationsCount() int {

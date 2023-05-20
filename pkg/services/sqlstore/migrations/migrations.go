@@ -22,6 +22,7 @@ func ProvideOSSMigrations() *OSSMigrations {
 }
 
 func (*OSSMigrations) AddMigration(mg *Migrator) {
+	mg.AddCreateMigration()
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
 	addStarMigrations(mg)
