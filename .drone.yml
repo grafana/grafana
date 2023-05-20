@@ -4448,8 +4448,8 @@ depends_on:
 - release-oss-build-e2e-publish
 - release-enterprise-build-e2e-publish
 - release-enterprise2-build-e2e-publish
-- release-oss-windows-publish
-- release-enterprise-windows-publish
+- release-oss-windows
+- release-enterprise-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -7198,6 +7198,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 8573594cbfb99bc925f53df8dddfa847e064b254d6298c284183d28cf73c8d92
+hmac: 99283163afaf3e8e055dbb0892a1e0fa186c3252420656e46134072f42916a02
 
 ...

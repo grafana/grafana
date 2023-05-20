@@ -804,8 +804,8 @@ def verify_release_pipeline(
             "release-oss-build-e2e-publish",
             "release-enterprise-build-e2e-publish",
             "release-enterprise2-build-e2e-publish",
-            "release-oss-windows-publish",
-            "release-enterprise-windows-publish",
+            "release-oss-windows",
+            "release-enterprise-windows",
         ]):
     """
     verify_release runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release
