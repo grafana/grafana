@@ -17,6 +17,7 @@ import { useDatasource } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
+import { applyMaxSize, maxSize } from './popperModifiers';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
@@ -79,6 +80,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           offset: [0, 4],
         },
       },
+      maxSize,
+      applyMaxSize,
     ],
   });
 
@@ -161,7 +164,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               ref={setSelectorElement}
               {...restProps}
               onDismiss={onClose}
-            ></PickerContent>
+              {...popper.attributes.popper}
+            />
           </div>
         </Portal>
       ) : null}
@@ -263,10 +267,10 @@ PickerContent.displayName = 'PickerContent';
 function getStylesPickerContent(theme: GrafanaTheme2) {
   return {
     container: css`
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      height: 412px;
-      width: 480px;
+      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
