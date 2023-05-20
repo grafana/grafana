@@ -25,8 +25,8 @@ func MigrateEntityStore(sql *sqlstore.SQLStore, features featuremgmt.FeatureTogg
 		return nil
 	}
 
-	marker := "Initalize entity tables (v0)" // changing this key wipe+rewrite everything
-	mg := migrator.NewMigrator(sql.GetEngine(), sql.Cfg, "entity")
+	marker := "Initialize entity tables (v0)" // changing this key wipe+rewrite everything
+	mg := migrator.NewScopedMigrator(sql.GetEngine(), sql.Cfg, "entity")
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 	initEntityTables(mg)
 

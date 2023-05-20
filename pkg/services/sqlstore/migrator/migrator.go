@@ -40,7 +40,12 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
+	return NewScopedMigrator(engine, cfg, "")
+}
+
+// NewScopedMigrator should only be used for the transition to a new storage engine
+func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
