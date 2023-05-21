@@ -57,7 +57,7 @@ func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path strin
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
 	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		logger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
+		logger.Error("Unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
