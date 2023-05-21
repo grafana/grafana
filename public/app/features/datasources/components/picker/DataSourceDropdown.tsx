@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
@@ -16,6 +17,7 @@ import { useDatasource } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
+import { applyMaxSize, maxSize } from './popperModifiers';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
@@ -25,6 +27,7 @@ const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
@@ -77,6 +80,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           offset: [0, 4],
         },
       },
+      maxSize,
+      applyMaxSize,
     ],
   });
 
@@ -102,12 +107,13 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2(getStylesDropdown);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
         <Input
           className={inputHasFocus ? undefined : styles.input}
+          data-testid={selectors.components.DataSourcePicker.inputV2}
           prefix={
             filterTerm && isOpen ? (
               <DataSourceLogoPlaceHolder />
@@ -158,7 +164,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               ref={setSelectorElement}
               {...restProps}
               onDismiss={onClose}
-            ></PickerContent>
+              {...popper.attributes.popper}
+            />
           </div>
         </Portal>
       ) : null}
@@ -205,22 +212,20 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <div className={styles.dataSourceList}>
-        <DataSourceList
-          {...props}
-          enableKeyboardNavigation
-          current={current}
-          onChange={changeCallback}
-          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
-        ></DataSourceList>
-      </div>
-
+      <DataSourceList
+        {...props}
+        enableKeyboardNavigation
+        className={styles.dataSourceList}
+        current={current}
+        onChange={changeCallback}
+        filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
+        onClickEmptyStateCTA={() =>
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+          })
+        }
+      ></DataSourceList>
       <div className={styles.footer}>
-        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
-          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
-            Add csv or spreadsheet
-          </Button>
-        )}
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
@@ -248,6 +253,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            Add csv or spreadsheet
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -257,10 +267,10 @@ PickerContent.displayName = 'PickerContent';
 function getStylesPickerContent(theme: GrafanaTheme2) {
   return {
     container: css`
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      height: 412px;
-      width: 480px;
+      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
@@ -274,6 +284,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     footer: css`
       flex: 0;
       display: flex;
+      flex-direction: row-reverse;
       justify-content: space-between;
       padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};

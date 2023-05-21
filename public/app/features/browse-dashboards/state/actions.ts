@@ -19,7 +19,9 @@ export const deleteDashboard = createAsyncThunk('browseDashboards/deleteDashboar
 
 export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', async (folderUID: string) => {
   return getBackendSrv().delete(`/api/folders/${folderUID}`, undefined, {
-    params: { forceDeleteRules: true },
+    // TODO: Once backend returns alert rule counts, set this back to true
+    // when this is merged https://github.com/grafana/grafana/pull/67259
+    params: { forceDeleteRules: false },
   });
 });
 

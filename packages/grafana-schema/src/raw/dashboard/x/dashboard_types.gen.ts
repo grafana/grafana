@@ -482,7 +482,7 @@ export interface Panel {
    */
   maxDataPoints?: number;
   /**
-   * options is specified by the PanelOptions field in panel
+   * options is specified by the Options field in panel
    * plugin schemas.
    */
   options: Record<string, unknown>;
@@ -591,7 +591,7 @@ export interface FieldConfig {
    */
   color?: FieldColor;
   /**
-   * custom is specified by the PanelFieldConfig field
+   * custom is specified by the FieldConfig field
    * in panel plugin schemas.
    */
   custom?: Record<string, unknown>;

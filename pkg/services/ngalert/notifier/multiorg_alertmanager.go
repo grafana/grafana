@@ -120,6 +120,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			cluster.DefaultProbeInterval,
 			nil,
 			true,
+			cfg.UnifiedAlerting.HALabel,
 		)
 
 		if err != nil {

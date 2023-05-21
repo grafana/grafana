@@ -2,16 +2,11 @@ export * from './panelcfg.gen';
 
 import { AxisPlacement, HeatmapCellLayout } from '@grafana/schema';
 
-import {
-  defaultPanelOptions as defaultPanelOptionsGen,
-  HeatmapColorMode,
-  HeatmapColorScale,
-  PanelOptions,
-} from './panelcfg.gen';
+import { defaultOptions as defaultOptionsGen, HeatmapColorMode, HeatmapColorScale, Options } from './panelcfg.gen';
 
-export const defaultPanelOptions = {
-  ...defaultPanelOptionsGen,
-  color: { ...defaultPanelOptionsGen.color, mode: HeatmapColorMode.Scheme, scale: HeatmapColorScale.Exponential },
-  yAxis: { ...defaultPanelOptionsGen.yAxis, axisPlacement: AxisPlacement.Left },
-  rowsFrame: { ...defaultPanelOptionsGen.rowsFrame, layout: HeatmapCellLayout.auto },
-} as PanelOptions;
+export const defaultOptions = {
+  ...defaultOptionsGen,
+  color: { ...defaultOptionsGen.color, mode: HeatmapColorMode.Scheme, scale: HeatmapColorScale.Exponential },
+  yAxis: { ...defaultOptionsGen.yAxis, axisPlacement: AxisPlacement.Left },
+  rowsFrame: { ...defaultOptionsGen.rowsFrame, layout: HeatmapCellLayout.auto },
+} as Options;

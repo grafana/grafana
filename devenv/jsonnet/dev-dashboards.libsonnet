@@ -128,7 +128,21 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('barchart-tooltips', import '../dev-dashboards/panel-barchart/barchart-tooltips.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('candlestick', import '../dev-dashboards/panel-candlestick/candlestick.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('canvas-connection-examples', import '../dev-dashboards/panel-canvas/canvas-connection-examples.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
@@ -780,6 +794,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('timeseries-yaxis-ticks', import '../dev-dashboards/panel-timeseries/timeseries-yaxis-ticks.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('trend_example', import '../dev-dashboards/panel-trend/trend_example.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {
