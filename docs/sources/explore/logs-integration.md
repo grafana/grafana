@@ -96,7 +96,8 @@ You can change the order of received logs from the default descending order (new
 
 ## Labels and detected fields
 
-Each log line has an extendable area, with its labels and detected fields, for more robust interaction. You can filter for (positive filter) and filter out (negative filter) selected labels. Additionally, you can select a unique field to visualize instead of the whole log line. Finally, each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log line has an extendable area, with its labels and detected fields, for more robust interaction. You can filter for (positive filter) and filter out (negative filter) selected labels. Additionally, you can select a unique field to visualize instead of the whole log line by clicking on the eye icon. 
+Finally, each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
 ## Escaping newlines
 
