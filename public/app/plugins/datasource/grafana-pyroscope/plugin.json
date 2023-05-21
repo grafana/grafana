@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "Grafana Pyroscope",
-  "id": "grafana-pyroscope",
+  "id": "grafana-pyroscope-datasource",
   "category": "profiling",
 
   "metrics": true,

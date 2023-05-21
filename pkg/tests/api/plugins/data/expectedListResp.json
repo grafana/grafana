@@ -663,7 +663,7 @@
   {
     "name": "Grafana Pyroscope",
     "type": "datasource",
-    "id": "grafana-pyroscope",
+    "id": "grafana-pyroscope-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
