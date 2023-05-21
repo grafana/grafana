@@ -24,7 +24,7 @@ seqs: [
 				name: string
 
 				// // Alias will support looking up the plugin by an alternative ID.
-				// // This is useful when migrating from one name to another while keeping existing configuraitons 
+				// // This is useful when migrating from one name to another while keeping existing configurations 
 				// alias?: string
 
 				// The set of all plugin types. This hidden field exists solely
