@@ -14,32 +14,40 @@ lineage: seqs: [
 			{
 				spec: {
 					// The scope where these policies should apply
-					scope: #ResourceID
+					scope: #ResourceRef
 
-					// The roles that must apply this policy 
-					role: #RoleID
+					// The role that must apply this policy 
+					role: #RoleRef
 
 					// The set of rules to apply.  Note that * is required to modify
 					// access policy rules, and that "none" will reject all actions
 					rules: [...#AccessRule]
 				} @cuetsy(kind="interface")
 
-				#RoleID: {
+				#RoleRef: {
 					// Policies can apply to roles, teams, or users
 					// Applying policies to individual users is supported, but discouraged
-					kind: "role" | "team" | "user"
-					uid:  string
+					kind:  "Role" | "BuiltinRole" | "Team" | "User"
+					name:  string
+					xname: string // temporary
 				} @cuetsy(kind="interface")
 
-				#ResourceID: {
+				#ResourceRef: {
 					kind: string // explicit resource or folder will cascade
-					uid:  string
+					name: string
 				} @cuetsy(kind="interface")
 
 				#AccessRule: {
-					action: "*" | "none" | string // READ, WRITE, CREATE, DELETE, ...
-					target: "*" | string          // dashboards, dashboards.permissions, alert.rules, ..
-				}
+					// The kind this rule applies to (dashboars, alert, etc)
+					kind: "*" | string
+
+					// READ, WRITE, CREATE, DELETE, ...
+					// should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete" 
+					verb: "*" | "none" | string
+
+					// Specific sub-elements like "alert.rules" or "dashbaord.permissions"????
+					target?: string
+				} @cuetsy(kind="interface")
 			},
 		]
 	},

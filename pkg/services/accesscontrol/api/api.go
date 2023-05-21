@@ -1,25 +1,31 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service,
+	sql db.DB,
 	features *featuremgmt.FeatureManager) *AccessControlAPI {
 	return &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		AccessControl: accesscontrol,
 		features:      features,
+		sql:           sql,
 	}
 }
 
@@ -27,6 +33,7 @@ type AccessControlAPI struct {
 	Service       ac.Service
 	AccessControl ac.AccessControl
 	RouteRegister routing.RouteRegister
+	sql           db.DB
 	features      *featuremgmt.FeatureManager
 }
 
@@ -36,6 +43,18 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Group("/api/access-control", func(rr routing.RouteRegister) {
 		rr.Get("/user/actions", middleware.ReqSignedIn, routing.Wrap(api.getUserActions))
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
+
+		rr.Get("/policies", middleware.ReqOrgAdmin, func(c *contextmodel.ReqContext) response.Response {
+			policies, err := database.GetAccessPolicies(c.Req.Context(), c.OrgID, api.sql.GetSqlxSession(),
+				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+					return strings.Split(scope, ":"), nil
+				})
+			if err != nil {
+				return response.Error(500, "err", err)
+			}
+			return response.JSON(http.StatusOK, policies)
+		})
+
 		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userID"))
 			rr.Get("/users/permissions/search", authorize(middleware.ReqSignedIn,
