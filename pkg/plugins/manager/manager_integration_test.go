@@ -175,7 +175,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"graph":          {},
 		"heatmap":        {},
 		"histogram":      {},
-		"icon":           {},
 		"live":           {},
 		"logs":           {},
 		"candlestick":    {},

@@ -11,9 +11,9 @@ export interface APIEditorConfig {
   data?: string;
 }
 
-const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
+const dummyStringSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api) {
@@ -24,7 +24,7 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
         data: api.data ?? {},
       })
       .subscribe({
-        error: (error: any) => {
+        error: (error) => {
           if (isTest) {
             appEvents.emit(AppEvents.alertError, ['Error has occurred: ', JSON.stringify(error)]);
             console.error(error);
@@ -39,7 +39,7 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
   }
 };
 
-type Props = StandardEditorProps<APIEditorConfig, any, any>;
+type Props = StandardEditorProps<APIEditorConfig>;
 
 export function APIEditor({ value, context, onChange }: Props) {
   const labelWidth = 9;

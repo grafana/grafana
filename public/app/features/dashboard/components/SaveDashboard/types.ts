@@ -28,7 +28,7 @@ export interface SaveDashboardFormProps {
   dashboard: DashboardModel;
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
 }
 
 export interface SaveDashboardModalProps {

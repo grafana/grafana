@@ -25,7 +25,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							// Represents the index of the selected frame
 							frameIndex: number | *0
 							// Controls whether the panel should show the header

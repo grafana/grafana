@@ -6,8 +6,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { useDispatch } from 'app/types';
 
-import { buildNavModel } from '../folders/state/navModel';
+import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -16,9 +17,10 @@ import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import { CreateNewButton } from './components/CreateNewButton';
+import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { useHasSelection } from './state';
+import { setAllSelection, useHasSelection } from './state';
 
 export interface BrowseDashboardsPageRouteParams {
   uid?: string;
@@ -31,12 +33,22 @@ export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRo
 
 const BrowseDashboardsPage = memo(({ match }: Props) => {
   const { uid: folderUID } = match.params;
+  const dispatch = useDispatch();
 
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
 
-  useEffect(() => stateManager.initStateFromUrl(folderUID), [folderUID, stateManager]);
+  useEffect(() => {
+    stateManager.initStateFromUrl(folderUID);
+
+    // Clear selected state when folderUID changes
+    dispatch(
+      setAllSelection({
+        isSelected: false,
+      })
+    );
+  }, [dispatch, folderUID, stateManager]);
 
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing
@@ -48,7 +60,21 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
   const [saveFolder] = useSaveFolderMutation();
-  const navModel = useMemo(() => (folderDTO ? buildNavModel(folderDTO) : undefined), [folderDTO]);
+  const navModel = useMemo(() => {
+    if (!folderDTO) {
+      return undefined;
+    }
+    const model = buildNavModel(folderDTO);
+
+    // Set the "Dashboards" tab to active
+    const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
+    const dashboardsTab = model.children?.find((child) => child.id === dashboardsTabID);
+    if (dashboardsTab) {
+      dashboardsTab.active = true;
+    }
+    return model;
+  }, [folderDTO]);
+
   const hasSelection = useHasSelection();
 
   const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
@@ -75,13 +101,16 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       pageNav={navModel}
       onEditTitle={onEditTitle}
       actions={
-        (canCreateDashboards || canCreateFolder) && (
-          <CreateNewButton
-            inFolder={folderUID}
-            canCreateDashboard={canCreateDashboards}
-            canCreateFolder={canCreateFolder}
-          />
-        )
+        <>
+          {folderDTO && <FolderActionsButton folder={folderDTO} />}
+          {(canCreateDashboards || canCreateFolder) && (
+            <CreateNewButton
+              inFolder={folderUID}
+              canCreateDashboard={canCreateDashboards}
+              canCreateFolder={canCreateFolder}
+            />
+          )}
+        </>
       }
     >
       <Page.Contents className={styles.pageContents}>
