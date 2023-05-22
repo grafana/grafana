@@ -14,7 +14,7 @@ interface SaveDashboardErrorProxyProps {
   /** original dashboard */
   dashboard: DashboardModel;
   /** dashboard save model with applied modifications, i.e. title */
-  dashboardSaveModel: any;
+  dashboardSaveModel: DashboardModel;
   error: FetchError;
   onDismiss: () => void;
 }

@@ -16,17 +16,17 @@ func upgradeCommand(c utils.CommandLine) error {
 	pluginsDir := c.PluginDirectory()
 	pluginID := c.Args().First()
 
-	localPlugin, err := services.ReadPlugin(pluginsDir, pluginID)
+	localPlugin, err := services.GetLocalPlugin(pluginsDir, pluginID)
 	if err != nil {
 		return err
 	}
 
-	plugin, err := services.GetPlugin(pluginID, c.PluginRepoURL())
+	plugin, err := services.GetPluginInfoFromRepo(pluginID, c.PluginRepoURL())
 	if err != nil {
 		return err
 	}
 
-	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
+	if shouldUpgrade(localPlugin, plugin) {
 		if err = uninstallPlugin(ctx, pluginID, c); err != nil {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}

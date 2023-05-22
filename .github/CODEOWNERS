@@ -233,7 +233,7 @@
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-datasources
 /pkg/tsdb/azuremonitor/ @grafana/partner-datasources
-/pkg/tsdb/cloudmonitoring/ @grafana/partner-datasources
+/pkg/tsdb/cloud-monitoring/ @grafana/partner-datasources
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics
@@ -419,7 +419,6 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
 /public/app/plugins/panel/canvas/ @grafana/dataviz-squad
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
-/public/app/plugins/panel/icon/ @grafana/dataviz-squad
 /public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
 /public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/stat/ @grafana/grafana-bi-squad
@@ -433,7 +432,6 @@ lerna.json @grafana/frontend-ops
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/dashboards/ @grafana/dashboards-squad
 /public/fonts/ @grafana/alerting-squad-frontend
-/public/emails/ @grafana/grafana-frontend-platform
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
@@ -454,6 +452,7 @@ lerna.json @grafana/frontend-ops
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
+/public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
@@ -542,7 +541,6 @@ lerna.json @grafana/frontend-ops
 /pkg/services/loginattempt/ @grafana/grafana-authnz-team
 /pkg/services/oauthtoken/ @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts/ @grafana/grafana-authnz-team
-/pkg/services/teamguardian/ @grafana/grafana-authnz-team
 
 # Support bundles
 /public/app/features/support-bundles/ @grafana/grafana-authnz-team
@@ -618,6 +616,7 @@ embed.go @grafana/grafana-as-code
 /docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot
+/public/emails/ @grafanabot
 
 # Conf
 /conf/defaults.ini @torkelo

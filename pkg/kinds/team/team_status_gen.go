@@ -39,7 +39,7 @@ type OperatorStateState string
 // Status defines model for Status.
 type Status struct {
 	// additionalFields is reserved for future use
-	AdditionalFields map[string]interface{} `json:"additionalFields"`
+	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.

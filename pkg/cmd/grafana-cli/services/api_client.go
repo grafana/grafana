@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
-func GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
+func GetPluginInfoFromRepo(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 	if err != nil {

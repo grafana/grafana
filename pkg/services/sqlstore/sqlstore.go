@@ -479,6 +479,10 @@ func (ss *SQLStore) readConfig() error {
 	return nil
 }
 
+func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
+	return ss.dbCfg.MigrationLockAttemptTimeout
+}
+
 func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	if ss.recursiveQueriesAreSupported != nil {
 		return *ss.recursiveQueriesAreSupported, nil
