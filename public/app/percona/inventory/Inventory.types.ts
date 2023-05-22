@@ -1,6 +1,12 @@
 import { Databases } from '../shared/core';
 import { DbNode, NodeType } from '../shared/services/nodes/Nodes.types';
-import { DbService, DbServiceWithAddress } from '../shared/services/services/Services.types';
+import {
+  DbAgent,
+  DbService,
+  DbServiceWithAddress,
+  ServiceStatus,
+  ServiceType,
+} from '../shared/services/services/Services.types';
 
 export interface CompatibleServicePayload {
   service_id: string;
@@ -83,6 +89,79 @@ export interface Agent {
   params: ServiceAgent;
 }
 
+export interface RemoveAgentBody {
+  agent_id: string;
+  force: boolean;
+}
+export interface RemoveNodeBody {
+  node_id: string;
+  force: boolean;
+}
+
+interface DbAgentNode {
+  agent_id: string;
+  agent_type: AgentType;
+  status: ServiceAgentStatus;
+  is_connected?: boolean;
+}
+
+interface ServiceNodeListDB {
+  service_id: string;
+  service_type: ServiceType;
+  service_name: string;
+}
+
+interface ServiceNodeList {
+  serviceId: string;
+  serviceType: ServiceType;
+  serviceName: string;
+}
+
+export interface Node {
+  nodeId: string;
+  nodeType: string;
+  nodeName: string;
+  machineId?: string;
+  distro?: string;
+  address: string;
+  nodeModel?: string;
+  region?: string;
+  az?: string;
+  containerId?: string;
+  containerName?: string;
+  customLabels?: Record<string, string>;
+  agents?: DbAgent[];
+  createdAt: string;
+  updatedAt: string;
+  status: ServiceStatus;
+  services?: ServiceNodeList[];
+  properties?: Record<string, string>;
+  agentsStatus?: string;
+}
+
+export interface NodeDB {
+  node_id: string;
+  node_type: string;
+  node_name: string;
+  machine_id?: string;
+  distro?: string;
+  address: string;
+  node_model?: string;
+  region?: string;
+  az?: string;
+  container_id?: string;
+  container_name?: string;
+  custom_labels?: Record<string, string>;
+  agents?: DbAgentNode[];
+  created_at: string;
+  updated_at: string;
+  status: ServiceStatus;
+  services?: ServiceNodeListDB[];
+}
+
+export interface NodeListDBPayload {
+  nodes: NodeDB[];
+}
 export type FlattenAgent = ServiceAgent & {
   type: AgentType;
 };

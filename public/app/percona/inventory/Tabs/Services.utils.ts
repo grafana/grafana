@@ -1,5 +1,5 @@
 import { BadgeColor, IconName } from '@grafana/ui';
-import { DbServiceAgent, ServiceStatus } from 'app/percona/shared/services/services/Services.types';
+import { DbAgent, ServiceStatus } from 'app/percona/shared/services/services/Services.types';
 
 import { MonitoringStatus, ServiceAgentStatus } from '../Inventory.types';
 
@@ -31,7 +31,7 @@ export const getBadgeIconForServiceStatus = (status: ServiceStatus) => {
   return icon || SERVICE_STATUS_TO_BADGE_ICON[ServiceStatus.UNKNOWN];
 };
 
-export const getAgentsMonitoringStatus = (agents: DbServiceAgent[]) => {
+export const getAgentsMonitoringStatus = (agents: DbAgent[]) => {
   const allAgentsOk = agents?.every(
     (agent) =>
       agent.status === ServiceAgentStatus.RUNNING || agent.status === ServiceAgentStatus.STARTING || !!agent.isConnected

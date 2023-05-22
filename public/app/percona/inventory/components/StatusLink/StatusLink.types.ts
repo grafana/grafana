@@ -1,4 +1,5 @@
 export interface StatusLinkProps {
-  agentsStatus: string;
-  strippedServiceId: string;
+  agentsStatus?: string;
+  strippedId: string;
+  type: 'services' | 'nodes';
 }

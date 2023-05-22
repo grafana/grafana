@@ -147,7 +147,7 @@ export const Services = () => {
         accessor: 'agentsStatus',
         width: '70px',
         Cell: ({ value, row }) => (
-          <StatusLink strippedServiceId={stripServiceId(row.original.serviceId)} agentsStatus={value} />
+          <StatusLink type="services" strippedId={stripServiceId(row.original.serviceId)} agentsStatus={value} />
         ),
         type: FilterFieldTypes.RADIO_BUTTON,
         options: [
@@ -253,7 +253,8 @@ export const Services = () => {
           {!!agents.length && (
             <DetailsRow.Contents title={Messages.services.details.agents}>
               <StatusBadge
-                strippedServiceId={stripServiceId(row.original.serviceId)}
+                strippedId={stripServiceId(row.original.serviceId)}
+                type={'services'}
                 agents={row.original.agents || []}
               />
             </DetailsRow.Contents>
