@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							view:     MapViewConfig
 							controls: ControlsOptions
 							basemap:  ui.MapLayerOptions

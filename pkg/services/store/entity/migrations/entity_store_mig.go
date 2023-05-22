@@ -2,10 +2,8 @@ package migrations
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func getLatinPathColumn(name string) *migrator.Column {
@@ -18,7 +16,7 @@ func getLatinPathColumn(name string) *migrator.Column {
 	}
 }
 
-func addEntityStoreMigrations(mg *migrator.Migrator) {
+func initEntityTables(mg *migrator.Migrator) {
 	grnLength := 256 // len(tenant)~8 + len(kind)!16 + len(kind)~128 = 256
 	tables := []migrator.Table{}
 	tables = append(tables, migrator.Table{
@@ -182,38 +180,16 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		},
 	})
 
-	// !!! This should not run in production!
-	// The object store SQL schema is still in active development and this
-	// will only be called when the feature toggle is enabled
-	// this check should not be necessary, but is added as an extra check
-	if setting.Env == setting.Prod {
-		return
-	}
-
-	// Migration cleanups: given that this is a complex setup
-	// that requires a lot of testing before we are ready to push out of dev
-	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v010)" // change this when we want to wipe and reset the object tables
-	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
-		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
-	`)))
-	// for a while this was called "ObjectStore"... this can be removed before we remove the dev only flags
-	mg.AddMigration("EntityStore init: object cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
-		DELETE FROM migration_log WHERE migration_id LIKE 'ObjectStore init%';
-	`)))
-
 	// Initialize all tables
 	for t := range tables {
-		mg.AddMigration("EntityStore init: drop "+tables[t].Name+suffix, migrator.NewRawSQLMigration(
-			fmt.Sprintf("DROP TABLE IF EXISTS %s", tables[t].Name),
-		))
-		mg.AddMigration("EntityStore init: table "+tables[t].Name+suffix, migrator.NewAddTableMigration(tables[t]))
+		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
+		mg.AddMigration("create table "+tables[t].Name, migrator.NewAddTableMigration(tables[t]))
 		for i := range tables[t].Indices {
-			mg.AddMigration(fmt.Sprintf("EntityStore init: index %s[%d]"+suffix, tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
+			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
 
-	mg.AddMigration("EntityStore init: set path collation in entity tables"+suffix, migrator.NewRawSQLMigration("").
+	mg.AddMigration("set path collation on entity table", migrator.NewRawSQLMigration("").
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
 		Postgres("ALTER TABLE entity_folder ALTER COLUMN slug_path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values

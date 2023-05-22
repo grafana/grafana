@@ -60,7 +60,7 @@ Logs of usage insights contain the following fields, where the fields followed b
 
 ## Configuration
 
-To export your logs, enable the usage insights feature and [configure]({{< relref "../../setup-grafana/configure-grafana/" >}}) an export location in the configuration file:
+To export your logs, enable the usage insights feature and [configure]({{< relref "../../setup-grafana/configure-grafana" >}}) an export location in the configuration file:
 
 ```ini
 [usage_insights.export]
@@ -90,7 +90,7 @@ tls = true
 tenant_id =
 ```
 
-Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../setup-grafana/configure-grafana/#log" >}}).
+Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../setup-grafana/configure-grafana#log" >}}).
 There is no option for configuring the `logger` storage type.
 
 ## Visualize Loki usage insights in Grafana

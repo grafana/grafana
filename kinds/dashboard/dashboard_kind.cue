@@ -460,7 +460,7 @@ lineage: seqs: [
 					// Dynamically load the panel
 					libraryPanel?: #LibraryPanelRef
 
-					// options is specified by the PanelOptions field in panel
+					// options is specified by the Options field in panel
 					// plugin schemas.
 					options: {...} @grafanamaturity(NeedsExpertReview)
 
@@ -541,7 +541,7 @@ lineage: seqs: [
 					// Alternative to empty string
 					noValue?: string @grafanamaturity(NeedsExpertReview)
 
-					// custom is specified by the PanelFieldConfig field
+					// custom is specified by the FieldConfig field
 					// in panel plugin schemas.
 					custom?: {...} @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
