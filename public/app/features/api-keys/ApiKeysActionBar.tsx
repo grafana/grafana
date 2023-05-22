@@ -11,7 +11,7 @@ interface Props {
 export const ApiKeysActionBar = ({ searchQuery, disabled, onSearchChange }: Props) => {
   return (
     <div className="page-action-bar">
-      <InlineField grow="true">
+      <InlineField grow>
         <FilterInput placeholder="Search keys" value={searchQuery} onChange={onSearchChange} />
       </InlineField>
     </div>

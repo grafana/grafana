@@ -83,25 +83,27 @@ const UserListAdminPageUnConnected = ({
   return (
     <Page.Contents>
       <div className="page-action-bar" data-testid={selectors.container}>
-        <InlineField grow="true">
-          <FilterInput
-            placeholder="Search user by login, email, or name."
-            autoFocus={true}
-            value={query}
-            onChange={changeQuery}
-          />
-          <RadioButtonGroup
-            options={[
-              { label: 'All users', value: false },
-              { label: 'Active last 30 days', value: true },
-            ]}
-            onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
-            value={filters.find((f) => f.name === 'activeLast30Days')?.value}
-            className={styles.filter}
-          />
-          {extraFilters.map((FilterComponent, index) => (
-            <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
-          ))}
+        <InlineField grow>
+          <>
+            <FilterInput
+              placeholder="Search user by login, email, or name."
+              autoFocus={true}
+              value={query}
+              onChange={changeQuery}
+            />
+            <RadioButtonGroup
+              options={[
+                { label: 'All users', value: false },
+                { label: 'Active last 30 days', value: true },
+              ]}
+              onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+              value={filters.find((f) => f.name === 'activeLast30Days')?.value}
+              className={styles.filter}
+            />
+            {extraFilters.map((FilterComponent, index) => (
+              <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
+            ))}
+          </>
         </InlineField>
         {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
           <LinkButton href="admin/users/create" variant="primary">

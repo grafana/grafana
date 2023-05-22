@@ -98,7 +98,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
       <Page navId="alert-list">
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
-            <InlineField grow="true">
+            <InlineField grow>
               <FilterInput placeholder="Search alerts" value={search} onChange={this.onSearchQueryChange} />
             </InlineField>
             <div className="gf-form">
