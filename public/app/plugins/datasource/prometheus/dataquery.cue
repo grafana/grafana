@@ -44,6 +44,11 @@ composableKinds: DataQuery: {
 						editorMode?: #QueryEditorMode
 						// Query format to determine how to display data points in panel. It can be "time_series", "table", "heatmap"
 						format?: #PromQueryFormat
+						// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
+						legendFormat?: string
+						// @deprecated Used to specify how many times to divide max data points by. We use max data points under query options
+						// See https://github.com/grafana/grafana/issues/48081
+						intervalFactor?: number
 
 						#QueryEditorMode: "code" | "builder"                  @cuetsy(kind="enum")
 						#PromQueryFormat: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
