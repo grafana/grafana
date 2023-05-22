@@ -46,6 +46,7 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
 		PackageName:      mname,
 		KindName:         kind.Props().Common().Name,
+		Version:          kind.Lineage().First().Version().String(),
 		SubresourceNames: subr,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core resource template: %w", err)

@@ -44,7 +44,7 @@ export const activePanelSubject = new ReplaySubject<SelectionAction>(1);
 export class CanvasPanel extends Component<Props, State> {
   declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
-  panelContext: PanelContext = {} as PanelContext;
+  panelContext: PanelContext | undefined;
 
   readonly scene: Scene;
   private subs = new Subscription();
@@ -104,7 +104,7 @@ export class CanvasPanel extends Component<Props, State> {
     activeCanvasPanel = this;
     activePanelSubject.next({ panel: this });
 
-    this.panelContext = this.context as PanelContext;
+    this.panelContext = this.context;
     if (this.panelContext.onInstanceStateChange) {
       this.panelContext.onInstanceStateChange({
         scene: this.scene,
@@ -126,7 +126,7 @@ export class CanvasPanel extends Component<Props, State> {
               }
             });
 
-            this.panelContext.onInstanceStateChange!({
+            this.panelContext?.onInstanceStateChange!({
               scene: this.scene,
               selected: v,
               layer: this.scene.root,
@@ -142,7 +142,7 @@ export class CanvasPanel extends Component<Props, State> {
               return;
             }
 
-            this.panelContext.onInstanceStateChange!({
+            this.panelContext?.onInstanceStateChange!({
               scene: this.scene,
               selected: this.context.instanceState.selected,
               selectedConnection: v,
