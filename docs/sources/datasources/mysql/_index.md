@@ -416,7 +416,7 @@ SELECT hostname FROM my_host  WHERE region IN($region)
 Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
 When nothing has been entered by the user the default value for `__searchFilter` is `%`.
 
-Important that you surround the `__searchFilter` expression with quotes as Grafana does not do this for you.
+> Important that you surround the `__searchFilter` expression with quotes as Grafana does not do this for you.
 
 The example below shows how to use `__searchFilter` as part of the query field to enable searching for `hostname` while the user types in the dropdown select box.
 
