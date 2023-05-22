@@ -30,7 +30,7 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points. Refer to [images in notifications](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/).
 
-6. The JSON format for webhook notifications has changed in Grafana Alerting, using that of [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
+6. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
 
 ## Limitations
 
