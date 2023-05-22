@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { LogRowModel, findHighlightChunksInText, CoreApp } from '@grafana/data';
-import { ClipboardButton, IconButton, Tooltip } from '@grafana/ui';
+import { ClipboardButton, IconButton } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowStyles } from './getLogRowStyles';
@@ -107,9 +107,13 @@ export class LogRowMessage extends PureComponent<Props> {
             onClick={this.onLogRowClick}
           >
             {shouldShowContextToggle && (
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-              </Tooltip>
+              <IconButton
+                size="md"
+                name="gf-show-context"
+                onClick={this.onShowContextClick}
+                tooltip="Show context"
+                tooltipPlacement="top"
+              />
             )}
             <ClipboardButton
               className={styles.copyLogButton}

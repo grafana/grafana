@@ -220,8 +220,18 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
           )}
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
-              <IconButton name="copy" onClick={() => onDuplicate(index)} data-testid="duplicate-value-mapping" />
-              <IconButton name="trash-alt" onClick={() => onRemove(index)} data-testid="remove-value-mapping" />
+              <IconButton
+                name="copy"
+                onClick={() => onDuplicate(index)}
+                data-testid="duplicate-value-mapping"
+                tooltip="Copy value"
+              />
+              <IconButton
+                name="trash-alt"
+                onClick={() => onRemove(index)}
+                data-testid="remove-value-mapping"
+                tooltip="Delete value"
+              />
             </HorizontalGroup>
           </td>
         </tr>

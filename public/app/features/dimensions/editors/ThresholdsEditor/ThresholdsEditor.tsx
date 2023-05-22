@@ -203,6 +203,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
             className={styles.trashIcon}
             name="trash-alt"
             onClick={() => this.onRemoveThreshold(threshold)}
+            tooltip={`Remove ${ariaLabel}`}
           />
         }
       />
