@@ -14,7 +14,7 @@ weight: 300
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source where you can create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
 
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
@@ -27,22 +27,23 @@ The Prometheus query editor has two modes:
 - [Code mode](#code-mode)
 - [Builder mode](#builder-mode)
 
-To switch between editor modes, select the corresponding **Builder** and **Code** tabs.
+To switch between editor modes, click the corresponding **Builder** or **Code** tab. Each mode is explained in greater detail below.
 
 {{< figure src="/static/img/docs/prometheus/editing-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Query editor mode" >}}
 
 Both modes are synchronized, so you can switch between them. However, if there is an issue with the query while switching modes, a warning message will appear.
 
-<!-- ## Toolbar options -->
+## Toolbar elements
 
-## Get started with the query editor
+The query editor toolbar contains the following:
 
-Regardless of mode, the query editor has the following:
+- **Kick start your query** - A list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
 
-| Name                      | Description                                                                                              |
-| ------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Kick start your query** | A list of operation patterns that help you quickly get started adding multiple operations to your query. |
-| **Explain**               | Displays a step-by-step explanation of all parts of a query and their operations.                        |
+  - Rate query starters
+  - Histogram query starters
+  - Binary query starters
+
+- **Explain** - Toggle on to display a step-by-step explanation of all parts of a query and its operations.
 
 ## Configure common options
 
@@ -54,11 +55,9 @@ You can configure Prometheus-specific options in the query editor by setting sev
 
 The **Legend** setting defines the time series's name. You can use a predefined or custom format.
 
-| Option      | Description                                                                                                                                                                                                           |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Auto**    | Displays unique labels. Also displays all overlapping labels if a series has multiple labels.                                                                                                                         |
-| **Verbose** | Displays all label names.                                                                                                                                                                                             |
-| **Custom**  | Uses templating to select which labels will be included.<br/>For example, `{{hostname}}` is replaced by the label value for the label `hostname`.<br/>Clear the input and click outside of it to select another mode. |
+- **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
+- **Verbose** - Displays all label names.
+- **Custom** - Uses templating to select which labels will be included. For example, `{{hostname}}` is replaced by the label value for the label `hostname`. Clear the input and click outside of it to select another mode.
 
 ### Min step
 
@@ -68,29 +67,25 @@ This setting supports the `$__interval` and `$__rate_interval` macros.
 
 ### Format
 
-You can switch between **Table**, **Time series**, and **Heatmap** options by configuring the query's **Format**.
+Switch between the following format options:
 
-| Option          | Description                                                                                                                                                                                                                         |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Time series** | Uses the default time series format.                                                                                                                                                                                                |
-| **Table**       | This works only in a [Table panel]({{< relref "../../../panels-visualizations/visualizations/table" >}}).                                                                                                                           |
-| **Heatmap**     | Displays metrics of the Histogram type on a [Heatmap panel]({{< relref "../../../panels-visualizations/visualizations/heatmap" >}}) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. |
+- **Time series** - The default time series format.
+- **Table** - This works only in a [Table panel]({{< relref "../../../panels-visualizations/visualizations/table" >}}).
+- **Heatmap** - Displays metrics of the Histogram type on a [Heatmap panel]({{< relref "../../../panels-visualizations/visualizations/heatmap" >}}) by converting cumulative histograms to regular ones and sorting the series by the bucket bound.
 
 ### Type
 
-The **Type** setting sets the query type.
+The **Type** setting sets the query type. These include:
 
-- The **Both** query option is the default option and returns results for both a **Range** query and an **Instant** query.
-- A **Range** query returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
-- An **Instant** query returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results can be shown in table format or as raw data.
-- An **Exemplars** query runs with the regular query and shows exemplars in the graph.
+- **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
+- **Range** - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
+- **Instant** - Returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results are depicted in table format or as raw data.
+- **Exemplars** query runs with the regular query and shows exemplars in the graph.
 
 For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step.
 > This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
-
-To run a query, select **Run query** in the upper right-hand corner of the query editor.
 
 ## Code mode
 
