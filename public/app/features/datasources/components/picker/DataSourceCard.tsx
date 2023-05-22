@@ -68,7 +68,7 @@ function getStyles(theme: GrafanaTheme2) {
     logo: css`
       width: 32px;
       height: 32px;
-      padding-right: ${theme.spacing(1.5)};
+      padding: ${theme.spacing(0, 1)};
       display: flex;
       align-items: center;
 
