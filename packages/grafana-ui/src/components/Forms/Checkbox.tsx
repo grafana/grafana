@@ -3,7 +3,7 @@ import React, { HTMLProps, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useStyles2 } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 import { getLabelStyles } from './Label';
@@ -36,13 +36,14 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       },
       [onChange]
     );
-    const styles = useStyles2(getCheckboxStyles);
+    const theme = useTheme2();
+    const styles = getCheckboxStyles(theme, invalid);
 
     const ariaChecked = indeterminate ? 'mixed' : undefined;
 
     return (
       <label className={cx(styles.wrapper, className)}>
-        <div className={cx(styles.checkboxWrapper, invalid && styles.invalid)}>
+        <div className={styles.checkboxWrapper}>
           <input
             type="checkbox"
             className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
@@ -63,7 +64,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
@@ -103,7 +104,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
        * */
       &:checked + span {
         background: ${theme.colors.primary.main};
-        border: none;
+        border: 1px solid ${invalid ? theme.colors.error.border : theme.colors.primary.main};
 
         &:hover {
           background: ${theme.colors.primary.shade};
@@ -113,8 +114,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           content: '';
           position: absolute;
           z-index: 2;
-          left: 5px;
-          top: 1px;
+          left: 4px;
+          top: 0px;
           width: 6px;
           height: 12px;
           border: solid ${theme.colors.primary.contrastText};
@@ -139,7 +140,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
     inputIndeterminate: css`
       &[aria-checked='mixed'] + span {
-        border: 1px solid ${theme.colors.primary.main};
+        border: 1px solid ${invalid ? theme.colors.error.border : theme.colors.primary.main};
         background: ${theme.colors.primary.main};
 
         &:hover {
@@ -162,7 +163,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
       &:disabled[aria-checked='mixed'] + span {
         background-color: ${theme.colors.action.disabledBackground};
-        border: 1px solid ${theme.colors.error.transparent};
+        border: 1px solid ${invalid ? theme.colors.error.border : theme.colors.error.transparent};
 
         &:after {
           border-color: ${theme.colors.action.disabledText};
@@ -184,11 +185,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       height: ${theme.spacing(checkboxSize)};
       border-radius: ${theme.shape.borderRadius()};
       background: ${theme.components.input.background};
-      border: 1px solid ${theme.components.input.borderColor};
+      border: 1px solid ${invalid ? theme.colors.error.border : theme.components.input.borderColor};
 
       &:hover {
         cursor: pointer;
-        border-color: ${theme.components.input.borderHover};
+        border-color: ${invalid ? theme.colors.error.border : theme.components.input.borderHover};
       }
     `,
     label: cx(
@@ -213,20 +214,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),
-    invalid: css`
-      input + span,
-      input:checked + span,
-      input[aria-checked='mixed'] + span,
-      input:disabled[aria-checked='mixed'] + span,
-      input:hover + span {
-        border: 1px solid ${theme.colors.error.border};
-      }
-      input:not([aria-checked='mixed']):checked + span:after {
-        left: 4px;
-        top: 0px;
-      }
-    `,
   };
-});
+};
 
 Checkbox.displayName = 'Checkbox';
