@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { EditableText, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
+import { EditableTitle } from './EditableTitle';
 import { PageInfoItem } from './types';
 
 export interface Props {
@@ -21,12 +22,8 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
-  const titleElement = renderTitle ? (
-    renderTitle(navItem.text)
-  ) : onEditTitle ? (
-    <EditableText as="h1" editLabel="Edit folder name" onEdit={onEditTitle}>
-      {navItem.text}
-    </EditableText>
+  const titleElement = onEditTitle ? (
+    <EditableTitle value={navItem.text} onEdit={onEditTitle} />
   ) : (
     <h1>{navItem.text}</h1>
   );
@@ -37,7 +34,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-            {titleElement}
+            {renderTitle ? renderTitle(navItem.text) : titleElement}
           </div>
           {info && <PageInfo info={info} />}
         </div>

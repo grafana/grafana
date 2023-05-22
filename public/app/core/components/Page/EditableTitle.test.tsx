@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createTheme, ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { EditableText } from './EditableText';
+import { EditableTitle } from './EditableTitle';
 
 describe('EditableText', () => {
   it('displays the provided text correctly', () => {});
