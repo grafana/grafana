@@ -34,10 +34,6 @@ type TeamGuardianMock struct {
 	result error
 }
 
-func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *user.SignedInUser) error {
-	return t.result
-}
-
 func (t *TeamGuardianMock) DeleteByUser(ctx context.Context, userID int64) error {
 	return t.result
 }
