@@ -273,14 +273,6 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 		return nil, err
 	}
 
-	// Hardcode alias features
-	switch pluginJSON.ID {
-	case "grafana-pyroscope": // rebranding
-		plugin.JSONData.Alias = "phlare"
-	case "debug": // panel plugin used for testing
-		plugin.JSONData.Alias = "debugX"
-	}
-
 	return plugin, nil
 }
 

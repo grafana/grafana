@@ -244,15 +244,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists {
-		for _, p = range s.pluginRegistry.Plugins(ctx) {
-			if p.Alias == pluginID {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			return nil, false
-		}
+		return nil, false
 	}
 
 	if p.IsDecommissioned() {

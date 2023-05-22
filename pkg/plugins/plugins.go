@@ -156,8 +156,14 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		return JSONData{}, err
 	}
 
-	if plugin.ID == "grafana-piechart-panel" {
+	// Hardcoded changes
+	switch plugin.ID {
+	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
+	case "grafana-pyroscope": // rebranding
+		plugin.Alias = "phlare"
+	case "debug": // panel plugin used for testing
+		plugin.Alias = "debugX"
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {
