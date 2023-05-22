@@ -11,12 +11,12 @@ import {
   DataTransformerConfig,
   DataTransformerID,
 } from '@grafana/data';
-import { ResourceDimensionMode } from 'app/features/dimensions';
+import { ResourceDimensionMode } from '@grafana/schema';
 
 import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';
-import { PanelOptions, TooltipMode } from './types';
+import { Options, TooltipMode } from './types';
 import { MapCenterID } from './view';
 
 /**
@@ -41,7 +41,7 @@ export const mapPanelChangedHandler: PanelTypeChangedHandler = (panel, prevPlugi
 
 export function worldmapToGeomapOptions(angular: any): {
   fieldConfig: FieldConfigSource;
-  options: PanelOptions;
+  options: Options;
   xform?: DataTransformerConfig;
 } {
   const fieldConfig: FieldConfigSource = {
@@ -50,7 +50,7 @@ export function worldmapToGeomapOptions(angular: any): {
   };
 
   const markersLayer = cloneDeep(defaultMarkersConfig);
-  const options: PanelOptions = {
+  const options: Options = {
     view: {
       id: MapCenterID.Zero,
     },
@@ -153,18 +153,18 @@ export function worldmapToGeomapOptions(angular: any): {
     'SE Asia': 'se-asia',
     'Last GeoHash': MapCenterID.Coordinates, // MapCenterID.LastPoint,
   };
-  options.view.id = mapCenters[angular.mapCenter as any];
+  options.view.id = mapCenters[angular.mapCenter];
   options.view.lat = asNumber(angular.mapCenterLatitude);
   options.view.lon = asNumber(angular.mapCenterLongitude);
   return { fieldConfig, options, xform };
 }
 
-function asNumber(v: any): number | undefined {
-  const num = +v;
+function asNumber(v: unknown): number | undefined {
+  const num = Number(v);
   return isNaN(num) ? undefined : num;
 }
 
-export const mapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
+export const mapMigrationHandler = (panel: PanelModel): Partial<Options> => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
   // before 8.3, only one layer was supported!

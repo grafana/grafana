@@ -15,11 +15,10 @@ func listRemoteCommand(c utils.CommandLine) error {
 	}
 
 	for _, p := range plugin.Plugins {
-		plugin := p
-		if len(plugin.Versions) > 0 {
-			ver := latestSupportedVersion(&plugin)
+		if len(p.Versions) > 0 {
+			ver := latestSupportedVersion(p)
 			if ver != nil {
-				logger.Infof("id: %v version: %s\n", plugin.ID, ver.Version)
+				logger.Infof("id: %v version: %s\n", p.ID, ver.Version)
 			}
 		}
 	}

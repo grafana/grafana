@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ThemeChangedEvent } from '@grafana/runtime';
+import { ThemeChangedEvent, config } from '@grafana/runtime';
 import { ThemeContext } from '@grafana/ui';
 
 import { appEvents } from '../core';
@@ -11,6 +11,7 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
+      config.theme2 = event.payload;
       setTheme(event.payload);
     });
 
