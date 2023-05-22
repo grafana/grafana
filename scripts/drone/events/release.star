@@ -808,9 +808,11 @@ def verify_release_pipeline(
             "release-enterprise-windows",
         ]):
     """
-    verify_release runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release
-    process.
-   """
+    Runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release process.
+
+    Returns:
+      A single Drone pipeline that runs the script.
+    """
     step = {
         "name": "gsutil-stat",
         "depends_on": ["clone"],
