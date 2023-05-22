@@ -148,14 +148,11 @@ use_pkce = true
 
 ### PKCE
 
-> Available in Grafana v8.3 and later versions.
-
 IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
 introduces "proof key for code exchange" (PKCE) which provides
 additional protection against some forms of authorization code
 interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
 
-> **Note:** Grafana v10.1 and newer use `use_pkce = true` by default,
 > You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.gitlab]` section.
 
 ```
