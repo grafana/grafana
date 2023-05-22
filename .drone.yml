@@ -516,6 +516,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: trigger-test-release
   when:
+    branch: main
     paths:
       include:
       - .drone.yml
@@ -6504,6 +6505,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 462fc8e153052bdb786a26a31e1f5884cf9ad55999da14e7f5db315568c7f882
+hmac: 5d9d1b858347f4565eb9e6fc5f53cac8dec18048824cfc851cdc4c334ef23c9a
 
 ...
