@@ -76,12 +76,14 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
             title={'Duplicate'}
             className={styles.actionIcon}
             onClick={() => onDuplicate(element)}
+            tooltip="Duplicate"
           />
           <IconButton
             name="trash-alt"
             title={'remove'}
             className={styles.actionIcon}
             onClick={() => onDelete(element)}
+            tooltip="Remove"
           />
         </div>
       )}
