@@ -5,7 +5,7 @@ import { createTheme, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { EditableTitle } from './EditableTitle';
 
-describe('EditableText', () => {
+describe('EditableTitle', () => {
   it('displays the provided text correctly', () => {});
 
   it('displays an edit button', () => {});

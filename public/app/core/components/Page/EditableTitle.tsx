@@ -38,7 +38,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           <Text as="h1" truncate>
             {value}
           </Text>
-          <IconButton name="pen" size="lg" ariaLabel="Edit title" onClick={() => setIsEditing(true)} />
+          <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
         </div>
       )}
       {(isEditing || changeInProgress) && (
