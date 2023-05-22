@@ -31,6 +31,7 @@ import {
   FetchError,
   FetchResponse,
   getBackendSrv,
+  HealthCheckResultDetails,
   isFetchError,
   toDataQueryResponse,
 } from '@grafana/runtime';
@@ -973,7 +974,9 @@ export class PrometheusDatasource
     }
   }
 
-  getBuildInfoMessage(buildInfo: PromApiFeatures) {
+  renderHealthCheckDetails(details: HealthCheckResultDetails) {
+    const buildInfo = details as unknown as PromApiFeatures;
+
     const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
     const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled" />;
     const unsupported = (
@@ -1018,7 +1021,7 @@ export class PrometheusDatasource
             <img
               style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
               src={LOGOS[application ?? PromApplication.Prometheus]}
-              alt=""
+              alt={application ?? 'Unknown'}
             />{' '}
             {application ? AppDisplayNames[application] : 'Unknown'}
           </span>

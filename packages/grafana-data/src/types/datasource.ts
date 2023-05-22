@@ -370,6 +370,12 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+
+  /**
+   * Optionally, use this method to render details for the health check
+   * Don't forget to change the file extension to "tsx" to enable webpack's JSX transformer
+   */
+  renderHealthCheckDetails?(details: Record<string, unknown> | undefined): JSX.Element;
 }
 
 export interface MetadataInspectorProps<

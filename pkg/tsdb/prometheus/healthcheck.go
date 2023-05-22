@@ -75,11 +75,28 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instan
 	return getHealthCheckMessage(logger, "Successfully queried the Prometheus API.", nil)
 }
 
+type features struct {
+	RulerApiEnabled bool `json:"rulerApiEnabled"`
+}
+
+type healthCheckDetails struct {
+	Application string   `json:"application"`
+	Features    features `json:"features"`
+}
+
 func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
+	details, _ := json.Marshal(healthCheckDetails{
+		Application: "Mimir",
+		Features: features{
+			RulerApiEnabled: true,
+		},
+	})
+
 	if err == nil {
 		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusOk,
-			Message: message,
+			Status:      backend.HealthStatusOk,
+			Message:     message,
+			JSONDetails: details,
 		}, nil
 	}
 

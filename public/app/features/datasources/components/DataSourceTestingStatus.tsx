@@ -1,13 +1,14 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes } from 'react';
+import React, { HTMLAttributes, ReactNode } from 'react';
 
-import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TestingStatus, config } from '@grafana/runtime';
+import { TestingStatus, config, HealthCheckResultDetails } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
 import { AccessControlAction } from '../../../types';
+import { useDataSourceInstance } from '../state/hooks';
 import { trackCreateDashboardClicked } from '../tracking';
 
 export type Props = {
@@ -77,8 +78,11 @@ AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource }: Props) {
   const severity = testingStatus?.status ? (testingStatus?.status as AlertVariant) : 'error';
   const message = testingStatus?.message;
-  const detailsMessage = testingStatus?.details?.message;
-  const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
+
+  const healthCheckDetails = testingStatus?.details;
+  const detailsMessage = healthCheckDetails?.message;
+  const detailsVerboseMessage = healthCheckDetails?.verboseMessage;
+
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -88,13 +92,16 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     });
   };
 
+  const instanceState = useDataSourceInstance(dataSource.uid);
+
   if (message) {
     return (
       <div className="gf-form-group p-t-2">
         <Alert severity={severity} title={message} aria-label={e2eSelectors.pages.DataSource.alert}>
-          {testingStatus?.details && (
+          {healthCheckDetails && (
             <>
               {detailsMessage}
+              {instanceState.value && renderDetailsForDataSource(instanceState.value, healthCheckDetails)}
               {severity === 'success' ? (
                 <AlertSuccessMessage
                   title={message}
@@ -111,6 +118,19 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
         </Alert>
       </div>
     );
+  }
+
+  return null;
+}
+
+export function renderDetailsForDataSource(
+  dataSource: DataSourceApi,
+  details: HealthCheckResultDetails
+): ReactNode | null {
+  const hasDetails = details && Object.entries(details).length > 0;
+
+  if (hasDetails && dataSource.renderHealthCheckDetails) {
+    return dataSource.renderHealthCheckDetails(details);
   }
 
   return null;
