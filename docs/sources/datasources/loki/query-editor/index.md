@@ -107,7 +107,7 @@ The initial log context query is created from all labels defining the stream for
 
 To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, we store your updated labels and apply them to the next log context view you open. This allows you to seamlessly navigate through various log context windows without having to manually reapply the same filters repeatedly.
 
-At any time, if you would like to reset filters and use the initial log context query, you can use `Revert to initial query` button positioned next to the query preview and click it. This action will restore the original query, allowing you to start fresh.
+At any time, if you would like to reset filters and use the initial log context query, you can use the `Revert to initial query` button positioned next to the query preview. Clicking this button will restore the original query, allowing you to start fresh.
 
 ### Tail live logs
 
