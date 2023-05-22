@@ -479,10 +479,11 @@ type availablePluginDTO struct {
 type AvailablePlugins map[plugins.Type]map[string]*availablePluginDTO
 
 func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*availablePluginDTO, bool) {
-	if _, exists := ap[pluginType][pluginID]; exists {
-		return ap[pluginType][pluginID], true
+	p, exists := ap[pluginType][pluginID]
+	if exists {
+		return p, true
 	}
-	for _, p := range ap[pluginType] {
+	for _, p = range ap[pluginType] {
 		if p.Plugin.ID == pluginID || p.Plugin.Alias == pluginID {
 			return p, true
 		}
