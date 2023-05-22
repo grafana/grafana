@@ -24,6 +24,19 @@ To view your provisioned resources in Grafana, complete the following steps.
 
 Provisioned resources are labeled **Provisioned**, so that it is clear that they were not created manually.
 
+# Edit provisioned alerting resources
+
+To allow editing of provisioned resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
+
+- `POST /api/v1/provisioning/alert-rules`
+- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` (calling this endpoint will change provenance for all alert rules within the alert group)
+- `POST /api/v1/provisioning/contact-points`
+- `POST /api/v1/provisioning/mute-timings`
+- `PUT /api/v1/provisioning/policies`
+- `PUT /api/v1/provisioning/templates/{name}`
+
+To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
+
 **Note:**
 
 You cannot edit provisioned resources from Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
