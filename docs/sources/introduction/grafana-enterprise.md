@@ -75,6 +75,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
+- [Databricks](/grafana/plugins/grafana-databricks-datasource/)
 - [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
@@ -88,6 +89,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Snowflake](/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](/grafana/plugins/grafana-splunk-datasource)
 - [Splunk Infrastructure monitoring (SignalFx)](/grafana/plugins/grafana-splunk-monitoring-datasource)
+- [Sqlyze](/grafana/plugins/grafana-odbc-datasource/)
 - [Wavefront](/grafana/plugins/grafana-wavefront-datasource)
 
 ## Try Grafana Enterprise

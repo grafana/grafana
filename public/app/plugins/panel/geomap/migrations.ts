@@ -153,14 +153,14 @@ export function worldmapToGeomapOptions(angular: any): {
     'SE Asia': 'se-asia',
     'Last GeoHash': MapCenterID.Coordinates, // MapCenterID.LastPoint,
   };
-  options.view.id = mapCenters[angular.mapCenter as any];
+  options.view.id = mapCenters[angular.mapCenter];
   options.view.lat = asNumber(angular.mapCenterLatitude);
   options.view.lon = asNumber(angular.mapCenterLongitude);
   return { fieldConfig, options, xform };
 }
 
-function asNumber(v: any): number | undefined {
-  const num = +v;
+function asNumber(v: unknown): number | undefined {
+  const num = Number(v);
   return isNaN(num) ? undefined : num;
 }
 
