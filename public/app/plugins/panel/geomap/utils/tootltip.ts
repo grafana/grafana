@@ -65,9 +65,9 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
       //this is used as the generic hover event
       if (!hoverPayload.data) {
         const props = feature.getProperties();
-        const frame = props['frame'];
+        const frame: DataFrame = props['frame'];
         if (frame) {
-          hoverPayload.data = ttip.data = frame as DataFrame;
+          hoverPayload.data = ttip.data = frame;
           hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
         }
 

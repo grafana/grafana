@@ -289,8 +289,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     return builder; // early abort (avoids error)
   }
 
-  // eslint-ignore @typescript-eslint/no-explicit-any
-  const yFieldConfig = yField.config?.custom as FieldConfig | undefined;
+  const yFieldConfig: FieldConfig | undefined = yField.config?.custom;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
