@@ -106,7 +106,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 {
   "name": "grafana",
   "role": "Viewer",
-  "isDisabled" : false
+  "isDisabled": false
 }
 ```
 
@@ -280,8 +280,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 
 {
-	"name": "grafana",
-	"role": "Viewer"
+	"name": "grafana"
 }
 ```
 
