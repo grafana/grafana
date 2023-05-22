@@ -1182,13 +1182,19 @@ def get_windows_steps(edition, ver_mode):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise',
+            'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}'.format(committish),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
         if 'environment' in steps[1]:
-            steps[1]['environment'] + {'GITHUB_TOKEN': from_secret(github_token)}
+            steps[1]['environment'] + {
+                'GITHUB_TOKEN': from_secret(github_token),
+                'GRAFANA_BRANCH': 'v8.5.x',
+            }
         else:
-            steps[1]['environment'] = {'GITHUB_TOKEN': from_secret(github_token)}
+            steps[1]['environment'] = {
+                'GITHUB_TOKEN': from_secret(github_token),
+                'GRAFANA_BRANCH': 'v8.5.x',
+            }
 
     return steps
 

@@ -2684,12 +2684,14 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    ${DRONE_TAG}
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
+    GRAFANA_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -4542,12 +4544,14 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    $$env:DRONE_BRANCH
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
+    GRAFANA_BRANCH: v8.5.x
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -4796,6 +4800,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 702107d1f512b722de5103aa8c80ff0f0048b3e42acbc3af17064301414def49
+hmac: 11722c95d8ea29a67300b8fd0a6e98501f14e2f66a6cee4400e0069a0cd7e537
 
 ...
