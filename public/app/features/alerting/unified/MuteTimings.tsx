@@ -61,7 +61,7 @@ const MuteTimings = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {!error && result && (
+      {result && !error && (
         <Switch>
           <Route exact path="/alerting/routes/mute-timing/new">
             <MuteTimingForm loading={loading} />

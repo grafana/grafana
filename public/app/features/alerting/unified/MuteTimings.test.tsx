@@ -150,9 +150,7 @@ describe('Mute timings', () => {
   });
 
   it('prepopulates the form when editing a mute timing', async () => {
-    renderMuteTimings(
-      '/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`
-    );
+    renderMuteTimings('/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`);
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     expect(ui.nameField.get()).toBeInTheDocument();
@@ -165,7 +163,6 @@ describe('Mute timings', () => {
     await userEvent.clear(ui.months.get());
     await userEvent.clear(ui.years.get());
 
-    // await userEvent.type(ui.weekdays.get(), 'monday');
     const monday = within(ui.weekdays.get()).getByText('Mon');
     await userEvent.click(monday);
     await userEvent.type(ui.days.get(), '-7:-1');
@@ -232,9 +229,7 @@ describe('Mute timings', () => {
   });
 
   it('replaces mute timings in routes when the mute timing name is changed', async () => {
-    renderMuteTimings(
-      '/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`
-    );
+    renderMuteTimings('/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`);
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     expect(ui.nameField.get()).toBeInTheDocument();

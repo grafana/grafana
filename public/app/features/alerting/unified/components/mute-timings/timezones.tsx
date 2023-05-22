@@ -404,6 +404,7 @@ const TIMEZONES = [
   'Indian/Mauritius',
   'Indian/Mayotte',
   'Indian/Reunion',
+  'Local', // this is the local timezone of the machine
   'Pacific/Apia',
   'Pacific/Auckland',
   'Pacific/Bougainville',
@@ -446,6 +447,7 @@ const TIMEZONES = [
   'Pacific/Truk',
   'Pacific/Wake',
   'Pacific/Wallis',
+  'UTC',
 ];
 
 export const TimezoneSelect = (options: SelectCommonProps<string>) => {

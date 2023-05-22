@@ -44,7 +44,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
             const startTimeKey = `time_intervals.${intervalIndex}.times.${index}.start_time`;
             const endTimeKey = `time_intervals.${intervalIndex}.times.${index}.end_time`;
 
-            // TODO figure out these TypeScript errors *sigh*
             const getStartAndEndTime = (): [string | undefined, string | undefined] => {
               // @ts-ignore react-hook-form doesn't handle nested field arrays well
               const startTime: string = getValues(startTimeKey);
