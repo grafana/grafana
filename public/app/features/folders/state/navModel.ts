@@ -3,6 +3,8 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
+export const FOLDER_ID = 'manage-folder';
+
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
@@ -12,7 +14,7 @@ export const getSettingsTabID = (folderUID: string) => `folder-settings-${folder
 export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavModelItem {
   const model: NavModelItem = {
     icon: 'folder',
-    id: 'manage-folder',
+    id: FOLDER_ID,
     subTitle: 'Manage folder dashboards and permissions',
     url: folder.url,
     text: folder.title,
