@@ -17,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -70,11 +72,51 @@ func genPKCECode() (string, string, error) {
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
-	loginInfo := loginservice.LoginInfo{
-		AuthModule: "oauth",
-	}
 	name := web.Params(ctx.Req)[":name"]
-	loginInfo.AuthModule = name
+	loginInfo := loginservice.LoginInfo{AuthModule: name}
+
+	if errorParam := ctx.Query("error"); errorParam != "" {
+		errorDesc := ctx.Query("error_description")
+		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
+		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
+		return
+	}
+
+	code := ctx.Query("code")
+
+	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		req := &authn.Request{HTTPRequest: ctx.Req, Resp: ctx.Resp}
+		if code == "" {
+			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
+			if err != nil {
+				ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
+				return
+			}
+
+			if pkce := redirect.Extra[authn.KeyOAuthPKCE]; pkce != "" {
+				cookies.WriteCookie(ctx.Resp, OauthPKCECookieName, pkce, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			}
+
+			cookies.WriteCookie(ctx.Resp, OauthStateCookieName, redirect.Extra[authn.KeyOAuthState], hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			ctx.Redirect(redirect.URL)
+			return
+		}
+
+		identity, err := hs.authnService.Login(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
+		// NOTE: always delete these cookies, even if login failed
+		cookies.DeleteCookie(ctx.Resp, OauthPKCECookieName, hs.CookieOptionsFromCfg)
+		cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
+
+		if err != nil {
+			ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
+			return
+		}
+
+		metrics.MApiLoginOAuth.Inc()
+		authn.HandleLoginRedirect(ctx.Req, ctx.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
+		return
+	}
+
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
 	if provider == nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, errors.New("OAuth not enabled"))
@@ -87,15 +129,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		return
 	}
 
-	errorParam := ctx.Query("error")
-	if errorParam != "" {
-		errorDesc := ctx.Query("error_description")
-		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
-		return
-	}
-
-	code := ctx.Query("code")
 	if code == "" {
 		var opts []oauth2.AuthCodeOption
 		if provider.UsePKCE {
@@ -106,6 +139,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 					HttpStatus:    http.StatusInternalServerError,
 					PublicMessage: "An internal error occurred",
 				})
+				return
 			}
 
 			cookies.WriteCookie(ctx.Resp, OauthPKCECookieName, ascii, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
@@ -258,16 +292,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 	hs.HooksService.RunLoginHook(&loginInfo, ctx)
 	metrics.MApiLoginOAuth.Inc()
 
-	if redirectTo := ctx.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			ctx.Redirect(redirectTo)
-			return
-		}
-		ctx.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-	}
-
-	ctx.Redirect(setting.AppSubUrl + "/")
+	ctx.Redirect(hs.GetRedirectURL(ctx))
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
@@ -326,18 +351,19 @@ func (hs *HTTPServer) SyncUser(
 		},
 	}
 
-	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
+	upsertedUser, err := hs.Login.UpsertUser(ctx.Req.Context(), cmd)
+	if err != nil {
 		return nil, err
 	}
 
 	// Do not expose disabled status,
 	// just show incorrect user credentials error (see #17947)
-	if cmd.Result.IsDisabled {
-		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
+	if upsertedUser.IsDisabled {
+		oauthLogger.Warn("User is disabled", "user", upsertedUser.Login)
 		return nil, login.ErrInvalidCredentials
 	}
 
-	return cmd.Result, nil
+	return upsertedUser, nil
 }
 
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
@@ -354,18 +380,24 @@ type LoginError struct {
 func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err LoginError) {
 	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
-	info.Error = err.Err
-	if info.Error == nil {
-		info.Error = errors.New(err.PublicMessage)
-	}
-	info.HTTPStatus = err.HttpStatus
+	// login hooks is handled by authn.Service
+	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		info.Error = err.Err
+		if info.Error == nil {
+			info.Error = errors.New(err.PublicMessage)
+		}
+		info.HTTPStatus = err.HttpStatus
 
-	hs.HooksService.RunLoginHook(&info, ctx)
+		hs.HooksService.RunLoginHook(&info, ctx)
+	}
 }
 
 func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
-	info.Error = err
-	hs.HooksService.RunLoginHook(&info, ctx)
+	// login hooks is handled by authn.Service
+	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		info.Error = err
+		hs.HooksService.RunLoginHook(&info, ctx)
+	}
 }

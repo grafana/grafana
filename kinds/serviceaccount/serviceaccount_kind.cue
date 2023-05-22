@@ -1,7 +1,10 @@
 package kind
 
-name:     "ServiceAccount"
-maturity: "merged"
+import "time"
+
+name:        "ServiceAccount"
+maturity:    "merged"
+description: "system account"
 
 lineage: seqs: [
 	{
@@ -34,9 +37,9 @@ lineage: seqs: [
 				// Teams is a list of teams the service account belongs to.
 				teams?: [...string] @grafanamaturity(ToMetadata="sys")
 				// Created indicates when the service account was created.
-				created?: int64 @grafanamaturity(ToMetadata="sys")
+				created?: string & time.Time
 				// Updated indicates when the service account was updated.
-				updated?: int64 @grafanamaturity(ToMetadata="sys")
+				updated?: string & time.Time
 
 				// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
 				#OrgRole: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type")

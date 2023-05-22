@@ -187,7 +187,7 @@ Now, when you change the color in the panel editor, the fill color of the circle
 
 Most panels visualize dynamic data from a Grafana data source. In this step, you'll create one circle per series, each with a radius equal to the last value in the series.
 
-> To use data from queries in your panel, you need to set up a data source. If you don't have one available, you can use the [TestData DB](/docs/grafana/latest/features/datasources/testdata) data source while developing.
+> To use data from queries in your panel, you need to set up a data source. If you don't have one available, you can use the [TestData](/docs/grafana/latest/features/datasources/testdata) data source while developing.
 
 The results from a data source query within your panel are available in the `data` property inside your panel component.
 

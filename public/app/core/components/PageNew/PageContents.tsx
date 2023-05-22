@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC } from 'react';
+import React from 'react';
 
 import PageLoader from '../PageLoader/PageLoader';
 
@@ -9,7 +9,7 @@ interface Props {
   className?: string;
 }
 
-export const PageContents: FC<Props> = ({ isLoading, children, className }) => {
+export const PageContents = ({ isLoading, children, className }: Props) => {
   let content = className ? <div className={className}>{children}</div> : children;
 
   return <>{isLoading ? <PageLoader /> : content}</>;

@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -246,7 +246,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	azurePortalUrl, err := resourcegraph.GetAzurePortalUrl(dsInfo.Cloud)
+	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -280,7 +280,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 
 	if res.StatusCode/100 != 2 {
 		logger.Debug("Request failed", "status", res.Status, "body", string(body))
-		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
 	}
 
 	var data types.AzureMonitorResponse
@@ -317,9 +317,12 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 				Unit: toGrafanaUnit(amr.Value[0].Unit),
 			})
 		}
-		resourceID, ok := labels["microsoft.resourceid"]
+
+		resourceIdLabel := "microsoft.resourceid"
+		resourceID, ok := labels[resourceIdLabel]
 		if !ok {
-			resourceID = labels["Microsoft.ResourceId"]
+			resourceIdLabel = "Microsoft.ResourceId"
+			resourceID = labels[resourceIdLabel]
 		}
 		resourceIDSlice := strings.Split(resourceID, "/")
 		resourceName := ""
@@ -331,18 +334,15 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceName = extractResourceNameFromMetricsURL(query.URL)
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
-		displayName := ""
-		if query.Alias != "" {
-			displayName = formatAzureMonitorLegendKey(query.Alias, resourceName,
-				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
-		} else if len(labels) > 0 {
-			// If labels are set, it will be used as the legend so we need to set a more user-friendly name
-			displayName = amr.Value[0].Name.LocalizedValue
-			if resourceName != "" {
-				displayName += " " + resourceName
-			}
+		if _, ok := labels[resourceIdLabel]; ok {
+			delete(labels, resourceIdLabel)
+			labels["resourceName"] = resourceName
 		}
-		if displayName != "" {
+
+		if query.Alias != "" {
+			displayName := formatAzureMonitorLegendKey(query.Alias, resourceName,
+				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+
 			if dataField.Config != nil {
 				dataField.Config.DisplayName = displayName
 			} else {
@@ -379,7 +379,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			return nil, err
 		}
 
-		frameWithLink := resourcegraph.AddConfigLinks(*frame, queryUrl)
+		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl)
 		frames = append(frames, &frameWithLink)
 	}
 

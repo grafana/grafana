@@ -40,9 +40,12 @@ The Azure Monitor data source supports visualizing data from three Azure service
 
 **To access the data source configuration page:**
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Azure Monitor data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Azure Monitor` in the search bar.
+1. Click **Azure Monitor**.
+
+   The **Settings** tab of the data source is displayed.
 
 ### Configure Azure Active Directory (AD) authentication
 
@@ -133,7 +136,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
    This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to Azure Monitor Metrics and Logs, and Azure Resource Graph.
 
-   {{< figure src="/static/img/docs/azure-monitor/managed-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
+   {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
 
 ## Query the data source
 

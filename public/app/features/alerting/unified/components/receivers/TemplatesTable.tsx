@@ -1,4 +1,4 @@
-import React, { FC, Fragment, useMemo, useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,7 +23,7 @@ interface Props {
   alertManagerName: string;
 }
 
-export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
+export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
@@ -50,8 +50,8 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
   return (
     <ReceiversSection
       title="Notification templates"
-      description="Notification templates customize notifications sent from contact points."
-      addButtonLabel="New template"
+      description="Create notification templates to customize your notifications."
+      addButtonLabel="Add template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
       showButton={contextSrv.hasPermission(permissions.create)}
     >
@@ -102,24 +102,35 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                       />
                     )}
                     {!provenance && (
-                      <Authorize actions={[permissions.update, permissions.delete]}>
-                        <Authorize actions={[permissions.update]}>
-                          <ActionIcon
-                            to={makeAMLink(
-                              `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
-                              alertManagerName
-                            )}
-                            tooltip="edit template"
-                            icon="pen"
-                          />
-                        </Authorize>
-                        <Authorize actions={[permissions.delete]}>
-                          <ActionIcon
-                            onClick={() => setTemplateToDelete(name)}
-                            tooltip="delete template"
-                            icon="trash-alt"
-                          />
-                        </Authorize>
+                      <Authorize actions={[permissions.update]}>
+                        <ActionIcon
+                          to={makeAMLink(
+                            `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
+                            alertManagerName
+                          )}
+                          tooltip="edit template"
+                          icon="pen"
+                        />
+                      </Authorize>
+                    )}
+                    {contextSrv.hasPermission(permissions.create) && (
+                      <ActionIcon
+                        to={makeAMLink(
+                          `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
+                          alertManagerName
+                        )}
+                        tooltip="Copy template"
+                        icon="copy"
+                      />
+                    )}
+
+                    {!provenance && (
+                      <Authorize actions={[permissions.delete]}>
+                        <ActionIcon
+                          onClick={() => setTemplateToDelete(name)}
+                          tooltip="delete template"
+                          icon="trash-alt"
+                        />
                       </Authorize>
                     )}
                   </td>

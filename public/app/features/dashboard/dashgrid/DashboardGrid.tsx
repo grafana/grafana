@@ -8,11 +8,13 @@ import { config } from '@grafana/runtime';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
+import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
 
+import { DashboardEmpty } from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {
@@ -20,6 +22,7 @@ export interface Props {
   isEditable: boolean;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  hidePanelMenus?: boolean;
 }
 
 export interface State {
@@ -186,6 +189,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
+    if (panel.type === 'add-library-panel') {
+      return <AddLibraryPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
+    }
+
     return (
       <DashboardPanel
         key={panel.key}
@@ -196,12 +203,14 @@ export class DashboardGrid extends PureComponent<Props, State> {
         isViewing={panel.isViewing}
         width={width}
         height={height}
+        hideMenu={this.props.hidePanelMenus}
       />
     );
   }
 
   render() {
-    const { isEditable } = this.props;
+    const { dashboard, isEditable } = this.props;
+    const hasPanels = dashboard.panels && dashboard.panels.length > 0;
 
     /**
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
@@ -223,7 +232,40 @@ export class DashboardGrid extends PureComponent<Props, State> {
             moving panels. https://github.com/grafana/grafana/issues/18497
             theme.breakpoints.md = 769
           */
-            return (
+            return config.featureToggles.emptyDashboardPage ? (
+              hasPanels ? (
+                /**
+                 * The children is using a width of 100% so we need to guarantee that it is wrapped
+                 * in an element that has the calculated size given by the AutoSizer. The AutoSizer
+                 * has a width of 0 and will let its content overflow its div.
+                 */
+                <div style={{ width: `${width}px`, height: '100%' }}>
+                  <ReactGridLayout
+                    width={width}
+                    isDraggable={draggable}
+                    isResizable={isEditable}
+                    containerPadding={[0, 0]}
+                    useCSSTransforms={false}
+                    margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+                    cols={GRID_COLUMN_COUNT}
+                    rowHeight={GRID_CELL_HEIGHT}
+                    draggableHandle=".grid-drag-handle"
+                    draggableCancel=".grid-drag-cancel"
+                    layout={this.buildLayout()}
+                    onDragStop={this.onDragStop}
+                    onResize={this.onResize}
+                    onResizeStop={this.onResizeStop}
+                    onLayoutChange={this.onLayoutChange}
+                  >
+                    {this.renderPanels(width)}
+                  </ReactGridLayout>
+                </div>
+              ) : (
+                <div style={{ width: `${width}px`, height: '100%', padding: `${draggable ? '100px 0' : '0'}` }}>
+                  <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />
+                </div>
+              )
+            ) : (
               /**
                * The children is using a width of 100% so we need to guarantee that it is wrapped
                * in an element that has the calculated size given by the AutoSizer. The AutoSizer

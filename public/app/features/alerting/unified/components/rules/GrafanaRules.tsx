@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
@@ -22,7 +22,7 @@ interface Props {
   expandAll: boolean;
 }
 
-export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
+export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
 

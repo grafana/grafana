@@ -13,9 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -34,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -153,6 +156,22 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
+	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+	})
+
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
 		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
@@ -167,7 +186,7 @@ func TestMiddlewareContext(t *testing.T) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
-				Settings: map[string]interface{}{},
+				Settings: &dtos.FrontendSettingsDTO{},
 				NavTree:  &navtree.NavTreeRoot{},
 			}
 			t.Log("Calling HTML", "data", data)
@@ -209,7 +228,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -225,7 +244,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -282,7 +301,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: 12, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -297,7 +316,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 
 		expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -344,9 +363,9 @@ func TestMiddlewareContext(t *testing.T) {
 		}
 
 		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *auth.UserToken,
-			clientIP net.IP, userAgent string) (bool, error) {
+			clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			userToken.UnhashedToken = "rotated"
-			return true, nil
+			return true, userToken, nil
 		}
 
 		maxAge := int(sc.cfg.LoginMaxLifetime.Seconds())
@@ -581,7 +600,7 @@ func TestMiddlewareContext(t *testing.T) {
 		configure := func(cfg *setting.Cfg) {
 			cfg.AuthProxyEnabled = true
 			cfg.AuthProxyAutoSignUp = true
-			cfg.LDAPEnabled = true
+			cfg.LDAPAuthEnabled = true
 			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			cfg.AuthProxyHeaderProperty = "username"
 			cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Role": "X-WEBAUTH-ROLE"}
@@ -595,7 +614,8 @@ func TestMiddlewareContext(t *testing.T) {
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
 			key := fmt.Sprintf(authproxy.CachePrefix, h)
-			err = sc.remoteCacheService.Set(context.Background(), key, userID, 0)
+			userIdBytes := []byte(strconv.FormatInt(userID, 10))
+			err = sc.remoteCacheService.Set(context.Background(), key, userIdBytes, 0)
 			require.NoError(t, err)
 			sc.fakeReq("GET", "/")
 
@@ -625,7 +645,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Nil(t, sc.context)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = false
 		})
 
@@ -646,7 +666,7 @@ func TestMiddlewareContext(t *testing.T) {
 			require.Contains(t, list.Items, "X-WEBAUTH-ROLE")
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -669,7 +689,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgRole, string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -695,7 +715,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, "", string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -713,7 +733,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, targetOrgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 			cfg.AuthProxyAutoSignUp = true
 		})
 
@@ -787,7 +807,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
@@ -805,7 +825,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 		})
 
 		middlewareScenario(t, "Should not allow the request from whitelisted IP", func(t *testing.T, sc *scenarioContext) {
@@ -821,7 +841,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.AuthProxyWhitelist = "8.8.8.8"
-			cfg.LDAPEnabled = false
+			cfg.LDAPAuthEnabled = false
 		})
 
 		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
@@ -932,9 +952,15 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService,
+		userService, mockSQLStore, &service.LDAPFakeService{ExpectedError: service.ErrUnableToCreateLDAPClient})
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck), &authntest.FakeService{})
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
+		remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy,
+		loginService, apiKeyService, authenticator, userService, orgService,
+		oauthTokenService,
+		featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
+		&authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
 }
 
 type fakeRenderService struct {

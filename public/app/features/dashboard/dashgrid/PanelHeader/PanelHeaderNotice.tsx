@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, QueryResultMetaNotice } from '@grafana/data';
 import { Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
@@ -10,7 +10,7 @@ interface Props {
   onClick: (e: React.SyntheticEvent, tab: string) => void;
 }
 
-export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
+export const PanelHeaderNotice = ({ notice, onClick }: Props) => {
   const styles = useStyles2(getStyles);
 
   const iconName =
@@ -21,6 +21,7 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
       <ToolbarButton
         className={styles.notice}
         icon={iconName}
+        iconSize="md"
         key={notice.severity}
         tooltip={notice.text}
         onClick={(e) => onClick(e, notice.inspect!)}
@@ -31,7 +32,7 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
   if (notice.link) {
     return (
       <a className={styles.notice} aria-label={notice.text} href={notice.link} target="_blank" rel="noreferrer">
-        <Icon name={iconName} style={{ marginRight: '8px' }} />
+        <Icon name={iconName} style={{ marginRight: '8px' }} size="md" />
       </a>
     );
   }
@@ -39,7 +40,7 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
   return (
     <Tooltip key={notice.severity} content={notice.text}>
       <span className={styles.iconTooltip}>
-        <Icon name={iconName} size="lg" />
+        <Icon name={iconName} size="md" />
       </span>
     </Tooltip>
   );
@@ -47,12 +48,13 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   notice: css({
+    background: 'inherit',
     border: 'none',
     borderRadius: theme.shape.borderRadius(),
   }),
   iconTooltip: css({
     color: `${theme.colors.text.secondary}`,
-    backgroundColor: `${theme.colors.background.primary}`,
+    backgroundColor: 'inherit',
     cursor: 'auto',
     border: 'none',
     borderRadius: `${theme.shape.borderRadius()}`,

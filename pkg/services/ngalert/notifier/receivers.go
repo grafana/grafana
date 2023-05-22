@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/alerting"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/types"
 
@@ -56,44 +57,32 @@ func (e ReceiverTimeoutError) Error() string {
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
-	receivers := make([]*alerting.APIReceiver, 0, len(c.Receivers))
+	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
-		greceivers := make([]*alerting.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
+		greceivers := make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			var settings map[string]interface{}
-			//TODO: We shouldn't need to do this marshalling.
-			j, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings to JSON: %v", err)
-			}
-
-			err = json.Unmarshal(j, &settings)
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings into map: %v", err)
-			}
-
-			greceivers = append(greceivers, &alerting.GrafanaReceiver{
+			greceivers = append(greceivers, &alertingNotify.GrafanaReceiver{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
 				DisableResolveMessage: gr.DisableResolveMessage,
-				Settings:              settings,
+				Settings:              json.RawMessage(gr.Settings),
 				SecureSettings:        gr.SecureSettings,
 			})
 		}
-		receivers = append(receivers, &alerting.APIReceiver{
+		receivers = append(receivers, &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
-			GrafanaReceivers: alerting.GrafanaReceivers{
+			GrafanaReceivers: alertingNotify.GrafanaReceivers{
 				Receivers: greceivers,
 			},
 		})
 	}
-	var alert *alerting.TestReceiversConfigAlertParams
+	var alert *alertingNotify.TestReceiversConfigAlertParams
 	if c.Alert != nil {
-		alert = &alerting.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
+		alert = &alertingNotify.TestReceiversConfigAlertParams{Annotations: c.Alert.Annotations, Labels: c.Alert.Labels}
 	}
 
-	result, err := am.Base.TestReceivers(ctx, alerting.TestReceiversConfigBodyParams{
+	result, err := am.Base.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
 		Alert:     alert,
 		Receivers: receivers,
 	})

@@ -117,6 +117,27 @@ func TestMakeAlertRule(t *testing.T) {
 			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
 	})
+
+	t.Run("alert is not paused", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(cnd, da, "folder")
+		require.NoError(t, err)
+		require.False(t, ar.IsPaused)
+	})
+
+	t.Run("paused dash alert is paused", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.State = "paused"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(cnd, da, "folder")
+		require.NoError(t, err)
+		require.True(t, ar.IsPaused)
+	})
 }
 
 func createTestDashAlert() dashAlert {

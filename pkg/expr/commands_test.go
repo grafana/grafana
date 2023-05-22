@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
@@ -105,9 +104,9 @@ func TestReduceExecute(t *testing.T) {
 
 	t.Run("should noop if Number", func(t *testing.T) {
 		var numbers mathexp.Values = []mathexp.Value{
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
-			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
+			mathexp.GenerateNumber(util.Pointer(rand.Float64())),
 		}
 
 		vars := map[string]mathexp.Results{
@@ -202,7 +201,7 @@ func TestResampleCommand_Execute(t *testing.T) {
 			isError: true,
 		}, {
 			name:    "should return error when input Scalar",
-			vals:    mathexp.NewScalar("test", ptr.Float64(rand.Float64())),
+			vals:    mathexp.NewScalar("test", util.Pointer(rand.Float64())),
 			isError: true,
 		},
 	}

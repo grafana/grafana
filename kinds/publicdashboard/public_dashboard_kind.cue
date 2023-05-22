@@ -1,7 +1,8 @@
 package kind
 
-name:     "PublicDashboard"
-maturity: "merged"
+name:        "PublicDashboard"
+maturity:    "merged"
+description: "Public dashboard configuration"
 
 lineage: seqs: [
 	{

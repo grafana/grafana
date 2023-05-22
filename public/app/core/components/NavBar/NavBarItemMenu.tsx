@@ -10,7 +10,6 @@ import { CustomScrollbar, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
 import { useNavBarItemMenuContext } from './context';
-import { getNavTitle } from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
 
 export interface NavBarItemMenuProps extends SpectrumMenuProps<NavModelItem> {
@@ -58,11 +57,10 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     <NavBarItemMenuItem key={getNavModelItemKey(item.value)} item={item} state={state} onNavigate={onNavigate} />
   ));
 
-  if (itemComponents.length === 0 && section.value.emptyMessageId) {
-    const emptyMessageTranslated = getNavTitle(section.value.emptyMessageId);
+  if (itemComponents.length === 0 && section.value.emptyMessage) {
     itemComponents.push(
       <div key="empty-message" className={styles.emptyMessage}>
-        {emptyMessageTranslated}
+        {section.value.emptyMessage}
       </div>
     );
   }

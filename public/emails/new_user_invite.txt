@@ -1,4 +1,4 @@
-{{Subject .Subject "{{.InvitedBy}} has invited you to join Grafana"}}
+{{HiddenSubject .Subject "{{.InvitedBy}} has invited you to join Grafana"}}
 
 You're invited to join {{.OrgName}}
 

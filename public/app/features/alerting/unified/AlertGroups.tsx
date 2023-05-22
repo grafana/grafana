@@ -25,7 +25,7 @@ import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
-  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
 
   const alertManagers = useAlertManagersByPermission('instance');
   const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
@@ -34,7 +34,7 @@ const AlertGroups = () => {
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
 
-  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
+  const { currentData: amConfigStatus } = useGetAlertmanagerChoiceStatusQuery();
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const {
@@ -47,7 +47,8 @@ const AlertGroups = () => {
   const filteredAlertGroups = useFilteredAmGroups(groupedAlerts);
 
   const grafanaAmDeliveryDisabled =
-    alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && alertmanagerChoice === AlertmanagerChoice.External;
+    alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+    amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
 
   useEffect(() => {
     function fetchNotifications() {

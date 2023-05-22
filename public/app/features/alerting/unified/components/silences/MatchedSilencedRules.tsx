@@ -64,12 +64,12 @@ export const MatchedSilencedRules = () => {
         {matchers.every((matcher) => !matcher.value && !matcher.name) ? (
           <span>Add a valid matcher to see affected alerts</span>
         ) : (
-          <>
-            <DynamicTable items={matchedAlertRules.slice(0, 5) ?? []} isExpandable={false} cols={columns} />
-            {matchedAlertRules.length > 5 && (
-              <div className={styles.moreMatches}>and {matchedAlertRules.length - 5} more</div>
-            )}
-          </>
+          <DynamicTable
+            items={matchedAlertRules}
+            isExpandable={false}
+            cols={columns}
+            pagination={{ itemsPerPage: 5 }}
+          />
         )}
       </div>
     </div>
@@ -92,7 +92,7 @@ function useColumns(): MatchedRulesTableColumnProps[] {
       renderCell: function renderName({ data: { matchedInstance } }) {
         return <AlertLabels labels={matchedInstance.labels} />;
       },
-      size: '250px',
+      size: 'auto',
     },
     {
       id: 'created',
@@ -106,7 +106,7 @@ function useColumns(): MatchedRulesTableColumnProps[] {
           </>
         );
       },
-      size: '400px',
+      size: '180px',
     },
   ];
 }

@@ -5,7 +5,7 @@ import React from 'react';
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
-import { DashboardSearchItemType } from '../../types';
+import { DashboardSearchItemType, DashboardViewItem } from '../../types';
 
 import { FolderSection } from './FolderSection';
 
@@ -14,7 +14,7 @@ describe('FolderSection', () => {
   const mockOnTagSelected = jest.fn();
   const mockSelectionToggle = jest.fn();
   const mockSelection = jest.fn();
-  const mockSection = {
+  const mockSection: DashboardViewItem = {
     kind: 'folder',
     uid: 'my-folder',
     title: 'My folder',
@@ -218,7 +218,7 @@ describe('FolderSection', () => {
     });
 
     describe('when in a pseudo-folder (i.e. Starred/Recent)', () => {
-      const mockRecentSection = {
+      const mockRecentSection: DashboardViewItem = {
         kind: 'folder',
         uid: '__recent',
         title: 'Recent',

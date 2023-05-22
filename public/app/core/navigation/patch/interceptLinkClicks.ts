@@ -3,7 +3,7 @@ import { locationService, navigationLogger } from '@grafana/runtime';
 import { config } from 'app/core/config';
 
 export function interceptLinkClicks(e: MouseEvent) {
-  const anchor = getParentAnchor(e.target as HTMLElement);
+  const anchor = e.target instanceof Element && getParentAnchor(e.target);
 
   // Ignore if opening new tab or already default prevented
   if (e.ctrlKey || e.metaKey || e.defaultPrevented) {
@@ -43,12 +43,12 @@ export function interceptLinkClicks(e: MouseEvent) {
   }
 }
 
-function getParentAnchor(element: HTMLElement | null): HTMLElement | null {
+function getParentAnchor(element: Element | null): Element | null {
   while (element !== null && element.tagName) {
     if (element.tagName.toUpperCase() === 'A') {
       return element;
     }
-    element = element.parentNode as HTMLElement;
+    element = element.parentElement;
   }
 
   return null;

@@ -1,4 +1,5 @@
 import {
+  CloudWatchAnnotationQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   LogGroup,
@@ -22,6 +23,13 @@ export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   metricEditorMode: MetricEditorMode.Builder,
   sqlExpression: '',
   matchExact: true,
+};
+
+export const DEFAULT_ANNOTATIONS_QUERY: Omit<CloudWatchAnnotationQuery, 'refId'> = {
+  queryMode: 'Annotations',
+  namespace: '',
+  region: 'default',
+  statistic: 'Average',
 };
 
 export const DEFAULT_LOGS_QUERY_STRING = 'fields @timestamp, @message |\n sort @timestamp desc |\n limit 20';

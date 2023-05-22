@@ -2,9 +2,10 @@ package pfs
 
 import (
 	"cuelang.org/go/cue/ast"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
+
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 type PluginDecl struct {
@@ -13,7 +14,7 @@ type PluginDecl struct {
 	Imports         []*ast.ImportSpec
 	PluginPath      string
 	PluginMeta      plugindef.PluginDef
-	KindDecl        kindsys.Decl[kindsys.ComposableProperties]
+	KindDecl        kindsys.Def[kindsys.ComposableProperties]
 }
 
 func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {

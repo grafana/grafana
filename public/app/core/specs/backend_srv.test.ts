@@ -3,11 +3,11 @@ import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
-import { BackendSrvRequest, FetchError } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
-import { BackendSrv } from '../services/backend_srv';
+import { BackendSrv, BackendSrvDependencies } from '../services/backend_srv';
 import { ContextSrv, User } from '../services/context_srv';
 
 const getTestContext = (overides?: object) => {
@@ -65,7 +65,7 @@ const getTestContext = (overides?: object) => {
     expect(fromFetchMock).toHaveBeenCalledTimes(1);
   };
 
-  const expectRequestCallChain = (options: any) => {
+  const expectRequestCallChain = (options: unknown) => {
     expect(parseRequestOptionsMock).toHaveBeenCalledTimes(1);
     expect(parseRequestOptionsMock).toHaveBeenCalledWith(options);
     expectCallChain();
@@ -109,7 +109,7 @@ describe('backendSrv', () => {
               orgId: orgId,
             },
           },
-        } as any);
+        } as BackendSrvDependencies);
 
         if (noBackendCache) {
           await srv.withNoBackendCache(async () => {
@@ -275,6 +275,26 @@ describe('backendSrv', () => {
             'bogus-trace-id',
           ]);
         });
+
+        it('It should favor error.message for fetch errors when error.data.message is Unexpected error', async () => {
+          const { backendSrv, appEventsMock } = getTestContext({});
+          backendSrv.showErrorAlert(
+            {
+              url: 'api/do/something',
+            } as BackendSrvRequest,
+            {
+              data: {
+                message: 'Unexpected error',
+              },
+              message: 'Failed to fetch',
+              status: 500,
+              config: {
+                url: '',
+              },
+            } as FetchError
+          );
+          expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to fetch', '']);
+        });
       });
     });
 
@@ -377,7 +397,7 @@ describe('backendSrv', () => {
           requestId: 'A',
         };
 
-        let slowError: any = null;
+        let slowError = null;
         backendSrv.request(options).catch((err) => {
           slowError = err;
         });
@@ -415,7 +435,7 @@ describe('backendSrv', () => {
           .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
         const url = '/api/dashboard/';
 
-        let inspectorPacket: any = null;
+        let inspectorPacket: FetchResponse | FetchError;
         backendSrv.getInspectorStream().subscribe({
           next: (rsp) => (inspectorPacket = rsp),
         });
@@ -536,7 +556,7 @@ describe('backendSrv', () => {
           method: 'GET',
         };
 
-        let inspectorPacket: any = null;
+        let inspectorPacket: FetchResponse | FetchError;
         backendSrv.getInspectorStream().subscribe({
           next: (rsp) => (inspectorPacket = rsp),
         });
@@ -563,7 +583,7 @@ describe('backendSrv', () => {
     describe('when called with 2 separate requests and then cancelAllInFlightRequests is called', () => {
       const url = '/api/dashboard/';
 
-      const getRequestObservable = (message: string, unsubscribe: any) =>
+      const getRequestObservable = (message: string, unsubscribe: jest.Mock) =>
         new Observable((subscriber) => {
           subscriber.next({
             ok: true,

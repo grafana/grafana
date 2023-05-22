@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/alerting_provisioning/
+canonical: /docs/grafana/latest/developers/http_api/alerting_provisioning/
 description: Grafana Alerts HTTP API
 keywords:
   - grafana
@@ -95,9 +96,10 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name | Source | Type   | Go type  | Separator | Required | Default | Description    |
-| ---- | ------ | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID  | `path` | string | `string` |           |    ✓     |         | Alert rule UID |
+| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description    |
+| -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
+| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID |
+| X-Disable-Provenance | `header` | string | `string` |           |          |         |                |
 
 #### All responses
 
@@ -244,10 +246,11 @@ GET /api/v1/provisioning/alert-rules/{UID}/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type  | Separator | Required | Default | Description                                        |
-| -------- | ------- | ------- | -------- | --------- | :------: | ------- | -------------------------------------------------- |
-| UID      | `path`  | string  | `string` |           |    ✓     |         | Alert rule UID                                     |
-| download | `query` | boolean | `bool`   |           |          |         | Whether to initiate a download of the file or not. |
+| Name     | Source  | Type     | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | -------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| UID      | `path`  | string   | `string` |           |    ✓     |          | Alert rule UID                                                                                                                    |
+| download | `query` | boolean  | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | `string` | string   |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -322,11 +325,12 @@ GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export
 
 #### Parameters
 
-| Name      | Source  | Type    | Go type  | Separator | Required | Default | Description                                        |
-| --------- | ------- | ------- | -------- | --------- | :------: | ------- | -------------------------------------------------- |
-| FolderUID | `path`  | string  | `string` |           |    ✓     |         |                                                    |
-| Group     | `path`  | string  | `string` |           |    ✓     |         |                                                    |
-| download  | `query` | boolean | `bool`   |           |          |         | Whether to initiate a download of the file or not. |
+| Name      | Source  | Type     | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| --------- | ------- | -------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| FolderUID | `path`  | string   | `string` |           |    ✓     |          |                                                                                                                                   |
+| Group     | `path`  | string   | `string` |           |    ✓     |          |                                                                                                                                   |
+| download  | `query` | boolean  | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format    | `query` | `string` | string   |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -381,9 +385,10 @@ GET /api/v1/provisioning/alert-rules/export
 
 #### Parameters
 
-| Name     | Source  | Type    | Go type | Separator | Required | Default | Description                                        |
-| -------- | ------- | ------- | ------- | --------- | :------: | ------- | -------------------------------------------------- |
-| download | `query` | boolean | `bool`  |           |          |         | Whether to initiate a download of the file or not. |
+| Name     | Source  | Type     | Go type | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | -------- | ------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean  | `bool`  |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | `string` | string  |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -633,9 +638,10 @@ POST /api/v1/provisioning/contact-points
 
 #### Parameters
 
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
 
 #### All responses
 
@@ -674,9 +680,10 @@ POST /api/v1/provisioning/mute-timings
 
 #### Parameters
 
-| Name | Source | Type                                    | Go type                   | Separator | Required | Default | Description |
-| ---- | ------ | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
-| Body | `body` | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |             |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
 
 #### All responses
 
@@ -758,11 +765,12 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 #### Parameters
 
-| Name      | Source | Type                                | Go type                 | Separator | Required | Default | Description |
-| --------- | ------ | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| FolderUID | `path` | string                              | `string`                |           |    ✓     |         |             |
-| Group     | `path` | string                              | `string`                |           |    ✓     |         |             |
-| Body      | `body` | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description |
+| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
+| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |             |
+| Group                | `path`   | string                              | `string`                |           |    ✓     |         |             |
+| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         |             |
+| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
 
 #### All responses
 
@@ -801,10 +809,11 @@ PUT /api/v1/provisioning/contact-points/{UID}
 
 #### Parameters
 
-| Name | Source | Type                                            | Go type                       | Separator | Required | Default | Description                                |
-| ---- | ------ | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
-| UID  | `path` | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
-| Body | `body` | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
+| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                                            |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
 
 #### All responses
 
@@ -843,10 +852,11 @@ PUT /api/v1/provisioning/mute-timings/{name}
 
 #### Parameters
 
-| Name | Source | Type                                    | Go type                   | Separator | Required | Default | Description      |
-| ---- | ------ | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
-| name | `path` | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
-| Body | `body` | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description      |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
+| name                 | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |                  |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
 
 #### All responses
 
@@ -885,9 +895,10 @@ PUT /api/v1/provisioning/policies
 
 #### Parameters
 
-| Name | Source | Type            | Go type        | Separator | Required | Default | Description                              |
-| ---- | ------ | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
-| Body | `body` | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
+| Name                 | Source   | Type            | Go type        | Separator | Required | Default | Description                              |
+| -------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
+| X-Disable-Provenance | `header` | string          | `string`       |           |          |         |                                          |
+| Body                 | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
 
 #### All responses
 
@@ -926,10 +937,11 @@ PUT /api/v1/provisioning/templates/{name}
 
 #### Parameters
 
-| Name | Source | Type                                                          | Go type                              | Separator | Required | Default | Description   |
-| ---- | ------ | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
-| name | `path` | string                                                        | `string`                             |           |    ✓     |         | Template Name |
-| Body | `body` | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
+| Name                 | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description   |
+| -------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
+| name                 | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name |
+| X-Disable-Provenance | `header` | string                                                        | `string`                             |           |          |         |               |
+| Body                 | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
 
 #### All responses
 
@@ -992,14 +1004,14 @@ Status: Accepted
 
 **Properties**
 
-| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                        | Example |
-| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | -------------------------------------------------------------------------------------------------- | ------- |
-| datasourceUid                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation. |         |
-| model                                                     | [interface{}](#interface)                 | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.         |         |
-| queryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                         |
+| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                            | Example |
+| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------ | ------- |
+| datasourceUid                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '**expr**' for a Server Side Expression operation. |         |
+| model                                                     | [interface{}](#interface)                 | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.             |         |
+| queryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                             |
 | It can be used to distinguish different types of queries. |                                           |
-| refId                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                             |         |
-| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                    |         |
+| refId                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                                 |         |
+| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                        |         |
 
 ### <span id="alert-query-export"></span> AlertQueryExport
 
@@ -1174,23 +1186,23 @@ Status: Accepted
 
 **Properties**
 
-| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                     |
-| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"-100","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
-| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                      |
-| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                               |
-| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                              |
-| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
+| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### <span id="provisioned-alert-rules"></span> ProvisionedAlertRules
 

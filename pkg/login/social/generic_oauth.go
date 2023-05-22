@@ -143,14 +143,19 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if userInfo.Role == "" {
-			role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
-			if role != "" {
-				s.log.Debug("Setting user info role from extracted role")
+			if !s.skipOrgRoleSync {
+				role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
+				if role != "" {
+					s.log.Debug("Setting user info role from extracted role")
 
-				userInfo.Role = role
-				if s.allowAssignGrafanaAdmin {
-					userInfo.IsGrafanaAdmin = &grafanaAdmin
+					userInfo.Role = role
+					if s.allowAssignGrafanaAdmin {
+						userInfo.IsGrafanaAdmin = &grafanaAdmin
+					}
 				}
+			}
+			if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+				s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 			}
 		}
 
@@ -512,4 +517,18 @@ func (s *SocialGenericOAuth) AuthCodeURL(state string, opts ...oauth2.AuthCodeOp
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
+}
+
+func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## GenericOAuth specific configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))
+	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", s.loginAttributePath))
+	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", s.idTokenAttributeName))
+	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", s.teamIdsAttributePath))
+	bf.WriteString(fmt.Sprintf("team_ids = %v\n", s.teamIds))
+	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
+	bf.WriteString("```\n\n")
+
+	return s.SocialBase.SupportBundleContent(bf)
 }

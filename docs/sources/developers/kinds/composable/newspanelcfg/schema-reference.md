@@ -6,24 +6,22 @@ title: NewsPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# NewsPanelCfg kind
+## NewsPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: [experimental](../../../maturity/#experimental)
+#### Version: 0.0
 
-## Properties
 
-| Property       | Type                    | Required | Description |
-|----------------|-------------------------|----------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-## PanelOptions
+| Property       | Type                    | Required | Default | Description |
+|----------------|-------------------------|----------|---------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
 
-### Properties
+### PanelOptions
 
-| Property    | Type    | Required | Description                                |
-|-------------|---------|----------|--------------------------------------------|
-| `feedUrl`   | string  | No       | empty/missing will default to grafana blog |
-| `showImage` | boolean | No       | Default: `true`.                           |
+| Property    | Type    | Required | Default | Description                                |
+|-------------|---------|----------|---------|--------------------------------------------|
+| `feedUrl`   | string  | No       |         | empty/missing will default to grafana blog |
+| `showImage` | boolean | No       | `true`  |                                            |
 
 

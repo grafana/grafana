@@ -3,6 +3,7 @@ import { each, map } from 'lodash';
 import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { FieldConfigSource } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
@@ -2196,8 +2197,7 @@ describe('when migrating table cell display mode to cell options', () => {
                 inspect: false,
               },
             },
-            overrides: [],
-          },
+          } as unknown as FieldConfigSource, // missing overrides
         },
         // @ts-expect-error
         {

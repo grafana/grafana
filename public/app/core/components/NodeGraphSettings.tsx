@@ -21,11 +21,11 @@ interface Props extends DataSourcePluginOptionsEditorProps<NodeGraphData> {}
 export function NodeGraphSettings({ options, onOptionsChange }: Props) {
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">Node Graph</h3>
+      <h3 className="page-heading">Node graph</h3>
       <InlineFieldRow className={styles.row}>
         <InlineField
-          tooltip="Enables the Node Graph visualization in the trace viewer."
-          label="Enable Node Graph"
+          tooltip="Displays the node graph above the trace view. Default: disabled"
+          label="Enable node graph"
           labelWidth={26}
         >
           <InlineSwitch

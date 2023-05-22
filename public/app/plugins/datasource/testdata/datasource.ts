@@ -193,10 +193,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
 
   variablesQuery(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
     const query = target.stringInput ?? '';
-    const interpolatedQuery = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '*', options: options.scopedVars })
-    );
+    const interpolatedQuery = this.templateSrv.replace(query, getSearchFilterScopedVar({ query, wildcardChar: '*' }));
     const children = queryMetricTree(interpolatedQuery);
     const items = children.map((item) => ({ value: item.name, text: item.name }));
     const dataFrame = new ArrayDataFrame(items);

@@ -11,7 +11,6 @@ var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.m
 var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
-var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 
 const (
@@ -40,6 +39,12 @@ type Folder struct {
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
+}
+
+var GeneralFolder = Folder{ID: 0, Title: "General"}
+
+func (f *Folder) IsGeneral() bool {
+	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
 type FolderDTO struct {

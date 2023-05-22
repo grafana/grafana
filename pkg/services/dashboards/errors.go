@@ -54,10 +54,6 @@ var (
 		Reason:     "Multiple dashboards with the same slug exists",
 		StatusCode: 412,
 	}
-	ErrDashboardFailedGenerateUniqueUid = DashboardErr{
-		Reason:     "Failed to generate unique dashboard id",
-		StatusCode: 500,
-	}
 	ErrDashboardTypeMismatch = DashboardErr{
 		Reason:     "Dashboard cannot be changed to a folder",
 		StatusCode: 400,
@@ -126,15 +122,14 @@ var (
 		Status:     "not-found",
 	}
 
-	ErrFolderNotFound                = errors.New("folder not found")
-	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
-	ErrFolderInvalidUID              = errors.New("invalid uid for folder provided")
-	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
-	ErrFolderAccessDenied            = errors.New("access denied to folder")
-	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
+	ErrFolderNotFound           = errors.New("folder not found")
+	ErrFolderVersionMismatch    = errors.New("the folder has been changed by someone else")
+	ErrFolderTitleEmpty         = errors.New("folder title cannot be empty")
+	ErrFolderWithSameUIDExists  = errors.New("a folder/dashboard with the same uid already exists")
+	ErrFolderInvalidUID         = errors.New("invalid uid for folder provided")
+	ErrFolderSameNameExists     = errors.New("a folder or dashboard in the general folder with the same name already exists")
+	ErrFolderAccessDenied       = errors.New("access denied to folder")
+	ErrFolderContainsAlertRules = errors.New("folder contains alert rules")
 )
 
 // DashboardErr represents a dashboard error.

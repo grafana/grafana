@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
@@ -73,7 +73,7 @@ type Props = {
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
+export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -255,6 +255,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
                       initialFolder={defaultValues.folder}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
+                      existing={Boolean(existing)}
                     />
                   ) : (
                     <CloudEvaluationBehavior />

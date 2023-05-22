@@ -1,4 +1,3 @@
-import { DisplayProcessor } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 import {
@@ -10,7 +9,7 @@ import {
   PIXELS_PER_LEVEL,
 } from '../../constants';
 
-import { ItemWithStart } from './dataTransform';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type RectData = {
   width: number;
@@ -26,25 +25,20 @@ type RectData = {
 /**
  * Compute the pixel coordinates for each bar in a level. We need full level of bars so that we can collapse small bars
  * into bigger rects.
- * @param level
- * @param levelIndex
- * @param totalTicks
- * @param rangeMin
- * @param pixelsPerTick
  */
 export function getRectDimensionsForLevel(
-  level: ItemWithStart[],
+  data: FlameGraphDataContainer,
+  level: LevelItem[],
   levelIndex: number,
   totalTicks: number,
   rangeMin: number,
-  pixelsPerTick: number,
-  processor: DisplayProcessor
+  pixelsPerTick: number
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
     const item = level[barIndex];
     const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = item.value;
+    let curBarTicks = data.getValue(item.itemIndex);
 
     // merge very small blocks into big "collapsed" ones for performance
     const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
@@ -52,14 +46,14 @@ export function getRectDimensionsForLevel(
       while (
         barIndex < level.length - 1 &&
         item.start + curBarTicks === level[barIndex + 1].start &&
-        level[barIndex + 1].value * pixelsPerTick <= COLLAPSE_THRESHOLD
+        data.getValue(level[barIndex + 1].itemIndex) * pixelsPerTick <= COLLAPSE_THRESHOLD
       ) {
         barIndex += 1;
-        curBarTicks += level[barIndex].value;
+        curBarTicks += data.getValue(level[barIndex].itemIndex);
       }
     }
 
-    const displayValue = processor(item.value);
+    const displayValue = data.getValueDisplay(item.itemIndex);
     let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
@@ -70,7 +64,7 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: item.label,
+      label: data.getLabel(item.itemIndex),
       unitLabel: unit,
     });
   }
@@ -86,7 +80,7 @@ export function renderRect(
   query: string,
   levelIndex: number,
   topLevelIndex: number,
-  ufuzzy: uFuzzy
+  foundNames: Set<string>
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -101,19 +95,17 @@ export function renderRect(
   const l = 65 + 7 * intensity;
 
   const name = rect.label;
-  const idxs = ufuzzy.filter([name], query);
-  const queryResult = query && idxs.length > 0;
 
   if (!rect.collapsed) {
     ctx.stroke();
 
     if (query) {
-      ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+      ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
     } else {
       ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
     }
   } else {
-    ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+    ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
   }
   ctx.fill();
 

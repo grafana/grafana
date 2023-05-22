@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 func Test_getVersionFolder(t *testing.T) {
@@ -26,6 +27,7 @@ func Test_getVersionFolder(t *testing.T) {
 		{"downstream mode", args{uploadConfig{versionMode: config.DownstreamMode}, "", mainFolder}, nil},
 		{"release branch mode", args{uploadConfig{versionMode: config.ReleaseBranchMode}, "", releaseBranchFolder}, nil},
 		{"enterprise pro mode", args{uploadConfig{versionMode: config.Enterprise2Mode}, config.Custom, releaseFolder}, nil},
+		{"cloud mode", args{uploadConfig{versionMode: config.CloudMode}, "", releaseFolder}, nil},
 		{"unrecognised version mode", args{uploadConfig{versionMode: "foo"}, config.Custom, ""}, errors.New("")},
 	}
 	for _, tt := range tests {

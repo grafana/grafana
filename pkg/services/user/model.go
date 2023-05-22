@@ -140,20 +140,21 @@ type GetUserProfileQuery struct {
 }
 
 type UserProfileDTO struct {
-	ID             int64           `json:"id"`
-	Email          string          `json:"email"`
-	Name           string          `json:"name"`
-	Login          string          `json:"login"`
-	Theme          string          `json:"theme"`
-	OrgID          int64           `json:"orgId,omitempty"`
-	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
-	IsDisabled     bool            `json:"isDisabled"`
-	IsExternal     bool            `json:"isExternal"`
-	AuthLabels     []string        `json:"authLabels"`
-	UpdatedAt      time.Time       `json:"updatedAt"`
-	CreatedAt      time.Time       `json:"createdAt"`
-	AvatarUrl      string          `json:"avatarUrl"`
-	AccessControl  map[string]bool `json:"accessControl,omitempty"`
+	ID                 int64           `json:"id"`
+	Email              string          `json:"email"`
+	Name               string          `json:"name"`
+	Login              string          `json:"login"`
+	Theme              string          `json:"theme"`
+	OrgID              int64           `json:"orgId,omitempty"`
+	IsGrafanaAdmin     bool            `json:"isGrafanaAdmin"`
+	IsDisabled         bool            `json:"isDisabled"`
+	IsExternal         bool            `json:"isExternal"`
+	IsExternallySynced bool            `json:"isExternallySynced"`
+	AuthLabels         []string        `json:"authLabels"`
+	UpdatedAt          time.Time       `json:"updatedAt"`
+	CreatedAt          time.Time       `json:"createdAt"`
+	AvatarURL          string          `json:"avatarUrl"`
+	AccessControl      map[string]bool `json:"accessControl,omitempty"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)
@@ -192,6 +193,11 @@ type GetSignedInUserQuery struct {
 	OrgID  int64 `xorm:"org_id"`
 }
 
+type AnalyticsSettings struct {
+	Identifier         string
+	IntercomIdentifier string
+}
+
 type SignedInUser struct {
 	UserID             int64 `xorm:"user_id"`
 	OrgID              int64 `xorm:"org_id"`
@@ -211,6 +217,7 @@ type SignedInUser struct {
 	HelpFlags1         HelpFlags1
 	LastSeenAt         time.Time
 	Teams              []int64
+	Analytics          AnalyticsSettings
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 }
@@ -241,7 +248,7 @@ type UserDisplayDTO struct {
 	ID        int64  `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Login     string `json:"login,omitempty"`
-	AvatarUrl string `json:"avatarUrl"`
+	AvatarURL string `json:"avatarUrl"`
 }
 
 // ------------------------
@@ -362,3 +369,14 @@ const (
 	QuotaTargetSrv string = "user"
 	QuotaTarget    string = "user"
 )
+
+type AdminCreateUserResponse struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
+type Password string
+
+func (p Password) IsWeak() bool {
+	return len(p) <= 4
+}

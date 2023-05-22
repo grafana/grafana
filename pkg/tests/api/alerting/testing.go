@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -98,14 +99,14 @@ func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     fmt.Sprintf("rule-%s", util.GenerateShortUID()),
 				Condition: "A",
-				Data: []ngmodels.AlertQuery{
+				Data: []apimodels.AlertQuery{
 					{
 						RefID: "A",
-						RelativeTimeRange: ngmodels.RelativeTimeRange{
-							From: ngmodels.Duration(time.Duration(5) * time.Hour),
-							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: apimodels.RelativeTimeRange{
+							From: apimodels.Duration(time.Duration(5) * time.Hour),
+							To:   apimodels.Duration(time.Duration(3) * time.Hour),
 						},
-						DatasourceUID: "-100",
+						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -159,6 +160,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		UID:          gettable.UID,
 		NoDataState:  gettable.NoDataState,
 		ExecErrState: gettable.ExecErrState,
+		IsPaused:     &gettable.IsPaused,
 	}
 }
 

@@ -2,7 +2,6 @@ import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
-const DASHBOARD_NAME = 'Test variable output';
 
 function fillInCustomVariable(name: string, label: string, value: string) {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
@@ -36,7 +35,7 @@ describe('Variables - Custom', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }
@@ -68,7 +67,7 @@ describe('Variables - Custom', () => {
       .window()
       .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
         if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb('Test variable output').click();
+          e2e.pages.Dashboard.Settings.Actions.close().click();
         } else {
           e2e.components.BackButton.backArrow().click({ force: true });
         }

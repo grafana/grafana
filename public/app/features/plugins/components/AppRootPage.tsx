@@ -6,10 +6,10 @@ import { useLocation, useRouteMatch } from 'react-router-dom';
 
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
-import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
+import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';

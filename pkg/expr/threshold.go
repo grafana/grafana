@@ -29,6 +29,17 @@ var (
 )
 
 func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
+	switch thresholdFunc {
+	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
+		if len(conditions) < 2 {
+			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 2", len(conditions))
+		}
+	case ThresholdIsAbove, ThresholdIsBelow:
+		if len(conditions) < 1 {
+			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 1", len(conditions))
+		}
+	}
+
 	return &ThresholdCommand{
 		RefID:         refID,
 		ReferenceVar:  referenceVar,

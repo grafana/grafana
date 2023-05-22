@@ -66,9 +66,11 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
       background-color: ${theme.colors.secondary.main}; // rgba(0,60,136,0.5);
     }
     .ol-control button:hover {
+      color: ${theme.colors.secondary.text};
       background-color: ${theme.colors.secondary.shade}; // rgba(0,60,136,0.5);
     }
     .ol-control button:focus {
+      color: ${theme.colors.secondary.text};
       background-color: ${theme.colors.secondary.main}; // rgba(0,60,136,0.5);
     }
     .ol-attribution ul {

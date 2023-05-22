@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -42,7 +43,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService,
+			supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
@@ -385,7 +387,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 				require.NoError(t, err)
-				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService)
+				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
 				require.NoError(t, err)
 				setup()
 				userCmd = user.CreateUserCommand{
@@ -394,7 +396,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					Login:            fmt.Sprint("login-sa", 1),
 					IsServiceAccount: true,
 				}
-				serviceAccount, err := userSvc.CreateUserForTests(context.Background(), &userCmd)
+				serviceAccount, err := userSvc.Create(context.Background(), &userCmd)
 				require.NoError(t, err)
 
 				groupId := team2.ID
@@ -514,7 +516,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		quotaService := quotaimpl.ProvideService(store, store.Cfg)
 		orgSvc, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService)
+		userSvc, err := userimpl.ProvideService(store, orgSvc, store.Cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {

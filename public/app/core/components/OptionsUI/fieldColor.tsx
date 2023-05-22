@@ -17,12 +17,9 @@ import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana
 
 import { ColorValueEditor } from './color';
 
-export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>> = ({
-  value,
-  onChange,
-  item,
-  id,
-}) => {
+type Props = FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
+
+export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 

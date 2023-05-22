@@ -114,7 +114,7 @@ describe('mapInternalLinkToExplore', () => {
         config: {},
         values: new ArrayVector([2]),
       },
-      replaceVariables: (val, scopedVars) => val.replace(/\$var/g, scopedVars!['var1'].value),
+      replaceVariables: (val, scopedVars) => val.replace(/\$var/g, scopedVars!['var1']!.value),
     });
 
     expect(decodeURIComponent(link.href)).toEqual(

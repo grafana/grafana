@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -54,7 +55,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
@@ -64,7 +65,7 @@ func setUpGetTeamMembersHandler(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			Login: fmt.Sprint("loginuser", i),
 		}
 		// user
-		user, err := usrSvc.CreateUserForTests(context.Background(), &userCmd)
+		user, err := usrSvc.Create(context.Background(), &userCmd)
 		require.NoError(t, err)
 		err = teamSvc.AddTeamMember(user.ID, testOrgID, team.ID, false, 1)
 		require.NoError(t, err)

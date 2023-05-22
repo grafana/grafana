@@ -7,6 +7,7 @@ import { DataFrame, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafa
 import { Collapse, TabContent, useStyles2 } from '@grafana/ui';
 
 import { GeomapLayerHover } from '../event';
+import { renderValue } from '../utils/uiUtils';
 
 import { DataHoverRow } from './DataHoverRow';
 
@@ -59,7 +60,7 @@ export const DataHoverRows = ({ layers, activeTabIndex }: Props) => {
   );
 };
 
-export const generateLabel = (feature: FeatureLike, idx: number): string => {
+export const generateLabel = (feature: FeatureLike, idx: number): string | React.ReactNode => {
   const names = ['Name', 'name', 'Title', 'ID', 'id'];
   let props = feature.getProperties();
   let first = '';
@@ -85,13 +86,21 @@ export const generateLabel = (feature: FeatureLike, idx: number): string => {
   }
 
   if (first) {
-    return `${first}: ${props[first]}`;
+    return (
+      <span>
+        {first}: {renderValue(props[first])}
+      </span>
+    );
   }
 
   for (let k of Object.keys(props)) {
     const v = props[k];
     if (isString(v)) {
-      return `${k}: ${v}`;
+      return (
+        <span>
+          {k}: {renderValue(v)}
+        </span>
+      );
     }
   }
 
@@ -100,6 +109,6 @@ export const generateLabel = (feature: FeatureLike, idx: number): string => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsibleRow: css`
-    margin-bottom: 0px;
+    margin-bottom: 0;
   `,
 });

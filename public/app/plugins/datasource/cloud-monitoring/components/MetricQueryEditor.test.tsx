@@ -8,7 +8,7 @@ import { QueryType } from '../types';
 import { MetricQueryEditor } from './MetricQueryEditor';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => val,
   }),
@@ -54,5 +54,14 @@ describe('MetricQueryEditor', () => {
     render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     const l = await screen.findByLabelText('Project');
     expect(l).toBeInTheDocument();
+  });
+
+  it('renders a Project dropdown', async () => {
+    const query = createMockQuery();
+    query.queryType = QueryType.TIME_SERIES_QUERY;
+
+    render(<MetricQueryEditor {...defaultProps} />);
+    const projectDropdown = await screen.findByLabelText('Project');
+    expect(projectDropdown).toBeInTheDocument();
   });
 });

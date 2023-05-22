@@ -19,20 +19,25 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
 	"github.com/grafana/grafana/pkg/kinds/team"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
-// Base is a registry of kindsys.Interface. It provides two modes for accessing
-// kinds: individually via literal named methods, or as a slice returned from
-// an All*() method.
+// Base is a registry of all Grafana core kinds. It is designed for use both inside
+// of Grafana itself, and for import by external Go programs wanting to work with Grafana's
+// kind system.
+//
+// The registry provides two modes for accessing core kinds:
+//   - Per-kind methods, which return the kind-specific type, e.g. Dashboard() returns [dashboard.Dashboard].
+//   - All(), which returns a slice of [kindsys.Core].
 //
 // Prefer the individual named methods for use cases where the particular kind(s) that
 // are needed are known to the caller. For example, a dashboard linter can know that it
 // specifically wants the dashboard kind.
 //
-// Prefer All*() methods when performing operations generically across all kinds.
-// For example, a validation HTTP middleware for any kind-schematized object type.
+// Prefer All() when performing operations generically across all kinds. For example,
+// a generic HTTP middleware for validating request bodies expected to contain some
+// kind-schematized type.
 type Base struct {
 	all             []kindsys.Core
 	dashboard       *dashboard.Kind

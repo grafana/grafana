@@ -56,6 +56,21 @@ func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *clou
 	}, nil
 }
 
+type mockLogsSyncClient struct {
+	cloudwatchlogsiface.CloudWatchLogsAPI
+
+	mock.Mock
+}
+
+func (m *mockLogsSyncClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	args := m.Called(ctx, input, option)
+	return args.Get(0).(*cloudwatchlogs.GetQueryResultsOutput), args.Error(1)
+}
+func (m *mockLogsSyncClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+	args := m.Called(ctx, input, option)
+	return args.Get(0).(*cloudwatchlogs.StartQueryOutput), args.Error(1)
+}
+
 func (m *fakeCWLogsClient) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	m.calls.describeLogGroups = append(m.calls.describeLogGroups, input)
 	output := &m.logGroups[m.logGroupsIndex]

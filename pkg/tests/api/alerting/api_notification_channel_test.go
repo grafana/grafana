@@ -16,14 +16,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/grafana/alerting/receivers"
+	alertingLine "github.com/grafana/alerting/receivers/line"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
+	alertingPushover "github.com/grafana/alerting/receivers/pushover"
+	alertingSlack "github.com/grafana/alerting/receivers/slack"
+	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
+	alertingThreema "github.com/grafana/alerting/receivers/threema"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -715,28 +723,33 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockEmail := &mockEmailHandler{}
 
 	// Set up responses
-	mockChannel.responses["slack_recv1"] = `{"ok": true}`
-	mockChannel.responses["slack_recvX"] = `{"ok": true}`
+	mockChannel.responses["slack_recv1"] = func(res http.ResponseWriter) {
+		res.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(res, `{"ok": true}`)
+	}
+	mockChannel.responses["slack_recvX"] = func(res http.ResponseWriter) {
+		fmt.Fprint(res, `ok`)
+	}
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
-		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-		channels.LineNotifyURL, channels.ThreemaGwBaseURL
-	originalTemplate := channels.DefaultTemplateString
+	os, opa, ot, opu, ogb, ol, oth := alertingSlack.APIURL, alertingPagerduty.APIURL,
+		alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+		alertingLine.APIURL, alertingThreema.APIURL
+	originalTemplate := alertingTemplates.DefaultTemplateString
 	t.Cleanup(func() {
-		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
-			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
-		channels.DefaultTemplateString = originalTemplate
+		alertingSlack.APIURL, alertingPagerduty.APIURL,
+			alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+			alertingLine.APIURL, alertingThreema.APIURL = os, opa, ot, opu, ogb, ol, oth
+		alertingTemplates.DefaultTemplateString = originalTemplate
 	})
-	channels.DefaultTemplateString = channels.TemplateForTestsString
-	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
-	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
-	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
-	channels.PushoverEndpoint = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
-	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
-	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
-	channels.GetBoundary = func() string { return "abcd" }
+	alertingTemplates.DefaultTemplateString = alertingTemplates.TemplateForTestsString
+	alertingSlack.APIURL = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
+	alertingPagerduty.APIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
+	alertingTelegram.APIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
+	alertingPushover.APIURL = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
+	alertingLine.APIURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
+	alertingThreema.APIURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
+	receivers.GetBoundary = func() string { return "abcd" }
 
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
 	// As we are using a NotificationService mock here, but the test expects real NotificationService -
@@ -972,14 +985,14 @@ func getRulesConfig(t *testing.T) string {
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     alertName,
 				Condition: "A",
-				Data: []ngmodels.AlertQuery{
+				Data: []apimodels.AlertQuery{
 					{
 						RefID: "A",
-						RelativeTimeRange: ngmodels.RelativeTimeRange{
-							From: ngmodels.Duration(time.Duration(5) * time.Hour),
-							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+						RelativeTimeRange: apimodels.RelativeTimeRange{
+							From: apimodels.Duration(time.Duration(5) * time.Hour),
+							To:   apimodels.Duration(time.Duration(3) * time.Hour),
 						},
-						DatasourceUID: "-100",
+						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
 							"type": "math",
 							"expression": "2 + 3 > 1"
@@ -1001,7 +1014,7 @@ type mockNotificationChannel struct {
 	server *http.Server
 
 	receivedNotifications  map[string][]string
-	responses              map[string]string
+	responses              map[string]func(res http.ResponseWriter)
 	notificationErrorCount int
 	notificationsMtx       sync.RWMutex
 }
@@ -1019,7 +1032,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
-		responses:             make(map[string]string),
+		responses:             make(map[string]func(res http.ResponseWriter)),
 		t:                     t,
 	}
 
@@ -1048,8 +1061,11 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	body := getBody(nc.t, req.Body)
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
-	res.WriteHeader(http.StatusOK)
-	fmt.Fprint(res, nc.responses[paths[0]])
+	if f, ok := nc.responses[paths[0]]; ok {
+		f(res)
+	} else {
+		res.WriteHeader(http.StatusOK)
+	}
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {
@@ -1152,8 +1168,8 @@ func multipartEqual(t *testing.T, exp, act string) {
 		}
 	}
 
-	expReader := multipart.NewReader(strings.NewReader(exp), channels.GetBoundary())
-	actReader := multipart.NewReader(strings.NewReader(act), channels.GetBoundary())
+	expReader := multipart.NewReader(strings.NewReader(exp), receivers.GetBoundary())
+	actReader := multipart.NewReader(strings.NewReader(act), receivers.GetBoundary())
 	expMap, actMap := make(map[string]string), make(map[string]string)
 	fillMap(expReader, expMap)
 	fillMap(actReader, actMap)
@@ -1171,7 +1187,7 @@ type mockEmailHandler struct {
 
 func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
-	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
+	alerts := cmd.Data["Alerts"].(alertingTemplates.ExtendedAlerts)
 	for i := range alerts {
 		alerts[i].StartsAt = time.Time{}
 	}
@@ -2292,8 +2308,8 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 				"Title":   "[FIRING:1] EmailAlert (default)",
 				"Message": "",
 				"Status":  "firing",
-				"Alerts": channels.ExtendedAlerts{
-					channels.ExtendedAlert{
+				"Alerts": alertingTemplates.ExtendedAlerts{
+					alertingTemplates.ExtendedAlert{
 						Status:       "firing",
 						Labels:       template.KV{"alertname": "EmailAlert", "grafana_folder": "default"},
 						Annotations:  template.KV{},

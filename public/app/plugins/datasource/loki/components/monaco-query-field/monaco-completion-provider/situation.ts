@@ -63,14 +63,14 @@ function parseStringLiteral(text: string): string {
   if (text.startsWith('"') && text.endsWith('"')) {
     // NOTE: this is not 100% perfect, we only unescape the double-quote,
     // there might be other characters too
-    return inside.replace(/\\"/, '"');
+    return inside.replace(/\\"/gm, '"');
   }
 
   // Single quotes
   if (text.startsWith("'") && text.endsWith("'")) {
     // NOTE: this is not 100% perfect, we only unescape the single-quote,
     // there might be other characters too
-    return inside.replace(/\\'/, "'");
+    return inside.replace(/\\'/gm, "'");
   }
 
   // Backticks

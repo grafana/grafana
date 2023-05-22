@@ -15,7 +15,6 @@ const (
 	WeightSavedItems
 	WeightCreate
 	WeightDashboard
-	WeightQueryLibrary
 	WeightExplore
 	WeightAlerting
 	WeightDataConnections
@@ -43,6 +42,7 @@ const (
 	NavIDAdmin              = "admin"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
+	NavIDAlertingLegacy     = "alerting-legacy"
 	NavIDMonitoring         = "monitoring"
 	NavIDReporting          = "reports"
 	NavIDApps               = "apps"

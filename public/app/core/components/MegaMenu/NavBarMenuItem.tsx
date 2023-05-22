@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -31,7 +32,11 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
   );
 
   let element = (
-    <button className={cx(styles.button, styles.element)} onClick={onClick}>
+    <button
+      data-testid={selectors.components.NavMenu.item}
+      className={cx(styles.button, styles.element)}
+      onClick={onClick}
+    >
       {linkContent}
     </button>
   );
@@ -39,11 +44,23 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
   if (url) {
     element =
       !target && url.startsWith('/') ? (
-        <Link className={styles.element} href={url} target={target} onClick={onClick}>
+        <Link
+          data-testid={selectors.components.NavMenu.item}
+          className={styles.element}
+          href={url}
+          target={target}
+          onClick={onClick}
+        >
           {linkContent}
         </Link>
       ) : (
-        <a href={url} target={target} className={styles.element} onClick={onClick}>
+        <a
+          data-testid={selectors.components.NavMenu.item}
+          href={url}
+          target={target}
+          className={styles.element}
+          onClick={onClick}
+        >
           {linkContent}
         </a>
       );

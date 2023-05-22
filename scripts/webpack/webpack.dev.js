@@ -88,8 +88,8 @@ module.exports = (env = {}) =>
               },
             },
           }),
-      // next major version of ForkTsChecker is dropping support for ESLint
       new ESLintPlugin({
+        cache: true,
         lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
       }),

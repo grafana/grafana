@@ -4,7 +4,7 @@ title: Plugin Anatomy
 
 Plugins come in different shapes and sizes. Before we dive deeper, let's look at some of the properties that are shared by all of them.
 
-Every plugin you create will require at least two files: `plugin.json` and `module.ts`.
+Every plugin you create will require at least two files: `plugin.json` and `src/module.ts`.
 
 ### plugin.json
 

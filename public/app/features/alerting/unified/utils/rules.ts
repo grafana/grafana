@@ -5,7 +5,9 @@ import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRule,
   CombinedRuleGroup,
+  CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
   PrometheusRuleIdentifier,
   PromRuleWithLocation,
@@ -26,10 +28,12 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
 import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { getRulesSourceName } from './datasource';
 import { AsyncRequestState } from './redux';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
@@ -50,6 +54,10 @@ export function isRecordingRulerRule(rule?: RulerRuleDTO): rule is RulerRecordin
 
 export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
+}
+
+export function isGrafanaRulerRulePaused(rule: CombinedRule) {
+  return rule.rulerRule && isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.is_paused);
 }
 
 export function alertInstanceKey(alert: Alert): string {
@@ -112,6 +120,22 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   }, []);
 };
 
+export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
+  isAlertingRule(rule.promRule) ? rule.promRule : null;
+
+export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
+  return rules.reduce<CombinedRuleWithLocation[]>((acc, { rulesSource, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (rule.promRule && isAlertingRule(rule.promRule)) {
+          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
+        }
+      });
+    });
+    return acc;
+  }, []);
+};
+
 export function alertStateToState(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): State {
   let key: PromAlertingRuleState | GrafanaAlertState | AlertState;
   if (Object.values(AlertState).includes(state as AlertState)) {
@@ -140,8 +164,8 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [AlertState.Unknown]: 'info',
 };
 
-export function getFirstActiveAt(promRule: AlertingRule) {
-  if (!promRule.alerts) {
+export function getFirstActiveAt(promRule?: AlertingRule) {
+  if (!promRule?.alerts) {
     return null;
   }
   return promRule.alerts.reduce((prev, alert) => {

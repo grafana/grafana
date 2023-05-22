@@ -55,16 +55,6 @@ type crawlStatus struct {
 	Last     time.Time    `json:"last,omitempty"`
 }
 
-type dashboardPreviewsSystemRequirements struct {
-	Met                                bool   `json:"met"`
-	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
-}
-
-type dashboardPreviewsSetupConfig struct {
-	SystemRequirements dashboardPreviewsSystemRequirements `json:"systemRequirements"`
-	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
-}
-
 type ThumbnailKind string
 type ThumbnailState string
 
@@ -161,8 +151,6 @@ type DashboardThumbnailMeta struct {
 
 type GetDashboardThumbnailCommand struct {
 	DashboardThumbnailMeta
-
-	Result *DashboardThumbnail
 }
 
 const DashboardVersionForManualThumbnailUpload = -1
@@ -176,7 +164,6 @@ type DashboardWithStaleThumbnail struct {
 }
 
 type FindDashboardThumbnailCountCommand struct {
-	Result int64
 }
 
 type FindDashboardsWithStaleThumbnailsCommand struct {
@@ -184,7 +171,6 @@ type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeThumbnailsWithEmptyDsUIDs  bool
 	Theme                             models.Theme
 	Kind                              ThumbnailKind
-	Result                            []*DashboardWithStaleThumbnail
 }
 
 type SaveDashboardThumbnailCommand struct {
@@ -193,8 +179,6 @@ type SaveDashboardThumbnailCommand struct {
 	Image            []byte
 	MimeType         string
 	DatasourceUIDs   []string
-
-	Result *DashboardThumbnail
 }
 
 type UpdateThumbnailStateCommand struct {

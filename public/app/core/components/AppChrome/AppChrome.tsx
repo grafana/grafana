@@ -5,9 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
+import { SearchWrapper } from 'app/features/search';
 import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
+// import { NavBar } from '../NavBar/NavBar';
 
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
@@ -21,7 +24,18 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
 
   if (!config.featureToggles.topnav) {
-    return <main className="main-view">{children}</main>;
+    return (
+      <>
+        {!state.chromeless && (
+          <>
+            {/* <NavBar /> */}
+            <SearchWrapper />
+            <CommandPalette />
+          </>
+        )}
+        <main className="main-view">{children}</main>
+      </>
+    );
   }
 
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
@@ -31,6 +45,10 @@ export function AppChrome({ children }: Props) {
     [styles.contentNoSearchBar]: searchBarHidden,
     [styles.contentChromeless]: state.chromeless,
   });
+
+  // Chromeless routes are without topNav, mega menu, search & command palette
+  // We check chromeless twice here instead of having a separate path so {children}
+  // doesn't get re-mounted when chromeless goes from true to false.
 
   return (
     <main className="main-view">
@@ -49,7 +67,12 @@ export function AppChrome({ children }: Props) {
         </div>
       )}
       <div className={contentClass}>{children}</div>
-      {!state.chromeless && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />}
+      {!state.chromeless && (
+        <>
+          <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          <CommandPalette />
+        </>
+      )}
     </main>
   );
 }

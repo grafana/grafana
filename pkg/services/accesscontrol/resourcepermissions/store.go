@@ -39,11 +39,13 @@ type flatResourcePermission struct {
 }
 
 func (p *flatResourcePermission) IsManaged(scope string) bool {
-	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && !p.IsInherited(scope)
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope == scope
 }
 
+// IsInherited returns true for scopes from managed permissions that don't directly match the required scope
+// (ie, managed permissions on a parent resource)
 func (p *flatResourcePermission) IsInherited(scope string) bool {
-	return !strings.HasPrefix(p.Scope, strings.Split(strings.ReplaceAll(scope, "*", ""), ":")[0])
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
 }
 
 func (s *store) SetUserResourcePermission(
@@ -412,10 +414,12 @@ func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int
 }
 
 func flatPermissionsToResourcePermissions(scope string, permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
-	var managed, provisioned []flatResourcePermission
+	var managed, inherited, provisioned []flatResourcePermission
 	for _, p := range permissions {
 		if p.IsManaged(scope) {
 			managed = append(managed, p)
+		} else if p.IsInherited(scope) {
+			inherited = append(inherited, p)
 		} else {
 			provisioned = append(provisioned, p)
 		}
@@ -423,6 +427,9 @@ func flatPermissionsToResourcePermissions(scope string, permissions []flatResour
 
 	var result []accesscontrol.ResourcePermission
 	if g := flatPermissionsToResourcePermission(scope, managed); g != nil {
+		result = append(result, *g)
+	}
+	if g := flatPermissionsToResourcePermission(scope, inherited); g != nil {
 		result = append(result, *g)
 	}
 	if g := flatPermissionsToResourcePermission(scope, provisioned); g != nil {

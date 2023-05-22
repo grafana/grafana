@@ -159,6 +159,10 @@ func (f *AlertmanagerApiHandler) handleRouteGetGrafanaAlertingConfig(ctx *contex
 	return f.GrafanaSvc.RouteGetAlertingConfig(ctx)
 }
 
+func (f *AlertmanagerApiHandler) handleRouteGetGrafanaAlertingConfigHistory(ctx *contextmodel.ReqContext) response.Response {
+	return f.GrafanaSvc.RouteGetAlertingConfigHistory(ctx)
+}
+
 func (f *AlertmanagerApiHandler) handleRouteGetGrafanaSilence(ctx *contextmodel.ReqContext, id string) response.Response {
 	return f.GrafanaSvc.RouteGetSilence(ctx, id)
 }

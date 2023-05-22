@@ -79,8 +79,8 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 
 func DataSourceModel() *datasources.DataSource {
 	return &datasources.DataSource{
-		Id:             DatasourceID,
-		Uid:            DatasourceUID,
+		ID:             DatasourceID,
+		UID:            DatasourceUID,
 		Name:           DatasourceUID,
 		Type:           DatasourceType,
 		JsonData:       simplejson.New(),

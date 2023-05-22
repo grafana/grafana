@@ -1,13 +1,9 @@
 import { rest } from 'msw';
-import { SetupServerApi } from 'msw/node';
+import { SetupServer } from 'msw/node';
 
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from '../../../../types/unified-alerting-dto';
 
-export function mockRulerRulesApiResponse(
-  server: SetupServerApi,
-  rulesSourceName: string,
-  response: RulerRulesConfigDTO
-) {
+export function mockRulerRulesApiResponse(server: SetupServer, rulesSourceName: string, response: RulerRulesConfigDTO) {
   server.use(
     rest.get(`/api/ruler/${rulesSourceName}/api/v1/rules`, (req, res, ctx) =>
       res(ctx.json<RulerRulesConfigDTO>(response))
@@ -16,7 +12,7 @@ export function mockRulerRulesApiResponse(
 }
 
 export function mockRulerRulesGroupApiResponse(
-  server: SetupServerApi,
+  server: SetupServer,
   rulesSourceName: string,
   namespace: string,
   group: string,

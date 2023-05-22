@@ -16,9 +16,13 @@ import {
   durationToMilliseconds,
   parseDuration,
 } from '@grafana/data';
-import { ScaleDistribution } from '@grafana/schema';
+import {
+  ScaleDistribution,
+  HeatmapCellLayout,
+  HeatmapCalculationMode,
+  HeatmapCalculationOptions,
+} from '@grafana/schema';
 
-import { HeatmapCellLayout, HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
@@ -191,7 +195,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     },
     fields: [
       {
-        name: 'xMax',
+        name: xField.type === FieldType.time ? 'xMax' : 'x',
         type: xField.type,
         values: new ArrayVector(xs),
         config: xField.config,

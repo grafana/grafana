@@ -80,12 +80,12 @@ describe('Read GeoJSON', () => {
     `);
 
     expect(
-      frame.fields.reduce((acc, v, idx, arr) => {
+      frame.fields.reduce<Record<string, unknown[]>>((acc, v, idx, arr) => {
         if (v.type !== FieldType.geo) {
           acc[v.name] = v.values.toArray();
         }
         return acc;
-      }, {} as any)
+      }, {})
     ).toMatchInlineSnapshot(`
       {
         "hello": [

@@ -455,7 +455,7 @@ describe('Labels as Columns', () => {
 });
 
 function toSimpleObject(frame: DataFrame) {
-  const obj: any = {};
+  const obj: Record<string, unknown> = {};
   for (const field of frame.fields) {
     obj[field.name] = field.values.toArray();
   }

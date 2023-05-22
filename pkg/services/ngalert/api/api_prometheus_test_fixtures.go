@@ -38,7 +38,7 @@ const classicConditionsModel = `
 	}],
 	"datasource": {
 		"type": "__expr__",
-		"uid": "-100"
+		"uid": "__expr__"
 	},
 	"hide": false,
 	"intervalMs": 1000,

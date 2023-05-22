@@ -23,6 +23,7 @@ export interface QueryRunnerOptions {
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
+  queryCachingTTL?: number;
   app?: string;
 }
 

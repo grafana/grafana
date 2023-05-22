@@ -1,12 +1,11 @@
 {
   "__inputs": [
     {
-      "name": "DS_TESTDATA_DB",
-      "label": "TestData DB",
+      "name": "DS_TESTDATA",
+      "label": "TestData",
       "description": "",
       "type": "datasource",
-      "pluginId": "testdata",
-      "pluginName": "TestData DB"
+      "pluginId": "testdata"
     }
   ],
   "__requires": [
@@ -31,7 +30,7 @@
     {
       "type": "datasource",
       "id": "testdata",
-      "name": "TestData DB",
+      "name": "TestData",
       "version": "1.0.0"
     }
   ],
@@ -146,7 +145,7 @@
       }
     },
     {
-      "datasource": "${DS_TESTDATA_DB}",
+      "datasource": "${DS_TESTDATA}",
       "description": "",
       "gridPos": {
         "h": 6,

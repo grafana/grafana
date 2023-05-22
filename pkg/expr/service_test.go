@@ -38,8 +38,8 @@ func TestService(t *testing.T) {
 		{
 			RefID: "A",
 			DataSource: &datasources.DataSource{
-				OrgId: 1,
-				Uid:   "test",
+				OrgID: 1,
+				UID:   "test",
 				Type:  "test",
 			},
 			JSON: json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),

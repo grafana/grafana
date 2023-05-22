@@ -20,7 +20,7 @@ export async function addDataLinksToLogsResponse(
   getRegion: (region: string) => string,
   tracingDatasourceUid?: string
 ): Promise<void> {
-  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
+  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, false, fieldName);
   const getVariableValue = (target: string) => getVariableValueFn(target, request.scopedVars);
 
   for (const dataFrame of response.data as DataFrame[]) {

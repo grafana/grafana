@@ -31,17 +31,17 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*entity.Entit
 	// TODO: fix model so this is not possible
 	if obj.Items == nil {
 		temp := make([]playlist.Item, 0)
-		obj.Items = &temp
+		obj.Items = temp
 	}
 
 	obj.Uid = uid // make sure they are consistent
 	summary := &entity.EntitySummary{
 		UID:         uid,
 		Name:        obj.Name,
-		Description: fmt.Sprintf("%d items, refreshed every %s", len(*obj.Items), obj.Interval),
+		Description: fmt.Sprintf("%d items, refreshed every %s", len(obj.Items), obj.Interval),
 	}
 
-	for _, item := range *obj.Items {
+	for _, item := range obj.Items {
 		switch item.Type {
 		case playlist.ItemTypeDashboardByUid:
 			summary.References = append(summary.References, &entity.EntityExternalReference{

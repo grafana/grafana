@@ -66,6 +66,25 @@ describe('DashboardModel', () => {
     });
   });
 
+  describe('when initalized with duplicate panel ids', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = createDashboardModelFixture({
+        panels: [
+          createPanelJSONFixture({ id: 6 }),
+          createPanelJSONFixture({ id: 2 }),
+          createPanelJSONFixture({}), // undefined
+          createPanelJSONFixture({ id: 2 }),
+        ],
+      });
+    });
+
+    it('should ensure unique panel ids', () => {
+      expect(model.panels.map((p) => p.id)).toEqual([6, 2, 7, 8]);
+    });
+  });
+
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
       const model = createDashboardModelFixture();
@@ -329,7 +348,7 @@ describe('DashboardModel', () => {
         },
         {},
         // getVariablesFromState stub to return a variable
-        () => [{} as any]
+        jest.fn().mockImplementation(() => [{}])
       );
     });
 
@@ -644,8 +663,8 @@ describe('DashboardModel', () => {
       model.processRepeats();
       expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       const saveModel = model.getSaveModelClone();
       expect(saveModel.panels.length).toBe(2);
@@ -653,8 +672,8 @@ describe('DashboardModel', () => {
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
-      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
     it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
@@ -697,19 +716,19 @@ describe('DashboardModel', () => {
       model.processRepeats();
       expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.snapshot = { timestamp: new Date() };
       const saveModel = model.getSaveModelClone();
       expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
-      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });
 
@@ -1106,7 +1125,7 @@ describe('DashboardModel', () => {
 
 describe('exitViewPanel', () => {
   function getTestContext() {
-    const panel: any = { setIsViewing: jest.fn() };
+    const panel = new PanelModel({ setIsViewing: jest.fn() });
     const dashboard = createDashboardModelFixture();
     dashboard.startRefresh = jest.fn();
     dashboard.panelInView = panel;
@@ -1143,7 +1162,7 @@ describe('exitViewPanel', () => {
 
 describe('exitPanelEditor', () => {
   function getTestContext(pauseAutoRefresh = false) {
-    const panel: any = { destroy: jest.fn() };
+    const panel = new PanelModel({ destroy: jest.fn() });
     const dashboard = createDashboardModelFixture();
     const timeSrvMock = {
       pauseAutoRefresh: jest.fn(),

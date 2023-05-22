@@ -185,17 +185,19 @@ describe('ensureStringValues', () => {
 
 describe('containsVariable', () => {
   it.each`
-    value                                | expected
-    ${''}                                | ${false}
-    ${'$var'}                            | ${true}
-    ${{ thing1: '${var}' }}              | ${true}
-    ${{ thing1: '${var:fmt}' }}          | ${true}
-    ${{ thing1: ['1', '${var}'] }}       | ${true}
-    ${{ thing1: ['1', '[[var]]'] }}      | ${true}
-    ${{ thing1: ['1', '[[var:fmt]]'] }}  | ${true}
-    ${{ thing1: { thing2: '${var}' } }}  | ${true}
-    ${{ params: [['param', '$var']] }}   | ${true}
-    ${{ params: [['param', '${var}']] }} | ${true}
+    value                                 | expected
+    ${''}                                 | ${false}
+    ${'$var'}                             | ${true}
+    ${{ thing1: '${var}' }}               | ${true}
+    ${{ thing1: '${var:fmt}' }}           | ${true}
+    ${{ thing1: '${var.fieldPath}' }}     | ${true}
+    ${{ thing1: '${var.fieldPath:fmt}' }} | ${true}
+    ${{ thing1: ['1', '${var}'] }}        | ${true}
+    ${{ thing1: ['1', '[[var]]'] }}       | ${true}
+    ${{ thing1: ['1', '[[var:fmt]]'] }}   | ${true}
+    ${{ thing1: { thing2: '${var}' } }}   | ${true}
+    ${{ params: [['param', '$var']] }}    | ${true}
+    ${{ params: [['param', '${var}']] }}  | ${true}
   `('when called with value:$value then result should be:$expected', ({ value, expected }) => {
     expect(containsVariable(value, 'var')).toEqual(expected);
   });

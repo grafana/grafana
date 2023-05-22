@@ -20,11 +20,12 @@ export function getDefaultEditorMode(expr: string) {
     return QueryEditorMode.Code;
   }
 
-  const value = store.get(queryEditorModeDefaultLocalStorageKey) as QueryEditorMode;
+  const value: string | undefined = store.get(queryEditorModeDefaultLocalStorageKey);
   switch (value) {
-    case QueryEditorMode.Builder:
-    case QueryEditorMode.Code:
-      return value;
+    case 'code':
+      return QueryEditorMode.Code;
+
+    case 'builder':
     default:
       return QueryEditorMode.Builder;
   }

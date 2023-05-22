@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +19,8 @@ var errTest = errors.New("test error")
 
 func TestLoginUsingLDAP(t *testing.T) {
 	LDAPLoginScenario(t, "When LDAP enabled and no server configured", func(sc *LDAPLoginScenarioContext) {
-		setting.LDAPEnabled = true
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
 
 		sc.withLoginResult(false)
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -31,7 +32,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 		}
 
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, cfg)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -39,11 +40,12 @@ func TestLoginUsingLDAP(t *testing.T) {
 	})
 
 	LDAPLoginScenario(t, "When LDAP disabled", func(sc *LDAPLoginScenarioContext) {
-		setting.LDAPEnabled = false
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = false
 
 		sc.withLoginResult(false)
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, cfg)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)
@@ -104,7 +106,7 @@ func mockLDAPAuthenticator(valid bool) *mockAuth {
 		validLogin: valid,
 	}
 
-	newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+	newLDAP = func(servers []*ldap.ServerConfig, _ *setting.Cfg) multildap.IMultiLDAP {
 		return mock
 	}
 
@@ -133,15 +135,6 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 			LDAPAuthenticatorMock: mock,
 		}
 
-		origNewLDAP := newLDAP
-		origGetLDAPConfig := getLDAPConfig
-		origLDAPEnabled := setting.LDAPEnabled
-		t.Cleanup(func() {
-			newLDAP = origNewLDAP
-			getLDAPConfig = origGetLDAPConfig
-			setting.LDAPEnabled = origLDAPEnabled
-		})
-
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			config := &ldap.Config{
 				Servers: []*ldap.ServerConfig{
@@ -154,7 +147,7 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 			return config, nil
 		}
 
-		newLDAP = func(server []*ldap.ServerConfig) multildap.IMultiLDAP {
+		newLDAP = func(server []*ldap.ServerConfig, _ *setting.Cfg) multildap.IMultiLDAP {
 			return mock
 		}
 

@@ -15,22 +15,87 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import traceGenerator from '../demo/trace-generators';
 import { getTraceName } from '../model/trace-viewer';
-import transformTraceData from '../model/transform-trace-data';
 
 import TracePageHeader, { TracePageHeaderEmbedProps } from './TracePageHeader';
 
-const trace = transformTraceData(traceGenerator.trace({}));
+export const trace = {
+  services: [{ name: 'serviceA', numberOfSpans: 1 }],
+  spans: [
+    {
+      traceID: '164afda25df92413',
+      spanID: '164afda25df92413',
+      operationName: 'HTTP Client',
+      serviceName: 'serviceA',
+      subsidiarilyReferencedBy: [],
+      startTime: 1675602037286989,
+      duration: 5685,
+      logs: [],
+      references: [],
+      tags: [],
+      processID: '164afda25df92413',
+      flags: 0,
+      process: {
+        serviceName: 'lb',
+        tags: [],
+      },
+      relativeStartTime: 0,
+      depth: 0,
+      hasChildren: false,
+      childSpanCount: 0,
+      warnings: [],
+    },
+    {
+      traceID: '164afda25df92413',
+      spanID: '164afda25df92413',
+      operationName: 'HTTP Client',
+      serviceName: 'serviceB',
+      subsidiarilyReferencedBy: [],
+      startTime: 1675602037286989,
+      duration: 5685,
+      logs: [],
+      references: [],
+      tags: [
+        {
+          key: 'http.url',
+          type: 'String',
+          value: `/v2/gamma/792edh2w897y2huehd2h89`,
+        },
+        {
+          key: 'http.method',
+          type: 'String',
+          value: `POST`,
+        },
+        {
+          key: 'http.status_code',
+          type: 'String',
+          value: `200`,
+        },
+      ],
+      processID: '164afda25df92413',
+      flags: 0,
+      process: {
+        serviceName: 'lb',
+        tags: [],
+      },
+      relativeStartTime: 0,
+      depth: 0,
+      hasChildren: false,
+      childSpanCount: 0,
+      warnings: [],
+    },
+  ],
+  traceID: '8bb35a31-eb64-512d-aaed-ddd61887bb2b',
+  traceName: 'serviceA: GET',
+  processes: {},
+  duration: 2355515,
+  startTime: 1675605056289000,
+  endTime: 1675605058644515,
+};
+
 const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
   const defaultProps = {
-    canCollapse: false,
-    hideSummary: false,
-    onSlimViewClicked: () => {},
-    onTraceGraphViewClicked: () => {},
-    slimView: false,
     trace,
-    hideMap: false,
     timeZone: '',
     viewRange: { time: { current: [10, 20] as [number, number] } },
     updateNextViewRangeTime: () => {},
@@ -82,42 +147,17 @@ describe('TracePageHeader test', () => {
     expect(screen.getByText(/Reset Selection/)).toBeInTheDocument();
   });
 
-  describe('observes the visibility toggles for various UX elements', () => {
-    it('hides the minimap when hideMap === true', () => {
-      setup({ hideMap: true } as TracePageHeaderEmbedProps);
-      expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
-    });
+  it('shows the summary', () => {
+    const { rerender } = setup();
 
-    it('hides the summary when hideSummary === true', () => {
-      const { rerender } = setup({ hideSummary: false } as TracePageHeaderEmbedProps);
-      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-
-      rerender(<TracePageHeader {...({ hideSummary: false, trace: null } as TracePageHeaderEmbedProps)} />);
-      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-
-      rerender(
-        <TracePageHeader
-          {...({
-            trace: trace,
-            hideSummary: true,
-            hideMap: false,
-            viewRange: { time: { current: [10, 20] } },
-          } as TracePageHeaderEmbedProps)}
-        />
-      );
-      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-
-      rerender(
-        <TracePageHeader
-          {...({
-            trace: trace,
-            hideSummary: false,
-            hideMap: false,
-            viewRange: { time: { current: [10, 20] } },
-          } as TracePageHeaderEmbedProps)}
-        />
-      );
-      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-    });
+    rerender(
+      <TracePageHeader
+        {...({
+          trace: trace,
+          viewRange: { time: { current: [10, 20] } },
+        } as unknown as TracePageHeaderEmbedProps)}
+      />
+    );
+    expect(screen.queryAllByRole('listitem')).toHaveLength(5);
   });
 });

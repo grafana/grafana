@@ -35,17 +35,24 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
-	settings, err := hs.getFrontendSettingsMap(c)
+	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
 	}
 
-	settings["dateFormats"] = hs.Cfg.DateFormats
+	settings.IsPublicDashboardView = c.IsPublicDashboardView
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+		if !prefs.Cookies("analytics") {
+			settings.GoogleAnalytics4Id = ""
+			settings.GoogleAnalyticsId = ""
+		}
 	}
 
 	// Locale is used for some number and date/time formatting, whereas language is used just for
@@ -70,16 +77,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
 		appURL = fmt.Sprintf("%s://localhost:%s", hs.Cfg.Protocol, hs.Cfg.HTTPPort)
 		appSubURL = ""
-		settings["appSubUrl"] = ""
+		settings.AppSubUrl = ""
 	}
 
 	navTree, err := hs.navTreeService.GetNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
-	}
-
-	if c.IsPublicDashboardView {
-		settings["isPublicDashboardView"] = true
 	}
 
 	weekStart := ""
@@ -109,15 +112,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
+			Analytics: dtos.AnalyticsSettings{
+				Identifier:         c.SignedInUser.Analytics.Identifier,
+				IntercomIdentifier: c.SignedInUser.Analytics.IntercomIdentifier,
+			},
 		},
 		Settings:                            settings,
 		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
-		GoogleTagManagerId:                  setting.GoogleTagManagerId,
+		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerID,
 		BuildVersion:                        setting.BuildVersion,
 		BuildCommit:                         setting.BuildCommit,
 		NewGrafanaVersion:                   hs.grafanaUpdateChecker.LatestVersion(),

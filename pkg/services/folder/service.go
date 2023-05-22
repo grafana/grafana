@@ -26,3 +26,15 @@ type Service interface {
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 }
+
+// FolderStore is a folder store.
+//
+//go:generate mockery --name FolderStore --structname FakeFolderStore --outpkg foldertest --output foldertest --filename folder_store_mock.go
+type FolderStore interface {
+	// GetFolderByTitle retrieves a folder by its title
+	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*Folder, error)
+	// GetFolderByUID retrieves a folder by its UID
+	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*Folder, error)
+	// GetFolderByID retrieves a folder by its ID
+	GetFolderByID(ctx context.Context, orgID int64, id int64) (*Folder, error)
+}

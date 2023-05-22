@@ -2,7 +2,7 @@ import { omit } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { MutableDataFrame, sortDataFrame } from '../../dataframe';
-import { isTimeSeries } from '../../dataframe/utils';
+import { isTimeSeriesFrames } from '../../dataframe/utils';
 import { getFrameDisplayName } from '../../field/fieldState';
 import {
   Field,
@@ -30,7 +30,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
           return data;
         }
 
-        if (!isTimeSeries(data)) {
+        if (!isTimeSeriesFrames(data)) {
           return data;
         }
 

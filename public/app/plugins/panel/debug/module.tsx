@@ -2,9 +2,9 @@ import { PanelPlugin } from '@grafana/data';
 
 import { DebugPanel } from './DebugPanel';
 import { StateViewEditor } from './StateView';
-import { DebugMode, DebugPanelOptions } from './types';
+import { DebugMode, PanelOptions } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<DebugPanelOptions>(DebugPanel).useFieldConfig().setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<PanelOptions>(DebugPanel).useFieldConfig().setPanelOptions((builder) => {
   builder
     .addSelect({
       path: 'mode',

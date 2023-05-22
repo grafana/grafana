@@ -185,7 +185,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 	}
 
 	// Validate URL
-	if ds.Url == "" {
+	if ds.URL == "" {
 		return "", fmt.Errorf("URL for this data source is empty")
 	}
 
@@ -206,12 +206,12 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 	if !ok {
 		r.log.Debug(
 			"Unable to determine prometheus datasource subtype, using default prefix",
-			"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
+			"datasource", ds.UID, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
 		return prefix, nil
 	}
 
 	r.log.Debug("Determined prometheus datasource subtype",
-		"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype)
+		"datasource", ds.UID, "datasourceType", ds.Type, "subtype", subtype)
 	return subTypePrefix, nil
 }
 

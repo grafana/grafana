@@ -53,8 +53,7 @@ func TestBacktesting(t *testing.T) {
 	require.Truef(t, ok, "The data file does not contain a field `query`")
 
 	for _, query := range queryRequest.Data {
-		isExpr, _ := query.IsExpression()
-		if isExpr {
+		if query.DatasourceUID == "__expr__" {
 			continue
 		}
 		t.Logf("Creating a new test data source with UID %s", query.DatasourceUID)
@@ -62,11 +61,11 @@ func TestBacktesting(t *testing.T) {
 			Name:   "Backtesting-TestDatasource",
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,
-			Uid:    query.DatasourceUID,
-			UserId: userId,
-			OrgId:  1,
+			UID:    query.DatasourceUID,
+			UserID: userId,
+			OrgID:  1,
 		}
-		err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
+		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
 		require.NoError(t, err)
 		break
 	}

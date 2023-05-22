@@ -1,7 +1,7 @@
 import { ScopedVars } from './ScopedVars';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { DataLink, LinkModel } from './dataLink';
-import { DecimalCount, DisplayProcessor, DisplayValue } from './displayValue';
+import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
@@ -16,7 +16,9 @@ export enum FieldType {
   // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
   trace = 'trace',
   geo = 'geo',
+  enum = 'enum',
   other = 'other', // Object, Array, etc
+  frame = 'frame', // DataFrame
 }
 
 /**
@@ -91,8 +93,22 @@ export interface FieldConfig<TOptions = any> {
   // Alternative to empty string
   noValue?: string;
 
+  // The field type may map to specific config
+  type?: FieldTypeConfig;
+
   // Panel Specific Values
   custom?: TOptions;
+}
+
+export interface FieldTypeConfig {
+  enum?: EnumFieldConfig;
+}
+
+export interface EnumFieldConfig {
+  text?: string[];
+  color?: string[];
+  icon?: string[];
+  description?: string[];
 }
 
 /** @public */
@@ -188,6 +204,12 @@ export interface FieldState {
    * this would applied more than one time.
    */
   nullThresholdApplied?: boolean;
+
+  /**
+   * Can be used by visualizations to cache max display value lengths to aid alignment.
+   * It's up to each visualization to calculate and set this.
+   */
+  alignmentFactors?: DisplayValueAlignmentFactors;
 }
 
 /** @public */

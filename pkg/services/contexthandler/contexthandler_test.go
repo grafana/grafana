@@ -24,9 +24,9 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	tryRotateCallCount := 0
 	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, error) {
+			userAgent string) (bool, *auth.UserToken, error) {
 			tryRotateCallCount++
-			return false, nil
+			return false, nil, nil
 		},
 	}
 
@@ -46,11 +46,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
 	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, error) {
+			userAgent string) (bool, *auth.UserToken, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
 			token.AuthToken = newToken
-			return true, nil
+			return true, token, nil
 		},
 	}
 

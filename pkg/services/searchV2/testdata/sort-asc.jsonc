@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 2,
 //          "sortBy": "test"
@@ -28,6 +32,10 @@
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 2,
             "sortBy": "test"

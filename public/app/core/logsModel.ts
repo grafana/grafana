@@ -1,5 +1,5 @@
-import { size } from 'lodash';
-import { Observable, from, isObservable } from 'rxjs';
+import { groupBy, size } from 'lodash';
+import { from, isObservable, Observable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
@@ -13,11 +13,11 @@ import {
   dateTimeFormatTimeAgo,
   FieldCache,
   FieldColorModeId,
-  FieldConfig,
   FieldType,
   FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
+  getTimeField,
   Labels,
   LoadingState,
   LogLevel,
@@ -26,9 +26,11 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsModel,
-  MutableDataFrame,
+  LogsVolumeCustomMetaData,
+  LogsVolumeType,
   rangeUtil,
   ScopedVars,
+  sortDataFrame,
   textUtil,
   TimeRange,
   toDataFrame,
@@ -40,6 +42,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
+
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 
@@ -221,6 +224,7 @@ export function dataFrameToLogsModel(
         absoluteRange
       );
       logsModel.visibleRange = visibleRange;
+      logsModel.bucketSize = bucketSize;
       logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
@@ -417,7 +421,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
 
-      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+      // Data sources that set up searchWords on backend use meta.custom.searchWords
+      // Data sources that set up searchWords trough frontend can use meta.searchWords
+      const searchWords = series.meta?.custom?.searchWords ?? series.meta?.searchWords ?? [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 
       const labels = getLabelsForFrameRow(info, j);
@@ -601,69 +607,22 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
   };
 }
 
-/**
- * Take multiple data frames, sum up values and group by level.
- * Return a list of data frames, each representing single level.
- */
-export function aggregateRawLogsVolume(
-  rawLogsVolume: DataFrame[],
-  extractLevel: (dataFrame: DataFrame) => LogLevel
-): DataFrame[] {
-  const logsVolumeByLevelMap: Partial<Record<LogLevel, DataFrame[]>> = {};
-
-  rawLogsVolume.forEach((dataFrame) => {
-    const level = extractLevel(dataFrame);
-    if (!logsVolumeByLevelMap[level]) {
-      logsVolumeByLevelMap[level] = [];
+const updateLogsVolumeConfig = (
+  dataFrame: DataFrame,
+  extractLevel: (dataFrame: DataFrame) => LogLevel,
+  oneLevelDetected: boolean
+): DataFrame => {
+  dataFrame.fields = dataFrame.fields.map((field) => {
+    if (field.type === FieldType.number) {
+      field.config = {
+        ...field.config,
+        ...getLogVolumeFieldConfig(extractLevel(dataFrame), oneLevelDetected),
+      };
     }
-    logsVolumeByLevelMap[level]!.push(dataFrame);
+    return field;
   });
-
-  return Object.keys(logsVolumeByLevelMap).map((level: string) => {
-    return aggregateFields(
-      logsVolumeByLevelMap[level as LogLevel]!,
-      getLogVolumeFieldConfig(level as LogLevel, Object.keys(logsVolumeByLevelMap).length === 1)
-    );
-  });
-}
-
-/**
- * Aggregate multiple data frames into a single data frame by adding values.
- * Multiple data frames for the same level are passed here to get a single
- * data frame for a given level. Aggregation by level happens in aggregateRawLogsVolume()
- */
-function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFrame {
-  const aggregatedDataFrame = new MutableDataFrame();
-  if (!dataFrames.length) {
-    return aggregatedDataFrame;
-  }
-
-  const totalLength = dataFrames[0].length;
-  const timeField = new FieldCache(dataFrames[0]).getFirstFieldOfType(FieldType.time);
-
-  if (!timeField) {
-    return aggregatedDataFrame;
-  }
-
-  aggregatedDataFrame.addField({ name: 'Time', type: FieldType.time }, totalLength);
-  aggregatedDataFrame.addField({ name: 'Value', type: FieldType.number, config }, totalLength);
-
-  dataFrames.forEach((dataFrame) => {
-    dataFrame.fields.forEach((field) => {
-      if (field.type === FieldType.number) {
-        for (let pointIndex = 0; pointIndex < totalLength; pointIndex++) {
-          const currentValue = aggregatedDataFrame.get(pointIndex).Value;
-          const valueToAdd = field.values.get(pointIndex);
-          const totalValue =
-            currentValue === null && valueToAdd === null ? null : (currentValue || 0) + (valueToAdd || 0);
-          aggregatedDataFrame.set(pointIndex, { Value: totalValue, Time: timeField.values.get(pointIndex) });
-        }
-      }
-    });
-  });
-
-  return aggregatedDataFrame;
-}
+  return dataFrame;
+};
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
   extractLevel: (dataFrame: DataFrame) => LogLevel;
@@ -693,7 +652,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
   logsVolumeRequest.hideFromInspector = true;
 
   return new Observable((observer) => {
-    let rawLogsVolume: DataFrame[] = [];
+    let logsVolumeData: DataFrame[] = [];
     observer.next({
       state: LoadingState.Loading,
       error: undefined,
@@ -705,20 +664,6 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
     const subscription = queryObservable.subscribe({
       complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-        if (aggregatedLogsVolume[0]) {
-          aggregatedLogsVolume[0].meta = {
-            custom: {
-              targets: options.targets,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-            },
-          };
-        }
-        observer.next({
-          state: LoadingState.Done,
-          error: undefined,
-          data: aggregatedLogsVolume,
-        });
         observer.complete();
       },
       next: (dataQueryResponse: DataQueryResponse) => {
@@ -731,7 +676,35 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+          const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
+          logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            let sourceRefId = dataFrame.refId || '';
+            if (sourceRefId.startsWith('log-volume-')) {
+              sourceRefId = sourceRefId.substr('log-volume-'.length);
+            }
+
+            const logsVolumeCustomMetaData: LogsVolumeCustomMetaData = {
+              logsVolumeType: LogsVolumeType.FullRange,
+              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              datasourceName: datasource.name,
+              sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
+            };
+
+            dataFrame.meta = {
+              ...dataFrame.meta,
+              custom: {
+                ...dataFrame.meta?.custom,
+                ...logsVolumeCustomMetaData,
+              },
+            };
+            return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);
+          });
+
+          observer.next({
+            state: dataQueryResponse.state,
+            error: undefined,
+            data: logsVolumeData,
+          });
         }
       },
       error: (error) => {
@@ -788,7 +761,11 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsSample = rawLogsSample.concat(dataQueryResponse.data.map(toDataFrame));
+          rawLogsSample = dataQueryResponse.data.map((dataFrame) => {
+            const frame = toDataFrame(dataFrame);
+            const { timeIndex } = getTimeField(frame);
+            return sortDataFrame(frame, timeIndex);
+          });
         }
       },
       error: (error) => {
@@ -807,7 +784,7 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
 }
 
 function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval: string; intervalMs?: number } {
-  if (scopedVars.__interval) {
+  if (scopedVars.__interval_ms) {
     let intervalMs: number = scopedVars.__interval_ms.value;
     let interval = '';
     // below 5 seconds we force the resolution to be per 1ms as interval in scopedVars is not less than 10ms

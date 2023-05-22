@@ -33,13 +33,7 @@ export function SectionNav({ model }: Props) {
           </div>
         </CustomScrollbar>
       </nav>
-      <SectionNavToggle
-        className={cx(styles.collapseIcon, {
-          [styles.collapseIconExpanded]: isExpanded,
-        })}
-        isExpanded={Boolean(isExpanded)}
-        onClick={onToggleSectionNav}
-      />
+      <SectionNavToggle isExpanded={isExpanded} onClick={onToggleSectionNav} />
     </div>
   );
 }
@@ -74,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     navContainer: css({
       display: 'flex',
       flexDirection: 'column',
+      position: 'relative',
 
       [theme.breakpoints.up('md')]: {
         flexDirection: 'row',
@@ -107,31 +102,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       minWidth: '250px',
       [theme.breakpoints.up('md')]: {
         padding: theme.spacing(4.5, 1, 2, 2),
-      },
-    }),
-    collapseIcon: css({
-      alignSelf: 'center',
-      margin: theme.spacing(1, 0),
-      position: 'relative',
-      top: theme.spacing(0),
-      transform: 'rotate(90deg)',
-      transition: theme.transitions.create('opacity'),
-
-      [theme.breakpoints.up('md')]: {
-        alignSelf: 'flex-start',
-        left: 0,
-        margin: theme.spacing(0, 0, 0, 1),
-        top: theme.spacing(2),
-        transform: 'none',
-      },
-
-      'div:hover > &, &:focus': {
-        opacity: 1,
-      },
-    }),
-    collapseIconExpanded: css({
-      [theme.breakpoints.up('md')]: {
-        opacity: 0,
       },
     }),
   };

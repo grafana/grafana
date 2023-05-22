@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 
 import { CorrelationData } from './useCorrelations';
 
@@ -31,17 +31,19 @@ export const attachCorrelationsToDataFrames = (
 
 const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlations: CorrelationData[]) => {
   dataFrame.fields.forEach((field) => {
+    field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
       if (correlation.config?.field === field.name) {
-        field.config.links = field.config.links || [];
-        field.config.links.push({
+        field.config.links!.push({
           internal: {
             query: correlation.config?.target,
             datasourceUid: correlation.target.uid,
             datasourceName: correlation.target.name,
+            transformations: correlation.config?.transformations,
           },
           url: '',
           title: correlation.label || correlation.target.name,
+          origin: DataLinkConfigOrigin.Correlations,
         });
       }
     });

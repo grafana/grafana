@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -273,10 +274,10 @@ func TestAlertRuleService(t *testing.T) {
 				errNil: false,
 			},
 			{
-				name:   "should not be able to update from provenance api to none",
+				name:   "should be able to update from provenance api to none",
 				from:   models.ProvenanceAPI,
 				to:     models.ProvenanceNone,
-				errNil: false,
+				errNil: true,
 			},
 			{
 				name:   "should not be able to update from provenance file to api",
@@ -371,7 +372,7 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 			{
 				RefID:         "A",
 				Model:         json.RawMessage("{}"),
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(60),
 					To:   models.Duration(0),

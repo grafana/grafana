@@ -201,7 +201,6 @@ describe('AddToDashboardButton', () => {
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -243,7 +242,6 @@ describe('AddToDashboardButton', () => {
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -359,7 +357,6 @@ describe('AddToDashboardButton', () => {
         {
           uid: 'someUid',
           isStarred: false,
-          items: [],
           title: 'Dashboard Title',
           tags: [],
           type: DashboardSearchItemType.DashDB,

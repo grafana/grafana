@@ -11,7 +11,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { Step } from './components/Step';
 import { getSteps } from './steps';
-import { Card, SetupStep } from './types';
+import { SetupStep } from './types';
 
 interface State {
   checksDone: boolean;
@@ -30,7 +30,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const { steps } = this.state;
 
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
-      const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {
+      const checkedCardsPromises = step.cards.map(async (card) => {
         return card.check().then((passed) => {
           return { ...card, done: passed };
         });

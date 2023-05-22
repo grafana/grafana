@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 import { ParcaDataSourceOptions } from './types';
 
@@ -18,6 +19,9 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={false}
         onChange={onOptionsChange}
       />
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
     </>
   );
 };

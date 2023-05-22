@@ -474,15 +474,19 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	}
 
 	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
-	if err == nil {
-		if rows.Next() {
-			err = rows.Scan(&createdAt, &createdBy)
-		}
-		if err == nil {
-			err = rows.Close()
-		}
+	if err != nil {
+		return err
 	}
-	return err
+
+	if rows.Next() {
+		err = rows.Scan(&createdAt, &createdBy)
+	}
+
+	errClose := rows.Close()
+	if err != nil {
+		return err
+	}
+	return errClose
 }
 
 func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
@@ -498,10 +502,13 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if rows.Next() {
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
-	if err == nil {
-		err = rows.Close()
+
+	errClose := rows.Close()
+	if err != nil {
+		return nil, err
 	}
-	return current, err
+
+	return current, errClose
 }
 
 func (s *sqlEntityServer) writeSearchInfo(
@@ -742,7 +749,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		fields:   fields,
 		from:     "entity", // the table
 		args:     []interface{}{},
-		limit:    int(r.Limit),
+		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 	entityQuery.addWhere("tenant_id", user.OrgID)
@@ -772,11 +779,6 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	query, args := entityQuery.toQuery()
-
-	fmt.Printf("\n\n-------------\n")
-	fmt.Printf("%s\n", query)
-	fmt.Printf("%v\n", args)
-	fmt.Printf("\n-------------\n\n")
 
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
@@ -813,7 +815,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 
 		// found one more than requested
-		if len(rsp.Results) >= entityQuery.limit {
+		if int64(len(rsp.Results)) >= entityQuery.limit {
 			// TODO? should this encode start+offset?
 			rsp.NextPageToken = oid
 			break

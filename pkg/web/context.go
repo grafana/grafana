@@ -16,12 +16,15 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"html/template"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
@@ -103,7 +106,10 @@ func (ctx *Context) HTML(status int, name string, data interface{}) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
-		panic("Context.HTML:" + err.Error())
+		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
+			return
+		}
+		panic(fmt.Sprintf("Context.HTML - Error rendering template: %s. You may need to build frontend assets \n %s", name, err.Error()))
 	}
 }
 

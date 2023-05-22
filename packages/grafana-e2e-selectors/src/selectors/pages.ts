@@ -27,6 +27,10 @@ export const Pages = {
     url: '/datasources',
     dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
   },
+  EditDataSource: {
+    url: (dataSourceUid: string) => `/datasources/edit/${dataSourceUid}`,
+    settings: 'Datasource settings page basic settings',
+  },
   AddDataSource: {
     url: '/datasources/new',
     /** @deprecated Use dataSourcePluginsV2 */
@@ -38,6 +42,7 @@ export const Pages = {
   },
   AddDashboard: {
     url: '/dashboard/new',
+    itemButton: (title: string) => `data-testid ${title}`,
     addNewPanel: 'Add new panel',
     addNewRow: 'Add new row',
     addNewPanelLibrary: 'Add new panel from panel library',
@@ -63,6 +68,9 @@ export const Pages = {
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
     },
     Settings: {
+      Actions: {
+        close: 'data-testid dashboard-settings-close',
+      },
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
@@ -186,16 +194,39 @@ export const Pages = {
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
-      EnableSwitch: 'data-testid public dashboard on off switch',
+      PauseSwitch: 'data-testid public dashboard pause switch',
       EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
-      SaveConfigButton: 'data-testid public dashboard save config button',
+      CreateButton: 'data-testid public dashboard create button',
       DeleteButton: 'data-testid public dashboard delete button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
-      UnsupportedDatasourcesWarningAlert: 'data-testid public dashboard unsupported datasources',
+      UnsupportedDataSourcesWarningAlert: 'data-testid public dashboard unsupported data sources alert',
+      NoUpsertPermissionsWarningAlert: 'data-testid public dashboard no upsert permissions alert',
       EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
+      EmailSharingConfiguration: {
+        Container: 'data-testid email sharing config container',
+        ShareType: 'data-testid public dashboard share type',
+        EmailSharingInput: 'data-testid public dashboard email sharing input',
+        EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
+        EmailSharingList: 'data-testid public dashboard email sharing list',
+        DeleteEmail: 'data-testid public dashboard delete email button',
+        ReshareLink: 'data-testid public dashboard reshare link button',
+      },
     },
+  },
+  PublicDashboard: {
+    page: 'public-dashboard-page',
+    NotAvailable: {
+      container: 'public-dashboard-not-available',
+      title: 'public-dashboard-title',
+      pausedDescription: 'public-dashboard-paused-description',
+    },
+  },
+  RequestViewAccess: {
+    form: 'request-view-access-form',
+    recipientInput: 'request-view-access-recipient-input',
+    submitButton: 'request-view-access-submit-button',
   },
   Explore: {
     url: '/explore',
@@ -236,6 +267,14 @@ export const Pages = {
       linkButton: 'public-dashboard-link-button',
       configButton: 'public-dashboard-configuration-button',
       trashcanButton: 'public-dashboard-remove-button',
+    },
+  },
+  UserListPage: {
+    org: {
+      url: '/org/users',
+    },
+    admin: {
+      url: '/admin/users',
     },
   },
 };

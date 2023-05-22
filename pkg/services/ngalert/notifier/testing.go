@@ -8,38 +8,49 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-type FakeConfigStore struct {
+type fakeConfigStore struct {
 	configs map[int64]*models.AlertConfiguration
+
+	// historicConfigs stores configs by orgID.
+	historicConfigs map[int64][]*models.HistoricAlertConfiguration
 }
 
 // Saves the image or returns an error.
-func (f *FakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
+func (f *fakeConfigStore) SaveImage(ctx context.Context, img *models.Image) error {
 	return models.ErrImageNotFound
 }
 
-func (f *FakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
+func (f *fakeConfigStore) GetImage(ctx context.Context, token string) (*models.Image, error) {
 	return nil, models.ErrImageNotFound
 }
 
-func (f *FakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
+func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
 	return nil, nil, models.ErrImageNotFound
 }
 
-func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) FakeConfigStore {
+func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfiguration) *fakeConfigStore {
 	t.Helper()
 
-	return FakeConfigStore{
-		configs: configs,
+	historicConfigs := make(map[int64][]*models.HistoricAlertConfiguration)
+	for org, config := range configs {
+		historicConfig := models.HistoricConfigFromAlertConfig(*config)
+		historicConfigs[org] = append(historicConfigs[org], &historicConfig)
+	}
+
+	return &fakeConfigStore{
+		configs:         configs,
+		historicConfigs: historicConfigs,
 	}
 }
 
-func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
+func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
 	for _, configuration := range f.configs {
 		result = append(result, configuration)
@@ -47,33 +58,32 @@ func (f *FakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context)
 	return result, nil
 }
 
-func (f *FakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	var ok bool
-	query.Result, ok = f.configs[query.OrgID]
+func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error) {
+	config, ok := f.configs[query.OrgID]
 	if !ok {
-		return store.ErrNoAlertmanagerConfiguration
+		return nil, store.ErrNoAlertmanagerConfiguration
 	}
-
-	return nil
+	return config, nil
 }
 
-func (f *FakeConfigStore) SaveAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	f.configs[cmd.OrgID] = &models.AlertConfiguration{
+func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
+}
+
+func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+	cfg := models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
+		ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
 		OrgID:                     cmd.OrgID,
 		ConfigurationVersion:      "v1",
 		Default:                   cmd.Default,
 	}
+	f.configs[cmd.OrgID] = &cfg
 
-	return nil
-}
-
-func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
-	f.configs[cmd.OrgID] = &models.AlertConfiguration{
-		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-		OrgID:                     cmd.OrgID,
-		ConfigurationVersion:      "v1",
-		Default:                   cmd.Default,
+	historicConfig := models.HistoricConfigFromAlertConfig(cfg)
+	if cmd.LastApplied != 0 {
+		historicConfig.LastApplied = time.Now().UTC().Unix()
+		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
 	}
 
 	if err := callback(); err != nil {
@@ -83,18 +93,65 @@ func (f *FakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 	return nil
 }
 
-func (f *FakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	if config, exists := f.configs[cmd.OrgID]; exists && config.ConfigurationHash == cmd.FetchedConfigurationHash {
-		f.configs[cmd.OrgID] = &models.AlertConfiguration{
+		newConfig := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 			OrgID:                     cmd.OrgID,
 			ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
 			ConfigurationVersion:      "v1",
 			Default:                   cmd.Default,
 		}
+		f.configs[cmd.OrgID] = &newConfig
+
+		historicConfig := models.HistoricConfigFromAlertConfig(newConfig)
+		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
 		return nil
 	}
+
 	return errors.New("config not found or hash not valid")
+}
+
+func (f *fakeConfigStore) MarkConfigurationAsApplied(_ context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error {
+	orgConfigs, ok := f.historicConfigs[cmd.OrgID]
+	if !ok {
+		return nil
+	}
+
+	// Iterate backwards to find the latest config first.
+	for i := len(orgConfigs) - 1; i >= 0; i-- {
+		for _, config := range orgConfigs {
+			if config.ConfigurationHash == cmd.ConfigurationHash {
+				config.LastApplied = time.Now().UTC().Unix()
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
+func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error) {
+	configsByOrg, ok := f.historicConfigs[orgID]
+	if !ok {
+		return []*models.HistoricAlertConfiguration{}, nil
+	}
+
+	// Iterate backwards to get the latest applied configs.
+	var configs []*models.HistoricAlertConfiguration
+	start := len(configsByOrg) - 1
+	end := start - limit
+	if end < 0 {
+		end = 0
+	}
+
+	for i := start; i >= end; i-- {
+		if configsByOrg[i].LastApplied > 0 {
+			configs = append(configs, configsByOrg[i])
+		}
+	}
+
+	return configs, nil
 }
 
 type FakeOrgStore struct {

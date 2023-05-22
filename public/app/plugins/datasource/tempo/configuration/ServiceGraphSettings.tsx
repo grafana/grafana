@@ -14,11 +14,9 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Service Graph</h3>
+      <h3 className="page-heading">Service graph</h3>
 
-      <div className={styles.infoText}>
-        To allow querying service graph data you have to select a Prometheus instance where the data is stored.
-      </div>
+      <div className={styles.infoText}>Select a Prometheus data source that contains the service graph data.</div>
 
       <InlineFieldRow className={styles.row}>
         <InlineField
@@ -65,7 +63,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding-bottom: ${theme.spacing(2)};
     color: ${theme.colors.text.secondary};
   `,
-
   row: css`
     label: row;
     align-items: baseline;

@@ -1,8 +1,8 @@
 import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   PluginErrorCode,
@@ -12,7 +12,7 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -73,12 +73,12 @@ const renderPluginDetails = (
     plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
   });
 
+  locationService.push({ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' });
+
   return render(
-    <MemoryRouter initialEntries={[{ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' }]}>
-      <Provider store={store}>
-        <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
-      </Provider>
-    </MemoryRouter>
+    <TestProvider store={store}>
+      <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
+    </TestProvider>
   );
 };
 
@@ -465,17 +465,17 @@ describe('Plugin details page', () => {
 
       // Does not show an Install button
       rendered = renderPluginDetails({ id }, { pluginsStateOverride });
-      expect(await rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
       rendered.unmount();
 
       // Does not show a Uninstall button
       rendered = renderPluginDetails({ id, isInstalled: true }, { pluginsStateOverride });
-      expect(await rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
       rendered.unmount();
 
       // Does not show an Update button
       rendered = renderPluginDetails({ id, isInstalled: true, hasUpdate: true }, { pluginsStateOverride });
-      expect(await rendered.queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
 
       // Shows a message to the user
       // TODO<Import these texts from a single source of truth instead of having them defined in multiple places>
@@ -491,15 +491,17 @@ describe('Plugin details page', () => {
 
       // Should not show an "Install" button
       rendered = renderPluginDetails({ id, isInstalled: false });
-      expect(await rendered.queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+      rendered.unmount();
 
       // Should not show an "Uninstall" button
       rendered = renderPluginDetails({ id, isInstalled: true });
-      expect(await rendered.queryByRole('button', { name: /^uninstall/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /^uninstall/i })).not.toBeInTheDocument();
+      rendered.unmount();
 
       // Should not show an "Update" button
       rendered = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
-      expect(await rendered.queryByRole('button', { name: /^update/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /^update/i })).not.toBeInTheDocument();
     });
 
     it('should display a "Create" button as a post installation step for installed data source plugins', async () => {

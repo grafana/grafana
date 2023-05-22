@@ -18,7 +18,7 @@ export function OrganizationSwitcher() {
   const onSelectChange = (option: SelectableValue<UserOrg>) => {
     if (option.value) {
       setUserOrganization(option.value.orgId);
-      locationService.partial({ orgId: option.value.orgId }, true);
+      locationService.push(`/?orgId=${option.value.orgId}`);
       // TODO how to reload the current page
       window.location.reload();
     }
@@ -31,12 +31,12 @@ export function OrganizationSwitcher() {
 
   const breakpoint = theme.breakpoints.values.sm;
 
-  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
+  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
 
   useMediaQueryChange({
     breakpoint,
     onChange: (e) => {
-      setIsSmallScreen(e.matches);
+      setIsSmallScreen(!e.matches);
     },
   });
 

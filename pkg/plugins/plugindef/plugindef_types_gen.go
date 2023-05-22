@@ -11,91 +11,65 @@ package plugindef
 
 // Defines values for BasicRole.
 const (
-	BasicRoleAdmin BasicRole = "Admin"
-
-	BasicRoleEditor BasicRole = "Editor"
-
+	BasicRoleAdmin        BasicRole = "Admin"
+	BasicRoleEditor       BasicRole = "Editor"
 	BasicRoleGrafanaAdmin BasicRole = "Grafana Admin"
-
-	BasicRoleViewer BasicRole = "Viewer"
+	BasicRoleViewer       BasicRole = "Viewer"
 )
 
 // Defines values for DependencyType.
 const (
-	DependencyTypeApp DependencyType = "app"
-
+	DependencyTypeApp        DependencyType = "app"
 	DependencyTypeDatasource DependencyType = "datasource"
-
-	DependencyTypePanel DependencyType = "panel"
+	DependencyTypePanel      DependencyType = "panel"
 )
 
 // Defines values for IncludeRole.
 const (
-	IncludeRoleAdmin IncludeRole = "Admin"
-
+	IncludeRoleAdmin  IncludeRole = "Admin"
 	IncludeRoleEditor IncludeRole = "Editor"
-
 	IncludeRoleViewer IncludeRole = "Viewer"
 )
 
 // Defines values for IncludeType.
 const (
-	IncludeTypeApp IncludeType = "app"
-
-	IncludeTypeDashboard IncludeType = "dashboard"
-
-	IncludeTypeDatasource IncludeType = "datasource"
-
-	IncludeTypePage IncludeType = "page"
-
-	IncludeTypePanel IncludeType = "panel"
-
-	IncludeTypeRenderer IncludeType = "renderer"
-
+	IncludeTypeApp            IncludeType = "app"
+	IncludeTypeDashboard      IncludeType = "dashboard"
+	IncludeTypeDatasource     IncludeType = "datasource"
+	IncludeTypePage           IncludeType = "page"
+	IncludeTypePanel          IncludeType = "panel"
+	IncludeTypeRenderer       IncludeType = "renderer"
 	IncludeTypeSecretsmanager IncludeType = "secretsmanager"
 )
 
 // Defines values for Category.
 const (
-	CategoryCloud Category = "cloud"
-
+	CategoryCloud      Category = "cloud"
 	CategoryEnterprise Category = "enterprise"
-
-	CategoryLogging Category = "logging"
-
-	CategoryOther Category = "other"
-
-	CategoryProfiling Category = "profiling"
-
-	CategorySql Category = "sql"
-
-	CategoryTracing Category = "tracing"
-
-	CategoryTsdb Category = "tsdb"
+	CategoryIot        Category = "iot"
+	CategoryLogging    Category = "logging"
+	CategoryOther      Category = "other"
+	CategoryProfiling  Category = "profiling"
+	CategorySql        Category = "sql"
+	CategoryTracing    Category = "tracing"
+	CategoryTsdb       Category = "tsdb"
 )
 
 // Defines values for Type.
 const (
-	TypeApp Type = "app"
-
-	TypeDatasource Type = "datasource"
-
-	TypePanel Type = "panel"
-
-	TypeRenderer Type = "renderer"
-
+	TypeApp            Type = "app"
+	TypeDatasource     Type = "datasource"
+	TypePanel          Type = "panel"
+	TypeRenderer       Type = "renderer"
 	TypeSecretsmanager Type = "secretsmanager"
 )
 
 // Defines values for ReleaseState.
 const (
-	ReleaseStateAlpha ReleaseState = "alpha"
-
-	ReleaseStateBeta ReleaseState = "beta"
-
+	ReleaseStateAlpha      ReleaseState = "alpha"
+	ReleaseStateBeta       ReleaseState = "beta"
 	ReleaseStateDeprecated ReleaseState = "deprecated"
-
-	ReleaseStateStable ReleaseState = "stable"
+	ReleaseStateStable     ReleaseState = "stable"
 )
 
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
@@ -105,7 +79,7 @@ type BasicRole string
 
 // BuildInfo defines model for BuildInfo.
 type BuildInfo struct {
-	// Git branch the plugin was built from.
+	// Git branch the plugin was built from
 	Branch *string `json:"branch,omitempty"`
 
 	// Git hash of the commit the plugin was built from
@@ -116,7 +90,7 @@ type BuildInfo struct {
 	Pr   *int32  `json:"pr,omitempty"`
 	Repo *string `json:"repo,omitempty"`
 
-	// Time when the plugin was built, as a Unix timestamp.
+	// Time when the plugin was built, as a Unix timestamp
 	Time *int64 `json:"time,omitempty"`
 }
 
@@ -131,8 +105,8 @@ type Dependencies struct {
 	// v7.x.x.
 	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
 
-	// An array of required plugins on which this plugin depends.
-	Plugins *[]Dependency `json:"plugins,omitempty"`
+	// An array of required plugins on which this plugin depends
+	Plugins []Dependency `json:"plugins,omitempty"`
 }
 
 // Dependency describes another plugin on which a plugin depends.
@@ -160,7 +134,7 @@ type Include struct {
 	// RBAC action the user must have to access the route
 	Action *string `json:"action,omitempty"`
 
-	// Add the include to the side menu.
+	// Add the include to the navigation menu.
 	AddToNav *bool `json:"addToNav,omitempty"`
 
 	// (Legacy) The Angular component to use for a page.
@@ -176,7 +150,9 @@ type Include struct {
 	Name *string `json:"name,omitempty"`
 
 	// Used for app plugins.
-	Path *string      `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// The minimum role a user must have to see this page in the navigation menu.
 	Role *IncludeRole `json:"role,omitempty"`
 
 	// IncludeType is a string identifier of a plugin include type, which is
@@ -187,7 +163,7 @@ type Include struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// IncludeRole defines model for Include.Role.
+// The minimum role a user must have to see this page in the navigation menu.
 type IncludeRole string
 
 // IncludeType is a string identifier of a plugin include type, which is
@@ -197,15 +173,15 @@ type IncludeType string
 // Metadata about a Grafana plugin. Some fields are used on the plugins
 // page in Grafana and others on grafana.com, if the plugin is published.
 type Info struct {
-	// Information about the plugin author.
+	// Information about the plugin author
 	Author *struct {
-		// Author's name.
+		// Author's name
 		Email *string `json:"email,omitempty"`
 
-		// Author's name.
+		// Author's name
 		Name *string `json:"name,omitempty"`
 
-		// Link to author's website.
+		// Link to author's website
 		Url *string `json:"url,omitempty"`
 	} `json:"author,omitempty"`
 	Build *BuildInfo `json:"build,omitempty"`
@@ -220,12 +196,12 @@ type Info struct {
 	// An array of link objects to be displayed on this plugin's
 	// project page in the form `{name: 'foo', url:
 	// 'http://example.com'}`
-	Links *[]struct {
+	Links []struct {
 		Name *string `json:"name,omitempty"`
 		Url  *string `json:"url,omitempty"`
 	} `json:"links,omitempty"`
 
-	// SVG images that are used as plugin icons.
+	// SVG images that are used as plugin icons
 	Logos *struct {
 		// Link to the "large" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
@@ -238,15 +214,15 @@ type Info struct {
 
 	// An array of screenshot objects in the form `{name: 'bar', path:
 	// 'img/screenshot.png'}`
-	Screenshots *[]struct {
+	Screenshots []struct {
 		Name *string `json:"name,omitempty"`
 		Path *string `json:"path,omitempty"`
 	} `json:"screenshots,omitempty"`
 
-	// Date when this plugin was built.
+	// Date when this plugin was built
 	Updated *string `json:"updated,omitempty"`
 
-	// Project version of this commit, e.g. `6.7.x`.
+	// Project version of this commit, e.g. `6.7.x`
 	Version *string `json:"version,omitempty"`
 }
 
@@ -274,29 +250,31 @@ type Permission struct {
 
 // PluginDef defines model for PluginDef.
 type PluginDef struct {
-	// For data source plugins, if the plugin supports alerting.
+	// Schema definition for the plugin.json file. Used primarily for schema validation.
+	Schema *string `json:"$schema,omitempty"`
+
+	// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
 	Alerting *bool `json:"alerting,omitempty"`
 
 	// For data source plugins, if the plugin supports annotation
 	// queries.
 	Annotations *bool `json:"annotations,omitempty"`
 
-	// Set to true for app plugins that should be enabled by default
-	// in all orgs
+	// Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs.
 	AutoEnabled *bool `json:"autoEnabled,omitempty"`
 
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
 
-	// builtin indicates whether the plugin is developed and shipped as part
-	// of Grafana. Also known as a "core plugin."
+	// [internal only] Indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a 'core plugin'.
 	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
 	Category     *Category    `json:"category,omitempty"`
 	Dependencies Dependencies `json:"dependencies"`
 
-	// Grafana Enerprise specific features.
+	// Grafana Enterprise specific features.
 	EnterpriseFeatures *struct {
 		// Enable/Disable health diagnostics errors. Requires Grafana
 		// >=7.5.5.
@@ -312,38 +290,34 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
-	// For data source plugins, include hidden queries in the data
-	// request.
-	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
-
-	// hideFromList excludes the plugin from listings in Grafana's UI. Only
-	// allowed for builtin plugins.
+	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
+	// allowed for `builtIn` plugins.
 	HideFromList bool `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
-	// grafana.com, then the plugin id has to follow the naming
+	// grafana.com, then the plugin `id` has to follow the naming
 	// conventions.
 	Id string `json:"id"`
 
 	// Resources to include in plugin.
-	Includes *[]Include `json:"includes,omitempty"`
+	Includes []Include `json:"includes,omitempty"`
 
 	// Metadata about a Grafana plugin. Some fields are used on the plugins
 	// page in Grafana and others on grafana.com, if the plugin is published.
 	Info Info `json:"info"`
 
-	// For data source plugins, if the plugin supports logs.
+	// For data source plugins, if the plugin supports logs. It may be used to filter logs only features.
 	Logs *bool `json:"logs,omitempty"`
 
 	// For data source plugins, if the plugin supports metric queries.
-	// Used in Explore.
+	// Used to enable the plugin in the panel editor.
 	Metrics *bool `json:"metrics,omitempty"`
 
 	// Human-readable name of the plugin that is shown to the user in
 	// the UI.
 	Name string `json:"name"`
 
-	// The PascalCase name for the plugin. Used for creating machine-friendly
+	// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
 	// identifiers, typically in code generation.
 	//
 	// If not provided, defaults to name, but title-cased and sanitized (only
@@ -376,10 +350,10 @@ type PluginDef struct {
 	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
 	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
 	// inherits them from the Viewer basic role.
-	Roles *[]RoleRegistration `json:"roles,omitempty"`
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Routes is a list of proxy routes, if any. For datasource plugins only.
-	Routes *[]Route `json:"routes,omitempty"`
+	Routes []Route `json:"routes,omitempty"`
 
 	// For panel plugins. Hides the query editor.
 	SkipDataQuery *bool `json:"skipDataQuery,omitempty"`
@@ -387,13 +361,10 @@ type PluginDef struct {
 	// ReleaseState indicates release maturity state of a plugin.
 	State *ReleaseState `json:"state,omitempty"`
 
-	// For data source plugins, if the plugin supports streaming.
+	// For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.
 	Streaming *bool `json:"streaming,omitempty"`
 
-	// This is an undocumented feature.
-	Tables *bool `json:"tables,omitempty"`
-
-	// For data source plugins, if the plugin supports tracing.
+	// For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins.
 	Tracing *bool `json:"tracing,omitempty"`
 
 	// type indicates which type of Grafana plugin this is, of the defined
@@ -404,7 +375,7 @@ type PluginDef struct {
 // Plugin category used on the Add data source page.
 type Category string
 
-// type indicates which type of Grafana plugin this is, of the defined
+// Type type indicates which type of Grafana plugin this is, of the defined
 // set of Grafana plugin types.
 type Type string
 
@@ -444,11 +415,11 @@ type RoleRegistration struct {
 type Route struct {
 	// For data source plugins. Route headers set the body content and
 	// length to the proxied request.
-	Body *map[string]interface{} `json:"body,omitempty"`
+	Body map[string]interface{} `json:"body,omitempty"`
 
 	// For data source plugins. Route headers adds HTTP headers to the
 	// proxied request.
-	Headers *[]Header `json:"headers,omitempty"`
+	Headers []Header `json:"headers,omitempty"`
 
 	// TODO docs
 	// TODO should this really be separate from TokenAuth?
@@ -470,8 +441,8 @@ type Route struct {
 
 	// For data source plugins. Route URL is where the request is
 	// proxied to.
-	Url       *string     `json:"url,omitempty"`
-	UrlParams *[]URLParam `json:"urlParams,omitempty"`
+	Url       *string    `json:"url,omitempty"`
+	UrlParams []URLParam `json:"urlParams,omitempty"`
 }
 
 // TODO docs
@@ -481,7 +452,7 @@ type TokenAuth struct {
 
 	// The list of scopes that your application should be granted
 	// access to.
-	Scopes *[]string `json:"scopes,omitempty"`
+	Scopes []string `json:"scopes,omitempty"`
 
 	// URL to fetch the authentication token.
 	Url *string `json:"url,omitempty"`

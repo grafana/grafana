@@ -12,12 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	alertingLogging "github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,6 +42,9 @@ var rmMigTitle = "remove unified alerting data"
 
 const clearMigrationEntryTitle = "clear migration entry %q"
 const codeMigration = "code migration"
+
+// It is defined in pkg/expr/service.go as "DatasourceType"
+const expressionDatasourceUID = "__expr__"
 
 type MigrationError struct {
 	AlertId int64
@@ -263,10 +267,35 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// cache for the general folders
 	generalFolderCache := make(map[int64]*dashboard)
 
+	folderHelper := folderHelper{
+		sess: sess,
+		mg:   mg,
+	}
+
+	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
+		f, ok := generalFolderCache[dash.OrgId]
+		if !ok {
+			// get or create general folder
+			f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+			if err != nil {
+				return nil, MigrationError{
+					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			generalFolderCache[dash.OrgId] = f
+		}
+		// No need to assign default permissions to general folder
+		// because they are included to the query result if it's a folder with no permissions
+		// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
+		return f, nil
+	}
+
 	// Per org map of newly created rules to which notification channels it should send to.
 	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
+		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -290,18 +319,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 		}
 
-		folderHelper := folderHelper{
-			sess: sess,
-			mg:   mg,
-		}
-
 		var folder *dashboard
 		switch {
 		case dash.HasACL:
 			folderName := getAlertFolderNameFromDashboard(&dash)
 			f, ok := folderCache[folderName]
 			if !ok {
-				mg.Logger.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "org", dash.OrgId, "dashboard_uid", dash.Uid, "folder", folderName)
+				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
 				f, err = folderHelper.createFolder(dash.OrgId, folderName)
 				if err != nil {
@@ -331,29 +355,20 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			// get folder if exists
 			f, err := folderHelper.getFolder(dash, da)
 			if err != nil {
-				return MigrationError{
-					Err:     err,
-					AlertId: da.Id,
-				}
-			}
-			folder = &f
-		default:
-			f, ok := generalFolderCache[dash.OrgId]
-			if !ok {
-				// get or create general folder
-				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+				// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
+				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderId)
+				folder, err = gf(dash, da)
 				if err != nil {
-					return MigrationError{
-						Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
-						AlertId: da.Id,
-					}
+					return err
 				}
-				generalFolderCache[dash.OrgId] = f
+			} else {
+				folder = &f
 			}
-			// No need to assign default permissions to general folder
-			// because they are included to the query result if it's a folder with no permissions
-			// https://github.com/grafana/grafana/blob/076e2ce06a6ecf15804423fcc8dca1b620a321e5/pkg/services/sqlstore/dashboard_acl.go#L109
-			folder = f
+		default:
+			folder, err = gf(dash, da)
+			if err != nil {
+				return err
+			}
 		}
 
 		if folder.Uid == "" {
@@ -478,7 +493,7 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				return err
 			}
 			var (
-				cfg = &channels.NotificationChannelConfig{
+				cfg = &receivers.NotificationChannelConfig{
 					UID:                   gr.UID,
 					OrgID:                 orgID,
 					Name:                  gr.Name,
@@ -502,12 +517,12 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels_config.Factory(gr.Type)
+			receiverFactory, exists := alertingNotify.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
-				return &channels.FakeLogger{}
+			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) alertingLogging.Logger {
+				return &alertingLogging.FakeLogger{}
 			}, setting.BuildVersion)
 			if err != nil {
 				return err

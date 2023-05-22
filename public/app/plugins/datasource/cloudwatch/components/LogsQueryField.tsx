@@ -102,6 +102,9 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
             cleanText={cleanText}
             placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
             portalOrigin="cloudwatch"
+            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+            // And slate will claim the focus, making it impossible to leave the field.
+            onBlur={() => {}}
           />
         </div>
         {ExtraFieldElement}

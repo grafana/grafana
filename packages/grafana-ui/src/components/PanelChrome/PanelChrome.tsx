@@ -5,14 +5,16 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { Dropdown } from '../Dropdown/Dropdown';
+import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
-import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip';
 
+import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
+import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
+import { TitleItem } from './TitleItem';
 
 /**
  * @internal
@@ -22,9 +24,10 @@ export interface PanelChromeProps {
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
+  hoverHeaderOffset?: number;
   title?: string;
   description?: string | (() => string);
-  titleItems?: ReactNode[];
+  titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
   dragClassCancel?: string;
@@ -43,13 +46,16 @@ export interface PanelChromeProps {
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
-   * @deprecated in favor of props
-   * statusMessage for error messages
-   * and loadingState for loading and streaming data
-   * which will serve the same purpose
-   * of showing/interacting with the panel's state
-   */
+   * @deprecated use `actions' instead
+   **/
   leftItems?: ReactNode[];
+  actions?: ReactNode;
+  displayMode?: 'default' | 'transparent';
+  onCancelQuery?: () => void;
+  /**
+   * callback when opening the panel menu
+   */
+  onOpenMenu?: () => void;
 }
 
 /**
@@ -67,31 +73,28 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
-  titleItems = [],
+  displayMode = 'default',
+  titleItems,
   menu,
   dragClass,
   dragClassCancel,
   hoverHeader = false,
+  hoverHeaderOffset,
   loadingState,
   statusMessage,
   statusMessageOnClick,
   leftItems,
+  actions,
+  onCancelQuery,
+  onOpenMenu,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  // To Do rely on hoverHeader prop for header, not separate props
-  // once hoverHeader is implemented
-  //
-  // Backwards compatibility for having a designated space for the header
+  const hasHeader = !hoverHeader;
 
-  const hasHeader =
-    hoverHeader === false &&
-    (title.length > 0 ||
-      titleItems.length > 0 ||
-      description !== '' ||
-      loadingState === LoadingState.Streaming ||
-      (leftItems?.length ?? 0) > 0);
+  // hover menu is only shown on hover when not on touch devices
+  const showOnHoverClass = 'show-on-hover';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -101,71 +104,101 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const itemStyles: CSSProperties = {
-    minHeight: headerHeight,
-    minWidth: headerHeight,
-  };
-
   const containerStyles: CSSProperties = { width, height };
-  const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+  if (displayMode === 'transparent') {
+    containerStyles.backgroundColor = 'transparent';
+    containerStyles.border = 'none';
+  }
+
+  /** Old property name now maps to actions */
+  if (leftItems) {
+    actions = leftItems;
+  }
+
+  const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
+
+  const headerContent = (
+    <>
+      {title && (
+        <h6 title={title} className={styles.title}>
+          {title}
+        </h6>
+      )}
+
+      <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+        <PanelDescription description={description} className={dragClassCancel} />
+        {titleItems}
+      </div>
+
+      {loadingState === LoadingState.Streaming && (
+        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+          <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
+            <Icon name="circle-mono" size="md" className={styles.streaming} />
+          </TitleItem>
+        </Tooltip>
+      )}
+      {loadingState === LoadingState.Loading && onCancelQuery && (
+        <DelayRender delay={2000}>
+          <Tooltip content="Cancel query">
+            <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
+              <Icon name="sync-slash" size="md" />
+            </TitleItem>
+          </Tooltip>
+        </DelayRender>
+      )}
+      <div className={styles.rightAligned}>
+        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+      </div>
+    </>
+  );
 
   return (
-    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+    <div className={styles.container} style={containerStyles} data-testid={testid}>
       <div className={styles.loadingBarContainer}>
-        {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={'28%'} height={'2px'} ariaLabel="Panel loading bar" />
-        ) : null}
+        {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
-      <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
-        {title && (
-          <h6 title={title} className={styles.title}>
-            {title}
-          </h6>
-        )}
+      {hoverHeader && (
+        <>
+          <HoverWidget
+            menu={menu}
+            title={title}
+            offset={hoverHeaderOffset}
+            dragClass={dragClass}
+            onOpenMenu={onOpenMenu}
+          >
+            {headerContent}
+          </HoverWidget>
 
-        <PanelDescription description={description} className={dragClassCancel} />
+          {statusMessage && (
+            <div className={styles.errorContainerFloating}>
+              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+            </div>
+          )}
+        </>
+      )}
 
-        {titleItems.length > 0 && (
-          <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-            {titleItems.map((item) => item)}
-          </div>
-        )}
-
-        {loadingState === LoadingState.Streaming && (
-          <div className={styles.item} style={itemStyles} data-testid="panel-streaming">
-            <Tooltip content="Streaming">
-              <Icon name="circle-mono" size="sm" className={styles.streaming} />
-            </Tooltip>
-          </div>
-        )}
-
-        <div className={styles.rightAligned}>
-          {menu && (
-            <Dropdown overlay={menu} placement="bottom">
-              <ToolbarButton
-                aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                title="Menu"
-                icon="ellipsis-v"
-                narrow
-                data-testid="panel-menu-button"
-                className={cx(styles.menuItem, dragClassCancel, 'menu-icon')}
-              />
-            </Dropdown>
+      {hasHeader && (
+        <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
+          {statusMessage && (
+            <div className={dragClassCancel}>
+              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+            </div>
           )}
 
-          {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
-        </div>
+          {headerContent}
 
-        {statusMessage && (
-          <PanelStatus
-            className={cx(styles.errorContainer, dragClassCancel)}
-            message={statusMessage}
-            onClick={statusMessageOnClick}
-            ariaLabel="Panel status"
-          />
-        )}
-      </div>
+          {menu && (
+            <PanelMenu
+              menu={menu}
+              title={title}
+              placement="bottom-end"
+              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
+              onOpenMenu={onOpenMenu}
+            />
+          )}
+        </div>
+      )}
 
       <div className={styles.content} style={contentStyle}>
         {children(innerWidth, innerHeight)}
@@ -174,7 +207,7 @@ export function PanelChrome({
   );
 }
 
-const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
+const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
   return toRender.length > 0 ? renderer(toRender) : null;
 };
@@ -210,7 +243,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor } = theme.components.panel;
+  const { background, borderColor, padding } = theme.components.panel;
 
   return {
     container: css({
@@ -218,21 +251,34 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'relative',
-      borderRadius: '3px',
+      borderRadius: theme.shape.borderRadius(1),
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 0',
 
+      '.show-on-hover': {
+        visibility: 'hidden',
+        opacity: '0',
+      },
+
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
-        '.menu-icon': {
+        '.show-on-hover': {
           visibility: 'visible',
+          opacity: '1',
         },
       },
 
       '&:focus-visible': {
         outline: `1px solid ${theme.colors.action.focus}`,
+      },
+
+      '&:focus-within': {
+        '.show-on-hover': {
+          visibility: 'visible',
+          opacity: '1',
+        },
       },
     }),
     loadingBarContainer: css({
@@ -251,7 +297,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
       label: 'panel-streaming',
@@ -265,6 +310,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       label: 'panel-title',
       marginBottom: 0, // override default h6 margin-bottom
+      padding: theme.spacing(0, padding),
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
@@ -279,16 +325,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'center',
       alignItems: 'center',
     }),
+    hiddenMenu: css({
+      visibility: 'hidden',
+    }),
     menuItem: css({
       label: 'panel-menu',
-      visibility: 'hidden',
       border: 'none',
+      background: theme.colors.secondary.main,
+      '&:hover': {
+        background: theme.colors.secondary.shade,
+      },
     }),
-    errorContainer: css({
+    errorContainerFloating: css({
       label: 'error-container',
       position: 'absolute',
-      left: '50%',
-      transform: 'translateX(-50%)',
+      left: 0,
+      top: 0,
+      zIndex: theme.zIndex.tooltip,
+    }),
+    rightActions: css({
+      display: 'flex',
+      padding: theme.spacing(0, padding),
+      gap: theme.spacing(1),
     }),
     rightAligned: css({
       label: 'right-aligned-container',
@@ -298,9 +356,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     titleItems: css({
       display: 'flex',
-      alignItems: 'center',
-      overflow: 'hidden',
-      padding: theme.spacing(1),
+      height: '100%',
     }),
   };
 };

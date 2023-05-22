@@ -1,66 +1,33 @@
-export enum QueryEditorPropertyType {
-  String = 'string',
-}
+import {
+  QueryEditorOperatorExpression as QueryEditorOperatorExpressionBase,
+  QueryEditorOperator as QueryEditorOperatorBase,
+  QueryEditorOperatorValueType,
+  QueryEditorExpressionType,
+  QueryEditorArrayExpression as QueryEditorArrayExpressionBase,
+  QueryEditorExpression as QueryEditorExpressionBase,
+} from './dataquery.gen';
+export {
+  QueryEditorPropertyType,
+  QueryEditorProperty,
+  QueryEditorPropertyExpression,
+  QueryEditorGroupByExpression,
+  QueryEditorFunctionExpression,
+  QueryEditorFunctionParameterExpression,
+} from './dataquery.gen';
 
-export interface QueryEditorProperty {
-  type: QueryEditorPropertyType;
-  name?: string;
-}
+export { QueryEditorExpressionType };
 
-export type QueryEditorOperatorType = string | boolean | number;
-type QueryEditorOperatorValueType = QueryEditorOperatorType | QueryEditorOperatorType[];
-
-export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> {
-  name?: string;
+export interface QueryEditorOperator<T extends QueryEditorOperatorValueType> extends QueryEditorOperatorBase {
   value?: T;
 }
 
-export interface QueryEditorOperatorExpression {
-  type: QueryEditorExpressionType.Operator;
-  property: QueryEditorProperty;
+export interface QueryEditorOperatorExpression extends QueryEditorOperatorExpressionBase {
   operator: QueryEditorOperator<QueryEditorOperatorValueType>;
 }
 
-export interface QueryEditorArrayExpression {
+export interface QueryEditorArrayExpression extends QueryEditorArrayExpressionBase {
   type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or;
   expressions: QueryEditorExpression[] | QueryEditorArrayExpression[];
 }
 
-export interface QueryEditorPropertyExpression {
-  type: QueryEditorExpressionType.Property;
-  property: QueryEditorProperty;
-}
-
-export enum QueryEditorExpressionType {
-  Property = 'property',
-  Operator = 'operator',
-  Or = 'or',
-  And = 'and',
-  GroupBy = 'groupBy',
-  Function = 'function',
-  FunctionParameter = 'functionParameter',
-}
-
-export type QueryEditorExpression =
-  | QueryEditorArrayExpression
-  | QueryEditorPropertyExpression
-  | QueryEditorGroupByExpression
-  | QueryEditorFunctionExpression
-  | QueryEditorFunctionParameterExpression
-  | QueryEditorOperatorExpression;
-
-export interface QueryEditorGroupByExpression {
-  type: QueryEditorExpressionType.GroupBy;
-  property: QueryEditorProperty;
-}
-
-export interface QueryEditorFunctionExpression {
-  type: QueryEditorExpressionType.Function;
-  name?: string;
-  parameters?: QueryEditorFunctionParameterExpression[];
-}
-
-export interface QueryEditorFunctionParameterExpression {
-  type: QueryEditorExpressionType.FunctionParameter;
-  name?: string;
-}
+export type QueryEditorExpression = QueryEditorArrayExpression | QueryEditorExpressionBase;

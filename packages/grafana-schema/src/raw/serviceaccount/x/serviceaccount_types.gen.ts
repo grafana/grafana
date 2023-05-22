@@ -26,7 +26,7 @@ export interface ServiceAccount {
   /**
    * Created indicates when the service account was created.
    */
-  created?: number;
+  created?: string;
   /**
    * ID is the unique identifier of the service account in the database.
    */
@@ -63,7 +63,7 @@ export interface ServiceAccount {
   /**
    * Updated indicates when the service account was updated.
    */
-  updated?: number;
+  updated?: string;
 }
 
 export const defaultServiceAccount: Partial<ServiceAccount> = {

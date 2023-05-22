@@ -4,12 +4,10 @@ import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { BucketAggregationType } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
-import { MetricAggregationType } from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { ElasticDatasource } from '../datasource';
 import { defaultBucketAgg, defaultMetricAgg } from '../queryDef';
-import { ElasticsearchQuery } from '../types';
+import { ElasticsearchQuery, MetricAggregationType, BucketAggregationType } from '../types';
 
 import { useFields } from './useFields';
 

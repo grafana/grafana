@@ -99,7 +99,7 @@
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
-     "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+     "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
      "type": "string"
     },
     "model": {
@@ -185,14 +185,17 @@
     },
     "execErrState": {
      "enum": [
+      "OK",
       "Alerting",
-      "Error",
-      "OK"
+      "Error"
      ],
      "type": "string"
     },
     "for": {
      "$ref": "#/definitions/Duration"
+    },
+    "isPaused": {
+     "type": "boolean"
     },
     "labels": {
      "additionalProperties": {
@@ -360,6 +363,10 @@
       "external"
      ],
      "type": "string"
+    },
+    "numExternalAlertmanagers": {
+     "format": "int64",
+     "type": "integer"
     }
    },
    "type": "object"
@@ -521,6 +528,9 @@
   "DataLink": {
    "description": "DataLink define what",
    "properties": {
+    "internal": {
+     "$ref": "#/definitions/InternalDataLink"
+    },
     "targetBlank": {
      "type": "boolean"
     },
@@ -708,6 +718,40 @@
    ],
    "type": "object"
   },
+  "EnumFieldConfig": {
+   "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+   "properties": {
+    "color": {
+     "description": "Color is the color value for a given index (empty is undefined)",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "description": {
+     "description": "Description of the enum state",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "icon": {
+     "description": "Icon supports setting an icon for a given index value",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "text": {
+     "description": "Value is the string display value for a given index",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string"
@@ -747,6 +791,9 @@
    "type": "object"
   },
   "EvalQueriesResponse": {},
+  "ExplorePanelsState": {
+   "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+  },
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -863,6 +910,9 @@
     "thresholds": {
      "$ref": "#/definitions/ThresholdsConfig"
     },
+    "type": {
+     "$ref": "#/definitions/FieldTypeConfig"
+    },
     "unit": {
      "description": "Numeric Options",
      "type": "string"
@@ -875,11 +925,20 @@
    "title": "FieldConfig represents the display properties for a Field.",
    "type": "object"
   },
+  "FieldTypeConfig": {
+   "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+   "properties": {
+    "enum": {
+     "$ref": "#/definitions/EnumFieldConfig"
+    }
+   },
+   "type": "object"
+  },
   "Frame": {
    "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
    "properties": {
     "Fields": {
-     "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.",
+     "description": "Fields are the columns of a frame.\nAll Fields must be of the same the length when marshalling the Frame for transmission.\nThere should be no `nil` entries in the Fields slice (making them pointers was a mistake).",
      "items": {
       "$ref": "#/definitions/Field"
      },
@@ -951,6 +1010,9 @@
     },
     "type": {
      "$ref": "#/definitions/FrameType"
+    },
+    "typeVersion": {
+     "$ref": "#/definitions/FrameTypeVersion"
     }
    },
    "title": "FrameMeta matches:",
@@ -960,8 +1022,16 @@
    "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
    "type": "string"
   },
+  "FrameTypeVersion": {
+   "items": {
+    "format": "uint64",
+    "type": "integer"
+   },
+   "title": "FrameType is a 2 number version (Major / Minor).",
+   "type": "array"
+  },
   "Frames": {
-   "description": "It is the main data container within a backend.DataResponse.",
+   "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
    "items": {
     "$ref": "#/definitions/Frame"
    },
@@ -1207,6 +1277,9 @@
      "format": "int64",
      "type": "integer"
     },
+    "is_paused": {
+     "type": "boolean"
+    },
     "namespace_id": {
      "format": "int64",
      "type": "integer"
@@ -1245,6 +1318,34 @@
     "version": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GettableHistoricUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "last_applied": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "template_file_provenances": {
+     "additionalProperties": {
+      "$ref": "#/definitions/Provenance"
+     },
+     "type": "object"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
     }
    },
    "type": "object"
@@ -1511,6 +1612,31 @@
    "title": "InspectType is a type for the Inspect property of a Notice.",
    "type": "integer"
   },
+  "InternalDataLink": {
+   "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+   "properties": {
+    "datasourceName": {
+     "type": "string"
+    },
+    "datasourceUid": {
+     "type": "string"
+    },
+    "panelsState": {
+     "$ref": "#/definitions/ExplorePanelsState"
+    },
+    "query": {},
+    "timeRange": {
+     "$ref": "#/definitions/TimeRange"
+    },
+    "transformations": {
+     "items": {
+      "$ref": "#/definitions/LinkTransformationConfig"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Json": {
    "type": "object"
   },
@@ -1551,6 +1677,23 @@
     "$ref": "#/definitions/Label"
    },
    "type": "array"
+  },
+  "LinkTransformationConfig": {
+   "properties": {
+    "expression": {
+     "type": "string"
+    },
+    "field": {
+     "type": "string"
+    },
+    "mapValue": {
+     "type": "string"
+    },
+    "type": {
+     "$ref": "#/definitions/SupportedTransformationTypes"
+    }
+   },
+   "type": "object"
   },
   "MatchRegexps": {
    "additionalProperties": {
@@ -2127,6 +2270,9 @@
      ],
      "type": "string"
     },
+    "is_paused": {
+     "type": "boolean"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2209,7 +2355,7 @@
     "data": {
      "example": [
       {
-       "datasourceUid": "-100",
+       "datasourceUid": "__expr__",
        "model": {
         "conditions": [
          {
@@ -2259,9 +2405,9 @@
     },
     "execErrState": {
      "enum": [
+      "OK",
       "Alerting",
-      "Error",
-      "OK"
+      "Error"
      ],
      "type": "string"
     },
@@ -2275,6 +2421,10 @@
     "id": {
      "format": "int64",
      "type": "integer"
+    },
+    "isPaused": {
+     "example": false,
+     "type": "boolean"
     },
     "labels": {
      "additionalProperties": {
@@ -2454,6 +2604,9 @@
     },
     "thresholds": {
      "$ref": "#/definitions/ThresholdsConfig"
+    },
+    "type": {
+     "$ref": "#/definitions/FieldTypeConfig"
     },
     "unit": {
      "description": "Numeric Options",
@@ -3023,6 +3176,9 @@
   "Success": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "SupportedTransformationTypes": {
+   "type": "string"
+  },
   "TLSConfig": {
    "properties": {
     "ca_file": {
@@ -3262,18 +3418,17 @@
    "type": "object"
   },
   "TimeRange": {
-   "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+   "description": "Redefining this to avoid an import cycle",
    "properties": {
-    "EndMinute": {
-     "format": "int64",
-     "type": "integer"
+    "from": {
+     "format": "date-time",
+     "type": "string"
     },
-    "StartMinute": {
-     "format": "int64",
-     "type": "integer"
+    "to": {
+     "format": "date-time",
+     "type": "string"
     }
    },
-   "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
    "type": "object"
   },
   "URL": {
@@ -3616,7 +3771,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4099,6 +4253,13 @@
       "in": "query",
       "name": "download",
       "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4230,6 +4391,13 @@
       "in": "query",
       "name": "download",
       "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
      }
     ],
     "produces": [
@@ -4479,6 +4647,13 @@
       "in": "query",
       "name": "download",
       "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
      }
     ],
     "produces": [
@@ -4827,6 +5002,15 @@
   "application/json"
  ],
  "responses": {
+  "GettableHistoricUserConfigs": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableHistoricUserConfig"
+    },
+    "type": "array"
+   }
+  },
   "receiversResponse": {
    "description": "",
    "schema": {

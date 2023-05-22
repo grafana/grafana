@@ -88,7 +88,7 @@ export interface SelectCommonProps<T> {
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: OptionsOrGroups<unknown, GroupBase<unknown>>
+    options: OptionsOrGroups<SelectableValue<T>, GroupBase<SelectableValue<T>>>
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;

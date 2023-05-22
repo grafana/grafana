@@ -1,5 +1,5 @@
 import pluralize from 'pluralize';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -238,7 +238,7 @@ interface Props {
   alertManagerName: string;
 }
 
-export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
+export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
@@ -298,9 +298,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   return (
     <ReceiversSection
       title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel={'New contact point'}
+      addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <DynamicTable

@@ -9,11 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/droneutil"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/grafana/grafana/pkg/build/packaging"
-	"github.com/urfave/cli/v2"
 )
 
 const releaseFolder = "release"
@@ -140,7 +141,7 @@ func bucketForEnterprise2(releaseModeConfig *config.BuildConfig, event string) (
 
 func getVersionFolder(cfg uploadConfig, event string) (string, error) {
 	switch cfg.versionMode {
-	case config.TagMode:
+	case config.TagMode, config.CloudMode:
 		return releaseFolder, nil
 	case config.MainMode, config.DownstreamMode:
 		return mainFolder, nil

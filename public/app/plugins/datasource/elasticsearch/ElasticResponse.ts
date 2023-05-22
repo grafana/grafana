@@ -8,17 +8,14 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
-import {
-  ExtendedStatMetaType,
-  isMetricAggregationWithField,
-  TopMetrics,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import * as queryDef from './queryDef';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery, TopMetrics, ExtendedStatMetaType } from './types';
 import { describeMetric, getScriptValue } from './utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
@@ -601,6 +598,14 @@ export class ElasticResponse {
 
           series.refId = target.refId;
           dataFrame.push(series);
+        }
+      }
+    }
+
+    for (let frame of dataFrame) {
+      for (let field of frame.fields) {
+        if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+          field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
         }
       }
     }

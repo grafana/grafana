@@ -40,7 +40,7 @@ const TOOLTIP_OFFSET = 10;
 /**
  * @alpha
  */
-export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
+export const TooltipPlugin = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   sync,
@@ -48,7 +48,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   config,
   renderTooltip,
   ...otherProps
-}) => {
+}: TooltipPluginProps) => {
   const plotInstance = useRef<uPlot>();
   const theme = useTheme2();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);

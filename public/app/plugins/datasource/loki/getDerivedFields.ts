@@ -38,7 +38,7 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
   const dataSourceSrv = getDataSourceSrv();
 
-  const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
+  const dataLinks = derivedFieldConfigs.reduce<DataLink[]>((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
       const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
@@ -49,7 +49,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         url: '',
         // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         internal: {
-          query: { query: derivedFieldConfig.url },
+          query: { query: derivedFieldConfig.url, queryType: dsSettings?.type === 'tempo' ? 'traceql' : undefined },
           datasourceUid: derivedFieldConfig.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },
@@ -63,7 +63,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
       });
     }
     return acc;
-  }, [] as DataLink[]);
+  }, []);
 
   return {
     name: derivedFieldConfigs[0].name,

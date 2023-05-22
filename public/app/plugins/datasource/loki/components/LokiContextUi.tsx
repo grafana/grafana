@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { LoadingPlaceholder, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
 import { ContextFilter } from '../types';
@@ -35,6 +35,19 @@ function getStyles(theme: GrafanaTheme2) {
         overscroll-behavior: contain;
       }
     `,
+    loadingPlaceholder: css`
+      margin-bottom: 0px;
+      float: right;
+      display: inline;
+      margin-left: auto;
+    `,
+    textWrapper: css`
+      display: flex;
+      align-items: center;
+    `,
+    hidden: css`
+      visibility: hidden;
+    `,
   };
 }
 
@@ -49,9 +62,12 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+
   const [initialized, setInitialized] = useState(false);
+  const [loading, setLoading] = useState(false);
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
+  const previousContextFilters = React.useRef<ContextFilter[]>([]);
   useEffect(() => {
     if (!initialized) {
       return;
@@ -63,11 +79,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
+    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+      setContextFilters(previousContextFilters.current);
+      return;
+    }
+
+    previousContextFilters.current = structuredClone(contextFilters);
+
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
     }
+    setLoading(true);
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters);
+      setLoading(false);
     }, 1500);
 
     return () => {
@@ -125,7 +150,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.multiSelectWrapper}>
-      <div>
+      <div className={styles.textWrapper}>
         {' '}
         <Tooltip
           content={
@@ -143,7 +168,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
             colorIndex={1}
           />
         </Tooltip>{' '}
-        Select labels to include in the context query:
+        Select labels to be included in the context query:
+        <LoadingPlaceholder text="" className={`${styles.loadingPlaceholder} ${loading ? '' : styles.hidden}`} />
       </div>
       <div>
         <MultiSelect

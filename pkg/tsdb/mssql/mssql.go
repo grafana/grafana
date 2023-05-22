@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	mssql "github.com/denisenkom/go-mssqldb"
+	mssql "github.com/grafana/go-mssqldb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
@@ -55,11 +56,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:      0,
-			MaxIdleConns:      2,
-			ConnMaxLifetime:   14400,
+			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:   cfg.SqlDatasourceMaxConnLifetimeDefault,
 			Encrypt:           "false",
 			ConnectionTimeout: 0,
+			SecureDSProxy:     false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -90,8 +92,18 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		if cfg.Env == setting.Dev {
 			logger.Debug("GetEngine", "connection", cnnstr)
 		}
+
+		driverName := "mssql"
+		// register a new proxy driver if the secure socks proxy is enabled
+		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			driverName, err = createMSSQLProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "mssql",
+			DriverName:        driverName,
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},

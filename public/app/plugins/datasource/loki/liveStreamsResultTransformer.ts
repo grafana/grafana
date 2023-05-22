@@ -27,7 +27,7 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
   // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
   // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
-  const usedUids: { string?: number } = {};
+  const usedUids: Record<string, number> = {};
 
   for (const stream of streams) {
     // Find unique labels
@@ -45,7 +45,13 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   }
 }
 
-function createUid(ts: string, labelsString: string, line: string, usedUids: any, refId?: string): string {
+function createUid(
+  ts: string,
+  labelsString: string,
+  line: string,
+  usedUids: Record<string, number>,
+  refId?: string
+): string {
   // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
   let id = uuidv5(`${ts}_${labelsString}_${line}`, UUID_NAMESPACE);
 

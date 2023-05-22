@@ -2,13 +2,14 @@ import { load } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 
 import { e2e } from '@grafana/e2e';
+import { GrafanaBootConfig } from '@grafana/runtime';
 
-import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
+import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
   AzureQueryType,
-} from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
+} from '../../public/app/plugins/datasource/azuremonitor/types';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
@@ -44,11 +45,12 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
       // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
-      e2e().wait(15000);
+      e2e().wait(30000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
     timeout: 10000,
+    awaitHealth: true,
   });
 }
 
@@ -96,7 +98,15 @@ const addAzureMonitorVariable = (
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-  e2e.components.PageToolbar.item('Go Back').click();
+  e2e()
+    .window()
+    .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
+      if (win.grafanaBootData.settings.featureToggles.topnav) {
+        e2e.pages.Dashboard.Settings.Actions.close().click();
+      } else {
+        e2e.components.PageToolbar.item('Go Back').click();
+      }
+    });
 };
 
 e2e.scenario({
@@ -248,6 +258,8 @@ e2e.scenario({
       .parent()
       .find('input')
       .type('microsoft.storage/storageaccounts{downArrow}{enter}');
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('region').parent().find('button').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('region').parent().find('input').type('uk south{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
       .parent()
@@ -262,8 +274,7 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.advanced.subscription.input().find('input').type('$subscription');
         e2eSelectors.queryEditor.resourcePicker.advanced.resourceGroup.input().find('input').type('$resourceGroups');
         e2eSelectors.queryEditor.resourcePicker.advanced.namespace.input().find('input').type('$namespaces');
-        // TODO: Enable this input once multiple resources feature flag is removed
-        // e2eSelectors.queryEditor.resourcePicker.advanced.region.input().find('input').type('$region');
+        e2eSelectors.queryEditor.resourcePicker.advanced.region.input().find('input').type('$region');
         e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');

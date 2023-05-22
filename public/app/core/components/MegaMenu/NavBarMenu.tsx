@@ -61,8 +61,8 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
         timeout={{ enter: animationSpeed, exit: 0 }}
         onExited={onClose}
       >
-        <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
-          <FocusScope contain autoFocus>
+        <FocusScope contain autoFocus>
+          <div data-testid="navbarmenu" ref={ref} {...overlayProps} {...dialogProps} className={styles.container}>
             <div className={styles.mobileHeader}>
               <Icon name="bars" size="xl" />
               <IconButton
@@ -82,8 +82,8 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
                 </ul>
               </CustomScrollbar>
             </nav>
-          </FocusScope>
-        </div>
+          </div>
+        </FocusScope>
       </CSSTransition>
       <CSSTransition
         nodeRef={backdropRef}
@@ -131,6 +131,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
       backgroundColor: theme.colors.background.primary,
       boxSizing: 'content-box',
+      flex: '1 1 0',
+
       [theme.breakpoints.up('md')]: {
         borderRight: `1px solid ${theme.colors.border.weak}`,
         right: 'unset',
@@ -140,12 +142,15 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'auto',
+      flexGrow: 1,
+      minHeight: 0,
     }),
     mobileHeader: css({
       display: 'flex',
       justifyContent: 'space-between',
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(1, 1, 1, 2),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+
       [theme.breakpoints.up('md')]: {
         display: 'none',
       },

@@ -1,6 +1,6 @@
 import { appEvents } from '../../../core/core';
 import { VariablesChanged } from '../../variables/types';
-import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
+import { getTimeSrv, setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 import { PanelModel } from './PanelModel';
 import { createDashboardModelFixture } from './__fixtures__/dashboardFixtures';
@@ -58,7 +58,7 @@ describe('Strict panel refresh', () => {
     beforeEach(() => {
       setTimeSrv({
         isRefreshOutsideThreshold: () => isRefreshOutsideThreshold,
-      } as any);
+      } as unknown as TimeSrv);
     });
 
     afterEach(() => {

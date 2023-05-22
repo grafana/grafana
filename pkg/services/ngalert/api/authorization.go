@@ -58,6 +58,10 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingRuleCreate, scope),
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
+	// Grafana rule state history paths
+	case http.MethodGet + "/api/v1/rules/history":
+		fallback = middleware.ReqSignedIn
+		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
 	// Grafana, Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/rules":
@@ -154,6 +158,9 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/alerts":
 		fallback = middleware.ReqEditorRole
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+	case http.MethodGet + "/api/alertmanager/grafana/config/history":
+		fallback = middleware.ReqEditorRole
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/alerts":
@@ -236,7 +243,9 @@ func (api *API) authorize(method, path string) web.Handler {
 // authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
 func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
 	for _, query := range rule.Data {
-		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
+		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
+			DatasourceUID == expr.
+			OldDatasourceUID {
 			continue
 		}
 		if !evaluator(ac.EvalPermission(datasources.ActionQuery, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))) {

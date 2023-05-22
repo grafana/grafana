@@ -300,7 +300,7 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
 	return AlertQuery{
 		RefID:         refID,
 		QueryType:     expr.DatasourceType,
-		DatasourceUID: expr.OldDatasourceUID,
+		DatasourceUID: expr.DatasourceUID,
 		// the format corresponds to model `ClassicConditionJSON` in /pkg/expr/classic/classic.go
 		Model: json.RawMessage(fmt.Sprintf(`
 		{
@@ -334,7 +334,7 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
                     }
                 }
             ]
-		}`, refID, inputRefID, operation, threshold, reducer, expr.OldDatasourceUID, expr.DatasourceType)),
+		}`, refID, inputRefID, operation, threshold, reducer, expr.DatasourceUID, expr.DatasourceType)),
 	}
 }
 

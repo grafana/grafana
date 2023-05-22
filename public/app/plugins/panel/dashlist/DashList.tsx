@@ -103,8 +103,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     e.preventDefault();
     e.stopPropagation();
 
-    // FIXME: Do not use dash ID. Use UID to star a dashboard once the backend allows it
-    const isStarred = await getDashboardSrv().starDashboard(dash.id!.toString(), dash.isStarred);
+    const isStarred = await getDashboardSrv().starDashboard(dash.uid, dash.isStarred);
     const updatedDashboards = new Map(dashboards);
     updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
     setDashboards(updatedDashboards);
@@ -171,7 +170,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     <ul className={css.gridContainer}>
       {dashboards.map((dash) => (
         <li key={dash.uid}>
-          <SearchCard item={dash} />
+          <SearchCard item={{ ...dash, kind: 'dashboard' }} />
         </li>
       ))}
     </ul>

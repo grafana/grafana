@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
     });
 
     builder
-      .addRadio({
+      .addSelect({
         path: 'colorMode',
         name: 'Color mode',
         defaultValue: BigValueColorMode.Value,
@@ -44,7 +44,8 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
           options: [
             { value: BigValueColorMode.None, label: 'None' },
             { value: BigValueColorMode.Value, label: 'Value' },
-            { value: BigValueColorMode.Background, label: 'Background' },
+            { value: BigValueColorMode.Background, label: 'Background Gradient' },
+            { value: BigValueColorMode.BackgroundSolid, label: 'Background Solid' },
           ],
         },
       })

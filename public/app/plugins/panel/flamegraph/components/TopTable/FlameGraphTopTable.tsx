@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import React, { CSSProperties, useCallback, useMemo } from 'react';
 import { SortByFn, useSortBy, useAbsoluteLayout, useTable, CellProps } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
@@ -16,6 +16,7 @@ type Props = {
   search: string;
   setSearch: (search: string) => void;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
 };
@@ -27,6 +28,7 @@ const FlameGraphTopTable = ({
   search,
   setSearch,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
 }: Props) => {
@@ -84,36 +86,37 @@ const FlameGraphTopTable = ({
   );
 
   const rowClicked = useCallback(
-    (row: string) => {
-      if (search === row) {
+    (symbol: string) => {
+      if (search === symbol) {
         setSearch('');
       } else {
-        setSearch(row);
+        setSearch(symbol);
         // Reset selected level in flamegraph when selecting row in top table
         setTopLevelIndex(0);
+        setSelectedBarIndex(0);
         setRangeMin(0);
         setRangeMax(1);
       }
     },
-    [search, setRangeMax, setRangeMin, setSearch, setTopLevelIndex]
+    [search, setRangeMax, setRangeMin, setSearch, setTopLevelIndex, setSelectedBarIndex]
   );
 
   const { headerGroups, rows, prepareRow } = useTable(options, useSortBy, useAbsoluteLayout);
 
   const renderRow = React.useCallback(
-    ({ index, style }) => {
+    ({ index, style }: { index: number; style: CSSProperties }) => {
       let row = rows[index];
       prepareRow(row);
 
-      const rowValue = row.values[ColumnTypes.Symbol.toLowerCase()];
-      const classNames = cx(rowValue === search && styles.matchedRow, styles.row);
+      const symbol = row.values[ColumnTypes.Symbol.toLowerCase()];
+      const classNames = cx(symbol === search && styles.matchedRow, styles.row);
 
       return (
         <div
           {...row.getRowProps({ style })}
           className={classNames}
           onClick={() => {
-            rowClicked(rowValue);
+            rowClicked(symbol);
           }}
         >
           {row.cells.map((cell) => {
@@ -177,7 +180,7 @@ const FlameGraphTopTable = ({
   );
 };
 
-const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, TopTableValue>) => {
+const SymbolCell = ({ cell: { value } }: CellProps<TopTableValue, string>) => {
   return <div>{value}</div>;
 };
 

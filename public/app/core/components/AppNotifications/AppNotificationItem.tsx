@@ -3,7 +3,6 @@ import React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { AppNotification, timeoutMap } from 'app/types';
 
@@ -21,8 +20,6 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
     }, timeoutMap[appNotification.severity]);
   });
 
-  const showTraceId = config.featureToggles.tracing && appNotification.traceId;
-
   return (
     <Alert
       severity={appNotification.severity}
@@ -32,7 +29,7 @@ export default function AppNotificationItem({ appNotification, onClearNotificati
     >
       <div className={styles.wrapper}>
         <span>{appNotification.component || appNotification.text}</span>
-        {showTraceId && <span className={styles.trace}>Trace ID: {appNotification.traceId}</span>}
+        {appNotification.traceId && <span className={styles.trace}>Trace ID: {appNotification.traceId}</span>}
       </div>
     </Alert>
   );

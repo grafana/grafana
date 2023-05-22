@@ -42,7 +42,7 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 					cache[muteTiming.OrgID][interval.Name] = interval
 				}
 			}
-			muteTiming.MuteTime.Provenance = models.ProvenanceFile
+			muteTiming.MuteTime.Provenance = definitions.Provenance(models.ProvenanceFile)
 			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Name]; exists {
 				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
 				if err != nil {

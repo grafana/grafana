@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/dashboard/
+canonical: /docs/grafana/latest/developers/http_api/dashboard/
 description: Grafana Dashboard HTTP API
 keywords:
   - grafana
@@ -13,7 +14,7 @@ title: Dashboard HTTP API
 
 # Dashboard API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -21,7 +22,7 @@ The identifier (id) of a dashboard is an auto-incrementing numeric value and is 
 
 The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
 It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "../../administration/provisioning/#dashboards" >}})
+dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
 The uid can have a maximum length of 40 characters.
@@ -75,7 +76,7 @@ JSON Body schema:
 - **folderUid** – The UID of the folder to save the dashboard in. Overrides the `folderId`.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
-- **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "../../setup-grafana/configure-grafana/#min_refresh_interval" >}}), then Grafana will ignore it and will enforce the minimum refresh interval.
+- **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#min_refresh_interval" >}}), then Grafana will ignore it and will enforce the minimum refresh interval.
 
 For adding or updating an alert rule for a dashboard panel the user should declare a
 `dashboard.panels.alert` block.

@@ -1,4 +1,5 @@
 import { ArrayDataFrame, MutableDataFrame, toDataFrame } from '../dataframe';
+import { rangeUtil } from '../datetime';
 import { createTheme } from '../themes';
 import { FieldMatcherID } from '../transformations';
 import {
@@ -31,36 +32,48 @@ import {
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 
-const property1: any = {
+const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 1',
 };
 
-const property2 = {
+const property2: FieldConfigPropertyItem = {
   id: 'custom.property2', // Match field properties
   path: 'property2', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 2',
 };
 
-const property3: any = {
+const property3: FieldConfigPropertyItem = {
   id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 3',
 };
 
-const shouldApplyFalse: any = {
+const shouldApplyFalse: FieldConfigPropertyItem = {
   id: 'custom.shouldApplyFalse', // Match field properties
   path: 'shouldApplyFalse', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => false,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Should Apply False',
 };
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
@@ -68,9 +81,9 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 });
 
 locationUtil.initialize({
-  config: { appSubUrl: '/subUrl' } as any,
-  getVariablesUrlParams: (() => {}) as any,
-  getTimeRangeForUrl: (() => {}) as any,
+  config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+  getVariablesUrlParams: jest.fn(),
+  getTimeRangeForUrl: jest.fn(),
 });
 
 describe('Global MinMax', () => {
@@ -181,7 +194,7 @@ describe('applyFieldOverrides', () => {
           defaults: {},
           overrides: [],
         },
-        replaceVariables: (value: any) => value,
+        replaceVariables: (value) => value,
         theme: createTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
@@ -300,7 +313,7 @@ describe('applyFieldOverrides', () => {
   });
 
   it('getLinks should use applied field config', () => {
-    const replaceVariablesCalls: any[] = [];
+    const replaceVariablesCalls: ScopedVars[] = [];
 
     const data = applyFieldOverrides({
       data: [f0], // the frame
@@ -316,7 +329,7 @@ describe('applyFieldOverrides', () => {
     data.fields[1].getLinks!({ valueRowIndex: 0 });
 
     expect(data.fields[1].config.decimals).toEqual(1);
-    expect(replaceVariablesCalls[3].__value.value.text).toEqual('100.0');
+    expect(replaceVariablesCalls[3].__dataContext?.value.rowIndex).toEqual(0);
   });
 
   it('creates a deep clone of field config', () => {
@@ -375,8 +388,8 @@ describe('setFieldConfigDefaults', () => {
     };
 
     const context: FieldOverrideEnv = {
-      data: [] as any,
-      field: { type: FieldType.number } as any,
+      data: [],
+      field: { type: FieldType.number } as Field,
       dataFrameIndex: 0,
       fieldConfigRegistry: customFieldRegistry,
     };
@@ -410,8 +423,8 @@ describe('setFieldConfigDefaults', () => {
     };
 
     const context: FieldOverrideEnv = {
-      data: [] as any,
-      field: { type: FieldType.number } as any,
+      data: [],
+      field: { type: FieldType.number } as Field,
       dataFrameIndex: 0,
       fieldConfigRegistry: customFieldRegistry,
     };
@@ -425,6 +438,124 @@ describe('setFieldConfigDefaults', () => {
           "property1": 10,
           "property2": 10,
         },
+      }
+    `);
+  });
+
+  it('applies field config defaults correctly when links property exist in field config and no links are defined in panel', () => {
+    const dsFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const panelFieldConfig: FieldConfig = {};
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    // @ts-ignore
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+        ],
+      }
+    `);
+  });
+
+  it('applies field config defaults correctly when links property exist in panel config and no links are defined in ds field config', () => {
+    const dsFieldConfig: FieldConfig = {};
+
+    const panelFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    // @ts-ignore
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+        ],
+      }
+    `);
+  });
+
+  it('applies a merge strategy for links when they exist in ds config and panel', () => {
+    const dsFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Google link',
+          url: 'https://google.com',
+        },
+      ],
+    };
+
+    const panelFieldConfig: FieldConfig = {
+      links: [
+        {
+          title: 'Grafana',
+          url: 'https://grafana.com',
+        },
+      ],
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    // we mutate dsFieldConfig
+    setFieldConfigDefaults(dsFieldConfig, panelFieldConfig, context);
+
+    expect(dsFieldConfig).toMatchInlineSnapshot(`
+      {
+        "custom": {},
+        "links": [
+          {
+            "title": "Google link",
+            "url": "https://google.com",
+          },
+          {
+            "title": "Grafana",
+            "url": "https://grafana.com",
+          },
+        ],
       }
     `);
   });
@@ -444,8 +575,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -467,8 +598,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -488,8 +619,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -513,8 +644,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -539,8 +670,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -553,8 +684,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -628,7 +759,7 @@ describe('getLinksSupplier', () => {
               },
             ],
           },
-          display: (v) => ({ numeric: v, text: String(v) }),
+          display: (v) => ({ numeric: Number(v), text: String(v) }),
         },
       ],
     });
@@ -643,6 +774,65 @@ describe('getLinksSupplier', () => {
 
     const links = supplier({ valueRowIndex: 0 });
     const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"]}`;
+    expect(links.length).toBe(1);
+    expect(links[0]).toEqual(
+      expect.objectContaining({
+        title: 'testDS',
+        href: `/explore?left=${encodeURIComponent(encodeURIParams)}`,
+        onClick: undefined,
+      })
+    );
+  });
+
+  it('handles time range on internal links', () => {
+    locationUtil.initialize({
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+    });
+
+    const datasourceUid = '1234';
+    const range = rangeUtil.relativeToTimeRange({ from: 600, to: 0 });
+    const f0 = new MutableDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+          config: {
+            links: [
+              {
+                url: '',
+                title: '',
+                internal: {
+                  datasourceUid: datasourceUid,
+                  datasourceName: 'testDS',
+                  query: '12345',
+                  range,
+                },
+              },
+            ],
+          },
+          display: (v) => ({ numeric: Number(v), text: String(v) }),
+        },
+      ],
+    });
+
+    const supplier = getLinksSupplier(
+      f0,
+      f0.fields[0],
+      {},
+      // We do not need to interpolate anything for this test
+      (value, vars, format) => value
+    );
+
+    const links = supplier({ valueRowIndex: 0 });
+    const rangeStr = JSON.stringify({
+      from: range.from.toISOString(),
+      to: range.to.toISOString(),
+    });
+    const encodeURIParams = `{"range":${rangeStr},"datasource":"${datasourceUid}","queries":["12345"]}`;
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({

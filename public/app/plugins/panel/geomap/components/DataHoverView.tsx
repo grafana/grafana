@@ -13,6 +13,8 @@ import {
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 
+import { renderValue } from '../utils/uiUtils';
+
 export interface Props {
   data?: DataFrame; // source data
   rowIndex?: number | null; // the hover row
@@ -98,13 +100,13 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
             displayValues.map((v, i) => (
               <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
                 <th>{v[0]}:</th>
-                <td>{v[2]}</td>
+                <td>{renderValue(v[2])}</td>
               </tr>
             ))}
           {mode === TooltipDisplayMode.Single && columnIndex && (
             <tr key={`${columnIndex}/${rowIndex}`}>
               <th>{displayValues[columnIndex][0]}:</th>
-              <td>{displayValues[columnIndex][2]}</td>
+              <td>{renderValue(displayValues[columnIndex][2])}</td>
             </tr>
           )}
           {renderLinks()}
@@ -154,6 +156,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     highlight: css`
       background: ${theme.colors.action.hover};
+    `,
+    link: css`
+      color: #6e9fff;
     `,
   };
 };

@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -28,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -41,6 +45,8 @@ var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
+	anonimpl.ProvideAnonymousSessionService,
+	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonSessionService)),
 	licensing.ProvideService,
 	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
@@ -80,10 +86,17 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
+	publicdashboardsService.ProvideServiceWrapper,
+	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
 )
 
 var wireExtsSet = wire.NewSet(
 	wireSet,
+	wireExtsBasicSet,
+)
+
+var wireExtsCLISet = wire.NewSet(
+	wireCLISet,
 	wireExtsBasicSet,
 )
 

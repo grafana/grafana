@@ -81,11 +81,44 @@ describe('getQueryHints', () => {
     });
 
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).not.toEqual(
+      expect(getQueryHints('{job="grafana"} | json', [jsonAndLogfmtSeries])).not.toEqual(
         expect.arrayContaining([
           expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
           expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
         ])
+      );
+    });
+  });
+
+  describe('when series with json and packed logs', () => {
+    const jsonAndPackSeries: DataFrame = {
+      name: 'logs',
+      length: 2,
+      fields: [
+        {
+          name: 'Line',
+          type: FieldType.string,
+          config: {},
+          values: new ArrayVector(['{"_entry": "bar", "bar": "baz"}']),
+        },
+      ],
+    };
+
+    it('suggest unpack parser when no parser in query', () => {
+      expect(getQueryHints('{job="grafana"', [jsonAndPackSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_UNPACK_PARSER' })])
+      );
+    });
+
+    it('does not suggest json parser', () => {
+      expect(getQueryHints('{job="grafana"', [jsonAndPackSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_JSON_PARSER' })])
+      );
+    });
+
+    it('does not suggest unpack parser when unpack in query', () => {
+      expect(getQueryHints('{job="grafana"} | unpack', [jsonAndPackSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_UNPACK_PARSER' })])
       );
     });
   });
@@ -117,7 +150,6 @@ describe('getQueryHints', () => {
         ],
       };
     };
-
     it('suggest level renaming when no level label', () => {
       expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toEqual(
         expect.arrayContaining([expect.objectContaining({ type: 'ADD_LEVEL_LABEL_FORMAT' })])

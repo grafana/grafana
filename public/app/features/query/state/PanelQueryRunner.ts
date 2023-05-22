@@ -25,6 +25,7 @@ import {
   TimeZone,
   toDataFrame,
   transformDataFrame,
+  preProcessPanelData,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
@@ -38,7 +39,7 @@ import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
-import { preProcessPanelData, runRequest } from './runRequest';
+import { runRequest } from './runRequest';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -58,6 +59,7 @@ export interface QueryRunnerOptions<
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
   transformations?: DataTransformerConfig[];
   app?: CoreApp;
 }
@@ -209,6 +211,7 @@ export class PanelQueryRunner {
       timeRange,
       timeInfo,
       cacheTimeout,
+      queryCachingTTL,
       maxDataPoints,
       scopedVars,
       minInterval,
@@ -236,6 +239,7 @@ export class PanelQueryRunner {
       maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
+      queryCachingTTL,
       startTime: Date.now(),
       rangeRaw: timeRange.raw,
     };
@@ -313,8 +317,11 @@ export class PanelQueryRunner {
 
     this.subscription.unsubscribe();
 
-    // If we have an old result with loading state, send it with done state
-    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+    // If we have an old result with loading or streaming state, send it with done state
+    if (
+      this.lastResult &&
+      (this.lastResult.state === LoadingState.Loading || this.lastResult.state === LoadingState.Streaming)
+    ) {
       this.subject.next({
         ...this.lastResult,
         state: LoadingState.Done,

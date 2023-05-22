@@ -19,6 +19,7 @@ describe('FlameGraphHeader', () => {
         search={search}
         setSearch={setSearch}
         setTopLevelIndex={jest.fn()}
+        setSelectedBarIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
         selectedView={selectedView}
@@ -32,7 +33,7 @@ describe('FlameGraphHeader', () => {
     render(<FlameGraphHeaderWithProps />);
     await userEvent.type(screen.getByPlaceholderText('Search..'), 'abc');
     expect(screen.getByDisplayValue('abc')).toBeInTheDocument();
-    screen.getByRole('button', { name: /Reset/i }).click();
+    await userEvent.click(screen.getByRole('button', { name: /Reset/i }));
     expect(screen.queryByDisplayValue('abc')).not.toBeInTheDocument();
   });
 });

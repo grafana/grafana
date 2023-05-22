@@ -3,9 +3,10 @@ import React, { ComponentProps } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourcePluginMeta, GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { useAddDatasource } from 'app/features/datasources/state';
@@ -30,8 +31,9 @@ interface Props extends Pick<ComponentProps<typeof Page>, 'navId' | 'pageNav'> {
 
 export function EmptyStateNoDatasource({ onCTAClick, loading = false, title, CTAText, navId, pageNav }: Props) {
   const styles = useStyles2(getStyles);
+  const { backend } = useGrafana();
   const { value: datasources, loading: loadingDatasources } = useAsync(async () => {
-    const datasourceMeta: DataSourcePluginMeta[] = await getBackendSrv().get('/api/plugins', {
+    const datasourceMeta: DataSourcePluginMeta[] = await backend.get('/api/plugins', {
       enabled: 1,
       type: 'datasource',
     });

@@ -69,7 +69,7 @@ groups:
         #                  evaluation - should be obtained trough the API
         data:
           - refId: A
-            datasourceUid: '-100'
+            datasourceUid: '__expr__'
             model:
               conditions:
                 - evaluator:
@@ -86,7 +86,7 @@ groups:
                   type: query
               datasource:
                 type: __expr__
-                uid: '-100'
+                uid: '__expr__'
               expression: 1==0
               intervalMs: 1000
               maxDataPoints: 43200
@@ -313,7 +313,7 @@ settings:
 ```yaml
 type: pagerduty
 settings:
-  # <string, required>
+  # <string, required> the 32-character Events API key https://support.pagerduty.com/docs/api-access-keys#events-api-keys
   integrationKey: XXX
   # <string> options: critical, error, warning, info
   severity: critical

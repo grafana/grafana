@@ -6,7 +6,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -41,6 +41,7 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <Table
       height={tableHeight}
+      // This calculation is to accommodate the optionally rendered Row Numbers Column
       width={width}
       data={main}
       noHeader={!options.showHeader}
@@ -48,11 +49,12 @@ export function TablePanel(props: Props) {
       resizable={true}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, width) => onColumnResize(displayName, width, props)}
+      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
       subData={subData}
+      cellHeight={options.cellHeight}
     />
   );
 
@@ -131,13 +133,6 @@ const tableStyles = {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100%;
-  `,
-  noData: css`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     height: 100%;
   `,
   selectWrapper: css`

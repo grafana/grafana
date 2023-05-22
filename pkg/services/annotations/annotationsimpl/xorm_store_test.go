@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -82,9 +83,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		require.NoError(t, err)
 
 		annotation := &annotations.Item{
-			OrgId:       1,
-			UserId:      1,
-			DashboardId: dashboard.ID,
+			OrgID:       1,
+			UserID:      1,
+			DashboardID: dashboard.ID,
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,
@@ -93,13 +94,13 @@ func TestIntegrationAnnotations(t *testing.T) {
 		}
 		err = repo.Add(context.Background(), annotation)
 		require.NoError(t, err)
-		assert.Greater(t, annotation.Id, int64(0))
+		assert.Greater(t, annotation.ID, int64(0))
 		assert.Equal(t, annotation.Epoch, annotation.EpochEnd)
 
 		annotation2 := &annotations.Item{
-			OrgId:       1,
-			UserId:      1,
-			DashboardId: dashboard2.ID,
+			OrgID:       1,
+			UserID:      1,
+			DashboardID: dashboard2.ID,
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       21, // Should swap epoch & epochEnd
@@ -108,13 +109,13 @@ func TestIntegrationAnnotations(t *testing.T) {
 		}
 		err = repo.Add(context.Background(), annotation2)
 		require.NoError(t, err)
-		assert.Greater(t, annotation2.Id, int64(0))
+		assert.Greater(t, annotation2.ID, int64(0))
 		assert.Equal(t, int64(20), annotation2.Epoch)
 		assert.Equal(t, int64(21), annotation2.EpochEnd)
 
 		organizationAnnotation1 := &annotations.Item{
-			OrgId:  1,
-			UserId: 1,
+			OrgID:  1,
+			UserID: 1,
 			Text:   "deploy",
 			Type:   "",
 			Epoch:  15,
@@ -122,11 +123,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 		}
 		err = repo.Add(context.Background(), organizationAnnotation1)
 		require.NoError(t, err)
-		assert.Greater(t, organizationAnnotation1.Id, int64(0))
+		assert.Greater(t, organizationAnnotation1.ID, int64(0))
 
 		globalAnnotation2 := &annotations.Item{
-			OrgId:  1,
-			UserId: 1,
+			OrgID:  1,
+			UserID: 1,
 			Text:   "rollback",
 			Type:   "",
 			Epoch:  17,
@@ -134,11 +135,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 		}
 		err = repo.Add(context.Background(), globalAnnotation2)
 		require.NoError(t, err)
-		assert.Greater(t, globalAnnotation2.Id, int64(0))
+		assert.Greater(t, globalAnnotation2.ID, int64(0))
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  dashboard.ID,
+				OrgID:        1,
+				DashboardID:  dashboard.ID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -155,8 +156,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		badAnnotation := &annotations.Item{
-			OrgId:  1,
-			UserId: 1,
+			OrgID:  1,
+			UserID: 1,
 			Text:   "rollback",
 			Type:   "",
 			Epoch:  17,
@@ -171,7 +172,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items := make([]annotations.Item, count)
 			for i := 0; i < count; i++ {
 				items[i] = annotations.Item{
-					OrgId: 100,
+					OrgID: 100,
 					Type:  "batch",
 					Epoch: 12,
 				}
@@ -180,7 +181,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err := repo.AddMany(context.Background(), items)
 
 			require.NoError(t, err)
-			query := &annotations.ItemQuery{OrgId: 100, SignedInUser: testUser}
+			query := &annotations.ItemQuery{OrgID: 100, SignedInUser: testUser}
 			inserted, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
@@ -196,7 +197,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items := make([]annotations.Item, count)
 			for i := 0; i < count; i++ {
 				items[i] = annotations.Item{
-					OrgId: 101,
+					OrgID: 101,
 					Type:  "batch",
 					Epoch: 12,
 				}
@@ -206,7 +207,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err := repo.AddMany(context.Background(), items)
 
 			require.NoError(t, err)
-			query := &annotations.ItemQuery{OrgId: 101, SignedInUser: testUser}
+			query := &annotations.ItemQuery{OrgID: 101, SignedInUser: testUser}
 			inserted, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
@@ -214,19 +215,19 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				AnnotationId: annotation2.Id,
+				OrgID:        1,
+				AnnotationID: annotation2.ID,
 				SignedInUser: testUser,
 			})
 			require.NoError(t, err)
 			assert.Len(t, items, 1)
-			assert.Equal(t, annotation2.Id, items[0].Id)
+			assert.Equal(t, annotation2.ID, items[0].ID)
 		})
 
 		t.Run("Should not find any when item is outside time range", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         12,
 				To:           15,
 				SignedInUser: testUser,
@@ -237,8 +238,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         1,
 				To:           15,
 				Tags:         []string{"asd"},
@@ -250,8 +251,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         1,
 				To:           15,
 				Type:         "alert",
@@ -263,8 +264,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         1,
 				To:           15, // this will exclude the second test annotation
 				Tags:         []string{"outage", "error"},
@@ -276,7 +277,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find two annotations using partial match", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
+				OrgID:        1,
 				From:         1,
 				To:           25,
 				MatchAny:     true,
@@ -289,8 +290,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find one when all key value tag filters does match", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         1,
 				To:           15,
 				Tags:         []string{"type:outage", "server:server-1"},
@@ -302,8 +303,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can update annotation and remove all tags", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -311,10 +312,10 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			annotationId := items[0].Id
+			annotationId := items[0].ID
 			err = repo.Update(context.Background(), &annotations.Item{
-				Id:    annotationId,
-				OrgId: 1,
+				ID:    annotationId,
+				OrgID: 1,
 				Text:  "something new",
 				Tags:  []string{},
 			})
@@ -323,7 +324,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			assert.Equal(t, annotationId, items[0].Id)
+			assert.Equal(t, annotationId, items[0].ID)
 			assert.Empty(t, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			data, err := items[0].Data.Map()
@@ -333,8 +334,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -342,10 +343,10 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			annotationId := items[0].Id
+			annotationId := items[0].ID
 			err = repo.Update(context.Background(), &annotations.Item{
-				Id:    annotationId,
-				OrgId: 1,
+				ID:    annotationId,
+				OrgID: 1,
 				Text:  "something new",
 				Tags:  []string{"newtag1", "newtag2"},
 			})
@@ -354,7 +355,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			assert.Equal(t, annotationId, items[0].Id)
+			assert.Equal(t, annotationId, items[0].ID)
 			assert.Equal(t, []string{"newtag1", "newtag2"}, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			assert.Greater(t, items[0].Updated, items[0].Created)
@@ -362,8 +363,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can update annotations with data", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -371,11 +372,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			annotationId := items[0].Id
+			annotationId := items[0].ID
 			data := simplejson.NewFromAny(map[string]interface{}{"data": "I am a data", "data2": "I am also a data"})
 			err = repo.Update(context.Background(), &annotations.Item{
-				Id:    annotationId,
-				OrgId: 1,
+				ID:    annotationId,
+				OrgID: 1,
 				Text:  "something new",
 				Tags:  []string{"newtag1", "newtag2"},
 				Data:  data,
@@ -385,7 +386,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err = repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			assert.Equal(t, annotationId, items[0].Id)
+			assert.Equal(t, annotationId, items[0].ID)
 			assert.Equal(t, []string{"newtag1", "newtag2"}, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			assert.Greater(t, items[0].Updated, items[0].Created)
@@ -394,8 +395,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can delete annotation", func(t *testing.T) {
 			query := &annotations.ItemQuery{
-				OrgId:        1,
-				DashboardId:  1,
+				OrgID:        1,
+				DashboardID:  1,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -403,8 +404,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			annotationId := items[0].Id
-			err = repo.Delete(context.Background(), &annotations.DeleteParams{Id: annotationId, OrgId: 1})
+			annotationId := items[0].ID
+			err = repo.Delete(context.Background(), &annotations.DeleteParams{ID: annotationId, OrgID: 1})
 			require.NoError(t, err)
 
 			items, err = repo.Get(context.Background(), query)
@@ -414,29 +415,29 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Can delete annotation using dashboard id and panel id", func(t *testing.T) {
 			annotation3 := &annotations.Item{
-				OrgId:       1,
-				UserId:      1,
-				DashboardId: dashboard2.ID,
+				OrgID:       1,
+				UserID:      1,
+				DashboardID: dashboard2.ID,
 				Text:        "toBeDeletedWithPanelId",
 				Type:        "alert",
 				Epoch:       11,
 				Tags:        []string{"test"},
-				PanelId:     20,
+				PanelID:     20,
 			}
 			err = repo.Add(context.Background(), annotation3)
 			require.NoError(t, err)
 
 			query := &annotations.ItemQuery{
-				OrgId:        1,
-				AnnotationId: annotation3.Id,
+				OrgID:        1,
+				AnnotationID: annotation3.ID,
 				SignedInUser: testUser,
 			}
 			items, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 
-			dashboardId := items[0].DashboardId
-			panelId := items[0].PanelId
-			err = repo.Delete(context.Background(), &annotations.DeleteParams{DashboardId: dashboardId, PanelId: panelId, OrgId: 1})
+			dashboardId := items[0].DashboardID
+			panelId := items[0].PanelID
+			err = repo.Delete(context.Background(), &annotations.DeleteParams{DashboardID: dashboardId, PanelID: panelId, OrgID: 1})
 			require.NoError(t, err)
 
 			items, err = repo.Get(context.Background(), query)
@@ -523,16 +524,16 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	require.NoError(t, err)
 
 	dash1Annotation := &annotations.Item{
-		OrgId:       1,
-		DashboardId: 1,
+		OrgID:       1,
+		DashboardID: 1,
 		Epoch:       10,
 	}
 	err = repo.Add(context.Background(), dash1Annotation)
 	require.NoError(t, err)
 
 	dash2Annotation := &annotations.Item{
-		OrgId:       1,
-		DashboardId: 2,
+		OrgID:       1,
+		DashboardID: 2,
 		Epoch:       10,
 		Tags:        []string{"foo:bar"},
 	}
@@ -540,7 +541,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	require.NoError(t, err)
 
 	organizationAnnotation := &annotations.Item{
-		OrgId: 1,
+		OrgID: 1,
 		Epoch: 10,
 	}
 	err = repo.Add(context.Background(), organizationAnnotation)
@@ -566,7 +567,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsAll},
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
-			expectedAnnotationIds: []int64{dash1Annotation.Id, dash2Annotation.Id, organizationAnnotation.Id},
+			expectedAnnotationIds: []int64{dash1Annotation.ID, dash2Annotation.ID, organizationAnnotation.ID},
 		},
 		{
 			description: "Should find all dashboard annotations",
@@ -574,7 +575,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
-			expectedAnnotationIds: []int64{dash1Annotation.Id, dash2Annotation.Id},
+			expectedAnnotationIds: []int64{dash1Annotation.ID, dash2Annotation.ID},
 		},
 		{
 			description: "Should find only annotations from dashboards that user can read",
@@ -582,7 +583,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {fmt.Sprintf("dashboards:uid:%s", dash1UID)},
 			},
-			expectedAnnotationIds: []int64{dash1Annotation.Id},
+			expectedAnnotationIds: []int64{dash1Annotation.ID},
 		},
 		{
 			description: "Should find no annotations if user can't view dashboards or organization annotations",
@@ -597,7 +598,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization},
 				dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
 			},
-			expectedAnnotationIds: []int64{organizationAnnotation.Id},
+			expectedAnnotationIds: []int64{organizationAnnotation.ID},
 		},
 		{
 			description: "Should error if user doesn't have annotation read permissions",
@@ -614,7 +615,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			setupRBACPermission(t, repo, role, user)
 
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
-				OrgId:        1,
+				OrgID:        1,
 				SignedInUser: user,
 			})
 			if tc.expectedError {
@@ -624,7 +625,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, results, len(tc.expectedAnnotationIds))
 			for _, r := range results {
-				assert.Contains(t, tc.expectedAnnotationIds, r.Id)
+				assert.Contains(t, tc.expectedAnnotationIds, r.ID)
 			}
 		})
 	}
@@ -686,4 +687,92 @@ func setupRBACPermission(t *testing.T, repo xormRepositoryImpl, role *accesscont
 	})
 
 	require.NoError(t, err)
+}
+
+func BenchmarkFindTags_10k(b *testing.B) {
+	benchmarkFindTags(b, 10000)
+}
+
+func BenchmarkFindTags_100k(b *testing.B) {
+	benchmarkFindTags(b, 100000)
+}
+
+func benchmarkFindTags(b *testing.B, numAnnotations int) {
+	sql := db.InitTestDB(b)
+	var maximumTagsLength int64 = 60
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+
+	type annotationTag struct {
+		ID           int64 `xorm:"pk autoincr 'id'"`
+		AnnotationID int64 `xorm:"annotation_id"`
+		TagID        int64 `xorm:"tag_id"`
+	}
+	newAnnotations := make([]annotations.Item, 0, numAnnotations)
+	newTags := make([]tag.Tag, 0, numAnnotations)
+	newAnnotationTags := make([]annotationTag, 0, numAnnotations)
+	for i := 0; i < numAnnotations; i++ {
+		newAnnotations = append(newAnnotations, annotations.Item{
+			ID:          int64(i),
+			OrgID:       1,
+			UserID:      1,
+			DashboardID: int64(i),
+			Text:        "hello",
+			Type:        "alert",
+			Epoch:       10,
+			Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+		})
+		newTags = append(newTags, tag.Tag{
+			Id:  int64(i),
+			Key: fmt.Sprintf("tag%d", i),
+		})
+
+		newAnnotationTags = append(newAnnotationTags, annotationTag{
+			AnnotationID: int64(i),
+			TagID:        int64(1),
+		})
+	}
+	err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		batchSize := 1000
+		numOfBatches := numAnnotations / batchSize
+		for i := 0; i < numOfBatches; i++ {
+			_, err := sess.Insert(newAnnotations[i*batchSize : (i+1)*batchSize-1])
+			require.NoError(b, err)
+
+			_, err = sess.Insert(newTags[i*batchSize : (i+1)*batchSize-1])
+			require.NoError(b, err)
+
+			_, err = sess.Insert(newAnnotationTags[i*batchSize : (i+1)*batchSize-1])
+			require.NoError(b, err)
+		}
+		return nil
+	})
+	require.NoError(b, err)
+
+	annotationWithTheTag := annotations.Item{
+		ID:          int64(numAnnotations) + 1,
+		OrgID:       1,
+		UserID:      1,
+		DashboardID: int64(1),
+		Text:        "hello",
+		Type:        "alert",
+		Epoch:       10,
+		Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
+		Data:        simplejson.NewFromAny(map[string]interface{}{"data1": "I am a cool data", "data2": "I am another cool data"}),
+	}
+	err = repo.Add(context.Background(), &annotationWithTheTag)
+	require.NoError(b, err)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		result, err := repo.GetTags(context.Background(), &annotations.TagsQuery{
+			OrgID: 1,
+			Tag:   "outage",
+		})
+		require.NoError(b, err)
+		require.Len(b, result.Tags, 2)
+		require.Equal(b, "outage", result.Tags[0].Tag)
+		require.Equal(b, "type:outage", result.Tags[1].Tag)
+		require.Equal(b, int64(1), result.Tags[0].Count)
+		require.Equal(b, int64(1), result.Tags[1].Count)
+	}
 }

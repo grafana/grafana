@@ -8,10 +8,7 @@ import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip, Fiel
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import {
-  ConnectionsRedirectNotice,
-  DestinationPage,
-} from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
@@ -67,13 +64,18 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     return null;
   }
 
-  return (
-    <Page navModel={navModel}>
-      <Page.Contents>
-        {config.featureToggles.dataConnectionsConsole && (filterByType === 'all' || filterByType === 'datasource') && (
-          <ConnectionsRedirectNotice destinationPage={DestinationPage.connectData} />
-        )}
+  const subTitle = config.featureToggles.dataConnectionsConsole ? (
+    <p>
+      Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
+      <a href={`${CONNECTIONS_ROUTES.ConnectData}?cat=data-source`}>Connections</a>.
+    </p>
+  ) : (
+    <p>Extend the Grafana experience with panel plugins and apps.</p>
+  );
 
+  return (
+    <Page navModel={navModel} subTitle={subTitle}>
+      <Page.Contents>
         <HorizontalGroup wrap>
           <Field label="Search">
             <SearchField value={query} onSearch={onSearch} />

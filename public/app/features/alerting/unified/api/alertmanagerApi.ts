@@ -9,14 +9,14 @@ import { alertingApi } from './alertingApi';
 
 export interface AlertmanagersChoiceResponse {
   alertmanagersChoice: AlertmanagerChoice;
+  numExternalAlertmanagers: number;
 }
 
 export const alertmanagerApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    getAlertmanagerChoice: build.query<AlertmanagerChoice, void>({
+    getAlertmanagerChoiceStatus: build.query<AlertmanagersChoiceResponse, void>({
       query: () => ({ url: '/api/v1/ngalert' }),
       providesTags: ['AlertmanagerChoice'],
-      transformResponse: (response: AlertmanagersChoiceResponse) => response.alertmanagersChoice,
     }),
 
     getExternalAlertmanagerConfig: build.query<ExternalAlertmanagerConfig, void>({
