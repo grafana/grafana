@@ -8,7 +8,7 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.36"
+grabpl_version = "v3.0.37"
 build_image = "grafana/build-container:1.7.4"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -1171,6 +1171,8 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
+    if ver_mode == "pr":
+        step = dict(step, failure = "ignore")
 
     return step
 
