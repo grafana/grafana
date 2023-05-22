@@ -373,7 +373,6 @@ export const importQueries = (
           queriesStartArr = [changedQuery];
         }
       }
-      console.log('try to import');
       importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queriesStartArr);
     }
 

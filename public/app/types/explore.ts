@@ -21,8 +21,7 @@ import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/ri
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
 export type ExploreQueryParams = {
-  left?: string;
-  right?: string;
+  panes?: string;
 };
 
 /**

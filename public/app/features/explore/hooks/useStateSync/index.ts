@@ -57,7 +57,7 @@ export function useStateSync(params: Record<string, string>) {
             action.type
           ),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
-          // The following 2 lines will throttle updates to avoid  creating history entries when rapid changes
+          // The following 2 lines will throttle updates to avoid creating history entries when rapid changes
           // are committed to the store.
           cancelActiveListeners();
           await delay(200);
@@ -214,7 +214,7 @@ export function useStateSync(params: Record<string, string>) {
           );
         })
       ).then((panes) => {
-        const a = panes.reduce(
+        const newParams = panes.reduce(
           (acc, { exploreId, state }) => {
             return {
               ...acc,
@@ -231,7 +231,15 @@ export function useStateSync(params: Record<string, string>) {
 
         initState.current = 'done';
 
-        location.partial({ panes: JSON.stringify(a.panes), schemaVersion: urlState.schemaVersion, orgId }, true);
+        location.replace({
+          search: Object.entries({
+            panes: JSON.stringify(newParams.panes),
+            schemaVersion: urlState.schemaVersion,
+            orgId,
+          })
+            .map(([key, value]) => `${key}=${value}`)
+            .join('&'),
+        });
       });
     }
 

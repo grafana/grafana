@@ -226,11 +226,11 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   if (initializeExplore.pending.match(action)) {
     const initialPanes = Object.entries(state.panes);
     const before = initialPanes.slice(0, action.meta.arg.position);
-    const panes = [
-      ...before,
-      [action.meta.arg.exploreId, initialExploreItemState] as const,
-      ...initialPanes.slice(before.length + 1),
-    ].reduce((acc, [id, pane]) => ({ ...acc, [id]: pane }), {});
+    const after = initialPanes.slice(before.length);
+    const panes = [...before, [action.meta.arg.exploreId, initialExploreItemState] as const, ...after].reduce(
+      (acc, [id, pane]) => ({ ...acc, [id]: pane }),
+      {}
+    );
 
     return {
       ...state,

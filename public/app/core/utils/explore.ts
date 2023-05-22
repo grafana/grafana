@@ -100,14 +100,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       state = {
         ...state,
         datasource: exploreDatasource.uid,
-        context: 'explore',
         queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
       };
     } else {
       state = {
         ...state,
         datasource: exploreDatasource.uid,
-        context: 'explore',
         queries: exploreTargets,
       };
     }
@@ -173,16 +171,6 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
 
-const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
-  props.some((prop) => segment.hasOwnProperty(prop));
-
-enum ParseUrlStateIndex {
-  RangeFrom = 0,
-  RangeTo = 1,
-  Datasource = 2,
-  SegmentsStart = 3,
-}
-
 export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
@@ -208,39 +196,6 @@ export const safeStringifyValue = (value: any, space?: number) => {
 
   return '';
 };
-
-export function parseUrlState(initial: string | undefined): ExploreUrlState {
-  const parsed = safeParseJson(initial);
-  const errorResult: any = {
-    datasource: null,
-    queries: [],
-    range: DEFAULT_RANGE,
-  };
-
-  if (!parsed) {
-    return errorResult;
-  }
-
-  if (!Array.isArray(parsed)) {
-    return { queries: [], range: DEFAULT_RANGE, ...parsed };
-  }
-
-  if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
-    console.error('Error parsing compact URL state for Explore.');
-    return errorResult;
-  }
-
-  const range = {
-    from: parsed[ParseUrlStateIndex.RangeFrom],
-    to: parsed[ParseUrlStateIndex.RangeTo],
-  };
-  const datasource = parsed[ParseUrlStateIndex.Datasource];
-  const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
-
-  const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, panelsState };
-}
 
 export function generateKey(index = 0): string {
   return `Q-${uuidv4()}-${index}`;

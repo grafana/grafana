@@ -1,76 +1,30 @@
-import { nanoid } from '@reduxjs/toolkit';
-
-import { ExploreUrlState } from '@grafana/data';
-import { parseUrlState, safeParseJson } from 'app/core/utils/explore';
+import { v0Migrator } from './migrators/v0';
+import { ExploreURLV1, v1Migrator } from './migrators/v1';
 
 export const parseURL = (params: AnyExploreParams) => {
   return migrate(params);
 };
 
 interface AnyExploreParams {
-  [key: string]: string;
+  [key: string]: string | undefined;
 }
 
-// don't look at this yet, it's a placeholder for the actual migrations
-const migrate = (params?: AnyExploreParams): ExploreURL => {
-  // v0 - compact URLs
-  if (params && !('schemaVersion' in params)) {
-    // schemaVersion is not in the URL, so it must be v0
-    return {
-      schemaVersion: 1,
-      panes: {
-        [nanoid()]: parseUrlState(params.left),
-        ...(params.right && { [nanoid()]: parseUrlState(params.right) }),
-      },
-    };
-  }
+const migrators = [v0Migrator, v1Migrator] as const;
 
-  return {
-    schemaVersion: 1,
-    panes: Object.entries(safeParseJson(params?.panes) || { [nanoid()]: parseUrlState(undefined) }).reduce(
-      (acc, [key, value]) => {
-        return {
-          ...acc,
-          [key]: value,
-        };
-      },
-      {}
-    ),
-  };
-  // TODO: this should be the first migration
-  // @ts-ignore
+const migrate = (params: AnyExploreParams): ExploreURL => {
+  const schemaVersion = params && 'schemaVersion' in params ? Number.parseInt(params.schemaVersion || '0', 10) : 0;
+
+  const [parser, ...migratorsToRun] = migrators.slice(schemaVersion);
+
+  const parsedUrl = parser.parse(params);
+
+  // @ts-expect-error
+  const final: ExploreURL = migratorsToRun.reduce((acc, migrator) => {
+    // @ts-expect-error
+    return migrator.migrate ? migrator.migrate(acc) : acc;
+  }, parsedUrl);
+
+  return final;
 };
 
-interface BaseExploreURL {
-  schemaVersion: number;
-}
-
-// interface ExploreURLV0 extends BaseExploreURL {
-//   schemaVersion: never;
-//   left: {};
-//   right?: {};
-// }
-
-interface ExploreURLV1 extends BaseExploreURL {
-  schemaVersion: 1;
-  panes: {
-    [id: string]: ExploreUrlState;
-  };
-}
-
-// type AnyExploreURL = ExploreURLV0 | ExploreURLV1;
-
 type ExploreURL = ExploreURLV1;
-
-// type MigrationHandler<In extends AnyExploreURL, Out extends AnyExploreURL> = (
-//   urlState: In
-// ) => Omit<Out, 'schemaVersion'> & { schemaVersion?: never };
-
-// const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = (urlState) => {
-//   return {
-//     panes: {
-//       left: urlState.left,
-//       ...(urlState.right && { right: urlState.right }),
-//     },
-//   };
-// };
