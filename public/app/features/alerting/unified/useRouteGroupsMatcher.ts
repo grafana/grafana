@@ -4,10 +4,10 @@ import { useCallback } from 'react';
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 
 import { logInfo } from './Analytics';
+import { createWorker } from './createRouteGroupsMatcherWorker';
 import type { RouteGroupsMatcher } from './routeGroupsMatcher.worker';
 
-const worker = new Worker(new URL('./routeGroupsMatcher.worker.ts', import.meta.url), { type: 'module' });
-const routeMatcher = comlink.wrap<RouteGroupsMatcher>(worker);
+const routeMatcher = comlink.wrap<RouteGroupsMatcher>(createWorker());
 
 export function useRouteGroupsMatcher() {
   const getRouteGroupsMap = useCallback(async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) => {
