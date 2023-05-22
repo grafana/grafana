@@ -167,9 +167,10 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			} else {
 				filterString = dimSB.String()
 			}
-			if azJSONModel.Top != "" {
-				params.Add("top", azJSONModel.Top)
-			}
+		}
+
+		if azJSONModel.Top != "" {
+			params.Add("top", azJSONModel.Top)
 		}
 
 		target = params.Encode()
@@ -379,7 +380,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			return nil, err
 		}
 
-		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl)
+		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl, nil)
 		frames = append(frames, &frameWithLink)
 	}
 

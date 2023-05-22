@@ -43,8 +43,7 @@ func TestMissingPath(t *testing.T) {
 			c, err := commandstest.NewCliContext(tc.cliContext)
 			require.NoError(t, err)
 
-			cmd := Command{}
-			err = cmd.lsCommand(c)
+			err = lsCommand(c)
 			assert.Equal(t, tc.error, err)
 		})
 	}
@@ -66,8 +65,7 @@ func TestValidateLsCommand_override(t *testing.T) {
 			return expected
 		}
 
-		cmd := Command{}
-		err = cmd.lsCommand(c)
+		err = lsCommand(c)
 		assert.Error(t, err)
 		assert.Equal(t, expected, err, "can override validateLsCommand")
 	})
@@ -77,8 +75,7 @@ func TestValidateLsCommand_override(t *testing.T) {
 		c, err := commandstest.NewCliContext(map[string]string{"path": "/var/lib/grafana/plugins"})
 		require.NoError(t, err)
 
-		cmd := Command{}
-		err = cmd.lsCommand(c)
+		err = lsCommand(c)
 		assert.NotEqual(t, err, expected, "validateLsCommand is reset")
 	})
 }

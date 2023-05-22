@@ -5,6 +5,7 @@ keywords:
   - ssl
   - certificates
 title: Set up Grafana HTTPS for secure web traffic
+description: Learn how to set up Grafana HTTPS for secure web traffic.
 menuTitle: Set up HTTPS
 weight: 900
 ---
@@ -237,7 +238,7 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
    > **Note**: The standard port for SSL traffic is 443, which you can use instead of Grafana's default port 3000. This change might require additional operating system privileges or configuration to bind to lower-numbered privileged ports.
 
-1. [Restart the Grafana server]({{< relref "./start-restart-grafana/#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
+1. [Restart the Grafana server]({{< relref "./start-restart-grafana#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting
 

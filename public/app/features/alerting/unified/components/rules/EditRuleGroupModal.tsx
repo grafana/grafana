@@ -381,14 +381,14 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   onClick={() => onClose(false)}
                   fill="outline"
                 >
-                  Close
+                  Cancel
                 </Button>
                 <Button
                   type="button"
                   disabled={!isDirty || loading}
                   onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
                 >
-                  {loading ? 'Saving...' : 'Save changes'}
+                  {loading ? 'Saving...' : 'Save evaluation interval'}
                 </Button>
               </Modal.ButtonRow>
             </div>

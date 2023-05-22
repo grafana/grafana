@@ -3,12 +3,12 @@ import { isEqual, uniqWith } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
-  MatcherOperator,
-  Route,
   Matcher,
+  MatcherOperator,
+  ObjectMatcher,
+  Route,
   TimeInterval,
   TimeRange,
-  ObjectMatcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 

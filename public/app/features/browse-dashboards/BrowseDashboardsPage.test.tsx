@@ -1,4 +1,4 @@
-import { render as rtlRender, screen } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -9,7 +9,8 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 
 import BrowseDashboardsPage, { Props } from './BrowseDashboardsPage';
 import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
-const [mockTree, { dashbdD }] = wellFormedTree();
+import * as permissions from './permissions';
+const [mockTree, { dashbdD, folderA }] = wellFormedTree();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -57,18 +58,27 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     props = {
       ...getRouteComponentProps(),
     };
+
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        canEditInFolder: true,
+        canCreateDashboards: true,
+        canCreateFolder: true,
+      };
+    });
   });
 
   it('displays a search input', async () => {
     render(<BrowseDashboardsPage {...props} />);
-    expect(await screen.findByPlaceholderText('Search box')).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
   });
 
   it('displays the filters and hides the actions initially', async () => {
     render(<BrowseDashboardsPage {...props} />);
+    await screen.findByPlaceholderText('Search for dashboards and folders');
 
-    expect(await screen.findByText('Sort')).toBeInTheDocument();
-    expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
+    expect(screen.queryByText('Sort')).toBeInTheDocument();
+    expect(screen.queryByText('Filter by tag')).toBeInTheDocument();
 
     expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
@@ -87,5 +97,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     // Check the actions are now visible
     expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  it('navigating into a child item resets the selected state', async () => {
+    render(<BrowseDashboardsPage {...props} />);
+
+    const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
+    await userEvent.click(checkbox);
+
+    // Check the actions are now visible
+    expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('link', { name: folderA.item.title }));
+
+    // Check the actions are no longer visible
+    waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    });
   });
 });

@@ -82,7 +82,7 @@ func TestRequestSnapshots(t *testing.T) {
 	queryHeader := []byte(`
 	{
 		"ignore_unavailable": true,
-		"index": "testdb-2022.11.14",
+		"index": ["testdb-2022.11.14"],
 		"search_type": "query_then_fetch"
 	}
 	`)

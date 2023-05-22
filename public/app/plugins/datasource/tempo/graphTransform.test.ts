@@ -1,4 +1,4 @@
-import { DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, dateTime, createDataFrame } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -77,7 +77,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: ['db', 'app', 'lb'] },
       { name: 'title', values: ['db', 'app', 'lb'] },
       { name: 'mainstat', values: [1000, 2000, NaN] },
-      { name: 'secondarystat', values: [0.17, 0.33, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0.8, 0.25, 1] },
       { name: 'arc__failed', values: [0.2, 0.75, 0] },
     ]);
@@ -86,7 +86,7 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'source', values: ['app', 'lb'] },
       { name: 'target', values: ['db', 'app'] },
       { name: 'mainstat', values: [1000, 2000] },
-      { name: 'secondarystat', values: [0.17, 0.33] },
+      { name: 'secondarystat', values: [10, 20] },
     ]);
   });
 
@@ -109,14 +109,14 @@ describe('mapPromMetricsToServiceMap', () => {
       { name: 'id', values: ['db', 'app', 'lb'] },
       { name: 'title', values: ['db', 'app', 'lb'] },
       { name: 'mainstat', values: [1000, 2000, NaN] },
-      { name: 'secondarystat', values: [0.17, 0.33, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0, 0, 1] },
       { name: 'arc__failed', values: [1, 1, 0] },
     ]);
   });
 });
 
-const singleSpanResponse = new MutableDataFrame({
+const singleSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335'] },
     { name: 'spanID', values: ['4322526419282105830'] },
@@ -128,7 +128,7 @@ const singleSpanResponse = new MutableDataFrame({
   ],
 });
 
-const missingSpanResponse = new MutableDataFrame({
+const missingSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335', '04450900759028499335'] },
     { name: 'spanID', values: ['1', '2'] },
@@ -140,7 +140,7 @@ const missingSpanResponse = new MutableDataFrame({
   ],
 });
 
-const totalsPromMetric = new MutableDataFrame({
+const totalsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -153,7 +153,7 @@ const totalsPromMetric = new MutableDataFrame({
   ],
 });
 
-const secondsPromMetric = new MutableDataFrame({
+const secondsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -166,7 +166,7 @@ const secondsPromMetric = new MutableDataFrame({
   ],
 });
 
-const failedPromMetric = new MutableDataFrame({
+const failedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -179,7 +179,7 @@ const failedPromMetric = new MutableDataFrame({
   ],
 });
 
-const invalidFailedPromMetric = new MutableDataFrame({
+const invalidFailedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },

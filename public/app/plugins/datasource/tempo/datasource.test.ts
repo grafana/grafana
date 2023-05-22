@@ -9,8 +9,9 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  MutableDataFrame,
+  createDataFrame,
   PluginType,
+  CoreApp,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -30,6 +31,7 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
+  getEscapedSpanNames,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
@@ -121,7 +123,7 @@ describe('Tempo data source', () => {
 
   it('parses json fields from backend', async () => {
     setupBackendSrv(
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           { name: 'traceID', values: ['04450900759028499335'] },
           { name: 'spanID', values: ['4322526419282105830'] },
@@ -448,7 +450,7 @@ describe('Tempo service graph view', () => {
     });
     setDataSourceSrv(backendSrvWithPrometheus as any);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange(), app: CoreApp.Explore } as any)
     );
 
     expect(response.data).toHaveLength(3);
@@ -587,6 +589,20 @@ describe('Tempo service graph view', () => {
   it('should build link expr correctly', () => {
     let builtQuery = buildLinkExpr('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
+  });
+
+  it('should escape span names correctly', () => {
+    const spanNames = [
+      '/actuator/health/**',
+      '$type + [test]|HTTP POST - post',
+      'server.cluster.local:9090^/sample.test(.*)?',
+    ];
+    let escaped = getEscapedSpanNames(spanNames);
+    expect(escaped).toEqual([
+      '/actuator/health/\\\\*\\\\*',
+      '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
+      'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
+    ]);
   });
 
   it('should get field config correctly', () => {
@@ -796,7 +812,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   readOnly: false,
 };
 
-const rateMetric = new MutableDataFrame({
+const rateMetric = createDataFrame({
   refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
@@ -808,7 +824,7 @@ const rateMetric = new MutableDataFrame({
   ],
 });
 
-const errorRateMetric = new MutableDataFrame({
+const errorRateMetric = createDataFrame({
   refId:
     'topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range])) by (span_name))',
   fields: [
@@ -821,7 +837,7 @@ const errorRateMetric = new MutableDataFrame({
   ],
 });
 
-const durationMetric = new MutableDataFrame({
+const durationMetric = createDataFrame({
   refId:
     'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
   fields: [
@@ -833,7 +849,7 @@ const durationMetric = new MutableDataFrame({
   ],
 });
 
-const totalsPromMetric = new MutableDataFrame({
+const totalsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -846,7 +862,7 @@ const totalsPromMetric = new MutableDataFrame({
   ],
 });
 
-const secondsPromMetric = new MutableDataFrame({
+const secondsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -859,7 +875,7 @@ const secondsPromMetric = new MutableDataFrame({
   ],
 });
 
-const failedPromMetric = new MutableDataFrame({
+const failedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },

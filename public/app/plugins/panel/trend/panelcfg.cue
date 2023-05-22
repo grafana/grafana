@@ -25,7 +25,7 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						// Identical to timeseries... except it does not have timezone settings
-						PanelOptions: {
+						Options: {
 							legend:  common.VizLegendOptions
 							tooltip: common.VizTooltipOptions
 
@@ -33,7 +33,7 @@ composableKinds: PanelCfg: {
 							xField?: string
 						} @cuetsy(kind="interface")
 
-						PanelFieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
+						FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
 					},
 				]
 			},

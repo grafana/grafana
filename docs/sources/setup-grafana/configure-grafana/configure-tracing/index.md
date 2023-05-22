@@ -4,21 +4,22 @@ aliases:
   - ../enable-diagnostics/
 menuTitle: Configure tracing
 title: Configure tracing to troubleshoot Grafana
+description: Learn how to configure tracing so that you can troubleshoot Grafana.
 weight: 200
 ---
 
 # Configure tracing to troubleshoot Grafana
 
-You can set up the `grafana-server` process to enable certain diagnostics when it starts. This can be helpful
+You can set up the `grafana-server` process to enable certain diagnostics when it starts. This can be useful
 when investigating certain performance problems. It's _not_ recommended to have these enabled by default.
 
 ## Turn on profiling
 
-The `grafana-server` can be started with the arguments `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
+The `grafana-server` can be started with the command-line option `-profile` to enable profiling, `-profile-addr` to override the default HTTP address (`localhost`), and
 `-profile-port` to override the default HTTP port (`6060`) where the `pprof` debugging endpoints are available. For example:
 
 ```bash
-./grafana-server -profile -profile-addr=0.0.0.0 -profile-port=8080
+./grafana server -profile -profile-addr=0.0.0.0 -profile-port=8080
 ```
 
 Note that `pprof` debugging endpoints are served on a different port than the Grafana HTTP server.
@@ -38,7 +39,7 @@ Refer to [Go command pprof](https://golang.org/cmd/pprof/) for more information 
 The `grafana-server` can be started with the arguments `-tracing` to enable tracing and `-tracing-file` to override the default trace file (`trace.out`) where trace result is written to. For example:
 
 ```bash
-./grafana-server -tracing -tracing-file=/tmp/trace.out
+./grafana server -tracing -tracing-file=/tmp/trace.out
 ```
 
 You can configure or override profiling settings using environment variables:
