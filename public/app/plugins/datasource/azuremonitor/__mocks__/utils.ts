@@ -7,7 +7,7 @@ interface TemplateableValue {
   templateVariable: VariableWithOptions;
 }
 
-export function createTemplateVariables(templateableProps: string[]): Map<string, TemplateableValue> {
+export function createTemplateVariables(templateableProps: string[], value = ''): Map<string, TemplateableValue> {
   const templateVariables = new Map<string, TemplateableValue>();
   templateableProps.map((prop) => {
     const variableName = prop.replace(/[\[\].]/g, '');
@@ -15,7 +15,7 @@ export function createTemplateVariables(templateableProps: string[]): Map<string
       current: {
         selected: false,
         text: `${variableName}-template-variable`,
-        value: `${variableName}-template-variable`,
+        value: value ? `${variableName}-template-variable` : value,
       },
       id: variableName,
       name: variableName,
