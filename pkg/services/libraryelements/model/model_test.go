@@ -39,19 +39,19 @@ func TestLibaryPanelConversion(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Printf("%s", string(out))
 	require.JSONEq(t, `{
-		"apiVersion": "alphav1",
+		"apiVersion": "v0.0-alpha",
 		"kind": "LibraryPanel",
 		"metadata": {
 		  "name": "TheUID",
+		  "resourceVersion": "10",
 		  "creationTimestamp": "2000-01-01T08:00:00Z",
 		  "annotations": {
 			"grafana.com/createdBy": "user:11",
 			"grafana.com/folder": "TheFolderUID",
 			"grafana.com/updatedBy": "user:12",
 			"grafana.com/updatedTimestamp": "2010-01-01T08:00:00Z"
-		  },
-		  "resourceVersion": "10"
+		  }
 		},
 		"spec": {}
-	  } `, string(out))
+	  }`, string(out))
 }
