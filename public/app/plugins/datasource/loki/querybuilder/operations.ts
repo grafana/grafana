@@ -5,6 +5,7 @@ import {
 import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
+import { DistinctParamEditor } from './components/DistinctParamEditor';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
 import {
   addLokiOperation,
@@ -485,6 +486,28 @@ Example: \`\`error_level=\`level\` \`\`
       renderer: (op, def, innerExpr) => `${innerExpr} | decolorize`,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `This will remove ANSI color codes from log lines.`,
+    },
+    {
+      id: LokiOperationId.Distinct,
+      name: 'Distinct',
+      params: [
+        {
+          name: 'String',
+          type: 'string',
+          hideName: true,
+          placeholder: 'label1, label2',
+          description: 'Comma separated list of labels to use for distinct filtering',
+          minWidth: 20,
+        },
+      ],
+      defaultParams: [''],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.Unwrap,
+      renderer: (op, def, innerExpr) => `${innerExpr} | distinct ${op.params[0]}`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () =>
+        'Allows filtering log lines using their original and extracted labels to filter out duplicate label values. The first line occurrence of a distinct value is returned, and the others are dropped.',
     },
     ...binaryScalarOperations,
     {
