@@ -373,6 +373,9 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 		if overwrite {
 			dash.SetVersion(existing.Version)
 		} else {
+			if dash.Version == 0 && !dashWithIdExists {
+				return false, dashboards.ErrDashboardWithSameUIDExists
+			}
 			return isParentFolderChanged, dashboards.ErrDashboardVersionMismatch
 		}
 	}

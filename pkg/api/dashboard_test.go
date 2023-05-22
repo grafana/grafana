@@ -665,7 +665,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}{
 				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: 404},
 				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: 409},
 				{SaveError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: 412},
 				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: 412},
 				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},

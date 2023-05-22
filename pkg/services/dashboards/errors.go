@@ -29,7 +29,7 @@ var (
 	}
 	ErrDashboardWithSameUIDExists = DashboardErr{
 		Reason:     "A dashboard with the same uid already exists",
-		StatusCode: 400,
+		StatusCode: 409,
 	}
 	ErrDashboardWithSameNameInFolderExists = DashboardErr{
 		Reason:     "A dashboard with the same name in the folder already exists",

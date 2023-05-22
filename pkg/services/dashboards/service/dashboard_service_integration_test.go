@@ -494,7 +494,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardVersionMismatch, err)
+						assert.Equal(t, dashboards.ErrDashboardWithSameUIDExists, err)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by uid with current version", canSave,
