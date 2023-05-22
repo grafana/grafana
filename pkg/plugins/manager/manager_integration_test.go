@@ -40,7 +40,6 @@ import (
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
-	phlare "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -49,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -218,7 +218,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
-		"grafana-pyroscope":                {},
+		"phlare":                           {},
 		"parca":                            {},
 	}
 
