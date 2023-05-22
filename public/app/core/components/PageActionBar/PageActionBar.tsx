@@ -36,7 +36,7 @@ export default class PageActionBar extends PureComponent<Props> {
 
     return (
       <div className="page-action-bar">
-        <InlineField grow="true">
+        <InlineField grow>
           <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={placeholder} />
         </InlineField>
         {sortPicker && (

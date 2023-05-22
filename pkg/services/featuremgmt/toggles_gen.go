@@ -315,6 +315,10 @@ const (
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
 
+	// FlagDataSourcePageHeader
+	// Apply new pageHeader UI in data source edit page
+	FlagDataSourcePageHeader = "dataSourcePageHeader"
+
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"

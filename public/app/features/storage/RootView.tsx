@@ -94,7 +94,7 @@ export function RootView({ root, onPathChange }: Props) {
   return (
     <div>
       <div className="page-action-bar">
-        <InlineField grow="true">
+        <InlineField grow>
           <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
         </InlineField>
         <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>

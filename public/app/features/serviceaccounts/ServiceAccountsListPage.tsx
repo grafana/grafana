@@ -168,7 +168,7 @@ export const ServiceAccountsListPageUnconnected = ({
     <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
         <div className="page-action-bar">
-          <InlineField grow="true">
+          <InlineField grow>
             <FilterInput
               placeholder="Search service account by name"
               value={query}

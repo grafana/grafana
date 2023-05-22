@@ -81,7 +81,7 @@ export const TeamList = ({
         ) : (
           <>
             <div className="page-action-bar">
-              <InlineField grow="true">
+              <InlineField grow>
                 <FilterInput placeholder="Search teams" value={query} onChange={changeQuery} />
               </InlineField>
 
