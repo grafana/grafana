@@ -3,6 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
@@ -143,6 +144,7 @@ export const Permissions = ({
               $all: false,
             }}
           />
+          <Space v={2} />
         </>
       )}
       {canSetPermissions && (
