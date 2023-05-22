@@ -92,7 +92,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           showButton={contextSrv.hasPermission(permissions.create)}
         />
       ) : (
-        <p>No mute timings configured</p>
+        <EmptyAreaWithCTA text="No mute timings configured" buttonLabel={''} showButton={false} />
       )}
       {!hideActions && (
         <ConfirmModal
