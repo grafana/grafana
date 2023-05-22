@@ -15,6 +15,7 @@ const { setFilteredMetricCount } = stateSlice.actions;
 export async function setMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery,
+  inferType: boolean,
   initialMetrics?: string[]
 ): Promise<MetricsModalMetadata> {
   // metadata is set in the metric select now
@@ -32,7 +33,16 @@ export async function setMetrics(
   let metricsData: MetricsData | undefined;
 
   metricsData = initialMetrics?.map((m: string) => {
-    const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
+    let type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
+    let inferredType = false;
+    if (!type && inferType) {
+      type = metricTypeHints(m);
+
+      if (type) {
+        inferredType = true;
+      }
+    }
+
     const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
 
     // possibly remove the type in favor of the type select
@@ -42,6 +52,7 @@ export async function setMetrics(
       value: m,
       type: type,
       description: description,
+      inferred: inferredType,
     };
 
     nameHaystackDictionaryData[m] = metricData;
@@ -103,6 +114,10 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
 
   if (!state.includeNullMetadata) {
     filteredMetrics = filteredMetrics.filter((m: MetricData) => {
+      if (state.inferType && m.inferred) {
+        return true;
+      }
+
       return m.type !== undefined && m.description !== undefined;
     });
   }
@@ -153,7 +168,8 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
 export async function getBackendSearchMetrics(
   metricText: string,
   labels: QueryBuilderLabelFilter[],
-  datasource: PrometheusDatasource
+  datasource: PrometheusDatasource,
+  inferType: boolean
 ): Promise<Array<{ value: string }>> {
   const queryString = regexifyLabelValuesQueryString(metricText);
 
@@ -167,18 +183,41 @@ export async function getBackendSearchMetrics(
 
   return await results.then((results) => {
     return results.map((result) => {
-      const type = getMetadataType(result.text, datasource.languageProvider.metricsMetadata!);
+      let type = getMetadataType(result.text, datasource.languageProvider.metricsMetadata!);
+      let inferredType = false;
+      if (!type && inferType) {
+        type = metricTypeHints(result.text);
+
+        if (type) {
+          inferredType = true;
+        }
+      }
       const description = getMetadataHelp(result.text, datasource.languageProvider.metricsMetadata!);
 
       const metricData: MetricData = {
         value: result.text,
         type: type,
         description: description,
+        inferred: inferredType,
       };
 
       return metricData;
     });
   });
+}
+
+function metricTypeHints(metric: string): string | undefined {
+  const histogramMetric = metric.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
+  if (histogramMetric) {
+    return 'histogram';
+  }
+
+  const counterMatch = metric.match(/\b(\w+_(total|sum|count))\b/);
+  if (counterMatch) {
+    return 'counter';
+  }
+
+  return undefined;
 }
 
 export const promTypes: PromFilterOption[] = [
@@ -209,4 +248,5 @@ export const placeholders = {
   type: 'Filter by type',
   includeNullMetadata: 'Include results with no metadata',
   setUseBackend: 'Enable regex search',
+  inferType: 'Infer Prometheus type',
 };

@@ -69,6 +69,7 @@ const {
   setSelectedIdx,
   setDisableTextWrap,
   showAdditionalSettings,
+  setInferType,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -82,27 +83,31 @@ export const MetricsModal = (props: MetricsModalProps) => {
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
    */
-  const updateMetricsMetadata = useCallback(async () => {
-    // *** Loading Gif
-    dispatch(setIsLoading(true));
+  const updateMetricsMetadata = useCallback(
+    async (inferType: boolean) => {
+      // *** Loading Gif
+      dispatch(setIsLoading(true));
 
-    const data: MetricsModalMetadata = await setMetrics(datasource, query, initialMetrics);
+      const data: MetricsModalMetadata = await setMetrics(datasource, query, inferType, initialMetrics);
 
-    dispatch(
-      buildMetrics({
-        isLoading: false,
-        hasMetadata: data.hasMetadata,
-        metrics: data.metrics,
-        metaHaystackDictionary: data.metaHaystackDictionary,
-        nameHaystackDictionary: data.nameHaystackDictionary,
-        totalMetricCount: data.metrics.length,
-        filteredMetricCount: data.metrics.length,
-      })
-    );
-  }, [query, datasource, initialMetrics]);
+      dispatch(
+        buildMetrics({
+          isLoading: false,
+          hasMetadata: data.hasMetadata,
+          metrics: data.metrics,
+          metaHaystackDictionary: data.metaHaystackDictionary,
+          nameHaystackDictionary: data.nameHaystackDictionary,
+          totalMetricCount: data.metrics.length,
+          filteredMetricCount: data.metrics.length,
+        })
+      );
+    },
+    [query, datasource, initialMetrics]
+  );
 
   useEffect(() => {
-    updateMetricsMetadata();
+    updateMetricsMetadata(state.inferType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateMetricsMetadata]);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
@@ -118,10 +123,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
    */
   const debouncedBackendSearch = useMemo(
     () =>
-      debounce(async (metricText: string) => {
+      debounce(async (metricText: string, inferType: boolean) => {
         dispatch(setIsLoading(true));
 
-        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource);
+        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource, inferType);
 
         dispatch(
           filterMetricsBackend({
@@ -145,9 +150,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
   function searchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
       // get all metrics data if a user erases everything in the input
-      updateMetricsMetadata();
+      updateMetricsMetadata(state.inferType);
     } else if (state.useBackend) {
-      debouncedBackendSearch(query);
+      debouncedBackendSearch(query, state.inferType);
     } else {
       // search either the names or all metadata
       // fuzzy search go!
@@ -202,17 +207,31 @@ export const MetricsModal = (props: MetricsModalProps) => {
           disableTextWrap: state.disableTextWrap,
         });
       }}
+      onChangeInferType={() => {
+        const inferType = !state.inferType;
+        dispatch(setInferType(inferType));
+        // update the type
+        if (state.useBackend) {
+          // if there is no query yet, it will infer the type on the api call
+          if (state.fuzzySearchQuery !== '') {
+            debouncedBackendSearch(state.fuzzySearchQuery, inferType);
+          }
+        } else {
+          // updates the metadata with the inferred type
+          updateMetricsMetadata(inferType);
+        }
+      }}
       onChangeUseBackend={() => {
         const newVal = !state.useBackend;
         dispatch(setUseBackend(newVal));
         onChange({ ...query, useBackend: newVal });
         if (newVal === false) {
           // rebuild the metrics metadata if we turn off useBackend
-          updateMetricsMetadata();
+          updateMetricsMetadata(state.inferType);
         } else {
           // check if there is text in the browse search and update
           if (state.fuzzySearchQuery !== '') {
-            debouncedBackendSearch(state.fuzzySearchQuery);
+            debouncedBackendSearch(state.fuzzySearchQuery, state.inferType);
           }
           // otherwise wait for user typing
         }
@@ -353,4 +372,5 @@ export const testIds = {
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
   showAdditionalSettings: 'show-additional-settings',
+  inferType: 'set-infer-type',
 };

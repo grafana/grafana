@@ -84,6 +84,9 @@ export const stateSlice = createSlice({
     showAdditionalSettings: (state) => {
       state.showAdditionalSettings = !state.showAdditionalSettings;
     },
+    setInferType: (state, action: PayloadAction<boolean>) => {
+      state.inferType = action.payload;
+    },
   },
 });
 
@@ -114,6 +117,7 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     disableTextWrap: query?.disableTextWrap ?? false,
     selectedIdx: 0,
     showAdditionalSettings: false,
+    inferType: true,
   };
 }
 
@@ -167,6 +171,8 @@ export interface MetricsModalState {
   selectedIdx: number;
   /** Display toggle switches for settings */
   showAdditionalSettings: boolean;
+  /** Check metric to match on substrings to infer prometheus type */
+  inferType: boolean;
 }
 
 /**

@@ -14,11 +14,18 @@ type AdditionalSettingsProps = {
   onChangeIncludeNullMetadata: () => void;
   onChangeDisableTextWrap: () => void;
   onChangeUseBackend: () => void;
+  onChangeInferType: () => void;
 };
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
-  const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
-    props;
+  const {
+    state,
+    onChangeFullMetaSearch,
+    onChangeIncludeNullMetadata,
+    onChangeDisableTextWrap,
+    onChangeUseBackend,
+    onChangeInferType,
+  } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -55,6 +62,10 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         >
           <Icon name="info-circle" size="xs" className={styles.backendTooltip} />
         </Tooltip>
+      </div>
+      <div className={styles.selectItem}>
+        <Switch data-testid={testIds.inferType} value={state.inferType} onChange={() => onChangeInferType()} />
+        <div className={styles.selectItemLabel}>{placeholders.inferType}&nbsp;</div>
       </div>
     </>
   );

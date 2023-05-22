@@ -4,7 +4,7 @@ import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
@@ -80,10 +80,24 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td>{metric.type ?? ''}</td>
+          <td>
+            {metric.type ?? ''} {inferredType(metric.inferred ?? false)}
+          </td>
           <td>{metric.description ?? ''}</td>
         </>
       );
+    }
+  }
+
+  function inferredType(inferred: boolean): JSX.Element | undefined {
+    if (inferred) {
+      return (
+        <Tooltip content={'This metric type has been inferred'} placement="bottom-end">
+          <Icon name="info-circle" size="xs" />
+        </Tooltip>
+      );
+    } else {
+      return undefined;
     }
   }
 
