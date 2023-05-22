@@ -51,7 +51,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     topRow: css({
-      alignItems: 'center',
+      alignItems: 'flex-start',
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',

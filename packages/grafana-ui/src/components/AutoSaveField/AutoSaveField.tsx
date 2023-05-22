@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import classNames from 'classnames';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
@@ -95,7 +96,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
         ref={fieldRef}
-        className={styles.widthFitContent}
+        className={classNames(styles.widthFitContent, restProps.className)}
       >
         {React.cloneElement(
           children((newValue) => {

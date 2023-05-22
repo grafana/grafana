@@ -85,8 +85,6 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           const result = await saveFolder({
             ...folderDTO,
             title: newValue,
-            // TODO remove this when FolderDTO is correctly returning version
-            version: 1,
           });
           if ('error' in result) {
             throw result.error instanceof Error ? result.error.message : result.error;

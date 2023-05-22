@@ -36,11 +36,11 @@ export const EditableText = ({ editLabel, onEdit, ...textProps }: EditableTextPr
       {!isEditing && !changeInProgress && (
         <div className={styles.textWrapper}>
           <Text {...textProps} truncate />
-          <IconButton name="pen" ariaLabel={editLabel} onClick={() => setIsEditing(true)} />
+          <IconButton name="pen" size="lg" ariaLabel={editLabel} onClick={() => setIsEditing(true)} />
         </div>
       )}
       {(isEditing || changeInProgress) && (
-        <AutoSaveField onFinishChange={onFinishChange}>
+        <AutoSaveField className={styles.field} onFinishChange={onFinishChange}>
           {(onChange) => (
             <Input
               defaultValue={textProps.children}
@@ -65,6 +65,9 @@ export const EditableText = ({ editLabel, onEdit, ...textProps }: EditableTextPr
 EditableText.displayName = 'EditableText';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  field: css({
+    marginBottom: 0,
+  }),
   textWrapper: css({
     alignItems: 'center',
     display: 'flex',
