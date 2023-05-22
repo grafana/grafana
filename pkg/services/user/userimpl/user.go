@@ -2,9 +2,6 @@ package userimpl
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -465,26 +462,4 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           false,
 		Fn:                collectorFn,
 	}
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func buildUserAnalyticsSettings(signedInUser user.SignedInUser, intercomSecret string) user.AnalyticsSettings {
-	var settings user.AnalyticsSettings
-
-	if signedInUser.ExternalAuthID != "" {
-		settings.Identifier = signedInUser.ExternalAuthID
-	} else {
-		settings.Identifier = signedInUser.Email + "@" + setting.AppUrl
-	}
-
-	if intercomSecret != "" {
-		settings.IntercomIdentifier = hashUserIdentifier(settings.Identifier, intercomSecret)
-	}
-	return settings
 }

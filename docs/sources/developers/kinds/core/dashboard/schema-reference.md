@@ -215,7 +215,7 @@ TODO docs
 | Property            | Type                                  | Required | Default | Description                                                                                                                                                                                                                                                                             |
 |---------------------|---------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `color`             | [FieldColor](#fieldcolor)             | No       |         | TODO docs                                                                                                                                                                                                                                                                               |
-| `custom`            | [object](#custom)                     | No       |         | custom is specified by the PanelFieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                          |
+| `custom`            | [object](#custom)                     | No       |         | custom is specified by the FieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                               |
 | `decimals`          | number                                | No       |         | Significant digits (for display)                                                                                                                                                                                                                                                        |
 | `description`       | string                                | No       |         | Human readable field metadata                                                                                                                                                                                                                                                           |
 | `displayNameFromDS` | string                                | No       |         | This can be used by data sources that return and explicit naming structure for values and labels<br/>When this property is configured, this value is used rather than the default naming strategy.                                                                                      |
@@ -339,7 +339,7 @@ TODO docs
 
 ### Custom
 
-custom is specified by the PanelFieldConfig field
+custom is specified by the FieldConfig field
 in panel plugin schemas.
 
 | Property | Type | Required | Default | Description |
@@ -410,7 +410,7 @@ schema; they do not evolve independently.
 | Property          | Type                                              | Required | Default | Description                                                                                                                                                |
 |-------------------|---------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `fieldConfig`     | [FieldConfigSource](#fieldconfigsource)           | **Yes**  |         |                                                                                                                                                            |
-| `options`         | [object](#options)                                | **Yes**  |         | options is specified by the PanelOptions field in panel<br/>plugin schemas.                                                                                |
+| `options`         | [object](#options)                                | **Yes**  |         | options is specified by the Options field in panel<br/>plugin schemas.                                                                                     |
 | `repeatDirection` | string                                            | **Yes**  | `h`     | Direction to repeat in if 'repeat' is set.<br/>"h" for horizontal, "v" for vertical.<br/>TODO this is probably optional<br/>Possible values are: `h`, `v`. |
 | `transformations` | [DataTransformerConfig](#datatransformerconfig)[] | **Yes**  |         |                                                                                                                                                            |
 | `transparent`     | boolean                                           | **Yes**  | `false` | Whether to display the panel without a background.                                                                                                         |
@@ -446,7 +446,7 @@ schema; they do not evolve independently.
 | Property            | Type                                  | Required | Default | Description                                                                                                                                                                                                                                                                             |
 |---------------------|---------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `color`             | [FieldColor](#fieldcolor)             | No       |         | TODO docs                                                                                                                                                                                                                                                                               |
-| `custom`            | [custom](#custom)                     | No       |         | custom is specified by the PanelFieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                          |
+| `custom`            | [custom](#custom)                     | No       |         | custom is specified by the FieldConfig field<br/>in panel plugin schemas.                                                                                                                                                                                                               |
 | `decimals`          | number                                | No       |         | Significant digits (for display)                                                                                                                                                                                                                                                        |
 | `description`       | string                                | No       |         | Human readable field metadata                                                                                                                                                                                                                                                           |
 | `displayNameFromDS` | string                                | No       |         | This can be used by data sources that return and explicit naming structure for values and labels<br/>When this property is configured, this value is used rather than the default naming strategy.                                                                                      |
@@ -513,7 +513,7 @@ The datasource used in all targets.
 
 ### Options
 
-options is specified by the PanelOptions field in panel
+options is specified by the Options field in panel
 plugin schemas.
 
 | Property | Type | Required | Default | Description |
@@ -567,7 +567,7 @@ schema; they do not evolve independently.
 | Property          | Type                                              | Required | Default | Description                                                                                                                                                |
 |-------------------|---------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `fieldConfig`     | [FieldConfigSource](#fieldconfigsource)           | **Yes**  |         |                                                                                                                                                            |
-| `options`         | [options](#options)                               | **Yes**  |         | options is specified by the PanelOptions field in panel<br/>plugin schemas.                                                                                |
+| `options`         | [options](#options)                               | **Yes**  |         | options is specified by the Options field in panel<br/>plugin schemas.                                                                                     |
 | `repeatDirection` | string                                            | **Yes**  | `h`     | Direction to repeat in if 'repeat' is set.<br/>"h" for horizontal, "v" for vertical.<br/>TODO this is probably optional<br/>Possible values are: `h`, `v`. |
 | `transformations` | [DataTransformerConfig](#datatransformerconfig)[] | **Yes**  |         |                                                                                                                                                            |
 | `transparent`     | boolean                                           | **Yes**  | `false` | Whether to display the panel without a background.                                                                                                         |
@@ -663,7 +663,7 @@ TODO this appears to be spread all over in the frontend. Concepts will likely ne
 
 | Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
 |--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `additionalFields` | [object](#additionalfields)                                                      | **Yes**  |         | additionalFields is reserved for future use                                                                                                                                |
+| `additionalFields` | [object](#additionalfields)                                                      | No       |         | additionalFields is reserved for future use                                                                                                                                |
 | `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
 
 ### AdditionalFields

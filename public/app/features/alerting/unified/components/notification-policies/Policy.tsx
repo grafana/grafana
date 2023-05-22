@@ -461,6 +461,7 @@ const INTEGRATION_ICONS: Record<string, IconName> = {
   telegram: 'telegram-alt',
 };
 
+// @TODO make this work for cloud AMs too
 const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   alertManagerSourceName,
   contactPoint,
