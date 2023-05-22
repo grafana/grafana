@@ -135,7 +135,9 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 #### AWS Signature Version 4 authentication
 
-> **Note:** Available in Grafana v7.3.5 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.3.5 and higher.
+{{% /admonition %}}
 
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
@@ -143,7 +145,9 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 ### Configure exemplars
 
-> **Note:** Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% admonition type="note" %}}
+Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% /admonition %}}
 
 Grafana 7.4 and higher can show exemplars data alongside a metric both in Explore and in Dashboards.
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data.
