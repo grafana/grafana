@@ -46,7 +46,9 @@ This section describes the fields you fill out to create an alert.
 
 You can set a minimum evaluation interval in the `alerting.min_interval_seconds` configuration field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../../administration/configuration/" >}}#min-interval-seconds) for more information.
 
-> **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
+{{% admonition type="caution" %}}
+Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -Pending -OK`.
+{{% /admonition %}}
 
 If an alert rule has a configured `For` and the query violates the configured threshold, then it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
 
