@@ -20,7 +20,7 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 2. Read and write access to legacy dashboard alerts and Grafana alerts are governed by the permissions of the folders storing them. During migration, legacy dashboard alert permissions are matched to the new rules permissions as follows:
 
-   - If there are dashboard permissions,a folder named `Migrated {"dashboardUid": "UID", "panelId": 1, "alertId": 1}` is created to match the permissions of the dashboard (including the inherited permissions from the folder).
+   - If there are dashboard permissions, a folder named `Migrated {"dashboardUid": "UID", "panelId": 1, "alertId": 1}` is created to match the permissions of the dashboard (including the inherited permissions from the folder).
    - If there are no dashboard permissions and the dashboard is in a folder, then the rule is linked to this folder and inherits its permissions.
    - If there are no dashboard permissions and the dashboard is in the General folder, then the rule is linked to the `General Alerting` folder and the rule inherits the default permissions.
 
