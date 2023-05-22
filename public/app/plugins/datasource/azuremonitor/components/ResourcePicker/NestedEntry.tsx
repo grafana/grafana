@@ -70,6 +70,7 @@ export const NestedEntry = ({
           aria-label={isOpen ? `Collapse ${entry.name}` : `Expand ${entry.name}`}
           onClick={handleToggleCollapse}
           id={entry.id}
+          tooltip={isOpen ? 'Collapse' : 'Expand'}
         />
       ) : (
         <Space layout="inline" h={2} />
