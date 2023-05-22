@@ -13,11 +13,11 @@ title: TablePanelCfg kind
 
 
 
-| Property  | Type               | Required | Default | Description |
-|-----------|--------------------|----------|---------|-------------|
-| `Options` | [object](#options) | **Yes**  |         |             |
+| Property       | Type                    | Required | Default | Description |
+|----------------|-------------------------|----------|---------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
 
-### Options
+### PanelOptions
 
 | Property        | Type                                              | Required | Default                                      | Description                                                        |
 |-----------------|---------------------------------------------------|----------|----------------------------------------------|--------------------------------------------------------------------|

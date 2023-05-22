@@ -55,12 +55,12 @@ export interface ScatterSeriesConfig extends ScatterFieldConfig {
   y?: string;
 }
 
-export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
+export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip {
   dims: XYDimensionConfig;
   series: Array<ScatterSeriesConfig>;
   seriesMapping?: SeriesMapping;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   series: [],
 };

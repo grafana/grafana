@@ -15,14 +15,14 @@ title: XYChartPanelCfg kind
 
 | Property              | Type                           | Required | Default | Description                                             |
 |-----------------------|--------------------------------|----------|---------|---------------------------------------------------------|
-| `Options`             | [object](#options)             | **Yes**  |         |                                                         |
+| `PanelOptions`        | [object](#paneloptions)        | **Yes**  |         |                                                         |
 | `ScatterFieldConfig`  | [object](#scatterfieldconfig)  | **Yes**  |         |                                                         |
 | `ScatterSeriesConfig` | [object](#scatterseriesconfig) | **Yes**  |         |                                                         |
 | `ScatterShow`         | string                         | **Yes**  |         | Possible values are: `points`, `lines`, `points+lines`. |
 | `SeriesMapping`       | string                         | **Yes**  |         | Possible values are: `auto`, `manual`.                  |
 | `XYDimensionConfig`   | [object](#xydimensionconfig)   | **Yes**  |         |                                                         |
 
-### Options
+### PanelOptions
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
