@@ -5,12 +5,20 @@ import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Collapse, Modal, TagList, useStyles2 } from '@grafana/ui';
-import { AlertManagerCortexConfig, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerChoice,
+  AlertManagerCortexConfig,
+  Receiver,
+  Route,
+  RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery, Labels } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchAlertManagerConfig } from '../../../api/alertmanager';
+import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
 import { addUniqueIdentifierToRoute, objectMatchersToString } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
@@ -19,59 +27,22 @@ import { findMatchingRoutes } from '../../../utils/notification-policies';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
 
-interface NotificationPreviewProps {
-  customLabels: Array<{
-    key: string;
-    value: string;
-  }>;
-  alertQueries: AlertQuery[];
-  condition: string;
-}
-
-export const useGetPotentialInstances = (
-  alertQueries: AlertQuery[],
-  condition: string,
-  customLabels: Array<{
-    key: string;
-    value: string;
-  }>
-) => {
-  // todo: we asume merge with custom labels will be done at the BE side adding a param in the eval query
-  // we asume the eval endpoint is going to receive an additional parameter the list of custom labels,
-  // and the response will return this merged labels with the resulting instances
-
-  const { useEvalQuery } = alertRuleApi;
-  const { data } = useEvalQuery({ alertQueries: alertQueries, condition: condition, customLabels: customLabels });
-
-  // convert data to list of labels: are the represetnation of the potential instances
-  const fields = data?.schema?.fields ?? [];
-  const potentialInstances = compact(fields.map((field) => field.labels));
-  return potentialInstances;
-};
-
-export function NotificationPreview({ alertQueries, customLabels, condition }: NotificationPreviewProps) {
-  const styles = useStyles2(getStyles);
-
-  // Get the potential labels
-  const potentialInstances = useGetPotentialInstances(alertQueries, condition, customLabels);
-
+const useGetPotentialInstancesByAlertManager = (alertManagerSourceName: string, potentialInstances: Labels[]) => {
   // get the AM configuration to get the routes
   const { value: AMConfig } = useAsync(async () => {
-    const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(GRAFANA_RULES_SOURCE_NAME);
+    const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(alertManagerSourceName);
     return AMConfig;
   }, []);
 
-  // todo: get the alert manager list where alerts are going to be sent
-
-  // to create the list of matching contact points
-  // get the rootRoute and receivers from the AMConfig
+  // to create the list of matching contact points we need to first get the rootRoute
   const { rootRoute, receivers } = useMemo(() => {
     if (!AMConfig) {
       return {};
     }
-
+    // we also get receivers from the AMConfig
     const receivers = AMConfig.alertmanager_config.receivers;
     const rootRoute = AMConfig.alertmanager_config.route;
+    rootRoute && normalizeTree(rootRoute);
     return {
       rootRoute: rootRoute ? addUniqueIdentifierToRoute(rootRoute) : undefined,
       receivers,
@@ -97,45 +68,127 @@ export function NotificationPreview({ alertQueries, customLabels, condition }: N
     return new Map([...map, ...matchingMap]);
   }, new Map<string, Labels[]>());
 
-  const matchingPoliciesFound = matchingMap.size > 0;
+  return { routesByIdMap, receiversByName, matchingMap };
+};
+
+interface NotificationPreviewProps {
+  customLabels: Array<{
+    key: string;
+    value: string;
+  }>;
+  alertQueries: AlertQuery[];
+  condition: string;
+}
+
+export const useGetPotentialInstances = (
+  alertQueries: AlertQuery[],
+  condition: string,
+  customLabels: Array<{
+    key: string;
+    value: string;
+  }>
+) => {
+  // todo: we asume we have a new endpoint which is going to receive an additional parameter the list of custom labels,
+  // and the response will return this merged labels with the resulting instances
+  // todo: we need to change this endpoint with the new one
+
+  const { useEvalQuery } = alertRuleApi;
+  const { data } = useEvalQuery({ alertQueries: alertQueries, condition: condition, customLabels: customLabels });
+
+  // convert data to list of labels: are the represetnation of the potential instances
+  const fields = data?.schema?.fields ?? [];
+  const potentialInstances = compact(fields.map((field) => field.labels));
+  return potentialInstances;
+};
+
+export const NotificationPreview = ({ alertQueries, customLabels, condition }: NotificationPreviewProps) => {
+  const styles = useStyles2(getStyles);
+
+  // Get the potential labels given the alert queries and the condition
+  const potentialInstances = useGetPotentialInstances(alertQueries, condition, customLabels);
+
+  //get current alerting config
+  const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
+
+  const externalDsAlertManagers = useExternalDataSourceAlertmanagers().map((ds) => ds.dataSource.name);
+  const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
+  const alertManagerSourceNames: string[] =
+    alertmanagerChoice === AlertmanagerChoice.Internal
+      ? [GRAFANA_RULES_SOURCE_NAME]
+      : alertmanagerChoice === AlertmanagerChoice.External
+      ? externalDsAlertManagers
+      : [GRAFANA_RULES_SOURCE_NAME, ...externalDsAlertManagers];
+  const onlyOneAM = alertManagerSourceNames.length === 1;
 
   return (
-    <Stack gap={1} direction="column">
-      <h3>Alert instance routing preview</h3>
-      {matchingPoliciesFound ? (
-        <>
-          <div className={styles.textMuted}>
-            Based on the labels you have added above and the labels that have been automatically assigned, alert
-            instances are being route to notification policies in the way listed bellow. Expand the notification
-            policies to see the instances which are going to be routed to them.
-          </div>
-          <Stack gap={1} direction="column">
-            {Array.from(matchingMap.entries()).map(([routeId, instances]) => {
-              const route = routesByIdMap.get(routeId);
-              const receiver = route?.receiver && receiversByName.get(route.receiver);
-              if (!route || !receiver) {
-                return null;
-              }
-              return (
-                <NotificationRoute
-                  instances={instances}
-                  route={route}
-                  receiver={receiver}
-                  key={routeId}
-                  routesByIdMap={routesByIdMap}
-                />
-              );
-            })}
-          </Stack>
-        </>
-      ) : (
-        <div className={styles.textMuted}>
-          Based on the labels you have added above and the labels that have been automatically assigned, there will be
-          no alert instances being route to notification policies
-        </div>
-      )}
-    </Stack>
+    <>
+      <h4>Alert instance routing preview</h4>
+      <div className={styles.textMuted}>
+        Based on the labels you have added above and the labels that have been automatically assigned, alert instances
+        are being route to notification policies in the way listed bellow. Expand the notification policies to see the
+        instances which are going to be routed to them.
+      </div>
+      {alertManagerSourceNames.map((alertManagerSourceName) => {
+        return (
+          <NotificationPreviewByAlertManager
+            alertManagerSourceName={alertManagerSourceName}
+            potentialInstances={potentialInstances}
+            onlyOneAM={onlyOneAM}
+            key={alertManagerSourceName}
+          />
+        );
+      })}
+    </>
   );
+};
+
+export function NotificationPreviewByAlertManager({
+  alertManagerSourceName,
+  potentialInstances,
+  onlyOneAM,
+}: {
+  alertManagerSourceName: string;
+  potentialInstances: Labels[];
+  onlyOneAM: boolean;
+}) {
+  const styles = useStyles2(getStyles);
+
+  const { routesByIdMap, receiversByName, matchingMap } = useGetPotentialInstancesByAlertManager(
+    alertManagerSourceName,
+    potentialInstances
+  );
+
+  const matchingPoliciesFound = matchingMap.size > 0;
+
+  return matchingPoliciesFound ? (
+    <div className={styles.alertManagerRow}>
+      {!onlyOneAM && (
+        <Stack direction="row" alignItems="center">
+          <div className={styles.alertManagerLine(0.1)}></div>
+          <div className={styles.alertManagerName}> Alert manager: {alertManagerSourceName}</div>
+          <div className={styles.alertManagerLine(0.9)}></div>
+        </Stack>
+      )}
+      <Stack gap={1} direction="column">
+        {Array.from(matchingMap.entries()).map(([routeId, instances]) => {
+          const route = routesByIdMap.get(routeId);
+          const receiver = route?.receiver && receiversByName.get(route.receiver);
+          if (!route || !receiver) {
+            return null;
+          }
+          return (
+            <NotificationRoute
+              instances={instances}
+              route={route}
+              receiver={receiver}
+              key={routeId}
+              routesByIdMap={routesByIdMap}
+            />
+          );
+        })}
+      </Stack>
+    </div>
+  ) : null;
 }
 
 function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithID }) {
@@ -171,8 +224,7 @@ function NotificationRouteDetailsModal({
   routesByIdMap: Map<string, RouteWithPath>;
 }) {
   const styles = useStyles2(getStyles);
-  const matchers = normalizeMatchers(route);
-  const stringMatchers = objectMatchersToString(matchers);
+  const stringMatchers = objectMatchersToString(route.object_matchers ?? []);
 
   return (
     <Modal
@@ -217,7 +269,6 @@ function NotificationRouteHeader({
   const onClickDetails = () => {
     setShowDetails(true);
   };
-
   return (
     <div className={styles.routeHeader}>
       <span>Notification policy</span>
@@ -285,13 +336,19 @@ function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithPath> {
     route.routes?.forEach((r) => addRoutesToMap(r, [...path, route.id]));
   }
   addRoutesToMap(rootRoute, []);
-  console.log('map', map);
   return map;
+}
+// normalize all the nodes in the tree
+function normalizeTree(routeTree: Route) {
+  const routeMatchers = normalizeMatchers(routeTree);
+  routeTree.object_matchers = routeMatchers;
+  routeTree.routes?.forEach((route) => normalizeTree(route));
 }
 
 function matchInstancesToPolicyTree(routeTree: RouteWithID, instancesToMatch: Labels[]): Map<string, Labels[]> {
   const result = new Map<string, Labels[]>();
 
+  normalizeTree(routeTree);
   instancesToMatch.forEach((instance) => {
     const matchingRoutes = findMatchingRoutes(routeTree, Object.entries(instance));
     matchingRoutes.forEach((route) => {
@@ -362,6 +419,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
   separator: css`
     width: 100%;
     height: 1px;
+    background-color: ${theme.colors.secondary.main};
+  `,
+  alertManagerRow: css`
+    margin-top: ${theme.spacing(2)};
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(1)};
+    width: 100%;
+  `,
+  alertManagerName: css`
+    width: fit-content;
+  `,
+  alertManagerLine: (flex: number) => css`
+    height: 1px;
+    width: 100%;
+    flex: ${flex};
     background-color: ${theme.colors.secondary.main};
   `,
   tagsInDetails: css`
