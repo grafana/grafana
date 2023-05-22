@@ -36,7 +36,11 @@ export const ConfigureCorrelationSourceForm = () => {
   );
   return (
     <>
-      <FieldSet label="Configure source data source (3/3)">
+      <FieldSet
+        label={`Configure the data source for ${
+          getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name
+        } (Step 3 of 3)`}
+      >
         <p>
           Links are displayed with results of the selected origin source data. They show along with the value of the
           provided <em>results field</em>.

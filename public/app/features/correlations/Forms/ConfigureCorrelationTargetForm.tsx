@@ -16,7 +16,7 @@ export const ConfigureCorrelationTargetForm = () => {
 
   return (
     <>
-      <FieldSet label="Setup target query (2/3)">
+      <FieldSet label="First setup the target for the correlation (Step 2 of 3)">
         <p>Clicking on a link runs a provided target query.</p>
         <Controller
           control={control}

@@ -25,7 +25,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
 
   return (
     <>
-      <FieldSet label="Define correlation name (1/3)">
+      <FieldSet label="Define correlation name (Step 1 of 3)">
         <p>The name of the correlation is used as the label of the link.</p>
         <input type="hidden" {...register('config.type')} />
         <Field
