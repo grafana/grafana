@@ -129,12 +129,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
   const defaultOld = css`
-    color: ${theme.colors.text.secondary};
-    background-color: ${theme.colors.background.primary};
+    color: ${theme.colors.text.primary};
+    background: ${theme.colors.secondary.main};
 
     &:hover {
       color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
+      background: ${theme.colors.secondary.shade};
+      border: 1px solid ${theme.colors.border.medium};
     }
   `;
 
@@ -160,7 +161,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius()};
       line-height: ${theme.components.height.md * theme.spacing.gridSize - 2}px;
       font-weight: ${theme.typography.fontWeightMedium};
-      border: 1px solid ${theme.colors.border.weak};
+      border: 1px solid ${theme.colors.secondary.border};
       white-space: nowrap;
       transition: ${theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
