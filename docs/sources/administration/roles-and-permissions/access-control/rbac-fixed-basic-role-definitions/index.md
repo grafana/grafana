@@ -11,7 +11,9 @@ weight: 70
 
 # RBAC role definitions
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
 
 The following tables list permissions associated with basic and fixed roles.
 
@@ -108,10 +110,14 @@ For more information about the permissions required to access alert rules, refer
 
 ### Grafana OnCall roles (beta)
 
-> **Note:** Available from Grafana 9.4 in early access.
+{{% admonition type="note" %}}
+Available from Grafana 9.4 in early access.
+{{% /admonition %}}
 
-> **Note:** This feature is behind the `accessControlOnCall` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+{{% admonition type="note" %}}
+This feature is behind the `accessControlOnCall` feature toggle.
+You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+{{% /admonition %}}
 
 If you are using [Grafana OnCall](https://grafana.com/docs/oncall/latest/get-started/), you can try out the integration between Grafana OnCall and RBAC.
 This will allow you to control access to different OnCall features using the following RBAC roles:

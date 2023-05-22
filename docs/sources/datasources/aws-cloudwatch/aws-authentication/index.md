@@ -77,7 +77,9 @@ For more information on why and how to use service endpoints, refer to the [AWS 
 
 Create a file at `~/.aws/credentials`, the `HOME` path for the user running the `grafana-server` service.
 
-> **Note:** If you think you have the credentials file in the right location, but it's not working, try moving your `.aws` file to `/usr/share/grafana/` and grant your credentials file at most 0644 permissions.
+{{% admonition type="note" %}}
+If you think you have the credentials file in the right location, but it's not working, try moving your `.aws` file to `/usr/share/grafana/` and grant your credentials file at most 0644 permissions.
+{{% /admonition %}}
 
 ### Credentials file example
 

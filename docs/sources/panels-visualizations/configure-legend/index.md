@@ -71,6 +71,8 @@ You can change legend mode to **Table** and choose [calculations]({{< relref "..
 
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 
-> **Note:** This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
+{{% admonition type="note" %}}
+This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
+{{% /admonition %}}
 
 ![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).

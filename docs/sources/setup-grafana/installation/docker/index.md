@@ -30,7 +30,9 @@ The default images are based on the popular [Alpine Linux project](http://alpine
 
 The Alpine variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
 
-> **Note:** Grafana docker images were based on [Ubuntu](https://ubuntu.com/) prior to version 6.4.0.
+{{% admonition type="note" %}}
+Grafana docker images were based on [Ubuntu](https://ubuntu.com/) prior to version 6.4.0.
+{{% /admonition %}}
 
 ## Ubuntu image
 
@@ -46,7 +48,9 @@ You can run the latest Grafana version, run a specific version, or run an unstab
 
 ### Run the latest stable version of Grafana
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% admonition type="note" %}}
+If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% /admonition %}}
 
 ```bash
 docker run -d -p 3000:3000 grafana/grafana-enterprise
@@ -54,7 +58,9 @@ docker run -d -p 3000:3000 grafana/grafana-enterprise
 
 ### Run a specific version of Grafana
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% admonition type="note" %}}
+If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% /admonition %}}
 
 ```bash
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:<version number>
@@ -90,7 +96,9 @@ docker run -d \
   grafana/grafana-enterprise
 ```
 
-> **Note:** If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
+{{% admonition type="note" %}}
+If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
+{{% /admonition %}}
 
 ### Install plugins from other sources
 

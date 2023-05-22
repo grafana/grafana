@@ -30,7 +30,9 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 
 To run a query, select **Run queries** located at the top of the editor.
 
-> **Note:** To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
+{{% admonition type="note" %}}
+To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
+{{% /admonition %}}
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations.
 
@@ -161,7 +163,9 @@ In your `server` section, add the following configuration:
   }
 ```
 
-> **Note:** Available in Grafana v6.3 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v6.3 and higher.
+{{% /admonition %}}
 
 ## Create a metric query
 

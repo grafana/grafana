@@ -21,11 +21,15 @@ Recorded queries allow you to see trends over time by taking a snapshot of a dat
 
 For our plugins that do not return time series, it might be useful to plot historical data. For example, you might want to query ServiceNow to see a history of request response times but it can only return current point-in-time metrics.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+{{% /admonition %}}
 
 ## How recorded queries work
 
-> **Note:** An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
+{{% admonition type="note" %}}
+An administrator must configure a Prometheus data source and associate it with a [Remote write target](#remote-write-target) before recorded queries can be used.
+{{% /admonition %}}
 
 Recorded queries only work with backend data source plugins. Refer to [Backend data source plugin](/tutorials/build-a-data-source-backend-plugin/) for more information about backend data source plugins. You can recorded three types of queries:
 

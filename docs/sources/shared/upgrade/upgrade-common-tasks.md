@@ -7,13 +7,17 @@ Because Grafana upgrades are backward compatible, the upgrade process is straigh
 
 In addition to common tasks you should complete for all versions of Grafana, there might be additional upgrade tasks to complete for a version.
 
-> **Note:** There might be minor breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for each release.
+{{% admonition type="note" %}}
+There might be minor breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for each release.
+{{% /admonition %}}
 
 For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
 
 When available, we list all changes with links to pull requests or issues in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
-> **Note:** When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
+{{% admonition type="note" %}}
+When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
+{{% /admonition %}}
 
 ## Back up the Grafana database
 

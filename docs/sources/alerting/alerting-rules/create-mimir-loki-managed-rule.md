@@ -32,7 +32,9 @@ Watch this video to learn more about how to create a Mimir managed alert rule: {
 
 _Refer to [Add a Grafana Mimir or Loki managed alerting rule]({{< relref "#add-a-grafana-mimir-or-loki-managed-alerting-rule" >}}) (following) for current instructions._
 
-> **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
+{{% admonition type="note" %}}
+If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
+{{% /admonition %}}
 
 ## Add a Grafana Mimir or Loki managed alerting rule
 

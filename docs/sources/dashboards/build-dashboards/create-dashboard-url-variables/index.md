@@ -61,7 +61,9 @@ https://${your-domain}/path/to/your/dashboard?var-adhoc=example_key|=|example_va
 
 The query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
 
-> **Note:** When sharing URLs with ad hoc filters, remember to encode the URL. In the above example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.
+{{% admonition type="note" %}}
+When sharing URLs with ad hoc filters, remember to encode the URL. In the above example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.
+{{% /admonition %}}
 
 ### Example
 

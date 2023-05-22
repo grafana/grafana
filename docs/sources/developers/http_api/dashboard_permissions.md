@@ -176,7 +176,9 @@ Status Codes:
 
 ## Get permissions for a dashboard by id
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#get-permissions-for-a-dashboard).
+{{% admonition type="warning" %}}
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#get-permissions-for-a-dashboard).
+{{% /admonition %}}
 
 `GET /api/dashboards/id/:dashboardId/permissions`
 
@@ -257,7 +259,9 @@ Status Codes:
 
 ## Update permissions for a dashboard by id
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#update-permissions-for-a-dashboard).
+{{% admonition type="warning" %}}
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#update-permissions-for-a-dashboard).
+{{% /admonition %}}
 
 `POST /api/dashboards/id/:dashboardId/permissions`
 

@@ -104,7 +104,9 @@ For example, `apps.$app.servers.*` uses the variable `$app` in its query definit
 
 ### Use `__searchFilter` to filter query variable results
 
-> **Note:** Available in Grafana v6.5 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v6.5 and higher.
+{{% /admonition %}}
 
 You can use `__searchFilter` in the query field to filter the query result based on what the user types in the dropdown select box.
 The default value for `__searchFilter` is `*` if you've not entered anything, and `` when used as part of a regular expression.

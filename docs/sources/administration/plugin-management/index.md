@@ -49,7 +49,9 @@ With [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}
 
 By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access, thanks to the `fixed:plugins.app:reader` role.
 
-> **Note:** Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+{{% admonition type="note" %}}
+Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+{{% /admonition %}}
 
 To prevent users from seeing an app plugin, refer to [this permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
 
@@ -93,7 +95,7 @@ To browse for available plugins:
 
 To install a plugin:
 
-1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
+1. In Grafana, click **Administration Plugins** in the side navigation menu to view installed plugins.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
 1. Click **Install**.
@@ -197,7 +199,9 @@ If you've allowed loading of an unsigned plugin, then Grafana writes a warning m
 WARN[06-01|16:45:59] Running an unsigned plugin   pluginID=<plugin id>
 ```
 
-> **Note:** If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
+{{% admonition type="note" %}}
+If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
+{{% /admonition %}}
 
 ## Learn more
 

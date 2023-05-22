@@ -13,7 +13,9 @@ weight: 850
 
 # Traces panel
 
-> **Note:** This panel is currently in beta. Expect changes in future releases.
+{{% admonition type="note" %}}
+This panel is currently in beta. Expect changes in future releases.
+{{% /admonition %}}
 
 _Traces_ are a visualization that enables you to track and log a request as it traverses the services in your infrastructure.
 

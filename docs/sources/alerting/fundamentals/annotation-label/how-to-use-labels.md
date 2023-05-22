@@ -37,8 +37,10 @@ Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514=
 
 # Grafana reserved labels
 
-> **Note:** Labels prefixed with `grafana_` are reserved by Grafana for special use. If a manually configured label is added beginning with `grafana_` it may be overwritten in case of collision.
-> To stop the Grafana Alerting engine from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#unified_alertingreserved_labels" >}}) configuration.
+{{% admonition type="note" %}}
+Labels prefixed with `grafana_` are reserved by Grafana for special use. If a manually configured label is added beginning with `grafana_` it may be overwritten in case of collision.
+To stop the Grafana Alerting engine from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#unified_alertingreserved_labels" >}}) configuration.
+{{% /admonition %}}
 
 Grafana reserved labels can be used in the same way as manually configured labels. The current list of available reserved labels are:
 

@@ -38,7 +38,9 @@ Prometheus node_exporter is a widely used tool that exposes system metrics. For 
 
 When you run node_exporter locally, navigate to `http://localhost:9100/metrics` to check that it is exporting metrics.
 
-> **Note**: The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
+{{% admonition type="note" %}}
+The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
+{{% /admonition %}}
 
 #### Install and configure Prometheus
 
@@ -102,7 +104,9 @@ remote_write:
     password: <Your Grafana.com API Key>
 ```
 
-> **Note**: To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](/grafana/download) and follow the configuration steps listed [here](/docs/grafana/latest/datasources/prometheus/#configure-the-data-source).
+{{% admonition type="note" %}}
+To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](/grafana/download) and follow the configuration steps listed [here](/docs/grafana/latest/datasources/prometheus/#configure-the-data-source).
+{{% /admonition %}}
 
 #### Check Prometheus metrics in Grafana Explore view
 

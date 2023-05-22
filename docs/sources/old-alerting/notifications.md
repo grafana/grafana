@@ -20,7 +20,9 @@ to add and configure a `notification` channel (can be email, PagerDuty, or other
 
 This is done from the Notification channels page.
 
-> **Note:** Alerting is only available in Grafana v4.0 and above.
+{{% admonition type="note" %}}
+Alerting is only available in Grafana v4.0 and above.
+{{% /admonition %}}
 
 ## Add a notification channel
 
@@ -86,7 +88,9 @@ external image destination if available or fallback to attaching the image to th
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
 
-> **Note:** Template variables are not supported in email alerts.
+{{% admonition type="note" %}}
+Template variables are not supported in email alerts.
+{{% /admonition %}}
 
 | Setting      | Description                                                                                  |
 | ------------ | -------------------------------------------------------------------------------------------- |
@@ -128,7 +132,9 @@ To setup Opsgenie you will need an API Key and the Alert API Url. These can be o
 | Override priority         | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.                                                            |
 | Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information. |
 
-> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
+{{% admonition type="note" %}}
+When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
+{{% /admonition %}}
 
 ### PagerDuty
 
@@ -261,7 +267,9 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 
 Alertmanager handles alerts sent by client applications such as Prometheus server or Grafana. It takes care of deduplicating, grouping, and routing them to the correct receiver. Grafana notifications can be sent to Alertmanager via a simple incoming webhook. Refer to the official [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/alertmanager) for configuration information.
 
-> **Caution:** In case of a high-availability setup, do not load balance traffic between Grafana and Alertmanagers to keep coherence between all your Alertmanager instances. Instead, point Grafana to a list of all Alertmanagers, by listing their URLs comma-separated in the notification channel configuration.
+{{% admonition type="caution" %}}
+In case of a high-availability setup, do not load balance traffic between Grafana and Alertmanagers to keep coherence between all your Alertmanager instances. Instead, point Grafana to a list of all Alertmanagers, by listing their URLs comma-separated in the notification channel configuration.
+{{% /admonition %}}
 
 ### Sensu Go
 
@@ -283,6 +291,8 @@ This URL is based on the [domain]({{< relref "../../administration/configuration
 
 ## Notification templating
 
-> **Note:** Alert notification templating is only available in Grafana v7.4 and above.
+{{% admonition type="note" %}}
+Alert notification templating is only available in Grafana v7.4 and above.
+{{% /admonition %}}
 
 The alert notification template feature allows you to take the [label]({{< relref "../../basics/timeseries-dimensions/#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "add-notification-template/" >}}).

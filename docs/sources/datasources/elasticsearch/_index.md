@@ -92,7 +92,9 @@ Toggle this to enable `X-Pack`-specific features and options, which provide the 
 
 When the "X-Pack enabled" setting is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
-> **Note:** Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
+{{% admonition type="note" %}}
+Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
+{{% /admonition %}}
 
 ### Logs
 
@@ -126,7 +128,9 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 #### AWS Signature Version 4 authentication
 
-> **Note:** Available in Grafana v7.3 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.3 and higher.
+{{% /admonition %}}
 
 To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
@@ -140,9 +144,11 @@ For more information about AWS authentication options, refer to [AWS authenticat
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-> **Note:** The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
-> You should now use the `index` field in `jsonData` to store the index name.
-> Please see the examples below.
+{{% admonition type="note" %}}
+The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+You should now use the `index` field in `jsonData` to store the index name.
+Please see the examples below.
+{{% /admonition %}}
 
 #### Provisioning examples
 

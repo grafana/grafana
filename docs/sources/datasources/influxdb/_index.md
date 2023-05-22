@@ -84,10 +84,12 @@ InfluxDB data source options differ depending on which query language you select
 
 To help choose the best language for your needs, refer to a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/) and [why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
 
-> **Note:** Though not required, we recommend that you append your query language choice to the data source's **Name** setting:
+{{% admonition type="note" %}}
+Though not required, we recommend that you append your query language choice to the data source's **Name** setting:
 >
-> - InfluxDB-InfluxQL
-> - InfluxDB-Flux
+- InfluxDB-InfluxQL
+- InfluxDB-Flux
+{{% /admonition %}}
 
 ### Configure InfluxQL
 
@@ -117,9 +119,11 @@ Configure these options if you select the Flux query language:
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-> **Note:** `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
-> We suggest to use `dbName` field in `jsonData`. Please see the examples below.
-> No need to change existing provisioning settings.
+{{% admonition type="note" %}}
+`database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).
+We suggest to use `dbName` field in `jsonData`. Please see the examples below.
+No need to change existing provisioning settings.
+{{% /admonition %}}
 
 #### Provisioning examples
 

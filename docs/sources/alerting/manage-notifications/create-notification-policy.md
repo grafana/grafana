@@ -30,11 +30,15 @@ When a network partition occurs, half of your services can no longer reach the d
 
 You can configure grouping to be `group_by: [alertname]` (take note that the `env` label is omitted). With this configuration in place, Grafana sends a single compact notification that has all the affected environments for this alert rule.
 
-> **Note:** Grafana also has a special label named `...` that you can use to group all alerts by all labels (effectively disabling grouping), therefore each alert will go into its own group. It is different from the default of `group_by: null` where **all** alerts go into a single group.
+{{% admonition type="note" %}}
+Grafana also has a special label named `...` that you can use to group all alerts by all labels (effectively disabling grouping), therefore each alert will go into its own group. It is different from the default of `group_by: null` where **all** alerts go into a single group.
+{{% /admonition %}}
 
 ## Edit default notification policy
 
-> **Note:** Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
+{{% admonition type="note" %}}
+Before Grafana v8.2, the configuration of the embedded Alertmanager was shared across organizations. Users of Grafana 8.0 and 8.1 are advised to use the new Grafana 8 Alerts only if they have one organization. Otherwise, silences for the Grafana managed alerts will be visible by all organizations.
+{{% /admonition %}}
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
