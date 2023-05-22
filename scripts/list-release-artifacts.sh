@@ -97,4 +97,4 @@ gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-oss-${ERSION}-ubuntu-armv7.img
 EOF
 )
 
-echo ${ASSETS} | envsubst
+echo "${ASSETS}" | envsubst
