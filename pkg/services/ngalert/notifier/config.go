@@ -14,7 +14,6 @@ import (
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-
 func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
 	if len(cfg.TemplateFiles) < 1 {
 		return nil, false, nil
@@ -66,7 +65,7 @@ func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path strin
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				logger.Error("unable to delete template", "error", err, "file", p)
+				logger.Error("Unable to delete template", "error", err, "file", p)
 			}
 		}
 	}
