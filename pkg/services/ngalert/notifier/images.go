@@ -121,17 +121,14 @@ func (i imageProvider) GetRawImage(ctx context.Context, alert *alertingNotify.Al
 
 func (i imageProvider) getImageFromURI(ctx context.Context, uri string) (*models.Image, error) {
 	// Check whether the uri is a URL or a token to know how to query the DB.
-	var image *models.Image
-	var err error
 	if strings.HasPrefix(uri, "http") {
 		i.logger.Debug("Received an image URL in annotations")
-		image, err = i.store.GetImageByURL(ctx, uri)
-	} else {
-		token := strings.TrimPrefix(uri, "token://")
-		i.logger.Debug("Received an image token in annotations", "token", token)
-		image, err = i.store.GetImage(ctx, token)
+		return i.store.GetImageByURL(ctx, uri)
 	}
-	return image, err
+
+	token := strings.TrimPrefix(uri, "token://")
+	i.logger.Debug("Received an image token in annotations", "token", token)
+	return i.store.GetImage(ctx, token)
 }
 
 // getImageURI is a helper function to retrieve the image URI from the alert annotations as a string.
