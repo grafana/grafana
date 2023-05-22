@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/exp/maps"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 
@@ -429,12 +429,21 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				return
 			}
 			require.Len(t, sessionData.JWTClaims.Extra, len(tt.expectedClaims))
-			for k, v := range tt.expectedClaims {
-				if k == "entitlements" {
-					// Hack to compare entitlements and prevent test to randomly fail
-					require.True(t, reflect.DeepEqual(v, sessionData.JWTClaims.Extra[k]))
-				} else {
-					require.Equal(t, v, sessionData.JWTClaims.Extra[k])
+
+			for claimsKey, claimsValue := range tt.expectedClaims {
+				switch expected := claimsValue.(type) {
+				case []string:
+					require.ElementsMatch(t, claimsValue, sessionData.JWTClaims.Extra[claimsKey])
+				case map[string][]interface{}:
+					actual, ok := sessionData.JWTClaims.Extra[claimsKey].(map[string][]interface{})
+					require.True(t, ok, "expected map[string][]interface{}")
+
+					require.ElementsMatch(t, maps.Keys(expected), maps.Keys(actual))
+					for expKey, expValue := range expected {
+						require.ElementsMatch(t, expValue, actual[expKey])
+					}
+				default:
+					require.Equal(t, claimsValue, sessionData.JWTClaims.Extra[claimsKey])
 				}
 			}
 
