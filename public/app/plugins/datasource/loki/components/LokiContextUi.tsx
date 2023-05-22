@@ -185,12 +185,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
       // We need to update filters based on preserved labels
       let arePreservedLabelsUsed = false;
       const newContextFilters = initContextFilters.map((contextFilter) => {
-        if (preservedLabels && preservedLabels.removedLabels.includes(contextFilter.label)) {
+        // We checked for undefined above
+        if (preservedLabels!.removedLabels.includes(contextFilter.label)) {
           arePreservedLabelsUsed = true;
           return { ...contextFilter, enabled: false };
         }
-
-        if (preservedLabels && preservedLabels.selectedExtractedLabels.includes(contextFilter.label)) {
+        // We checked for undefined above
+        if (preservedLabels!.selectedExtractedLabels.includes(contextFilter.label)) {
           arePreservedLabelsUsed = true;
           return { ...contextFilter, enabled: true };
         }
