@@ -63,14 +63,14 @@ export function OpenTsdbQueryEditor({
   }
 
   datasource.getAggregators().then((aggs: string[]) => {
-    if (aggs.length !== 0) {
+    if (aggs.length !== 0 && aggs !== aggregators) {
       setAggregators(aggs);
     }
   });
 
-  datasource.getFilterTypes().then((filterTypes: string[]) => {
-    if (filterTypes.length !== 0) {
-      setFilterTypes(filterTypes);
+  datasource.getFilterTypes().then((newFilterTypes: string[]) => {
+    if (newFilterTypes.length !== 0 && newFilterTypes !== filterTypes) {
+      setFilterTypes(newFilterTypes);
     }
   });
 
