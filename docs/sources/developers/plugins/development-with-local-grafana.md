@@ -149,7 +149,9 @@ Now that your plugin is ready to run, follow the instructions bellow for your ID
 
 1. If Grafana isn't already running, run it.
 
-> **Note:** If you re-run the configuration, Grafana automatically reloads the plugin.
+{{% admonition type="note" %}}
+If you re-run the configuration, Grafana automatically reloads the plugin.
+{{% /admonition %}}
 
 ### Other IDEs
 
