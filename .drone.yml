@@ -782,6 +782,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
+  failure: ignore
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -7108,6 +7109,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: c7f212377faba75cfe2c25a43057fd22638aa0be29259622877acd00246bf6bb
+hmac: 28926d32b4ccd19d11c3e3840598c480fb22f1ff1456387c27f3794e3592b006
 
 ...

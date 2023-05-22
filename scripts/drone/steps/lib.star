@@ -1173,6 +1173,8 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
+    if ver_mode == "pr":
+        step = dict(step, failure = "ignore")
 
     return step
 
