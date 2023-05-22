@@ -138,9 +138,9 @@ class GraphElement {
       if (this.legendElem.hasChildNodes()) {
         this.legendElemRoot.render(null);
       }
-      // we need to wait for react to finish rendering before we can render the legend
+      // we need to wait for react to finish rendering the legend before we can render the graph
       // this is a slightly worse version of the `renderCallback` logic we use below
-      // the problem here is we can't pass a `renderCallback` since we don't want to render the legend at all.
+      // the problem here is there's nothing to pass a `renderCallback` to since we don't want to render the legend at all.
       setTimeout(() => {
         this.renderPanel();
       });
