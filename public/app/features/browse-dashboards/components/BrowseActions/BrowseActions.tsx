@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useMoveFolderMutation } from '../../api/browseDashboardsAPI';
+import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../../api/services';
 import {
   childrenByParentUIDSelector,
   deleteDashboard,
@@ -26,8 +27,6 @@ import { MoveModal } from './MoveModal';
 
 export interface Props {}
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
   const selectedItems = useActionSelectionState();
@@ -41,18 +40,15 @@ export function BrowseActions() {
   const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = (parentsToRefresh: Set<string | undefined>) => {
-    dispatch(
-      setAllSelection({
-        isSelected: false,
-      })
-    );
+    dispatch(setAllSelection({ isSelected: false }));
+
     if (isSearching) {
       // Redo search query
       stateManager.doSearchWithDebounce();
     } else {
       // Refetch parents
       for (const parentUID of parentsToRefresh) {
-        dispatch(fetchChildren(parentUID));
+        dispatch(fetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
       }
     }
   };
@@ -73,7 +69,6 @@ export function BrowseActions() {
     // TODO error handling here
     for (const dashboardUID of selectedDashboards) {
       await dispatch(deleteDashboard(dashboardUID));
-      await wait(250);
       // find the parent folder uid and add it to parentsToRefresh
       const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);

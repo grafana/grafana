@@ -1,5 +1,4 @@
-import { debounce } from 'lodash';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { Spinner } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -114,14 +113,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [flatTree]
   );
 
-  const handleLoadMore = useMemo(() => {
-    function loadMore(startIndex: number, endIndex: number) {
-      console.log('loadMoreItems', startIndex, endIndex);
-      dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-    }
-
-    return debounce(loadMore, 300);
-  }, [dispatch, folderUID]);
+  const handleLoadMore = useLoadNextChildrenPage(folderUID);
 
   if (status === 'pending') {
     return <Spinner />;
@@ -178,4 +170,24 @@ function hasSelectedDescendants(
 
     return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
   });
+}
+
+function useLoadNextChildrenPage(folderUID: string | undefined) {
+  const dispatch = useDispatch();
+  const requestInFlightRef = useRef(false);
+
+  const handleLoadMore = useCallback(() => {
+    if (requestInFlightRef.current) {
+      return Promise.resolve();
+    }
+
+    requestInFlightRef.current = true;
+
+    const promise = dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+    promise.finally(() => (requestInFlightRef.current = false));
+
+    return promise;
+  }, [dispatch, folderUID]);
+
+  return handleLoadMore;
 }
