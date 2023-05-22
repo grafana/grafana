@@ -1,12 +1,7 @@
 import { wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { BrowseDashboardsState } from '../types';
 
-import {
-  extraReducerFetchChildrenFulfilled,
-  setAllSelection,
-  setFolderOpenState,
-  setItemSelectionState,
-} from './reducers';
+import { fetchNextChildrenPageFulfilled, setAllSelection, setFolderOpenState, setItemSelectionState } from './reducers';
 
 function createInitialState(): BrowseDashboardsState {
   return {
@@ -43,7 +38,7 @@ describe('browse-dashboards reducers', () => {
         },
       };
 
-      extraReducerFetchChildrenFulfilled(state, action);
+      fetchNextChildrenPageFulfilled(state, action);
 
       expect(state.rootItems).toEqual(children);
     });
@@ -63,7 +58,7 @@ describe('browse-dashboards reducers', () => {
         },
       };
 
-      extraReducerFetchChildrenFulfilled(state, action);
+      fetchNextChildrenPageFulfilled(state, action);
 
       expect(state.childrenByParentUID).toEqual({ [parentFolder.uid]: children });
     });
@@ -87,7 +82,7 @@ describe('browse-dashboards reducers', () => {
         },
       };
 
-      extraReducerFetchChildrenFulfilled(state, action);
+      fetchNextChildrenPageFulfilled(state, action);
 
       expect(state.selectedItems).toEqual({
         $all: false,

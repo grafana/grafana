@@ -6,26 +6,26 @@ import { createAsyncThunk, DashboardDTO } from 'app/types';
 
 import { listDashboards, listFolders } from '../api/services';
 
-interface FetchChildrenPayload {
+interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
   pageSize: number;
 }
 
-interface FetchChildrenFulfilledPayload {
+interface FetchNextChildrenPageResult {
   children: DashboardViewItem[];
   kind: 'folder' | 'dashboard';
   page: number;
   lastPageOfKind: boolean;
 }
 
-export const fetchChildren = createAsyncThunk(
-  'browseDashboards/fetchChildren',
+export const fetchNextChildrenPage = createAsyncThunk(
+  'browseDashboards/fetchNextChildrenPage',
   async (
-    { parentUID, pageSize }: FetchChildrenPayload,
+    { parentUID, pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
-  ): Promise<undefined | FetchChildrenFulfilledPayload> => {
+  ): Promise<undefined | FetchNextChildrenPageResult> => {
     if (process.env.NODE_ENV !== 'production' && parentUID === GENERAL_FOLDER_UID) {
-      console.error(new Error("fetchChildren called with a parentUID of 'general' instead of undefined"));
+      console.error(new Error("fetchNextChildrenPage called with a parentUID of 'general' instead of undefined"));
     }
 
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;

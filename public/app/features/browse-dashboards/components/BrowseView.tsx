@@ -9,7 +9,7 @@ import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
-  fetchChildren,
+  fetchNextChildrenPage,
   setFolderOpenState,
   setItemSelectionState,
   useChildrenByParentUIDState,
@@ -39,14 +39,14 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       dispatch(setFolderOpenState({ folderUID: clickedFolderUID, isOpen }));
 
       if (isOpen) {
-        dispatch(fetchChildren({ parentUID: clickedFolderUID, pageSize: PAGE_SIZE }));
+        dispatch(fetchNextChildrenPage({ parentUID: clickedFolderUID, pageSize: PAGE_SIZE }));
       }
     },
     [dispatch]
   );
 
   useEffect(() => {
-    dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+    dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
   }, [handleFolderClick, dispatch, folderUID]);
 
   const handleItemSelectionChange = useCallback(
@@ -183,7 +183,7 @@ function useLoadNextChildrenPage(folderUID: string | undefined) {
 
     requestInFlightRef.current = true;
 
-    const promise = dispatch(fetchChildren({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
     promise.finally(() => (requestInFlightRef.current = false));
 
     return promise;

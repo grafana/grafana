@@ -4,12 +4,15 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 
 import { BrowseDashboardsState } from '../types';
 
-import { fetchChildren } from './actions';
+import { fetchNextChildrenPage } from './actions';
 import { findItem } from './utils';
 
-type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
+type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 
-export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState, action: FetchChildrenAction) {
+export function fetchNextChildrenPageFulfilled(
+  state: BrowseDashboardsState,
+  action: FetchNextChildrenPageFulfilledAction
+) {
   const payload = action.payload;
   if (!payload) {
     // If not additional pages to load, the action returns undefined
