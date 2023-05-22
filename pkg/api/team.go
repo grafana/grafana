@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -137,17 +136,10 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		page = 1
 	}
 
-	// Using accesscontrol the filtering is done based on user permissions
-	userIDFilter := team.FilterIgnoreUser
-	if hs.AccessControl.IsDisabled() {
-		userIDFilter = userFilter(c)
-	}
-
 	query := team.SearchTeamsQuery{
 		OrgID:        c.OrgID,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
-		UserIDFilter: userIDFilter,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
@@ -178,17 +170,6 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, queryResult)
 }
 
-// UserFilter returns the user ID used in a filter when querying a team
-// 1. If the user is a viewer or editor, this will return the user's ID.
-// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
-func userFilter(c *contextmodel.ReqContext) int64 {
-	userIdFilter := c.SignedInUser.UserID
-	if c.OrgRole == org.RoleAdmin {
-		userIdFilter = team.FilterIgnoreUser
-	}
-	return userIdFilter
-}
-
 // swagger:route GET /teams/{team_id} teams getTeamByID
 //
 // Get Team By ID.
@@ -205,18 +186,11 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	// Using accesscontrol the filtering has already been performed at middleware layer
-	userIdFilter := team.FilterIgnoreUser
-	if hs.AccessControl.IsDisabled() {
-		userIdFilter = userFilter(c)
-	}
-
 	query := team.GetTeamByIDQuery{
 		OrgID:        c.OrgID,
 		ID:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
-		UserIdFilter: userIdFilter,
 	}
 
 	queryResult, err := hs.teamService.GetTeamByID(c.Req.Context(), &query)
