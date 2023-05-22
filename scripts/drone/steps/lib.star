@@ -1565,6 +1565,7 @@ def trigger_test_release():
             "repo": [
                 "grafana/grafana",
             ],
+            "branch": "main",
         },
     }
 
