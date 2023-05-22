@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
+import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
@@ -19,11 +20,11 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchAlertManagerConfig } from '../../../api/alertmanager';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
-import { addUniqueIdentifierToRoute, objectMatchersToString } from '../../../utils/amroutes';
+import { addUniqueIdentifierToRoute, normalizeMatchers, objectMatchersToString } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
-import { normalizeMatchers } from '../../../utils/matchers';
 import { findMatchingRoutes } from '../../../utils/notification-policies';
+import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
 
@@ -164,9 +165,9 @@ export function NotificationPreviewByAlertManager({
     <div className={styles.alertManagerRow}>
       {!onlyOneAM && (
         <Stack direction="row" alignItems="center">
-          <div className={styles.alertManagerLine(0.1)}></div>
+          <div className={styles.firstAlertManagerLine}></div>
           <div className={styles.alertManagerName}> Alert manager: {alertManagerSourceName}</div>
-          <div className={styles.alertManagerLine(0.9)}></div>
+          <div className={styles.secondAlertManagerLine}></div>
         </Stack>
       )}
       <Stack gap={1} direction="column">
@@ -197,7 +198,7 @@ function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, Route
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
 
   return (
-    <div className={styles.policyPath}>
+    <div className={styles.policyPathWrapper}>
       <div className={styles.defaultPolicy}>Default policy</div>
       {routePathObjects.map((route_, index) => {
         return (
@@ -258,10 +259,12 @@ function NotificationRouteHeader({
   route,
   receiver,
   routesByIdMap,
+  instancesCount,
 }: {
   route: RouteWithID;
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
+  instancesCount: number;
 }) {
   const styles = useStyles2(getStyles);
   const [showDetails, setShowDetails] = useState(false);
@@ -271,15 +274,28 @@ function NotificationRouteHeader({
   };
   return (
     <div className={styles.routeHeader}>
-      <span>Notification policy</span>
-      <Matchers matchers={route.object_matchers ?? []} />
+      <Stack gap={1} direction="row" alignItems="center">
+        Notification policy
+        <Matchers matchers={route.object_matchers ?? []} />
+      </Stack>
       <Spacer />
-      <div>
-        <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
-      </div>
-      <Button type="button" onClick={onClickDetails} variant="secondary">
-        See details
-      </Button>
+      <Stack gap={2} direction="row" alignItems="center">
+        <MetaText icon="layers-alt" data-testid="matching-instances">
+          {instancesCount ?? '-'}
+          <span>{pluralize('instance', instancesCount)}</span>
+        </MetaText>
+        <Stack gap={1} direction="row" alignItems="center">
+          <div>
+            <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
+          </div>
+
+          <div className={styles.verticalBar} />
+
+          <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
+            See details
+          </Button>
+        </Stack>
+      </Stack>
       {showDetails && (
         <NotificationRouteDetailsModal
           onClose={() => setShowDetails(false)}
@@ -304,7 +320,14 @@ function NotificationRoute({ route, instances, receiver, routesByIdMap }: Notifi
 
   return (
     <Collapse
-      label={<NotificationRouteHeader route={route} receiver={receiver} routesByIdMap={routesByIdMap} />}
+      label={
+        <NotificationRouteHeader
+          route={route}
+          receiver={receiver}
+          routesByIdMap={routesByIdMap}
+          instancesCount={instances.length}
+        />
+      }
       className={styles.collapsableSection}
       onToggle={setExpandRoute}
       collapsible={true}
@@ -376,6 +399,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     gap: ${theme.spacing(1)};
     width: 100%;
+    align-items: center;
   `,
   collapseLabel: css`
     flex: 1;
@@ -421,6 +445,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 1px;
     background-color: ${theme.colors.secondary.main};
   `,
+  verticalBar: css`
+    width: 1px;
+    height: 20px;
+    background-color: ${theme.colors.secondary.main};
+    margin-left: ${theme.spacing(1)};
+    margin-right: ${theme.spacing(1)};
+  `,
   alertManagerRow: css`
     margin-top: ${theme.spacing(2)};
     display: flex;
@@ -431,10 +462,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alertManagerName: css`
     width: fit-content;
   `,
-  alertManagerLine: (flex: number) => css`
+  firstAlertManagerLine: css`
+    height: 1px;
+    width: ${theme.spacing(4)};
+    background-color: ${theme.colors.secondary.main};
+  `,
+  secondAlertManagerLine: css`
     height: 1px;
     width: 100%;
-    flex: ${flex};
+    flex: 1;
     background-color: ${theme.colors.secondary.main};
   `,
   tagsInDetails: css`
@@ -443,7 +479,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-wrap: wrap;
     margin-bottom: ${theme.spacing(2)};
   `,
-  policyPath: css`
+  policyPathWrapper: css`
     display: flex;
     flex-direction: column;
     margin-top: ${theme.spacing(2)};
