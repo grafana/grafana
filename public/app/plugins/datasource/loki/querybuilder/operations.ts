@@ -5,7 +5,6 @@ import {
 import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
-import { DistinctParamEditor } from './components/DistinctParamEditor';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
 import {
   addLokiOperation,
