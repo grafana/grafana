@@ -23,12 +23,12 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Type of the icon - mono or default */
   iconType?: IconType;
   /** Tooltip content to display on hover */
-  tooltip?: PopoverContent;
+  tooltip: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
-  /** Text avilable ony for screenscreen readers. Will use tooltip text as fallback. */
+  /** Text available only for screen readers. Will use tooltip text as fallback. */
   ariaLabel?: string;
 }
 
@@ -59,29 +59,21 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     }
 
     const styles = getStyles(theme, limitedIconSize, variant);
-    const tooltipString = typeof tooltip === 'string' ? tooltip : '';
+    const tooltipString = typeof tooltip === 'string' ? tooltip : String(tooltip);
 
-    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
-    const button = (
-      <button
-        ref={tooltip ? undefined : ref}
-        aria-label={ariaLabel || tooltipString}
-        {...restProps}
-        className={cx(styles.button, className)}
-      >
-        <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
-      </button>
+    // ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
+    return (
+      <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
+        <button
+          ref={ref}
+          aria-label={ariaLabel || tooltipString}
+          {...restProps}
+          className={cx(styles.button, className)}
+        >
+          <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+        </button>
+      </Tooltip>
     );
-
-    if (tooltip) {
-      return (
-        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
-          {button}
-        </Tooltip>
-      );
-    }
-
-    return button;
   }
 );
 
