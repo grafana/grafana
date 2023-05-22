@@ -136,8 +136,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // Most data sources triggers onChange and onRunQueries consecutively
       // It means our reducer state is always one step behind when runQueries is invoked
       // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
-      // No matter if we use query or getValues('queries') their state is always stale when we invoke runQueries
-      // As a workaround we use this ref which is updated immediately in onChange and used in runQueries
+      // As a workaround we update form values as soon as possible to avoid stale state
+      // This way we can access up to date queries in runQueriesPreview without waiting for re-render
       setValue('queries', updatedQueries, { shouldValidate: false });
 
       dispatch(setDataQueries(updatedQueries));
