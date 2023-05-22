@@ -96,6 +96,29 @@ EOT
 }
 ```
 
+You can create multiple external integrations in a single contact point. Notifications routed to this contact point will be sent to all integrations. This example shows multiple integrations in the same Terraform resource.
+
+```
+resource "grafana_contact_point" "my_multi_contact_point" {
+    name = "Send to Many Places"
+
+    slack {
+        url = "webhook1"
+        ...
+    }
+    slack {
+        url = "webhook2"
+        ...
+    }
+    teams {
+        ...
+    }
+    email {
+        ...
+    }
+}
+```
+
 2. Enter text for your notification in the text field.
 
 The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting notification templates directly in Terraform.
@@ -129,13 +152,13 @@ EOT
 
 ## Provision notification policies and routing
 
-Notification policies tell Grafana how to route alert instances, as opposed to where. They connect firing alerts to your previously defined contact points using a system of labels and matchers.
+Notification policies tell Grafana how to route alert instances to your contact points. They connect firing alerts to your previously defined contact points using a system of labels and matchers.
 
 To provision notification policies and routing, complete the following steps.
 
 1. Copy this code block into a .tf file on your local machine.
 
-In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message.
+In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message. You can provide any set of label keys here, or you can use the special label `"..."` to route by all label keys, sending each alert in a separate notification.
 
 If you want to route specific notifications differently, you can add sub-policies. Sub-policies allow you to apply routing to different alerts based on label matching. In this example, we apply a mute timing to all alerts with the label a=b.
 
