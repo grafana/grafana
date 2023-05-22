@@ -16,6 +16,11 @@
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
         labels: namespace
+        loki-relabel-config: |
+          - action: replace
+            source_labels: ["namespace","compose_service"]
+            separator: "/"
+            target_label: job
 
   app:
     image: grafana/tns-app:9c1ab38
@@ -38,6 +43,11 @@
       options:
         loki-url: 'http://localhost:3100/api/prom/push'
         labels: namespace
+        loki-relabel-config: |
+          - action: replace
+            source_labels: ["namespace","compose_service"]
+            separator: "/"
+            target_label: job
 
   loadgen:
     image: grafana/tns-loadgen:9c1ab38
