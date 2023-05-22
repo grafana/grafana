@@ -317,7 +317,7 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 Unclear progress on migration to React - [issue](https://github.com/pueteam/datasource-plugin-solr/issues/12).
 {{% /admonition %}}
 
-**Migration available - potential alternative:** Users could configure the solr-exporter for Prometheus as described [here](https://solr.apache.org/guide/solr/latest/deployment-guide/monitoring-with-prometheus-and-grafana.html).
+> **Migration available - potential alternative:** Users could configure the solr-exporter for Prometheus as described [here](https://solr.apache.org/guide/solr/latest/deployment-guide/monitoring-with-prometheus-and-grafana.html).
 
 ### [QuasarDB](https://grafana.com/grafana/plugins/quasardb-datasource/)
 
