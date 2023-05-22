@@ -8,6 +8,8 @@ import {
   By,
   ConvOp,
   Decolorize,
+  DistinctFilter,
+  DistinctLabel,
   Filter,
   FilterOp,
   Grouping,
@@ -202,6 +204,19 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
         break;
       }
       context.errors.push(makeError(expr, node));
+      break;
+    }
+
+    case DistinctFilter: {
+      const { operation, error } = handleDistinctFilter(expr, node, context);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      // Show error for query patterns not supported in visual query builder
+      if (error) {
+        context.errors.push(createNotSupportedError(expr, node, error));
+      }
+
       break;
     }
 
@@ -422,6 +437,7 @@ function handleUnwrapExpr(
 
   return {};
 }
+
 function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(RangeOp);
   const funcName = getString(expr, nameNode);
@@ -631,4 +647,33 @@ function isEmptyQuery(query: LokiVisualQuery) {
     return true;
   }
   return false;
+}
+
+function handleDistinctFilter(
+  expr: string,
+  node: SyntaxNode,
+  context: Context
+): { operation?: QueryBuilderOperation; error?: string } {
+  const labels: string[] = [];
+  let exploringNode = node.getChild(DistinctLabel);
+  while (exploringNode) {
+    const label = getString(expr, exploringNode.getChild(Identifier));
+    if (label) {
+      labels.push(label);
+    }
+    exploringNode = exploringNode?.getChild(DistinctLabel);
+  }
+
+  console.log(labels);
+
+  if (labels.length) {
+    return {
+      operation: {
+        id: LokiOperationId.Distinct,
+        params: [labels.join(', ')],
+      },
+    };
+  }
+
+  return {};
 }
