@@ -288,6 +288,13 @@ export async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.Decolorize),
   });
 
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'distinct',
+    insertText: `${prefix}distinct`,
+    documentation: explainOperator(LokiOperationId.Distinct),
+  });
+
   // Let's show label options only if query has parser
   if (hasQueryParser) {
     extractedLabelKeys.forEach((key) => {
