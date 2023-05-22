@@ -9,7 +9,6 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
-import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
 
 export interface SpanBarOptions {
   type?: string;
@@ -32,13 +31,6 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Span bar</h3>
-
-      <div className={styles.infoText}>
-        Add additional info next to the service and operation on a span bar row in the trace view
-        <DocsLinkButton hrefSuffix={`${options.type}/#span-bar`} />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField label="Label" labelWidth={26} tooltip="Default: duration" grow>
           <Select
@@ -83,6 +75,11 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
     </div>
   );
 }
+
+export const SPAN_BAR_TITLE = 'Span bar';
+export const SPAN_BAR_DESCRIPTION =
+  'Add additional info next to the service and operation on a span bar row in the trace view.';
+export const SPAN_BAR_SUFFIX = '#span-bar';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`

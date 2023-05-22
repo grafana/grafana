@@ -3,7 +3,6 @@ import React from 'react';
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
-import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
 
 import { TempoJsonData } from '../types';
 
@@ -26,13 +25,6 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">Loki search</h3>
-
-      <div className={styles.infoText}>
-        Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source
-        <DocsLinkButton hrefSuffix="tempo/#loki-search" />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField tooltip="The Loki data source with the service graph data" label="Data source" labelWidth={26}>
           <DataSourcePicker

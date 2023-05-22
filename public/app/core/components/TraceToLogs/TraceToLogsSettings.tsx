@@ -1,16 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
-import {
-  DataSourceJsonData,
-  DataSourceInstanceSettings,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
-
-import { DocsLinkButton } from '../DocsLinkButton';
+import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -71,7 +64,6 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles2(getStyles);
   const supportedDataSourceTypes = [
     'loki',
     'elasticsearch',
@@ -108,13 +100,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to logs</h3>
-
-      <div className={styles.infoText}>
-        Navigate from a trace span to the selected data source&apos;s logs
-        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-logs`} />
-      </div>
-
       <InlineFieldRow>
         <InlineField
           tooltip="The logs data source the trace is going to navigate to"
@@ -261,9 +246,6 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-});
+export const TRACE_TO_LOGS_TITLE = 'Trace to logs';
+export const TRACE_TO_LOGS_DESCRIPTION = "Navigate from a trace span to the selected data source's logs.";
+export const TRACE_TO_LOGS_SUFFIX = '#trace-to-logs';
