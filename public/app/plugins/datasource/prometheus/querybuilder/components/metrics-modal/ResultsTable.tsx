@@ -4,7 +4,7 @@ import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
@@ -65,7 +65,8 @@ export function ResultsTable(props: ResultsTableProps) {
               searchWords={state.metaHaystackMatches}
               autoEscape
               highlightClassName={styles.matchHighLight}
-            />
+            />{' '}
+            {inferredType(metric.inferred ?? false)}
           </td>
           <td>
             <Highlighter
@@ -91,11 +92,7 @@ export function ResultsTable(props: ResultsTableProps) {
 
   function inferredType(inferred: boolean): JSX.Element | undefined {
     if (inferred) {
-      return (
-        <Tooltip content={'This metric type has been inferred'} placement="bottom-end">
-          <Icon name="info-circle" size="xs" />
-        </Tooltip>
-      );
+      return <Icon name="info-circle" size="xs" title="This metric type has been inferred." />;
     } else {
       return undefined;
     }
