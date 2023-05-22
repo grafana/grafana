@@ -17,7 +17,9 @@ weight: 1800
 
 If you are running Grafana in a Docker image, then you configure Grafana using [environment variables]({{< relref "./configure-grafana#override-configuration-with-environment-variables" >}}) rather than directly editing the configuration file. If you want to save your data, then you also need to designate persistent storage or bind mounts for the Grafana container.
 
-> **Note:** These examples use the Grafana Enterprise docker image. You can use the Grafana Open Source edition by changing the docker image to `grafana/grafana-oss`.
+{{% admonition type="note" %}}
+These examples use the Grafana Enterprise docker image. You can use the Grafana Open Source edition by changing the docker image to `grafana/grafana-oss`.
+{{% /admonition %}}
 
 ## Save your Grafana data
 
