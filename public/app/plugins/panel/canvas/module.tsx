@@ -6,9 +6,9 @@ import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { canvasMigrationHandler } from './migrations';
-import { PanelOptions } from './models.gen';
+import { Options } from './models.gen';
 
-export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
+export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: 'Inline editing',
@@ -24,7 +24,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
   });
 };
 
-export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
+export const plugin = new PanelPlugin<Options>(CanvasPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig({
     standardOptions: {

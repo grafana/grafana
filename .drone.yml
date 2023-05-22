@@ -120,7 +120,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -373,56 +373,6 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-oss-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands: []
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    - pkg/**
-    - packaging/**
-    - go.sum
-    - go.mod
-    include: []
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
 name: pr-lint-backend
 node:
   type: no-parallel
@@ -487,6 +437,7 @@ trigger:
     include:
     - pkg/**
     - packaging/**
+    - .drone.yml
     - conf/**
     - go.sum
     - go.mod
@@ -521,7 +472,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -802,6 +753,40 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - ./bin/build build-docker --edition oss --ubuntu -archs amd64
+  depends_on:
+  - copy-packages-for-docker
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: build-docker-images-ubuntu
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - build-docker-images
+  - build-docker-images-ubuntu
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password_pr
+    DOCKER_USER:
+      from_secret: docker_username_pr
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 trigger:
   event:
   - pull_request
@@ -892,7 +877,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1233,7 +1218,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1485,7 +1470,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1791,6 +1776,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -1811,6 +1802,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-oss
   volumes:
@@ -1939,7 +1936,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2097,7 +2094,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2135,126 +2132,6 @@ trigger:
     - latest.json
   repo:
   - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: main-oss-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands: []
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: main-enterprise-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: grabpl
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
-  - cd grafana-enterprise
-  - git checkout main
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands:
-  - cp -r grafana-enterprise C:\App\grafana-enterprise
-  - rm -r -force grafana-enterprise
-  - cp grabpl.exe C:\App\grabpl.exe
-  - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
-  - cp C:\App\grabpl.exe grabpl.exe
-  depends_on:
-  - clone
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags enterprise ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
 type: docker
 volumes:
 - host:
@@ -2396,7 +2273,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2699,7 +2576,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2839,7 +2716,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2899,7 +2776,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3194,7 +3071,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3292,7 +3169,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3403,7 +3280,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3419,6 +3296,7 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    ${DRONE_TAG}
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -3483,7 +3361,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3682,6 +3560,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key_hg
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-enterprise2
   volumes:
@@ -3744,7 +3628,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3785,6 +3669,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana
   volumes:
@@ -3802,6 +3692,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-oss
   volumes:
@@ -3840,7 +3736,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3881,6 +3777,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-enterprise
   volumes:
@@ -3919,7 +3821,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3960,6 +3862,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-grafana-enterprise
   volumes:
@@ -4561,6 +4469,8 @@ steps:
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_main.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -4607,6 +4517,8 @@ steps:
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -4638,6 +4550,58 @@ clone:
   disable: true
 depends_on: []
 environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: testing-oss-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .
+  - git checkout -f $$env:DRONE_COMMIT
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands: []
+  depends_on:
+  - clone
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags oss ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  event:
+  - promote
+  target:
+  - test-windows
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
   EDITION: enterprise
 image_pull_secrets:
 - dockerconfigjson
@@ -4652,7 +4616,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4731,7 +4695,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5015,7 +4979,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5128,114 +5092,6 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-oss-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands: []
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: release-branch-enterprise-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: grabpl
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
-  - cd grafana-enterprise
-  - git checkout $$env:DRONE_BRANCH
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands:
-  - cp -r grafana-enterprise C:\App\grafana-enterprise
-  - rm -r -force grafana-enterprise
-  - cp grabpl.exe C:\App\grabpl.exe
-  - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
-  - cp C:\App\grabpl.exe grabpl.exe
-  depends_on:
-  - clone
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags enterprise ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
 name: release-branch-oss-integration-tests
 node:
   type: no-parallel
@@ -5284,7 +5140,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5409,7 +5265,6 @@ clone:
 depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test-frontend
-- release-branch-oss-test-backend-windows
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -5428,7 +5283,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -5478,7 +5333,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5784,7 +5639,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5875,7 +5730,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6011,7 +5866,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6182,7 +6037,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -6198,6 +6053,7 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    $$env:DRONE_BRANCH
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -6252,7 +6108,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6454,6 +6310,12 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key_hg
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk
   name: publish-images-enterprise2
   volumes:
@@ -6544,7 +6406,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6721,7 +6583,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.36/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -7216,12 +7078,36 @@ kind: secret
 name: destination
 ---
 get:
+  name: dagger_token
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: dagger_token
+---
+get:
   name: pat
   path: infra/data/ci/github/grafanabot
 kind: secret
 name: github_token
 ---
+get:
+  name: app-id
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-id
+---
+get:
+  name: app-installation-id
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-installation-id
+---
+get:
+  name: app-private-key
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-private-key
+---
 kind: signature
-hmac: 3e9459f86eb6cc4301481b61d507a8c27b15309c096f7608db29ced62f571689
+hmac: 94ce51cca3f202daaecc32aa797fa458bc85aefb1ad9a0c02169817b41eace39
 
 ...

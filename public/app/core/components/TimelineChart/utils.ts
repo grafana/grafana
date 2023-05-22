@@ -444,6 +444,9 @@ export function prepareTimelineFields(
 
     const fields: Field[] = [];
     for (let field of nullToValue(nulledFrame).fields) {
+      if (field.config.custom?.hideFrom?.viz) {
+        continue;
+      }
       switch (field.type) {
         case FieldType.time:
           isTimeseries = true;
@@ -558,6 +561,7 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
+  // This ignores the hide from legend since the range is valid
   if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
     return getThresholdItems(fieldConfig, theme);
   }
@@ -567,15 +571,17 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
     return undefined; // eventually a color bar
   }
 
-  let stateColors: Map<string, string | undefined> = new Map();
+  const stateColors: Map<string, string | undefined> = new Map();
 
   fields.forEach((field) => {
-    field.values.forEach((v) => {
-      let state = field.display!(v);
-      if (state.color) {
-        stateColors.set(state.text, state.color!);
-      }
-    });
+    if (!field.config.custom?.hideFrom?.legend) {
+      field.values.forEach((v) => {
+        let state = field.display!(v);
+        if (state.color) {
+          stateColors.set(state.text, state.color!);
+        }
+      });
+    }
   });
 
   stateColors.forEach((color, label) => {

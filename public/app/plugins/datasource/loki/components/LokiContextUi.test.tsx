@@ -8,7 +8,7 @@ import { LogRowModel } from '@grafana/data';
 import { LogContextProvider } from '../LogContextProvider';
 import { ContextFilter, LokiQuery } from '../types';
 
-import { LokiContextUi, LokiContextUiProps } from './LokiContextUi';
+import { LokiContextUi, LokiContextUiProps, LOKI_LOG_CONTEXT_PRESERVED_LABELS } from './LokiContextUi';
 
 // we have to mock out reportInteraction, otherwise it crashes the test.
 jest.mock('@grafana/runtime', () => ({
@@ -21,6 +21,10 @@ jest.mock('app/core/store', () => {
     set() {},
     getBool() {
       return true;
+    },
+    delete() {},
+    get() {
+      return window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
     },
   };
 });
@@ -77,6 +81,10 @@ describe('LokiContextUi', () => {
   });
   afterAll(() => {
     global = savedGlobal;
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
   });
 
   it('renders and shows executed query text', async () => {
@@ -204,6 +212,105 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
       expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should revert to original query when revert button clicked', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    // In initial query, label3 is not selected
+    await waitFor(() => {
+      expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+
+    // We select parsed label and label3="value3" should appear
+    const parsedLabelsInput = screen.getAllByRole('combobox')[1];
+    await userEvent.click(parsedLabelsInput);
+    await userEvent.type(parsedLabelsInput, '{enter}');
+    expect(screen.getByText('label3="value3"')).toBeInTheDocument();
+
+    // We click on revert button and label3="value3" should disappear
+    const revertButton = screen.getByTestId('revert-button');
+    await userEvent.click(revertButton);
+    await waitFor(() => {
+      expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('preserve labels', () => {
+    it('should use init contextFilters if all real labels are disabled', async () => {
+      window.localStorage.setItem(
+        LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+        JSON.stringify({
+          removedLabels: ['label1'],
+          selectedExtractedLabels: ['label3'],
+        })
+      );
+      const props = setupProps();
+      const newProps = {
+        ...props,
+        origQuery: {
+          expr: '{label1="value1"} | logfmt',
+          refId: 'A',
+        },
+      };
+      render(<LokiContextUi {...newProps} />);
+      await waitFor(() => {
+        expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+        expect(screen.getByText('label1="value1"')).toBeInTheDocument();
+      });
+    });
+
+    it('should use preserved contextFilters if all at least 1 real labels is enabled', async () => {
+      window.localStorage.setItem(
+        LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+        JSON.stringify({
+          removedLabels: ['foo'],
+          selectedExtractedLabels: ['label3'],
+        })
+      );
+      const props = setupProps();
+      const newProps = {
+        ...props,
+        origQuery: {
+          expr: '{label1="value1"} | logfmt',
+          refId: 'A',
+        },
+      };
+      render(<LokiContextUi {...newProps} />);
+      await waitFor(() => {
+        expect(screen.getByText('label3="value3"')).toBeInTheDocument();
+        expect(screen.getByText('label1="value1"')).toBeInTheDocument();
+      });
+    });
+
+    it('should not introduce new labels in ui', async () => {
+      window.localStorage.setItem(
+        LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+        JSON.stringify({
+          removedLabels: ['foo'],
+          selectedExtractedLabels: ['bar', 'baz'],
+        })
+      );
+      const props = setupProps();
+      const newProps = {
+        ...props,
+        origQuery: {
+          expr: '{label1="value1"} | logfmt',
+          refId: 'A',
+        },
+      };
+      render(<LokiContextUi {...newProps} />);
+      await waitFor(() => {
+        expect(screen.getByText('label1="value1"')).toBeInTheDocument();
+      });
     });
   });
 });
