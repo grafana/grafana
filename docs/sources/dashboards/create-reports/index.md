@@ -268,7 +268,9 @@ Email branding:
 - **Footer link text:** Text of the link in the report email footer. Defaults to `Grafana`.
 - **Footer link URL:** Link of the report email footer.
 
-Note: Currently, the API does not allow for the simultaneous upload of files with identical names for both the email logo and report logo. You can still upload the same file for each logo separately in two distinct steps.
+{{% admonition type="note" %}
+Currently, the API does not allow for the simultaneous upload of files with identical names for both the email logo and report logo. You can still upload the same file for each logo separately in two distinct steps.
+{{% /admonition %}}
 
 ## Troubleshoot reporting
 

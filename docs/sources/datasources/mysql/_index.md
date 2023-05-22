@@ -14,7 +14,7 @@ weight: 1000
 
 # MySQL data source
 
-Starting from Grafana v5.1 you can name the time column _time_ in addition to earlier supported _time_sec_. Usage of _time_sec_ will eventually be deprecated.
+> Starting from Grafana v5.1 you can name the time column _time_ in addition to earlier supported _time_sec_. Usage of _time_sec_ will eventually be deprecated.
 
 Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database.
 
@@ -232,10 +232,10 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as above but NULL will be used as value for missing points.                                                                                                                                             |
 | `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).                                             |
 | `$__timeGroupAlias(dateColumn,'5m')`                  | Will be replaced identical to $\_\_timeGroup but with an added column alias (only available in Grafana 5.3+).                                                                                                |
-| `$__unixEpochFilter(dateColumn)`                      | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn 1494410783 AND dateColumn < 1494497183_                         |
+| `$__unixEpochFilter(dateColumn)`                      | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                         |
 | `$__unixEpochFrom()`                                  | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, _1494410783_                                                                                            |
 | `$__unixEpochTo()`                                    | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, _1494497183_                                                                                              |
-| `$__unixEpochNanoFilter(dateColumn)`                  | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, _dateColumn 1494410783152415214 AND dateColumn < 1494497183142514872_ |
+| `$__unixEpochNanoFilter(dateColumn)`                  | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_ |
 | `$__unixEpochNanoFrom()`                              | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, _1494410783152415214_                                                                             |
 | `$__unixEpochNanoTo()`                                | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                               |
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).                                                                                                              |
@@ -411,7 +411,7 @@ SELECT hostname FROM my_host  WHERE region IN($region)
 
 #### Using `__searchFilter` to filter results in Query Variable
 
-Available from Grafana 6.5 and above
+> Available from Grafana 6.5 and above
 
 Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
 When nothing has been entered by the user the default value for `__searchFilter` is `%`.
@@ -487,7 +487,7 @@ WHERE
 
 **Example region query using time and timeend columns with epoch values:**
 
-Only available in Grafana v6.6+.
+> Only available in Grafana v6.6+.
 
 ```sql
 SELECT

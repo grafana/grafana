@@ -307,7 +307,7 @@ roles:
 
 {{% admonition type="note" %}}
 You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
-<br/**Note**: Make sure to **increment** the role version for the changes to be accounted for.
+ Make sure to **increment** the role version for the changes to be accounted for.
 {{% /admonition %}}
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}) for more details.

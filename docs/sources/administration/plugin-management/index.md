@@ -95,7 +95,7 @@ To browse for available plugins:
 
 To install a plugin:
 
-1. In Grafana, click **Administration Plugins** in the side navigation menu to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
 1. Click **Install**.

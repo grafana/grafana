@@ -30,7 +30,7 @@ You can see a list of users with accounts in your Grafana organization. If neces
 **To view a list of organization users**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Navigate to **Administration Users**.
+1. Navigate to **Administration > Users**.
 
 {{% admonition type="note" %}}
 If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [view a global list of users]({{< relref "../server-user-management#view-a-list-of-users" >}}) in the Server Admin section of Grafana.

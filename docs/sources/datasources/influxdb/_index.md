@@ -86,7 +86,6 @@ To help choose the best language for your needs, refer to a [comparison of Flux 
 
 {{% admonition type="note" %}}
 Though not required, we recommend that you append your query language choice to the data source's **Name** setting:
->
 - InfluxDB-InfluxQL
 - InfluxDB-Flux
 {{% /admonition %}}
