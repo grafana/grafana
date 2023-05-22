@@ -102,20 +102,26 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	name: "Phlare<>Pyroscope rebranding -- hardcoded alias",
-		// 	pluginJSON: func(t *testing.T) io.ReadCloser {
-		// 		pJSON := `{
-		// 			"id": "grafana-pyroscope"
-		// 		}`
-		// 		return io.NopCloser(strings.NewReader(pJSON))
-		// 	},
-		// 	expected: JSONData{
-		// 		ID:           "grafana-pyroscope",
-		// 		Alias:        "phlare",
-		// 		Dependencies: Dependencies{},
-		// 	},
-		// },
+		{
+			name: "Phlare<>Pyroscope rebranding -- hardcoded alias",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "grafana-pyroscope",
+					"type": "datasource"
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:    "grafana-pyroscope",
+				Alias: "phlare", // Hardcoded from the parser
+				Type:  "datasource",
+				Dependencies: Dependencies{
+					GrafanaDependency: "",
+					GrafanaVersion:    "*",
+					Plugins:           []Dependency{},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
