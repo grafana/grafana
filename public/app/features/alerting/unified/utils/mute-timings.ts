@@ -56,7 +56,7 @@ export const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => 
         days_of_month: convertStringToArray(days_of_month),
         months: convertStringToArray(months),
         years: convertStringToArray(years),
-        location: location,
+        location: location ? location : undefined,
       };
 
       return omitBy(interval, isUndefined);
