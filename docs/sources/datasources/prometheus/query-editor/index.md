@@ -27,7 +27,7 @@ The Prometheus query editor has two modes:
 - [Code mode](#code-mode)
 - [Builder mode](#builder-mode)
 
-To switch between editor modes, click the corresponding **Builder** or **Code** tab. Each mode is explained in greater detail below.
+Each mode is explained in greater detail below.
 
 {{< figure src="/static/img/docs/prometheus/editing-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Query editor mode" >}}
 
@@ -35,15 +35,19 @@ Both modes are synchronized, so you can switch between them. However, if there i
 
 ## Toolbar elements
 
-The query editor toolbar contains the following:
+The query editor toolbar contains the following elements:
 
-- **Kick start your query** - A list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
+- **Kick start your query** - Click to see a list of operation patterns that help you quickly get started adding multiple operations to your query. These include:
 
   - Rate query starters
   - Histogram query starters
   - Binary query starters
 
+Click the arrow next to each to see available options to add to your query.
+
 - **Explain** - Toggle on to display a step-by-step explanation of all parts of a query and its operations.
+
+- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
 
 ## Configure common options
 
@@ -69,7 +73,7 @@ This setting supports the `$__interval` and `$__rate_interval` macros.
 
 Switch between the following format options:
 
-- **Time series** - The default time series format.
+- **Time series** - The default time series format. See [Time series kind formats](https://grafana.github.io/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
 - **Table** - This works only in a [Table panel]({{< relref "../../../panels-visualizations/visualizations/table" >}}).
 - **Heatmap** - Displays metrics of the Histogram type on a [Heatmap panel]({{< relref "../../../panels-visualizations/visualizations/heatmap" >}}) by converting cumulative histograms to regular ones and sorting the series by the bucket bound.
 
@@ -80,16 +84,19 @@ The **Type** setting sets the query type. These include:
 - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
 - **Range** - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
 - **Instant** - Returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results are depicted in table format or as raw data.
-- **Exemplars** query runs with the regular query and shows exemplars in the graph.
 
 For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step.
 > This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
+### Exemplars
+
+Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
+
 ## Code mode
 
-**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about Prometheus's query language (PromQL), see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+**Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about PromQL see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
 
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
@@ -110,21 +117,22 @@ The autocompletion dropdown includes documentation for the suggested items where
 ### Metrics browser
 
 The metrics browser locates metrics and selects relevant labels to help you build basic queries.
-When you open the browser, it displays all available metrics and labels.
-If supported by your Prometheus instance, each metric also displays its HELP and TYPE as a tooltip.
+When you click **Metrics browser**, it displays all available metrics and labels.
+If supported by your Prometheus instance, each metric also displays its `HELP` and `TYPE` as a tooltip.
 
 {{< figure src="/static/img/docs/prometheus/metric-browser.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}}
 
-When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
-You can then select one or more labels for which the available label values are shown in lists in the bottom section.
-Select one or more values for each label to tighten your query scope.
+When you select a metric under Step 1, the browser narrows down the available labels to show only the ones applicable to the metric.
+You can then select one or more labels shown in Step 2.
+Select one or more values in Step 3 for each label to tighten your query scope.
+In Step 4, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
 > **Note:** If you do not remember a metric name to start with, you can also select a few labels to narrow down the list, then find relevant label values.
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string.
 The values section has only one search field, and its filtering applies to all labels to help you find values across labels once selected.
 
-For example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
+For example, among your labels `app`, `job`, `job_name` only one might have the value you are looking for.
 
 Once you are satisfied with your query, click **Run query**.
 
