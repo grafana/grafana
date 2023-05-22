@@ -34,7 +34,7 @@ It can be difficult to understand the distinctions between different data source
 
 ## Plugins
 
-A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we will address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the data from the data source, and reconcile the differences in data models using a unified data structure called a [data frame](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/). The data coming into the plugin from the data source might be many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it is always data frames.
+A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we will address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the data from the data source, and reconcile the differences in data models using a unified data structure called a [data frame](/docs/grafana/latest/developers/plugins/data-frames/). The data coming into the plugin from the data source might be many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it is always data frames.
 
 Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](/tutorials/build-a-data-source-plugin/).
 
@@ -42,7 +42,7 @@ Currently, Grafana offers a diverse range of 155 data sources that you can use. 
 
 Queries allow for the reduction of data to a specific dataset, providing a more manageable visualization. They help answer questions you have about system and operational processes. For instance, a company with an online store might want to determine the number of customers who add products to their shopping carts. This can be achieved through a query that aggregates access metrics for the shopping cart service, revealing the number of users accessing the service per second.
 
-When working with data sources, it is crucial to recognize that each one has its own distinct query language. For example, Prometheus data sources utilize [PromQL](/blog/2020/02/04/introduction-to-promql-the-prometheus-query-language/), while [LogQL](https://grafana.com/docs/loki/latest/logql/) is used for logs, and particular databases employ SQL. A query supports every visualization in Grafana, and a dashboard might feature a range of query languages.
+When working with data sources, it is crucial to recognize that each one has its own distinct query language. For example, Prometheus data sources utilize [PromQL](/blog/2020/02/04/introduction-to-promql-the-prometheus-query-language/), while [LogQL](/docs/loki/latest/logql/) is used for logs, and particular databases employ SQL. A query supports every visualization in Grafana, and a dashboard might feature a range of query languages.
 
 The following image shows the Query Editor associated with the Prometheus data source. The `node_cpu_seconds_total` query is written in PromQL and requests just one metric.
 
@@ -50,7 +50,7 @@ The following image shows the Query Editor associated with the Prometheus data s
 
 ## Transforms
 
-When the data format in a visualization doesn’t meet your requirements, you can apply a [transformation]({{< relref "../panels-visualizations/query-transform-data/transform-data" >}}) that manipulates the data returned by a query. You might not need to transform data when you are first starting out, but they are powerful and worth mentioning.
+When the data format in a visualization doesn’t meet your requirements, you can apply a [transformation]({{< relref "../../panels-visualizations/query-transform-data/transform-data" >}}) that manipulates the data returned by a query. You might not need to transform data when you are first starting out, but they are powerful and worth mentioning.
 
 Transforming data is useful in the following kinds of situations:
 

@@ -27,10 +27,12 @@ See [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note:** If you have installed Grafana using the `deb` or `rpm`
-> packages, then your configuration file is located at
-> `/etc/grafana/grafana.ini`. This path is specified in the Grafana
-> init.d script using `--config` file parameter.
+{{% admonition type="note" %}}
+If you have installed Grafana using the `deb` or `rpm`
+packages, then your configuration file is located at
+`/etc/grafana/grafana.ini`. This path is specified in the Grafana
+init.d script using `--config` file parameter.
+{{% /admonition %}}
 
 ### Using Environment Variables
 
@@ -67,7 +69,9 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 ## Data sources
 
-> **Note:** Available in Grafana v5.0 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v5.0 and higher.
+{{% /admonition %}}
 
 You can manage data sources in Grafana by adding YAML configuration files in the [`provisioning/datasources`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
 Each config file can contain a list of `datasources` to add or update during startup.
@@ -167,7 +171,9 @@ To provision the rest of a data source's settings, include them as a JSON blob i
 
 Common settings in the [built-in core data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}) include:
 
-> **Note:** Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which includes all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+{{% admonition type="note" %}}
+Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which includes all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+{{% /admonition %}}
 
 | Name                          | Type    | Data source                                                      | Description                                                                                                                                                                                                 |
 | ----------------------------- | ------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -229,7 +235,9 @@ For examples of specific data sources' JSON data, refer to that [data source's d
 
 Secure JSON data is a map of settings that will be encrypted with [secret key]({{< relref "../../setup-grafana/configure-grafana#secret_key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
-> **Note:** The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+{{% admonition type="note" %}}
+The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MSSQL.
+{{% /admonition %}}
 
 | Name              | Type   | Data source                        | Description                                              |
 | ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
@@ -264,12 +272,16 @@ datasources:
 
 ## Plugins
 
-> **Note:** Available in Grafana v7.1 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.1 and higher.
+{{% /admonition %}}
 
 You can manage plugin applications in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
 
-> **Note:** This feature enables you to provision plugin configurations, not the plugins themselves.
-> The plugins must already be installed on the Grafana instance.
+{{% admonition type="note" %}}
+This feature enables you to provision plugin configurations, not the plugins themselves.
+The plugins must already be installed on the Grafana instance.
+{{% /admonition %}}
 
 ### Example plugin configuration file
 
@@ -356,10 +368,12 @@ If the dashboard in the JSON file contains an [UID]({{< relref "../../dashboards
 When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
 By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
-> **Note:** Provisioning allows you to overwrite existing dashboards
-> which leads to problems if you re-use settings that are supposed to be unique.
-> Be careful not to re-use the same `title` multiple times within a folder
-> or `uid` within the same installation as this will cause weird behaviors.
+{{% admonition type="note" %}}
+Provisioning allows you to overwrite existing dashboards
+which leads to problems if you re-use settings that are supposed to be unique.
+Be careful not to re-use the same `title` multiple times within a folder
+or `uid` within the same installation as this will cause weird behaviors.
+{{% /admonition %}}
 
 ### Provision folders structure from filesystem to Grafana
 
@@ -393,9 +407,13 @@ providers:
 
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note:** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+{{% admonition type="note" %}}
+`folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+{{% /admonition %}}
 
-> **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
+{{% admonition type="note" %}}
+To provision dashboards to the General folder, store them in the root of your `path`.
+{{% /admonition %}}
 
 ## Alerting
 
@@ -403,7 +421,9 @@ For information on provisioning Grafana Alerting, refer to [Provision Grafana Al
 
 ## Alert Notification Channels
 
-> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
+{{% admonition type="note" %}}
+Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
+{{% /admonition %}}
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
@@ -475,7 +495,9 @@ delete_notifiers:
 
 The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
 
-> **Note:** Secure settings is supported since Grafana v7.2.
+{{% admonition type="note" %}}
+Secure settings is supported since Grafana v7.2.
+{{% /admonition %}}
 
 #### Alert notification `pushover`
 
