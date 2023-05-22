@@ -74,8 +74,17 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
+const alertVariants = new Set<AlertVariant>(['success', 'info', 'warning', 'error']);
+const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str as AlertVariant);
+const getAlertVariant = (status: string): AlertVariant => {
+  if (status.toLowerCase() === 'ok') {
+    return 'success';
+  }
+  return isAlertVariant(status) ? status : 'info';
+};
+
 export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource }: Props) {
-  const severity = testingStatus?.status ? (testingStatus?.status as AlertVariant) : 'error';
+  const severity = getAlertVariant(testingStatus?.status ?? 'error');
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
