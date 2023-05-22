@@ -77,3 +77,4 @@ advancedDataSourcePicker,stable,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,beta,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
 extraThemes,alpha,@grafana/user-essentials,false,false,false,true
+pluginsFrontendSandbox,alpha,@grafana/plugins-platform-backend,false,false,false,true

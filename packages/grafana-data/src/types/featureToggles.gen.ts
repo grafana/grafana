@@ -96,4 +96,5 @@ export interface FeatureToggles {
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
+  pluginsFrontendSandbox?: boolean;
 }
