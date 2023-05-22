@@ -67,7 +67,9 @@ To close the newly created query, click on the Close Split button.
 
 ## Share shortened link
 
-> **Note:** Available in Grafana 7.3 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana 7.3 and later versions.
+{{% /admonition %}}
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
 
