@@ -10,6 +10,52 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+func extServiceRoleUID(externalServiceID string) string {
+	uid := fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, externalServiceID)
+	return uid
+}
+
+func extServiceRoleName(externalServiceID string) string {
+	name := fmt.Sprintf("%s%s:permissions", accesscontrol.ExternalServiceRolePrefix, externalServiceID)
+	return name
+}
+
+func (s *AccessControlStore) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	uid := extServiceRoleUID(externalServiceID)
+
+	return s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		stored, errGet := getRoleByUID(ctx, sess, uid)
+		if errGet != nil {
+			// Role not found, nothing to do
+			if errors.Is(errGet, accesscontrol.ErrRoleNotFound) {
+				return nil
+			}
+			return errGet
+		}
+
+		// Delete the assignments
+		_, errDel := sess.Exec("DELETE FROM user_role WHERE role_id = ?", stored.ID)
+		if errDel != nil {
+			return errDel
+		}
+		// Shouldn't happen but just in case delete any team assignments
+		_, errDel = sess.Exec("DELETE FROM team_role WHERE role_id = ?", stored.ID)
+		if errDel != nil {
+			return errDel
+		}
+
+		// Delete the permissions
+		_, errDel = sess.Exec("DELETE FROM permission WHERE role_id = ?", stored.ID)
+		if errDel != nil {
+			return errDel
+		}
+
+		// Delete the role
+		_, errDel = sess.Exec("DELETE FROM role WHERE id = ?", stored.ID)
+		return errDel
+	})
+}
+
 func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
 	role := genExternalServiceRole(cmd)
 	assignment := genExternalServiceAssignment(cmd)
@@ -39,8 +85,8 @@ func genExternalServiceRole(cmd accesscontrol.SaveExternalServiceRoleCommand) ac
 	role := accesscontrol.Role{
 		OrgID:       cmd.OrgID,
 		Version:     1,
-		Name:        fmt.Sprintf("%s%s:permissions", accesscontrol.ExternalServiceRolePrefix, cmd.ExternalServiceID),
-		UID:         fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, cmd.ExternalServiceID),
+		Name:        extServiceRoleName(cmd.ExternalServiceID),
+		UID:         extServiceRoleUID(cmd.ExternalServiceID),
 		DisplayName: fmt.Sprintf("External Service %s Permissions", cmd.ExternalServiceID),
 		Description: fmt.Sprintf("External Service %s permissions", cmd.ExternalServiceID),
 		Group:       "External Service",

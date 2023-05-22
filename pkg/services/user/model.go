@@ -199,25 +199,22 @@ type AnalyticsSettings struct {
 }
 
 type SignedInUser struct {
-	UserID             int64 `xorm:"user_id"`
-	OrgID              int64 `xorm:"org_id"`
-	OrgName            string
-	OrgRole            roletype.RoleType
-	ExternalAuthModule string
-	ExternalAuthID     string `xorm:"external_auth_id"`
-	Login              string
-	Name               string
-	Email              string
-	ApiKeyID           int64 `xorm:"api_key_id"`
-	IsServiceAccount   bool  `xorm:"is_service_account"`
-	OrgCount           int
-	IsGrafanaAdmin     bool
-	IsAnonymous        bool
-	IsDisabled         bool
-	HelpFlags1         HelpFlags1
-	LastSeenAt         time.Time
-	Teams              []int64
-	Analytics          AnalyticsSettings
+	UserID           int64 `xorm:"user_id"`
+	OrgID            int64 `xorm:"org_id"`
+	OrgName          string
+	OrgRole          roletype.RoleType
+	Login            string
+	Name             string
+	Email            string
+	ApiKeyID         int64 `xorm:"api_key_id"`
+	IsServiceAccount bool  `xorm:"is_service_account"`
+	OrgCount         int
+	IsGrafanaAdmin   bool
+	IsAnonymous      bool
+	IsDisabled       bool
+	HelpFlags1       HelpFlags1
+	LastSeenAt       time.Time
+	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 }
