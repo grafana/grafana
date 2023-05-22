@@ -58,7 +58,6 @@ type GetTeamByIDQuery struct {
 	ID           int64
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
-	UserIdFilter int64
 }
 
 // FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
@@ -76,7 +75,6 @@ type SearchTeamsQuery struct {
 	Limit        int
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
-	UserIDFilter int64 `xorm:"user_id_filter"`
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
 }

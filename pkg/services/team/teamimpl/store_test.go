@@ -369,13 +369,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				team1 := searchQueryResult.Teams[0]
 				require.EqualValues(t, team1.MemberCount, 2)
 
-				searchQueryFilteredByUser := &team.SearchTeamsQuery{OrgID: testOrgID, Page: 1, Limit: 10, UserIDFilter: userIds[0], SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
-				searchQueryFilteredByUserResult, err := teamSvc.SearchTeams(context.Background(), searchQueryFilteredByUser)
-				require.NoError(t, err)
-				require.Equal(t, len(searchQueryFilteredByUserResult.Teams), 1)
-				team1 = searchQueryResult.Teams[0]
-				require.EqualValues(t, team1.MemberCount, 2)
-
 				getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				getTeamQueryResult, err := teamSvc.GetTeamByID(context.Background(), getTeamQuery)
 				require.NoError(t, err)

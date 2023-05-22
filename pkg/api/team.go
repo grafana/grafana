@@ -137,17 +137,10 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		page = 1
 	}
 
-	// Using accesscontrol the filtering is done based on user permissions
-	userIDFilter := team.FilterIgnoreUser
-	if hs.AccessControl.IsDisabled() {
-		userIDFilter = userFilter(c)
-	}
-
 	query := team.SearchTeamsQuery{
 		OrgID:        c.OrgID,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
-		UserIDFilter: userIDFilter,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
@@ -205,18 +198,11 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	// Using accesscontrol the filtering has already been performed at middleware layer
-	userIdFilter := team.FilterIgnoreUser
-	if hs.AccessControl.IsDisabled() {
-		userIdFilter = userFilter(c)
-	}
-
 	query := team.GetTeamByIDQuery{
 		OrgID:        c.OrgID,
 		ID:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
-		UserIdFilter: userIdFilter,
 	}
 
 	queryResult, err := hs.teamService.GetTeamByID(c.Req.Context(), &query)
