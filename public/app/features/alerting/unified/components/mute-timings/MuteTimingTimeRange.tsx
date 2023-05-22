@@ -6,13 +6,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
+
 import { isValidStartAndEndTime, isvalidTimeFormat } from './util';
 
 interface Props {
   intervalIndex: number;
 }
 
-const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC'
+const INVALID_FORMAT_MESSAGE = 'Times must be between 00:00 and 24:00 UTC';
 
 export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   const styles = useStyles2(getStyles);
@@ -45,11 +46,13 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
 
             // TODO figure out these TypeScript errors *sigh*
             const getStartAndEndTime = (): [string | undefined, string | undefined] => {
+              // @ts-ignore react-hook-form doesn't handle nested field arrays well
               const startTime: string = getValues(startTimeKey);
+              // @ts-ignore react-hook-form doesn't handle nested field arrays well
               const endTime: string = getValues(endTimeKey);
 
               return [startTime, endTime];
-            }
+            };
 
             return (
               <div className={styles.timeRange} key={timeRange.id}>
@@ -64,17 +67,17 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                       // @ts-ignore
                       {...register(startTimeKey, {
                         validate: (input: string) => {
-                          const validFormat = isvalidTimeFormat(input)
+                          const validFormat = isvalidTimeFormat(input);
                           if (!validFormat) {
-                            return INVALID_FORMAT_MESSAGE
+                            return INVALID_FORMAT_MESSAGE;
                           }
 
                           const [startTime, endTime] = getStartAndEndTime();
 
                           if (isValidStartAndEndTime(startTime, endTime)) {
-                            return
+                            return;
                           } else {
-                            return 'Start time must be before end time'
+                            return 'Start time must be before end time';
                           }
                         },
                       })}
@@ -96,17 +99,17 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {
                         validate: (input: string) => {
-                          const validFormat = isvalidTimeFormat(input)
+                          const validFormat = isvalidTimeFormat(input);
                           if (!validFormat) {
-                            return INVALID_FORMAT_MESSAGE
+                            return INVALID_FORMAT_MESSAGE;
                           }
 
                           const [startTime, endTime] = getStartAndEndTime();
 
                           if (isValidStartAndEndTime(startTime, endTime)) {
-                            return
+                            return;
                           } else {
-                            return 'End time must be after start time'
+                            return 'End time must be after start time';
                           }
                         },
                       })}

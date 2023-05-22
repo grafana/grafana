@@ -1,15 +1,15 @@
 import { css, cx } from '@emotion/css';
+import { concat, uniq, upperFirst, without } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Button, Field, FieldSet, Icon, Input, useStyles2 } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
 
-import { Stack } from '@grafana/experimental';
-import { concat, uniq, upperFirst, without } from 'lodash';
 import { MuteTimingTimeRange } from './MuteTimingTimeRange';
 import { TimezoneSelect } from './timezones';
 
@@ -24,8 +24,6 @@ export const MuteTimingTimeInterval = () => {
     name: 'time_intervals',
   });
 
-  console.log("intervals", timeIntervals);
-
   return (
     <FieldSet label="Time intervals">
       <>
@@ -35,9 +33,13 @@ export const MuteTimingTimeInterval = () => {
           instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple
           time intervals.
         </p>
-        <Stack direction='column' gap={2}>
+        <Stack direction="column" gap={2}>
           {timeIntervals.map((timeInterval, timeIntervalIndex) => {
             const errors = formState.errors;
+
+            // manually register the "location" field, react-hook-form doesn't handle nested field arrays well and will refuse to set
+            // the default value for the field when using "useFieldArray"
+            register(`time_intervals.${timeIntervalIndex}.location`);
 
             return (
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
@@ -52,7 +54,7 @@ export const MuteTimingTimeInterval = () => {
                     prefix={<Icon name="map-marker" />}
                     width={50}
                     onChange={(selectedTimezone) => {
-                      setValue(`time_intervals.${timeIntervalIndex}.location`, selectedTimezone.value)
+                      setValue(`time_intervals.${timeIntervalIndex}.location`, selectedTimezone.value);
                     }}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={{ label: timeInterval.location, value: timeInterval.location }}
@@ -61,8 +63,8 @@ export const MuteTimingTimeInterval = () => {
                 </Field>
                 <Field label="Days of the week">
                   <DaysOfTheWeek
-                    onChange={daysOfWeek => {
-                      setValue(`time_intervals.${timeIntervalIndex}.weekdays`, daysOfWeek)
+                    onChange={(daysOfWeek) => {
+                      setValue(`time_intervals.${timeIntervalIndex}.weekdays`, daysOfWeek);
                     }}
                     // @ts-ignore react-hook-form doesn't handle nested field arrays well
                     defaultValue={timeInterval.weekdays}
@@ -134,7 +136,7 @@ export const MuteTimingTimeInterval = () => {
                 <Button
                   type="button"
                   variant="destructive"
-                  fill='outline'
+                  fill="outline"
                   icon="trash-alt"
                   onClick={() => removeTimeInterval(timeIntervalIndex)}
                 >
@@ -142,8 +144,7 @@ export const MuteTimingTimeInterval = () => {
                 </Button>
               </div>
             );
-          }
-          )}
+          })}
         </Stack>
         <Button
           type="button"
@@ -162,31 +163,31 @@ export const MuteTimingTimeInterval = () => {
 };
 
 interface DaysOfTheWeekProps {
-  defaultValue?: string
-  onChange: (input: string) => void
+  defaultValue?: string;
+  onChange: (input: string) => void;
 }
 
 const parseDays = (input: string): string[] => {
   const parsedDays = input
-    .split(",")
-    .map(day => day.trim())
+    .split(',')
+    .map((day) => day.trim())
     // each "day" could still be a range of days, so we parse the range
-    .flatMap(day => day.includes(':') ? parseWeekdayRange(day) : day)
-    .map(day => day.toLowerCase())
+    .flatMap((day) => (day.includes(':') ? parseWeekdayRange(day) : day))
+    .map((day) => day.toLowerCase())
     // remove invalid weekdays
-    .filter(day => DAYS_OF_THE_WEEK.includes(day))
+    .filter((day) => DAYS_OF_THE_WEEK.includes(day));
 
-  return uniq(parsedDays)
-}
+  return uniq(parsedDays);
+};
 
 // parse monday:wednesday to ["monday", "tuesday", "wednesday"]
 function parseWeekdayRange(input: string): string[] {
-  const [start = '', end = ''] = input.split(':')
+  const [start = '', end = ''] = input.split(':');
 
-  const startIndex = DAYS_OF_THE_WEEK.indexOf(start)
-  const endIndex = DAYS_OF_THE_WEEK.indexOf(end)
+  const startIndex = DAYS_OF_THE_WEEK.indexOf(start);
+  const endIndex = DAYS_OF_THE_WEEK.indexOf(end);
 
-  return DAYS_OF_THE_WEEK.slice(startIndex, endIndex + 1)
+  return DAYS_OF_THE_WEEK.slice(startIndex, endIndex + 1);
 }
 
 const DaysOfTheWeek = ({ defaultValue = '', onChange }: DaysOfTheWeekProps) => {
@@ -196,31 +197,31 @@ const DaysOfTheWeek = ({ defaultValue = '', onChange }: DaysOfTheWeekProps) => {
 
   const toggleDay = (day: string) => {
     selectedDays.includes(day)
-      ? setSelectedDays(selectedDays => without(selectedDays, day))
-      : setSelectedDays(selectedDays => concat(selectedDays, day))
-  }
+      ? setSelectedDays((selectedDays) => without(selectedDays, day))
+      : setSelectedDays((selectedDays) => concat(selectedDays, day));
+  };
 
   useEffect(() => {
-    onChange(selectedDays.join(', '))
-  }, [selectedDays]);
+    onChange(selectedDays.join(', '));
+  }, [selectedDays, onChange]);
 
   return (
     <div data-testid="mute-timing-weekdays">
       <Stack gap={1}>
-        {DAYS_OF_THE_WEEK.map(day => {
-          const style = cx(styles.dayOfTheWeek, selectedDays.includes(day) && 'selected')
+        {DAYS_OF_THE_WEEK.map((day) => {
+          const style = cx(styles.dayOfTheWeek, selectedDays.includes(day) && 'selected');
           const abbreviated = day.slice(0, 3);
 
           return (
             <button type="button" key={day} className={style} onClick={() => toggleDay(day)}>
               {upperFirst(abbreviated)}
             </button>
-          )
+          );
         })}
       </Stack>
     </div>
-  )
-}
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   input: css`
@@ -250,5 +251,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border-color: ${theme.colors.primary.border};
       background: ${theme.colors.primary.transparent};
     }
-  `
+  `,
 });

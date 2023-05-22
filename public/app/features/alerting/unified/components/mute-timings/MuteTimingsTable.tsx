@@ -18,6 +18,7 @@ import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '..
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
+
 import { renderTimeIntervals } from './util';
 
 interface Props {
@@ -132,7 +133,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
         id: 'timeRange',
         label: 'Time range',
         renderCell: ({ data }) => {
-          return renderTimeIntervals(data)
+          return renderTimeIntervals(data);
         },
       },
     ];

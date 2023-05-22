@@ -1,34 +1,18 @@
-import { MuteTimeInterval } from "app/plugins/datasource/alertmanager/types";
-import moment from "moment";
-import React from "react";
-import { getDaysOfMonthString, getMonthsString, getTimeString, getWeekdayString, getYearsString } from "../../utils/alertmanager";
+import moment from 'moment';
+import React from 'react';
 
-function summarizeMuteTiming(muteTiming: MuteTimeInterval): JSX.Element {
-  const numIntervals = muteTiming.time_intervals.length;
+import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
-  // TODO can we calculate the next occurrence of the mute timing?
-  const nextOccurrences = [];
-
-  const intervals = muteTiming.time_intervals.map(interval => {
-    const start = null;
-    const end = null;
-
-    return {
-      start,
-      end
-    }
-  });
-
-  // Every <day of week> <day of month> of <month> in <year> from <start> to <end>
-
-  return (
-    <>
-    </>
-  )
-}
+import {
+  getDaysOfMonthString,
+  getMonthsString,
+  getTimeString,
+  getWeekdayString,
+  getYearsString,
+} from '../../utils/alertmanager';
 
 // https://github.com/prometheus/alertmanager/blob/9de8ef36755298a68b6ab20244d4369d38bdea99/timeinterval/timeinterval.go#L443
-const TIME_RANGE_REGEX = /^((([01][0-9])|(2[0-3])):[0-5][0-9])$|(^24:00$)/
+const TIME_RANGE_REGEX = /^((([01][0-9])|(2[0-3])):[0-5][0-9])$|(^24:00$)/;
 
 const isvalidTimeFormat = (timeString: string): boolean => {
   return timeString ? TIME_RANGE_REGEX.test(timeString) : true;
@@ -37,26 +21,29 @@ const isvalidTimeFormat = (timeString: string): boolean => {
 const isValidStartAndEndTime = (startTime?: string, endTime?: string): boolean => {
   // empty time range is perfactly valid for a mute timing
   if (!startTime && !endTime) {
-    return true
+    return true;
   }
 
-  if ((!startTime && endTime) || startTime && !endTime) {
-    return false
+  if ((!startTime && endTime) || (startTime && !endTime)) {
+    return false;
   }
 
-  const startDate = moment().startOf('day').add(startTime, "HH:mm");
-  const endDate = moment().startOf('day').add(endTime, "HH:mm");
+  const timeUnit = 'HH:mm';
+  // @ts-ignore typescript types here incorrect, sigh
+  const startDate = moment().startOf('day').add(startTime, timeUnit);
+  // @ts-ignore typescript types here incorrect, sigh
+  const endDate = moment().startOf('day').add(endTime, timeUnit);
 
   if (startTime && endTime && startDate.isBefore(endDate)) {
-    return true
+    return true;
   }
 
   if (startTime && endTime && endDate.isAfter(startDate)) {
-    return true
+    return true;
   }
 
-  return false
-}
+  return false;
+};
 
 function renderTimeIntervals(muteTiming: MuteTimeInterval) {
   const timeIntervals = muteTiming.time_intervals;
@@ -80,9 +67,4 @@ function renderTimeIntervals(muteTiming: MuteTimeInterval) {
   });
 }
 
-export {
-  isvalidTimeFormat,
-  isValidStartAndEndTime,
-  renderTimeIntervals,
-  summarizeMuteTiming
-};
+export { isvalidTimeFormat, isValidStartAndEndTime, renderTimeIntervals };
