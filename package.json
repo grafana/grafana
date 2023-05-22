@@ -247,7 +247,7 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
-    "@daybrush/utils": "1.11.0",
+    "@daybrush/utils": "1.10.2",
     "@emotion/css": "11.10.6",
     "@emotion/react": "11.10.6",
     "@glideapps/glide-data-grid": "^5.2.1",
