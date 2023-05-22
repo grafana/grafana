@@ -204,7 +204,6 @@ github.com/Microsoft/go-winio v0.6.0/go.mod h1:cTAf44im0RAYeL23bpB+fzCyDH2MJiz2B
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 h1:YoJbenK9C67SkzkDfmQuVln04ygHj3vjZfd9FL+GmQQ=
 github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7/go.mod h1:z4/9nQmJSSwwds7ejkxaJwO37dru3geImFUdJlaLzQo=
 github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 h1:L6S7kR7SlhQKplIBpkra3s6yhcZV51lhRnXmYc4HohI=
 github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756/go.mod h1:8TI4H3IbrackdNgv+92dI+rhpCaLqM0IfpgCgenFvRE=
@@ -1067,12 +1066,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0 h1:jELbsqee5kRz9vD1hZeP8+984xMZDU/M6uGv0RhOR34=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
-github.com/grafana/kindsys v0.0.0-20230323180930-c2a9ced5c751 h1:X5jwaMcpUMQ+xv7fKhs9U+oBxfo2x+x8GpHWybDSgk0=
-github.com/grafana/kindsys v0.0.0-20230323180930-c2a9ced5c751/go.mod h1:213a3clTiegHfheYcLPLeEyHv/azK/fAF67OEbzuLzw=
-github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a h1:i2YhC6eTyDp+7Ftv5c6VZDUQskmKX4oIPGf38qfiZiU=
-github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
-github.com/grafana/kindsys v0.0.0-20230508172648-19fc432f045a h1:L8Qph5iUyVnLGinQzPmtJYUtPDG4TyT6vGDFT9EdCTU=
-github.com/grafana/kindsys v0.0.0-20230508172648-19fc432f045a/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/kindsys v0.0.0-20230508175818-7ad73516220b h1:x3gw5zsWZ2vxQ0GYucB2PFQ6eISAoWkba5MrQd8ZK0E=
 github.com/grafana/kindsys v0.0.0-20230508175818-7ad73516220b/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 h1:bBzCezZNRyYlJpXTkyZdY4fpPxHZUdyeyRWzhtw/P6I=
