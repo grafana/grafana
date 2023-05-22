@@ -426,7 +426,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   let pageNav = state.pageNav;
   let sectionNav = state.sectionNav;
 
-  if (!pageNav || dashboard.title !== pageNav.text) {
+  if (!pageNav || dashboard.title !== pageNav.text || dashboard.meta.folderUrl !== pageNav.parentItem?.url) {
     pageNav = {
       text: dashboard.title,
       url: locationUtil.getUrlForPartial(props.history.location, {
