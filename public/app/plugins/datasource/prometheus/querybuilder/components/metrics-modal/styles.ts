@@ -49,6 +49,10 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       border: solid 1px rgba(204, 204, 220, 0.25);
       padding: 7px;
     `,
+    resultsDataFilteredText: css`
+      display: inline;
+      vertical-align: text-top;
+    `,
     results: css`
       height: calc(80vh - 280px);
       overflow-y: scroll;
