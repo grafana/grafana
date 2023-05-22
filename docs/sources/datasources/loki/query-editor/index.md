@@ -105,6 +105,14 @@ In Explore, you can can retrieve the context surrounding your log results by cli
 
 The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
 
+To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, we store your updated labels and apply them to the next log context view you open. This allows you to seamlessly navigate through various log context windows without having to manually reapply the same filters repeatedly.
+
+At any time, if you would like to reset filters and use the initial log context query, you can use `Revert to initial query` button positioned next to the query preview and click it. This action will restore the original query, allowing you to start fresh.
+
+To reduce the repetition to select and remove same labels over and over again when looking at multiple log context window, we are storing your selected and removed labels and apply them to your opened log context view.
+
+At any time, if you would like to reset filters and use initial log context query, you can use Revert to initial query button positioned next to the query preview.
+
 ### Tail live logs
 
 Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
