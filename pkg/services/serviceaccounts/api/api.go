@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -68,6 +69,7 @@ func NewServiceAccountsAPI(
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
+
 		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
@@ -134,6 +136,42 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	return response.JSON(http.StatusCreated, serviceAccount)
+}
+
+func (api *ServiceAccountsAPI) ListServiceAccounts(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	q := serviceaccounts.SearchOrgServiceAccountsQuery{
+		OrgID:        c.OrgID,
+		Query:        c.Query("query"),
+		Page:         1,
+		Limit:        10,
+		Filter:       "",
+		SignedInUser: c.SignedInUser,
+	}
+	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, &q)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
+	}
+
+	saIDs := map[string]bool{}
+	for i := range serviceAccountSearch.ServiceAccounts {
+		sa := serviceAccountSearch.ServiceAccounts[i]
+		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault("", sa.Name)
+
+		saIDString := strconv.FormatInt(sa.Id, 10)
+		saIDs[saIDString] = true
+		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
+		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
+		tokens, err := api.service.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
+		})
+		if err != nil {
+			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
+		}
+		sa.Tokens = int64(len(tokens))
+	}
+
+	return response.JSON(http.StatusOK, serviceAccountSearch)
 }
 
 // swagger:route GET /serviceaccounts/{serviceAccountId} service_accounts retrieveServiceAccount
@@ -328,11 +366,16 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	migrationResult, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID)
+	fmt.Println("MigrateApiKeysToServiceAccounts")
+	fmt.Printf("api: %+v\n", api)
+	fmt.Printf("api.service: %+v\n", api.service)
+	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID)
+	fmt.Printf("results: %+v\n", results)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
-	return response.JSON(200, migrationResult)
+
+	return response.JSON(http.StatusOK, results)
 }
 
 // POST /api/serviceaccounts/migrate/:keyId

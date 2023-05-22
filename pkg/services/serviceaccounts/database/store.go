@@ -365,6 +365,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) (*serviceaccounts.MigrationResult, error) {
+	fmt.Printf("Migrating API keys to service accounts for orgId: %d\n", orgId)
 	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if err != nil {
 		return nil, err
