@@ -124,7 +124,7 @@ The process for deploying Grafana Enterprise is almost identical to the precedin
 ### Obtain Grafana Enterprise license
 
 To run Grafana Enterprise, you need a valid license.
-To obtain a license, [contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise).
+To obtain a license, [contact a Grafana Labs representative](/contact?about=grafana-enterprise).
 This topic assumes that you have a valid license in a `license.jwt` file.
 Associate your license with a URL that you can use later in the topic.
 

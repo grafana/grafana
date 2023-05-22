@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							common.SingleStatBaseOptions
 							showThresholdLabels:  bool | *false
 							showThresholdMarkers: bool | *true

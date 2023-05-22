@@ -230,6 +230,9 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         </div>
       </div>
       <Modal.ButtonRow>
+        <Button type="button" variant="secondary" onClick={onDismiss} fill="text">
+          Cancel
+        </Button>
         <Button
           type="button"
           variant="primary"
@@ -241,9 +244,6 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           }}
         >
           Confirm
-        </Button>
-        <Button type="button" variant="secondary" onClick={onDismiss}>
-          Cancel
         </Button>
       </Modal.ButtonRow>
     </Modal>

@@ -269,16 +269,6 @@ export function getPanelMenu(
     });
   }
 
-  if (subMenu.length) {
-    menu.push({
-      type: 'submenu',
-      text: t('panel.header-menu.more', `More...`),
-      iconClassName: 'cube',
-      subMenu,
-      onClick: onMore,
-    });
-  }
-
   const { extensions } = getPluginExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
@@ -303,6 +293,16 @@ export function getPanelMenu(
       iconClassName: 'plug',
       type: 'submenu',
       subMenu: extensionsMenu,
+    });
+  }
+
+  if (subMenu.length) {
+    menu.push({
+      type: 'submenu',
+      text: t('panel.header-menu.more', `More...`),
+      iconClassName: 'cube',
+      subMenu,
+      onClick: onMore,
     });
   }
 
@@ -342,5 +342,6 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     },
     targets: panel.targets,
     scopedVars: panel.scopedVars,
+    data: panel.getQueryRunner().getLastResult(),
   };
 }

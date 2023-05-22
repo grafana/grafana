@@ -6,7 +6,26 @@ import { ModalTabsHeader } from './ModalTabsHeader';
 
 # Modal
 
-Generic Modal component
+Generic Modal component.
+
+Example usage:
+
+```tsx
+<Modal title="title" isOpen={true}>
+  <div>Some body</div>
+  <Modal.ButtonRow>
+    <Button variant="secondary" fill="outline">
+      Cancel
+    </Button>
+    <Button>Save</Button>
+  </Modal.ButtonRow>
+</Modal>
+```
+
+For buttons at the bottom of the modal you should always use:
+
+- Modal.ButtonRow - this makes sure the Buttons are right aligned
+- If you have a Cancel button use fill="outline" and variant="secondary" and place it on the left side of any other button.
 
 <ArgTypes of={Modal} />
 

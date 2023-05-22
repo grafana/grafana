@@ -40,6 +40,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
+  lastSearchTimestamp = 0;
+
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
@@ -224,29 +226,27 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     this.setState({ loading: true });
 
-    if (this.state.starred) {
-      getGrafanaSearcher()
-        .starred(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
+    const searcher = getGrafanaSearcher();
+
+    const searchTimestamp = Date.now();
+    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
+
+    searchPromise
+      .then((result) => {
+        // Only keep the results if it's was issued after the most recently resolved search.
+        // This prevents results showing out of order if first request is slower than later ones
+        if (searchTimestamp > this.lastSearchTimestamp) {
+          this.setState({ result, loading: false });
+          this.lastSearchTimestamp = searchTimestamp;
+        }
+      })
+      .catch((error) => {
+        reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+          ...trackingInfo,
+          error: error?.message,
         });
-    } else {
-      getGrafanaSearcher()
-        .search(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
-        });
-    }
+        this.setState({ loading: false });
+      });
   }
 
   // This gets the possible tags from within the query results

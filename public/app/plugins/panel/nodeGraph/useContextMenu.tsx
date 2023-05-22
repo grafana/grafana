@@ -232,12 +232,12 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
 
   const rows = [];
   if (valueSource && valueTarget) {
-    rows.push(<HeaderRow label={'Source → Target'} value={`${valueSource} → ${valueTarget}`} />);
+    rows.push(<HeaderRow key={'header-row'} label={'Source → Target'} value={`${valueSource} → ${valueTarget}`} />);
   }
 
   for (const f of [fields.mainStat, fields.secondaryStat, ...fields.details]) {
     if (f && f.values[index]) {
-      rows.push(<FieldRow field={f} index={index} />);
+      rows.push(<FieldRow key={`field-row-${index}`} field={f} index={index} />);
     }
   }
 
