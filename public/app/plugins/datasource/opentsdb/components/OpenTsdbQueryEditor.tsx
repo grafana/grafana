@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, QueryEditorProps, textUtil } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -62,17 +62,21 @@ export function OpenTsdbQueryEditor({
     query.downsampleFillPolicy = 'none';
   }
 
-  datasource.getAggregators().then((aggs: string[]) => {
-    if (aggs.length !== 0 && aggs !== aggregators) {
-      setAggregators(aggs);
-    }
-  });
+  useEffect(() => {
+    datasource.getAggregators().then((aggs: string[]) => {
+      if (aggs.length !== 0) {
+        setAggregators(aggs);
+      }
+    });
+  }, [datasource]);
 
-  datasource.getFilterTypes().then((newFilterTypes: string[]) => {
-    if (newFilterTypes.length !== 0 && newFilterTypes !== filterTypes) {
-      setFilterTypes(newFilterTypes);
-    }
-  });
+  useEffect(() => {
+    datasource.getFilterTypes().then((newFilterTypes: string[]) => {
+      if (newFilterTypes.length !== 0) {
+        setFilterTypes(newFilterTypes);
+      }
+    });
+  }, [datasource]);
 
   async function suggestMetrics(value: string): Promise<Array<{ value: string; description: string }>> {
     return datasource.metricFindQuery(`metrics(${value})`).then(getTextValues);
