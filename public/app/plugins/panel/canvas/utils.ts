@@ -82,8 +82,11 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
 
 export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
   const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-  const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
-  newElementOptions.type = newItem.id;
+  const newElementOptions: CanvasElementOptions = {
+    ...newItem.getNewOptions(),
+    type: newItem.id,
+    name: '',
+  };
 
   if (anchorPoint) {
     newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };

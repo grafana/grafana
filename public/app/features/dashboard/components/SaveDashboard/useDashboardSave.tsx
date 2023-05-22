@@ -29,7 +29,7 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [state, onDashboardSave] = useAsyncFn(
-    async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+    async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
         const result = await saveDashboard(clone, options, dashboard);
         dashboard.version = result.version;
