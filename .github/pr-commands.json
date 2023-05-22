@@ -299,20 +299,6 @@
   },
   {
     "type": "changedfiles",
-    "matches": ["public/app/plugins/panel/icon/**/*"],
-    "action": "updateLabel",
-    "addLabel": "area/panel/icon"
-  },
-  {
-    "type": "label",
-    "name": "area/panel/icon",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "changedfiles",
     "matches": ["public/app/plugins/panel/state-timeline/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/state-timeline"
