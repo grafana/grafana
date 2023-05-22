@@ -49,6 +49,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		expectedBodyFilter           string
 		expectedParamFilter          string
 		expectedPortalURL            *string
+		resources                    map[string]types.AzureMonitorResource
 	}{
 		{
 			name: "Parse queries from frontend and build AzureMonitor API queries",
@@ -296,6 +297,16 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
 			require.NoError(t, err)
 
+			resources := map[string]types.AzureMonitorResource{}
+			if tt.azureMonitorVariedProperties["resources"] != nil {
+				resourceSlice := tt.azureMonitorVariedProperties["resources"].([]types.AzureMonitorResource)
+				for _, resource := range resourceSlice {
+					resources[fmt.Sprintf("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", resource.ResourceGroup, resource.ResourceName)] = resource
+				}
+			} else {
+				resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] = types.AzureMonitorResource{ResourceGroup: "grafanastaging", ResourceName: "grafana"}
+			}
+
 			azureMonitorQuery := &types.AzureMonitorQuery{
 				URL:    tt.expectedURL,
 				Target: tt.azureMonitorQueryTarget,
@@ -305,7 +316,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				BodyFilter: tt.expectedBodyFilter,
+				BodyFilter:   tt.expectedBodyFilter,
+				Subscription: "12345678-aaaa-bbbb-cccc-123456789abc",
+				Resources:    resources,
 			}
 
 			assert.Equal(t, tt.expectedParamFilter, queries[0].Params.Get("$filter"))
@@ -354,6 +367,10 @@ func TestCustomNamespace(t *testing.T) {
 }
 
 func TestAzureMonitorParseResponse(t *testing.T) {
+	resources := map[string]types.AzureMonitorResource{}
+	resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] = types.AzureMonitorResource{ResourceGroup: "grafanastaging", ResourceName: "grafana"}
+	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+
 	tests := []struct {
 		name            string
 		responseFile    string
@@ -369,6 +386,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -379,6 +398,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -389,6 +410,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Maximum"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -399,6 +422,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Minimum"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -409,6 +434,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Count"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -419,6 +446,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -430,6 +459,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -441,17 +472,21 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
 			name:         "multiple dimension time series response with label alias",
 			responseFile: "azuremonitor/7-azure-monitor-response-multi-dimension.json",
 			mockQuery: &types.AzureMonitorQuery{
-				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics",
 				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    map[string]types.AzureMonitorResource{"/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics": {ResourceGroup: "grafanatest", ResourceName: "testblobaccount"}},
+				Subscription: subscription,
 			},
 		},
 		{
@@ -463,6 +498,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -474,6 +511,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -485,6 +524,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -495,6 +536,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 		{
@@ -505,6 +548,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
+				Resources:    resources,
+				Subscription: subscription,
 			},
 		},
 	}
