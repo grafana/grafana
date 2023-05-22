@@ -104,7 +104,7 @@ The `text` field supports [Go-style templating](https://pkg.go.dev/text/template
 
 4. Go to the Grafana UI and check the details of your contact point.
 
-You cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+By default, you cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 5. Click **Test** to verify that the contact point works correctly.
 
@@ -179,7 +179,9 @@ resource "grafana_notification_policy" "my_policy" {
 
 **Note:**
 
-You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
+
+By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 5. Click **Test** to verify that the notification point is working correctly.
 
@@ -216,7 +218,7 @@ resource "grafana_mute_timing" "my_mute_timing" {
 
 **Note:**
 
-You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 5. Click **Test** to verify that the mute timing is working correctly.
 
