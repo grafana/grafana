@@ -107,7 +107,7 @@ The initial log context query is created from all labels defining the stream for
 
 To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you seamlessly navigate through various log context windows without having to reapply your filters.
 
-At any time, if you would like to reset filters and use the initial log context query, you can use the `Revert to initial query` button positioned next to the query preview. Clicking this button will restore the original query, allowing you to start fresh.
+To reset filters and use the initial log context query, click the `Revert to initial query` button next to the query preview.
 
 ### Tail live logs
 
