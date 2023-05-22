@@ -244,6 +244,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return fmt.Errorf("failed to generate UID for datasource %q: %w", cmd.Name, err)
 			}
 			cmd.UID = uid
+		} else if !util.IsValidShortUID(cmd.UID) {
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
 		}
 
 		ds = &datasources.DataSource{
@@ -377,6 +379,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
+		if !util.IsValidShortUID(cmd.UID) {
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name)
+		}
+
 		return err
 	})
 }
@@ -399,3 +405,10 @@ func generateNewDatasourceUid(sess *db.Session, orgId int64) (string, error) {
 }
 
 var generateNewUid func() string = util.GenerateShortUID
+
+func logDeprecatedInvalidDsUid(logger log.Logger, uid, name string) {
+	logger.Error(
+		"invalid datasource uid, invalid uids are deprecated and this operation will fail in future versions of Grafana",
+		"uid", uid, "name", name,
+	)
+}
