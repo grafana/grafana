@@ -4,6 +4,7 @@ aliases:
   - ../enable-diagnostics/
 menuTitle: Configure tracing
 title: Configure tracing to troubleshoot Grafana
+description: Learn how to configure tracing so that you can troubleshoot Grafana.
 weight: 200
 ---
 

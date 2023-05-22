@@ -8,6 +8,7 @@ cascade:
       - enterprise
       - oss
 title: Fundamentals
+description: Learn about the basics of observability.
 weight: 8
 ---
 
