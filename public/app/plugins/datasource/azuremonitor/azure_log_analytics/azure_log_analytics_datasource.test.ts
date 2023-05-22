@@ -392,7 +392,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
-        resources: [templateVariables.get('resource')?.templateVariable.current.value],
+        resources: ['resource1', 'resource2'],
       });
     });
 
