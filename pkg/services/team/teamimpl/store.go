@@ -23,6 +23,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
+	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
@@ -452,6 +453,16 @@ func removeTeamMember(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error
 	}
 
 	return err
+}
+
+// RemoveUsersMemberships removes all the team membership entries for the given user.
+// Only used when removing a user from a Grafana instance.
+func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) error {
+	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var rawSQL = "DELETE FROM team_member WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
+		return err
+	})
 }
 
 // GetUserTeamMemberships return a list of memberships to teams granted to a user
