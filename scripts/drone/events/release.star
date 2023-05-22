@@ -214,20 +214,10 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         integration_test_steps = []
         volumes = []
 
-    windows_pipeline = pipeline(
-        name = "{}-oss-windows".format(ver_mode),
-        edition = "oss",
-        trigger = trigger,
-        steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
-        platform = "windows",
-        depends_on = [
-            "{}-oss-build-e2e-publish".format(ver_mode),
-            "{}-oss-test-frontend".format(ver_mode),
-            "{}-oss-test-backend".format(ver_mode),
-        ],
-        environment = environment,
-    )
-
+    windows_pipeline_dependencies = [
+        "{}-oss-build-e2e-publish".format(ver_mode),
+        "{}-oss-test-frontend".format(ver_mode),
+    ]
     pipelines = [
         pipeline(
             name = "{}-oss-build-e2e-publish".format(ver_mode),
@@ -259,6 +249,16 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
             environment = environment,
             volumes = volumes,
         ))
+
+    windows_pipeline = pipeline(
+        name = "{}-oss-windows".format(ver_mode),
+        edition = "oss",
+        trigger = trigger,
+        steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
+        platform = "windows",
+        depends_on = windows_pipeline_dependencies,
+        environment = environment,
+    )
 
     pipelines.append(windows_pipeline)
 

@@ -1,4 +1,4 @@
-import { render as rtlRender, screen } from '@testing-library/react';
+import { render as rtlRender, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -10,7 +10,7 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import BrowseDashboardsPage, { Props } from './BrowseDashboardsPage';
 import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
 import * as permissions from './permissions';
-const [mockTree, { dashbdD }] = wellFormedTree();
+const [mockTree, { dashbdD, folderA }] = wellFormedTree();
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -97,5 +97,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     // Check the actions are now visible
     expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  it('navigating into a child item resets the selected state', async () => {
+    render(<BrowseDashboardsPage {...props} />);
+
+    const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
+    await userEvent.click(checkbox);
+
+    // Check the actions are now visible
+    expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('link', { name: folderA.item.title }));
+
+    // Check the actions are no longer visible
+    waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    });
   });
 });

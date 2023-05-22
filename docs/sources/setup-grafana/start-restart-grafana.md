@@ -58,7 +58,7 @@ To restart the Grafana server, run the following commands:
 sudo systemctl restart grafana-server
 ```
 
-> **Note:** SUSE or OpenSUSE users might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
+> **Note:** SUSE or openSUSE users might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
 
 ### Start the Grafana server using init.d
 
@@ -198,5 +198,5 @@ To restart Grafana:
 
 After the Grafana server is up and running, consider taking the next steps:
 
-- Refer to [Get Started]({{< relref "../getting-started/" >}}) to learn how to build your first dashboard.
-- Refer to [Configuration]({{< relref "./configure-grafana/" >}}) to learn about how you can customize your environment.
+- Refer to [Get Started]({{< relref "../getting-started" >}}) to learn how to build your first dashboard.
+- Refer to [Configuration]({{< relref "./configure-grafana" >}}) to learn about how you can customize your environment.

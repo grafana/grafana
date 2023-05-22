@@ -26,6 +26,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Click **Dashboards** in the left-side menu.
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
+
+   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
+
 1. In the first line of the **Query** tab, click the dropdown list and select a data source.
 1. Write or construct a query in the query language of your data source.
 
@@ -59,6 +62,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+
+   ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
 
 ## Configure repeating rows
 

@@ -2,7 +2,7 @@
 aliases:
   - ../../../auth/jwt/
 description: Grafana JWT Authentication
-title: Configure JWT Authentication
+title: Configure JWT authentication
 weight: 500
 ---
 
@@ -22,7 +22,7 @@ authentication in an app embedding Grafana.
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana/" >}}).
+1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana" >}}).
 1. Specify the header name that contains a token.
 
 ```ini

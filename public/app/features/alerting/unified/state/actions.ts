@@ -1,7 +1,7 @@
 import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -32,9 +32,8 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, trackNewAlerRuleFormSaved, withPerformanceLogging } from '../Analytics';
+import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -511,14 +510,6 @@ export const saveRuleFormAction = createAsyncThunk(
           }
 
           logInfo(LogMessages.successSavingAlertRule, { type, isNew: (!existing).toString() });
-
-          if (!existing) {
-            trackNewAlerRuleFormSaved({
-              grafana_version: config.buildInfo.version,
-              org_id: contextSrv.user.orgId,
-              user_id: contextSrv.user.id,
-            });
-          }
 
           if (redirectOnSave) {
             locationService.push(redirectOnSave);

@@ -104,7 +104,7 @@ const QueryEditorForm = ({ value }: Props) => {
   const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 
   const showBucketAggregationsEditor = value.metrics?.every(
-    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
+    (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'metrics'
   );
 
   return (

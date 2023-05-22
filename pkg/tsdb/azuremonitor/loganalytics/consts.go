@@ -92,6 +92,8 @@ var ExceptionsSchema = copyCommonProperties(map[string]string{
 	"problemId":         "ProblemId",
 	"severityLevel":     "SeverityLevel",
 	"type":              "ExceptionType",
+	// Grafana specific error tag
+	"error": "error",
 }, map[string]string{"duration": "duration", "id": "id", "name": "name", "performanceBucket": "performanceBucket", "success": "success"})
 
 var TracesSchema = copyCommonProperties(map[string]string{

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { FeatureState, SelectableValue } from '@grafana/data';
+import { FeatureState, SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -11,7 +11,6 @@ import {
   FieldSet,
   Form,
   Label,
-  RadioButtonGroup,
   Select,
   stylesFactory,
   TimeZonePicker,
@@ -22,6 +21,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
+import { changeTheme } from 'app/core/services/theme';
 
 export interface Props {
   resourceUri: string;
@@ -67,12 +67,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
       queryHistory: { homeTab: '' },
     };
 
-    this.themeOptions = [
-      { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
-      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
-      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
-      { value: 'system', label: t('shared-preferences.theme.system-label', 'System') },
-    ];
+    this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
+      value: theme.id,
+      label: getTranslatedThemeName(theme),
+    }));
+
+    // Add default option
+    this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
   }
 
   async componentDidMount() {
@@ -98,8 +99,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
   };
 
-  onThemeChanged = (value: string) => {
-    this.setState({ theme: value });
+  onThemeChanged = (value: SelectableValue<string>) => {
+    this.setState({ theme: value.value });
+
+    if (value.value) {
+      changeTheme(value.value, true);
+    }
   };
 
   onTimeZoneChanged = (timezone?: string) => {
@@ -131,21 +136,19 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { disabled } = this.props;
     const styles = getStyles();
     const languages = getLanguageOptions();
-    let currentThemeOption = this.themeOptions[0].value;
-    if (theme?.length) {
-      currentThemeOption = this.themeOptions.find((item) => item.value === theme)?.value;
-    }
+    const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
             <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-              <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
-                <RadioButtonGroup
+              <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
+                <Select
                   options={this.themeOptions}
                   value={currentThemeOption}
                   onChange={this.onThemeChanged}
+                  inputId="shared-preferences-theme-select"
                 />
               </Field>
 
@@ -240,3 +243,16 @@ const getStyles = stylesFactory(() => {
     `,
   };
 });
+
+function getTranslatedThemeName(theme: ThemeRegistryItem) {
+  switch (theme.id) {
+    case 'dark':
+      return t('shared.preferences.theme.dark-label', 'Dark');
+    case 'light':
+      return t('shared.preferences.theme.light-label', 'Light');
+    case 'system':
+      return t('shared.preferences.theme.system-label', 'System preference');
+    default:
+      return theme.name;
+  }
+}

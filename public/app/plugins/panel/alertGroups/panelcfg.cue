@@ -20,7 +20,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							// Comma-separated list of values used to filter alert results
 							labels: string
 							// Name of the alertmanager used as a source for alerts

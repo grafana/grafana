@@ -111,3 +111,9 @@ If your evaluation returns an error, you can set the state on your alert rule to
 | Error    | Creates an alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
 | Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
 | Ok       | Sets alert rule state to `Normal`.                                                                                                              |
+
+### Resolve stale alert instances
+
+An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
+
+Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.

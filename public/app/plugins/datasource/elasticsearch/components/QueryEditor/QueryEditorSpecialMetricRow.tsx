@@ -9,10 +9,9 @@ import { SettingsEditor } from './MetricAggregationsEditor/SettingsEditor';
 type Props = {
   name: string;
   metric: MetricAggregation;
-  info?: string;
 };
 
-export const QueryEditorSpecialMetricRow = ({ name, metric, info }: Props) => {
+export const QueryEditorSpecialMetricRow = ({ name, metric }: Props) => {
   // this widget is only used in scenarios when there is only a single
   // metric, so the array of "previousMetrics" (meaning all the metrics
   // before the current metric), is an ampty-array
@@ -26,11 +25,6 @@ export const QueryEditorSpecialMetricRow = ({ name, metric, info }: Props) => {
         </InlineLabel>
       </InlineSegmentGroup>
       <SettingsEditor metric={metric} previousMetrics={previousMetrics} />
-      {info != null && (
-        <InlineSegmentGroup>
-          <InlineLabel>{info}</InlineLabel>
-        </InlineSegmentGroup>
-      )}
     </InlineFieldRow>
   );
 };
