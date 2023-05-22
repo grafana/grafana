@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -169,17 +168,6 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 	queryResult.PerPage = perPage
 
 	return response.JSON(http.StatusOK, queryResult)
-}
-
-// UserFilter returns the user ID used in a filter when querying a team
-// 1. If the user is a viewer or editor, this will return the user's ID.
-// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
-func userFilter(c *contextmodel.ReqContext) int64 {
-	userIdFilter := c.SignedInUser.UserID
-	if c.OrgRole == org.RoleAdmin {
-		userIdFilter = team.FilterIgnoreUser
-	}
-	return userIdFilter
 }
 
 // swagger:route GET /teams/{team_id} teams getTeamByID
