@@ -99,7 +99,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0;
       left: 100%;
       z-index: ${theme.zIndex.dropdown};
-      border: 1px solid ${theme.colors.border.weak};
     `,
   };
 };
