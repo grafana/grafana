@@ -24,11 +24,11 @@ There are three options to choose from:
 
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning API]({{< relref "../../../developers/http_api/alerting_provisioning" >}}).
 
-1. Provision your alerting resources using Terraform.
+1. Provision your alerting resources using [Terraform](https://www.terraform.io/).
 
 **Note:**
 
-Currently, provisioning for Grafana Alerting supports alert rules, contact points, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
+Currently, provisioning for Grafana Alerting supports alert rules, contact points, notification policies, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
 
 To allow editing of provisioned resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
 
@@ -39,11 +39,13 @@ To allow editing of provisioned resources in the Grafana UI, add the `X-Disable-
 - `PUT /api/v1/provisioning/policies`
 - `PUT /api/v1/provisioning/templates/{name}`
 
+To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
+
 **Useful Links:**
 
 [Grafana provisioning][provisioning]
 
-[Grafana Cloud provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
+[Terraform provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
 
 [Grafana Alerting provisioning API][alerting_provisioning]
 
