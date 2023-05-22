@@ -87,7 +87,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const preMigrationQuery = target.azureMonitor;
 
     if (!preMigrationQuery) {
-      // return target;
       throw new Error('Query is not a valid Azure Monitor Metrics query');
     }
 
