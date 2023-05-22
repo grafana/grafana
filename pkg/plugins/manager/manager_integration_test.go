@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
+	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	phlare "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope"
