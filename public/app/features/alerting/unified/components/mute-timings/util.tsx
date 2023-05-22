@@ -49,8 +49,8 @@ function renderTimeIntervals(muteTiming: MuteTimeInterval) {
   const timeIntervals = muteTiming.time_intervals;
 
   return timeIntervals.map((interval, index) => {
-    const { times, weekdays, days_of_month, months, years } = interval;
-    const timeString = getTimeString(times);
+    const { times, weekdays, days_of_month, months, years, location } = interval;
+    const timeString = getTimeString(times, location);
     const weekdayString = getWeekdayString(weekdays);
     const daysString = getDaysOfMonthString(days_of_month);
     const monthsString = getMonthsString(months);
