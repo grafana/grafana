@@ -233,7 +233,7 @@
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-datasources
 /pkg/tsdb/azuremonitor/ @grafana/partner-datasources
-/pkg/tsdb/cloudmonitoring/ @grafana/partner-datasources
+/pkg/tsdb/cloud-monitoring/ @grafana/partner-datasources
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics

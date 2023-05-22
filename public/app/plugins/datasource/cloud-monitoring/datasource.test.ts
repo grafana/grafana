@@ -6,7 +6,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
 import Datasource from './datasource';
-import { CloudMonitoringQuery, MetricKind, PreprocessorType, QueryType } from './types';
+import { CloudMonitoringQuery, PreprocessorType, QueryType, MetricKind } from './types/query';
 
 describe('Cloud Monitoring Datasource', () => {
   describe('interpolateVariablesInQueries', () => {

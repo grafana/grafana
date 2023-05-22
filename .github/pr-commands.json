@@ -89,7 +89,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/cloud-monitoring/**/*", "pkg/tsdb/cloudmonitoring/**/*"],
+    "matches": [ "public/app/plugins/datasource/cloud-monitoring/**/*", "pkg/tsdb/cloud-monitoring/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/GoogleCloudMonitoring"
   },

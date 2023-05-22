@@ -142,7 +142,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"

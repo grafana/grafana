@@ -4,14 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import {
-  AlignmentTypes,
-  CloudMonitoringQuery,
-  CustomMetaData,
-  QueryType,
-  TimeSeriesList,
-  TimeSeriesQuery,
-} from '../types';
+import { AlignmentTypes, CloudMonitoringQuery, QueryType, TimeSeriesList, TimeSeriesQuery } from '../types/query';
+import { CustomMetaData } from '../types/types';
 
 import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';
@@ -85,18 +79,19 @@ function Editor({
 
   return (
     <EditorRows>
-      {[QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType) && query.timeSeriesList && (
-        <VisualMetricQueryEditor
-          refId={refId}
-          variableOptionGroup={variableOptionGroup}
-          customMetaData={customMetaData}
-          onChange={onChangeTimeSeriesList}
-          datasource={datasource}
-          query={query.timeSeriesList}
-          aliasBy={query.aliasBy}
-          onChangeAliasBy={(aliasBy: string) => onQueryChange({ ...query, aliasBy })}
-        />
-      )}
+      {(query.queryType === QueryType.ANNOTATION || query.queryType === QueryType.TIME_SERIES_LIST) &&
+        query.timeSeriesList && (
+          <VisualMetricQueryEditor
+            refId={refId}
+            variableOptionGroup={variableOptionGroup}
+            customMetaData={customMetaData}
+            onChange={onChangeTimeSeriesList}
+            datasource={datasource}
+            query={query.timeSeriesList}
+            aliasBy={query.aliasBy}
+            onChangeAliasBy={(aliasBy: string) => onQueryChange({ ...query, aliasBy })}
+          />
+        )}
 
       {query.queryType === QueryType.TIME_SERIES_QUERY && query.timeSeriesQuery && (
         <>
