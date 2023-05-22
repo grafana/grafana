@@ -7,7 +7,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceSrv, locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
+import { ContextSrv, contextSrv, setContextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { AccessControlAction } from 'app/types';
@@ -41,6 +41,7 @@ jest.mock('./api/ruler');
 jest.mock('../../../core/hooks/useMediaQueryChange');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };

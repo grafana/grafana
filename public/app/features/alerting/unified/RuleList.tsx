@@ -81,7 +81,7 @@ const RuleList = withErrorBoundary(
     }, [loading, limitAlerts, dispatch]);
 
     useEffect(() => {
-      trackRuleListNavigation();
+      trackRuleListNavigation().catch(() => {});
     }, []);
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
