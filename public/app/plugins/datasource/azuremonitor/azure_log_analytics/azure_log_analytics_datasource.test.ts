@@ -429,5 +429,23 @@ describe('AzureLogAnalyticsDatasource', () => {
         ],
       });
     });
+
+    it('should return a trace query with multiple resources template variables replaced', () => {
+      const templateVariables = createTemplateVariables(['resource'], 'resource1,resource2');
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureTraces: Partial<AzureTracesQuery> = {};
+      azureTraces.resources = ['$resource'];
+      query.queryType = AzureQueryType.AzureTraces;
+      query.azureTraces = {
+        ...query.azureTraces,
+        ...azureTraces,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].azureTraces).toMatchObject({
+        resources: ['resource1', 'resource2'],
+      });
+    });
   });
 });

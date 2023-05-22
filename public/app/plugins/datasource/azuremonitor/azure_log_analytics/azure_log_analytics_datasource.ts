@@ -117,7 +117,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     if (target.queryType === AzureQueryType.LogAnalytics && target.azureLogAnalytics) {
       item = target.azureLogAnalytics;
       const templateSrv = getTemplateSrv();
-      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      const resources = this.expandResourcesForMultipleVariables(item.resources, scopedVars, templateSrv);
       let workspace = templateSrv.replace(item.workspace, scopedVars);
 
       if (!workspace && !resources && this.firstWorkspace) {
@@ -187,7 +187,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         expandedResources.push(value);
       });
     });
-  
     return expandedResources;
   }
 

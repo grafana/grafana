@@ -15,7 +15,7 @@ export function createTemplateVariables(templateableProps: string[], value = '')
       current: {
         selected: false,
         text: `${variableName}-template-variable`,
-        value: value ? `${variableName}-template-variable` : value,
+        value: value === '' ? `${variableName}-template-variable` : value,
       },
       id: variableName,
       name: variableName,
