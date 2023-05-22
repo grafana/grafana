@@ -61,7 +61,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                     label="Start time"
                     invalid={Boolean(timeRangeErrors?.start_time)}
                     error={timeRangeErrors?.start_time?.message}
-                    validationMessageHorizontalOverflow
                   >
                     <Input
                       // @ts-ignore
@@ -94,7 +93,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                     label="End time"
                     invalid={Boolean(timeRangeErrors?.end_time)}
                     error={timeRangeErrors?.end_time?.message}
-                    validationMessageHorizontalOverflow
                   >
                     <Input
                       {...register(`time_intervals.${intervalIndex}.times.${index}.end_time`, {

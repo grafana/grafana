@@ -44,12 +44,7 @@ export const MuteTimingTimeInterval = () => {
             return (
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
                 <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
-                <Field
-                  label="Location"
-                  invalid={Boolean(errors.location)}
-                  error={errors.location?.message}
-                  validationMessageHorizontalOverflow
-                >
+                <Field label="Location" invalid={Boolean(errors.location)} error={errors.location?.message}>
                   <TimezoneSelect
                     prefix={<Icon name="map-marker" />}
                     width={50}
