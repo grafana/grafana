@@ -66,7 +66,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
       <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={''}>
-        <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
+        <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
     </Page>
   );
