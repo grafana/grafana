@@ -45,6 +45,8 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
   return dashboardsResults.view.map((item) => {
     const viewItem = queryResultToViewItem(item, dashboardsResults.view);
 
+    // TODO: Once we remove nestedFolders feature flag, undo this and prevent the 'general'
+    // parentUID from being set in searcher
     if (viewItem.parentUID === GENERAL_FOLDER_UID) {
       viewItem.parentUID = undefined;
     }
