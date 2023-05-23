@@ -17,7 +17,7 @@ The Grafana plugin system for backend development allows you to integrate Grafan
 
 ## Background
 
-Grafana added support for _frontend plugins_ in version 3.0 so that the Grafana community could create custom panels and links to data source. It was wildly successful and has made Grafana much more useful for our user community.
+Grafana added support for _frontend plugins_ in version 3.0 so that the Grafana community could create custom panels and data sources. It was wildly successful and has made Grafana much more useful for our user community.
 
 However, one limitation of these plugins is that they run on the client side, in the browser. Therefore, they can't support use cases that require server-side features.
 
