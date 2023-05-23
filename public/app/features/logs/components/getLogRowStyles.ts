@@ -143,7 +143,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       padding: 0 0 0 ${theme.spacing(0.5)};
       height: ${theme.spacing(3)};
       width: ${theme.spacing(3.25)};
-      line-height: ${theme.spacing(2.75)};
+      line-height: ${theme.spacing(2.5)};
       overflow: hidden;
       &:hover {
           background-color: ${colorManipulator.alpha(theme.colors.text.primary, 0.12)};
