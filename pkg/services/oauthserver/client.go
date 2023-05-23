@@ -33,9 +33,9 @@ type Client struct {
 	ExternalServiceName string `xorm:"app_name"`
 	ClientID            string `xorm:"client_id"`
 	Secret              string `xorm:"secret"`
-	RedirectURI         string `xorm:"redirect_uri"`
-	GrantTypes          string `xorm:"grant_types"` // CSV value
-	Audiences           string `xorm:"audiences"`   // CSV value
+	RedirectURI         string `xorm:"redirect_uri"` // Not used yet (code flow)
+	GrantTypes          string `xorm:"grant_types"`  // CSV value
+	Audiences           string `xorm:"audiences"`    // CSV value
 	PublicPem           []byte `xorm:"public_pem"`
 	ServiceAccountID    int64  `xorm:"service_account_id"`
 	// SelfPermissions are the registered service account permissions (registered and managed permissions)
