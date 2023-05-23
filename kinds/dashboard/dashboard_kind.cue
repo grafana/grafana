@@ -89,7 +89,7 @@ lineage: seqs: [
 					// TODO docs
 					annotations?: #AnnotationContainer
 
-					// TODO docs
+					// Links with references to other dashboards or external websites.
 					links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
 
 					snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
@@ -203,22 +203,31 @@ lineage: seqs: [
 					uid?: string @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
-				// TODO docs
+				// Links with references to other dashboards or external resources
 				#DashboardLink: {
-					title:   string             @grafanamaturity(NeedsExpertReview)
-					type:    #DashboardLinkType @grafanamaturity(NeedsExpertReview)
-					icon:    string             @grafanamaturity(NeedsExpertReview)
-					tooltip: string             @grafanamaturity(NeedsExpertReview)
-					url:     string             @grafanamaturity(NeedsExpertReview)
+					// Title to display with the link
+					title: string @grafanamaturity(NeedsExpertReview)
+					// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+					type: #DashboardLinkType @grafanamaturity(NeedsExpertReview)
+					// Icon name to be displayed with the link
+					icon: string @grafanamaturity(NeedsExpertReview)
+					// Tooltip to display when the user hovers their mouse over it
+					tooltip: string @grafanamaturity(NeedsExpertReview)
+					// Link URL. Only required/valid if the type is link
+					url: string @grafanamaturity(NeedsExpertReview)
+					// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 					tags: [...string] @grafanamaturity(NeedsExpertReview)
-					asDropdown:  bool | *false @grafanamaturity(NeedsExpertReview)
+					// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+					asDropdown: bool | *false @grafanamaturity(NeedsExpertReview)
+					// If true, the link will be opened in a new tab
 					targetBlank: bool | *false @grafanamaturity(NeedsExpertReview)
+					// If true, includes current template variables values in the link as query params
 					includeVars: bool | *false @grafanamaturity(NeedsExpertReview)
-					keepTime:    bool | *false @grafanamaturity(NeedsExpertReview)
+					// If true, includes current time range in the link as query params
+					keepTime: bool | *false @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
-				// TODO docs
+				// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 				#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 				// FROM: packages/grafana-data/src/types/templateVars.ts
