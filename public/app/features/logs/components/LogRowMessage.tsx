@@ -116,7 +116,7 @@ export class LogRowMessage extends PureComponent<Props> {
               icon="copy"
               variant="secondary"
               fill="text"
-              size="sm"
+              size="md"
               getText={this.getLogText}
               tooltip="Copy"
               tooltipPlacement="top"

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, LogLevel } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
 export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
@@ -141,6 +141,13 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
     `,
     copyLogButton: css`
       padding: 0 0 0 ${theme.spacing(0.5)};
+      height: ${theme.spacing(3)};
+      width: ${theme.spacing(3.25)};
+      overflow: hidden;
+      &:hover {
+          background-color: ${colorManipulator.alpha(theme.colors.text.primary, 0.12)};
+        }
+      }
     `,
     //Log details specific CSS
     logDetailsContainer: css`
