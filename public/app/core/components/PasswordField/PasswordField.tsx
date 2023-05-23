@@ -27,7 +27,6 @@ export const PasswordField = React.forwardRef<HTMLInputElement, Props>(
         suffix={
           <IconButton
             name={showPassword ? 'eye-slash' : 'eye'}
-            type="button"
             aria-controls={id}
             role="switch"
             aria-checked={showPassword}
@@ -35,6 +34,7 @@ export const PasswordField = React.forwardRef<HTMLInputElement, Props>(
             onClick={() => {
               setShowPassword(!showPassword);
             }}
+            tooltip={showPassword ? 'Hide password' : 'Show password'}
           />
         }
       />

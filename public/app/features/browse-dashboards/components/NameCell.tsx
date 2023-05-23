@@ -43,6 +43,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
           onClick={() => onFolderClick(item.uid, !isOpen)}
           name={chevronIcon}
           ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+          tooltip={isOpen ? 'Collapse folder' : 'Expand folder'}
         />
       ) : (
         <span className={styles.folderButtonSpacer} />

@@ -216,7 +216,7 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
    * There are 3 edit modes:
    *
    * 1. "refId": Editing the refId (ie. A -> B)
-   * 2. "epressionType": Editing the type of the expression (ie. Reduce -> Math)
+   * 2. "expressionType": Editing the type of the expression (ie. Reduce -> Math)
    * 3. "false": This means we're not editing either of those
    */
   const [editMode, setEditMode] = useState<'refId' | 'expressionType' | false>(false);
@@ -286,6 +286,7 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
+          tooltip="Remove expression"
         />
       </Stack>
     </header>

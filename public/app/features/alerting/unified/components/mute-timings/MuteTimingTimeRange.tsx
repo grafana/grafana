@@ -85,6 +85,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                       e.preventDefault();
                       removeTimeRange(index);
                     }}
+                    tooltip="Remove time range"
                   />
                 </InlineFieldRow>
               </div>
