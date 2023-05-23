@@ -462,16 +462,23 @@ lineage: seqs: [
 					// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
 					// This value must be formatted as a number followed by a valid time 
 					// identifier like: "40s", "3d", etc.
-					// See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval
+					// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 					interval?: string
 
-					// TODO docs
-					// TODO tighter constraint
-					timeFrom?: string @grafanamaturity(NeedsExpertReview)
+					// Overrides the relative time range for individual panels, 
+					// which causes them to be different than what is selected in 
+					// the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different 
+					// time periods or days on the same dashboard.
+					// The value is formated as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far), 
+					// `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
+					// NOTE: Panel time overrides have no effect when the dashboard’s time range is absolute.
+					// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
+					timeFrom?: string
 
-					// TODO docs
-					// TODO tighter constraint
-					timeShift?: string @grafanamaturity(NeedsExpertReview)
+					// Overrides the time range for individual panels by shifting its start and end relative to the time picker. 
+					// For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+					// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
+					timeShift?: string
 
 					// Dynamically load the panel
 					libraryPanel?: #LibraryPanelRef
