@@ -664,13 +664,12 @@ function handleDistinctFilter(
     exploringNode = exploringNode?.getChild(DistinctLabel);
   }
 
-  console.log(labels);
-
   if (labels.length) {
+    labels.reverse();
     return {
       operation: {
         id: LokiOperationId.Distinct,
-        params: [labels.join(', ')],
+        params: labels,
       },
     };
   }

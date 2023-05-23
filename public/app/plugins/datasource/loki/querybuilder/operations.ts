@@ -1,3 +1,4 @@
+import { LabelParamEditor } from '../../prometheus/querybuilder/components/LabelParamEditor';
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
@@ -491,19 +492,18 @@ Example: \`\`error_level=\`level\` \`\`
       name: 'Distinct',
       params: [
         {
-          name: 'String',
+          name: 'Label',
           type: 'string',
-          hideName: true,
-          placeholder: 'label1, label2',
-          description: 'Comma separated list of labels to use for distinct filtering',
-          minWidth: 20,
+          restParam: true,
+          optional: true,
+          editor: LabelParamEditor,
         },
       ],
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Unwrap,
-      renderer: (op, def, innerExpr) => `${innerExpr} | distinct ${op.params[0]}`,
+      renderer: (op, def, innerExpr) => `${innerExpr} | distinct ${op.params.join(',')}`,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
         'Allows filtering log lines using their original and extracted labels to filter out duplicate label values. The first line occurrence of a distinct value is returned, and the others are dropped.',
