@@ -75,8 +75,8 @@ Examples of use cases for implementing resources:
 - Implement a custom data source proxy in case certain authentication/authorization or other requirements that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source/#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable for use within a data source query editor to provide auto-complete functionality.
 - Return static resources such as images or files.
-- Send a command to a device, such as a micro controller or IoT device.
-- Request information from a device, such as a micro controller or IoT device.
+- Send a command to a device, such as a microcontroller or IoT device.
+- Request information from a device, such as a microcontroller or IoT device.
 - Extend Grafana's HTTP API with custom resources, methods and actions.
 - Use [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding) to return large data responses in chunks or to enable certain streaming capabilities.
 
