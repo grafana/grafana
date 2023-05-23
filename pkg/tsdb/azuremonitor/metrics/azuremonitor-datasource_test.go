@@ -58,7 +58,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"top":         "10",
 			},
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=10",
 		},
 		{
 			name: "legacy query without resourceURI and time grain set to auto",
@@ -68,7 +68,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT15M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=10",
 		},
 		{
 			name: "legacy query without resourceURI and time grain set to auto",
@@ -79,7 +79,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT5M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=10",
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter",
@@ -104,7 +104,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=10",
 		},
 		{
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with one dimension",
@@ -217,7 +217,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"region":    "westus",
 			},
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=10",
 			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 		},
 		{
@@ -229,7 +229,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"resources": []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}, {ResourceGroup: "rg2", ResourceName: "vm2"}},
 			},
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=10",
 			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
 			expectedBodyFilter:      "Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm' or Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg2/providers/Microsoft.Compute/virtualMachines/vm2'",
 		},
