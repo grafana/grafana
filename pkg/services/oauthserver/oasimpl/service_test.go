@@ -1,4 +1,4 @@
-package oauthimpl
+package oasimpl
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oauthtest"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
@@ -36,7 +36,7 @@ type TestEnv struct {
 	S           *OAuth2ServiceImpl
 	Cfg         *setting.Cfg
 	AcStore     *actest.MockStore
-	OAuthStore  *oauthtest.MockStore
+	OAuthStore  *oastest.MockStore
 	UserService *usertest.FakeUserService
 	TeamService *teamtest.FakeService
 	SAService   *satests.MockServiceAccountService
@@ -61,7 +61,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	env := &TestEnv{
 		Cfg:         cfg,
 		AcStore:     &actest.MockStore{},
-		OAuthStore:  &oauthtest.MockStore{},
+		OAuthStore:  &oastest.MockStore{},
 		UserService: usertest.NewUserServiceFake(),
 		TeamService: teamtest.NewFakeService(),
 		SAService:   &satests.MockServiceAccountService{},

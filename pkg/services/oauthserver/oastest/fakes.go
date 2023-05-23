@@ -1,4 +1,4 @@
-package oauthtest
+package oastest
 
 import (
 	"context"

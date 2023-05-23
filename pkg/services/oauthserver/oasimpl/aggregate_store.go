@@ -1,4 +1,4 @@
-package oauthimpl
+package oasimpl
 
 import (
 	"context"

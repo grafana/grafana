@@ -1,4 +1,4 @@
-package oauthimpl
+package oasimpl
 
 import (
 	"context"
@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oauthstore"
+	"github.com/grafana/grafana/pkg/services/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -93,7 +93,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 		accessControl: accessControl,
 		acService:     acSvc,
 		memstore:      storage.NewMemoryStore(),
-		sqlstore:      oauthstore.NewStore(db, cfg),
+		sqlstore:      store.NewStore(db, cfg),
 		logger:        log.New("oauthserver"),
 		userService:   userSvc,
 		saService:     svcAccSvc,

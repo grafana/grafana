@@ -1,4 +1,4 @@
-package oauthstore
+package store
 
 import (
 	"context"
