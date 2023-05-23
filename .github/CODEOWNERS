@@ -229,6 +229,7 @@
 /Dockerfile @grafana/grafana-delivery
 /Makefile @grafana/grafana-delivery
 /scripts/build/ @grafana/grafana-delivery
+/scripts/list-release-artifacts.sh @grafana/grafana-delivery
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-datasources
