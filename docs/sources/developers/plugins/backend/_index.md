@@ -68,7 +68,7 @@ The resources capability allows a backend plugin to handle custom HTTP requests 
 
 Compared to the query data capability, where the response contains data frames, the resources capability gives the plugin developer more flexibility for extending and opening up Grafana for new and interesting use cases.
 
-#### Use cases
+### Use cases
 
 Examples of use cases for implementing resources:
 
