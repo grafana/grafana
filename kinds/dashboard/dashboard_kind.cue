@@ -69,8 +69,8 @@ lineage: seqs: [
 					// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
 					// avoid dashboards presenting stale live data
 					liveNow?: bool @grafanamaturity(NeedsExpertReview)
-					// TODO docs
-					weekStart?: string @grafanamaturity(NeedsExpertReview)
+					// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
+					weekStart?: string
 
 					// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 					refresh?: string | false
