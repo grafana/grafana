@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -220,7 +221,7 @@ func createService(t *testing.T, cfg setting.Cfg, sqlStore db.DB, withDB bool) *
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
 		tracing.InitializeTracerForTest(),
-		actest.FakeAccessControl{ExpectedDisabled: true},
+		acimpl.ProvideAccessControl(&cfg),
 		actest.FakeService{},
 		supportbundlestest.NewFakeBundleService(),
 	)
