@@ -4,6 +4,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -38,9 +40,15 @@ func parseModule(mod *modfile.Require) Module {
 	return m
 }
 
-func parseGoMod(name string) ([]Module, error) {
+func parseGoMod(fileSystem fs.FS, name string) ([]Module, error) {
+	file, err := fileSystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close() // NOTE: will be executed at the end
+
 	// Turn go.mod into array of bytes
-	data, err := os.ReadFile(name)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +67,15 @@ func parseGoMod(name string) ([]Module, error) {
 	return modules, nil
 }
 
-func check(args []string) error {
-	m, err := parseGoMod(args[0])
+func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
+	m, err := parseGoMod(fileSystem, args[0])
 	if err != nil {
 		return err // NOTE: propogating the error upwards
 	}
 	fail := false
 	for _, mod := range m {
 		if mod.Indirect == false && len(mod.Owners) == 0 {
-			fmt.Println(mod.Name)
+			logger.Println(mod.Name)
 			fail = true
 		}
 	}
@@ -80,11 +88,11 @@ func check(args []string) error {
 // TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
 // TODO: test with go test
 // Print owners.
-func owners(args []string) error {
+func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("owners", flag.ExitOnError)
 	count := fs.Bool("c", false, "print count of dependencies per owner")
 	fs.Parse(args)
-	m, err := parseGoMod(fs.Arg(0))
+	m, err := parseGoMod(fileSystem, fs.Arg(0))
 	if err != nil {
 		return err
 	}
@@ -129,13 +137,13 @@ func owners(args []string) error {
 
 // Print dependencies. Can specify direct / multiple owners.
 // Example CLI command `go run dummy/modowners.go modules -m dummy/go.txd -o @as-code,@delivery`
-func modules(args []string) error {
+func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
 	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
-	m, err := parseGoMod(*modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
+	m, err := parseGoMod(fileSystem, *modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
 	if err != nil {
 		return err
 	}
@@ -169,10 +177,11 @@ func main() {
 		fmt.Println("usage: modowners subcommand go.mod...")
 		os.Exit(1)
 	}
-	cmds := map[string]func([]string) error{"check": check, "owners": owners, "modules": modules}
+	type CmdFunc func(fs.FS, *log.Logger, []string) error
+	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
 	if f, ok := cmds[os.Args[1]]; !ok { // NOTE: both f and ok are visible inside the if / else if statement, but not outside; chaining of ifs very common in go when checking errors and calling multiple funcs
 		log.Fatal("invalid command")
-	} else if err := f(os.Args[2:]); err != nil {
+	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {
 		log.Fatal(err)
 	}
 }
