@@ -72,7 +72,7 @@ To delete all rows, use the `Select all` checkbox found on the top left corner o
 
 ### Searching data
 
-The search functionality can be triggered from the context menu and will allow users to find keywords within the dataset. The searchbox can then be closed either by clicking the `x` button or pressing te `Escape` key.
+The search functionality can be triggered from the context menu and will allow users to find keywords within the dataset. The searchbox can then be closed either by clicking the `x` button or pressing the `Escape` key.
 
 ### Header dropdown menu
 
