@@ -10,7 +10,7 @@ keywords:
   - guide
   - profiling
   - pyroscope
-title: Phlare
+title: Grafana Pyroscope
 weight: 1150
 ---
 
@@ -24,8 +24,8 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
-1. Enter `Phlare` in the search bar.
-1. Click **Phlare**.
+1. Enter `Grafana Pyroscope` in the search bar.
+1. Click **Grafana Pyroscope**.
 
    The **Settings** tab of the data source is displayed.
 
@@ -35,8 +35,8 @@ To configure basic settings for the data source, complete the following steps:
    | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
    | `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                                                                                                                                                                       |
    | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                                                                                                                                                             |
-   | `URL`          | The URL of the Phlare instance, e.g., `http://localhost:4100`                                                                                                                                                                                                                                                            |
-   | `Basic Auth`   | Enable basic authentication to the Phlare data source.                                                                                                                                                                                                                                                                   |
+   | `URL`          | The URL of the Grafana Pyroscope or Phlare instance, e.g., `http://localhost:4100`                                                                                                                                                                                                                                       |
+   | `Basic Auth`   | Enable basic authentication to the data source.                                                                                                                                                                                                                                                                          |
    | `User`         | User name for basic authentication.                                                                                                                                                                                                                                                                                      |
    | `Password`     | Password for basic authentication.                                                                                                                                                                                                                                                                                       |
    | `Minimal step` | Used for queries returning timeseries data. Phlare backend, similar to Prometheus, scrapes profiles at certain intervals. To prevent querying at smaller interval use Minimal step same or higher than your Phlare scrape interval. For Pyroscope backend this prevents returning too many data points to the front end. |

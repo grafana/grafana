@@ -4,7 +4,7 @@
     "interval": "PT1H",
     "value": [
       {
-        "id": "/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/danieltest/providers/Microsoft.Storage/storageAccounts/danieltestdiag187/blobServices/default/providers/Microsoft.Insights/metrics/BlobCapacity",
+        "id": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics/BlobCapacity",
         "type": "Microsoft.Insights/metrics",
         "name": {
           "value": "BlobCapacity",
