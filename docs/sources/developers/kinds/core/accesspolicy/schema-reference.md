@@ -76,7 +76,7 @@ extraFields is reserved for any fields that are pulled from the API server metad
 |----------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `kind`   | string | **Yes**  |         | The kind this rule applies to (dashboars, alert, etc)                                                                                   |
 | `verb`   | string | **Yes**  |         | READ, WRITE, CREATE, DELETE, ...<br/>should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete" |
-| `target` | string | No       |         | Specific sub-elements like "alert.rules" or "dashbaord.permissions"????                                                                 |
+| `target` | string | No       |         | Specific sub-elements like "alert.rules" or "dashboard.permissions"????                                                                 |
 
 ### ResourceRef
 

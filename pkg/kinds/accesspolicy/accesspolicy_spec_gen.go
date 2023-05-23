@@ -22,7 +22,7 @@ type AccessRule struct {
 	// The kind this rule applies to (dashboars, alert, etc)
 	Kind string `json:"kind"`
 
-	// Specific sub-elements like "alert.rules" or "dashbaord.permissions"????
+	// Specific sub-elements like "alert.rules" or "dashboard.permissions"????
 	Target *string `json:"target,omitempty"`
 
 	// READ, WRITE, CREATE, DELETE, ...

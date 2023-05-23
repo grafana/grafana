@@ -29,7 +29,7 @@ export interface AccessRule {
    */
   kind: ('*' | string);
   /**
-   * Specific sub-elements like "alert.rules" or "dashbaord.permissions"????
+   * Specific sub-elements like "alert.rules" or "dashboard.permissions"????
    */
   target?: string;
   /**

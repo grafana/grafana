@@ -45,7 +45,7 @@ lineage: seqs: [
 					// should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete" 
 					verb: "*" | "none" | string
 
-					// Specific sub-elements like "alert.rules" or "dashbaord.permissions"????
+					// Specific sub-elements like "alert.rules" or "dashboard.permissions"????
 					target?: string
 				} @cuetsy(kind="interface")
 			},

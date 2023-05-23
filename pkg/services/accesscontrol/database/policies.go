@@ -126,7 +126,7 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 			rule.Target = util.Pointer(parts[1])
 		}
 
-		// // When the scope is dashbaords or teams
+		// // When the scope is dashboards or teams
 		// // ... hymmm ... this would imply permissions
 		// if rule.Kind == current.Spec.Scope.Kind {
 		// 	rule.Kind = "*"
