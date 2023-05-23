@@ -72,7 +72,7 @@ Compared to the query data capability, where the response contains data frames, 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy in case certain authentication/authorization or other requirements that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source/#data-source-proxy-calls" >}}).
+- Implement a custom data source proxy to provide certain authentication, authorization, or other requirements that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source/#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable for use within a data source query editor to provide auto-complete functionality.
 - Return static resources such as images or files.
 - Send a command to a device, such as a microcontroller or IoT device.
