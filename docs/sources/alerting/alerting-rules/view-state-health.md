@@ -36,7 +36,9 @@ An alert rule can be in either of the following states:
 | **Pending** | At least one time series returned by the evaluation engine is `Pending`.                       |
 | **Firing**  | At least one time series returned by the evaluation engine is `Firing`.                        |
 
-> **Note:** Alerts will transition first to `pending` and then `firing`, thus it will take at least two evaluation cycles before an alert is fired.
+{{% admonition type="note" %}}
+Alerts will transition first to `pending` and then `firing`, thus it will take at least two evaluation cycles before an alert is fired.
+{{% /admonition %}}
 
 ## Alert instance state
 
