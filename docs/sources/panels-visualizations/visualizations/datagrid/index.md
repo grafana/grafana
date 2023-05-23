@@ -18,6 +18,8 @@ weight: 950
 
 # Datagrid
 
+> **Note:** Grafana Datagrid panel is Experimental. This feature is supported by the engineering team on a best-effort basis, and breaking changes may occur without notice prior to general availability.
+
 The datagrid panel offers a user the ability to create or edit and fine-tune data within Grafana. As such, this panel can act as a data source for other panels
 inside a dashboard. Let us dive deeper into the flows and functionalities of this panel.
 
