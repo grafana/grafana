@@ -459,9 +459,11 @@ lineage: seqs: [
 
 					transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
-					// TODO docs
-					// TODO tighter constraint
-					interval?: string @grafanamaturity(NeedsExpertReview)
+					// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
+					// This value must be formatted as a number followed by a valid time 
+					// identifier like: "40s", "3d", etc.
+					// See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval
+					interval?: string
 
 					// TODO docs
 					// TODO tighter constraint
