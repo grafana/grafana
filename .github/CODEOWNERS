@@ -229,11 +229,12 @@
 /Dockerfile @grafana/grafana-delivery
 /Makefile @grafana/grafana-delivery
 /scripts/build/ @grafana/grafana-delivery
+/scripts/list-release-artifacts.sh @grafana/grafana-delivery
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-datasources
 /pkg/tsdb/azuremonitor/ @grafana/partner-datasources
-/pkg/tsdb/cloudmonitoring/ @grafana/partner-datasources
+/pkg/tsdb/cloud-monitoring/ @grafana/partner-datasources
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics
@@ -541,7 +542,6 @@ lerna.json @grafana/frontend-ops
 /pkg/services/loginattempt/ @grafana/grafana-authnz-team
 /pkg/services/oauthtoken/ @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts/ @grafana/grafana-authnz-team
-/pkg/services/teamguardian/ @grafana/grafana-authnz-team
 
 # Support bundles
 /public/app/features/support-bundles/ @grafana/grafana-authnz-team
