@@ -38,7 +38,7 @@ type Client struct {
 	Audiences           string `xorm:"audiences"`   // CSV value
 	PublicPem           []byte `xorm:"public_pem"`
 	ServiceAccountID    int64  `xorm:"service_account_id"`
-	// SelfPermissions are the registered service account permissions (does not include managed permissions)
+	// SelfPermissions are the registered service account permissions (registered and managed permissions)
 	SelfPermissions []ac.Permission
 	// ImpersonatePermissions is the restriction set of permissions while impersonating
 	ImpersonatePermissions []ac.Permission
