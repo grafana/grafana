@@ -1,3 +1,17 @@
+<!-- 9.5.2 START -->
+
+# 9.5.2 (2023-05-03)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.4. [#67757](https://github.com/grafana/grafana/issues/67757), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **Explore:** Update table min height (#67321). [#67332](https://github.com/grafana/grafana/issues/67332), [@adrapereira](https://github.com/adrapereira)
+- **DataLinks:** Encoded URL fixed. [#67291](https://github.com/grafana/grafana/issues/67291), [@juanicabanas](https://github.com/juanicabanas)
+
+<!-- 9.5.2 END -->
 <!-- 9.5.1 START -->
 
 # 9.5.1 (2023-04-26)
@@ -261,6 +275,11 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **ContextMenu:** Fix padding and show border based on items. [#63948](https://github.com/grafana/grafana/pull/63948), [@aocenas](https://github.com/aocenas)
 
 <!-- 9.5.0 END -->
+<!-- 9.4.10 START -->
+
+# 9.4.10 (2023-05-08)
+
+<!-- 9.4.10 END -->
 <!-- 9.4.9 START -->
 
 # 9.4.9 (2023-04-24)

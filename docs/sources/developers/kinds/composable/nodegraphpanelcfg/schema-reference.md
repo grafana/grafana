@@ -13,12 +13,12 @@ title: NodeGraphPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default | Description |
-|----------------|-------------------------|----------|---------|-------------|
-| `ArcOption`    | [object](#arcoption)    | **Yes**  |         |             |
-| `EdgeOptions`  | [object](#edgeoptions)  | **Yes**  |         |             |
-| `NodeOptions`  | [object](#nodeoptions)  | **Yes**  |         |             |
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
+| Property      | Type                   | Required | Default | Description |
+|---------------|------------------------|----------|---------|-------------|
+| `ArcOption`   | [object](#arcoption)   | **Yes**  |         |             |
+| `EdgeOptions` | [object](#edgeoptions) | **Yes**  |         |             |
+| `NodeOptions` | [object](#nodeoptions) | **Yes**  |         |             |
+| `Options`     | [object](#options)     | **Yes**  |         |             |
 
 ### ArcOption
 
@@ -42,7 +42,7 @@ title: NodeGraphPanelCfg kind
 | `mainStatUnit`      | string                    | No       |         | Unit for the main stat to override what ever is set in the data frame.                  |
 | `secondaryStatUnit` | string                    | No       |         | Unit for the secondary stat to override what ever is set in the data frame.             |
 
-### PanelOptions
+### Options
 
 | Property | Type                        | Required | Default | Description |
 |----------|-----------------------------|----------|---------|-------------|

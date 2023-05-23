@@ -131,6 +131,7 @@ export function MetricSelect({
       return (
         <div
           {...props.innerProps}
+          className="metric-encyclopedia-open"
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
@@ -139,10 +140,10 @@ export function MetricSelect({
           }}
         >
           {
-            <div className={`${styles.customOption} ${isFocused}`}>
+            <div className={`${styles.customOption} ${isFocused} metric-encyclopedia-open`}>
               <div>
-                <div>{option.label}</div>
-                <div className={styles.customOptionDesc}>{option.description}</div>
+                <div className="metric-encyclopedia-open">{option.label}</div>
+                <div className={`${styles.customOptionDesc} metric-encyclopedia-open`}>{option.description}</div>
               </div>
               <Button
                 variant="primary"
@@ -150,6 +151,7 @@ export function MetricSelect({
                 size="sm"
                 onClick={() => setState({ ...state, metricsModalOpen: true })}
                 icon="book"
+                className="metric-encyclopedia-open"
               >
                 Open
               </Button>

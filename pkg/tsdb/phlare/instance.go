@@ -13,6 +13,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 var (
@@ -27,6 +30,7 @@ type PhlareDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
+	ac         accesscontrol.AccessControl
 }
 
 type JsonData struct {
@@ -34,7 +38,7 @@ type JsonData struct {
 }
 
 // NewPhlareDatasource creates a new datasource instance.
-func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -54,6 +58,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		httpClient: httpClient,
 		client:     getClient(jsonData.BackendType, httpClient, settings.URL),
 		settings:   settings,
+		ac:         ac,
 	}, nil
 }
 
@@ -165,6 +170,17 @@ type BackendTypeRespBody struct {
 
 // backendType is a simplistic test to figure out if we are speaking to phlare or pyroscope backend
 func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	// To prevent any user sending arbitrary URL for us to test with we allow this only for users who can edit the datasource
+	// as config page is where this is meant to be used.
+	ok, err := d.isUserAllowedToEditDatasource(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return sender.Send(&backend.CallResourceResponse{Headers: req.Headers, Status: 401})
+	}
+
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		return err
@@ -194,11 +210,26 @@ func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallRes
 		return err
 	}
 
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
+	return sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+}
+
+func (d *PhlareDatasource) isUserAllowedToEditDatasource(ctx context.Context) (bool, error) {
+	reqCtx := contexthandler.FromContext(ctx)
+	uidScope := datasources.ScopeProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+
+	if reqCtx == nil || reqCtx.SignedInUser == nil {
+		return false, nil
 	}
-	return nil
+
+	ok, err := d.ac.Evaluate(ctx, reqCtx.SignedInUser, accesscontrol.EvalPermission(datasources.ActionWrite, uidScope))
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // QueryData handles multiple queries and returns multiple responses.
