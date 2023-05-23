@@ -129,8 +129,8 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: serviceName,
-				Key:                 &oauthserver.KeyOption{Generate: true},
+				Name: serviceName,
+				Key:  &oauthserver.KeyOption{Generate: true},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
@@ -157,9 +157,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: serviceName,
-				Key:                 &oauthserver.KeyOption{Generate: true},
-				Permissions:         []ac.Permission{{Action: "users:read", Scope: "users:*"}},
+				Name:        serviceName,
+				Key:         &oauthserver.KeyOption{Generate: true},
+				Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the client has a service account and the correct grant type
@@ -186,9 +186,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: serviceName,
-				Key:                 &oauthserver.KeyOption{Generate: true},
-				Permissions:         []ac.Permission{},
+				Name:        serviceName,
+				Key:         &oauthserver.KeyOption{Generate: true},
+				Permissions: []ac.Permission{},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the service has no service account anymore
@@ -217,9 +217,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName: serviceName,
-				Key:                 &oauthserver.KeyOption{Generate: true},
-				Permissions:         []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
+				Name:        serviceName,
+				Key:         &oauthserver.KeyOption{Generate: true},
+				Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
@@ -239,7 +239,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				ExternalServiceName:    serviceName,
+				Name:                   serviceName,
 				Key:                    &oauthserver.KeyOption{Generate: true},
 				ImpersonatePermissions: []ac.Permission{{Action: "users:read", Scope: "global.users:self"}},
 			},

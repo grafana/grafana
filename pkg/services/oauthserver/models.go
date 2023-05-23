@@ -62,7 +62,7 @@ type KeyOption struct {
 
 // ExternalServiceRegistration represents the registration form to save new OAuth2 client.
 type ExternalServiceRegistration struct {
-	ExternalServiceName string `json:"name"`
+	Name string `json:"name"`
 	// Permissions are the permissions that the external service needs its associated service account to have.
 	Permissions []accesscontrol.Permission `json:"permissions,omitempty"`
 	// ImpersonatePermissions are the permissions that the external service needs when impersonating a user.
