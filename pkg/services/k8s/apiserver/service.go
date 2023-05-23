@@ -3,22 +3,21 @@ package apiserver
 import (
 	"context"
 	"crypto/x509"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"net"
 	"os"
 	"path"
 	"strconv"
 
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/apis/kinds/install"
-	v1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -28,9 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
@@ -62,17 +63,20 @@ type service struct {
 	restConfig *rest.Config
 	rr         routing.RouteRegister
 
+	restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter
+
 	handler   web.Handler
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error) {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter) (*service, error) {
 	s := &service{
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
-		stopCh:   make(chan struct{}),
+		rr:                rr,
+		dataPath:          path.Join(cfg.DataPath, "k8s"),
+		stopCh:            make(chan struct{}),
+		restOptionsGetter: restOptionsGetter,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesAPIServer)
@@ -173,9 +177,9 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	serverConfig.ExtraConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, unstructured.UnstructuredJSONScheme)
-	serverConfig.GenericConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, Codecs.LegacyCodec(v1.SchemeGroupVersion))
-	serverConfig.GenericConfig.Config.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, Codecs.LegacyCodec(v1.SchemeGroupVersion))
+	serverConfig.ExtraConfig.RESTOptionsGetter = s.restOptionsGetter(unstructured.UnstructuredJSONScheme)
+	serverConfig.GenericConfig.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+	serverConfig.GenericConfig.Config.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	serverConfig.GenericConfig.Authentication.Authenticator = authenticator
 
