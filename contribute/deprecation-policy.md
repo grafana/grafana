@@ -2,7 +2,7 @@
 
 Prior to Grafana 10, major releases were an opportunity to make breaking changes and remove code we didn’t want to maintain.
 
-Going forward that is something we will avoid in order to make it easier to upgrade Grafana. From now on we should avoid making unexpected breaking changes to the customer experience and our ability to operate our service.
+Going forward we will do our best to **not** make breaking changes, in order to make upgrading Grafana as easy and reliable as possible. From now on we will avoid making unexpected breaking changes to the customer experience and our ability to operate our service.
 
 If we cannot remove a feature without introducing a breaking chance we should create a deprecation plan as listed below:
 
