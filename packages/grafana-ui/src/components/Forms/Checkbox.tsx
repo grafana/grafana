@@ -68,6 +68,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: inline-grid;
       align-items: center;
       column-gap: ${theme.spacing(labelPadding)};
+      position: relative;
       vertical-align: middle;
     `,
     input: css`
@@ -164,7 +165,6 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     checkboxWrapper: css`
       display: flex;
       align-items: center;
-      position: relative;
       grid-column-start: 1;
       grid-row-start: 1;
     `,
