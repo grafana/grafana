@@ -8,8 +8,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import 'whatwg-fetch';
 
+import 'whatwg-fetch';
 import { RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { CloneRuleEditor } from './CloneRuleEditor';
