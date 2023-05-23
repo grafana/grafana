@@ -282,19 +282,19 @@ lineage: seqs: [
 					steps: [...#Threshold] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
 				#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// Supported value mapping types
 				#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// Maps text values to a color or different display text
 				#ValueMap: {
 					type: #MappingType & "value"
 					options: [string]: #ValueMappingResult
 				} @cuetsy(kind="interface")
 
-				// TODO docs
+				// Maps numeric ranges to a color or different display text
 				#RangeMap: {
 					type: #MappingType & "range"
 					options: {
@@ -305,7 +305,7 @@ lineage: seqs: [
 					}
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// Maps regular expressions to replacement text and a color
 				#RegexMap: {
 					type: #MappingType & "regex"
 					options: {
@@ -314,7 +314,8 @@ lineage: seqs: [
 					}
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
+				// and color
 				#SpecialValueMap: {
 					type: #MappingType & "special"
 					options: {
@@ -324,10 +325,10 @@ lineage: seqs: [
 					}
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// Special value types supported by the SpecialValueMap
 				#SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNan|Empty")
 
-				// TODO docs
+				// Result used as replacement text and color for RegexMap and SpecialValueMap
 				#ValueMappingResult: {
 					text?:  string
 					color?: string
