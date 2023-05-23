@@ -169,8 +169,6 @@ Once you are satisfied with your query, click **Run query**.
 
 The user interface (UI) also lets you select metrics, labels, filters and operations.
 
-<!-- You can also use the [Explain feature]({{< relref "#use-explain-mode-to-understand-queries" >}}) to help understand how a query works, and augment queries by using [template variables]({{< relref "./template-variables/" >}}). -->
-
 You can write complex queries using the text editor with autocompletion features and syntax highlighting.
 It also contains a [Metrics browser]({{< relref "#metrics-browser" >}}) to further help you write queries.
 
