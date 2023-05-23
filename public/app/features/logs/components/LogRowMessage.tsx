@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { LogRowModel, findHighlightChunksInText, CoreApp } from '@grafana/data';
-import { IconButton, Tooltip } from '@grafana/ui';
+import { ClipboardButton, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowStyles } from './getLogRowStyles';
@@ -65,6 +65,16 @@ export class LogRowMessage extends PureComponent<Props> {
     onOpenContext(this.props.row);
   };
 
+  onLogRowClick = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
+
+  getLogText = () => {
+    const { row, prettifyLogMessage } = this.props;
+    const { raw } = row;
+    return restructureLog(raw, prettifyLogMessage);
+  };
+
   render() {
     const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
     const { hasAnsi, raw } = row;
@@ -94,16 +104,23 @@ export class LogRowMessage extends PureComponent<Props> {
             className={cx('log-row-menu', styles.rowMenu, {
               [styles.rowMenuWithContextButton]: shouldShowContextToggle,
             })}
-            onClick={(e) => e.stopPropagation()}
+            onClick={this.onLogRowClick}
           >
             {shouldShowContextToggle && (
               <Tooltip placement="top" content={'Show context'}>
                 <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
               </Tooltip>
             )}
-            <Tooltip placement="top" content={'Copy'}>
-              <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
-            </Tooltip>
+            <ClipboardButton
+              className={styles.copyLogButton}
+              icon="copy"
+              variant="secondary"
+              fill="text"
+              size="sm"
+              getText={this.getLogText}
+              tooltip="Copy"
+              tooltipPlacement="top"
+            />
           </span>
         </td>
       </>

@@ -139,6 +139,9 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: 100%;
       text-align: left;
     `,
+    copyLogButton: css`
+      padding: 0 0 0 ${theme.spacing(0.5)};
+    `,
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
