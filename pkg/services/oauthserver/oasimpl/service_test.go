@@ -105,13 +105,13 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	// Using a function to prevent modifying the same object in the tests
 	client1 := func() *oauthserver.Client {
 		return &oauthserver.Client{
-			ExternalServiceName: serviceName,
-			ClientID:            "RANDOMID",
-			Secret:              "RANDOMSECRET",
-			GrantTypes:          "client_credentials",
-			PublicPem:           []byte("-----BEGIN PUBLIC KEY-----"),
-			ServiceAccountID:    prevSaID,
-			SelfPermissions:     []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
+			Name:             serviceName,
+			ClientID:         "RANDOMID",
+			Secret:           "RANDOMSECRET",
+			GrantTypes:       "client_credentials",
+			PublicPem:        []byte("-----BEGIN PUBLIC KEY-----"),
+			ServiceAccountID: prevSaID,
+			SelfPermissions:  []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
 		}
 	}
 
@@ -137,7 +137,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 					return name == serviceName
 				}))
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					ok := client.ExternalServiceName == serviceName
+					ok := client.Name == serviceName
 					ok = ok && client.ClientID != ""
 					ok = ok && client.Secret != ""
 					ok = ok && len(client.GrantTypes) == 0
@@ -164,7 +164,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the client has a service account and the correct grant type
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					return client.ExternalServiceName == serviceName &&
+					return client.Name == serviceName &&
 						client.GrantTypes == "client_credentials" && client.ServiceAccountID == sa1.Id
 				}))
 				// Check that the service account is created in the correct org with the correct role
@@ -193,7 +193,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the service has no service account anymore
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.Client) bool {
-					return client.ExternalServiceName == serviceName && client.ServiceAccountID == oauthserver.NoServiceAccountID
+					return client.Name == serviceName && client.ServiceAccountID == oauthserver.NoServiceAccountID
 				}))
 				// Check that the service account is retrieved with the correct ID
 				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything,
@@ -228,7 +228,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 							len(cmd.Permissions) == 1 &&
 							cmd.OrgID == int64(ac.GlobalOrgID) &&
 							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"} &&
-							cmd.ExternalServiceID == client1().ExternalServiceName
+							cmd.ExternalServiceID == client1().Name
 					}))
 			},
 		},
@@ -303,22 +303,22 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 
 	dummyClient := func() *oauthserver.Client {
 		return &oauthserver.Client{
-			ExternalServiceName: serviceName,
-			ClientID:            "RANDOMID",
-			Secret:              "RANDOMSECRET",
-			GrantTypes:          "client_credentials",
-			PublicPem:           []byte("-----BEGIN PUBLIC KEY-----"),
-			ServiceAccountID:    1,
+			Name:             serviceName,
+			ClientID:         "RANDOMID",
+			Secret:           "RANDOMSECRET",
+			GrantTypes:       "client_credentials",
+			PublicPem:        []byte("-----BEGIN PUBLIC KEY-----"),
+			ServiceAccountID: 1,
 		}
 	}
 	cachedUser := &oauthserver.Client{
-		ExternalServiceName: serviceName,
-		ClientID:            "RANDOMID",
-		Secret:              "RANDOMSECRET",
-		GrantTypes:          "client_credentials",
-		PublicPem:           []byte("-----BEGIN PUBLIC KEY-----"),
-		ServiceAccountID:    1,
-		SelfPermissions:     []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
+		Name:             serviceName,
+		ClientID:         "RANDOMID",
+		Secret:           "RANDOMSECRET",
+		GrantTypes:       "client_credentials",
+		PublicPem:        []byte("-----BEGIN PUBLIC KEY-----"),
+		ServiceAccountID: 1,
+		SelfPermissions:  []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
 		SignedInUser: &user.SignedInUser{
 			UserID: 1,
 			Permissions: map[int64]map[string][]string{
@@ -406,7 +406,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 				tt.mockChecks(t, env)
 			}
 
-			require.Equal(t, serviceName, client.ExternalServiceName)
+			require.Equal(t, serviceName, client.Name)
 			require.ElementsMatch(t, client.SelfPermissions, []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}})
 			assertArrayInMap(t, client.SignedInUser.Permissions[1], map[string][]string{"users:impersonate": {"users:*"}})
 

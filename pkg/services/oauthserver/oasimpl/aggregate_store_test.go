@@ -14,13 +14,13 @@ import (
 
 var cachedUser = func() *oauthserver.Client {
 	return &oauthserver.Client{
-		ExternalServiceName: "my-ext-service",
-		ClientID:            "RANDOMID",
-		Secret:              "RANDOMSECRET",
-		GrantTypes:          "client_credentials",
-		PublicPem:           []byte("-----BEGIN PUBLIC KEY-----"),
-		ServiceAccountID:    1,
-		SelfPermissions:     []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
+		Name:             "my-ext-service",
+		ClientID:         "RANDOMID",
+		Secret:           "RANDOMSECRET",
+		GrantTypes:       "client_credentials",
+		PublicPem:        []byte("-----BEGIN PUBLIC KEY-----"),
+		ServiceAccountID: 1,
+		SelfPermissions:  []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
 		SignedInUser: &user.SignedInUser{
 			UserID: 2,
 			OrgID:  1,

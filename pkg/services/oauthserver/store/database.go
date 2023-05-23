@@ -41,7 +41,7 @@ func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) 
 func registerExternalService(sess *db.Session, client *oauthserver.Client) error {
 	insertQuery := []interface{}{
 		`INSERT INTO oauth_client (name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		client.ExternalServiceName,
+		client.Name,
 		client.ClientID,
 		client.Secret,
 		client.GrantTypes,
@@ -86,7 +86,7 @@ func updateExternalService(sess *db.Session, client *oauthserver.Client, prevCli
 		client.ServiceAccountID,
 		client.PublicPem,
 		client.RedirectURI,
-		client.ExternalServiceName,
+		client.Name,
 	}
 	if _, err := sess.Exec(updateQuery...); err != nil {
 		return err
@@ -96,11 +96,11 @@ func updateExternalService(sess *db.Session, client *oauthserver.Client, prevCli
 }
 
 func (s *store) SaveExternalService(ctx context.Context, client *oauthserver.Client) error {
-	if client.ExternalServiceName == "" {
+	if client.Name == "" {
 		return oauthserver.ErrClientRequiredName
 	}
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		previous, errFetchExtSvc := getExternalServiceByName(sess, client.ExternalServiceName)
+		previous, errFetchExtSvc := getExternalServiceByName(sess, client.Name)
 		if errFetchExtSvc != nil {
 			var srcError errutil.Error
 			if errors.As(errFetchExtSvc, &srcError) {
@@ -183,33 +183,33 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string
 	}, nil
 }
 
-func (s *store) GetExternalServiceByName(ctx context.Context, app string) (*oauthserver.Client, error) {
+func (s *store) GetExternalServiceByName(ctx context.Context, name string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
-	if app == "" {
+	if name == "" {
 		return nil, oauthserver.ErrClientRequiredName
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var errGetByName error
-		res, errGetByName = getExternalServiceByName(sess, app)
+		res, errGetByName = getExternalServiceByName(sess, name)
 		return errGetByName
 	})
 
 	return res, err
 }
 
-func getExternalServiceByName(sess *db.Session, app string) (*oauthserver.Client, error) {
+func getExternalServiceByName(sess *db.Session, name string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	getClientQuery := `SELECT
 		id, name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
 		FROM oauth_client
 		WHERE name = ?`
-	found, err := sess.SQL(getClientQuery, app).Get(res)
+	found, err := sess.SQL(getClientQuery, name).Get(res)
 	if err != nil {
 		return nil, err
 	}
 	if !found {
-		return nil, oauthserver.ErrClientNotFound(app)
+		return nil, oauthserver.ErrClientNotFound(name)
 	}
 
 	impersonatePermQuery := `SELECT action, scope FROM oauth_impersonate_permission WHERE client_id = ?`

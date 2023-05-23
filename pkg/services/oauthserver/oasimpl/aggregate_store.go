@@ -137,7 +137,7 @@ func (s *OAuth2ServiceImpl) GetPublicKeys(ctx context.Context, issuer string, su
 
 // GetPublicKeyScopes returns assigned scope for assertion, identified by public key, issued by 'issuer'.
 func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer string, subject string, kid string) ([]string, error) {
-	app, err := s.GetExternalService(ctx, issuer)
+	client, err := s.GetExternalService(ctx, issuer)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer strin
 	if err != nil {
 		return nil, err
 	}
-	return app.GetScopesOnUser(ctx, s.accessControl, userID), nil
+	return client.GetScopesOnUser(ctx, s.accessControl, userID), nil
 }
 
 // IsJWTUsed returns true, if JWT is not known yet or it can not be considered valid, because it must be already

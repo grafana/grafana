@@ -135,27 +135,27 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
 	entry, ok := s.cache.Get(id)
 	if ok {
-		app, ok := entry.(oauthserver.Client)
+		client, ok := entry.(oauthserver.Client)
 		if ok {
 			s.logger.Debug("GetExternalService: cache hit", "client id", id)
-			return &app, nil
+			return &client, nil
 		}
 	}
 
-	app, err := s.sqlstore.GetExternalService(ctx, id)
+	client, err := s.sqlstore.GetExternalService(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	// Retrieve self permissions and generate a signed in user
 	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
+	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
 	if err != nil {
 		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
 		return nil, err
 	}
 
-	app.SignedInUser = &user.SignedInUser{
+	client.SignedInUser = &user.SignedInUser{
 		UserID:      sa.Id,
 		OrgID:       oauthserver.TmpOrgID,
 		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
@@ -163,16 +163,16 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
 	}
-	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
+	client.SelfPermissions, err = s.acService.GetUserPermissions(ctx, client.SignedInUser, ac.Options{})
 	if err != nil {
 		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
 		return nil, err
 	}
-	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
+	client.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(client.SelfPermissions)
 
-	s.cache.Set(id, *app, cacheExpirationTime)
+	s.cache.Set(id, *client, cacheExpirationTime)
 
-	return app, nil
+	return client, nil
 }
 
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
@@ -200,9 +200,9 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	if client == nil {
 		s.logger.Debug("External service does not yet exist", "external service name", registration.ExternalServiceName)
 		client = &oauthserver.Client{
-			ExternalServiceName: registration.ExternalServiceName,
-			ServiceAccountID:    oauthserver.NoServiceAccountID,
-			Audiences:           s.cfg.AppURL,
+			Name:             registration.ExternalServiceName,
+			ServiceAccountID: oauthserver.NoServiceAccountID,
+			Audiences:        s.cfg.AppURL,
 		}
 	}
 
@@ -220,7 +220,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	}
 
 	s.logger.Debug("Handle service account save")
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.ExternalServiceName, client.ServiceAccountID, registration.Permissions)
+	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, registration.Permissions)
 	if errSaveServiceAccount != nil {
 		return nil, errSaveServiceAccount
 	}
@@ -253,7 +253,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		s.logger.Error("Error saving external service", "client", client.LogID(), "error", err)
 		return nil, err
 	}
-	s.logger.Debug("Registered app", "client", client.LogID())
+	s.logger.Debug("Registered", "client", client.LogID())
 	return dto, nil
 }
 
@@ -283,12 +283,12 @@ func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
 func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, impersonatePermissions []ac.Permission) []string {
 	grantTypes := []string{}
 
-	// If the app has permissions, it can use the client credentials grant type
+	// If the client has permissions, it can use the client credentials grant type
 	if len(selfPermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeClientCredentials))
 	}
 
-	// If the app has impersonate permissions, it can use the JWT bearer grant type
+	// If the client has impersonate permissions, it can use the JWT bearer grant type
 	// TODO MVP: with the registration form change, check the enabled boolean
 	if len(impersonatePermissions) > 0 {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))

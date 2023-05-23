@@ -19,25 +19,25 @@ type KeyResult struct {
 }
 
 type ClientDTO struct {
-	ExternalServiceName string     `json:"name"`
-	ID                  string     `json:"clientId"`
-	Secret              string     `json:"clientSecret"`
-	GrantTypes          string     `json:"grantTypes"` // CSV value
-	Audiences           string     `json:"audiences"`  // CSV value
-	RedirectURI         string     `json:"redirectUri,omitempty"`
-	KeyResult           *KeyResult `json:"key,omitempty"`
+	Name        string     `json:"name"`
+	ID          string     `json:"clientId"`
+	Secret      string     `json:"clientSecret"`
+	GrantTypes  string     `json:"grantTypes"` // CSV value
+	Audiences   string     `json:"audiences"`  // CSV value
+	RedirectURI string     `json:"redirectUri,omitempty"`
+	KeyResult   *KeyResult `json:"key,omitempty"`
 }
 
 type Client struct {
-	ID                  int64  `xorm:"id pk autoincr"`
-	ExternalServiceName string `xorm:"name"`
-	ClientID            string `xorm:"client_id"`
-	Secret              string `xorm:"secret"`
-	RedirectURI         string `xorm:"redirect_uri"` // Not used yet (code flow)
-	GrantTypes          string `xorm:"grant_types"`  // CSV value
-	Audiences           string `xorm:"audiences"`    // CSV value
-	PublicPem           []byte `xorm:"public_pem"`
-	ServiceAccountID    int64  `xorm:"service_account_id"`
+	ID               int64  `xorm:"id pk autoincr"`
+	Name             string `xorm:"name"`
+	ClientID         string `xorm:"client_id"`
+	Secret           string `xorm:"secret"`
+	RedirectURI      string `xorm:"redirect_uri"` // Not used yet (code flow)
+	GrantTypes       string `xorm:"grant_types"`  // CSV value
+	Audiences        string `xorm:"audiences"`    // CSV value
+	PublicPem        []byte `xorm:"public_pem"`
+	ServiceAccountID int64  `xorm:"service_account_id"`
 	// SelfPermissions are the registered service account permissions (registered and managed permissions)
 	SelfPermissions []ac.Permission
 	// ImpersonatePermissions is the restriction set of permissions while impersonating
@@ -51,12 +51,12 @@ type Client struct {
 
 func (c *Client) ToDTO() *ClientDTO {
 	c2 := ClientDTO{
-		ExternalServiceName: c.ExternalServiceName,
-		ID:                  c.ClientID,
-		Secret:              c.Secret,
-		GrantTypes:          c.GrantTypes,
-		Audiences:           c.Audiences,
-		RedirectURI:         c.RedirectURI,
+		Name:        c.Name,
+		ID:          c.ClientID,
+		Secret:      c.Secret,
+		GrantTypes:  c.GrantTypes,
+		Audiences:   c.Audiences,
+		RedirectURI: c.RedirectURI,
 	}
 	if len(c.PublicPem) > 0 {
 		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
@@ -65,7 +65,7 @@ func (c *Client) ToDTO() *ClientDTO {
 }
 
 func (c *Client) LogID() string {
-	return "{externalServiceName: " + c.ExternalServiceName + ", clientID: " + c.ClientID + "}"
+	return "{externalServiceName: " + c.Name + ", clientID: " + c.ClientID + "}"
 }
 
 // GetID returns the client ID.

@@ -32,8 +32,8 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 		return
 	}
 
-	app, err := s.GetExternalService(ctx, accessRequest.GetClient().GetID())
-	if err != nil || app == nil {
+	client, err := s.GetExternalService(ctx, accessRequest.GetClient().GetID())
+	if err != nil || client == nil {
 		s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
 			DescriptionField: "Could not find the requested subject.",
 			ErrorField:       "not_found",
@@ -41,15 +41,15 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 		})
 		return
 	}
-	currentOAuthSessionData.JWTClaims.Add("client_id", app.ClientID)
+	currentOAuthSessionData.JWTClaims.Add("client_id", client.ClientID)
 
-	errClientCred := s.handleClientCredentials(ctx, accessRequest, currentOAuthSessionData, app)
+	errClientCred := s.handleClientCredentials(ctx, accessRequest, currentOAuthSessionData, client)
 	if errClientCred != nil {
 		s.writeAccessError(ctx, rw, accessRequest, errClientCred)
 		return
 	}
 
-	errJWTBearer := s.handleJWTBearer(ctx, accessRequest, currentOAuthSessionData, app)
+	errJWTBearer := s.handleJWTBearer(ctx, accessRequest, currentOAuthSessionData, client)
 	if errJWTBearer != nil {
 		s.writeAccessError(ctx, rw, accessRequest, errJWTBearer)
 		return

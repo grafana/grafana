@@ -32,10 +32,10 @@ import (
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 	client1 := &oauthserver.Client{
-		ExternalServiceName: "testapp",
-		ClientID:            "RANDOMID",
-		GrantTypes:          string(fosite.GrantTypeClientCredentials),
-		ServiceAccountID:    2,
+		Name:             "testapp",
+		ClientID:         "RANDOMID",
+		GrantTypes:       string(fosite.GrantTypeClientCredentials),
+		ServiceAccountID: 2,
 		SignedInUser: &user.SignedInUser{
 			UserID:  2,
 			Name:    "Test App",
@@ -60,11 +60,11 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 		{
 			name: "no claim without client_credentials grant type",
 			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeJWTBearer),
-				ServiceAccountID:    2,
-				SignedInUser:        &user.SignedInUser{},
+				Name:             "testapp",
+				ClientID:         "RANDOMID",
+				GrantTypes:       string(fosite.GrantTypeJWTBearer),
+				ServiceAccountID: 2,
+				SignedInUser:     &user.SignedInUser{},
 			},
 		},
 		{
@@ -136,10 +136,10 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 	now := time.Now()
 	client1 := &oauthserver.Client{
-		ExternalServiceName: "testapp",
-		ClientID:            "RANDOMID",
-		GrantTypes:          string(fosite.GrantTypeJWTBearer),
-		ServiceAccountID:    2,
+		Name:             "testapp",
+		ClientID:         "RANDOMID",
+		GrantTypes:       string(fosite.GrantTypeJWTBearer),
+		ServiceAccountID: 2,
 		SignedInUser: &user.SignedInUser{
 			UserID:  2,
 			OrgID:   oauthserver.TmpOrgID,
@@ -182,10 +182,10 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		{
 			name: "no claim without jwtbearer grant type",
 			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeClientCredentials),
-				ServiceAccountID:    2,
+				Name:             "testapp",
+				ClientID:         "RANDOMID",
+				GrantTypes:       string(fosite.GrantTypeClientCredentials),
+				ServiceAccountID: 2,
 			},
 		},
 		{
@@ -197,10 +197,10 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		{
 			name: "err client is not allowed to impersonate",
 			client: &oauthserver.Client{
-				ExternalServiceName: "testapp",
-				ClientID:            "RANDOMID",
-				GrantTypes:          string(fosite.GrantTypeJWTBearer),
-				ServiceAccountID:    2,
+				Name:             "testapp",
+				ClientID:         "RANDOMID",
+				GrantTypes:       string(fosite.GrantTypeJWTBearer),
+				ServiceAccountID: 2,
 				SignedInUser: &user.SignedInUser{
 					UserID:      2,
 					Name:        "Test App",
@@ -478,11 +478,11 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client1Secret), bcrypt.DefaultCost)
 	require.NoError(t, err)
 	client1 := &oauthserver.Client{
-		ExternalServiceName: "testapp",
-		ClientID:            "RANDOMID",
-		Secret:              string(hashedSecret),
-		GrantTypes:          string(fosite.GrantTypeClientCredentials + "," + fosite.GrantTypeJWTBearer),
-		ServiceAccountID:    2,
+		Name:             "testapp",
+		ClientID:         "RANDOMID",
+		Secret:           string(hashedSecret),
+		GrantTypes:       string(fosite.GrantTypeClientCredentials + "," + fosite.GrantTypeJWTBearer),
+		ServiceAccountID: 2,
 		ImpersonatePermissions: []ac.Permission{
 			{Action: "users:read", Scope: oauthserver.ScopeGlobalUsersSelf},
 			{Action: "users.permissions:read", Scope: oauthserver.ScopeUsersSelf},

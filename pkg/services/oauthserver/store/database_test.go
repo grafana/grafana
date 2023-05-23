@@ -23,10 +23,10 @@ func TestStore_RegisterAndGetClient(t *testing.T) {
 		{
 			name: "register and get",
 			client: oauthserver.Client{
-				ExternalServiceName: "The Worst App Ever",
-				ClientID:            "ANonRandomClientID",
-				Secret:              "ICouldKeepSecrets",
-				GrantTypes:          "clients_credentials",
+				Name:       "The Worst App Ever",
+				ClientID:   "ANonRandomClientID",
+				Secret:     "ICouldKeepSecrets",
+				GrantTypes: "clients_credentials",
 				PublicPem: []byte(`------BEGIN FAKE PUBLIC KEY-----
 VGhpcyBJcyBOb3QgQW4gUlNBIEtleS4gVGhpcyBJcyBOb3QgQW4gUlNBIEtleS4gVGhpcyBJcyBO
 b3QgQW4gUlNBIEtleS4gVGhpcyBJcyBOb3QgQW4gUlNBIEtleS4gVGhpcyBJcyBOb3QgQW4gUlNB
@@ -60,13 +60,13 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		{
 			name: "register with impersonate permissions and get",
 			client: oauthserver.Client{
-				ExternalServiceName: "The Best App Ever",
-				ClientID:            "AnAlmostRandomClientID",
-				Secret:              "ICannotKeepSecrets",
-				GrantTypes:          "clients_credentials",
-				PublicPem:           []byte(`test`),
-				ServiceAccountID:    2,
-				SelfPermissions:     nil,
+				Name:             "The Best App Ever",
+				ClientID:         "AnAlmostRandomClientID",
+				Secret:           "ICannotKeepSecrets",
+				GrantTypes:       "clients_credentials",
+				PublicPem:        []byte(`test`),
+				ServiceAccountID: 2,
+				SelfPermissions:  nil,
 				ImpersonatePermissions: []accesscontrol.Permission{
 					{Action: "dashboards:create", Scope: "folders:*"},
 					{Action: "dashboards:read", Scope: "folders:*"},
@@ -81,15 +81,15 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		{
 			name: "register with audiences and get",
 			client: oauthserver.Client{
-				ExternalServiceName: "The Most Normal App Ever",
-				ClientID:            "AnAlmostRandomClientIDAgain",
-				Secret:              "ICanKeepSecretsEventually",
-				GrantTypes:          "clients_credentials",
-				PublicPem:           []byte(`test`),
-				ServiceAccountID:    2,
-				SelfPermissions:     nil,
-				Audiences:           "https://oauth.test/,https://sub.oauth.test/",
-				RedirectURI:         "/whereto",
+				Name:             "The Most Normal App Ever",
+				ClientID:         "AnAlmostRandomClientIDAgain",
+				Secret:           "ICanKeepSecretsEventually",
+				GrantTypes:       "clients_credentials",
+				PublicPem:        []byte(`test`),
+				ServiceAccountID: 2,
+				SelfPermissions:  nil,
+				Audiences:        "https://oauth.test/,https://sub.oauth.test/",
+				RedirectURI:      "/whereto",
 			},
 			wantErr: false,
 		},
@@ -112,7 +112,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 
 func TestStore_SaveExternalService(t *testing.T) {
 	client1 := oauthserver.Client{
-		ExternalServiceName:    "my-external-service",
+		Name:                   "my-external-service",
 		ClientID:               "ClientID",
 		Secret:                 "Secret",
 		GrantTypes:             "client_credentials",
@@ -194,7 +194,7 @@ func TestStore_SaveExternalService(t *testing.T) {
 
 func TestStore_GetExternalServiceByName(t *testing.T) {
 	client1 := oauthserver.Client{
-		ExternalServiceName:    "my-external-service",
+		Name:                   "my-external-service",
 		ClientID:               "ClientID",
 		Secret:                 "Secret",
 		GrantTypes:             "client_credentials",
@@ -204,13 +204,13 @@ func TestStore_GetExternalServiceByName(t *testing.T) {
 		RedirectURI:            "/whereto",
 	}
 	client2 := oauthserver.Client{
-		ExternalServiceName: "my-external-service-2",
-		ClientID:            "ClientID2",
-		Secret:              "Secret2",
-		GrantTypes:          "client_credentials,urn:ietf:params:grant-type:jwt-bearer",
-		PublicPem:           []byte("test2"),
-		ServiceAccountID:    3,
-		Audiences:           "https://oauth.test/,https://sub.oauth.test/",
+		Name:             "my-external-service-2",
+		ClientID:         "ClientID2",
+		Secret:           "Secret2",
+		GrantTypes:       "client_credentials,urn:ietf:params:grant-type:jwt-bearer",
+		PublicPem:        []byte("test2"),
+		ServiceAccountID: 3,
+		Audiences:        "https://oauth.test/,https://sub.oauth.test/",
 		ImpersonatePermissions: []accesscontrol.Permission{
 			{Action: "dashboards:read", Scope: "folders:*"},
 			{Action: "dashboards:read", Scope: "dashboards:*"},
@@ -270,7 +270,7 @@ func TestStore_GetExternalServicePublicKey(t *testing.T) {
 	clientID := "ClientID"
 	createClient := func(clientID string, publicPem string) *oauthserver.Client {
 		return &oauthserver.Client{
-			ExternalServiceName:    "my-external-service",
+			Name:                   "my-external-service",
 			ClientID:               clientID,
 			Secret:                 "Secret",
 			GrantTypes:             "client_credentials",

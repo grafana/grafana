@@ -17,11 +17,11 @@ func setupTestEnv(t *testing.T) *Client {
 	t.Helper()
 
 	client := &Client{
-		ExternalServiceName: "my-ext-service",
-		ClientID:            "RANDOMID",
-		Secret:              "RANDOMSECRET",
-		GrantTypes:          "client_credentials,urn:ietf:params:oauth:grant-type:jwt-bearer",
-		ServiceAccountID:    2,
+		Name:             "my-ext-service",
+		ClientID:         "RANDOMID",
+		Secret:           "RANDOMSECRET",
+		GrantTypes:       "client_credentials,urn:ietf:params:oauth:grant-type:jwt-bearer",
+		ServiceAccountID: 2,
 		SelfPermissions: []ac.Permission{
 			{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 		},
@@ -200,20 +200,20 @@ func TestClient_GetScopes(t *testing.T) {
 
 func TestClient_ToDTO(t *testing.T) {
 	client := &Client{
-		ID:                  1,
-		ExternalServiceName: "my-ext-service",
-		ClientID:            "test",
-		Secret:              "testsecret",
-		RedirectURI:         "http://localhost:3000",
-		GrantTypes:          "client_credentials,urn:ietf:params:oauth:grant-type:jwt-bearer",
-		Audiences:           "https://example.org,https://second.example.org",
-		PublicPem:           []byte("pem_encoded_public_key"),
+		ID:          1,
+		Name:        "my-ext-service",
+		ClientID:    "test",
+		Secret:      "testsecret",
+		RedirectURI: "http://localhost:3000",
+		GrantTypes:  "client_credentials,urn:ietf:params:oauth:grant-type:jwt-bearer",
+		Audiences:   "https://example.org,https://second.example.org",
+		PublicPem:   []byte("pem_encoded_public_key"),
 	}
 
 	dto := client.ToDTO()
 
 	require.Equal(t, client.ClientID, dto.ID)
-	require.Equal(t, client.ExternalServiceName, dto.ExternalServiceName)
+	require.Equal(t, client.Name, dto.Name)
 	require.Equal(t, client.RedirectURI, dto.RedirectURI)
 	require.Equal(t, client.GrantTypes, dto.GrantTypes)
 	require.Equal(t, client.Audiences, dto.Audiences)
