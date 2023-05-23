@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { PageToolbar } from '@grafana/ui';
+import { Button, PageToolbar } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -17,14 +18,13 @@ import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
 
 interface EmbeddedDashboardPageRouteParams {
-  accessToken?: string;
   uid: string;
 }
 
 interface EmbeddedDashboardPageRouteSearchParams {
-  from?: string;
-  to?: string;
-  refresh?: string;
+  callbackUrl?: string;
+  json?: string;
+  accessToken?: string;
 }
 
 export type Props = GrafanaRouteComponentProps<
@@ -32,7 +32,7 @@ export type Props = GrafanaRouteComponentProps<
   EmbeddedDashboardPageRouteSearchParams
 >;
 
-export default function EmbeddedDashboardPage({ match, route }: Props) {
+export default function EmbeddedDashboardPage({ match, route, queryParams }: Props) {
   const dispatch = useDispatch();
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
@@ -43,7 +43,8 @@ export default function EmbeddedDashboardPage({ match, route }: Props) {
       initDashboard({
         routeName: route.routeName,
         fixUrl: false,
-        accessToken: match.params.accessToken,
+        // TODO check auth
+        accessToken: queryParams.accessToken,
         keybindingSrv: context.keybindings,
         urlUid: match.params.uid,
       })
@@ -61,7 +62,7 @@ export default function EmbeddedDashboardPage({ match, route }: Props) {
 
   return (
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-      <Toolbar dashboard={dashboard} />
+      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={''}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
@@ -70,11 +71,26 @@ export default function EmbeddedDashboardPage({ match, route }: Props) {
   );
 }
 
-const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
+interface ToolbarProps {
+  dashboard: DashboardModel;
+  callbackUrl?: string;
+}
+
+const Toolbar = ({ dashboard, callbackUrl }: ToolbarProps) => {
   const dispatch = useDispatch();
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
     dispatch(updateTimeZoneForSession(timeZone));
+  };
+
+  const saveDashboard = () => {
+    const clone = dashboard?.getSaveModelClone();
+    if (!clone || !callbackUrl) {
+      return;
+    }
+
+    const data = JSON.stringify(clone, null, 2);
+    return getBackendSrv().post(`http://localhost:3000/${callbackUrl}`, { dashboard: data });
   };
 
   return (
@@ -82,6 +98,7 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
       {!dashboard.timepicker.hidden && (
         <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
       )}
+      <Button onClick={saveDashboard}>Save</Button>
     </PageToolbar>
   );
 };
