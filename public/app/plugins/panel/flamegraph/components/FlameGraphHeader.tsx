@@ -161,9 +161,14 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
     width: 100%;
     background: ${theme.colors.background.primary};
     top: 0;
-    height: 50px;
     z-index: ${theme.zIndex.navbarFixed};
-    ${app === CoreApp.Explore ? 'position: sticky; margin-bottom: 8px; padding-top: 9px' : ''};
+    ${app === CoreApp.Explore
+      ? css`
+          position: sticky;
+          padding-bottom: ${theme.spacing(1)};
+          padding-top: ${theme.spacing(1)};
+        `
+      : ''};
   `,
   inputContainer: css`
     float: left;

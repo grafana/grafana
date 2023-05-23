@@ -130,7 +130,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
     }),
     body: css({
       display: 'flex',
