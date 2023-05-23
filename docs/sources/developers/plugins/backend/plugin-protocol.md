@@ -31,7 +31,7 @@ From time to time, Grafana will offer additions of services, messages, and field
 
 Grafana will release new major versions of the plugin protocol alongside new major Grafana releases. When this happens, we'll support both the old and the new plugin protocol for some time to make sure existing backend plugins continue to work.
 
-The plugin protocol attempts to follow Grafana's versioning, However, that doesn't mean that we will automatically create a new major version of the plugin protocol when a new major release of Grafana is released.
+The plugin protocol attempts to follow Grafana's versioning. However, that doesn't mean we will automatically create a new major version of the plugin protocol when a new major release of Grafana is released.
 
 ## Writing plugins without Go
 
