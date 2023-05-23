@@ -34,13 +34,13 @@ lineage: seqs: [
 					gnetId?: string @grafanamaturity(NeedsExpertReview)
 					// Tags associated with dashboard.
 					tags?: [...string] @grafanamaturity(NeedsExpertReview)
-					// Theme of dashboard. 
+					// Theme of dashboard.
 					style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
 					// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 					timezone?: string | *"browser"
 					// Whether a dashboard is editable or not.
 					editable: bool | *true
-					// Configuration of dashboard cursor sync behavior. 
+					// Configuration of dashboard cursor sync behavior.
 					// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
 					graphTooltip: #DashboardCursorSync
 					// Time range for dashboard.
@@ -101,16 +101,16 @@ lineage: seqs: [
 				// TODO: this should be a regular DataQuery that depends on the selected dashboard
 				// these match the properties of the "grafana" datasouce that is default in most dashboards
 				#AnnotationTarget: {
-					// Only required/valid for the grafana datasource... 
+					// Only required/valid for the grafana datasource...
 					// but code+tests is already depending on it so hard to change
 					limit: int64
-					// Only required/valid for the grafana datasource... 
+					// Only required/valid for the grafana datasource...
 					// but code+tests is already depending on it so hard to change
 					matchAny: bool
-					// Only required/valid for the grafana datasource... 
+					// Only required/valid for the grafana datasource...
 					// but code+tests is already depending on it so hard to change
 					tags: [...string]
-					// Only required/valid for the grafana datasource... 
+					// Only required/valid for the grafana datasource...
 					// but code+tests is already depending on it so hard to change
 					type: string
 					... // datasource will stick their raw DataQuery here
@@ -149,14 +149,14 @@ lineage: seqs: [
 					// When enabled the annotation query is issued with every dashboard refresh
 					enable: bool | *true
 
-					// Annotation queries can be toggled on or off at the top of the dashboard.  
+					// Annotation queries can be toggled on or off at the top of the dashboard.
 					// When hide is true, the toggle is not shown in the dashboard.
 					hide?: bool | *false
 
 					// Color to use for the annotation event markers
 					iconColor: string
 
-					// Optionally   
+					// Optionally
 					filter?: #AnnotationPanelFilter
 
 					// TODO.. this should just be a normal query target
@@ -364,29 +364,33 @@ lineage: seqs: [
 				// type directly to achieve the same effect.
 				#Target: {...} @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
+				// A dashboard snapshot shares an interactive dashboard publicly.
+				// It is a read-only version of a dashboard, and is not editable.
+				// It is possible to create a snapshot of a snapshot.
+				// Grafana strips away all sensitive information from the dashboard.
+				// Sensitive information stripped: queries (metric, template,annotation) and panel links.
 				#Snapshot: {
-					// TODO docs
+					// Time when the snapshot was created
 					created: string & t.Time
-					// TODO docs
+					// Time when the snapshot expires, default is never to expire
 					expires: string @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Is the snapshot saved in an external grafana instance
 					external: bool @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// external url, if snapshot was shared in external grafana instance
 					externalUrl: string @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Unique identifier of the snapshot
 					id: uint32 @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Optional, defined the unique key of the snapshot, required if external is true
 					key: string @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Optional, name of the snapshot
 					name: string @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// org id of the snapshot
 					orgId: uint32 @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// last time when the snapshot was updated
 					updated: string & t.Time
-					// TODO docs
+					// url of the snapshot, if snapshot was shared internally
 					url?: string @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// user id of the snapshot creator
 					userId: uint32 @grafanamaturity(NeedsExpertReview)
 				} @grafanamaturity(NeedsExpertReview)
 
