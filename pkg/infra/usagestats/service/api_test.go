@@ -47,7 +47,7 @@ func TestApi_getUsageStats(t *testing.T) {
 		},
 	}
 	sqlStore := dbtest.NewFakeDB()
-	uss := createService(t, setting.Cfg{}, sqlStore, false)
+	uss := createService(t, sqlStore, false)
 	uss.registerAPIEndpoints()
 
 	for _, tt := range tests {
