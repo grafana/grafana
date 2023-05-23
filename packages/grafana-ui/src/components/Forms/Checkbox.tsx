@@ -69,7 +69,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const checkboxSize = 2;
   const labelPadding = 1;
 
-  const getBorderColor = (color: string, invalid: boolean) => {
+  const getBorderColor = (color: string) => {
     return invalid ? theme.colors.error.border : color;
   };
 
@@ -108,7 +108,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
        * */
       &:checked + span {
         background: ${theme.colors.primary.main};
-        border: 1px solid ${getBorderColor(theme.colors.primary.main, invalid)};
+        border: 1px solid ${getBorderColor(theme.colors.primary.main)};
 
         &:hover {
           background: ${theme.colors.primary.shade};
@@ -131,7 +131,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       &:disabled + span {
         background-color: ${theme.colors.action.disabledBackground};
         cursor: not-allowed;
-        border: 1px solid ${getBorderColor(theme.colors.action.disabledBackground, invalid)};
+        border: 1px solid ${getBorderColor(theme.colors.action.disabledBackground)};
 
         &:hover {
           background-color: ${theme.colors.action.disabledBackground};
@@ -145,7 +145,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
 
     inputIndeterminate: css`
       &[aria-checked='mixed'] + span {
-        border: 1px solid ${getBorderColor(theme.colors.primary.main, invalid)};
+        border: 1px solid ${getBorderColor(theme.colors.primary.main)};
         background: ${theme.colors.primary.main};
 
         &:hover {
@@ -168,7 +168,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       }
       &:disabled[aria-checked='mixed'] + span {
         background-color: ${theme.colors.action.disabledBackground};
-        border: 1px solid ${getBorderColor(theme.colors.error.transparent, invalid)};
+        border: 1px solid ${getBorderColor(theme.colors.error.transparent)};
 
         &:after {
           border-color: ${theme.colors.action.disabledText};
@@ -190,11 +190,11 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       height: ${theme.spacing(checkboxSize)};
       border-radius: ${theme.shape.borderRadius()};
       background: ${theme.components.input.background};
-      border: 1px solid ${getBorderColor(theme.components.input.borderColor, invalid)};
+      border: 1px solid ${getBorderColor(theme.components.input.borderColor)};
 
       &:hover {
         cursor: pointer;
-        border-color: ${getBorderColor(theme.components.input.borderHover, invalid)};
+        border-color: ${getBorderColor(theme.components.input.borderHover)};
       }
     `,
     label: cx(
