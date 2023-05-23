@@ -113,7 +113,7 @@ const mockPrometheusRulesResponse: PromRulesResponse = {
   },
 };
 
-describe('browse-dashboards BrowseDashboardsPage', () => {
+describe('browse-dashboards BrowseFolderAlertingPage', () => {
   let props: OwnProps;
   let server: SetupServer;
 

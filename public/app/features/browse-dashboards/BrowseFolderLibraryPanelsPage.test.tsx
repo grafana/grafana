@@ -45,7 +45,7 @@ const mockLibraryElementsSearchResult: LibraryElementsSearchResult = {
   ],
 };
 
-describe('browse-dashboards BrowseDashboardsPage', () => {
+describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   let props: OwnProps;
   let server: SetupServer;
 
@@ -110,7 +110,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
   });
 
-  it('displays all the folder tabs and shows the "Alert rules" tab as selected', async () => {
+  it('displays all the folder tabs and shows the "Library panels" tab as selected', async () => {
     render(<BrowseFolderLibraryPanelsPage {...props} />);
     expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toHaveAttribute('aria-selected', 'false');
