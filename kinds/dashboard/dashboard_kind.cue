@@ -81,7 +81,7 @@ lineage: seqs: [
 					// Version of the dashboard, incremented each time the dashboard is updated.
 					version?: uint32 @grafanamaturity(NeedsExpertReview)
 					panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Contains the list of configured template variables with their saved values along with some other metadata
 					templating?: {
 						list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 					}
@@ -140,11 +140,8 @@ lineage: seqs: [
 					// Name of annotation.
 					name: string
 
-					// TODO: Should be DataSourceRef
-					datasource: {
-						type?: string
-						uid?:  string
-					} @grafanamaturity(NeedsExpertReview)
+					// Datasource where the annotations data is
+					datasource: #DataSourceRef
 
 					// When enabled the annotation query is issued with every dashboard refresh
 					enable: bool | *true
@@ -156,7 +153,7 @@ lineage: seqs: [
 					// Color to use for the annotation event markers
 					iconColor: string
 
-					// Optionally
+					// Filters to apply when fetching annotations
 					filter?: #AnnotationPanelFilter
 
 					// TODO.. this should just be a normal query target
@@ -254,7 +251,7 @@ lineage: seqs: [
 					x: uint32 & >=0 & <24 | *0 @grafanamaturity(NeedsExpertReview)
 					// Panel y
 					y: uint32 & >=0 | *0 @grafanamaturity(NeedsExpertReview)
-					// true if fixed
+					// Whether the panel is fixed within the grid
 					static?: bool @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
@@ -440,8 +437,8 @@ lineage: seqs: [
 					// Id of the repeating panel.
 					repeatPanelId?: int64 @grafanamaturity(NeedsExpertReview)
 
-					// TODO docs
-					maxDataPoints?: number @grafanamaturity(NeedsExpertReview)
+					// The maximum number of data points that the panel queries are retrieving.
+					maxDataPoints?: number
 
 					// TODO docs - seems to be an old field from old dashboard alerts?
 					thresholds?: [...] @grafanamaturity(NeedsExpertReview)
