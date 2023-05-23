@@ -434,9 +434,9 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				switch expected := claimsValue.(type) {
 				case []string:
 					require.ElementsMatch(t, claimsValue, sessionData.JWTClaims.Extra[claimsKey])
-				case map[string][]interface{}:
-					actual, ok := sessionData.JWTClaims.Extra[claimsKey].(map[string][]interface{})
-					require.True(t, ok, "expected map[string][]interface{}")
+				case map[string][]string:
+					actual, ok := sessionData.JWTClaims.Extra[claimsKey].(map[string][]string)
+					require.True(t, ok, "expected map[string][]string")
 
 					require.ElementsMatch(t, maps.Keys(expected), maps.Keys(actual))
 					for expKey, expValue := range expected {
