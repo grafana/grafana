@@ -8,21 +8,24 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
-import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { initDashboard } from '../state/initDashboard';
 
-interface PublicDashboardPageRouteParams {
+interface EmbeddedDashboardPageRouteParams {
   accessToken?: string;
+  uid: string;
 }
 
-interface PublicDashboardPageRouteSearchParams {
+interface EmbeddedDashboardPageRouteSearchParams {
   from?: string;
   to?: string;
   refresh?: string;
 }
 
-export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
+export type Props = GrafanaRouteComponentProps<
+  EmbeddedDashboardPageRouteParams,
+  EmbeddedDashboardPageRouteSearchParams
+>;
 
 export default function EmbeddedDashboardPage({ match, route }: Props) {
   const dispatch = useDispatch();
@@ -60,7 +63,6 @@ export default function EmbeddedDashboardPage({ match, route }: Props) {
       <div className={''}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
-      <PublicDashboardFooter />
     </Page>
   );
 }
