@@ -18,23 +18,27 @@ const (
 	ScopeUsersSelf       = "users:self"
 	ScopeGlobalUsersSelf = "global.users:self"
 	ScopeTeamsSelf       = "teams:self"
+
+	// Supported encryptions
+	RS256 = "RS256"
+	ES256 = "ES256"
 )
 
 // OAuth2Server represents a service in charge of managing OAuth2 clients
-// and handling OAuth2 requests (token, introspection)
+// and handling OAuth2 requests (token, introspection).
 type OAuth2Server interface {
 	// SaveExternalService creates or updates an external service in the database, it ensures that the associated
-	// service account has the correct permissions
+	// service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
 	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 	// SignedInUser from the associated service account.
 	GetExternalService(ctx context.Context, id string) (*Client, error)
 
 	// HandleTokenRequest handles the client's OAuth2 query to obtain an access_token by presenting its authorization
-	// grant (ex: client_credentials, jwtbearer)
+	// grant (ex: client_credentials, jwtbearer).
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	// HandleIntrospectionRequest handles the OAuth2 query to determine the active state of an OAuth 2.0 token and
-	// to determine meta-information about this token
+	// to determine meta-information about this token.
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
 }
 
@@ -56,15 +60,18 @@ type KeyOption struct {
 	Generate  bool   `json:"generate,omitempty"`
 }
 
+// ExternalServiceRegistration represents the registration form to save new OAuth2 client.
 type ExternalServiceRegistration struct {
-	ExternalServiceName    string                     `json:"name"`
-	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
+	ExternalServiceName string `json:"name"`
+	// Permissions are the permissions that the external service needs its associated service account to have.
+	Permissions []accesscontrol.Permission `json:"permissions,omitempty"`
+	// ImpersonatePermissions are the permissions that the external service needs when impersonating a user.
+	// The intersection of this set with the impersonated user's permission guarantees that the client will not
+	// gain more privileges than the impersonated user has.
 	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
-	RedirectURI            *string                    `json:"redirectUri,omitempty"`
-	Key                    *KeyOption                 `json:"key,omitempty"`
+	// RedirectURI is the URI that is used in the code flow.
+	// Note that this is not used yet.
+	RedirectURI *string `json:"redirectUri,omitempty"`
+	// Key is the option to specify a public key or ask the server to generate a crypto key pair.
+	Key *KeyOption `json:"key,omitempty"`
 }
-
-const (
-	RS256 = "RS256"
-	ES256 = "ES256"
-)
