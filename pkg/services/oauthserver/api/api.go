@@ -28,7 +28,6 @@ func (a *api) RegisterAPIEndpoints() {
 		// oauthRouter.Get("/client/:id", middleware.ReqGrafanaAdmin, a.getClient)
 		// oauthRouter.Delete("/client/:id", middleware.ReqGrafanaAdmin, a.removeClient)
 
-		// TODO: protect register endpoint
 		oauthRouter.Post("/introspect", a.handleIntrospectionRequest)
 		oauthRouter.Post("/token", a.handleTokenRequest)
 	})
