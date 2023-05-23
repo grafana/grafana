@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -41,5 +42,13 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
     limit: pageSize,
   });
 
-  return dashboardsResults.view.map((item) => queryResultToViewItem(item, dashboardsResults.view));
+  return dashboardsResults.view.map((item) => {
+    const viewItem = queryResultToViewItem(item, dashboardsResults.view);
+
+    if (viewItem.parentUID === GENERAL_FOLDER_UID) {
+      viewItem.parentUID = undefined;
+    }
+
+    return viewItem;
+  });
 }
