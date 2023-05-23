@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -234,7 +235,7 @@ func TestIntersect(t *testing.T) {
 		for action, scopes := range intersect {
 			want, ok := want[action]
 			require.True(t, ok)
-			require.ElementsMatch(t, scopes, want)
+			require.ElementsMatch(t, scopes, want, fmt.Sprintf("scopes for %v differs from expected", action))
 		}
 	}
 	for _, tt := range tests {
@@ -312,6 +313,12 @@ func Test_intersectScopes(t *testing.T) {
 			s1:   []string{"dashboards:uid:*", "folders:uid:1"},
 			s2:   []string{"folders:uid:*", "dashboards:uid:1"},
 			want: []string{"dashboards:uid:1", "folders:uid:1"},
+		},
+		{
+			name: "intersection of non reduced list of scopes",
+			s1:   []string{"dashboards:uid:*", "dashboards:*", "dashboards:uid:1"},
+			s2:   []string{"dashboards:uid:*", "dashboards:*", "dashboards:uid:2"},
+			want: []string{"dashboards:uid:*", "dashboards:*", "dashboards:uid:1", "dashboards:uid:2"},
 		},
 	}
 	check := func(t *testing.T, want []string, s1, s2 []string) {
