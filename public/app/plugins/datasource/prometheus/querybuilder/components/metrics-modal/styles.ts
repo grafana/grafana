@@ -54,7 +54,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       vertical-align: text-top;
     `,
     results: css`
-      height: calc(80vh - 280px);
+      height: calc(80vh - 310px);
       overflow-y: scroll;
     `,
     resultsFooter: css`
