@@ -369,13 +369,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				team1 := searchQueryResult.Teams[0]
 				require.EqualValues(t, team1.MemberCount, 2)
 
-				searchQueryFilteredByUser := &team.SearchTeamsQuery{OrgID: testOrgID, Page: 1, Limit: 10, UserIDFilter: userIds[0], SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
-				searchQueryFilteredByUserResult, err := teamSvc.SearchTeams(context.Background(), searchQueryFilteredByUser)
-				require.NoError(t, err)
-				require.Equal(t, len(searchQueryFilteredByUserResult.Teams), 1)
-				team1 = searchQueryResult.Teams[0]
-				require.EqualValues(t, team1.MemberCount, 2)
-
 				getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				getTeamQueryResult, err := teamSvc.GetTeamByID(context.Background(), getTeamQuery)
 				require.NoError(t, err)
@@ -427,9 +420,9 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	type searchTeamsTestCase struct {
-		desc             string
-		query            *team.SearchTeamsQuery
-		expectedNumUsers int
+		desc              string
+		query             *team.SearchTeamsQuery
+		expectedTeamCount int
 	}
 
 	tests := []searchTeamsTestCase{
@@ -442,7 +435,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 				},
 			},
-			expectedNumUsers: 10,
+			expectedTeamCount: 10,
 		},
 		{
 			desc: "should return no teams",
@@ -453,7 +446,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {""}}},
 				},
 			},
-			expectedNumUsers: 0,
+			expectedTeamCount: 0,
 		},
 		{
 			desc: "should return some teams",
@@ -468,7 +461,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 					}}},
 				},
 			},
-			expectedNumUsers: 3,
+			expectedTeamCount: 3,
 		},
 	}
 
@@ -485,8 +478,8 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			queryResult, err := teamSvc.SearchTeams(context.Background(), tt.query)
 			require.NoError(t, err)
-			assert.Len(t, queryResult.Teams, tt.expectedNumUsers)
-			assert.Equal(t, queryResult.TotalCount, int64(tt.expectedNumUsers))
+			assert.Len(t, queryResult.Teams, tt.expectedTeamCount)
+			assert.Equal(t, queryResult.TotalCount, int64(tt.expectedTeamCount))
 
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
 				for _, team := range queryResult.Teams {
