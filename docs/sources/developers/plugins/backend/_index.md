@@ -43,7 +43,7 @@ Grafana's approach has benefits for developers:
 
 - **Stability:** Plugins can't crash your Grafana process: a panic in a plugin doesn't panic the server.
 - **Ease of development:** Plugins can be written in any language that supports gRPC (for example, just write a Go application and run `go build`).
-- **Security:** Plugins only have access to the interfaces and arguments that are given to it, not to the entire memory space of the process.
+- **Security:** Plugins only have access to the interfaces and arguments given to them, not to the entire memory space of the process.
 
 ### Capabilities of the backend plugin system
 
