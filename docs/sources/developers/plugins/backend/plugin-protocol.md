@@ -37,8 +37,8 @@ The plugin protocol attempts to follow Grafana's versioning. However, that doesn
 
 If you want to write a backend plugin in a language other than Go, then it's possible as long as the language supports gRPC. However, we recommend that you develop your plugin in Go for several reasons:
 
-- We offer an official plugin SDK
-- The compiled output is a single binary
+- We offer an official plugin SDK.
+- The compiled output is a single binary.
 - Writing for multiple platforms is easy. Typically, no additional dependencies must be installed on the target platform.
-- Small footprint for binary size
-- Small footprint for resource usage
+- Small footprint for binary size.
+- Small footprint for resource usage.
