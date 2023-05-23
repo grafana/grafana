@@ -200,7 +200,7 @@ export function trackGroupedQueries(
   };
 
   for (const group of requests) {
-    const splitting_partition_size = group.partition.length;
+    const split_query_partition_size = group.partition.length;
     trackQuery(response, group.request, startTime, {
       ...splittingPayload,
       splitting_partition_size,
