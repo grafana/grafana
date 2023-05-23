@@ -8,7 +8,7 @@ Follow the steps in this guide to set up a development environment where you run
 
 ## Run Grafana in your host
 
-Here's how to clone and run Grafana locally:
+To clone and run Grafana locally:
 
 1. Download and set up Grafana. Refer to the [developer-guide](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md).
 
