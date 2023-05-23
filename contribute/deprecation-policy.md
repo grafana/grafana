@@ -7,7 +7,7 @@ Going forward we will do our best to **not** make breaking changes, in order to 
 If we cannot remove a feature without introducing a breaking chance we should create a deprecation plan as listed below:
 
 - A deprecation plan should have the following steps.
-- Figure out usage stats for the feature.
+- Determine usage levels of the feature.
 - Find alternative solutions and possible migration paths.
 - Announce deprecation of the feature.
 - Migrate users if possible
