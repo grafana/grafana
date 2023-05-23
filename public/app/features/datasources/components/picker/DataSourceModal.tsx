@@ -117,11 +117,9 @@ export function DataSourceModal({
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <BuiltInDataSourceList
-            className={styles.builtInDataSourceList}
-            onChange={onChangeDataSource}
-            current={current}
-          />
+          <CustomScrollbar>
+            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+          </CustomScrollbar>
           {enableFileUpload && (
             <FileDropzone
               readAs="readAsArrayBuffer"
@@ -218,14 +216,12 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       }
     `,
     builtInDataSources: css`
-      flex: 1;
+      flex: 1 1;
       margin-bottom: ${theme.spacing(4)};
+      overflow: auto;
     `,
     dataSourceList: css`
       height: 100%;
-    `,
-    builtInDataSourceList: css`
-      margin-bottom: ${theme.spacing(4)};
     `,
     newDSSection: css`
       display: flex;
@@ -240,10 +236,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       overflow: hidden;
       white-space: nowrap;
       color: ${theme.colors.text.secondary};
-
-      ${theme.breakpoints.down('md')} {
-        padding-bottom: ${theme.spacing(3)};
-      }
     `,
     searchInput: css`
       width: 100%;
