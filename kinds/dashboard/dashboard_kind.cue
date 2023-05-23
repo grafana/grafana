@@ -255,12 +255,13 @@ lineage: seqs: [
 					static?: bool @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
-				// TODO docs
+				// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+				// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 				#Threshold: {
-					// TODO docs
+					// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 					// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
 					value?: number @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 					color: string @grafanamaturity(NeedsExpertReview)
 					// Threshold index, an old property that is not needed an should only appear in older dashboards
 					index?: int32 @grafanamaturity(NeedsExpertReview)
@@ -270,6 +271,7 @@ lineage: seqs: [
 					state?: string @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
+				// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
 				#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 				#ThresholdsConfig: {
