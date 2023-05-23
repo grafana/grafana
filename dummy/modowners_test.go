@@ -25,6 +25,7 @@ func TestCommonElement(t *testing.T) {
 }
 
 func TestCheck(t *testing.T) {
+	// Test case: all dependencies have an owner, check passes
 	buf := &bytes.Buffer{}        // NOTE: empty buffer, growing list of bytes
 	logger := log.New(buf, "", 0) // NOTE: uses buffer as writer, appends data to buffer
 	filesystem := fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
@@ -42,6 +43,7 @@ func TestCheck(t *testing.T) {
 }
 
 func TestModules(t *testing.T) {
+	// Test case: no flags, print all direct dependencies
 	buf := &bytes.Buffer{}
 	logger := log.New(buf, "", 0)
 	filesystem := fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
@@ -52,8 +54,8 @@ func TestModules(t *testing.T) {
 		github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
 	)
 	`)}}
-	err := modules(filesystem, logger, []string{"go.txd", "-i", "-o", "@delivery"}) // NOTE: pass various flags, these are cmd line arguments
+	err := modules(filesystem, logger, []string{"-m", "go.txd"}) // NOTE: pass various flags, these are cmd line arguments
 	if err != nil {
-		t.Error(err, buf.String()) // NOTE: print output of check cmd
+		t.Error("ERROR:", err, "BUFFER: ", buf.String()) // NOTE: print output of check cmd
 	}
 }

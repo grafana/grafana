@@ -67,6 +67,8 @@ func parseGoMod(fileSystem fs.FS, name string) ([]Module, error) {
 	return modules, nil
 }
 
+// Validate that each module has an owner.
+// Example CLI command `go run dummy/modowners.go check dummy/go.txd`
 func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	m, err := parseGoMod(fileSystem, args[0])
 	if err != nil {
@@ -140,7 +142,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
-	modfile := fs.String("m", "go.mod", "use specified modfile")
+	modfile := fs.String("m", "go.txd", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
 	m, err := parseGoMod(fileSystem, *modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
@@ -153,9 +155,9 @@ func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 		// If there are owner flags or modfile's dependency has an owner to compare
 		// Else if -i is present and current dependency is indirect
 		if len(*owner) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
-			fmt.Println(mod.Name)
+			logger.Println(mod.Name)
 		} else if *indirect && !mod.Indirect {
-			fmt.Println(mod.Name)
+			logger.Println(mod.Name)
 		}
 	}
 	return nil
