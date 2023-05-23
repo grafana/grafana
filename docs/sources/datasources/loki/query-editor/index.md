@@ -107,6 +107,10 @@ In Explore, you can can retrieve the context surrounding your log results by cli
 
 The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
 
+To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you seamlessly navigate through various log context windows without having to reapply your filters.
+
+To reset filters and use the initial log context query, click the `Revert to initial query` button next to the query preview.
+
 ### Tail live logs
 
 Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
