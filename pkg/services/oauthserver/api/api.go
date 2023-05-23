@@ -22,12 +22,7 @@ func NewAPI(
 }
 
 func (a *api) RegisterAPIEndpoints() {
-	// authorize := ac.Middleware(a.ac)
 	a.router.Group("/oauth2", func(oauthRouter routing.RouteRegister) {
-		// oauthRouter.Get("/clients/", middleware.ReqGrafanaAdmin, a.getClients)
-		// oauthRouter.Get("/client/:id", middleware.ReqGrafanaAdmin, a.getClient)
-		// oauthRouter.Delete("/client/:id", middleware.ReqGrafanaAdmin, a.removeClient)
-
 		oauthRouter.Post("/introspect", a.handleIntrospectionRequest)
 		oauthRouter.Post("/token", a.handleTokenRequest)
 	})
