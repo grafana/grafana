@@ -50,18 +50,17 @@ lineage: seqs: [
 						to:   string | *"now"
 					} @grafanamaturity(NeedsExpertReview)
 
-					// TODO docs
-					// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
+					// Configuration of the time picker shown at the top of a dashboard.
 					timepicker?: {
-						// Whether timepicker is collapsed or not.
-						collapse: bool | *false
-						// Whether timepicker is enabled or not.
-						enable: bool | *true
 						// Whether timepicker is visible or not.
 						hidden: bool | *false
-						// Selectable intervals for auto-refresh.
+						// Interval options available in the refresh picker dropdown.
 						refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-						// TODO docs
+						// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
+						collapse: bool | *false
+						// Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
+						enable: bool | *true
+						// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 						time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 					} @grafanamaturity(NeedsExpertReview)
 					// The month that the fiscal year starts on.  0 = January, 11 = December
