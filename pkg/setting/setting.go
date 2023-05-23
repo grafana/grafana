@@ -1053,7 +1053,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		return err
 	}
 
-	readOAuth2ServerSettings(iniFile, cfg)
+	readOAuth2ServerSettings(cfg)
 
 	readAccessControlSettings(iniFile, cfg)
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
@@ -1605,8 +1605,8 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 }
 
-func readOAuth2ServerSettings(iniFile *ini.File, cfg *Cfg) {
-	oauth2Srv := iniFile.Section("oauth2_server")
+func readOAuth2ServerSettings(cfg *Cfg) {
+	oauth2Srv := cfg.SectionWithEnvOverrides("oauth2_server")
 	cfg.OAuth2ServerEnabled = oauth2Srv.Key("enabled").MustBool(false)
 	cfg.OAuth2ServerGeneratedKeyTypeForClient = strings.ToUpper(oauth2Srv.Key("generated_key_type_for_client").In("RSA", []string{"RSA", "ECDSA"}))
 	cfg.OAuth2ServerAccessTokenLifespan = oauth2Srv.Key("access_token_lifespan").MustDuration(time.Minute * 3)
