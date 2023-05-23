@@ -14,8 +14,8 @@ import {
   childrenByParentUIDSelector,
   deleteDashboard,
   deleteFolder,
-  fetchNextChildrenPage,
   moveDashboard,
+  refetchChildren,
   rootItemsSelector,
   setAllSelection,
   useActionSelectionState,
@@ -48,7 +48,7 @@ export function BrowseActions() {
     } else {
       // Refetch parents
       for (const parentUID of parentsToRefresh) {
-        dispatch(fetchNextChildrenPage({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
+        dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
       }
     }
   };

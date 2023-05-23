@@ -4,10 +4,30 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 
 import { BrowseDashboardsState } from '../types';
 
-import { fetchNextChildrenPage } from './actions';
+import { fetchNextChildrenPage, refetchChildren } from './actions';
 import { findItem } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
+type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
+
+export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
+  const { children, page, kind, lastPageOfKind } = action.payload;
+  const { parentUID } = action.meta.arg;
+
+  const newCollection = {
+    items: children,
+    lastFetchedKind: kind,
+    lastFetchedPage: page,
+    lastKindHasMoreItems: !lastPageOfKind,
+    isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
+  };
+
+  if (parentUID) {
+    state.childrenByParentUID[parentUID] = newCollection;
+  } else {
+    state.rootItems = newCollection;
+  }
+}
 
 export function fetchNextChildrenPageFulfilled(
   state: BrowseDashboardsState,

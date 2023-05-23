@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { TableInstance, useTable } from 'react-table';
-import { FixedSizeList as List, ListOnScrollProps } from 'react-window';
+import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
@@ -41,11 +41,6 @@ interface DashboardsTreeProps {
 const HEADER_HEIGHT = 35;
 const ROW_HEIGHT = 35;
 
-function FixedNumber({ number }: { number?: number }) {
-  const str = number?.toString() ?? '';
-  return <span style={{ fontFamily: 'monospace', whiteSpace: 'pre' }}>{str.padStart(4)}</span>;
-}
-
 export function DashboardsTree({
   items,
   width,
@@ -58,16 +53,17 @@ export function DashboardsTree({
   requestLoadMore,
   canSelect = false,
 }: DashboardsTreeProps) {
+  const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
 
-  const tableColumns = useMemo(() => {
-    const indexColumn: DashboardsTreeColumn = {
-      id: 'index',
-      width: 0,
-      Header: ({}) => <FixedNumber />,
-      Cell: ({ row: { index } }: DashboardsTreeCellProps) => <FixedNumber number={index} />,
-    };
+  useEffect(() => {
+    if (infiniteLoaderRef.current) {
+      console.log('resetloadMoreItemsCache');
+      infiniteLoaderRef.current.resetloadMoreItemsCache();
+    }
+  }, [items]);
 
+  const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
       width: 0,
@@ -95,7 +91,7 @@ export function DashboardsTree({
       Header: 'Tags',
       Cell: TagsCell,
     };
-    const columns = [indexColumn, canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, canSelect]);
@@ -152,7 +148,12 @@ export function DashboardsTree({
       })}
 
       <div {...getTableBodyProps()}>
-        <InfiniteLoader itemCount={items.length} isItemLoaded={handleIsItemLoaded} loadMoreItems={handleLoadMore}>
+        <InfiniteLoader
+          ref={infiniteLoaderRef}
+          itemCount={items.length}
+          isItemLoaded={handleIsItemLoaded}
+          loadMoreItems={handleLoadMore}
+        >
           {({ onItemsRendered, ref }) => (
             <List
               ref={ref}

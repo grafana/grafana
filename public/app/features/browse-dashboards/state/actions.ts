@@ -18,6 +18,57 @@ interface FetchNextChildrenPageResult {
   lastPageOfKind: boolean;
 }
 
+interface RefetchChildrenArgs {
+  parentUID: string | undefined;
+  pageSize: number;
+}
+
+interface RefetchChildrenResult {
+  children: DashboardViewItem[];
+  kind: 'folder' | 'dashboard';
+  page: number;
+  lastPageOfKind: boolean;
+}
+
+export const refetchChildren = createAsyncThunk(
+  'browseDashboards/refetchChildren',
+  async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
+    if (process.env.NODE_ENV !== 'production' && parentUID === GENERAL_FOLDER_UID) {
+      console.error(new Error("fetchNextChildrenPage called with a parentUID of 'general' instead of undefined"));
+    }
+
+    const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
+
+    // At the moment this will just clear out all loaded children and refetch the first page.
+    // If user has scrolled beyond the first page, then InfiniteLoader will probably trigger
+    // an additional page load (via fetchNextChildrenPage)
+
+    let page = 1;
+    let fetchKind: DashboardViewItemKind | undefined = 'folder';
+
+    let children = await listFolders(uid, undefined, page, pageSize);
+    let lastPageOfKind = children.length < pageSize;
+
+    // If we've loaded all folders, load the first page of dashboards.
+    // This ensures dashboards are loaded if a folder contains only dashboards.
+    if (fetchKind === 'folder' && lastPageOfKind) {
+      fetchKind = 'dashboard';
+      page = 1;
+
+      const childDashboards = await listDashboards(uid, page, pageSize);
+      lastPageOfKind = childDashboards.length < pageSize;
+      children = children.concat(childDashboards);
+    }
+
+    return {
+      children,
+      lastPageOfKind: lastPageOfKind,
+      page,
+      kind: fetchKind,
+    };
+  }
+);
+
 export const fetchNextChildrenPage = createAsyncThunk(
   'browseDashboards/fetchNextChildrenPage',
   async (
