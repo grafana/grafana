@@ -158,23 +158,23 @@ describe('AnnotationsSettings', () => {
     setup(dashboard);
 
     // Check that we have sorting buttons
-    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
-    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'move up' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'move down' })).toBeInTheDocument();
 
-    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
-    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'move up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'move down' })).toBeInTheDocument();
 
-    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
-    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-down' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'move up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'move down' })).not.toBeInTheDocument();
 
     // Check the original order
     expect(within(getTableBodyRows()[0]).queryByText(/annotations & alerts/i)).toBeInTheDocument();
     expect(within(getTableBodyRows()[1]).queryByText(/annotation 2/i)).toBeInTheDocument();
     expect(within(getTableBodyRows()[2]).queryByText(/annotation 3/i)).toBeInTheDocument();
 
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'move down' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'move down' })[1]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'move up' })[0]);
 
     // Checking if it has changed the sorting accordingly
     expect(within(getTableBodyRows()[0]).queryByText(/annotation 3/i)).toBeInTheDocument();
