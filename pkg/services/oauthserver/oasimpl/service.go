@@ -219,7 +219,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		return nil, errGenCred
 	}
 
-	s.logger.Debug("Handle service account save")
+	s.logger.Debug("Save service account")
 	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, registration.Permissions)
 	if errSaveServiceAccount != nil {
 		return nil, errSaveServiceAccount
@@ -260,8 +260,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 // randString generates a a cryptographically secure random string of n bytes
 func (s *OAuth2ServiceImpl) randString(n int) (string, error) {
 	res := make([]byte, n)
-	_, err := rand.Read(res)
-	if err != nil {
+	if _, err := rand.Read(res); err != nil {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(res), nil
