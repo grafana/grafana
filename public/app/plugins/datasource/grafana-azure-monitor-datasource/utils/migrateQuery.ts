@@ -176,13 +176,22 @@ function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQu
 function migrateResourceGroupAndName(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
 
-  if (workingQuery.azureMonitor) {
-    workingQuery.azureMonitor.resources = [
-      { resourceGroup: workingQuery.azureMonitor.resourceGroup, resourceName: workingQuery.azureMonitor.resourceName },
-    ];
+  if (workingQuery.azureMonitor?.resourceGroup && workingQuery.azureMonitor?.resourceName) {
+    workingQuery = {
+      ...workingQuery,
+      azureMonitor: {
+        ...workingQuery.azureMonitor,
+        resources: [
+          {
+            resourceGroup: workingQuery.azureMonitor.resourceGroup,
+            resourceName: workingQuery.azureMonitor.resourceName,
+          },
+        ],
+      },
+    };
 
-    delete workingQuery.azureMonitor.resourceGroup;
-    delete workingQuery.azureMonitor.resourceName;
+    delete workingQuery.azureMonitor?.resourceGroup;
+    delete workingQuery.azureMonitor?.resourceName;
   }
 
   return workingQuery;
