@@ -195,7 +195,7 @@ export function trackGroupedQueries(
 ): void {
   const splittingPayload = {
     split_query_group_count: requests.length,
-    splitting_max_requests: Math.max(...requests.map(({ partition }) => partition.length)),
+    split_query_largest_partition_size: Math.max(...requests.map(({ partition }) => partition.length)),
     splitting_total_requests: requests.reduce((total, { partition }) => total + partition.length, 0),
   };
 
