@@ -36,7 +36,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
   const dispatch = useDispatch();
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel();
+  const dashboard = new DashboardModel(JSON.parse(queryParams.json!));
 
   useEffect(() => {
     dispatch(
@@ -47,6 +47,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
         accessToken: queryParams.accessToken,
         keybindingSrv: context.keybindings,
         urlUid: match.params.uid,
+        dashboardDto: { dashboard, meta: {} },
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
