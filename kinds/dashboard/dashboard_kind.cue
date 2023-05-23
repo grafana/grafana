@@ -40,7 +40,8 @@ lineage: seqs: [
 					timezone?: string | *"browser"
 					// Whether a dashboard is editable or not.
 					editable: bool | *true
-					// Configuration of dashboard cursor sync behavior.
+					// Configuration of dashboard cursor sync behavior. 
+					// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
 					graphTooltip: #DashboardCursorSync
 					// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 					time?: {
