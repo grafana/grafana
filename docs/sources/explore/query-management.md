@@ -19,7 +19,9 @@ This functionality is similar to the panel inspector tasks [Inspect query perfor
 
 Query history is a list of queries that you used in Explore. The history is stored in the Grafana database and it is not shared with other users. The retention period for queries in history is two weeks. Queries older than two weeks are automatically deleted. To open and interact with your history, click the **Query history** button in Explore.
 
-> **Note**: Starred queries are not subject to the two weeks retention period and they are not deleted.
+{{% admonition type="note" %}}
+Starred queries are not subject to the two weeks retention period and they are not deleted.
+{{% /admonition %}}
 
 ### View query history
 

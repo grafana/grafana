@@ -16,7 +16,9 @@ title: 'Alerting Notification Channels HTTP API '
 
 # Legacy Alerting Notification Channels API
 
-> **Note:** Starting with v9.0, the Legacy Alerting Notification Channels API is deprecated. It will be removed in a future release.
+{{% admonition type="note" %}}
+Starting with v9.0, the Legacy Alerting Notification Channels API is deprecated. It will be removed in a future release.
+{{% /admonition %}}
 
 This page documents the Alerting Notification Channels API.
 
