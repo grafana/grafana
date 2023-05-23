@@ -355,8 +355,9 @@ lerna.json @grafana/frontend-ops
 /public/app/features/auth-config/ @grafana/grafana-authnz-team
 /public/app/features/annotations/ @grafana/grafana-frontend-platform
 /public/app/features/api-keys/ @grafana/grafana-frontend-platform
-/public/app/features/visualization/canvas/ @grafana/dataviz-squad
-/public/app/features/visualization/geo/ @grafana/dataviz-squad
+/public/app/features/canvas/ @grafana/dataviz-squad
+/public/app/features/geo/ @grafana/dataviz-squad
+/public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/explore-squad
