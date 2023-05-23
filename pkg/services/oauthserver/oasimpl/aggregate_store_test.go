@@ -80,9 +80,12 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 					{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf}}
 				env.S.cache.Set("my-ext-service", *currentUser, time.Minute)
 			},
-			userID:         "user:id:3",
-			expectedScopes: []string{"users:impersonate", "profile", "email", "entitlements", "groups"},
-			wantErr:        false,
+			userID: "user:id:3",
+			expectedScopes: []string{"users:impersonate",
+				"profile", "email", ac.ActionUsersRead,
+				"entitlements", ac.ActionUsersPermissionsRead,
+				"groups", ac.ActionTeamsRead},
+			wantErr: false,
 		},
 	}
 	for _, tc := range testCases {
