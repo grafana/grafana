@@ -333,7 +333,7 @@ func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, e
 	// Check if we have time field though as it makes sense to split only for time series.
 	if hasTimeField(frame) {
 		if len(statsGroups) > 0 && len(frame.Fields) > 0 {
-			groupedFrames, err := groupResults(frame, statsGroups)
+			groupedFrames, err := groupResults(frame, statsGroups, false)
 			if err != nil {
 				return nil, err
 			}

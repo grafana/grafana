@@ -44,7 +44,9 @@ You can apply standard options to most built-in Grafana panels. Some older panel
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
-> **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+{{% admonition type="note" %}}
+We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+{{% /admonition %}}
 
 ### Unit
 

@@ -22,17 +22,18 @@ import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
 export class TimeSrv {
-  time: any;
+  time: RawTimeRange;
   refreshTimer: number | undefined;
   refresh: any;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
-  timeAtLoad: any;
+  timeAtLoad: RawTimeRange;
   private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
     this.time = getDefaultTimeRange().raw;
+    this.timeAtLoad = getDefaultTimeRange().raw;
     this.refreshTimeModel = this.refreshTimeModel.bind(this);
 
     appEvents.subscribe(ZoomOutEvent, (e) => {
@@ -105,7 +106,7 @@ export class TimeSrv {
     }
   }
 
-  private parseUrlParam(value: any) {
+  private parseUrlParam(value: string) {
     if (value.indexOf('now') !== -1) {
       return value;
     }
@@ -121,7 +122,7 @@ export class TimeSrv {
       }
     }
 
-    if (!isNaN(value)) {
+    if (!isNaN(Number(value))) {
       const epoch = parseInt(value, 10);
       return toUtc(epoch);
     }

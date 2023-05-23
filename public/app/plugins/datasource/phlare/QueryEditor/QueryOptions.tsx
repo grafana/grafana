@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useToggle } from 'react-use';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Icon, useStyles2, RadioButtonGroup, MultiSelect, Input } from '@grafana/ui';
+import { Icon, useStyles2, RadioButtonGroup, MultiSelect, Input, clearButtonStyles, Button } from '@grafana/ui';
 
 import { Query } from '../types';
 
@@ -43,10 +43,11 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
         value: l,
       }))
     : [];
+  const buttonStyles = useStyles2(clearButtonStyles);
 
   return (
     <Stack gap={0} direction="column">
-      <div className={styles.header} onClick={toggleOpen} title="Click to edit options">
+      <Button className={cx(styles.header, buttonStyles)} onClick={toggleOpen} title="Click to edit options">
         <div className={styles.toggle}>
           <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
         </div>
@@ -60,7 +61,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               ))}
           </div>
         )}
-      </div>
+      </Button>
       {isOpen && (
         <div className={styles.body}>
           <EditorField label={'Query Type'}>
