@@ -98,10 +98,6 @@ type SearchTeamQueryResult struct {
 	PerPage    int        `json:"perPage"`
 }
 
-type IsAdminOfTeamsQuery struct {
-	SignedInUser *user.SignedInUser
-}
-
 // TeamMember model
 type TeamMember struct {
 	ID         int64 `xorm:"pk autoincr 'id'"`
