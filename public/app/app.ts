@@ -194,7 +194,11 @@ export class GrafanaApp {
 
       // Create extension registry out of the preloaded plugins
       const pluginExtensionGetter: GetPluginExtensions = (options) =>
-        getPluginExtensions({ ...options, registry: createPluginExtensionRegistry(preloadResults) });
+        getPluginExtensions({
+          ...options,
+          registry: createPluginExtensionRegistry(preloadResults),
+        });
+
       setPluginExtensionGetter(pluginExtensionGetter);
 
       // initialize chrome service

@@ -3,7 +3,9 @@ import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 import { PluginExtensionLink, PluginExtensionPoints, type PluginExtensionExploreContext } from '@grafana/data';
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { ExploreId } from 'app/types';
+import { ExploreId, useSelector } from 'app/types';
+
+import { getExploreItemSelector } from '../state/selectors';
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
 
@@ -22,6 +24,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
   const extensions = useExtensionLinks(context);
+  const selectExploreItem = getExploreItemSelector(exploreId);
+  const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
 
   if (extensions.length === 0) {
     return (
@@ -52,7 +56,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
   return (
     <Suspense fallback={null}>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton variant="canvas" icon="plus" isOpen={isOpen}>
+        <ToolbarButton disabled={!Boolean(noQueriesInPane)} variant="canvas" icon="plus" isOpen={isOpen}>
           {splitted ? ' ' : 'Add to...'}
         </ToolbarButton>
       </Dropdown>
