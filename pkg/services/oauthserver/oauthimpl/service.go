@@ -419,6 +419,9 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	return dto, nil
 }
 
+// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
+// SignedInUser from the associated service account.
+// For performance reason, the service uses caching.
 func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
 	entry, ok := s.cache.Get(id)
 	if ok {

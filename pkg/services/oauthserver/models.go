@@ -20,10 +20,21 @@ const (
 	ScopeTeamsSelf       = "teams:self"
 )
 
+// OAuth2Service represents a service in charge of managing OAuth2 clients
+// and handling OAuth2 requests (token, introspection)
 type OAuth2Service interface {
+	// SaveExternalService creates or updates an external service in the database, it ensures that the associated
+	// service account has the correct permissions
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
+	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
+	// SignedInUser from the associated service account.
 	GetExternalService(ctx context.Context, id string) (*Client, error)
+
+	// HandleTokenRequest handles the client's OAuth2 query to obtain an access_token by presenting its authorization
+	// grant (ex: client_credentials, jwtbearer)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
+	// HandleIntrospectionRequest handles the OAuth2 query to determine the active state of an OAuth 2.0 token and
+	// to determine meta-information about this token
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
 }
 

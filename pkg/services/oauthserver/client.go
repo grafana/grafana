@@ -112,7 +112,6 @@ func (c *Client) GetGrantTypes() fosite.Arguments {
 // All allowed combinations of response types have to be listed, each combination having
 // response types of the combination separated by a space.
 func (c *Client) GetResponseTypes() fosite.Arguments {
-	// TODO
 	return fosite.Arguments{"code"}
 }
 
