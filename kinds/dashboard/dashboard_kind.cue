@@ -30,13 +30,13 @@ lineage: seqs: [
 					// to see if the version has changed since the last time.  Unclear why using the version property
 					// is insufficient.
 					revision?: int64 @grafanamaturity(NeedsExpertReview)
-					// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+					// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
 					gnetId?: string @grafanamaturity(NeedsExpertReview)
 					// Tags associated with dashboard.
 					tags?: [...string] @grafanamaturity(NeedsExpertReview)
-					// Theme of dashboard.
+					// Theme of dashboard. 
 					style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-					// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+					// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 					timezone?: string | *"browser"
 					// Whether a dashboard is editable or not.
 					editable: bool | *true
