@@ -34,8 +34,8 @@ export const Examples = () => {
           titleHref=""
           parentHref=""
           leftItems={[
-            <IconButton name="share-alt" size="lg" key="share" />,
-            <IconButton name="favorite" iconType="mono" size="lg" key="favorite" />,
+            <IconButton name="share-alt" size="lg" key="share" tooltip="Share" />,
+            <IconButton name="favorite" iconType="mono" size="lg" key="favorite" tooltip="Favour" />,
           ]}
         >
           <ToolbarButton icon="panel-add" />
