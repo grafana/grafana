@@ -357,7 +357,7 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
-	wire.Bind(new(oauthserver.OAuth2Service), new(*oasimpl.OAuth2ServiceImpl)),
+	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	modules.WireSet,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
