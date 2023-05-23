@@ -472,7 +472,7 @@ export const runQueries = (
   return (dispatch, getState) => {
     dispatch(updateTime({ exploreId }));
 
-    const correlations$ = getCorrelations();
+    const correlations$ = getCorrelations(exploreId);
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     const preserveCache = options?.preserveCache === true;
@@ -1135,15 +1135,15 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 /**
  * Creates an observable that emits correlations once they are loaded
  */
-const getCorrelations = () => {
+const getCorrelations = (exploreId: ExploreId) => {
   return new Observable<CorrelationData[]>((subscriber) => {
-    const existingCorrelations = store.getState().explore.correlations;
+    const existingCorrelations = store.getState().explore.panes[exploreId]?.correlations;
     if (existingCorrelations) {
       subscriber.next(existingCorrelations);
       subscriber.complete();
     } else {
       const unsubscribe = store.subscribe(() => {
-        const { correlations } = store.getState().explore;
+        const correlations = store.getState().explore.panes[exploreId]?.correlations;
         if (correlations) {
           unsubscribe();
           subscriber.next(correlations);

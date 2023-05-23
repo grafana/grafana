@@ -66,6 +66,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
+  correlations: undefined,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({

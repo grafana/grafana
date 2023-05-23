@@ -21,6 +21,8 @@ import {
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { getAllFromSourceUIDInfo } from 'app/features/correlations/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -106,6 +108,12 @@ export interface SetUrlReplacedPayload {
 }
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
 
+export interface SaveCorrelationsPayload {
+  exploreId: ExploreId;
+  correlations: CorrelationData[];
+}
+export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
+
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
@@ -183,6 +191,9 @@ export const initializeExplore = createAsyncThunk(
       // we already have something in the url. Adding basically the same state as additional history item prevents
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
+
+      const correlations = await getAllFromSourceUIDInfo(instance.uid);
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
     }
   }
 );
@@ -263,6 +274,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), action: AnyAction): ExploreItemState => {
+  console.log(action);
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
@@ -293,6 +305,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changePanelsStateAction.match(action)) {
     const { panelsState } = action.payload;
     return { ...state, panelsState };
+  }
+
+  if (saveCorrelationsAction.match(action)) {
+    return {
+      ...state,
+      correlations: action.payload.correlations,
+    };
   }
 
   if (initializeExploreAction.match(action)) {

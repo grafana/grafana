@@ -47,8 +47,6 @@ export interface ExploreState {
     [paneId in ExploreId]?: ExploreItemState;
   };
 
-  correlations?: CorrelationData[];
-
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
    */
@@ -213,6 +211,8 @@ export interface ExploreItemState {
   panelsState: ExplorePanelsState;
 
   isFromCompactUrl?: boolean;
+
+  correlations?: CorrelationData[];
 }
 
 export interface ExploreUpdateState {

@@ -8,18 +8,16 @@ import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useAppNotification } from 'app/core/copy/appNotification';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
 import { Branding } from '../../core/components/Branding/Branding';
-import { useCorrelations } from '../correlations/useCorrelations';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, saveCorrelationsAction, resetExploreAction, splitSizeUpdateAction } from './state/main';
+import { lastSavedUrl, resetExploreAction, splitSizeUpdateAction } from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -35,10 +33,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useExplorePageTitle();
   const dispatch = useDispatch();
   const queryParams = props.queryParams;
-  const { keybindings, chrome, config } = useGrafana();
+  const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
-  const { getAllFromSourceUIDInfo } = useCorrelations();
-  const { warning } = useAppNotification();
   const panelCtx = usePanelContext();
   const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
   const [rightPaneWidthRatio, setRightPaneWidthRatio] = useState(0.5);
@@ -55,39 +51,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
-
-  useEffect(() => {
-    if (!config.featureToggles.correlations) {
-      dispatch(saveCorrelationsAction([]));
-    } else {
-      const leftDSUID = exploreState.panes[ExploreId.left]?.datasourceInstance?.uid;
-      const rightDSUID = exploreState.panes[ExploreId.right]?.datasourceInstance?.uid;
-
-      if (leftDSUID !== undefined) {
-        getAllFromSourceUIDInfo.execute({ sourceUID: leftDSUID });
-      }
-
-      if (rightDSUID !== undefined) {
-        getAllFromSourceUIDInfo.execute({ sourceUID: rightDSUID });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    exploreState.panes[ExploreId.left]?.datasourceInstance?.uid,
-    exploreState.panes[ExploreId.right]?.datasourceInstance?.uid,
-  ]);
-
-  useEffect(() => {
-    if (getAllFromSourceUIDInfo.value?.correlations) {
-      dispatch(saveCorrelationsAction(getAllFromSourceUIDInfo.value.correlations));
-    } else if (getAllFromSourceUIDInfo.error) {
-      dispatch(saveCorrelationsAction([]));
-      warning(
-        'Could not load correlations.',
-        'Correlations data could not be loaded, DataLinks may have partial data.'
-      );
-    }
-  }, [getAllFromSourceUIDInfo.value, getAllFromSourceUIDInfo.error, dispatch, warning]);
 
   useEffect(() => {
     lastSavedUrl.left = undefined;

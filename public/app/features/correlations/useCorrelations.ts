@@ -29,7 +29,7 @@ export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'target
   target: DataSourceInstanceSettings;
 }
 
-interface CorrelationsData {
+export interface CorrelationsData {
   correlations: CorrelationData[];
   page?: number;
   perPage?: number;
@@ -49,13 +49,13 @@ const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse):
   };
 };
 
-const toNonPagedEnrichedCorrelationsData = (correlationsResponse: Correlation[]): CorrelationsData => {
+export const toNonPagedEnrichedCorrelationsData = (correlationsResponse: Correlation[]): CorrelationsData => {
   return {
     correlations: correlationsResponse.map(toEnrichedCorrelationData),
   };
 };
 
-function getData<T>(response: FetchResponse<T>) {
+export function getData<T>(response: FetchResponse<T>) {
   return response.data;
 }
 

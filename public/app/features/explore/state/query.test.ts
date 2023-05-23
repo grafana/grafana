@@ -24,8 +24,8 @@ import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { makeLogs } from '../__mocks__/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
+import { saveCorrelationsAction } from './explorePane';
 import { createDefaultInitialState } from './helpers';
-import { saveCorrelationsAction } from './main';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -157,7 +157,7 @@ describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
-    await dispatch(saveCorrelationsAction([]));
+    await dispatch(saveCorrelationsAction({ exploreId: ExploreId.left, correlations: [] }));
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore.panes.left!.showMetrics).toBeTruthy();
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
@@ -166,7 +166,7 @@ describe('runQueries', () => {
   it('should modify the request-id for all supplementary queries', () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
-    dispatch(saveCorrelationsAction([]));
+    dispatch(saveCorrelationsAction({ exploreId: ExploreId.left, correlations: [] }));
     dispatch(runQueries(ExploreId.left));
 
     const state = getState().explore.panes.left!;
@@ -186,7 +186,7 @@ describe('runQueries', () => {
     const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore.panes.left!.datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
-    await dispatch(saveCorrelationsAction([]));
+    await dispatch(saveCorrelationsAction({ exploreId: ExploreId.left, correlations: [] }));
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
@@ -197,7 +197,7 @@ describe('runQueries', () => {
     setupQueryResponse(getState());
     await dispatch(runQueries(ExploreId.left));
     expect(getState().explore.panes.left!.graphResult).not.toBeDefined();
-    await dispatch(saveCorrelationsAction([]));
+    await dispatch(saveCorrelationsAction({ exploreId: ExploreId.left, correlations: [] }));
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 });
