@@ -436,6 +436,14 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingNotificationsPoliciesMatchingInstances",
+			Description:  "Enables the preview of matching instances for notification policies",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			State:       FeatureStateAlpha,

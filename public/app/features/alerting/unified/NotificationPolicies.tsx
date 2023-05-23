@@ -52,6 +52,7 @@ enum ActiveTab {
 const AmRoutes = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+
   const { useGetAlertmanagerAlertGroupsQuery } = alertmanagerApi;
 
   const [queryParams, setQueryParams] = useQueryParams();
@@ -99,7 +100,10 @@ const AmRoutes = () => {
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
-  const [{ value: routeAlertGroupsMap }, triggerGetRouteGroupsMap] = useAsyncFn(getRouteGroupsMap, []);
+  const [{ value: routeAlertGroupsMap, error: instancesPreviewError }, triggerGetRouteGroupsMap] = useAsyncFn(
+    getRouteGroupsMap,
+    []
+  );
 
   useEffect(() => {
     if (rootRoute && alertGroups) {
@@ -272,7 +276,7 @@ const AmRoutes = () => {
                       onDeletePolicy={openDeleteModal}
                       onShowAlertInstances={showAlertGroupsModal}
                       routesMatchingFilters={routesMatchingFilters}
-                      routeAlertGroupsMap={routeAlertGroupsMap}
+                      matchingInstancesPreview={{ groupsMap: routeAlertGroupsMap, enabled: !instancesPreviewError }}
                     />
                   )}
                 </Stack>

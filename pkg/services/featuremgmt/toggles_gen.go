@@ -263,6 +263,10 @@ const (
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
 
+	// FlagAlertingNotificationsPoliciesMatchingInstances
+	// Enables the preview of matching instances for notification policies
+	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
+
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
 	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
@@ -308,7 +312,7 @@ const (
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
 	// FlagFaroDatasourceSelector
-	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
