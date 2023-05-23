@@ -471,12 +471,13 @@ lineage: seqs: [
 					// time periods or days on the same dashboard.
 					// The value is formated as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far), 
 					// `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
-					// NOTE: Panel time overrides have no effect when the dashboard’s time range is absolute.
+					// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
 					// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 					timeFrom?: string
 
 					// Overrides the time range for individual panels by shifting its start and end relative to the time picker. 
 					// For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+					// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
 					// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 					timeShift?: string
 
