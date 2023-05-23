@@ -65,7 +65,7 @@ func (c *Client) ToDTO() *ClientDTO {
 }
 
 func (c *Client) LogID() string {
-	return "{externalServiceName: " + c.Name + ", clientID: " + c.ClientID + "}"
+	return "{name: " + c.Name + ", clientID: " + c.ClientID + "}"
 }
 
 // GetID returns the client ID.
