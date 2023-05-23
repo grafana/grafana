@@ -48,7 +48,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 			expectedScopes: nil,
 		},
 		{
-			name: "should return the 'profile', 'email'",
+			name: "should return the 'profile', 'email' and associated RBAC action",
 			initTestEnv: func(c *Client) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
@@ -62,10 +62,10 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 					{Action: ac.ActionUsersRead, Scope: ScopeGlobalUsersSelf},
 				}
 			},
-			expectedScopes: []string{"profile", "email"},
+			expectedScopes: []string{"profile", "email", ac.ActionUsersRead},
 		},
 		{
-			name: "should return 'entitlements' scope",
+			name: "should return 'entitlements' and associated RBAC action scopes",
 			initTestEnv: func(c *Client) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
@@ -79,10 +79,10 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 					{Action: ac.ActionUsersPermissionsRead, Scope: ScopeUsersSelf},
 				}
 			},
-			expectedScopes: []string{"entitlements"},
+			expectedScopes: []string{"entitlements", ac.ActionUsersPermissionsRead},
 		},
 		{
-			name: "should return 'groups' scope",
+			name: "should return 'groups' and associated RBAC action scopes",
 			initTestEnv: func(c *Client) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
@@ -96,7 +96,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 					{Action: ac.ActionTeamsRead, Scope: ScopeTeamsSelf},
 				}
 			},
-			expectedScopes: []string{"groups"},
+			expectedScopes: []string{"groups", ac.ActionTeamsRead},
 		},
 		{
 			name: "should return all scopes",
@@ -116,7 +116,10 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 					{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 				}
 			},
-			expectedScopes: []string{"profile", "email", "entitlements", "groups", "dashboards:read"},
+			expectedScopes: []string{"profile", "email", ac.ActionUsersRead,
+				"entitlements", ac.ActionUsersPermissionsRead,
+				"groups", ac.ActionTeamsRead,
+				"dashboards:read"},
 		},
 		{
 			name: "should return stored scopes when the client's impersonate scopes has already been set",
