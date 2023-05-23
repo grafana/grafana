@@ -51,7 +51,7 @@ TableImageCellOptions: {
 // String cell options
 TableStringCellOptions: {
 	type: TableCellDisplayMode & "string"
-  sanitizeHTML: bool
+  renderAsHTML: bool
 } @cuetsy(kind="interface")
 
 // Gauge cell options

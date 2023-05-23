@@ -91,7 +91,7 @@ const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
-  { value: { type: TableCellDisplayMode.String, sanitizeHTML: false }, label: 'String' },
+  { value: { type: TableCellDisplayMode.String, renderAsHTML: false }, label: 'String' },
 ];
 
 const getStyles = (theme: GrafanaTheme2) => ({

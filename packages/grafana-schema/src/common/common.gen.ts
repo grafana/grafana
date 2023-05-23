@@ -737,7 +737,7 @@ export interface TableImageCellOptions {
  * String cell options
  */
 export interface TableStringCellOptions {
-  sanitizeHTML: boolean;
+  renderAsHTML: boolean;
   type: TableCellDisplayMode.String;
 }
 

@@ -13,10 +13,10 @@ import { TableCellProps } from './types';
 export function StringCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
 
-  const sanitizeHTML = field.config.custom?.cellOptions.sanitizeHTML;
+  const renderAsHTML = field.config.custom?.cellOptions.renderAsHTML;
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
-  const content = sanitizeHTML ? (
+  const content = renderAsHTML ? (
     <div dangerouslySetInnerHTML={{ __html: textUtil.sanitize(cell.value) }} />
   ) : (
     <div>{cell.value}</div>
