@@ -24,8 +24,8 @@ For options and functions common to all query editors, see [Query editors]({{< r
 
 The Prometheus query editor has two modes:
 
-- [Code mode](#code-mode)
 - [Builder mode](#builder-mode)
+- [Code mode](#code-mode)
 
 Each mode is explained in greater detail below.
 
@@ -45,7 +45,9 @@ The query editor toolbar contains the following elements:
 
 Click the arrow next to each to see available options to add to your query.
 
-- **Explain** - Toggle on to display a step-by-step explanation of all parts of a query and its operations.
+- **Explain** - Toggle to display a step-by-step explanation of all query components and operations.
+
+{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
 
 - **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
 
@@ -83,7 +85,7 @@ The **Type** setting sets the query type. These include:
 
 - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
 - **Range** - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
-- **Instant** - Returns one data point per query and only the most recent point in the time range provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results are depicted in table format or as raw data.
+- **Instant** - Returns one data point per query and only the most recent point in the time range. provided. Instant query results can be depicted in the time series panel by adding a field override, adding a property to the override named `Transform`, and selecting `Constant` from the **Transform** dropdown. The results are depicted in table format or as raw data.
 
 For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
 
@@ -94,25 +96,88 @@ For more information, refer to the [Time Series Transform option documentation](
 
 Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
 
+> **Note:** There is no option to add exemplars with an **Instant** query type.
+
+### Inspector
+
+Click **Inspector** to get detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
+
+{{< figure src="/static/img/docs/prometheus/insepctor-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Inspector" >}}
+
+## Builder mode
+
+**Builder mode** helps you build queries using a visual interface. This option is best for users who have limited or no previous experience working with Prometheus and PromQL.
+
+This video demonstrates how to use the visual Prometheus query builder available in Grafana v9.0:
+
+{{< vimeo 720004179 >}}
+
+</br>
+
+### Metrics
+
+{{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
+
+When you are ready to create a query, you can choose the specific metric name from the dropdown list under **Metric**.
+The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
+You can also enter text into the selector when the dropdown is open to search and filter the list.
+
+### Label filters
+
+Select desired labels and their values from the dropdown list.
+When a metric is selected, the data source requests available labels and their values from the server.
+Use the `+` button to add a label, and the `x` button to remove a label.
+
+### Operations
+
+{{< figure src="/static/img/docs/prometheus/operations.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" >}}
+
+Select the **+ Operations** button to add operations to your query.
+
+The query editor groups operations into the following sections:
+
+- Aggregations - for additional information see [Aggregation operators](https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators).
+- Range functions - for additional information see [Functions](https://prometheus.io/docs/prometheus/latest/querying/functions/#functions).
+- Functions - for additional information see [Functions](https://prometheus.io/docs/prometheus/latest/querying/functions/#functions).
+- Binary operations - for additional information see [Binary operators](https://prometheus.io/docs/prometheus/latest/querying/operators/#binary-operators).
+- Trigonometric - for additional information see [Trigonometric functions](https://prometheus.io/docs/prometheus/latest/querying/functions/#trigonometric-functions).
+- Time functions - for additional information see [Functions](https://prometheus.io/docs/prometheus/latest/querying/functions/#functions).
+
+All operations have function parameters under the operation header. Click the `operator` to see a full list of supported functions. Some operations allow you to apply specific labels to functions.
+
+{{< figure src="/static/img/docs/prometheus/use-function-by-label-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Functions and labels" >}}
+
+Some operations make sense only when used in a specific order.
+If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
+
+#### Hints
+
+{{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
+
+The query editor can detect which operations are most appropriate for some selected metrics.
+If it does, it displays a hint next to the **+ Operations** button.
+
+To add the operation to your query, click the **Hint**.
+
+Once you are satisfied with your query, click **Run query**.
+
 ## Code mode
 
 **Code mode** is for the experienced Prometheus user with prior expertise in PromQL, Prometheus' query language. The Code mode editor allows you to create queries just as you would in Prometheus. For more information about PromQL see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
 
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
-The user interface (UI) also lets you select metrics, label filter and operations.
+The user interface (UI) also lets you select metrics, labels, filters and operations.
 
 <!-- You can also use the [Explain feature]({{< relref "#use-explain-mode-to-understand-queries" >}}) to help understand how a query works, and augment queries by using [template variables]({{< relref "./template-variables/" >}}). -->
 
 You can write complex queries using the text editor with autocompletion features and syntax highlighting.
 It also contains a [Metrics browser]({{< relref "#metrics-browser" >}}) to further help you write queries.
 
-### Use autocompletion
+### Use autocomplete
 
-Code mode's autocompletion feature works automatically while typing. The query editor can autocomplete static functions, aggregations, keywords, and also dynamic items like metrics and labels.
+Code mode's autocomplete feature works automatically while typing. The query editor can autocomplete static functions, aggregations, keywords, and also dynamic items like metrics and labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
-
-<!-- To run a query in [Explore]({{< relref "../../../explore/" >}}), use the keyboard shortcut <key>Shift</key> + <key>Enter</key>. -->
 
 ### Metrics browser
 
@@ -127,7 +192,7 @@ You can then select one or more labels shown in Step 2.
 Select one or more values in Step 3 for each label to tighten your query scope.
 In Step 4, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
-> **Note:** If you do not remember a metric name to start with, you can also select a few labels to narrow down the list, then find relevant label values.
+> **Note:** If you do not remember a metric name, you can also select a few labels to narrow down the list, then find relevant label values.
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string.
 The values section has only one search field, and its filtering applies to all labels to help you find values across labels once selected.
@@ -135,94 +200,3 @@ The values section has only one search field, and its filtering applies to all l
 For example, among your labels `app`, `job`, `job_name` only one might have the value you are looking for.
 
 Once you are satisfied with your query, click **Run query**.
-
-<!-- The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
-The "Validate selector" button will check with Prometheus how many time series are available for that selector. -->
-
-## Builder mode
-
-**Builder mode** helps you build queries using a visual interface. This option is best for users who have limited or no previous experience working with Prometheus and PromQL.
-
-This video demonstrates how to use the visual Prometheus query builder available since Grafana v9.0:
-
-{{< vimeo 720004179 >}}
-
-</br>
-
-### Metric and labels
-
-{{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
-
-Select a specific metric name from the dropdown list.
-The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
-You can also enter text into the selector when the dropdown is open to search and filter the list.
-
-Select desired labels and their values from the dropdown list.
-When a metric is selected, the data source requests available labels and their values from the server.
-Use the `+` button to add a label, and the `x` button to remove a label.
-
-### Operations
-
-{{< figure src="/static/img/docs/prometheus/operations.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" >}}
-
-Select the **+ Operations** button to add operations to your query.
-The query editor groups operations into related sections, and you can type while the operations dropdown is open to search and filter the list.
-
-The following operations are available:
-
-- Aggregations
-- Range functions
-- Functions
-- Binary operations
-- Trigonometric
-- Time functions
-
-<!-- The query editor displays a query's operations as boxes in the operations section.
-Each operation's header displays its name, and additional action buttons appear when you hover your cursor over the header: -->
-
-<!-- | Button | Action                                                            |
-| ------ | ----------------------------------------------------------------- |
-| `v`    | Replaces the operation with different operation of the same type. |
-| `info` | Opens the operation's description tooltip.                        |
-| `x`    | Removes the operation.                                            | -->
-
-All operations have function parameters under the operation header. For details about each operation refer to Prometheus documentation on [Functions](https://prometheus.io/docs/prometheus/latest/querying/functions/).
-
-<!-- For details about each operation, use the `info` button to view the operation's description, or refer to the Prometheus documentation on [query functions](https://prometheus.io/docs/prometheus/latest/querying/functions/). -->
-
-Some operations make sense only when used in a specific order.
-If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
-
-<!-- To re-order operations manually, drag the operation box by its name and drop it into the desired place. -->
-
-#### Hints
-
-{{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
-
-The query editor can detect which operations are most appropriate for some selected metrics.
-If it does, it displays a hint next to the **+ Operations** button.
-
-To add the operation to your query, click the **Hint**.
-
-## Use Explain mode to understand queries
-
-{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
-
-Explain mode helps you understand a query by displaying a step-by-step explanation of all query components and operations.
-
-### Additional options
-
-In addition to these Builder mode-specific options, the query editor also displays the options it shares in common with Code mode.
-For details, refer to the [common options]({{< relref "#configure-common-options" >}}).
-
-## Apply annotations
-
-[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's Annotations view.
-
-Prometheus supports two ways to query annotations.
-
-- A regular metric query
-- A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/#inspecting-alerts-during-runtime))
-
-The step option is useful to limit the number of events returned from your query.
