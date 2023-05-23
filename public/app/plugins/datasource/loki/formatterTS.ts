@@ -46,23 +46,21 @@ import {
   ConvOp,
   BinOpExpr,
   LiteralExpr,
-  LabelReplaceExpr,
   VectorExpr,
   VectorOp,
+  Add,
+  Sub,
 } from '@grafana/lezer-logql';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { isValidQuery } from './queryUtils';
 
-// todo: complete all metric query types
-// todo: complete and refactor variable transformation
-
 export const formatLokiQuery = (query: string): string => {
-  if (isValidQuery(query) === false) {
+  const { transformedQuery, transformations } = transformVariablesToValue(query.trim());
+
+  if (isValidQuery(transformedQuery) === false) {
     return query;
   }
-
-  const { transformedQuery, transformations } = transformVariablesToValue(query);
 
   const tree = parser.parse(transformedQuery);
   let formatted = '';
@@ -71,7 +69,7 @@ export const formatLokiQuery = (query: string): string => {
     enter: (ref): void => {
       const node = ref.node;
 
-      if (node.parent?.type.id !== Expr) {
+      if (node.parent?.type.id !== Expr || node.parent?.parent?.type.id === BinOpExpr) {
         return;
       }
 
@@ -87,7 +85,7 @@ export const formatLokiQuery = (query: string): string => {
     },
   });
 
-  return transformValuesToVariables(formatted, transformations);
+  return transformValuesToVariables(formatted, transformations).trim();
 };
 
 /* 
@@ -99,10 +97,10 @@ const formatMetricExpr = (node: SyntaxNode, query: string): string => {
   let formatted = '';
 
   tree.iterate({
-    enter: (ref): void => {
+    enter: (ref): false | void => {
       const node = ref.node;
 
-      if (node.parent?.parent?.type.id !== Expr) {
+      if (node.parent?.parent?.type.id !== Expr || node.parent?.parent?.type.id === BinOpExpr) {
         return;
       }
 
@@ -117,15 +115,14 @@ const formatMetricExpr = (node: SyntaxNode, query: string): string => {
 
         case BinOpExpr:
           formatted = formatBinOpExpr(node, query);
-          break;
+          return false;
 
         case LiteralExpr:
-          break;
-
-        case LabelReplaceExpr:
+          formatted = formatLiteralExpr(node, query);
           break;
 
         case VectorExpr:
+          formatted = formatVectorExpr(node, query);
           break;
       }
     },
@@ -239,12 +236,12 @@ function formatLogRangeExpr(node: SyntaxNode, query: string): string {
     }
 
     if (node.type.id === OffsetExpr) {
-      response += ' ' + offset;
+      response += offset;
     }
 
     if (node.type.id === UnwrapExpr) {
       if (previousNode?.type.id !== OffsetExpr && previousNode?.type.id !== Range) {
-        response += '\n' + indent(0.5) + unwrap;
+        response += '\n' + indent(1) + unwrap;
       } else {
         response += ' ' + unwrap;
       }
@@ -268,11 +265,11 @@ function formatGrouping(node: SyntaxNode, query: string): string {
 
     switch (node.type.id) {
       case By:
-        response = ` by(${labels.join(', ')})`;
+        response = ` by (${labels.join(', ')}) `;
         break;
 
       case Without:
-        response = ` without(${labels.join(', ')})`;
+        response = ` without (${labels.join(', ')}) `;
         break;
     }
   });
@@ -327,8 +324,37 @@ function formatBinOpExpr(node: SyntaxNode, query: string): string {
     return formatLokiQuery(query.substring(node.from, node.to));
   });
 
-  console.log(leftExpr + '\n' + operator + '\n' + rightExpr);
   return leftExpr + '\n' + operator + '\n' + rightExpr;
+}
+
+function formatLiteralExpr(node: SyntaxNode, query: string): string {
+  const addNode = node.getChild(Add);
+  const subNode = node.getChild(Sub);
+  const numberNode = node.getChild(Number);
+
+  if (!numberNode) {
+    return '';
+  }
+
+  if (addNode) {
+    return `+${query.substring(numberNode.from, numberNode.to)}`;
+  }
+
+  if (subNode) {
+    return `-${query.substring(numberNode.from, numberNode.to)}`;
+  }
+
+  return query.substring(numberNode.from, numberNode.to);
+}
+
+function formatVectorExpr(node: SyntaxNode, query: string): string {
+  const numberNode = node.getChild(Number);
+
+  if (!numberNode) {
+    return '';
+  }
+
+  return `vector(${query.substring(numberNode.from, numberNode.to)})`;
 }
 
 /* 
