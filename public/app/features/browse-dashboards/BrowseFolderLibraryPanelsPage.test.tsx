@@ -13,9 +13,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { LibraryElementsSearchResult } from '../library-panels/types';
 
 import BrowseFolderLibraryPanelsPage, { OwnProps } from './BrowseFolderLibraryPanelsPage';
-import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
-
-const [_, { folderA }] = wellFormedTree();
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -30,6 +27,8 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const mockFolderName = 'myFolder';
+const mockFolderUid = '12345';
 const mockLibraryPanelName = 'myLibraryPanel';
 const mockLibraryElementsSearchResult: LibraryElementsSearchResult = {
   page: 1,
@@ -38,7 +37,7 @@ const mockLibraryElementsSearchResult: LibraryElementsSearchResult = {
   elements: [
     {
       name: mockLibraryPanelName,
-      folderUid: folderA.item.uid,
+      folderUid: mockFolderUid,
       model: {
         type: 'timeseries',
       },
@@ -56,8 +55,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         return res(
           ctx.status(200),
           ctx.json({
-            title: folderA.item.title,
-            uid: folderA.item.uid,
+            title: mockFolderName,
+            uid: mockFolderUid,
           })
         );
       }),
@@ -86,7 +85,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       ...getRouteComponentProps({
         match: {
           params: {
-            uid: folderA.item.uid,
+            uid: mockFolderUid,
           },
           isExact: false,
           path: '',
@@ -103,7 +102,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   it('displays the folder title', async () => {
     render(<BrowseFolderLibraryPanelsPage {...props} />);
-    expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: mockFolderName })).toBeInTheDocument();
   });
 
   it('displays the "Folder actions" button', async () => {

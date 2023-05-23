@@ -17,9 +17,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import BrowseFolderAlertingPage, { OwnProps } from './BrowseFolderAlertingPage';
-import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';
-
-const [_, { folderA }] = wellFormedTree();
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -34,10 +31,12 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const mockFolderName = 'myFolder';
+const mockFolderUid = '12345';
 const mockAlertRuleName = 'myAlertRule';
 
 const mockRulerRulesResponse: RulerRulesConfigDTO = {
-  [folderA.item.title]: [
+  [mockFolderName]: [
     {
       name: 'foo',
       interval: '1m',
@@ -69,7 +68,7 @@ const mockRulerRulesResponse: RulerRulesConfigDTO = {
               },
             ],
             uid: 'eb8bc52a-9a1d-4100-a428-91b543c0e5ab',
-            namespace_uid: folderA.item.uid,
+            namespace_uid: mockFolderUid,
             namespace_id: 93,
             no_data_state: GrafanaAlertStateDecision.NoData,
             exec_err_state: GrafanaAlertStateDecision.Error,
@@ -87,7 +86,7 @@ const mockPrometheusRulesResponse: PromRulesResponse = {
     groups: [
       {
         name: 'foo',
-        file: folderA.item.title,
+        file: mockFolderName,
         rules: [
           {
             alerts: [],
@@ -124,8 +123,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         return res(
           ctx.status(200),
           ctx.json({
-            title: folderA.item.title,
-            uid: folderA.item.uid,
+            title: mockFolderName,
+            uid: mockFolderUid,
           })
         );
       }),
@@ -149,7 +148,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       ...getRouteComponentProps({
         match: {
           params: {
-            uid: folderA.item.uid,
+            uid: mockFolderUid,
           },
           isExact: false,
           path: '',
@@ -166,7 +165,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   it('displays the folder title', async () => {
     render(<BrowseFolderAlertingPage {...props} />);
-    expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: mockFolderName })).toBeInTheDocument();
   });
 
   it('displays the "Folder actions" button', async () => {
