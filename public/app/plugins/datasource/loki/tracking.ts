@@ -183,6 +183,7 @@ export function trackQuery(
       time_range_to: request?.range?.to?.toISOString(),
       time_taken: Date.now() - startTime.getTime(),
       bytes_processed: totalBytes,
+      is_split: false,
       ...extraPayload,
     });
   }
@@ -197,13 +198,14 @@ export function trackGroupedQueries(
     split_query_group_count: requests.length,
     split_query_largest_partition_size: Math.max(...requests.map(({ partition }) => partition.length)),
     split_query_total_request_count: requests.reduce((total, { partition }) => total + partition.length, 0),
+    is_split: true,
   };
 
   for (const group of requests) {
     const split_query_partition_size = group.partition.length;
     trackQuery(response, group.request, startTime, {
       ...splittingPayload,
-      splitting_partition_size,
+      split_query_partition_size,
     });
   }
 }

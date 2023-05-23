@@ -6,7 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
 
 import { partitionTimeRange } from './querySplitting';
-import { trackGroupedQueries } from './tracking';
+import { trackGroupedQueries, trackQuery } from './tracking';
 import { LokiGroupedRequest, LokiQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -58,6 +58,35 @@ beforeAll(() => {
 afterAll(() => {
   jest.useRealTimers();
 });
+beforeEach(() => {
+  jest.mocked(reportInteraction).mockClear();
+});
+
+test('Tracks queries', () => {
+  trackQuery({ data: [] }, requests[1].request, new Date());
+
+  expect(reportInteraction).toHaveBeenCalledWith('grafana_loki_query_executed', {
+    app: 'explore',
+    bytes_processed: 0,
+    editor_mode: 'builder',
+    grafana_version: '1.0',
+    has_data: false,
+    has_error: false,
+    is_split: false,
+    legend: undefined,
+    line_limit: 10,
+    obfuscated_query: '{Identifier=String}',
+    parsed_query: 'LogQL,Expr,LogExpr,Selector,Matchers,Matcher,Identifier,Eq,String',
+    query_type: 'logs',
+    query_vector_type: undefined,
+    resolution: 1,
+    simultaneously_executed_query_count: 1,
+    simultaneously_hidden_query_count: 0,
+    time_range_from: '2023-02-08T05:00:00.000Z',
+    time_range_to: '2023-02-10T06:00:00.000Z',
+    time_taken: 0,
+  });
+});
 
 test('Tracks grouped queries', () => {
   trackGroupedQueries({ data: [] }, requests, new Date());
@@ -69,6 +98,7 @@ test('Tracks grouped queries', () => {
     grafana_version: '1.0',
     has_data: false,
     has_error: false,
+    is_split: true,
     legend: undefined,
     line_limit: undefined,
     obfuscated_query: 'count_over_time({Identifier=String}[1m])',
@@ -79,10 +109,10 @@ test('Tracks grouped queries', () => {
     resolution: 1,
     simultaneously_executed_query_count: 1,
     simultaneously_hidden_query_count: 1,
-    splitting_groups: 2,
-    splitting_max_requests: 3,
-    splitting_partition_size: 3,
-    splitting_total_requests: 6,
+    split_query_group_count: 2,
+    split_query_largest_partition_size: 3,
+    split_query_partition_size: 3,
+    split_query_total_request_count: 6,
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
@@ -95,6 +125,7 @@ test('Tracks grouped queries', () => {
     grafana_version: '1.0',
     has_data: false,
     has_error: false,
+    is_split: true,
     legend: undefined,
     line_limit: undefined,
     obfuscated_query: '{Identifier=String}',
@@ -104,10 +135,10 @@ test('Tracks grouped queries', () => {
     resolution: 1,
     simultaneously_executed_query_count: 1,
     simultaneously_hidden_query_count: 1,
-    splitting_groups: 2,
-    splitting_max_requests: 3,
-    splitting_partition_size: 3,
-    splitting_total_requests: 6,
+    split_query_group_count: 2,
+    split_query_largest_partition_size: 3,
+    split_query_partition_size: 3,
+    split_query_total_request_count: 6,
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
@@ -120,6 +151,7 @@ test('Tracks grouped queries', () => {
     grafana_version: '1.0',
     has_data: false,
     has_error: false,
+    is_split: true,
     legend: undefined,
     line_limit: 10,
     obfuscated_query: '{Identifier=String}',
@@ -129,10 +161,10 @@ test('Tracks grouped queries', () => {
     resolution: 1,
     simultaneously_executed_query_count: 1,
     simultaneously_hidden_query_count: 0,
-    splitting_groups: 2,
-    splitting_max_requests: 3,
-    splitting_partition_size: 3,
-    splitting_total_requests: 6,
+    split_query_group_count: 2,
+    split_query_largest_partition_size: 3,
+    split_query_partition_size: 3,
+    split_query_total_request_count: 6,
     time_range_from: '2023-02-08T05:00:00.000Z',
     time_range_to: '2023-02-10T06:00:00.000Z',
     time_taken: 0,
