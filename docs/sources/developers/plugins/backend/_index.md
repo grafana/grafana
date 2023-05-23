@@ -82,7 +82,7 @@ Examples of use cases for implementing resources:
 
 #### Health checks
 
-The health checks capability allows a backend plugin to return the status of the plugin. For data source backend plugins, the health check is automatically called when a user edits a data source by selecting _Save & Test_ in the UI.
+The health checks capability allows a backend plugin to return the status of the plugin. For data source backend plugins, the health check is automatically called when a user edits a data source and selects _Save & Test_ in the UI.
 
 A plugin's health check endpoint is exposed in the Grafana HTTP API and allows external systems to continuously poll the plugin's health to make sure that it's running and working as expected.
 
