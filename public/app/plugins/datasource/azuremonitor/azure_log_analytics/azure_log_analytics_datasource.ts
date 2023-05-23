@@ -3,6 +3,7 @@ import { map } from 'lodash';
 import { DataSourceInstanceSettings, DataSourceRef, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -17,7 +18,6 @@ import {
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 interface AdhocQuery {
   datasource: DataSourceRef;
@@ -175,13 +175,17 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return target;
   }
 
-  private expandResourcesForMultipleVariables(resources: string[] | undefined, scopedVars: ScopedVars, templateSrv: TemplateSrv): string[] | undefined {
+  private expandResourcesForMultipleVariables(
+    resources: string[] | undefined,
+    scopedVars: ScopedVars,
+    templateSrv: TemplateSrv
+  ): string[] | undefined {
     if (!resources) {
       return undefined;
     }
-    const expandedResources: Array<string> = [];
+    const expandedResources: string[] = [];
     resources.forEach((r: string) => {
-      const tempVars = templateSrv.replace(r, scopedVars, "raw" ) as string;
+      const tempVars = templateSrv.replace(r, scopedVars, 'raw');
       const values = tempVars.split(',');
       values.forEach((value) => {
         expandedResources.push(value);
