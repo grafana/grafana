@@ -43,7 +43,8 @@ lineage: seqs: [
 					// Configuration of dashboard cursor sync behavior. 
 					// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
 					graphTooltip: #DashboardCursorSync
-					// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
+					// Time range for dashboard.
+					// Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.
 					time?: {
 						from: string | *"now-6h"
 						to:   string | *"now"
