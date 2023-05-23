@@ -68,6 +68,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 // Extension Points available in core Grafana
 export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+  ExploreToolbarAction = 'grafana/explore/toolbar/action',
 }
 
 export type PluginExtensionPanelContext = {
@@ -87,3 +88,5 @@ type Dashboard = {
   title: string;
   tags: string[];
 };
+
+export type PluginExtensionExploreContext = {};

@@ -1,35 +1,30 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { lazy, RefObject, Suspense, useMemo } from 'react';
+import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { AccessControlAction } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
-import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
-import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
+import { DashNavButton } from '../../dashboard/components/DashNav/DashNavButton';
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../../profile/state/reducers';
+import { getFiscalYearStartMonth, getTimeZone } from '../../profile/state/selectors';
+import { ExploreTimeControls } from '../ExploreTimeControls';
+import { LiveTailButton } from '../LiveTailButton';
+import { changeDatasource } from '../state/datasource';
+import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from '../state/main';
+import { cancelQueries, runQueries } from '../state/query';
+import { isSplit } from '../state/selectors';
+import { syncTimes, changeRefreshInterval } from '../state/time';
+import { LiveTailControls } from '../useLiveTailControls';
 
-import { ExploreTimeControls } from './ExploreTimeControls';
-import { LiveTailButton } from './LiveTailButton';
-import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
-import { cancelQueries, runQueries } from './state/query';
-import { isSplit } from './state/selectors';
-import { syncTimes, changeRefreshInterval } from './state/time';
-import { LiveTailControls } from './useLiveTailControls';
-
-const AddToDashboard = lazy(() =>
-  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
-);
+import { ToolbarExtensionPoint } from './ToolbarExtensionPoint';
 
 const rotateIcon = css({
   '> div > svg': {
@@ -123,12 +118,12 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval(exploreId, item));
   };
 
-  const showExploreToDashboard = useMemo(
-    () =>
-      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
-      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor),
-    []
-  );
+  // const showExploreToDashboard = useMemo(
+  //   () =>
+  //     contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
+  //     contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor),
+  //   []
+  // );
 
   return (
     <div ref={topOfViewRef}>
@@ -188,11 +183,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               </ToolbarButton>
             </ButtonGroup>
           ),
-          showExploreToDashboard && (
-            <Suspense key="addToDashboard" fallback={null}>
-              <AddToDashboard exploreId={exploreId} />
-            </Suspense>
-          ),
+          <ToolbarExtensionPoint key="toolbar-extension-point" splitted={splitted} exploreId={exploreId} />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"
