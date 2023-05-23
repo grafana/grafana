@@ -207,24 +207,40 @@ type AnnotationTarget struct {
 // 2 for shared crosshair AND shared tooltip.
 type CursorSync int
 
-// FROM public/app/features/dashboard/state/Models.ts - ish
-// TODO docs
+// Links with references to other dashboards or external resources
 type Link struct {
-	AsDropdown  bool     `json:"asDropdown"`
-	Icon        string   `json:"icon"`
-	IncludeVars bool     `json:"includeVars"`
-	KeepTime    bool     `json:"keepTime"`
-	Tags        []string `json:"tags"`
-	TargetBlank bool     `json:"targetBlank"`
-	Title       string   `json:"title"`
-	Tooltip     string   `json:"tooltip"`
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	AsDropdown bool `json:"asDropdown"`
 
-	// TODO docs
+	// Icon name to be displayed with the link
+	Icon string `json:"icon"`
+
+	// If true, includes current template variables values in the link as query params
+	IncludeVars bool `json:"includeVars"`
+
+	// If true, includes current time range in the link as query params
+	KeepTime bool `json:"keepTime"`
+
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	Tags []string `json:"tags"`
+
+	// If true, the link will be opened in a new tab
+	TargetBlank bool `json:"targetBlank"`
+
+	// Title to display with the link
+	Title string `json:"title"`
+
+	// Tooltip to display when the user hovers their mouse over it
+	Tooltip string `json:"tooltip"`
+
+	// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 	Type LinkType `json:"type"`
-	Url  string   `json:"url"`
+
+	// Link URL. Only required/valid if the type is link
+	Url string `json:"url"`
 }
 
-// TODO docs
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 type LinkType string
 
 // Ref to a DataSource instance
@@ -410,7 +426,7 @@ type Panel struct {
 	// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
 	// This value must be formatted as a number followed by a valid time
 	// identifier like: "40s", "3d", etc.
-	// See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval
+	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	Interval     *string          `json:"interval,omitempty"`
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
@@ -448,15 +464,23 @@ type Panel struct {
 	// TODO docs - seems to be an old field from old dashboard alerts?
 	Thresholds []interface{} `json:"thresholds,omitempty"`
 
-	// TODO docs
-	// TODO tighter constraint
+	// Overrides the relative time range for individual panels,
+	// which causes them to be different than what is selected in
+	// the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different
+	// time periods or days on the same dashboard.
+	// The value is formated as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far),
+	// `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
+	// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	TimeFrom *string `json:"timeFrom,omitempty"`
 
 	// TODO docs
 	TimeRegions []interface{} `json:"timeRegions,omitempty"`
 
-	// TODO docs
-	// TODO tighter constraint
+	// Overrides the time range for individual panels by shifting its start and end relative to the time picker.
+	// For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+	// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
@@ -593,7 +617,7 @@ type Spec struct {
 	// TODO must isolate or remove identifiers local to a Grafana instance...?
 	Id *int64 `json:"id,omitempty"`
 
-	// TODO docs
+	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -705,9 +729,10 @@ type SpecialValueMapType string
 // type directly to achieve the same effect.
 type Target = map[string]interface{}
 
-// TODO docs
+// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 type Threshold struct {
-	// TODO docs
+	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 	Color string `json:"color"`
 
 	// Threshold index, an old property that is not needed an should only appear in older dashboards
@@ -718,20 +743,21 @@ type Threshold struct {
 	// Some seem to be listed in typescript comment
 	State *string `json:"state,omitempty"`
 
-	// TODO docs
+	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
 	Value *float32 `json:"value,omitempty"`
 }
 
 // ThresholdsConfig defines model for ThresholdsConfig.
 type ThresholdsConfig struct {
+	// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
 	Mode ThresholdsMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []Threshold `json:"steps"`
 }
 
-// ThresholdsMode defines model for ThresholdsMode.
+// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
 type ThresholdsMode string
 
 // Maps text values to a color or different display text

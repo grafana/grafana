@@ -173,19 +173,48 @@ export interface DataSourceRef {
 }
 
 /**
- * FROM public/app/features/dashboard/state/DashboardModels.ts - ish
- * TODO docs
+ * Links with references to other dashboards or external resources
  */
 export interface DashboardLink {
+  /**
+   * If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+   */
   asDropdown: boolean;
+  /**
+   * Icon name to be displayed with the link
+   */
   icon: string;
+  /**
+   * If true, includes current template variables values in the link as query params
+   */
   includeVars: boolean;
+  /**
+   * If true, includes current time range in the link as query params
+   */
   keepTime: boolean;
+  /**
+   * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+   */
   tags: Array<string>;
+  /**
+   * If true, the link will be opened in a new tab
+   */
   targetBlank: boolean;
+  /**
+   * Title to display with the link
+   */
   title: string;
+  /**
+   * Tooltip to display when the user hovers their mouse over it
+   */
   tooltip: string;
+  /**
+   * Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+   */
   type: DashboardLinkType;
+  /**
+   * Link URL. Only required/valid if the type is link
+   */
   url: string;
 }
 
@@ -198,7 +227,7 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
 };
 
 /**
- * TODO docs
+ * Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
  */
 export type DashboardLinkType = ('link' | 'dashboards');
 
@@ -274,11 +303,12 @@ export const defaultGridPos: Partial<GridPos> = {
 };
 
 /**
- * TODO docs
+ * User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+ * They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
  */
 export interface Threshold {
   /**
-   * TODO docs
+   * Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
    */
   color: string;
   /**
@@ -292,12 +322,15 @@ export interface Threshold {
    */
   state?: string;
   /**
-   * TODO docs
+   * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
    * FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
    */
   value?: number;
 }
 
+/**
+ * Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+ */
 export enum ThresholdsMode {
   Absolute = 'absolute',
   Percentage = 'percentage',
@@ -465,7 +498,7 @@ export interface Panel {
    * The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
    * This value must be formatted as a number followed by a valid time
    * identifier like: "40s", "3d", etc.
-   * See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval
+   * See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
    */
   interval?: string;
   /**
@@ -517,8 +550,14 @@ export interface Panel {
    */
   thresholds?: Array<unknown>;
   /**
-   * TODO docs
-   * TODO tighter constraint
+   * Overrides the relative time range for individual panels,
+   * which causes them to be different than what is selected in
+   * the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different
+   * time periods or days on the same dashboard.
+   * The value is formated as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far),
+   * `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
+   * Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+   * See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
    */
   timeFrom?: string;
   /**
@@ -526,8 +565,10 @@ export interface Panel {
    */
   timeRegions?: Array<unknown>;
   /**
-   * TODO docs
-   * TODO tighter constraint
+   * Overrides the time range for individual panels by shifting its start and end relative to the time picker.
+   * For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+   * Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+   * See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
    */
   timeShift?: string;
   /**
@@ -736,7 +777,7 @@ export interface Dashboard {
    */
   id?: number;
   /**
-   * TODO docs
+   * Links with references to other dashboards or external websites.
    */
   links?: Array<DashboardLink>;
   /**
