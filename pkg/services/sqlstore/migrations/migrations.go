@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/oauthserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
