@@ -27,8 +27,8 @@ const (
 // OAuth2Server represents a service in charge of managing OAuth2 clients
 // and handling OAuth2 requests (token, introspection).
 type OAuth2Server interface {
-	// SaveExternalService creates or updates an external service in the database, it ensures that the associated
-	// service account has the correct permissions.
+	// SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
+	// it ensures that the associated service account has the correct permissions.
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)
 	// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 	// SignedInUser from the associated service account.

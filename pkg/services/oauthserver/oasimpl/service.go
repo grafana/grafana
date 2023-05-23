@@ -129,8 +129,136 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 	)
 }
 
-// RandString generates a a cryptographically secure random string of n bytes
-func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
+// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
+// SignedInUser from the associated service account.
+// For performance reason, the service uses caching.
+func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
+	entry, ok := s.cache.Get(id)
+	if ok {
+		app, ok := entry.(oauthserver.Client)
+		if ok {
+			s.logger.Debug("GetExternalService: cache hit", "client id", id)
+			return &app, nil
+		}
+	}
+
+	app, err := s.sqlstore.GetExternalService(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve self permissions and generate a signed in user
+	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
+	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
+	if err != nil {
+		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
+		return nil, err
+	}
+
+	app.SignedInUser = &user.SignedInUser{
+		UserID:      sa.Id,
+		OrgID:       oauthserver.TmpOrgID,
+		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
+		Login:       sa.Login,
+		Name:        sa.Name,
+		Permissions: map[int64]map[string][]string{},
+	}
+	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
+	if err != nil {
+		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
+		return nil, err
+	}
+	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
+
+	s.cache.Set(id, *app, cacheExpirationTime)
+
+	return app, nil
+}
+
+// SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
+// it ensures that the associated service account has the correct permissions.
+// Database consistency is not guaranteed, consider changing this in the future.
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+	if registration == nil {
+		s.logger.Warn("RegisterExternalService called without registration")
+		return nil, nil
+	}
+	s.logger.Info("Registering external service", "external service name", registration.ExternalServiceName)
+
+	// Check if the client already exists in store
+	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.ExternalServiceName)
+	if errFetchExtSvc != nil {
+		var srcError errutil.Error
+		if errors.As(errFetchExtSvc, &srcError) {
+			if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
+				s.logger.Error("Error fetching service", "external service", registration.ExternalServiceName, "error", errFetchExtSvc)
+				return nil, errFetchExtSvc
+			}
+		}
+	}
+	// Otherwise, create a new client
+	if client == nil {
+		s.logger.Debug("External service does not yet exist", "external service name", registration.ExternalServiceName)
+		client = &oauthserver.Client{
+			ExternalServiceName: registration.ExternalServiceName,
+			ServiceAccountID:    oauthserver.NoServiceAccountID,
+			Audiences:           s.cfg.AppURL,
+		}
+	}
+
+	client.ImpersonatePermissions = registration.ImpersonatePermissions
+
+	if registration.RedirectURI != nil {
+		client.RedirectURI = *registration.RedirectURI
+	}
+
+	var errGenCred error
+	client.ClientID, client.Secret, errGenCred = s.genCredentials()
+	if errGenCred != nil {
+		s.logger.Error("Error generating credentials", "client", client.LogID(), "error", errGenCred)
+		return nil, errGenCred
+	}
+
+	s.logger.Debug("Handle service account save")
+	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.ExternalServiceName, client.ServiceAccountID, registration.Permissions)
+	if errSaveServiceAccount != nil {
+		return nil, errSaveServiceAccount
+	}
+	client.ServiceAccountID = saID
+
+	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
+
+	// Handle key options
+	s.logger.Debug("Handle key options")
+	keys, err := s.handleKeyOptions(ctx, registration.Key)
+	if err != nil {
+		s.logger.Error("Error handling key options", "client", client.LogID(), "error", err)
+		return nil, err
+	}
+	if keys != nil {
+		client.PublicPem = []byte(keys.PublicPem)
+	}
+	dto := client.ToDTO()
+	dto.KeyResult = keys
+
+	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client.Secret), bcrypt.DefaultCost)
+	if err != nil {
+		s.logger.Error("Error hashing secret", "client", client.LogID(), "error", err)
+		return nil, err
+	}
+	client.Secret = string(hashedSecret)
+
+	err = s.sqlstore.SaveExternalService(ctx, client)
+	if err != nil {
+		s.logger.Error("Error saving external service", "client", client.LogID(), "error", err)
+		return nil, err
+	}
+	s.logger.Debug("Registered app", "client", client.LogID())
+	return dto, nil
+}
+
+// randString generates a a cryptographically secure random string of n bytes
+func (s *OAuth2ServiceImpl) randString(n int) (string, error) {
 	res := make([]byte, n)
 	_, err := rand.Read(res)
 	if err != nil {
@@ -140,12 +268,12 @@ func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 }
 
 func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
-	id, err := s.RandString(20)
+	id, err := s.randString(20)
 	if err != nil {
 		return "", "", err
 	}
 	// client_secret must be at least 32 bytes long
-	secret, err := s.RandString(32)
+	secret, err := s.randString(32)
 	if err != nil {
 		return "", "", err
 	}
@@ -336,132 +464,4 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	}
 
 	return sa.Id, nil
-}
-
-// SaveExternalService creates or updates an external service in the database, it ensures that the associated
-// service account has the correct permissions
-// Database consistency is not guaranteed, consider changing this in the future.
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
-	if registration == nil {
-		s.logger.Warn("RegisterExternalService called without registration")
-		return nil, nil
-	}
-	s.logger.Info("Registering external service", "external service name", registration.ExternalServiceName)
-
-	// Check if the client already exists in store
-	client, errFetchExtSvc := s.sqlstore.GetExternalServiceByName(ctx, registration.ExternalServiceName)
-	if errFetchExtSvc != nil {
-		var srcError errutil.Error
-		if errors.As(errFetchExtSvc, &srcError) {
-			if srcError.MessageID != oauthserver.ErrClientNotFoundMessageID {
-				s.logger.Error("Error fetching service", "external service", registration.ExternalServiceName, "error", errFetchExtSvc)
-				return nil, errFetchExtSvc
-			}
-		}
-	}
-	// Otherwise, create a new client
-	if client == nil {
-		s.logger.Debug("External service does not yet exist", "external service name", registration.ExternalServiceName)
-		client = &oauthserver.Client{
-			ExternalServiceName: registration.ExternalServiceName,
-			ServiceAccountID:    oauthserver.NoServiceAccountID,
-			Audiences:           s.cfg.AppURL,
-		}
-	}
-
-	client.ImpersonatePermissions = registration.ImpersonatePermissions
-
-	if registration.RedirectURI != nil {
-		client.RedirectURI = *registration.RedirectURI
-	}
-
-	var errGenCred error
-	client.ClientID, client.Secret, errGenCred = s.genCredentials()
-	if errGenCred != nil {
-		s.logger.Error("Error generating credentials", "client", client.LogID(), "error", errGenCred)
-		return nil, errGenCred
-	}
-
-	s.logger.Debug("Handle service account save")
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.ExternalServiceName, client.ServiceAccountID, registration.Permissions)
-	if errSaveServiceAccount != nil {
-		return nil, errSaveServiceAccount
-	}
-	client.ServiceAccountID = saID
-
-	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
-
-	// Handle key options
-	s.logger.Debug("Handle key options")
-	keys, err := s.handleKeyOptions(ctx, registration.Key)
-	if err != nil {
-		s.logger.Error("Error handling key options", "client", client.LogID(), "error", err)
-		return nil, err
-	}
-	if keys != nil {
-		client.PublicPem = []byte(keys.PublicPem)
-	}
-	dto := client.ToDTO()
-	dto.KeyResult = keys
-
-	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client.Secret), bcrypt.DefaultCost)
-	if err != nil {
-		s.logger.Error("Error hashing secret", "client", client.LogID(), "error", err)
-		return nil, err
-	}
-	client.Secret = string(hashedSecret)
-
-	err = s.sqlstore.SaveExternalService(ctx, client)
-	if err != nil {
-		s.logger.Error("Error saving external service", "client", client.LogID(), "error", err)
-		return nil, err
-	}
-	s.logger.Debug("Registered app", "client", client.LogID())
-	return dto, nil
-}
-
-// GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
-// SignedInUser from the associated service account.
-// For performance reason, the service uses caching.
-func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
-	entry, ok := s.cache.Get(id)
-	if ok {
-		app, ok := entry.(oauthserver.Client)
-		if ok {
-			s.logger.Debug("GetExternalService: cache hit", "client id", id)
-			return &app, nil
-		}
-	}
-
-	app, err := s.sqlstore.GetExternalService(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// Retrieve self permissions and generate a signed in user
-	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
-	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, app.ServiceAccountID)
-	if err != nil {
-		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
-		return nil, err
-	}
-
-	app.SignedInUser = &user.SignedInUser{
-		UserID:      sa.Id,
-		OrgID:       oauthserver.TmpOrgID,
-		OrgRole:     org.RoleType(sa.Role), // Need this to compute the permissions in OSS
-		Login:       sa.Login,
-		Name:        sa.Name,
-		Permissions: map[int64]map[string][]string{},
-	}
-	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
-	if err != nil {
-		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
-		return nil, err
-	}
-	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
-
-	s.cache.Set(id, *app, cacheExpirationTime)
-
-	return app, nil
 }
