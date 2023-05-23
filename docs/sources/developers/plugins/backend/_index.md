@@ -21,7 +21,7 @@ Grafana added support for _frontend plugins_ in version 3.0 so that the Grafana 
 
 However, one limitation with these plugins is that they execute on the client-side (that is, they run in the browser). Therefore, they can't support certain any use cases that require server-side features.
 
-Since Grafana v7.0, we have supported server-side plugins that remove this limitation. We use the term _backend plugin_ to denote that a plugin has a backend component. Still, normally a backend plugin requires frontend components as well. For example, this is true for backend data source plugins which normally need to work with query editor components on the frontend.
+Since Grafana v7.0, we have supported server-side plugins that remove this limitation. We use the term _backend plugin_ to denote that a plugin has a backend component. A backend plugin usually requires frontend components as well. For example, some backend data source plugins need query editor components on the frontend.
 
 ## Use cases for implementing a backend plugin
 
