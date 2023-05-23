@@ -349,7 +349,6 @@ func intersectScopes(s1, s2 []string) []string {
 }
 
 // Intersect returns the intersection of two slices of permissions, grouping scopes by action.
-// TODO: think of how that needs to handle intersection between: dashboards:create scoped and unscoped.
 func Intersect(p1, p2 []Permission) map[string][]string {
 	if len(p1) == 0 || len(p2) == 0 {
 		return map[string][]string{}
