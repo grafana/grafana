@@ -218,7 +218,8 @@ export async function importPluginModule({
     }
   }
 
-  if (!isAngular && config.featureToggles.pluginsFrontendSandbox) {
+  // This code cannot work in a nodejs environment and requires a real browser for the sandboxing mechanism to function.
+  if (!isAngular && config.featureToggles.pluginsFrontendSandbox && process.env.NODE_ENV !== 'test') {
     return importPluginModuleInSandbox({ pluginId });
   }
 
