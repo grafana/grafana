@@ -25,7 +25,7 @@ Since Grafana v7.0, we have supported server-side plugins that remove this limit
 
 ## Use cases for implementing a backend plugin
 
-The following examples gives are some common use cases for backend plugins:
+The following examples give some common use cases for backend plugins:
 
 - Enable [Grafana Alerting]({{< relref "../../../alerting/" >}}) for data sources.
 - Connect to SQL database servers and other non-HTTP services that normally can't be connected to from a browser.
