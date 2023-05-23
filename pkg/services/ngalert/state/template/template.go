@@ -47,7 +47,22 @@ type Value struct {
 }
 
 func (v Value) String() string {
-	return strconv.FormatFloat(v.Value, 'f', -1, 64)
+	absVal := math.Abs(v.Value)
+	if absVal == 0 {
+		return "0"
+	}
+
+	// Calculate the position of the first non-zero digit
+	firstNonZeroPos := int(math.Floor(math.Log10(absVal))) + 1
+
+	// Calculate the precision necessary to display two significant digits
+	precision := 2 - firstNonZeroPos
+	if precision < 0 {
+		precision = 0
+	}
+
+	// Return the string formatted to the desired precision
+	return strconv.FormatFloat(v.Value, 'f', precision, 64)
 }
 
 func NewValues(captures map[string]eval.NumberValueCapture) map[string]Value {
