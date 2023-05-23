@@ -477,3 +477,56 @@ def get_e2e_suffix():
     if not disable_tests:
         return '-e2e'
     return ''
+
+release_trigger = {
+    'event': {
+        'exclude': [
+            'promote'
+        ]
+    },
+    'ref': ['refs/tags/v*',],
+    'repo': {
+        'exclude': ['grafana/grafana'],
+    },
+}
+
+def verify_release_pipeline(
+        name = "verify-prerelease-assets",
+        bucket = from_secret(prerelease_bucket),
+        gcp_key = from_secret("gcp_key"),
+        version = "${DRONE_TAG}",
+        trigger = release_trigger,
+        depends_on = [
+            "oss-build-e2e-publish-release",
+            "oss-windows-release",
+            "enterprise-build-e2e-publish-release",
+            "enterprise-windows-release",
+        ]):
+    """
+    Runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release process.
+
+    Returns:
+      A single Drone pipeline that runs the script.
+    """
+    step = {
+        "name": "gsutil-stat",
+        "depends_on": ["clone"],
+        "image": "google/cloud-sdk",
+        "environment": {
+            "BUCKET": bucket,
+            "GCP_KEY": gcp_key,
+        },
+        "commands": [
+            "apt-get update && apt-get install -yq gettext",
+            "printenv GCP_KEY | base64 -d > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
+            "VERSION={} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat".format(version),
+        ],
+    }
+    return pipeline(
+        depends_on = depends_on,
+        name = name,
+        edition = "all",
+        trigger = trigger,
+        steps = [step],
+    )
