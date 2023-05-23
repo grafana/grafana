@@ -19,7 +19,7 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { getEmbeddedDashboardRoutes, getPublicDashboardRoutes } from '../features/dashboard/routes';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -508,6 +508,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    ...getEmbeddedDashboardRoutes(),
     {
       path: '/*',
       component: PageNotFound,
