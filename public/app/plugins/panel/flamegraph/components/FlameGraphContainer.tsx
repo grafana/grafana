@@ -11,7 +11,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
+import { SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -26,6 +26,8 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
+
   const theme = useTheme2();
 
   const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
@@ -75,6 +77,8 @@ const FlameGraphContainer = (props: Props) => {
             selectedView={selectedView}
             setSelectedView={setSelectedView}
             containerWidth={containerWidth}
+            textAlign={textAlign}
+            onTextAlignChange={setTextAlign}
           />
 
           <div className={styles.body}>
@@ -108,6 +112,7 @@ const FlameGraphContainer = (props: Props) => {
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
                 selectedView={selectedView}
+                textAlign={textAlign}
               />
             )}
           </div>
