@@ -58,6 +58,7 @@ go.sum @grafana/backend-platform
 /Dockerfile @grafana/grafana-delivery
 /Makefile @grafana/grafana-delivery
 /scripts/build/ @grafana/grafana-delivery
+/scripts/list-release-artifacts.sh @grafana/grafana-delivery
 
 # Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/aws-plugins
