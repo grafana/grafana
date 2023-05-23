@@ -267,7 +267,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/grafana-apiserver v0.0.0-20230510204443-bd441636ae0b
+	github.com/grafana/grafana-apiserver v0.0.0-20230522204031-8ffd54547a7f
 	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a
 	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
 	github.com/redis/go-redis/v9 v9.0.2
@@ -296,6 +296,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
+	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
@@ -364,7 +365,9 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	k8s.io/api v0.27.1 // indirect
 	k8s.io/component-base v0.27.1 // indirect
+	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kms v0.27.1 // indirect
+	k8s.io/kube-aggregator v0.27.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.1 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
