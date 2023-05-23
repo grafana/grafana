@@ -20,8 +20,8 @@ import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { useDispatch } from 'app/types';
 
 import { sortLogRows } from '../../utils';

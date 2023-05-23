@@ -7,11 +7,10 @@ import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafa
 import { config, reportInteraction } from '@grafana/runtime';
 import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { NodeGraph } from '../../plugins/panel/nodeGraph';
-import { useCategorizeFrames } from '../../plugins/panel/nodeGraph/useCategorizeFrames';
-import { ExploreId, StoreState } from '../../types';
-
-import { useLinks } from './utils/links';
+import { NodeGraph } from '../../../plugins/panel/nodeGraph';
+import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
+import { ExploreId, StoreState } from '../../../types';
+import { useLinks } from '../utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   warningText: css`
