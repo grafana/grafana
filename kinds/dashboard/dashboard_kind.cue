@@ -110,7 +110,7 @@ lineage: schemas: [{
 			// Only required/valid for the grafana datasource...
 			// but code+tests is already depending on it so hard to change
 			type: string
-			...
+			... // datasource will stick their raw DataQuery here
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 		#AnnotationPanelFilter: {
@@ -161,6 +161,9 @@ lineage: schemas: [{
 
 			// TODO -- this should not exist here, it is based on the --grafana-- datasource
 			type?: string @grafanamaturity(NeedsExpertReview)
+
+			// unless datasources have migrated to the target+mapping,
+			// they just spread their query into the base object :(
 			...
 		} @cuetsy(kind="interface")
 
@@ -455,7 +458,7 @@ lineage: schemas: [{
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
-			// options is specified by the PanelOptions field in panel
+			// options is specified by the Options field in panel
 			// plugin schemas.
 			options: {...} @grafanamaturity(NeedsExpertReview)
 
@@ -536,7 +539,7 @@ lineage: schemas: [{
 			// Alternative to empty string
 			noValue?: string @grafanamaturity(NeedsExpertReview)
 
-			// custom is specified by the PanelFieldConfig field
+			// custom is specified by the FieldConfig field
 			// in panel plugin schemas.
 			custom?: {...} @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
@@ -577,4 +580,6 @@ lineage: schemas: [{
 			...
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 	}
-}]
+
+},
+]

@@ -62,7 +62,7 @@ composableKinds: PanelCfg: {
 					name?: string
 				} @cuetsy(kind="interface")
 
-				PanelOptions: {
+				Options: {
 					common.OptionsWithLegend
 					common.OptionsWithTooltip
 

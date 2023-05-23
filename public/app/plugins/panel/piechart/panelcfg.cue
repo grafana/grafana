@@ -42,7 +42,7 @@ composableKinds: PanelCfg: {
 					common.VizLegendOptions
 					values: [...PieChartLegendValues]
 				} @cuetsy(kind="interface")
-				PanelOptions: {
+				Options: {
 					common.OptionsWithTooltip
 					common.SingleStatBaseOptions
 					pieType: PieChartType

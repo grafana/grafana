@@ -24,7 +24,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					ui.OptionsWithLegend
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
@@ -36,7 +36,7 @@ composableKinds: PanelCfg: {
 					//Controls the column width
 					colWidth?: float & <=1 | *0.9
 				} @cuetsy(kind="interface")
-				PanelFieldConfig: {
+				FieldConfig: {
 					ui.HideableFieldConfig
 					lineWidth?:   uint32 & <=10 | *1
 					fillOpacity?: uint32 & <=100 | *70

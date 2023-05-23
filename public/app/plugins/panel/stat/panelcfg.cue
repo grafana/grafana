@@ -25,7 +25,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					common.SingleStatBaseOptions
 					graphMode:   common.BigValueGraphMode & (*"area" | _)
 					colorMode:   common.BigValueColorMode & (*"value" | _)

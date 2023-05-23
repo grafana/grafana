@@ -21,7 +21,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					selectedSeries: int32 & >=0 | *0
 				} @cuetsy(kind="interface")
 			}

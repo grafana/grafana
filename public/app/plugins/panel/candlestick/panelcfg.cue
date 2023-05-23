@@ -18,10 +18,10 @@ composableKinds: PanelCfg: lineage: {
 	schemas: [{
 		version: [0, 0]
 		schema: {
-			PanelOptions: {
+			Options: {
 				...
 			} @cuetsy(kind="interface")
-			PanelFieldConfig: {
+			FieldConfig: {
 				...
 			} @cuetsy(kind="interface")
 		}

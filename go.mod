@@ -60,7 +60,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20230428095912-33c5aa68a5ba
 	github.com/grafana/grafana-aws-sdk v0.15.0
-	github.com/grafana/grafana-azure-sdk-go v1.6.0
+	github.com/grafana/grafana-azure-sdk-go v1.7.0
 	github.com/grafana/grafana-plugin-sdk-go v0.160.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-hclog v1.5.0
@@ -284,6 +284,7 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
+	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
@@ -344,7 +345,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7
+	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20191112132149-a4c4c47bc57f // indirect

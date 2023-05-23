@@ -21,7 +21,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					// empty/missing will default to grafana blog
 					feedUrl?:   string
 					showImage?: bool | *true

@@ -24,7 +24,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					ui.OptionsWithLegend
 					ui.OptionsWithTooltip
 					ui.OptionsWithTimezones
@@ -38,7 +38,7 @@ composableKinds: PanelCfg: {
 					//Controls value alignment on the timelines
 					alignValue?: ui.TimelineValueAlignment & (*"left" | _)
 				} @cuetsy(kind="interface")
-				PanelFieldConfig: {
+				FieldConfig: {
 					ui.HideableFieldConfig
 					lineWidth?:   uint32 & <=10 | *0
 					fillOpacity?: uint32 & <=100 | *70

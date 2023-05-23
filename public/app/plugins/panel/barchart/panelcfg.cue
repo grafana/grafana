@@ -22,10 +22,11 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
+
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					common.OptionsWithLegend
 					common.OptionsWithTooltip
 					common.OptionsWithTextFormatting
@@ -57,7 +58,7 @@ composableKinds: PanelCfg: {
 					// hovers over highlighted area
 					fullHighlight: bool | *false
 				} @cuetsy(kind="interface")
-				PanelFieldConfig: {
+				FieldConfig: {
 					common.AxisConfig
 					common.HideableFieldConfig
 

@@ -25,7 +25,7 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				PanelOptions: {
+				Options: {
 					common.SingleStatBaseOptions
 					displayMode:  common.BarGaugeDisplayMode & (*"gradient" | _)
 					valueMode:    common.BarGaugeValueMode & (*"color" | _)
