@@ -146,6 +146,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid", reqSignedIn, hs.Index)
+	r.Get("/d-embed/:uid", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, hs.Index)
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)

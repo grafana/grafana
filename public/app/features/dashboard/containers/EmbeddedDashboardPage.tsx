@@ -40,6 +40,7 @@ export default function EmbeddedDashboardPage({ match, route }: Props) {
         fixUrl: false,
         accessToken: match.params.accessToken,
         keybindingSrv: context.keybindings,
+        urlUid: match.params.uid,
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,10 +48,6 @@ export default function EmbeddedDashboardPage({ match, route }: Props) {
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
-  }
-
-  if (dashboard.meta.publicDashboardEnabled === false) {
-    return <p>Paused</p>;
   }
 
   if (dashboard.meta.dashboardNotFound) {

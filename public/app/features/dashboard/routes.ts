@@ -40,7 +40,7 @@ export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
     {
       path: '/d-embed/:uid',
       pageClass: 'dashboard-embed',
-      routeName: DashboardRoutes.Embed,
+      routeName: DashboardRoutes.Normal,
       component: SafeDynamicImport(
         () =>
           import(
