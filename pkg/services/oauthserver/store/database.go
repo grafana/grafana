@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -168,7 +169,7 @@ func (s *store) GetExternalServicePublicKey(ctx context.Context, clientID string
 		return nil, err
 	}
 
-	key, errParseKey := oauthserver.ParsePublicKeyPem(res.PublicPem)
+	key, errParseKey := utils.ParsePublicKeyPem(res.PublicPem)
 	if errParseKey != nil {
 		return nil, errParseKey
 	}

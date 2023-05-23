@@ -2,10 +2,6 @@ package oauthserver
 
 import (
 	"context"
-	"crypto/x509"
-	"encoding/pem"
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -14,23 +10,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-// ParsePublicKeyPem parses the public key from the PEM encoded public key.
-func ParsePublicKeyPem(publicPem []byte) (interface{}, error) {
-	block, _ := pem.Decode(publicPem)
-	if block == nil {
-		return nil, errors.New("could not decode PEM block")
-	}
-
-	switch block.Type {
-	case "PUBLIC KEY":
-		return x509.ParsePKIXPublicKey(block.Bytes)
-	case "RSA PUBLIC KEY":
-		return x509.ParsePKCS1PublicKey(block.Bytes)
-	default:
-		return nil, fmt.Errorf("unknown key type %q", block.Type)
-	}
-}
 
 type KeyResult struct {
 	URL        string `json:"url,omitempty"`

@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
 	"github.com/grafana/grafana/pkg/services/oauthserver/store"
+	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -236,7 +237,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 		if err != nil {
 			s.logger.Error("cannot decode base64 encoded PEM string", "error", err)
 		}
-		_, err = oauthserver.ParsePublicKeyPem(pemEncoded)
+		_, err = utils.ParsePublicKeyPem(pemEncoded)
 		if err != nil {
 			s.logger.Error("cannot parse PEM encoded string", "error", err)
 			return nil, err
