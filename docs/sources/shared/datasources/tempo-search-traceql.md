@@ -22,7 +22,7 @@ This new Search query type is available as an experimental feature. This feature
 Using the Search tab in Explore, you can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
 To access **Search**, select your Tempo data source, and then choose **Explore** and select **Query type** > **Search**.
-You can query by resource service name, span name, duration, and one or more tags. The examples on this page use the default filters.
+You can use the query builder to search trace data by resource service name, span name, duration, and one or more tags. The examples on this page use the default filters.
 
 In addition, you can add query builder blocks, view the query history, and use the **Inspector** to see details.
 
