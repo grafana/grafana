@@ -43,7 +43,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
-      // custom functions we make available to plugins in their window object
+      // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
