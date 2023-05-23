@@ -80,5 +80,5 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
-export const { useGetAffectedItemsQuery, useGetFolderQuery, useMoveFolderMutation } = browseDashboardsAPI;
+export const { endpoints, useGetAffectedItemsQuery, useGetFolderQuery, useMoveFolderMutation } = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';
