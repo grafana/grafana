@@ -30,7 +30,7 @@ type ClientDTO struct {
 
 type Client struct {
 	ID                  int64  `xorm:"id pk autoincr"`
-	ExternalServiceName string `xorm:"app_name"`
+	ExternalServiceName string `xorm:"name"`
 	ClientID            string `xorm:"client_id"`
 	Secret              string `xorm:"secret"`
 	RedirectURI         string `xorm:"redirect_uri"` // Not used yet (code flow)

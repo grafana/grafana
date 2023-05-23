@@ -11,20 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type store struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db db.DB
 }
 
-func NewStore(db db.DB, cfg *setting.Cfg) oauthserver.Store {
-	return &store{
-		db:  db,
-		cfg: cfg,
-	}
+func NewStore(db db.DB) oauthserver.Store {
+	return &store{db: db}
 }
 
 func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) error {
@@ -45,7 +40,7 @@ func createImpersonatePermissions(sess *db.Session, client *oauthserver.Client) 
 
 func registerExternalService(sess *db.Session, client *oauthserver.Client) error {
 	insertQuery := []interface{}{
-		`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO oauth_client (name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		client.ExternalServiceName,
 		client.ClientID,
 		client.Secret,
@@ -83,7 +78,7 @@ func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Client
 
 func updateExternalService(sess *db.Session, client *oauthserver.Client, prevClientID string) error {
 	updateQuery := []interface{}{
-		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, audiences = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE app_name = ?`,
+		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, audiences = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE name = ?`,
 		client.ClientID,
 		client.Secret,
 		client.GrantTypes,
@@ -129,7 +124,7 @@ func (s *store) GetExternalService(ctx context.Context, id string) (*oauthserver
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		getClientQuery := `SELECT
-		id, app_name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
+		id, name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
 		FROM oauth_client
 		WHERE client_id = ?`
 		found, err := sess.SQL(getClientQuery, id).Get(res)
@@ -206,9 +201,9 @@ func (s *store) GetExternalServiceByName(ctx context.Context, app string) (*oaut
 func getExternalServiceByName(sess *db.Session, app string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	getClientQuery := `SELECT
-		id, app_name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
+		id, name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri
 		FROM oauth_client
-		WHERE app_name = ?`
+		WHERE name = ?`
 	found, err := sess.SQL(getClientQuery, app).Get(res)
 	if err != nil {
 		return nil, err

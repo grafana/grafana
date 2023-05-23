@@ -94,7 +94,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 		accessControl: accessControl,
 		acService:     acSvc,
 		memstore:      storage.NewMemoryStore(),
-		sqlstore:      store.NewStore(db, cfg),
+		sqlstore:      store.NewStore(db),
 		logger:        log.New("oauthserver"),
 		userService:   userSvc,
 		saService:     svcAccSvc,

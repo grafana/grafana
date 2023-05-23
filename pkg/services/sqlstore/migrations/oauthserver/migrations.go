@@ -20,20 +20,19 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "oauth_client",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "app_name", Type: migrator.DB_Varchar, Length: 190, Nullable: true}, // TODO: Rename to external_service_name
+			{Name: "name", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
 			{Name: "client_id", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "secret", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "grant_types", Type: migrator.DB_Text, Nullable: true},
 			{Name: "audiences", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
 			{Name: "service_account_id", Type: migrator.DB_BigInt, Nullable: true},
-			{Name: "public_pem", Type: migrator.DB_Text, Nullable: true}, // TODO: 4096 should be enough but it is not too much? -> Removed the limit because pg does not support it
+			{Name: "public_pem", Type: migrator.DB_Text, Nullable: true},
 			{Name: "redirect_uri", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
-			// {Name: "domain", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"client_id"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"client_id", "service_account_id"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"app_name"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"name"}, Type: migrator.UniqueIndex},
 		},
 	}
 
@@ -49,5 +48,5 @@ func AddMigration(mg *migrator.Migrator) {
 	//-------  indexes ------------------
 	mg.AddMigration("add unique index client_id", migrator.NewAddIndexMigration(clientTable, clientTable.Indices[0]))
 	mg.AddMigration("add unique index client_id service_account_id", migrator.NewAddIndexMigration(clientTable, clientTable.Indices[1]))
-	mg.AddMigration("add unique index app_name", migrator.NewAddIndexMigration(clientTable, clientTable.Indices[2]))
+	mg.AddMigration("add unique index name", migrator.NewAddIndexMigration(clientTable, clientTable.Indices[2]))
 }
