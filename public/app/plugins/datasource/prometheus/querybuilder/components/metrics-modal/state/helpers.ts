@@ -248,5 +248,5 @@ export const placeholders = {
   type: 'Filter by type',
   includeNullMetadata: 'Include results with no metadata',
   setUseBackend: 'Enable regex search',
-  inferType: 'Infer Prometheus type',
+  inferType: 'Infer metric type',
 };

@@ -64,7 +64,7 @@ export function ResultsTable(props: ResultsTableProps) {
               textToHighlight={metric.type ?? ''}
               searchWords={state.metaHaystackMatches}
               autoEscape
-              highlightClassName={styles.matchHighLight}
+              highlightClassName={`${styles.matchHighLight} ${metric.inferred ? styles.italicized : ''}`}
             />{' '}
             {inferredType(metric.inferred ?? false)}
           </td>
@@ -81,7 +81,7 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td>
+          <td className={metric.inferred ? styles.italicized : ''}>
             {metric.type ?? ''} {inferredType(metric.inferred ?? false)}
           </td>
           <td>{metric.description ?? ''}</td>
@@ -228,6 +228,9 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     noResults: css`
       text-align: center;
       color: ${theme.colors.text.secondary};
+    `,
+    italicized: css`
+      font-style: italic;
     `,
   };
 };

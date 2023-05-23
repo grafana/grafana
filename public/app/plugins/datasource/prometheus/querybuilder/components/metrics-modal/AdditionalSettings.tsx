@@ -59,13 +59,19 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         <Icon
           name="info-circle"
           size="xs"
-          className={styles.backendTooltip}
+          className={styles.settingsIcon}
           title="Filter metric names by regex search, using an additional call on the Prometheus API."
         />
       </div>
       <div className={styles.selectItem}>
         <Switch data-testid={testIds.inferType} value={state.inferType} onChange={() => onChangeInferType()} />
         <div className={styles.selectItemLabel}>{placeholders.inferType}&nbsp;</div>
+        <Icon
+          name="info-circle"
+          size="xs"
+          className={styles.settingsIcon}
+          title="For example, metrics ending in _sum, _count, will be given an inferred type of counter. Metrics ending in _bucket with be given a type of histogram."
+        />
       </div>
     </>
   );
@@ -73,7 +79,7 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    backendTooltip: css`
+    settingsIcon: css`
       color: ${theme.colors.text.secondary};
     `,
     selectItem: css`
