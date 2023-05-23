@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-
-import { GeomapLayerHover } from '../../../plugins/panel/geomap/event';
+import { GeomapLayerHover } from 'app/plugins/panel/geomap/event';
 
 import { DataHoverRows } from './DataHoverRows';
 import { DataHoverTabs } from './DataHoverTabs';
