@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
@@ -151,7 +152,7 @@ func (s *AuthService) initKeySet() error {
 		if err != nil {
 			return err
 		}
-		if urlParsed.Scheme != "https" {
+		if urlParsed.Scheme != "https" && setting.Env != setting.Dev {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
 		s.keySet = &keySetHTTP{
@@ -222,6 +223,8 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	if ks.cacheExpiration > 0 {
 		cacheExpiration := ks.getCacheExpiration(resp.Header.Get("cache-control"))
 
+		ks.log.Debug("Setting key set in cache", "url", ks.url,
+			"cacheExpiration", cacheExpiration, "cacheControl", resp.Header.Get("cache-control"))
 		err = ks.cache.Set(ctx, ks.cacheKey, jsonBuf.Bytes(), cacheExpiration)
 	}
 	return jwks, err
