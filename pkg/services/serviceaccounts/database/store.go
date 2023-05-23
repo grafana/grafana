@@ -3,6 +3,7 @@ package database
 //nolint:goimports
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -373,14 +374,15 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
 			if err != nil {
+				fmt.Printf("failed to migrate API key %d to service account: %v\n", key.ID, err)
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return fmt.Errorf("operation timed out, please retry")
+				}
 				s.log.Error("migating to service accounts failed with error", err)
 				return err
 			}
 			s.log.Debug("API key converted to service account token", "keyId", key.ID)
 		}
-	}
-	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
-		s.log.Error("Failed to write API keys migration status", err)
 	}
 	return nil
 }
@@ -396,6 +398,9 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 	for _, key := range basicKeys {
 		if keyId == key.ID {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
+			// TODO: remove this sleep in PR
+			// Simulate a long-running operation
+			time.Sleep(2 * time.Second)
 			if err != nil {
 				s.log.Error("converting to service account failed with error", "keyId", keyId, "error", err)
 				return err
@@ -406,6 +411,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
+
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgID, key.Name),
@@ -420,6 +426,9 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		if errCreateSA != nil {
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}
+		// TODO: remove this sleep in PR
+		// Simulate a long-running operation
+		time.Sleep(100 * time.Millisecond)
 
 		if err := s.assignApiKeyToServiceAccount(sess, key.ID, newSA.ID); err != nil {
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)

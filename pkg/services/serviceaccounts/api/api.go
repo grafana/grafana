@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -329,7 +330,12 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
 	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+		if err != nil {
+			if strings.Contains(err.Error(), "please retry") {
+				return response.Error(http.StatusRequestTimeout, "Operation timed out, please retry", err)
+			}
+			return response.Error(http.StatusInternalServerError, "Internal server error", err)
+		}
 	}
 
 	return response.Success("API keys migrated to service accounts")
