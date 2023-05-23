@@ -3347,6 +3347,51 @@ volumes:
     path: /var/run/docker.sock
   name: docker
 ---
+depends_on:
+- oss-build-e2e-publish-release
+- oss-windows-release
+- enterprise-build-e2e-publish-release
+- enterprise-windows-release
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  depends_on:
+  - clone
+  environment:
+    BUCKET:
+      from_secret: prerelease_bucket
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: gsutil-stat
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+  - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
 depends_on: []
 image_pull_secrets:
 - dockerconfigjson
@@ -4800,6 +4845,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 11722c95d8ea29a67300b8fd0a6e98501f14e2f66a6cee4400e0069a0cd7e537
+hmac: c308db868702a2afd6fd653165e65a2e21c77c8e5d4dae5e9ad5d5de318fdae3
 
 ...
