@@ -7,17 +7,17 @@ import (
 )
 
 type api struct {
-	router       routing.RouteRegister
-	oauthService oauthserver.OAuth2Service
+	router      routing.RouteRegister
+	oauthServer oauthserver.OAuth2Server
 }
 
 func NewAPI(
 	router routing.RouteRegister,
-	oauthService oauthserver.OAuth2Service,
+	oauthServer oauthserver.OAuth2Server,
 ) *api {
 	return &api{
-		router:       router,
-		oauthService: oauthService,
+		router:      router,
+		oauthServer: oauthServer,
 	}
 }
 
@@ -35,9 +35,9 @@ func (a *api) RegisterAPIEndpoints() {
 }
 
 func (a *api) handleTokenRequest(c *contextmodel.ReqContext) {
-	a.oauthService.HandleTokenRequest(c.Resp, c.Req)
+	a.oauthServer.HandleTokenRequest(c.Resp, c.Req)
 }
 
 func (a *api) handleIntrospectionRequest(c *contextmodel.ReqContext) {
-	a.oauthService.HandleIntrospectionRequest(c.Resp, c.Req)
+	a.oauthServer.HandleIntrospectionRequest(c.Resp, c.Req)
 }

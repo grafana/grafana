@@ -20,9 +20,9 @@ const (
 	ScopeTeamsSelf       = "teams:self"
 )
 
-// OAuth2Service represents a service in charge of managing OAuth2 clients
+// OAuth2Server represents a service in charge of managing OAuth2 clients
 // and handling OAuth2 requests (token, introspection)
-type OAuth2Service interface {
+type OAuth2Server interface {
 	// SaveExternalService creates or updates an external service in the database, it ensures that the associated
 	// service account has the correct permissions
 	SaveExternalService(ctx context.Context, cmd *ExternalServiceRegistration) (*ClientDTO, error)

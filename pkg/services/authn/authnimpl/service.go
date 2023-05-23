@@ -65,7 +65,7 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
-	signingKeysService signingkeys.Service, oauthService oauthserver.OAuth2Service,
+	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
 ) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -132,7 +132,7 @@ func ProvideService(
 	}
 
 	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthService))
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
