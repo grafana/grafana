@@ -130,15 +130,15 @@ func (c *Client) GetScopesOnUser(ctx context.Context, accessControl ac.AccessCon
 		perms := c.ImpersonatePermissions
 		for i := range perms {
 			if perms[i].Action == ac.ActionUsersRead && perms[i].Scope == ScopeGlobalUsersSelf {
-				ret = append(ret, "profile", "email")
+				ret = append(ret, "profile", "email", ac.ActionUsersRead)
 				continue
 			}
 			if perms[i].Action == ac.ActionUsersPermissionsRead && perms[i].Scope == ScopeUsersSelf {
-				ret = append(ret, "entitlements")
+				ret = append(ret, "entitlements", ac.ActionUsersPermissionsRead)
 				continue
 			}
 			if perms[i].Action == ac.ActionTeamsRead && perms[i].Scope == ScopeTeamsSelf {
-				ret = append(ret, "groups")
+				ret = append(ret, "groups", ac.ActionTeamsRead)
 				continue
 			}
 			// Add all other action that the plugin is allowed to request
