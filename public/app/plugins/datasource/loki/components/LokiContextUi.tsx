@@ -5,7 +5,10 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import store from 'app/core/store';
+import { dispatch } from 'app/store/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { LogContextProvider } from '../LogContextProvider';
@@ -55,7 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
-      width: calc(100% - 20px);
+      margin-right: ${theme.spacing(4)};
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -77,6 +80,12 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
+export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
+
+type PreservedLabels = {
+  removedLabels: string[];
+  selectedExtractedLabels: string[];
+};
 
 export function LokiContextUi(props: LokiContextUiProps) {
   const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
@@ -125,6 +134,25 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setLoading(true);
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters.filter(({ enabled }) => enabled));
+      // We are storing the removed labels and selected extracted labels in local storage so we can
+      // preselect the labels in the UI in the next log context view.
+      const preservedLabels: PreservedLabels = {
+        removedLabels: [],
+        selectedExtractedLabels: [],
+      };
+
+      contextFilters.forEach(({ enabled, fromParser, label }) => {
+        // We only want to store real labels that were removed from the initial query
+        if (!enabled && !fromParser) {
+          preservedLabels.removedLabels.push(label);
+        }
+        // Or extracted labels that were added to the initial query
+        if (enabled && fromParser) {
+          preservedLabels.selectedExtractedLabels.push(label);
+        }
+      });
+
+      store.set(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
       setLoading(false);
     }, 1500);
 
@@ -143,8 +171,45 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
-    setContextFilters(contextFilters);
+    const initContextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
+
+    let preservedLabels: undefined | PreservedLabels = undefined;
+    try {
+      preservedLabels = JSON.parse(store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS));
+      // Do nothing when error occurs
+    } catch (e) {}
+
+    if (!preservedLabels) {
+      setContextFilters(initContextFilters);
+    } else {
+      // We need to update filters based on preserved labels
+      let arePreservedLabelsUsed = false;
+      const newContextFilters = initContextFilters.map((contextFilter) => {
+        // We checked for undefined above
+        if (preservedLabels!.removedLabels.includes(contextFilter.label)) {
+          arePreservedLabelsUsed = true;
+          return { ...contextFilter, enabled: false };
+        }
+        // We checked for undefined above
+        if (preservedLabels!.selectedExtractedLabels.includes(contextFilter.label)) {
+          arePreservedLabelsUsed = true;
+          return { ...contextFilter, enabled: true };
+        }
+        return { ...contextFilter };
+      });
+
+      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
+      if (!isAtLeastOneRealLabelEnabled) {
+        // If we end up with no real labels enabled, we need to reset the init filters
+        setContextFilters(initContextFilters);
+      } else {
+        // Otherwise use new filters
+        setContextFilters(newContextFilters);
+        if (arePreservedLabelsUsed) {
+          dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
+        }
+      }
+    }
     setInitialized(true);
     setLoading(false);
   });
@@ -199,6 +264,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   enabled: !contextFilter.fromParser,
                 }));
               });
+              // We are removing the preserved labels from local storage so we can preselect the labels in the UI
+              store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
             }}
           />
         </div>
