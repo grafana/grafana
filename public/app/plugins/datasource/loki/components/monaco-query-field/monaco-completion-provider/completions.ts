@@ -363,7 +363,6 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  console.log(situation.type);
   switch (situation.type) {
     case 'EMPTY':
     case 'AT_ROOT':

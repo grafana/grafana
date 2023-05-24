@@ -124,6 +124,12 @@ const afterSelectorCompletions = [
     type: 'PIPE_OPERATION',
     documentation: 'Operator docs',
   },
+  {
+    documentation: 'Operator docs',
+    insertText: '| distinct',
+    label: 'distinct',
+    type: 'PIPE_OPERATION',
+  },
 ];
 
 function buildAfterSelectorCompletions(
