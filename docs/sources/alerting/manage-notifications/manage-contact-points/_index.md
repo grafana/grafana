@@ -5,6 +5,7 @@ aliases:
   - ../../contact-points/edit-contact-point/
   - ../../contact-points/test-contact-point/
   - ../create-contact-point/
+description: How to manage your contact points
 keywords:
   - grafana
   - alerting
