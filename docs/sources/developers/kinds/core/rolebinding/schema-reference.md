@@ -11,7 +11,7 @@ title: RoleBinding kind
 #### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
-Role bindings link a set of subjects to a configured role
+Role bindings links a user|team to a configured role
 
 | Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
 |------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -64,10 +64,10 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
-| Property   | Type                                        | Required | Default | Description                                                                                                                                                                                                                                                |
-|------------|---------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `roleRef`  | [object](#roleref)                          | **Yes**  |         | The role we are discussing                                                                                                                                                                                                                                 |
-| `subjects` | [RoleBindingSubject](#rolebindingsubject)[] | **Yes**  |         | The set of subjects who share the same role<br/>??? this is a list in k8s... should it be in grafana?<br/>as a list it implies that ability to edit a role+role_binding<br/>meas you can see all the teams+users that use it.<br/>-- is that OK, accurate? |
+| Property  | Type                                      | Required | Default | Description                |
+|-----------|-------------------------------------------|----------|---------|----------------------------|
+| `role`    | [object](#role)                           | **Yes**  |         | The role we are discussing |
+| `subject` | [RoleBindingSubject](#rolebindingsubject) | **Yes**  |         |                            |
 
 ### RoleBindingSubject
 
@@ -76,7 +76,7 @@ extraFields is reserved for any fields that are pulled from the API server metad
 | `kind`   | string | **Yes**  |         | Possible values are: `Team`, `User`. |
 | `name`   | string | **Yes**  |         | The team/user identifier name        |
 
-### RoleRef
+### Role
 
 The role we are discussing
 

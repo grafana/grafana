@@ -2,10 +2,7 @@ package kind
 
 name:        "RoleBinding"
 maturity:    "merged"
-description: "Role bindings link a set of subjects to a configured role"
-
-// ?? Writing a role binding requires "write" permission (or *)
-// on the parent roleRef 
+description: "Role bindings links a user|team to a configured role"
 
 lineage: seqs: [
 	{
@@ -14,14 +11,10 @@ lineage: seqs: [
 			{
 				spec: {
 					// The role we are discussing
-					roleRef: #BuiltinRoleRef | #CustomRoleRef
+					role: #BuiltinRoleRef | #CustomRoleRef
 
-					// The set of subjects who share the same role
-					// ??? this is a list in k8s... should it be in grafana?
-					// as a list it implies that ability to edit a role+role_binding
-					// meas you can see all the teams+users that use it.
-					// -- is that OK, accurate?
-					subjects: [...#RoleBindingSubject]
+					// The team or user that has the specified role
+					subject: #RoleBindingSubject
 				} @cuetsy(kind="interface")
 
 				#CustomRoleRef: {

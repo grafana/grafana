@@ -151,9 +151,6 @@ export type {
   RoleBindingSubject
 } from './raw/rolebinding/x/rolebinding_types.gen';
 
-// Raw generated enums and default consts from rolebinding kind.
-export { defaultRoleBinding } from './raw/rolebinding/x/rolebinding_types.gen';
-
 // Raw generated types from ServiceAccount kind.
 export type {
   ServiceAccount,

@@ -30,17 +30,9 @@ export interface RoleBinding {
   /**
    * The role we are discussing
    */
-  roleRef: (BuiltinRoleRef | CustomRoleRef);
+  role: (BuiltinRoleRef | CustomRoleRef);
   /**
-   * The set of subjects who share the same role
-   * ??? this is a list in k8s... should it be in grafana?
-   * as a list it implies that ability to edit a role+role_binding
-   * meas you can see all the teams+users that use it.
-   * -- is that OK, accurate?
+   * The team or user that has the specified role
    */
-  subjects: Array<RoleBindingSubject>;
+  subject: RoleBindingSubject;
 }
-
-export const defaultRoleBinding: Partial<RoleBinding> = {
-  subjects: [],
-};
