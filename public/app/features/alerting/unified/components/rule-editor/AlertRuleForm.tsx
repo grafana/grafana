@@ -28,6 +28,7 @@ import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
+import { translateRouteParamToRuleType } from './util';
 
 const recordingRuleNameValidationPattern = {
   message:
@@ -81,7 +82,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
-  const { type: ruleType } = useParams<{ type?: RuleFormType }>();
+  const routeParams = useParams<{ type: string }>();
+  const ruleType = translateRouteParamToRuleType(routeParams.type);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
