@@ -1,5 +1,6 @@
 import { AnyAction } from '@reduxjs/toolkit';
 
+import { reportInteraction } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
@@ -218,6 +219,25 @@ function metricTypeHints(metric: string): string | undefined {
   }
 
   return undefined;
+}
+
+export function tracking(event: string, state: MetricsModalState, metric: string) {
+  switch (event) {
+    case 'grafana_prom_metric_encycopedia_tracking':
+      reportInteraction(event, {
+        metric: metric,
+        hasMetadata: state.hasMetadata,
+        totalMetricCount: state.totalMetricCount,
+        fuzzySearchQuery: state.fuzzySearchQuery,
+        fullMetaSearch: state.fullMetaSearch,
+        selectedTypes: state.selectedTypes,
+        inferType: state.inferType,
+      });
+    case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
+      reportInteraction(event, {
+        disableTextWrap: state.disableTextWrap,
+      });
+  }
 }
 
 export const promTypes: PromFilterOption[] = [

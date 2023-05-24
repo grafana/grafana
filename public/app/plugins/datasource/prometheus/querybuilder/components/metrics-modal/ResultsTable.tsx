@@ -3,11 +3,11 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
+import { tracking } from './state/helpers';
 import { MetricsModalState } from './state/state';
 import { MetricData, MetricsData } from './types';
 
@@ -37,15 +37,7 @@ export function ResultsTable(props: ResultsTableProps) {
   function selectMetric(metric: MetricData) {
     if (metric.value) {
       onChange({ ...query, metric: metric.value });
-      reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-        metric: metric.value,
-        hasMetadata: state.hasMetadata,
-        totalMetricCount: state.totalMetricCount,
-        fuzzySearchQuery: state.fuzzySearchQuery,
-        fullMetaSearch: state.fullMetaSearch,
-        selectedTypes: state.selectedTypes,
-        disableTextWrap: state.disableTextWrap,
-      });
+      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
       onClose();
     }
   }

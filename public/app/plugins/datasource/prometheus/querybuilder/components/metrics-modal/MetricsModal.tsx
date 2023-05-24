@@ -3,7 +3,6 @@ import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import {
   Input,
   Modal,
@@ -31,6 +30,7 @@ import {
   setMetrics,
   placeholders,
   promTypes,
+  tracking,
 } from './state/helpers';
 import {
   DEFAULT_RESULTS_PER_PAGE,
@@ -173,14 +173,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
       const metric = displayedMetrics(state, dispatch)[state.selectedIdx];
 
       onChange({ ...query, metric: metric.value });
-      reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-        metric: metric.value,
-        hasMetadata: state.hasMetadata,
-        totalMetricCount: state.totalMetricCount,
-        fuzzySearchQuery: state.fuzzySearchQuery,
-        fullMetaSearch: state.fullMetaSearch,
-        selectedTypes: state.selectedTypes,
-      });
+
+      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
+
       onClose();
     }
   }
@@ -203,9 +198,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
       onChangeDisableTextWrap={() => {
         dispatch(setDisableTextWrap());
         onChange({ ...query, disableTextWrap: !state.disableTextWrap });
-        reportInteraction('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', {
-          disableTextWrap: state.disableTextWrap,
-        });
+        tracking('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', state, '');
       }}
       onChangeInferType={() => {
         const inferType = !state.inferType;
