@@ -208,15 +208,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case DistinctFilter: {
-      const { operation, error } = handleDistinctFilter(expr, node, context);
-      if (operation) {
-        visQuery.operations.push(operation);
-      }
-      // Show error for query patterns not supported in visual query builder
-      if (error) {
-        context.errors.push(createNotSupportedError(expr, node, error));
-      }
-
+      visQuery.operations.push(handleDistinctFilter(expr, node, context));
       break;
     }
 
@@ -649,11 +641,7 @@ function isEmptyQuery(query: LokiVisualQuery) {
   return false;
 }
 
-function handleDistinctFilter(
-  expr: string,
-  node: SyntaxNode,
-  context: Context
-): { operation?: QueryBuilderOperation; error?: string } {
+function handleDistinctFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
   const labels: string[] = [];
   let exploringNode = node.getChild(DistinctLabel);
   while (exploringNode) {
@@ -663,16 +651,9 @@ function handleDistinctFilter(
     }
     exploringNode = exploringNode?.getChild(DistinctLabel);
   }
-
-  if (labels.length) {
-    labels.reverse();
-    return {
-      operation: {
-        id: LokiOperationId.Distinct,
-        params: labels,
-      },
-    };
-  }
-
-  return {};
+  labels.reverse();
+  return {
+    id: LokiOperationId.Distinct,
+    params: labels,
+  };
 }
