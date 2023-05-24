@@ -310,7 +310,7 @@ export function RichHistoryCard(props: Props) {
       {value?.dsInstance && (
         <IconButton name="share-alt" onClick={onCreateShortLink} tooltip="Copy shortened link to clipboard" />
       )}
-      <IconButton name="trash-alt" tooltip="Delete query" onClick={onDeleteQuery} />
+      <IconButton name="trash-alt" title="Delete query" tooltip="Delete query" onClick={onDeleteQuery} />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
         iconType={query.starred ? 'mono' : 'default'}
