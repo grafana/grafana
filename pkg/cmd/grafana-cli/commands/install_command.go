@@ -67,8 +67,11 @@ func installCommand(c utils.CommandLine) error {
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
-	client := repo.NewClient(c.Bool("insecure"), services.Logger)
-	repository := repo.NewManager(c.PluginRepoURL(), client, services.Logger)
+	repository := repo.NewManager(repo.ManagerOpts{
+		Client:  repo.NewClient(c.Bool("insecure"), services.Logger),
+		BaseURL: c.PluginRepoURL(),
+		Logger:  services.Logger,
+	})
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 

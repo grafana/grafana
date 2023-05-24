@@ -34,7 +34,7 @@ func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	}
 }
 
-func (c *Client) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+func (c *Client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
 	req, err := c.createReq(url, compatOpts...)
 	if err != nil {
 		return nil, err

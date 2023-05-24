@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+const defaultBaseURL = "https://www.grafana.com/api/plugins"
+
 type Manager struct {
 	client  *Client
 	baseURL string
@@ -26,14 +28,34 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 	}
 
 	logger := log.NewPrettyLogger("plugin.repository")
-	return NewManager(defaultBaseURL, NewClient(false, logger), logger), nil
+	return NewManager(ManagerOpts{
+		Client:  NewClient(false, logger),
+		BaseURL: defaultBaseURL,
+	}), nil
 }
 
-func NewManager(baseURL string, client *Client, logger log.PrettyLogger) *Manager {
+type ManagerOpts struct {
+	Client  *Client
+	BaseURL string
+	Logger  log.PrettyLogger
+}
+
+func NewManager(opts ...ManagerOpts) *Manager {
+	if len(opts) == 0 {
+		logger := log.NewPrettyLogger("plugin.repository")
+		opts = []ManagerOpts{
+			{
+				BaseURL: defaultBaseURL,
+				Client:  NewClient(false, logger),
+				Logger:  logger,
+			},
+		}
+	}
+
 	return &Manager{
-		baseURL: baseURL,
-		client:  client,
-		log:     logger,
+		baseURL: opts[0].BaseURL,
+		client:  opts[0].Client,
+		log:     opts[0].Logger,
 	}
 }
 
@@ -68,6 +90,10 @@ func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version stri
 		Checksum:      v.Checksum,
 		URL:           m.downloadURL(pluginID, v.Version),
 	}, nil
+}
+
+func (m *Manager) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+	return m.client.sendReq(url, compatOpts...)
 }
 
 type VersionData struct {
@@ -198,7 +224,7 @@ func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts Co
 
 	u.Path = path.Join(u.Path, "repo", pluginID)
 
-	body, err := m.client.SendReq(u, compatOpts)
+	body, err := m.client.sendReq(u, compatOpts)
 	if err != nil {
 		return nil, err
 	}
