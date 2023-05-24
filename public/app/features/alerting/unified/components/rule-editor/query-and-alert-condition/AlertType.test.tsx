@@ -40,7 +40,7 @@ function renderAlertTypeStep() {
 
 describe('RuleTypePicker', () => {
   describe('RBAC', () => {
-    it('Should display grafana, mimir alert and mimir recording buttons when user has rule create and write permissions', async () => {
+    it('Should display grafana and mimir alert when user has rule create and write permissions', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => {
         return [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite].includes(
           action as AccessControlAction
@@ -51,7 +51,17 @@ describe('RuleTypePicker', () => {
 
       expect(ui.ruleTypePicker.grafanaManagedButton.get()).toBeInTheDocument();
       expect(ui.ruleTypePicker.mimirOrLokiButton.get()).toBeInTheDocument();
-      expect(ui.ruleTypePicker.mimirOrLokiRecordingButton.get()).toBeInTheDocument();
+    });
+
+    it('Should not display the recording rule button', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => {
+        return [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite].includes(
+          action as AccessControlAction
+        );
+      });
+
+      renderAlertTypeStep();
+      expect(ui.ruleTypePicker.mimirOrLokiRecordingButton.query()).not.toBeInTheDocument();
     });
 
     it('Should hide grafana button when user does not have rule create permission', () => {
@@ -63,7 +73,7 @@ describe('RuleTypePicker', () => {
 
       expect(ui.ruleTypePicker.grafanaManagedButton.query()).not.toBeInTheDocument();
       expect(ui.ruleTypePicker.mimirOrLokiButton.get()).toBeInTheDocument();
-      expect(ui.ruleTypePicker.mimirOrLokiRecordingButton.get()).toBeInTheDocument();
+      expect(ui.ruleTypePicker.mimirOrLokiRecordingButton.query()).not.toBeInTheDocument();
     });
 
     it('Should hide mimir alert and mimir recording when user does not have rule external write permission', () => {
