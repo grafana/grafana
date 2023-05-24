@@ -398,9 +398,6 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 	for _, key := range basicKeys {
 		if keyId == key.ID {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
-			// TODO: remove this sleep in PR
-			// Simulate a long-running operation
-			time.Sleep(2 * time.Second)
 			if err != nil {
 				s.log.Error("converting to service account failed with error", "keyId", keyId, "error", err)
 				return err
