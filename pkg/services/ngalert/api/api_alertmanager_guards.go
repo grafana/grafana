@@ -104,7 +104,7 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 				return err
 			}
 			newSettings := map[string]interface{}{}
-			err = json.Unmarshal(contactPoint.Settings, &newSettings)
+			err = json.Unmarshal(postedContactPoint.Settings, &newSettings)
 			if err != nil {
 				return err
 			}
