@@ -6,10 +6,11 @@ import { CanvasConnection, ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { ConnectionState } from '../../types';
+import { getConnections, isConnectionSource, isConnectionTarget } from '../../utils';
+
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
-import { ConnectionState } from './types';
-import { getConnections, isConnectionSource, isConnectionTarget } from './utils';
 
 export class Connections {
   scene: Scene;
