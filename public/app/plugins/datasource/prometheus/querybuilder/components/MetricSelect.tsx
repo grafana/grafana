@@ -1,13 +1,21 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { useCallback, useState } from 'react';
+import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { AsyncSelect, Button, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
-import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
+import {
+  AsyncSelect,
+  Button,
+  CustomScrollbar,
+  FormatOptionLabelMeta,
+  getSelectStyles,
+  Icon,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
@@ -119,48 +127,43 @@ export function MetricSelect({
     (query: string) => getMetricLabels(query),
     datasource.getDebounceTimeInMilliseconds()
   );
-  // No type found for the common select props so typing as any
-  // https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Select/SelectBase.tsx/#L212-L263
-  // eslint-disable-next-line
-  const CustomOption = (props: any) => {
-    const option = props.data;
 
-    if (option.value === 'BrowseMetrics') {
-      const isFocused = props.isFocused ? styles.focus : '';
-      return (
-        <div
-          {...props.innerProps}
-          className={`${styles.customOptionWidth} metric-encyclopedia-open`}
-          onKeyDown={(e) => {
-            // if there is no metric and the m.e. is enabled, open the modal
-            if (e.code === 'Enter') {
+  interface SelectMenuProps {
+    maxHeight: number;
+    innerRef: RefCallback<HTMLDivElement>;
+    innerProps: {};
+  }
+
+  const CustomMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
+    const theme = useTheme2();
+    const stylesMenu = getSelectStyles(theme);
+
+    return (
+      <div
+        {...innerProps}
+        className={`${stylesMenu.menu} ${styles.container}`}
+        style={{ maxHeight }}
+        aria-label="Select options menu"
+      >
+        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+          {children}
+        </CustomScrollbar>
+        <div className={styles.footer}>
+          <Button
+            size="sm"
+            variant="secondary"
+            fill="text"
+            className={`metric-encyclopedia-open`}
+            onClick={() => {
               setState({ ...state, metricsModalOpen: true });
-            }
-          }}
-        >
-          {
-            <div className={`${styles.customOption} ${isFocused} metric-encyclopedia-open`}>
-              <div>
-                <div className="metric-encyclopedia-open">{option.label}</div>
-                <div className={`${styles.customOptionDesc} metric-encyclopedia-open`}>{option.description}</div>
-              </div>
-              <Button
-                variant="primary"
-                fill="outline"
-                size="sm"
-                onClick={() => setState({ ...state, metricsModalOpen: true })}
-                icon="book"
-                className="metric-encyclopedia-open"
-              >
-                Open
-              </Button>
-            </div>
-          }
+            }}
+          >
+            Open advanced metric browser
+            <Icon name="arrow-right" />
+          </Button>
         </div>
-      );
-    }
-
-    return SelectMenuOptions(props);
+      </div>
+    );
   };
 
   return (
@@ -196,17 +199,10 @@ export function MetricSelect({
                 metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
               }
 
-              if (config.featureToggles.prometheusMetricEncyclopedia) {
-                // pass the initial metrics, possibly filtered by labels into the Metrics Modal
-                const metricsModalOption: SelectableValue[] = [
-                  {
-                    value: 'BrowseMetrics',
-                    label: 'Browse metrics',
-                    description: 'Browse and filter metrics and metadata with a fuzzy search',
-                  },
-                ];
+              if (prometheusMetricEncyclopedia) {
+                // pass the initial metrics into the Metrics Modal
                 setState({
-                  metrics: [...metricsModalOption, ...metrics],
+                  metrics: metrics,
                   isLoading: undefined,
                   initialMetrics: initialMetrics,
                 });
@@ -219,15 +215,10 @@ export function MetricSelect({
             defaultOptions={state.metrics}
             onChange={({ value }) => {
               if (value) {
-                // if there is no metric and the m.e. is enabled, open the modal
-                if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
-                  setState({ ...state, metricsModalOpen: true });
-                } else {
-                  onChange({ ...query, metric: value });
-                }
+                onChange({ ...query, metric: value });
               }
             }}
-            components={{ Option: CustomOption }}
+            components={prometheusMetricEncyclopedia ? { MenuList: CustomMenu } : {}}
           />
         </EditorField>
       </EditorFieldGroup>
@@ -246,28 +237,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.contrastText};
     background-color: ${theme.colors.warning.main};
   `,
-  customOption: css`
-    padding: 8px;
+  footer: css`
+    flex: 0;
     display: flex;
+    flex-direction: row-reverse;
     justify-content: space-between;
-    cursor: pointer;
-    :hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
-    }
+    padding: ${theme.spacing(1.5)};
+    border-top: 1px solid ${theme.colors.border.weak};
+    background-color: ${theme.colors.background.secondary};
   `,
-  customOptionlabel: css`
-    color: ${theme.colors.text.primary};
-  `,
-  customOptionDesc: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.size.xs};
-    opacity: 50%;
-  `,
-  focus: css`
-    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
-  `,
-  customOptionWidth: css`
-    min-width: 400px;
+  container: css`
+    display: flex;
+    flex-direction: column;
+    height: 412px;
+    width: 480px;
+    background: ${theme.colors.background.primary};
+    box-shadow: ${theme.shadows.z3};
   `,
 });
 
