@@ -141,8 +141,8 @@ export const Components = {
       content: 'Panel editor data pane content',
     },
     applyButton: 'data-testid Apply changes and go back to dashboard',
-    toggleVizPicker: 'toggle-viz-picker',
-    toggleVizOptions: 'toggle-viz-options',
+    toggleVizPicker: 'data-testid toggle-viz-picker',
+    toggleVizOptions: 'data-testid toggle-viz-options',
     toggleTableView: 'toggle-table-view',
 
     // [Geomap] Map controls
@@ -301,7 +301,7 @@ export const Components = {
     container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
-    container: 'Data source picker select container',
+    container: 'data-testid Data source picker select container',
     /**
      * @deprecated use inputV2 instead
      */

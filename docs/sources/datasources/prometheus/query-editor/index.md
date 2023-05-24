@@ -89,8 +89,10 @@ The **Type** setting sets the query type. These include:
 
 For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
 
-> **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step.
-> This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
+{{% admonition type="note" %}}
+Grafana modifies the request dates for queries to align them with the dynamically calculated step.
+This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
+{{% /admonition %}}
 
 ### Exemplars
 

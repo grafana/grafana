@@ -11,6 +11,7 @@ import {
   LoadingState,
   createDataFrame,
   PluginType,
+  CoreApp,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -449,7 +450,7 @@ describe('Tempo service graph view', () => {
     });
     setDataSourceSrv(backendSrvWithPrometheus as any);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange(), app: CoreApp.Explore } as any)
     );
 
     expect(response.data).toHaveLength(3);

@@ -73,7 +73,7 @@ export function AppChrome({ children }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark
     ? `0 0.6px 1.5px rgb(0 0 0), 0 2px 4px rgb(0 0 0 / 40%), 0 5px 10px rgb(0 0 0 / 23%)`
-    : '0 0.6px 1.5px rgb(0 0 0 / 8%), 0 2px 4px rgb(0 0 0 / 6%), 0 5px 10px rgb(0 0 0 / 5%)';
+    : '0 4px 8px rgb(0 0 0 / 4%)';
 
   return {
     content: css({

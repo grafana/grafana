@@ -204,9 +204,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     cell: css({
       padding: theme.spacing(1),
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
+      overflow: 'hidden', // Required so flex children can do text-overflow: ellipsis
+      display: 'flex',
+      alignItems: 'center',
     }),
 
     link: css({
