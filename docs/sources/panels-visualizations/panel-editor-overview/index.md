@@ -63,9 +63,7 @@ The inspect drawer helps you understand and troubleshoot your panels. You can vi
 
 To access the panel inspect drawer from the edit view, hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Inspect**.
 
-{{% admonition type="note" %}}
-Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
-{{% /admonition %}}
+> **Note:** Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 
 The panel inspector consists of the following options:
 

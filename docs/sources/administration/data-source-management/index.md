@@ -21,9 +21,7 @@ Only users with the organization admin role can add data sources.
 
 Before you can create your first dashboard, you need to add your data source.
 
-{{% admonition type="note" %}}
-Only users with the organization admin role can add data sources.
-{{% /admonition %}}
+> **Note:** Only users with the organization admin role can add data sources.
 
 **To add a data source:**
 
@@ -38,9 +36,7 @@ Only users with the organization admin role can add data sources.
 
 You can configure data source permissions to allow or deny certain users the ability to query or edit a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, teams, or roles.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. Additionally, by default, data sources can be edited by the user who created the data source, as well as users with the `Admin` role.
 
@@ -87,15 +83,11 @@ When query caching is enabled, Grafana temporarily stores the results of data so
 
 Query caching works for all backend data sources. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL).
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 The following cache backends are available: in-memory, Redis, and Memcached.
 
-{{% admonition type="note" %}}
-Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
-{{% /admonition %}}
+> **Note:** Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 
 When a panel queries a cached data source, the time until this query fetches fresh data is determined by the panel's **interval.** This means that wider panels and dashboards with shorter time ranges fetch new data more frequently than narrower panels and dashboards with longer time ranges.
 
@@ -144,9 +136,7 @@ You can optionally override a data source's configured TTL for individual dashbo
 
 {{< figure max-width="500px" src="/media/docs/grafana/per-panel-cache-ttl-9-4.png" caption="Set Cache TTL for a single panel" >}}
 
-{{% admonition type="note" %}}
-If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
-{{% /admonition %}}
+> **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
 To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}).
 
@@ -165,9 +155,7 @@ To disable query caching for an entire Grafana instance, set the `enabled` flag 
 
 If you experience performance issues or repeated queries become slower to execute, consider clearing your cache.
 
-{{% admonition type="note" %}}
-This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
-{{% /admonition %}}
+> **Note:** This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
 
 1. Click **Connections** in the left-side menu.
 1. Under Your Connections, click **Data sources**.
