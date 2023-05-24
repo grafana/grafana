@@ -129,8 +129,21 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 				return
 			}
 			require.Len(t, sessionData.JWTClaims.Extra, len(tt.expectedClaims))
-			for k, v := range tt.expectedClaims {
-				require.Equal(t, v, sessionData.JWTClaims.Extra[k])
+			for claimsKey, claimsValue := range tt.expectedClaims {
+				switch expected := claimsValue.(type) {
+				case []string:
+					require.ElementsMatch(t, claimsValue, sessionData.JWTClaims.Extra[claimsKey])
+				case map[string][]string:
+					actual, ok := sessionData.JWTClaims.Extra[claimsKey].(map[string][]string)
+					require.True(t, ok, "expected map[string][]string")
+
+					require.ElementsMatch(t, maps.Keys(expected), maps.Keys(actual))
+					for expKey, expValue := range expected {
+						require.ElementsMatch(t, expValue, actual[expKey])
+					}
+				default:
+					require.Equal(t, claimsValue, sessionData.JWTClaims.Extra[claimsKey])
+				}
 			}
 		})
 	}
