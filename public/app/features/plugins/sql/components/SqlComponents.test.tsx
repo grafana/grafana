@@ -54,16 +54,7 @@ describe('TableSelector', () => {
     });
   });
 
-  it('should not query the database if Postgres instance, and no preconfigured database', async () => {
-    const mockProps = buildMockTableSelectorProps();
-    render(<TableSelector {...mockProps} />);
-
-    await waitFor(() => {
-      expect(mockProps.db.tables).not.toHaveBeenCalled();
-    });
-  });
-
-  it('should not query the database if preconfigured', async () => {
+  it('should not query the database if no dataset is passed as a prop', async () => {
     const mockProps = buildMockTableSelectorProps();
     render(<TableSelector {...mockProps} />);
 
