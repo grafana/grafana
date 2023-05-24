@@ -202,6 +202,7 @@ export default function CorrelationsPage() {
                 onNavigate={(toPage: number) => {
                   setPage(toPage);
                 }}
+                ariaAppend="page"
               />
             </>
           )}

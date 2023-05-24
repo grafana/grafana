@@ -33,6 +33,19 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ fetch }),
+}));
+
+jest.mock('rxjs', () => ({
+  ...jest.requireActual('rxjs'),
+  lastValueFrom: () =>
+    new Promise((resolve, reject) => {
+      resolve({ data: [] });
+    }),
+}));
+
 describe('ExplorePage', () => {
   afterEach(() => {
     tearDown();

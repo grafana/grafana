@@ -274,7 +274,6 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), action: AnyAction): ExploreItemState => {
-  console.log(action);
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
