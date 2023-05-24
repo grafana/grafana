@@ -372,7 +372,7 @@ Role sync allows you to map user roles from an identity provider to Grafana. To 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_role" >}}) option to the attribute name where the role information will be extracted from.
 1. Set the [`role_values_editor`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_editor" >}}) option to the values mapped to the `Editor` role.
 1. Set the [`role_values_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_admin" >}}) option to the values mapped to the organization `Admin` role.
-1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role.
+1. Set the [`role_values_grafana_admin`]({{< relref "../../../configure-grafana/enterprise-configuration#role_values_grafana_admin" >}}) option to the values mapped to the `Grafana Admin` role. You need to quote the role value in role_values_grafana_admin
 
 If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
 
@@ -385,7 +385,7 @@ Example configuration:
 assertion_attribute_role = role
 role_values_editor = editor, developer
 role_values_admin = admin, operator
-role_values_grafana_admin = superadmin
+role_values_grafana_admin = "superadmin"
 ```
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
@@ -474,7 +474,7 @@ assertion_attribute_role = Role
 assertion_attribute_org = Org
 role_values_editor = editor, developer
 role_values_admin = admin, operator
-role_values_grafana_admin = superadmin
+role_values_grafana_admin = "superadmin"
 org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor
 allowed_organizations = Engineering, Sales
 ```
