@@ -474,6 +474,18 @@ Example: \`\`error_level=\`level\` \`\`
         }`;
       },
     },
+    {
+      id: LokiOperationId.Decolorize,
+      name: 'Decolorize',
+      params: [],
+      defaultParams: [],
+      alternativesKey: 'format',
+      category: LokiVisualQueryOperationCategory.Formats,
+      orderRank: LokiOperationOrder.PipeOperations,
+      renderer: (op, def, innerExpr) => `${innerExpr} | decolorize`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: () => `This will remove ANSI color codes from log lines.`,
+    },
     ...binaryScalarOperations,
     {
       id: LokiOperationId.NestedQuery,
