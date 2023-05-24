@@ -365,10 +365,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/storage/:path*',
+      path: '/admin/storage/',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
+      ),
+    },
+    {
+      path: '/admin/storage/:path*/',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
+      ),
+    },
+    {
+      path: '/admin/storage/export',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
       ),
     },
     {

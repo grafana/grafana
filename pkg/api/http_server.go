@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/export"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -212,6 +213,7 @@ type HTTPServer struct {
 	authnService         authn.Service
 	starApi              *starApi.API
 	cachingService       caching.CachingService
+	ExportService        export.ExportService
 
 	errs chan error
 }
@@ -256,6 +258,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	starApi *starApi.API, cachingService caching.CachingService,
+	exportService export.ExportService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -359,6 +362,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 		cachingService:               cachingService,
+		ExportService:                exportService,
 
 		errs: make(chan error),
 	}
