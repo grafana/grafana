@@ -8,17 +8,20 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import 'whatwg-fetch';
+
 import { RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockDataSource, MockDataSourceSrv, mockRulerAlertingRule, mockRulerGrafanaRule, mockStore } from './mocks';
+import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
 import { mockSearchApiResponse } from './mocks/grafanaApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultFormValues } from './utils/rule-form';
 import { hashRulerRule } from './utils/rule-id';
 
@@ -96,6 +99,22 @@ function getProvidersWrapper() {
     );
   };
 }
+const amConfig: AlertManagerCortexConfig = {
+  alertmanager_config: {
+    receivers: [{ name: 'default' }, { name: 'critical' }],
+    route: {
+      receiver: 'default',
+      group_by: ['alertname'],
+      routes: [
+        {
+          matchers: ['env=prod', 'region!=EU'],
+        },
+      ],
+    },
+    templates: [],
+  },
+  template_files: {},
+};
 
 describe('CloneRuleEditor', function () {
   describe('Grafana-managed rules', function () {
@@ -116,6 +135,7 @@ describe('CloneRuleEditor', function () {
       });
 
       mockSearchApiResponse(server, []);
+      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(<CloneRuleEditor sourceRuleId={{ uid: 'grafana-rule-1', ruleSourceName: 'grafana' }} />, {
         wrapper: getProvidersWrapper(),
@@ -166,6 +186,7 @@ describe('CloneRuleEditor', function () {
       });
 
       mockSearchApiResponse(server, []);
+      mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor

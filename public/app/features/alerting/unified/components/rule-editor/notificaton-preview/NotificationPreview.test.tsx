@@ -7,8 +7,6 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import * as notificationPreview from './NotificationPreview';
 import { NotificationPreview, NOTIFICATION_PREVIEW_TITLE } from './NotificationPreview';
 
-jest.spyOn(notificationPreview, 'useGetPotentialInstances').mockReturnValue([{ severity: 'tomato' }]);
-
 jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNames').mockReturnValue([GRAFANA_RULES_SOURCE_NAME]);
 
 // const receiversByName = new Map(

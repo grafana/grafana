@@ -5,10 +5,10 @@ import { arrayKeyValuesToObject } from '../utils/labels';
 
 import { alertingApi } from './alertingApi';
 
-const evalUrl = 'api/v1/rule/backtest'; //we need to enable the feature flag for this
+const previewlUrl = 'api/v1/rule/backtest'; //we need to enable the feature flag for this
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    eval: build.query<
+    preview: build.mutation<
       DataFrameJSON,
       {
         alertQueries: AlertQuery[];
@@ -20,7 +20,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }
     >({
       query: ({ alertQueries, condition, customLabels }) => ({
-        url: evalUrl,
+        url: previewlUrl,
         data: {
           data: alertQueries,
           condition: condition,
