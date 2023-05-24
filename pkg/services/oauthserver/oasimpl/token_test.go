@@ -519,7 +519,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		{Action: "users:read", Scope: "global.users:id:56"},
 		{Action: "folders:read", Scope: "folders:uid:UID1"},
 		{Action: "dashboards:read", Scope: "folders:uid:UID1"},
-		{Action: "datasources:read", Scope: "datasoucres:uid:DS_UID2"}, // This one should be ignored when impersonating
+		{Action: "datasources:read", Scope: "datasources:uid:DS_UID2"}, // This one should be ignored when impersonating
 	}
 	user56Teams := []*team.TeamDTO{
 		{ID: 1, Name: "Team 1", OrgID: 1},
