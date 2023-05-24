@@ -171,53 +171,24 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		dto.PublicDashboard.Share = PublicShareType
 	}
 
-	uid, err := pd.NewPublicDashboardUid(ctx)
+	publicDashboard, err := pd.getCreatePublicDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
-	}
-
-	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var isEnabled, annotationsEnabled, timeSelectionEnabled bool
-
-	if dto.PublicDashboard.IsEnabled != nil {
-		isEnabled = *dto.PublicDashboard.IsEnabled
-	}
-	if dto.PublicDashboard.AnnotationsEnabled != nil {
-		annotationsEnabled = *dto.PublicDashboard.AnnotationsEnabled
-	}
-	if dto.PublicDashboard.TimeSelectionEnabled != nil {
-		timeSelectionEnabled = *dto.PublicDashboard.TimeSelectionEnabled
 	}
 
 	cmd := SavePublicDashboardCommand{
-		PublicDashboard: PublicDashboard{
-			Uid:                  uid,
-			DashboardUid:         dto.DashboardUid,
-			OrgId:                dto.OrgId,
-			IsEnabled:            isEnabled,
-			AnnotationsEnabled:   annotationsEnabled,
-			TimeSelectionEnabled: timeSelectionEnabled,
-			TimeSettings:         dto.PublicDashboard.TimeSettings,
-			Share:                dto.PublicDashboard.Share,
-			CreatedBy:            dto.UserId,
-			CreatedAt:            time.Now(),
-			AccessToken:          accessToken,
-		},
+		PublicDashboard: *publicDashboard,
 	}
 
 	affectedRows, err := pd.store.Create(ctx, cmd)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard with Uid %s: %w", uid, err)
+		return nil, ErrInternalServerError.Errorf("Create: failed to create the public dashboard with Uid %s: %w", publicDashboard.Uid, err)
 	} else if affectedRows == 0 {
-		return nil, ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", uid)
+		return nil, ErrInternalServerError.Errorf("Create: failed to create a database entry for public dashboard with Uid %s. 0 rows changed, no error reported.", publicDashboard.Uid)
 	}
 
 	//Get latest public dashboard to return
-	newPubdash, err := pd.store.Find(ctx, uid)
+	newPubdash, err := pd.store.Find(ctx, publicDashboard.Uid)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
 	}
@@ -253,20 +224,11 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
 	}
 
-	setPersistedValueIfNull(dto.PublicDashboard, existingPubdash)
+	publicDashboard := getUpdatePublicDashboard(dto, existingPubdash)
 
 	// set values to update
 	cmd := SavePublicDashboardCommand{
-		PublicDashboard: PublicDashboard{
-			Uid:                  existingPubdash.Uid,
-			IsEnabled:            *dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled:   *dto.PublicDashboard.AnnotationsEnabled,
-			TimeSelectionEnabled: *dto.PublicDashboard.TimeSelectionEnabled,
-			TimeSettings:         dto.PublicDashboard.TimeSettings,
-			Share:                dto.PublicDashboard.Share,
-			UpdatedBy:            dto.UserId,
-			UpdatedAt:            time.Now(),
-		},
+		PublicDashboard: *publicDashboard,
 	}
 
 	// persist
@@ -455,28 +417,72 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-func setPersistedValueIfNull(dto *PublicDashboardDTO, pd *PublicDashboard) {
-	if dto.TimeSettings == nil {
+func (pd *PublicDashboardServiceImpl) getCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	uid, err := pd.NewPublicDashboardUid(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	isEnabled := returnValueOrDefault(dto.PublicDashboard.IsEnabled, false)
+	annotationsEnabled := returnValueOrDefault(dto.PublicDashboard.AnnotationsEnabled, false)
+	timeSelectionEnabled := returnValueOrDefault(dto.PublicDashboard.TimeSelectionEnabled, false)
+
+	return &PublicDashboard{
+		Uid:                  uid,
+		DashboardUid:         dto.DashboardUid,
+		OrgId:                dto.PublicDashboard.OrgId,
+		IsEnabled:            isEnabled,
+		AnnotationsEnabled:   annotationsEnabled,
+		TimeSelectionEnabled: timeSelectionEnabled,
+		TimeSettings:         dto.PublicDashboard.TimeSettings,
+		Share:                dto.PublicDashboard.Share,
+		CreatedBy:            dto.UserId,
+		CreatedAt:            time.Now(),
+		AccessToken:          accessToken,
+	}, nil
+}
+
+func getUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) *PublicDashboard {
+	pubdashDTO := dto.PublicDashboard
+	timeSelectionEnabled := returnValueOrDefault(pubdashDTO.TimeSelectionEnabled, pd.TimeSelectionEnabled)
+	isEnabled := returnValueOrDefault(pubdashDTO.IsEnabled, pd.IsEnabled)
+	annotationsEnabled := returnValueOrDefault(pubdashDTO.AnnotationsEnabled, pd.AnnotationsEnabled)
+
+	share := pubdashDTO.Share
+	if pubdashDTO.Share == "" {
+		share = pd.Share
+	}
+
+	timeSettings := pubdashDTO.TimeSettings
+	if pubdashDTO.TimeSettings == nil {
 		if pd.TimeSettings == nil {
-			dto.TimeSettings = &TimeSettings{}
+			timeSettings = &TimeSettings{}
 		} else {
-			dto.TimeSettings = pd.TimeSettings
+			timeSettings = pd.TimeSettings
 		}
 	}
 
-	if dto.TimeSelectionEnabled == nil {
-		dto.TimeSelectionEnabled = &pd.TimeSelectionEnabled
+	return &PublicDashboard{
+		Uid:                  pd.Uid,
+		IsEnabled:            isEnabled,
+		AnnotationsEnabled:   annotationsEnabled,
+		TimeSelectionEnabled: timeSelectionEnabled,
+		TimeSettings:         timeSettings,
+		Share:                share,
+		UpdatedBy:            dto.UserId,
+		UpdatedAt:            time.Now(),
+	}
+}
+
+func returnValueOrDefault(value *bool, defaultValue bool) bool {
+	if value != nil {
+		return *value
 	}
 
-	if dto.IsEnabled == nil {
-		dto.IsEnabled = &pd.IsEnabled
-	}
-
-	if dto.AnnotationsEnabled == nil {
-		dto.AnnotationsEnabled = &pd.AnnotationsEnabled
-	}
-
-	if dto.Share == "" {
-		dto.Share = pd.Share
-	}
+	return defaultValue
 }

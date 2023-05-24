@@ -136,7 +136,6 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	pdDTO.OrgId = c.OrgID
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -174,7 +173,6 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	pdDTO.Uid = uid
 	dto := SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}

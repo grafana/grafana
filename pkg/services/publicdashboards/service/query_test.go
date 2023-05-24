@@ -691,12 +691,11 @@ func TestGetQueryDataResponse(t *testing.T) {
 		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
-			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
 				IsEnabled:    &isEnabled,
 				DashboardUid: "NOTTHESAME",
-				OrgId:        9999999,
+				OrgId:        dashboard.OrgID,
 				TimeSettings: timeSettings,
 			},
 		}
@@ -1203,7 +1202,6 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled := true
 	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
-		OrgId:        publicDashboard.OrgID,
 		PublicDashboard: &PublicDashboardDTO{
 			IsEnabled:    &isEnabled,
 			DashboardUid: "NOTTHESAME",
@@ -1218,7 +1216,6 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled = false
 	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
-		OrgId:        nonPublicDashboard.OrgID,
 		PublicDashboard: &PublicDashboardDTO{
 			IsEnabled:    &isEnabled,
 			DashboardUid: "NOTTHESAME",

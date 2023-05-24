@@ -149,7 +149,6 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, req
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
 	DashboardUid    string
-	OrgId           int64
 	UserId          int64
 	PublicDashboard *PublicDashboardDTO
 }
