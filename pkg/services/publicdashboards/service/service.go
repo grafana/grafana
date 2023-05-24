@@ -162,15 +162,6 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 
-	// set default value for time settings
-	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = &TimeSettings{}
-	}
-
-	if dto.PublicDashboard.Share == "" {
-		dto.PublicDashboard.Share = PublicShareType
-	}
-
 	publicDashboard, err := pd.getCreatePublicDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
@@ -432,6 +423,16 @@ func (pd *PublicDashboardServiceImpl) getCreatePublicDashboard(ctx context.Conte
 	annotationsEnabled := returnValueOrDefault(dto.PublicDashboard.AnnotationsEnabled, false)
 	timeSelectionEnabled := returnValueOrDefault(dto.PublicDashboard.TimeSelectionEnabled, false)
 
+	timeSettings := dto.PublicDashboard.TimeSettings
+	if dto.PublicDashboard.TimeSettings == nil {
+		timeSettings = &TimeSettings{}
+	}
+
+	share := dto.PublicDashboard.Share
+	if dto.PublicDashboard.Share == "" {
+		share = PublicShareType
+	}
+
 	return &PublicDashboard{
 		Uid:                  uid,
 		DashboardUid:         dto.DashboardUid,
@@ -439,8 +440,8 @@ func (pd *PublicDashboardServiceImpl) getCreatePublicDashboard(ctx context.Conte
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,
-		TimeSettings:         dto.PublicDashboard.TimeSettings,
-		Share:                dto.PublicDashboard.Share,
+		TimeSettings:         timeSettings,
+		Share:                share,
 		CreatedBy:            dto.UserId,
 		CreatedAt:            time.Now(),
 		AccessToken:          accessToken,
@@ -453,11 +454,6 @@ func getUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 	isEnabled := returnValueOrDefault(pubdashDTO.IsEnabled, pd.IsEnabled)
 	annotationsEnabled := returnValueOrDefault(pubdashDTO.AnnotationsEnabled, pd.AnnotationsEnabled)
 
-	share := pubdashDTO.Share
-	if pubdashDTO.Share == "" {
-		share = pd.Share
-	}
-
 	timeSettings := pubdashDTO.TimeSettings
 	if pubdashDTO.TimeSettings == nil {
 		if pd.TimeSettings == nil {
@@ -465,6 +461,11 @@ func getUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 		} else {
 			timeSettings = pd.TimeSettings
 		}
+	}
+
+	share := pubdashDTO.Share
+	if pubdashDTO.Share == "" {
+		share = pd.Share
 	}
 
 	return &PublicDashboard{
