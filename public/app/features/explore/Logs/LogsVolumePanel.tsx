@@ -13,9 +13,8 @@ import {
 } from '@grafana/data';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../logs/utils';
-
-import { ExploreGraph } from './Graph/ExploreGraph';
+import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
+import { ExploreGraph } from '../Graph/ExploreGraph';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
@@ -139,15 +138,15 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		dataResponse.Frames = frames
 		return dataResponse
 	}
-
-	model, err := simplejson.NewJson(query.JSON)
+	var model dataquery.AzureMonitorQuery
+	err := json.Unmarshal(query.JSON, &model)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
 	}
 
 	reqBody, err := json.Marshal(map[string]interface{}{
-		"subscriptions": model.Get("subscriptions").MustStringArray(),
+		"subscriptions": model.Subscriptions,
 		"query":         query.InterpolatedQuery,
 		"options":       map[string]string{"resultFormat": "table"},
 	})

@@ -5,8 +5,8 @@ import React, { ComponentProps } from 'react';
 
 import { LogLevel, LogsDedupStrategy, MutableDataFrame } from '@grafana/data';
 
-import { MAX_CHARACTERS } from '../logs/components/LogRowMessage';
-import { logRowsToReadableJson } from '../logs/utils';
+import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
+import { logRowsToReadableJson } from '../../logs/utils';
 
 import { LogsMetaRow } from './LogsMetaRow';
 
