@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"path/filepath"
+
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
@@ -8,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
-	"path/filepath"
 )
 
 func PluginTSEachMajor(rt *thema.Runtime) codejen.OneToMany[*pfs.PluginDecl] {
