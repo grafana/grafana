@@ -1,5 +1,4 @@
-import { map, Observable, defer, mergeMap, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { map, Observable, defer, mergeMap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -13,6 +12,7 @@ import {
 } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
+import { SearchStreamingState } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { createTableFrameFromTraceQlQuery } from './resultTransformer';
 import { TempoJsonData, TempoQuery } from './types';
@@ -51,20 +51,25 @@ export function doTempoChannelStream(
             console.log(evt);
             if ('message' in evt && evt?.message) {
               const traces = evt.message.data.values[0][0];
-              state = evt.message.data.values[2][0] === 2 ? LoadingState.Done : LoadingState.Loading;
+              const frameState: SearchStreamingState = evt.message.data.values[2][0];
+              const error = evt.message.data.values[3][0];
+              switch (frameState) {
+                case SearchStreamingState.Done:
+                  state = LoadingState.Done;
+                  break;
+                case SearchStreamingState.Streaming:
+                  state = LoadingState.Streaming;
+                  break;
+                case SearchStreamingState.Error:
+                  throw new Error(error);
+              }
+
               frames = createTableFrameFromTraceQlQuery(traces, instanceSettings);
             }
             return {
               data: frames || [],
               state,
             };
-          }),
-          catchError((err) => {
-            console.log(err);
-            return of({
-              data: [],
-              state: LoadingState.Error,
-            });
           })
         );
     })
