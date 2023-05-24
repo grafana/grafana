@@ -533,5 +533,12 @@ var (
 			State:        FeatureStateAlpha,
 			Owner:        grafanaUserEssentialsSquad,
 		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

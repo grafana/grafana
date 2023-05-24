@@ -322,4 +322,8 @@ const (
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
+
+	// FlagSqlDatasourceDatabaseSelection
+	// Enables previous SQL data source dataset dropdown behavior
+	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 )
