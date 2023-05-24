@@ -113,7 +113,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 			requester := fosite.NewAccessRequest(session)
 			requester.GrantTypes = fosite.Arguments(strings.Split(tt.client.GrantTypes, ","))
 			requester.RequestedScope = fosite.Arguments(tt.scopes)
-			sessionData := NewPluginAuthSession("")
+			sessionData := NewAuthSession("")
 			err := env.S.handleClientCredentials(ctx, requester, sessionData, tt.client)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -411,7 +411,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			requester.GrantTypes = fosite.Arguments(strings.Split(tt.client.GrantTypes, ","))
 			requester.RequestedScope = fosite.Arguments(tt.scopes)
 			requester.GrantedScope = fosite.Arguments(tt.scopes)
-			sessionData := NewPluginAuthSession("")
+			sessionData := NewAuthSession("")
 			sessionData.Subject = tt.subject
 
 			if tt.initEnv != nil {

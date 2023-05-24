@@ -9,13 +9,13 @@ import (
 	"github.com/ory/fosite/token/jwt"
 )
 
-type PluginAuthSession struct {
+type AuthSession struct {
 	oauth2.JWTSession
 	Extra map[string]interface{} `json:"extra"`
 }
 
-func NewPluginAuthSession(subject string) *PluginAuthSession {
-	return &PluginAuthSession{
+func NewAuthSession(subject string) *AuthSession {
+	return &AuthSession{
 		JWTSession: oauth2.JWTSession{
 			JWTClaims: new(jwt.JWTClaims),
 			JWTHeader: new(jwt.Headers),
@@ -25,7 +25,7 @@ func NewPluginAuthSession(subject string) *PluginAuthSession {
 	}
 }
 
-func (s *PluginAuthSession) GetJWTClaims() jwt.JWTClaimsContainer {
+func (s *AuthSession) GetJWTClaims() jwt.JWTClaimsContainer {
 	if s.JWTClaims == nil {
 		s.JWTClaims = &jwt.JWTClaims{}
 	}
@@ -34,7 +34,7 @@ func (s *PluginAuthSession) GetJWTClaims() jwt.JWTClaimsContainer {
 	return s.JWTClaims
 }
 
-func (s *PluginAuthSession) GetJWTHeader() *jwt.Headers {
+func (s *AuthSession) GetJWTHeader() *jwt.Headers {
 	if s.JWTHeader == nil {
 		s.JWTHeader = &jwt.Headers{}
 	}
@@ -44,14 +44,14 @@ func (s *PluginAuthSession) GetJWTHeader() *jwt.Headers {
 	return s.JWTHeader
 }
 
-func (s *PluginAuthSession) SetExpiresAt(key fosite.TokenType, exp time.Time) {
+func (s *AuthSession) SetExpiresAt(key fosite.TokenType, exp time.Time) {
 	if s.ExpiresAt == nil {
 		s.ExpiresAt = make(map[fosite.TokenType]time.Time)
 	}
 	s.ExpiresAt[key] = exp
 }
 
-func (s *PluginAuthSession) GetExpiresAt(key fosite.TokenType) time.Time {
+func (s *AuthSession) GetExpiresAt(key fosite.TokenType) time.Time {
 	if s.ExpiresAt == nil {
 		s.ExpiresAt = make(map[fosite.TokenType]time.Time)
 	}
@@ -62,45 +62,30 @@ func (s *PluginAuthSession) GetExpiresAt(key fosite.TokenType) time.Time {
 	return s.ExpiresAt[key]
 }
 
-func (s *PluginAuthSession) GetUsername() string {
-	if s == nil {
-		return ""
-	}
+func (s *AuthSession) GetUsername() string {
 	return s.Username
 }
 
-func (s *PluginAuthSession) SetSubject(subject string) {
+func (s *AuthSession) SetSubject(subject string) {
 	s.Subject = subject
 }
 
-func (s *PluginAuthSession) GetSubject() string {
-	if s == nil {
-		return ""
-	}
-
+func (s *AuthSession) GetSubject() string {
 	return s.Subject
 }
 
-func (s *PluginAuthSession) Clone() fosite.Session {
-	if s == nil {
-		return nil
-	}
-
+func (s *AuthSession) Clone() fosite.Session {
 	return deepcopy.Copy(s).(fosite.Session)
 }
 
 // GetExtraClaims implements ExtraClaimsSession for JWTSession.
 // The returned value is a copy of JWTSession claims.
-func (s *PluginAuthSession) GetExtraClaims() map[string]interface{} {
-	if s == nil {
-		return nil
-	}
-
+func (s *AuthSession) GetExtraClaims() map[string]interface{} {
 	// We make a clone so that WithScopeField does not change the original value.
-	return s.Clone().(*PluginAuthSession).GetJWTClaims().WithScopeField(jwt.JWTScopeFieldString).ToMapClaims()
+	return deepcopy.Copy(s).(*AuthSession).GetJWTClaims().WithScopeField(jwt.JWTScopeFieldString).ToMapClaims()
 }
 
-func (s *PluginAuthSession) SetClientID(clientID string) *jwt.JWTClaims {
+func (s *AuthSession) SetClientID(clientID string) *jwt.JWTClaims {
 	if s.JWTClaims == nil {
 		s.JWTClaims = &jwt.JWTClaims{}
 	}
