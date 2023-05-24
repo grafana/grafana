@@ -20,9 +20,7 @@ The Stat panel visualization shows a one large stat value with an optional graph
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
-{{% admonition type="note" %}}
-This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
-{{% /admonition %}}
+> **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 
 By default, the Stat panel displays one of the following:
 
