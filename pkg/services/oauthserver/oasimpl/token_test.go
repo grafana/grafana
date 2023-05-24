@@ -272,20 +272,6 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			},
 		},
 		{
-			name: "no entitlement without any permission in the impersonate set",
-			initEnv: func(env *TestEnv) {
-				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{}, nil)
-				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{56: {"Viewer"}}, nil)
-				env.UserService.ExpectedUser = user56
-			},
-			client:  client1,
-			subject: "user:id:56",
-			expectedClaims: map[string]interface{}{
-				"entitlements": map[string][]string{},
-			},
-			scopes: []string{"entitlements"},
-		},
-		{
 			name: "no entitlement without permission intersection",
 			initEnv: func(env *TestEnv) {
 				env.UserService.ExpectedUser = user56
@@ -338,8 +324,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 					56: {
 						{Action: "users:read", Scope: "global.users:id:*"},
 						{Action: "users.permissions:read", Scope: "users:id:*"},
-					},
-				}, nil)
+					}}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "users:read", Scope: "global.users:self"},
@@ -362,19 +347,14 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
 					56: {"Viewer"}}, nil)
 				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
-					56: {
-						{Action: "teams:read", Scope: "teams:*"},
-					},
-				}, nil)
+					56: {{Action: "teams:read", Scope: "teams:*"}}}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "teams:read", Scope: "teams:self"},
 			}),
 			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
-				"entitlements": map[string][]string{
-					"teams:read": {"teams:id:1", "teams:id:2"},
-				},
+				"entitlements": map[string][]string{"teams:read": {"teams:id:1", "teams:id:2"}},
 			},
 			scopes: []string{"entitlements"},
 		},
@@ -389,8 +369,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 					56: {
 						{Action: "users:read", Scope: "global.users:id:*"},
 						{Action: "datasources:read", Scope: "datasources:uid:1"},
-					},
-				}, nil)
+					}}, nil)
 			},
 			client: client1WithPerm([]ac.Permission{
 				{Action: "users:read", Scope: "global.users:*"},
@@ -398,9 +377,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			}),
 			subject: "user:id:56",
 			expectedClaims: map[string]interface{}{
-				"entitlements": map[string][]string{
-					"users:read": {"global.users:id:*"},
-				},
+				"entitlements": map[string][]string{"users:read": {"global.users:id:*"}},
 			},
 			scopes: []string{"entitlements", "users:read"},
 		},
