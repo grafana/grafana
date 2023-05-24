@@ -1096,7 +1096,7 @@ Enable this to allow Grafana to send email. Default is `false`.
 
 ### host
 
-Default is `localhost:25`. Port 465 is only supported for the SMTP proxy server with the TLS port enabled.
+Default is `localhost:25`. Use port 465 for implicit TLS.
 
 ### user
 
