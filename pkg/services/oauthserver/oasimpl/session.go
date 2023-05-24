@@ -11,7 +11,6 @@ import (
 
 type AuthSession struct {
 	oauth2.JWTSession
-	Extra map[string]interface{} `json:"extra"`
 }
 
 func NewAuthSession(subject string) *AuthSession {
@@ -21,7 +20,6 @@ func NewAuthSession(subject string) *AuthSession {
 			JWTHeader: new(jwt.Headers),
 			Subject:   subject,
 		},
-		Extra: map[string]interface{}{},
 	}
 }
 
