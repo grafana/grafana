@@ -450,9 +450,9 @@ func TestIntegrationMySQL(t *testing.T) {
 		err = sess.CreateTable(metric_values{})
 		require.NoError(t, err)
 
-		rand.Seed(time.Now().Unix())
+		rng := rand.New(rand.NewSource(time.Now().Unix()))
 		rnd := func(min, max int64) int64 {
-			return rand.Int63n(max-min) + min
+			return rng.Int63n(max-min) + min
 		}
 
 		var tInitial time.Time

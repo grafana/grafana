@@ -19,7 +19,7 @@ import {
   SortOrder,
 } from '@grafana/schema';
 
-import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
+import { FieldConfig as PanelFieldConfig, Options } from './panelcfg.gen';
 import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 function mockDataFrame() {
@@ -69,7 +69,7 @@ function mockDataFrame() {
     state: {},
   });
 
-  const info = prepareBarChartDisplayValues([df1], createTheme(), {} as PanelOptions);
+  const info = prepareBarChartDisplayValues([df1], createTheme(), {} as Options);
 
   if (!('aligned' in info)) {
     throw new Error('Bar chart not prepared correctly');
@@ -159,7 +159,7 @@ describe('BarChart utils', () => {
 
   describe('prepareGraphableFrames', () => {
     it('will warn when there is no data in the response', () => {
-      const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as PanelOptions);
+      const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as Options);
       const warning = assertIsDefined('warn' in result ? result : null);
 
       expect(warning.warn).toEqual('No data in response');
@@ -172,7 +172,7 @@ describe('BarChart utils', () => {
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as PanelOptions);
+      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
       const warning = assertIsDefined('warn' in result ? result : null);
       expect(warning.warn).toEqual('Bar charts requires a string or time field');
       expect(warning).not.toHaveProperty('viz');
@@ -185,7 +185,7 @@ describe('BarChart utils', () => {
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as PanelOptions);
+      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
       const warning = assertIsDefined('warn' in result ? result : null);
       expect(warning.warn).toEqual('No numeric fields found');
       expect(warning).not.toHaveProperty('viz');
@@ -198,7 +198,7 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as PanelOptions);
+      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
       const displayValues = assertIsDefined('viz' in result ? result : null);
 
       const field = displayValues.viz[0].fields[1];
@@ -238,7 +238,7 @@ describe('BarChart utils', () => {
 
       const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: false },
-      } as PanelOptions);
+      } as Options);
       const displayValuesAsc = assertIsDefined('viz' in resultAsc ? resultAsc : null).viz[0];
       expect(displayValuesAsc.fields[0].type).toBe(FieldType.string);
       expect(displayValuesAsc.fields[1].name).toBe('a');
@@ -253,7 +253,7 @@ describe('BarChart utils', () => {
 
       const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: true },
-      } as PanelOptions);
+      } as Options);
       const displayValuesDesc = assertIsDefined('viz' in resultDesc ? resultDesc : null).viz[0];
       expect(displayValuesDesc.fields[0].type).toBe(FieldType.string);
       expect(displayValuesDesc.fields[1].name).toBe('b');
@@ -279,7 +279,7 @@ describe('BarChart utils', () => {
 
       const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
         stacking: StackingMode.Percent,
-      } as PanelOptions);
+      } as Options);
       const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
 
       expect(displayLegendValuesAsc.fields[1].config.unit).toBeUndefined();

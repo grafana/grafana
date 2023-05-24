@@ -96,7 +96,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, logger log.L
 }
 
 func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Logger, logsQuery models.LogsQuery, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
-	instance, err := e.getInstance(pluginCtx)
+	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Lo
 		region = logsQuery.Region
 	}
 
-	logsClient, err := e.getCWLogsClient(pluginCtx, region)
+	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func groupResponseFrame(frame *data.Frame, statsGroups []string) (data.Frames, e
 	// Check if we have time field though as it makes sense to split only for time series.
 	if hasTimeField(frame) {
 		if len(statsGroups) > 0 && len(frame.Fields) > 0 {
-			groupedFrames, err := groupResults(frame, statsGroups)
+			groupedFrames, err := groupResults(frame, statsGroups, false)
 			if err != nil {
 				return nil, err
 			}

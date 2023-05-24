@@ -30,10 +30,22 @@ type AzRoute struct {
 	Headers map[string]string
 }
 
+type AzureSettings struct {
+	AzureMonitorSettings
+	AzureClientSettings
+}
+
 type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
+}
+
+type AzureClientSettings struct {
+	AzureAuthType string
+	CloudName     string
+	TenantId      string
+	ClientId      string
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
@@ -65,14 +77,16 @@ type DatasourceInfo struct {
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
 type AzureMonitorQuery struct {
-	URL        string
-	Target     string
-	Params     url.Values
-	RefID      string
-	Alias      string
-	TimeRange  backend.TimeRange
-	BodyFilter string
-	Dimensions []AzureMonitorDimensionFilter
+	URL          string
+	Target       string
+	Params       url.Values
+	RefID        string
+	Alias        string
+	TimeRange    backend.TimeRange
+	BodyFilter   string
+	Dimensions   []AzureMonitorDimensionFilter
+	Resources    map[string]AzureMonitorResource
+	Subscription string
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -272,6 +286,13 @@ type LogAnalyticsWorkspaceResponse struct {
 	PublicNetworkAccessForIngestion string                          `json:"publicNetworkAccessForIngestion"`
 	PublicNetworkAccessForQuery     string                          `json:"publicNetworkAccessForQuery"`
 	RetentionInDays                 int                             `json:"retentionInDays"`
+}
+
+type SubscriptionsResponse struct {
+	ID             string `json:"id"`
+	SubscriptionID string `json:"subscriptionId"`
+	TenantID       string `json:"tenantId"`
+	DisplayName    string `json:"displayName"`
 }
 
 var ErrorAzureHealthCheck = errors.New("health check failed")

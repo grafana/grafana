@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { SyntheticEvent, useEffect, useRef, useState } from 'react';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableEventHandler } from 'react-draggable';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
@@ -53,7 +53,7 @@ export function InlineEdit({ onClose, id, scene }: Props) {
     }
   }, [windowHeight, windowWidth, placement, measurements]);
 
-  const onDragStop = (event: any, dragElement: any) => {
+  const onDragStop: DraggableEventHandler = (event, dragElement) => {
     let x = dragElement.x < 0 ? 0 : dragElement.x;
     let y = dragElement.y < 0 ? 0 : dragElement.y;
 

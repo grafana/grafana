@@ -21,10 +21,10 @@ import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { PanelOptions } from './types';
+import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
-interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
+interface HeatmapPanelProps extends PanelProps<Options> {}
 
 export const HeatmapPanel = ({
   data,

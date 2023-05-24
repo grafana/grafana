@@ -9,8 +9,13 @@ load(
     "pipeline",
 )
 load(
+    "scripts/drone/events/release.star",
+    "verify_release_pipeline",
+)
+load(
     "scripts/drone/vault.star",
     "from_secret",
+    "rgm_dagger_token",
     "rgm_destination",
     "rgm_gcp_key_base64",
     "rgm_github_token",
@@ -20,6 +25,7 @@ rgm_env_secrets = {
     "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
     "DESTINATION": from_secret(rgm_destination),
     "GITHUB_TOKEN": from_secret(rgm_github_token),
+    "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
 }
 
 def rgm_build(script = "drone_publish_main.sh"):
@@ -62,34 +68,34 @@ def rgm_main():
     }
 
     return pipeline(
-        name = "[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging to main",
+        name = "rgm-main-prerelease",
         edition = "all",
         trigger = trigger,
         steps = rgm_build(),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
-def rgm_tag():
-    trigger = {
-        "event": {
-            "exclude": [
-                "promote",
-            ],
-        },
-        "ref": {
-            "include": [
-                "refs/tags/v*",
-            ],
-            "exclude": [
-                "refs/tags/*-cloud*",
-            ],
-        },
-    }
+tag_trigger = {
+    "event": {
+        "exclude": [
+            "promote",
+        ],
+    },
+    "ref": {
+        "include": [
+            "refs/tags/v*",
+        ],
+        "exclude": [
+            "refs/tags/*-cloud*",
+        ],
+    },
+}
 
+def rgm_tag():
     return pipeline(
-        name = "[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging",
+        name = "rgm-tag-prerelease",
         edition = "all",
-        trigger = trigger,
+        trigger = tag_trigger,
         steps = rgm_build(script = "drone_publish_tag.sh"),
         depends_on = [],
     )
@@ -98,4 +104,10 @@ def rgm():
     return [
         rgm_main(),
         rgm_tag(),
+        verify_release_pipeline(
+            name = "rgm-tag-verify-prerelease-assets",
+            trigger = tag_trigger,
+            depends_on = ["rgm-tag-prerelease"],
+            bucket = "grafana-prerelease-dev",
+        ),
     ]
