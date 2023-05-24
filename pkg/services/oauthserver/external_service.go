@@ -29,15 +29,15 @@ type ExternalServiceDTO struct {
 }
 
 type ExternalService struct {
-	ID               int64
-	Name             string
-	ClientID         string
-	Secret           string
-	RedirectURI      string // Not used yet (code flow)
-	GrantTypes       string // CSV value
-	Audiences        string // CSV value
-	PublicPem        []byte
-	ServiceAccountID int64
+	ID               int64  `xorm:"id pk autoincr"`
+	Name             string `xorm:"name"`
+	ClientID         string `xorm:"client_id"`
+	Secret           string `xorm:"secret"`
+	RedirectURI      string `xorm:"redirect_uri"` // Not used yet (code flow)
+	GrantTypes       string `xorm:"grant_types"`  // CSV value
+	Audiences        string `xorm:"audiences"`    // CSV value
+	PublicPem        []byte `xorm:"public_pem"`
+	ServiceAccountID int64  `xorm:"service_account_id"`
 	// SelfPermissions are the registered service account permissions (registered and managed permissions)
 	SelfPermissions []ac.Permission
 	// ImpersonatePermissions is the restriction set of permissions while impersonating
