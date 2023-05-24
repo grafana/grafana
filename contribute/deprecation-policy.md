@@ -19,7 +19,7 @@ Depending on the size and importance of the feature this can be a design doc or 
 
 Grafana employees can find more details in our internal docs.
 
-## Grace period between announcement and disablement
+## Grace period between announcement and disabling feature by default
 
 | Size   | Duration   | Example                                                          |
 | ------ | ---------- | ---------------------------------------------------------------- |
