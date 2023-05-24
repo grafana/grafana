@@ -74,9 +74,7 @@ can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
 
 ![](/static/img/docs/v43/opentsdb_query_editor.png)
 
-{{% admonition type="note" %}}
-While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
-{{% /admonition %}}
+> **Note:** While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 
 ### Auto complete suggestions
 

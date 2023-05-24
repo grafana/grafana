@@ -14,9 +14,7 @@ This topic explains how to install Grafana dependencies, install Grafana on Linu
 
 There are multiple ways to install Grafana: using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file. Choose only one of the methods below that best suits your needs.
 
-{{% admonition type="note" %}}
-If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
-{{% /admonition %}}
+> **Note:** If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
 
 ## Install from APT repository
 
@@ -29,9 +27,7 @@ If you install from the APT repository, Grafana automatically updates when you r
 | Grafana OSS               | grafana            | `https://apt.grafana.com stable main` |
 | Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
 
-{{% admonition type="note" %}}
-Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
-{{% /admonition %}}
+> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
 Complete the following steps to install Grafana from the APT repository:
 

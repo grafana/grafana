@@ -27,9 +27,7 @@ filters = accesscontrol:debug accesscontrol.evaluator:debug dashboard.permission
 
 ## Enable audit logging
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 You can enable auditing in the Grafana configuration file.
 
@@ -47,10 +45,8 @@ Learn more about [access control audit logs]({{< relref "../../../../setup-grafa
 This happens when an instance is downgraded from a version that uses RBAC to a version that uses the legacy access control, and dashboard, folder or data source permissions are updated.
 These permission updates will not be applied to RBAC, so permissions will be out of sync when the instance is next upgraded to a version with RBAC.
 
-{{% admonition type="note" %}}
-the steps provided below will set all dashboard, folder and data source permissions to what they are set to with the legacy access control.
-If you have made dashboard, folder or data source permission updates with RBAC enabled, these updates will be wiped.
-{{% /admonition %}}
+> **Note:** the steps provided below will set all dashboard, folder and data source permissions to what they are set to with the legacy access control.
+> If you have made dashboard, folder or data source permission updates with RBAC enabled, these updates will be wiped.
 
 To resynchronize the permissions:
 

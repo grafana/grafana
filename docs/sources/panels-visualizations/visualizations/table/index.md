@@ -39,9 +39,7 @@ Click a column title to change the sort order from default to descending to asce
 
 ## Table options
 
-{{% admonition type="note" %}}
-If you are using a table visualization created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
-{{% /admonition %}}
+> **Note:** If you are using a table visualization created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
 
 ### Show header
 
@@ -74,9 +72,7 @@ Choose how Grafana should align cell contents:
 
 By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to set the default for all fields. Additional configuration is available for some cell types.
 
-{{% admonition type="note" %}}
-If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
-{{% /admonition %}}
+> **Note:** If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
 
 ### Color text
 
@@ -144,9 +140,7 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-{{% admonition type="note" %}}
-This cell type is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
-{{% /admonition %}}
+> **Note:** This cell type is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
 
 Shows value rendered as a sparkline. Requires [time series to table]({{< relref "../../query-transform-data/transform-data/#time-series-to-table-transform" >}}) data transform.
 
@@ -156,9 +150,7 @@ Shows value rendered as a sparkline. Requires [time series to table]({{< relref 
 
 Enables value inspection from table cell. The raw value is presented in a modal window.
 
-{{% admonition type="note" %}}
-Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
-{{% /admonition %}}
+> **Note:** Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
 
 ## Column filter
 

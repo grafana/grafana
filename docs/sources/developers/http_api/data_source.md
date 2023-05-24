@@ -76,9 +76,7 @@ Content-Type: application/json
 
 `GET /api/datasources/:datasourceId`
 
-{{% admonition type="warning" %}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid) or to the [API for getting a single data source by its name](#get-a-single-data-source-by-name).
-{{% /admonition %}}
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for getting a single data source by UID](#get-a-single-data-source-by-uid) or to the [API for getting a single data source by its name](#get-a-single-data-source-by-name).
 
 **Required permissions**
 
@@ -343,9 +341,7 @@ Content-Type: application/json
 }
 ```
 
-{{% admonition type="note" %}}
-By defining `password` and `basicAuthPassword` under `secureJsonData` Grafana encrypts them securely as an encrypted blob in the database. The response then lists the encrypted fields under `secureJsonFields`.
-{{% /admonition %}}
+> **Note:** By defining `password` and `basicAuthPassword` under `secureJsonData` Grafana encrypts them securely as an encrypted blob in the database. The response then lists the encrypted fields under `secureJsonFields`.
 
 **Example Graphite Request with basic auth enabled**:
 
@@ -432,9 +428,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 `PUT /api/datasources/:datasourceId`
 
-{{% admonition type="warning" %}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source update API](#update-an-existing-data-source).
-{{% /admonition %}}
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source update API](#update-an-existing-data-source).
 
 **Required permissions**
 
@@ -511,9 +505,7 @@ Content-Type: application/json
 }
 ```
 
-{{% admonition type="note" %}}
-Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
-{{% /admonition %}}
+> **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
 
 ## Update an existing data source
 
@@ -595,17 +587,13 @@ Content-Type: application/json
 }
 ```
 
-{{% admonition type="note" %}}
-Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.## Update an existing data source by id
-{{% /admonition %}}
+> **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.## Update an existing data source by id
 
 ## Delete an existing data source by id
 
 `DELETE /api/datasources/:datasourceId`
 
-{{% admonition type="warning" %}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid) or to the [API for deleting an existing data source by its name](#delete-an-existing-data-source-by-name)
-{{% /admonition %}}
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [API for deleting an existing data source by UID](#delete-an-existing-data-source-by-uid) or to the [API for deleting an existing data source by its name](#delete-an-existing-data-source-by-name)
 
 **Required permissions**
 
@@ -707,9 +695,7 @@ Content-Type: application/json
 
 ## Data source proxy calls by id
 
-{{% admonition type="warning" %}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
-{{% /admonition %}}
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source API for proxying requests](#data-source-proxy-calls).
 
 `GET /api/datasources/proxy/:datasourceId/*`
 
@@ -783,9 +769,7 @@ Content-Type: application/json
 
 ## Fetch data source resources by id
 
-{{% admonition type="warning" %}}
-This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source resources API](#fetch-data-source-resources).
-{{% /admonition %}}
+> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new data source resources API](#fetch-data-source-resources).
 
 `GET /api/datasources/:datasourceId/resources/*`
 
@@ -885,9 +869,7 @@ Queries a data source having a backend implementation.
 
 `POST /api/ds/query`
 
-{{% admonition type="note" %}}
-Grafana's built-in data sources usually have a backend implementation.
-{{% /admonition %}}
+> **Note:** Grafana's built-in data sources usually have a backend implementation.
 
 **Example request for the Test data source**:
 
