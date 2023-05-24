@@ -13,7 +13,7 @@ keywords:
 title: 'Alerting Provisioning HTTP API '
 ---
 
-# Alerting provisioning API
+# Alerting provisioning HTTP API
 
 ## Information
 

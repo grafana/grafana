@@ -1,5 +1,4 @@
 ---
-aliases:
 keywords:
   - grafana
   - alerting
@@ -8,6 +7,7 @@ keywords:
   - create templates
   - edit templates
   - delete templates
+description: How to create notification templates
 title: Create notification templates
 weight: 200
 ---
