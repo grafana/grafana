@@ -15,8 +15,8 @@ Any links should be fully qualified and not relative: /docs/grafana/
 
 # Create TraceQL queries using Search
 
-{{% admonition type="Note" %}}
-This new Search query type is available as an experimental feature. This feature is under active development and is not production ready. To try this feature, enable the `traceqlSearch` feature flag in Grafana (read documentation). Grafana Cloud users should contact Grafana Support to enable this feature.
+{{% admonition type="note" %}}
+This new Search query type is available as an experimental feature. This feature is under active development and is not production ready. To try this feature, enable the `traceqlSearch` feature flag in Grafana (read [documentation](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/)). Grafana Cloud users should contact Grafana Support to enable this feature.
 {{% /admonition %}}
 
 Using the Search tab in Explore, you can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
@@ -39,9 +39,9 @@ The screenshot below identifies the areas used to perform a search.
 |:----|:----|:----|:----|
 |1|Data source|Use the data source drop-down to select a Tempo data source.|Each data source has its own version of search. This Search is specific to the Tempo data source.|
 |2|Query type tab|Select Search.| |
-|3|Choose filter|Choose whether to filter using **Resource Service Name**, **Span Name**, and/or **Duration**.|You must have at least one filter or tag defined to run the query.|
+|3|Choose filter|Choose whether to filter using **Resource Service Name**, **Span Name**, and/or **Duration**.|Optional. You can execute an empty query in the Search tab. In TraceQL, `{}` is a valid query and is the default query until you choose options.|
 |4|Filters conditions|Select options for one or more filters. For example, you can define a filter where **Resource Service Name** (`resource.service.name`) equals (`=`) `cloud-logs-archiver`.|Optional. At least one tag or filter must be defined.|
-|5|Tags|Add tags for span, resource, or unscoped and define their conditions.|Optional. At least one tag or filter must be defined.|
+|5|Tags|Add tags for span, resource, or unscoped and define their conditions.|Optional.|
 |6|TraceQL query|Displays the TraceQL query constructed by your selections.|This TraceQL query is executed when you select **Run query**.|
 
 Every query searches the data for the selected time frame.
@@ -64,7 +64,6 @@ Filters can be limited by the operators. The available operators are determined 
 For example, **Span Name** and **Resource Service Name** are string fields so the comparison operators are equals (`=`), not equal (`!=`), or regular expressions (`=~`).
 **Duration** is a duration field type and uses range selections (`>`, `>=`, `<`, `<=`).
 
-You must define at least one filter or one tag for a query to run.
 
 To define filters, follow these steps:
 

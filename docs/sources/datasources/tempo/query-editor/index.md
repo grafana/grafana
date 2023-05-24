@@ -73,9 +73,9 @@ To learn more about how to query by TraceQL, refer to the [TraceQL documentation
 
 You can create TraceQL queries using the Query editor or using Search query tab (preview feature).
 
-<!-- Include content for preview of Search tab featuring TraceQL query builder -->
+[//]: # (Include content for preview of Search tab featuring TraceQL query builder)
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" version="latest" leveloffset="+1" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" >}}
 
 ## Query Loki for traces
 
