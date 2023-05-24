@@ -7,6 +7,7 @@ import {
   Bool,
   By,
   ConvOp,
+  Decolorize,
   Filter,
   FilterOp,
   Grouping,
@@ -173,6 +174,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
         context.errors.push(createNotSupportedError(expr, node, error));
       }
 
+      break;
+    }
+
+    case Decolorize: {
+      visQuery.operations.push(getDecolorize());
       break;
     }
 
@@ -365,6 +371,15 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   return {
     id,
     params: [getString(expr, originalLabel), handleQuotes(getString(expr, renameTo))],
+  };
+}
+
+function getDecolorize(): QueryBuilderOperation {
+  const id = LokiOperationId.Decolorize;
+
+  return {
+    id,
+    params: [],
   };
 }
 
