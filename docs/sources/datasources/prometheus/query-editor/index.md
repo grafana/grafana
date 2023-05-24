@@ -87,10 +87,8 @@ The **Type** setting selects the query type.
 
 - An **Exemplars** query runs with the regular query and shows exemplars in the graph.
 
-{{% admonition type="note" %}}
-Grafana modifies the request dates for queries to align them with the dynamically calculated step.
-This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
-{{% /admonition %}}
+> **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step.
+> This ensures a consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
 ## Code mode
 
@@ -125,9 +123,7 @@ When you select a metric, the browser narrows down the available labels to show 
 You can then select one or more labels for which the available label values are shown in lists in the bottom section.
 Select one or more values for each label to tighten your query scope.
 
-{{% admonition type="note" %}}
-If you do not remember a metric name to start with, you can also select a few labels to narrow down the list, then find relevant label values.
-{{% /admonition %}}
+> **Note:** If you do not remember a metric name to start with, you can also select a few labels to narrow down the list, then find relevant label values.
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string.
 The values section has only one search field, and its filtering applies to all labels to help you find values across labels once selected.

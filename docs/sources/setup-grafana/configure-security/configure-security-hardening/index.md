@@ -9,17 +9,13 @@ title: Configure security hardening
 
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
-{{% admonition type="note" %}}
-These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
-{{% /admonition %}}
+> **Note:** These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
 
 ## Additional security for cookies
 
 If Grafana uses HTTPS, you can further secure the cookie that the system uses to authenticate access to the web UI. By applying additional security to the cookie, you might mitigate certain attacks that result from an attacker obtaining the cookie value.
 
-{{% admonition type="note" %}}
-Grafana must use HTTPS for the following configurations to work properly.
-{{% /admonition %}}
+> **Note:** Grafana must use HTTPS for the following configurations to work properly.
 
 ### Add a secure attribute to cookies
 
@@ -43,9 +39,7 @@ Example:
 cookie_samesite = strict
 ```
 
-{{% admonition type="note" %}}
-By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
-{{% /admonition %}}
+> **Note:** By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
 
 ### Add a prefix to cookie names
 

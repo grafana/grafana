@@ -90,9 +90,7 @@ For details on the available functions, refer to [AWS Metric Math](https://docs.
 
 For example, to apply arithmetic operations to a metric, apply a unique string id to the raw metric, then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
-{{% admonition type="note" %}}
-If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
-{{% /admonition %}}
+> **Note:** If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
 
 #### Period macro
 
@@ -111,9 +109,7 @@ This feature is not available for metrics based on [metric math expressions](#me
 
 ### Create a Metric Insights query
 
-{{% admonition type="note" %}}
-This query option is available only in Grafana v8.3 and higher.
-{{% /admonition %}}
+> **Note:** This query option is available only in Grafana v8.3 and higher.
 
 The Metrics Query option in the CloudWatch data source is referred to as **Metric Insights** in the AWS console.
 It's a fast, flexible, SQL-based query engine that you can use to identify trends and patterns across millions of operational metrics in real time.
@@ -175,9 +171,7 @@ The suggestions appear after typing a space, comma, or dollar (`$`) character, o
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-code-editor-autocomplete-8.3.0.png" max-width="500px" class="docs-image--right" caption="Code editor autocomplete" >}}
 
-{{% admonition type="note" %}}
-Template variables in the code editor can interfere with autocompletion.
-{{% /admonition %}}
+> **Note:** Template variables in the code editor can interfere with autocompletion.
 
 To run the query, click **Run query** above the code editor.
 

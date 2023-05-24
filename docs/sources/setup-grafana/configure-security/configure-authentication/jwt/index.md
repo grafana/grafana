@@ -61,18 +61,14 @@ If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth
 If you want to embed Grafana in an iframe while maintaning user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
-{{% admonition type="note" %}}
-For Grafana Cloud, or scenarios where verifying viewer identity is not required,
-embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
-{{% /admonition %}}
+> **Note**: For Grafana Cloud, or scenarios where verifying viewer identity is not required,
+> embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
 
 In this scenario, you will need to configure Grafana to accept a JWT
 provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
-{{% admonition type="note" %}}
-For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
-{{% /admonition %}}
+> **Note**: For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
 
 In a scenario where it is not possible to rewrite the request headers you
 can use URL login instead.
@@ -95,10 +91,8 @@ skip_org_role_sync = true
 
 **Note**: You need to have enabled JWT before setting this setting see section Enabled JWT
 
-{{% admonition type="warning" %}}
-this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
-using HTTP over TLS.
-{{% /admonition %}}
+> **Warning**: this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
+> using HTTP over TLS.
 
 ```ini
 # [auth.jwt]

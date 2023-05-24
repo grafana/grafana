@@ -24,9 +24,7 @@ Values mapped via value mappings bypass the unit formatting. This means that a t
 
 If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
 
-{{% admonition type="note" %}}
-The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
-{{% /admonition %}}
+> **Note:** The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
 
 ## Types of value mappings
 
