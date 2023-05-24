@@ -36,13 +36,13 @@ export function MarkersLegend(props: MarkersLegendProps) {
     }
 
     const props = hoverEvent.getProperties();
-    const frame = props.frame as DataFrame; // eslint-disable-line
+    const frame: DataFrame = props.frame;
 
     if (!frame) {
       return undefined;
     }
 
-    const rowIndex = props.rowIndex as number; // eslint-disable-line
+    const rowIndex: number = props.rowIndex;
     return colorField.values[rowIndex];
   }, [hoverEvent, colorField]);
 
@@ -99,8 +99,8 @@ export function MarkersLegend(props: MarkersLegendProps) {
           <ColorScale
             hoverValue={hoverValue}
             colorPalette={colors}
-            min={colorRange.min as number}
-            max={colorRange.max as number}
+            min={colorRange.min ?? 0}
+            max={colorRange.max ?? 100}
             display={display}
             useStopsPercentage={false}
           />

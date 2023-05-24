@@ -272,19 +272,23 @@ Grafana checks for the presence of a role using the [JMESPath](http://jmespath.o
 
 For more information, refer to the [JMESPath examples](#jmespath-examples).
 
-> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
-> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `skip_org_role_sync` option.
-> See [Configure Grafana]({{< relref "../../../configure-grafana#authgeneric_oauth" >}}) for more information.
+{{% admonition type="warning" %}}
+Currently if no organization role mapping is found for a user, Grafana doesn't
+update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+enable the `skip_org_role_sync` option.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authgeneric_oauth" >}}) for more information.
+{{% /admonition %}}
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-> then the user is assigned the role specified by
-> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% admonition type="warning" %}}
+With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+then the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% /admonition %}}
 
 ### JMESPath examples
 
