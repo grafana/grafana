@@ -64,7 +64,7 @@ weight: 1
 
 # What's new in Grafana
 
-For release highlights, deprecations, and breaking changes in Grafana releases, refer to these "What's new" pages for each version.
+For release highlights, deprecations, and breaking changes in Grafana releases, refer to these "What's new" and "Breaking changes" (major releases only) pages for each version.
 
 > **Note:** For Grafana versions prior to v9.2, additional information might also be available in the archive of [release notes]({{< relref "../release-notes/" >}}).
 

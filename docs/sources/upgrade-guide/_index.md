@@ -20,6 +20,8 @@ Because Grafana upgrades are backward compatible, the upgrade process is straigh
 
 To learn what's available in a Grafana release, refer to [What's New ]({{< relref "../whatsnew/" >}}).
 
+To learn about breaking changes in a Grafana release, refer to the [Breaking changes] ({{< relref "../breaking-changes/" >}}).
+
 Refer to any of the following upgrade guides:
 
 {{< section menuTitle="true">}}
