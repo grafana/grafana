@@ -9,6 +9,14 @@
 
 package dataquery
 
+// Defines values for SearchStreamingState.
+const (
+	SearchStreamingStateDone      SearchStreamingState = "done"
+	SearchStreamingStateError     SearchStreamingState = "error"
+	SearchStreamingStatePending   SearchStreamingState = "pending"
+	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+)
+
 // Defines values for TempoQueryFiltersScope.
 const (
 	TempoQueryFiltersScopeResource TempoQueryFiltersScope = "resource"
@@ -41,6 +49,9 @@ const (
 	TraceqlSearchScopeSpan     TraceqlSearchScope = "span"
 	TraceqlSearchScopeUnscoped TraceqlSearchScope = "unscoped"
 )
+
+// The state of the TraceQL streaming search query
+type SearchStreamingState string
 
 // TempoDataQuery defines model for TempoDataQuery.
 type TempoDataQuery = map[string]interface{}

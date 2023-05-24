@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
@@ -23,16 +21,14 @@ import (
 )
 
 type Service struct {
-	im             instancemgmt.InstanceManager
-	tlog           log.Logger
-	SearchRequests *Streams
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	return &Service{
-		tlog:           log.New("tsdb.tempo"),
-		im:             datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		SearchRequests: NewSearchStreams(),
+		logger: log.New("tsdb.tempo"),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
 }
 
@@ -70,7 +66,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	s.tlog.Info("QueryData called ", "Queries ", req.Queries)
+	s.logger.Info("QueryData called ", "Queries ", req.Queries)
 
 	// create response struct
 	response := backend.NewQueryDataResponse()
@@ -95,59 +91,9 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 	switch query.QueryType {
 	case string(dataquery.TempoQueryTypeTraceId):
 		return s.getTrace(ctx, pCtx, query)
-	case string(dataquery.TempoQueryTypeTraceql):
-		fallthrough
-	case string(dataquery.TempoQueryTypeTraceqlSearch):
-		return s.streamSearch(ctx, pCtx, query)
 	}
 
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
-}
-
-func (s *Service) streamSearch(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	var sr *tempopb.SearchRequest
-	response := &backend.DataResponse{}
-
-	s.tlog.Warn("streamSearch called", "query", string(query.JSON))
-
-	err := json.Unmarshal(query.JSON, &sr)
-	if err != nil {
-		response.Error = fmt.Errorf("error unmarshaling query model: %v", err)
-		return response, nil
-	}
-	sr.Start = uint32(query.TimeRange.From.Unix())
-	sr.End = uint32(query.TimeRange.To.Unix())
-
-	// generate unique identifier for this stream
-	streamPath := SearchPathPrefix + uuid.NewString()
-
-	traceqlSearch := NewTraceQLSearch(sr)
-
-	s.tlog.Info("Adding request to search requests", "streamPath", streamPath)
-	if err := s.SearchRequests.add(streamPath, traceqlSearch); err != nil {
-		s.tlog.Error("Error adding request to search requests", "err", err)
-	}
-
-	tempoDatasource, err := s.getDSInfo(pCtx)
-	if err != nil {
-		return response, err
-	}
-
-	traceqlSearch.Run(ctx, tempoDatasource)
-
-	frame := data.NewFrame("response")
-
-	channel := live.Channel{
-		Scope:     live.ScopeDatasource,
-		Namespace: pCtx.DataSourceInstanceSettings.UID,
-		Path:      streamPath,
-	}
-	frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-	response.Frames = append(response.Frames, frame)
-
-	s.tlog.Info("Return response")
-
-	return response, nil
 }
 
 func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
@@ -177,7 +123,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			s.tlog.FromContext(ctx).Warn("failed to close response body", "err", err)
+			s.logger.FromContext(ctx).Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -222,7 +168,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *TempoDatasource, tr
 
 	req.Header.Set("Accept", "application/protobuf")
 
-	s.tlog.FromContext(ctx).Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
+	s.logger.FromContext(ctx).Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
 	return req, nil
 }
 

@@ -70,6 +70,16 @@ export enum TraceqlSearchScope {
   Unscoped = 'unscoped',
 }
 
+/**
+ * The state of the TraceQL streaming search query
+ */
+export enum SearchStreamingState {
+  Done = 'done',
+  Error = 'error',
+  Pending = 'pending',
+  Streaming = 'streaming',
+}
+
 export interface TraceqlFilter {
   /**
    * Uniquely identify the filter, will not be used in the query generation

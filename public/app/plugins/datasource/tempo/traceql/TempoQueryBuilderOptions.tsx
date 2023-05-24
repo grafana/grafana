@@ -28,7 +28,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   return (
     <>
       <EditorRow>
-        <QueryOptionGroup title="Options" collapsedInfo={[`Limit: ${query.limit || DEFAULT_LIMIT}`]}>
+        <QueryOptionGroup
+          title="Options"
+          collapsedInfo={[`Limit: ${query.limit || DEFAULT_LIMIT} | Streaming: ${query.streaming ? 'Yes' : 'No'}`]}
+        >
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"

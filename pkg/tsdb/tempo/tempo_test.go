@@ -11,14 +11,14 @@ import (
 
 func TestTempo(t *testing.T) {
 	t.Run("createRequest without time range - success", func(t *testing.T) {
-		service := &Service{tlog: log.New("tempo-test")}
+		service := &Service{logger: log.New("tempo-test")}
 		req, err := service.createRequest(context.Background(), &TempoDatasource{}, "traceID", 0, 0)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))
 	})
 
 	t.Run("createRequest with time range - success", func(t *testing.T) {
-		service := &Service{tlog: log.New("tempo-test")}
+		service := &Service{logger: log.New("tempo-test")}
 		req, err := service.createRequest(context.Background(), &TempoDatasource{}, "traceID", 1, 2)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))

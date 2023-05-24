@@ -57,6 +57,10 @@ composableKinds: DataQuery: {
 
 						// static fields are pre-set in the UI, dynamic fields are added by the user
 						#TraceqlSearchScope: "unscoped" | "resource" | "span" @cuetsy(kind="enum")
+
+						// The state of the TraceQL streaming search query
+						#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
+
 						#TraceqlFilter: {
 							// Uniquely identify the filter, will not be used in the query generation
 							id: string
