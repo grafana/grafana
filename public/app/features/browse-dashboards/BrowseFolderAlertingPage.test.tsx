@@ -8,15 +8,9 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { contextSrv } from 'app/core/core';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { backendSrv } from 'app/core/services/backend_srv';
-import {
-  GrafanaAlertStateDecision,
-  PromAlertingRuleState,
-  PromRulesResponse,
-  PromRuleType,
-  RulerRulesConfigDTO,
-} from 'app/types/unified-alerting-dto';
 
 import BrowseFolderAlertingPage, { OwnProps } from './BrowseFolderAlertingPage';
+import { getPrometheusRulesResponse, getRulerRulesResponse } from './fixtures/alertRules.fixture';
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -33,85 +27,9 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockFolderName = 'myFolder';
 const mockFolderUid = '12345';
-const mockAlertRuleName = 'myAlertRule';
 
-const mockRulerRulesResponse: RulerRulesConfigDTO = {
-  [mockFolderName]: [
-    {
-      name: 'foo',
-      interval: '1m',
-      rules: [
-        {
-          annotations: {},
-          labels: {},
-          expr: '',
-          for: '5m',
-          grafana_alert: {
-            id: '49',
-            title: mockAlertRuleName,
-            condition: 'B',
-            data: [
-              {
-                refId: 'A',
-                queryType: '',
-                relativeTimeRange: {
-                  from: 600,
-                  to: 0,
-                },
-                datasourceUid: 'gdev-testdata',
-                model: {
-                  hide: false,
-                  intervalMs: 1000,
-                  maxDataPoints: 43200,
-                  refId: 'A',
-                },
-              },
-            ],
-            uid: 'eb8bc52a-9a1d-4100-a428-91b543c0e5ab',
-            namespace_uid: mockFolderUid,
-            namespace_id: 93,
-            no_data_state: GrafanaAlertStateDecision.NoData,
-            exec_err_state: GrafanaAlertStateDecision.Error,
-            is_paused: false,
-          },
-        },
-      ],
-    },
-  ],
-};
-
-const mockPrometheusRulesResponse: PromRulesResponse = {
-  status: 'success',
-  data: {
-    groups: [
-      {
-        name: 'foo',
-        file: mockFolderName,
-        rules: [
-          {
-            alerts: [],
-            labels: {},
-            state: PromAlertingRuleState.Inactive,
-            name: mockAlertRuleName,
-            query:
-              '[{"refId":"A","queryType":"","relativeTimeRange":{"from":600,"to":0},"datasourceUid":"gdev-testdata","model":{"hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A"}},{"refId":"B","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"name":"Expression","type":"__expr__","uid":"__expr__"},"expression":"A","intervalMs":1000,"maxDataPoints":43200,"refId":"B","type":"threshold"}}]',
-            duration: 300,
-            health: 'ok',
-            type: PromRuleType.Alerting,
-            lastEvaluation: '0001-01-01T00:00:00Z',
-            evaluationTime: 0,
-          },
-        ],
-        interval: 60,
-        lastEvaluation: '0001-01-01T00:00:00Z',
-        evaluationTime: 0,
-      },
-    ],
-    totals: {
-      inactive: 1,
-    },
-  },
-};
+const mockRulerRulesResponse = getRulerRulesResponse(mockFolderName, mockFolderUid);
+const mockPrometheusRulesResponse = getPrometheusRulesResponse(mockFolderName);
 
 describe('browse-dashboards BrowseFolderAlertingPage', () => {
   let props: OwnProps;
@@ -129,10 +47,10 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
         );
       }),
       rest.get('api/ruler/grafana/api/v1/rules', (_, res, ctx) => {
-        return res(ctx.status(200), ctx.json<RulerRulesConfigDTO>(mockRulerRulesResponse));
+        return res(ctx.status(200), ctx.json(mockRulerRulesResponse));
       }),
       rest.get('api/prometheus/grafana/api/v1/rules', (_, res, ctx) => {
-        return res(ctx.status(200), ctx.json<PromRulesResponse>(mockPrometheusRulesResponse));
+        return res(ctx.status(200), ctx.json(mockPrometheusRulesResponse));
       })
     );
     server.listen();
@@ -188,6 +106,7 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   it('displays the alert rules returned by the API', async () => {
     render(<BrowseFolderAlertingPage {...props} />);
 
-    expect(await screen.findByRole('link', { name: mockAlertRuleName })).toBeInTheDocument();
+    const ruleName = mockPrometheusRulesResponse.data.groups[0].rules[0].name;
+    expect(await screen.findByRole('link', { name: ruleName })).toBeInTheDocument();
   });
 });

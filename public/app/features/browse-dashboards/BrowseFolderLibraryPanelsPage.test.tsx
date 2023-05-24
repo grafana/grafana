@@ -5,14 +5,12 @@ import { SetupServer, setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { LibraryPanel } from '@grafana/schema';
 import { contextSrv } from 'app/core/core';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { LibraryElementsSearchResult } from '../library-panels/types';
-
 import BrowseFolderLibraryPanelsPage, { OwnProps } from './BrowseFolderLibraryPanelsPage';
+import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -29,21 +27,9 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockFolderName = 'myFolder';
 const mockFolderUid = '12345';
-const mockLibraryPanelName = 'myLibraryPanel';
-const mockLibraryElementsSearchResult: LibraryElementsSearchResult = {
-  page: 1,
-  perPage: 40,
-  totalCount: 1,
-  elements: [
-    {
-      name: mockLibraryPanelName,
-      folderUid: mockFolderUid,
-      model: {
-        type: 'timeseries',
-      },
-    } as LibraryPanel,
-  ],
-};
+const mockLibraryElementsResponse = getLibraryElementsResponse(1, {
+  folderUid: mockFolderUid,
+});
 
 describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   let props: OwnProps;
@@ -63,8 +49,8 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
       rest.get('/api/library-elements', (_, res, ctx) => {
         return res(
           ctx.status(200),
-          ctx.json<{ result: LibraryElementsSearchResult }>({
-            result: mockLibraryElementsSearchResult,
+          ctx.json({
+            result: mockLibraryElementsResponse,
           })
         );
       }),
@@ -125,6 +111,6 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   it('displays the library panels returned by the API', async () => {
     render(<BrowseFolderLibraryPanelsPage {...props} />);
 
-    expect(await screen.findByText(mockLibraryPanelName)).toBeInTheDocument();
+    expect(await screen.findByText(mockLibraryElementsResponse.elements[0].name)).toBeInTheDocument();
   });
 });
