@@ -24,30 +24,20 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+### Data source options
 
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `MySQL` in the search bar.
-1. Select **MySQL**.
-
-   The **Settings** tab of the data source is displayed.
-
-1. Set the data source's basic configuration options.
-
-| Name                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**             | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                                                   |
-| **Default**          | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Host**             | The IP address/hostname and optional port of your MySQL instance.                                                                                                                                                                                                                                                                                                                                                                                                       |
-| **Database**         | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| **User**             | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| **Password**         | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| **Session Timezone** | Specify the time zone used in the database session, such as `Europe/Berlin` or `+02:00`. This is necessary, if the timezone of the database (or the host of the database) is set to something other than UTC. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, then the time zone is not updated. For more information, refer to the [MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/time-zone-support.html). |
-| **Max open**         | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Max idle**         | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                           |
-| **Auto (max idle)**  | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                                                                  |
-| **Max lifetime**     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).                                                                                                                                                                                               |
+| Name               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`             | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                                                   |
+| `Default`          | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `Host`             | The IP address/hostname and optional port of your MySQL instance.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `Database`         | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `User`             | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `Password`         | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `Session Timezone` | Specify the time zone used in the database session, such as `Europe/Berlin` or `+02:00`. This is necessary, if the timezone of the database (or the host of the database) is set to something other than UTC. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, then the time zone is not updated. For more information, refer to the [MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/time-zone-support.html). |
+| `Max open`         | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                            |
+| `Max idle`         | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                             |
+| `Max lifetime`     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).                                                                                                                                                                                               |
 
 ### Min time interval
 
@@ -92,9 +82,7 @@ You can use wildcards (`*`) in place of database or table if you want to grant a
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-#### Provisioning examples
-
-##### Basic Provisioning
+#### Provisioning example
 
 ```yaml
 apiVersion: 1
@@ -103,62 +91,14 @@ datasources:
   - name: MySQL
     type: mysql
     url: localhost:3306
+    database: grafana
     user: grafana
     jsonData:
-      database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
+      maxOpenConns: 0 # Grafana v5.4+
+      maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+
     secureJsonData:
       password: ${GRAFANA_MYSQL_PASSWORD}
-```
-
-##### Using TLS Verificaiton
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: MySQL
-    type: mysql
-    url: localhost:3306
-    user: grafana
-    jsonData:
-      tlsAuth: true
-      database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
-    secureJsonData:
-      password: ${GRAFANA_MYSQL_PASSWORD}
-      tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
-      tlsCACert: ${GRAFANA_TLS_CA_CERT}
-```
-
-##### Use TLS and Skip Certificate Verification
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: MySQL
-    type: mysql
-    url: localhost:3306
-    user: grafana
-    jsonData:
-      tlsAuth: true
-      skipTLSVerify: true
-      database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
-    secureJsonData:
-      password: ${GRAFANA_MYSQL_PASSWORD}
-      tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
-      tlsCACert: ${GRAFANA_TLS_CA_CERT}
 ```
 
 ## Query builder
@@ -177,10 +117,6 @@ You can run the built query by pressing the `Run query` button in the top right 
 The response from MySQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
 ### Dataset and Table selection
-
-{{% admonition type="note" %}}
-If your table or database name contains a reserved word or a [not permitted character](https://dev.mysql.com/doc/refman/8.0/en/identifiers.html) the editor will put quotes around them. For example a table name like `table-name` will be quoted with backticks `` `table-name` ``.
-{{% /admonition %}}
 
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
@@ -285,7 +221,7 @@ To optionally customize the default series name formatting, refer to [Standard o
 
 ```sql
 SELECT
-  $__timeGroupAlias(time_date_time,'5m'),
+  $__timeGroup(time_date_time,'5m'),
   min(value_double),
   'min' as metric
 FROM test_data
@@ -307,11 +243,11 @@ Data frame result:
 +---------------------+-----------------+
 ```
 
-**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
+**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
-  $__timeGroupAlias(createdAt,'5m',0),
+  $__timeGroup(createdAt,'5m',0),
   sum(value_double) as value,
   hostname
 FROM test_data
@@ -340,7 +276,7 @@ Data frame result:
 
 ```sql
 SELECT
-  $__timeGroupAlias(time_date_time,'5m'),
+  $__timeGroup(time_date_time,'5m'),
   min(value_double) as min_value,
   max(value_double) as max_value
 FROM test_data
