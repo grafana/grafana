@@ -975,6 +975,7 @@ export class PrometheusDatasource
   }
 
   renderHealthCheckDetails(details: HealthCheckResultDetails) {
+    // TODO remove type assertion here; use custom type-guard?
     const buildInfo = details as unknown as PromApiFeatures;
 
     const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
@@ -1011,18 +1012,21 @@ export class PrometheusDatasource
       [PromApplication.Thanos]: 'Thanos',
     };
 
-    const application = this.datasourceConfigurationPrometheusFlavor ?? buildInfo.application;
+    const application = buildInfo.application;
+    const logo = application && LOGOS[application];
 
     // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus
     const applicationSubType = (
       <Badge
         text={
           <span>
-            <img
-              style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
-              src={LOGOS[application ?? PromApplication.Prometheus]}
-              alt={application ?? 'Unknown'}
-            />{' '}
+            {logo && (
+              <img
+                style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
+                src={logo}
+                alt={application}
+              />
+            )}{' '}
             {application ? AppDisplayNames[application] : 'Unknown'}
           </span>
         }
