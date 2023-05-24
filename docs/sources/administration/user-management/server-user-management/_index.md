@@ -37,9 +37,7 @@ You can see a list of users with accounts on your Grafana server. This action mi
 1. Sign in to Grafana as a server administrator.
 1. Click **Administration** in the left-side menu, and then **Users**.
 
-{{% admonition type="note" %}}
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still [view of list of users in a given organization]({{< relref "../manage-org-users/#view-a-list-of-organization-users" >}}).
-{{% /admonition %}}
+> **Note:** If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still [view of list of users in a given organization]({{< relref "../manage-org-users/#view-a-list-of-organization-users" >}}).
 
 ## View user details
 
@@ -117,9 +115,7 @@ When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth 
 
 When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "add-remove-user-to-org/" >}}).
 
-{{% admonition type="note" %}}
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../manage-org-users#invite-a-user-to-join-an-organization" >}}).
-{{% /admonition %}}
+> **Note:** If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../manage-org-users#invite-a-user-to-join-an-organization" >}}).
 
 ## Force a user to log out of Grafana
 

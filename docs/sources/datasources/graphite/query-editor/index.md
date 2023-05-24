@@ -66,10 +66,8 @@ Grafana consolidates all Graphite metrics so that Graphite doesn't return more d
 By default, Grafana consolidates data points using the `avg` function.
 To control how Graphite consolidates metrics, use the Graphite `consolidateBy()` function.
 
-{{% admonition type="note" %}}
-Legend summary values (max, min, total) can't all be correct at the same time because they are calculated client-side by Grafana.
-Depending on your consolidation function, only one or two can be correct at the same time.
-{{% /admonition %}}
+> **Note:** Legend summary values (max, min, total) can't all be correct at the same time because they are calculated client-side by Grafana.
+> Depending on your consolidation function, only one or two can be correct at the same time.
 
 ### Combine time series
 
@@ -84,10 +82,8 @@ To select data, use the `seriesByTag` function, which takes tag expressions (`=`
 
 The Grafana query builder does this for you automatically when you select a tag.
 
-{{% admonition type="note" %}}
-The regular expression search can be slow on high-cardinality tags, so try to use other tags to reduce the scope first.
-To help reduce the results, start by filtering on a particular name or namespace.
-{{% /admonition %}}
+> **Tip:** The regular expression search can be slow on high-cardinality tags, so try to use other tags to reduce the scope first.
+> To help reduce the results, start by filtering on a particular name or namespace.
 
 ## Nest queries
 
