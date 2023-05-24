@@ -11,12 +11,16 @@ import { data } from './testData/dataNestedSet';
 
 import 'jest-canvas-mock';
 
-jest.mock('react-use', () => ({
-  useMeasure: () => {
-    const ref = React.useRef();
-    return [ref, { width: 1600 }];
-  },
-}));
+jest.mock('react-use', () => {
+  const reactUse = jest.requireActual('react-use');
+  return {
+    ...reactUse,
+    useMeasure: () => {
+      const ref = React.useRef();
+      return [ref, { width: 1600 }];
+    },
+  };
+});
 
 describe('FlameGraph', () => {
   const FlameGraphWithProps = () => {
