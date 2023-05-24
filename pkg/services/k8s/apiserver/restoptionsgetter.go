@@ -16,17 +16,20 @@ import (
 )
 
 type RESTOptionsGetter struct {
-	features featuremgmt.FeatureToggles
-	store    entity.EntityStoreServer
-	codec    runtime.Codec
+	store entity.EntityStoreServer
+	codec runtime.Codec
 }
 
 func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureToggles, store entity.EntityStoreServer) func(runtime.Codec) generic.RESTOptionsGetter {
 	return func(codec runtime.Codec) generic.RESTOptionsGetter {
-		if true {
+		// Default to a file based solution
+		if true { // !features.IsEnabled(featuremgmt.FlagEntityStore) {
 			return filepath.NewRESTOptionsGetter(path.Join(cfg.DataPath, "k8s"), codec)
 		}
-		return &RESTOptionsGetter{features: features, store: store, codec: codec}
+		return &RESTOptionsGetter{
+			store: store,
+			codec: codec,
+		}
 	}
 }
 

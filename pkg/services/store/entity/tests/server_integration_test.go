@@ -30,13 +30,13 @@ type rawEntityMatcher struct {
 	createdBy    string
 	updatedBy    string
 	body         []byte
-	version      *string
+	version      uint64 // zero is not checked
 }
 
 type objectVersionMatcher struct {
 	updatedRange []time.Time
 	updatedBy    string
-	version      *string
+	version      uint64 // zero is not checked
 	etag         *string
 	comment      *string
 }
@@ -88,8 +88,8 @@ func requireEntityMatch(t *testing.T, obj *entity.Entity, m rawEntityMatcher) {
 		}
 	}
 
-	if m.version != nil && *m.version != obj.Version {
-		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
+	if m.version > 0 && m.version != obj.Version {
+		mismatches += fmt.Sprintf("expected version: %d, actual version: %d\n", m.version, obj.Version)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -111,8 +111,8 @@ func requireVersionMatch(t *testing.T, obj *entity.EntityVersionInfo, m objectVe
 		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
 	}
 
-	if m.version != nil && *m.version != obj.Version {
-		mismatches += fmt.Sprintf("expected version: %s, actual version: %s\n", *m.version, obj.Version)
+	if m.version > 0 && m.version != obj.Version {
+		mismatches += fmt.Sprintf("expected version: %d, actual version: %d\n", m.version, obj.Version)
 	}
 
 	require.True(t, len(mismatches) == 0, mismatches)
@@ -132,7 +132,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
 
 	fakeUser := store.GetUserIDString(testCtx.user)
-	firstVersion := "1"
+	firstVersion := uint64(1)
 	kind := entity.StandardKindJSONObj
 	grn := &entity.GRN{
 		Kind: kind,
@@ -163,14 +163,13 @@ func TestIntegrationEntityServer(t *testing.T) {
 		versionMatcher := objectVersionMatcher{
 			updatedRange: []time.Time{before, time.Now()},
 			updatedBy:    fakeUser,
-			version:      &firstVersion,
+			version:      firstVersion,
 			comment:      &writeReq.Comment,
 		}
 		requireVersionMatch(t, writeResp.Entity, versionMatcher)
 
 		readResp, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
 			GRN:      grn,
-			Version:  "",
 			WithBody: true,
 		})
 		require.NoError(t, err)
@@ -190,7 +189,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body,
-			version:      &firstVersion,
+			version:      firstVersion,
 		}
 		requireEntityMatch(t, readResp, objectMatcher)
 
@@ -203,7 +202,6 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		readRespAfterDelete, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
 			GRN:      grn,
-			Version:  "",
 			WithBody: true,
 		})
 		require.NoError(t, err)
@@ -262,11 +260,10 @@ func TestIntegrationEntityServer(t *testing.T) {
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body3,
-			version:      &writeResp3.Entity.Version,
+			version:      writeResp3.Entity.Version,
 		}
 		readRespLatest, err := testCtx.client.Read(ctx, &entity.ReadEntityRequest{
 			GRN:      grn,
-			Version:  "", // latest
 			WithBody: true,
 		})
 		require.NoError(t, err)
@@ -289,7 +286,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 			createdBy:    fakeUser,
 			updatedBy:    fakeUser,
 			body:         body,
-			version:      &firstVersion,
+			version:      firstVersion,
 		})
 
 		history, err := testCtx.client.History(ctx, &entity.EntityHistoryRequest{
@@ -357,7 +354,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NotNil(t, search)
 		uids := make([]string, 0, len(search.Results))
 		kinds := make([]string, 0, len(search.Results))
-		version := make([]string, 0, len(search.Results))
+		version := make([]uint64, 0, len(search.Results))
 		for _, res := range search.Results {
 			uids = append(uids, res.GRN.UID)
 			kinds = append(kinds, res.GRN.Kind)
@@ -365,7 +362,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2", "uid3", "uid4"}, uids)
 		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
-		require.Equal(t, []string{
+		require.Equal(t, []uint64{
 			w1.Entity.Version,
 			w2.Entity.Version,
 			w3.Entity.Version,
@@ -379,7 +376,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NoError(t, err)
 		uids = make([]string, 0, len(searchKind1.Results))
 		kinds = make([]string, 0, len(searchKind1.Results))
-		version = make([]string, 0, len(searchKind1.Results))
+		version = make([]uint64, 0, len(searchKind1.Results))
 		for _, res := range searchKind1.Results {
 			uids = append(uids, res.GRN.UID)
 			kinds = append(kinds, res.GRN.Kind)
@@ -387,7 +384,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		require.Equal(t, []string{"my-test-entity", "uid2"}, uids)
 		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
-		require.Equal(t, []string{
+		require.Equal(t, []uint64{
 			w1.Entity.Version,
 			w2.Entity.Version,
 		}, version)

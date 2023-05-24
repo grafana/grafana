@@ -54,10 +54,16 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 	stream.WriteObjectField("GRN")
 	stream.WriteVal(obj.GRN)
 
-	if obj.Version != "" {
+	if obj.Guid != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("guid")
+		stream.WriteString(obj.Guid)
+	}
+
+	if obj.Version > 0 {
 		stream.WriteMore()
 		stream.WriteObjectField("version")
-		stream.WriteString(obj.Version)
+		stream.WriteUint64(obj.Version)
 	}
 	if obj.CreatedAt > 0 {
 		stream.WriteMore()
@@ -83,6 +89,27 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteMore()
 		stream.WriteObjectField("folder")
 		stream.WriteString(obj.Folder)
+	}
+	if obj.Access != nil {
+		stream.WriteMore()
+		stream.WriteObjectField("access")
+		stream.WriteArrayStart()
+		for idx, v := range obj.Access {
+			if idx > 0 {
+				stream.WriteMore()
+			}
+			stream.WriteObjectStart()
+			stream.WriteObjectField("role")
+			stream.WriteString(v.Role)
+			stream.WriteMore()
+			stream.WriteObjectField("subject")
+			stream.WriteString(v.Subject)
+			stream.WriteMore()
+			stream.WriteObjectField("verb")
+			stream.WriteString(v.Verb)
+			stream.WriteObjectEnd()
+		}
+		stream.WriteArrayEnd()
 	}
 	if obj.Body != nil {
 		stream.WriteMore()
@@ -130,6 +157,8 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "GRN":
 			raw.GRN = &GRN{}
 			iter.ReadVal(raw.GRN)
+		case "guid":
+			raw.Guid = iter.ReadString()
 		case "updatedAt":
 			raw.UpdatedAt = iter.ReadInt64()
 		case "updatedBy":
@@ -143,12 +172,28 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "etag":
 			raw.ETag = iter.ReadString()
 		case "version":
-			raw.Version = iter.ReadString()
+			raw.Version = iter.ReadUint64()
 		case "folder":
 			raw.Folder = iter.ReadString()
 		case "origin":
 			raw.Origin = &EntityOriginInfo{}
 			iter.ReadVal(raw.Origin)
+		case "access":
+			for iter.ReadArray() {
+				a := &EntityAccess{}
+				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
+					switch l2Field {
+					case "role":
+						a.Role = iter.ReadString()
+					case "subject":
+						a.Subject = iter.ReadString()
+					case "verb":
+						a.Verb = iter.ReadString()
+					}
+				}
+				raw.Access = append(raw.Access, a)
+			}
+
 		case "summary":
 			var val interface{}
 			iter.ReadVal(&val) // ??? is there a smarter way to just keep the underlying bytes without read+marshal
