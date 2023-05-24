@@ -261,7 +261,7 @@ This special formatting syntax is only available in Grafana 7.1.2+
 | `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339                                                                    |
 | `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                         |
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                        |
-| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character |
+| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC                        |
 
 The syntax above also works with `${__to}`.
 
