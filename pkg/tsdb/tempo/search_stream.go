@@ -18,49 +18,47 @@ type ExtendedResponse struct {
 	State dataquery.SearchStreamingState
 }
 
-func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *TempoDatasource) error {
-	s.logger.Info("Running stream", "path", req.Path, "data", string(req.Data))
-
-	var backendQuery *backend.DataQuery
+func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
+	s.logger.Debug("Running stream", "path", req.Path, "data", string(req.Data))
 	response := &backend.DataResponse{}
 
+	var backendQuery *backend.DataQuery
 	err := json.Unmarshal(req.Data, &backendQuery)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
 		return err
 	}
 
-	s.logger.Info("Got backend query", "data", backendQuery)
-
 	var sr *tempopb.SearchRequest
-
 	err = json.Unmarshal(req.Data, &sr)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		return err
 	}
 
-	s.logger.Info("Got search request", "data", sr)
-
-	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
-	sr.End = uint32(backendQuery.TimeRange.To.Unix())
-
 	if sr.GetQuery() == "" {
 		return fmt.Errorf("query is empty")
 	}
+
+	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
+	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
 	s.logger.Info("Calling Search", "search request", sr)
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
 		s.logger.Error("Error Search()", "err", err)
+		return err
 	}
 
+	return s.processStream(stream, sender)
+}
+
+func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender *backend.StreamSender) error {
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
-			s.logger.Info("End of stream")
 			if err := sendResponse(&ExtendedResponse{
 				State: dataquery.SearchStreamingStateDone,
 				SearchResponse: &tempopb.SearchResponse{

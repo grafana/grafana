@@ -2,23 +2,19 @@ package tempo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
 	"net/http"
 	url2 "net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"go.opentelemetry.io/collector/model/otlp"
 )
 
 type Service struct {
@@ -33,7 +29,7 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	}
 }
 
-type TempoDatasource struct {
+type Datasource struct {
 	HTTPClient      *http.Client
 	StreamingClient tempopb.StreamingQuerierClient
 	URL             string
@@ -61,7 +57,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 		streamingClient := tempopb.NewStreamingQuerierClient(clientConn)
 
-		model := &TempoDatasource{
+		model := &Datasource{
 			HTTPClient:      client,
 			StreamingClient: streamingClient,
 			URL:             settings.URL,
@@ -81,8 +77,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if res, err := s.query(ctx, req.PluginContext, q); err != nil {
 			return response, err
 		} else {
-			// save the response in a hashmap
-			// based on with RefID as identifier
 			if res != nil {
 				response.Responses[q.RefID] = *res
 			}
@@ -101,89 +95,13 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
 }
 
-func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	result := &backend.DataResponse{}
-	refID := query.RefID
-
-	model := &dataquery.TempoQuery{}
-	err := json.Unmarshal(query.JSON, model)
-	if err != nil {
-		return result, err
-	}
-
-	dsInfo, err := s.getDSInfo(pCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	request, err := s.createRequest(ctx, dsInfo, model.Query, query.TimeRange.From.Unix(), query.TimeRange.To.Unix())
-	if err != nil {
-		return result, err
-	}
-
-	resp, err := dsInfo.HTTPClient.Do(request)
-	if err != nil {
-		return result, fmt.Errorf("failed get to tempo: %w", err)
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			s.logger.FromContext(ctx).Warn("failed to close response body", "err", err)
-		}
-	}()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return &backend.DataResponse{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.Query, resp.Status, string(body))
-		return result, nil
-	}
-
-	otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(body)
-
-	if err != nil {
-		return &backend.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
-	}
-
-	frame, err := TraceToFrame(otTrace)
-	if err != nil {
-		return &backend.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
-	}
-	frame.RefID = refID
-	frames := []*data.Frame{frame}
-	result.Frames = frames
-	return result, nil
-}
-
-func (s *Service) createRequest(ctx context.Context, dsInfo *TempoDatasource, traceID string, start int64, end int64) (*http.Request, error) {
-	var tempoQuery string
-	if start == 0 || end == 0 {
-		tempoQuery = fmt.Sprintf("%s/api/traces/%s", dsInfo.URL, traceID)
-	} else {
-		tempoQuery = fmt.Sprintf("%s/api/traces/%s?start=%d&end=%d", dsInfo.URL, traceID, start, end)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Accept", "application/protobuf")
-
-	s.logger.FromContext(ctx).Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
-	return req, nil
-}
-
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*TempoDatasource, error) {
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*Datasource, error) {
 	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	instance, ok := i.(*TempoDatasource)
+	instance, ok := i.(*Datasource)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast datsource info")
 	}
