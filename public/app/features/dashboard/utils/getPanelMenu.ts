@@ -141,7 +141,11 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
+  if (
+    contextSrv.hasAccessToExplore() &&
+    !(panel.plugin && panel.plugin.meta.skipDataQuery) &&
+    panel.datasource?.uid !== '-- Dashboard --'
+  ) {
     menu.push({
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
