@@ -540,6 +540,11 @@ export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
     canDelete: true,
     canEdit: true,
     canSave: true,
+    created: '',
+    createdBy: '',
+    hasAcl: false,
+    updated: '',
+    updatedBy: '',
     ...partial,
   };
 };

@@ -7,9 +7,9 @@ import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
-export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
+export class GaugePanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
     menuProps: DataLinksContextMenuApi

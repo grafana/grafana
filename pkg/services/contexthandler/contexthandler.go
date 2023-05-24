@@ -3,9 +3,6 @@ package contexthandler
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -113,25 +110,6 @@ func FromContext(c context.Context) *contextmodel.ReqContext {
 	return nil
 }
 
-func hashUserIdentifier(identifier string, secret string) string {
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func setSignedInUser(reqContext *contextmodel.ReqContext, identity *authn.Identity, intercomSecret string) {
-	reqContext.SignedInUser = identity.SignedInUser()
-	if identity.AuthID != "" {
-		reqContext.SignedInUser.Analytics.Identifier = identity.AuthID
-	} else {
-		reqContext.SignedInUser.Analytics.Identifier = identity.Email + "@" + setting.AppUrl
-	}
-	if intercomSecret != "" {
-		reqContext.SignedInUser.Analytics.IntercomIdentifier = hashUserIdentifier(identity.AuthID, intercomSecret)
-	}
-}
-
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -172,8 +150,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
+				reqContext.SignedInUser = identity.SignedInUser()
 				reqContext.UserToken = identity.SessionToken
-				setSignedInUser(reqContext, identity, h.Cfg.IntercomSecret)
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
@@ -259,13 +237,20 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 		return false
 	}
 
+	httpReqCopy := &http.Request{}
+	if reqContext.Req != nil && reqContext.Req.Header != nil {
+		// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
+		httpReqCopy.Header = reqContext.Req.Header.Clone()
+		httpReqCopy.RemoteAddr = reqContext.Req.RemoteAddr
+	}
+
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				reqContext.Logger.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := h.anonSessionService.TagSession(context.Background(), reqContext.Req); err != nil {
+		if err := h.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
 			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()

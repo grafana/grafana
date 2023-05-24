@@ -4,6 +4,7 @@ import React from 'react';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
+import { IconButton } from '../IconButton/IconButton';
 import { VerticalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
@@ -41,9 +42,10 @@ export function Examples() {
           <Button variant="secondary">Button</Button>
         </Dropdown>
       </StoryExample>
+
       <StoryExample name="Icon button, placement=bottom-start">
         <Dropdown overlay={menu} placement="bottom-start">
-          <Button variant="secondary" icon="bars" />
+          <IconButton tooltip="Open menu" variant="secondary" name="bars" />
         </Dropdown>
       </StoryExample>
     </VerticalGroup>

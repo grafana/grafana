@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -19,7 +20,7 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	statistic := ""
 
@@ -48,7 +49,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 	actionPrefix := model.ActionPrefix
 	alarmNamePrefix := model.AlarmNamePrefix
 
-	cli, err := e.getCWClient(pluginCtx, model.Region)
+	cli, err := e.getCWClient(ctx, pluginCtx, model.Region)
 	if err != nil {
 		return nil, err
 	}

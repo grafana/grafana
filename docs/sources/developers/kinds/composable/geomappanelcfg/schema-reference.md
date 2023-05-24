@@ -18,7 +18,7 @@ title: GeomapPanelCfg kind
 | `ControlsOptions` | [object](#controlsoptions) | **Yes**  |         |                                               |
 | `MapCenterID`     | string                     | **Yes**  |         | Possible values are: `zero`, `coords`, `fit`. |
 | `MapViewConfig`   | [object](#mapviewconfig)   | **Yes**  |         |                                               |
-| `PanelOptions`    | [object](#paneloptions)    | **Yes**  |         |                                               |
+| `Options`         | [object](#options)         | **Yes**  |         |                                               |
 | `TooltipMode`     | string                     | **Yes**  |         | Possible values are: `none`, `details`.       |
 | `TooltipOptions`  | [object](#tooltipoptions)  | **Yes**  |         |                                               |
 
@@ -49,7 +49,7 @@ title: GeomapPanelCfg kind
 | `shared`    | boolean | No       |         |             |
 | `zoom`      | int64   | No       | `1`     |             |
 
-### PanelOptions
+### Options
 
 | Property   | Type                                  | Required | Default | Description |
 |------------|---------------------------------------|----------|---------|-------------|

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
@@ -63,6 +64,7 @@ type store interface {
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 	SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
+	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 }
 
 // Service is the service implementing role based access control.
@@ -416,7 +418,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	}
 
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.log.Debug("registering external service role is behind a feature flag, enable it to use this feature.")
+		s.log.Debug("registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
 
@@ -425,4 +427,20 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	}
 
 	return s.store.SaveExternalServiceRole(ctx, cmd)
+}
+
+func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	// If accesscontrol is disabled no need to delete the external service role
+	if accesscontrol.IsDisabled(s.cfg) {
+		return nil
+	}
+
+	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.log.Debug("deleting an external service role is behind a feature flag, enable it to use this feature.")
+		return nil
+	}
+
+	slug := slugify.Slugify(externalServiceID)
+
+	return s.store.DeleteExternalServiceRole(ctx, slug)
 }

@@ -23,11 +23,11 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<PanelOptions> {}
+interface TimelinePanelProps extends PanelProps<Options> {}
 
 /**
  * @alpha

@@ -56,13 +56,12 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 	}
 
 	authorize := ac.Middleware(accessControl)
-	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 
 	router.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPConfigReload)), routing.Wrap(s.ReloadLDAPCfg))
-		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersSync)), routing.Wrap(s.PostSyncUserWithLDAP))
-		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersRead)), routing.Wrap(s.GetUserFromLDAP))
-		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(s.GetLDAPStatus))
+		adminRoute.Post("/ldap/reload", authorize(ac.EvalPermission(ac.ActionLDAPConfigReload)), routing.Wrap(s.ReloadLDAPCfg))
+		adminRoute.Post("/ldap/sync/:id", authorize(ac.EvalPermission(ac.ActionLDAPUsersSync)), routing.Wrap(s.PostSyncUserWithLDAP))
+		adminRoute.Get("/ldap/:username", authorize(ac.EvalPermission(ac.ActionLDAPUsersRead)), routing.Wrap(s.GetUserFromLDAP))
+		adminRoute.Get("/ldap/status", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(s.GetLDAPStatus))
 	}, middleware.ReqSignedIn)
 
 	if cfg.LDAPAuthEnabled {
