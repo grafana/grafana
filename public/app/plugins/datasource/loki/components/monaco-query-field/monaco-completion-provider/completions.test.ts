@@ -388,6 +388,32 @@ describe('getCompletions', () => {
     ]);
     expect(functionCompletions).toHaveLength(3);
   });
+
+  test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
+    const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
+    const completions = await getCompletions(situation, completionProvider);
+
+    expect(completions).toEqual([
+      {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'place',
+        label: 'place',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'source',
+        label: 'source',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+    ]);
+  });
 });
 
 describe('getAfterSelectorCompletions', () => {
