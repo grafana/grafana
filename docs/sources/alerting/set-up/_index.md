@@ -1,6 +1,7 @@
 ---
 aliases:
   - unified-alerting/set-up/
+description: How to set up alerting features and integrations
 title: Set up Alerting
 weight: 107
 ---

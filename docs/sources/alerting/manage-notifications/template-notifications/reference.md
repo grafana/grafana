@@ -4,6 +4,7 @@ keywords:
   - alerting
   - notifications
   - templates
+description: Reference for templating notifications
 title: Reference
 weight: 400
 ---

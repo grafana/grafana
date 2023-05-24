@@ -4,6 +4,7 @@ keywords:
   - alerting
   - notifications
   - templates
+description: How to customize your notifications using templating
 title: Customize notifications
 weight: 400
 ---

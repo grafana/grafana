@@ -5,6 +5,7 @@ keywords:
   - notifications
   - templates
   - write templates
+description: Use Go's templating language in notifications
 title: Using Go's templating language
 weight: 100
 ---

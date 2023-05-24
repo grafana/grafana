@@ -3,6 +3,7 @@ aliases:
   - old-alerting/create-alerts/
   - rules/
   - unified-alerting/alerting-rules/
+description: How you can manage your alert rules
 title: Manage your alert rules
 weight: 130
 ---

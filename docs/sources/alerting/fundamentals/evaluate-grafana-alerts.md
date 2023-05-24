@@ -2,6 +2,7 @@
 aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/evaluate-grafana-alerts/
+description: How to alert on numeric data
 title: Alerting on numeric data
 weight: 116
 ---

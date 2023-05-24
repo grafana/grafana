@@ -1,5 +1,5 @@
 ---
-description:
+description: How to use images in notifications
 keywords:
   - grafana
   - alerting
