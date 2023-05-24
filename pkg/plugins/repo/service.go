@@ -26,10 +26,10 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 	}
 
 	logger := log.NewPrettyLogger("plugin.repository")
-	return New(defaultBaseURL, NewClient(false, logger), logger), nil
+	return NewManager(defaultBaseURL, NewClient(false, logger), logger), nil
 }
 
-func New(baseURL string, client *Client, logger log.PrettyLogger) *Manager {
+func NewManager(baseURL string, client *Client, logger log.PrettyLogger) *Manager {
 	return &Manager{
 		baseURL: baseURL,
 		client:  client,

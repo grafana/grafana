@@ -69,7 +69,7 @@ func TestGetPluginArchive(t *testing.T) {
 			)
 
 			logger := &fakeLogger{}
-			m := New(srv.URL, NewClient(false, logger), logger)
+			m := NewManager(srv.URL, NewClient(false, logger), logger)
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
 				GrafanaVersion: grafanaVersion,
 				OS:             opSys,
