@@ -14,33 +14,31 @@ weight: 1000
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports/#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports/" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 > **Note:** Image rendering of dashboards is not supported at this time.
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
+A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana/#temp_data_lifetime" >}}) setting.
 
-You can also render a PNG by clicking hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
+You can also render a PNG by clicking the dropdown arrow next to a panel title, then clicking **Share > Direct link rendered image**.
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana#concurrent_render_limit" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana/#concurrent_render_limit" >}}).
 
 ## Install Grafana Image Renderer plugin
 
-{{% admonition type="note" %}}
-Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
-{{% /admonition %}}
+> **Note:** Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
 
-To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer#installation).
+To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer#installation).
 
 ## Configuration
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana#plugingrafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana/#plugingrafana-image-renderer" >}}).
 
 In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
@@ -58,9 +56,7 @@ You can see a docker-compose example using a custom configuration file [here](ht
 
 ### Security
 
-{{% admonition type="note" %}}
-This feature is available in Image Renderer v3.6.1 and later.
-{{% /admonition %}}
+> **Note:** This feature is available in Image Renderer v3.6.1 and later.
 
 You can restrict access to the rendering endpoint by specifying a secret token. The token should be configured in the Grafana configuration file and the renderer configuration file. This token is important when you run the plugin in remote rendering mode.
 
@@ -84,7 +80,7 @@ AUTH_TOKEN=-
 }
 ```
 
-See the [Grafana configuration]({{< relref "../configure-grafana#renderer_token" >}}) for how to configure the token in Grafana.
+See the [Grafana configuration]({{< relref "../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
 
 ### Rendering mode
 
@@ -94,9 +90,7 @@ You can instruct how headless browser instances are created by configuring a ren
 
 Default mode will create a new browser instance on each request. When handling multiple concurrent requests, this mode increases memory usage as it will launch multiple browsers at the same time. If you want to set a maximum number of browser to open, you'll need to use the [clustered mode](#clustered).
 
-{{% admonition type="note" %}}
-When using the `default` mode, it's recommended to not remove the default Chromium flag `--disable-gpu`. When receiving a lot of concurrent requests, not using this flag can cause Puppeteer `newPage` function to freeze, causing request timeouts and leaving browsers open.
-{{% /admonition %}}
+> **Note:** When using the `default` mode, it's recommended to not remove the default Chromium flag `--disable-gpu`. When receiving a lot of concurrent requests, not using this flag can cause Puppeteer `newPage` function to freeze, causing request timeouts and leaving browsers open.
 
 ```bash
 RENDERING_MODE=default
@@ -136,6 +130,29 @@ RENDERING_CLUSTERING_TIMEOUT=30
 }
 ```
 
+##### Cluster mode `contextPerRenderKey` (experimental)
+
+> **Note:** This feature is available in Image Renderer v3.4.0 and later versions.
+
+In `contextPerRenderKey` mode, the plugin will reuse the same [browser context](https://chromedevtools.github.io/devtools-protocol/tot/Target/#method-createBrowserContext) for all rendering requests sharing the same `renderKey` auth cookie and target domain within a short time window. Each new request will open a new page within the existing context. Contexts are closed automatically after 5s of inactivity.
+
+In the case of `contextPerRenderKey` mode, the `clustering.max_concurrency` option refers to the number of open contexts rather than the number of open pages. There is no way to limit the number of open pages in a context.
+
+`contextPerRenderKey` was designed to improve the performance of the [dashboard previews crawler]({{< relref "../../search/dashboard-previews/#about-the-dashboard-previews-crawler" >}}).
+
+```json
+{
+  "rendering": {
+    "mode": "clustered",
+    "clustering": {
+      "mode": "contextPerRenderKey",
+      "maxConcurrency": 5,
+      "timeout": 30
+    }
+  }
+}
+```
+
 #### Reusable (experimental)
 
 When using the rendering mode `reusable`, one browser instance will be created and reused. A new incognito page will be opened for each request. This mode is experimental since, if the browser instance crashes, it will not automatically be restarted. You can achieve a similar behavior using `clustered` mode with a high `maxConcurrency` setting.
@@ -154,7 +171,7 @@ RENDERING_MODE=reusable
 
 #### Optimize the performance, CPU and memory usage of the image renderer
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "./monitoring" >}}).
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "monitoring/" >}}).
 
 With no concurrent requests, the different modes show very similar performance and CPU / memory usage.
 
@@ -167,9 +184,7 @@ To achieve better performance, monitor the machine on which your service is runn
 
 ### Other available settings
 
-{{% admonition type="note" %}}
-Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
-{{% /admonition %}}
+> **Note:** Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
 
 #### HTTP host
 
@@ -205,7 +220,7 @@ HTTP_PORT=0
 
 #### Enable Prometheus metrics
 
-You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint]({{< relref "./monitoring#enable-prometheus-metrics-endpoint" >}}) for details.
+You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [output example](./monitoring/#prometheus-metrics-endpoint-output-example) for details.
 
 Default is `false`.
 
@@ -287,9 +302,7 @@ RENDERING_DUMPIO=true
 If you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
 installed on your system, then you can use this instead of the pre-packaged version of Chromium.
 
-{{% admonition type="note" %}}
-Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not compatible with the [Grafana Image renderer plugin](/grafana/plugins/grafana-image-renderer).
-{{% /admonition %}}
+> **Note:** Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not compatible with the [Grafana Image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 You need to make sure that the Chrome/Chromium executable is available for the Grafana/image rendering service process.
 

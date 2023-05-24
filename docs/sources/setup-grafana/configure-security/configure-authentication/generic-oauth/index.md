@@ -15,7 +15,7 @@ weight: 200
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
 
-- [Generic OAuth authentication](#configure-generic-oauth-authentication)
+- [Generic OAuth authentication](#generic-oauth-authentication)
   - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
@@ -217,7 +217,7 @@ By default, a refresh token is included in the response for the **Authorization 
    allow_sign_up = true
    auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret>
+   client_secret = <your generated OpenID Connect Client Secret"
    scopes = openid profile email
    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
@@ -272,23 +272,19 @@ Grafana checks for the presence of a role using the [JMESPath](http://jmespath.o
 
 For more information, refer to the [JMESPath examples](#jmespath-examples).
 
-{{% admonition type="warning" %}}
-Currently if no organization role mapping is found for a user, Grafana doesn't
-update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-enable the `skip_org_role_sync` option.
-See [Configure Grafana]({{< relref "../../../configure-grafana#authgeneric_oauth" >}}) for more information.
-{{% /admonition %}}
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-{{% admonition type="warning" %}}
-With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-then the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-{{% /admonition %}}
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 
 ### JMESPath examples
 
@@ -372,7 +368,7 @@ With Team Sync you can map your Generic OAuth groups to teams in Grafana so that
 
 Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
 
 Config:
 
@@ -395,17 +391,4 @@ Payload:
     },
     ...
 }
-```
-
-## Skip organization role sync
-
-To prevent the sync of organization roles from the OAuth provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
-This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth provider.
-
-```ini
-[auth.generic_oauth]
-# ..
-# prevents the sync of org roles from the Oauth provider
-skip_org_role_sync = true
-``
 ```

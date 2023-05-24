@@ -42,9 +42,7 @@ You must have an authorized viewer permission to see an image rendered by a dire
 
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
-{{% admonition type="note" %}}
-As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
-{{% /admonition %}}
+> **Note:** As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
 
 When you share a panel or dashboard as a snapshot, a snapshot (which is a panel or dashboard at the moment you take the snapshot) is publicly available on the web. Anyone with a link to it can access it. Because snapshots do not require any authorization to view, Grafana removes information related to the account it came from, as well as any sensitive data from the snapshot.
 
@@ -52,9 +50,7 @@ When you share a panel or dashboard as a snapshot, a snapshot (which is a panel 
 
 You can share a dashboard as a direct link or as a snapshot. You can also export a dashboard.
 
-{{% admonition type="note" %}}
-If you change a dashboard, ensure that you save the changes before sharing.
-{{% /admonition %}}
+> **Note:** If you change a dashboard, ensure that you save the changes before sharing.
 
 1. Navigate to the home page of your Grafana instance.
 1. Click on the share icon in the top navigation.
@@ -93,9 +89,7 @@ Grafana dashboards can easily be exported and imported. For more information, re
 
 You can generate and save PDF files of any dashboard.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
 
 1. In the upper-right corner of the dashboard that you want to export as PDF, click the **Share dashboard** icon.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.

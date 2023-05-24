@@ -7,7 +7,7 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitLab OAuth2 authentication
+title: Configure GitLab OAuth2 Authentication
 weight: 700
 ---
 
@@ -61,7 +61,6 @@ allowed_groups =
 role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
-tls_skip_verify_insecure = false
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -141,7 +140,6 @@ allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
-tls_skip_verify_insecure = false
 ```
 
 ### Configure automatic login
@@ -157,25 +155,21 @@ auto_login = true
 
 You can use GitLab OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
+For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions/" >}}).
 
-{{% admonition type="warning" %}}
-Currently if no organization role mapping is found for a user, Grafana doesn't
-update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-enable the `skip_org_role_sync` option.
-See [Configure Grafana]({{< relref "../../../configure-grafana#authgitlab" >}}) for more information.
-{{% /admonition %}}
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-{{% admonition type="warning" %}}
-With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-then the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-{{% /admonition %}}
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 
 An example Query could look like the following:
 
@@ -228,7 +222,7 @@ the correct teams.
 
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
 
 ## Skip organization role sync
 

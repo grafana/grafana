@@ -42,9 +42,7 @@ Set the data source's basic configuration options carefully:
 | **Allowed cookies** | Defines which cookies are forwarded to the data source. Grafana Proxy deletes all other cookies.                                                                    |
 | **Maximum lines**   | Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000. Lower this limit if your browser is sluggish when displaying logs in Explore. |
 
-{{% admonition type="note" %}}
-To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
-{{% /admonition %}}
+> **Note:** To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 
 ### Configure derived fields
 
@@ -56,9 +54,7 @@ The **Derived Fields** configuration helps you:
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
 These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
 
-{{% admonition type="note" %}}
-If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
-{{% /admonition %}}
+> **Note:** If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 Each derived field consists of:
 

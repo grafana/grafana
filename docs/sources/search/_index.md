@@ -30,9 +30,7 @@ Dashboard search is:
 - _Not_ case sensitive
 - Functional across stored _and_ file based dashboards.
 
-{{% admonition type="note" %}}
-You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard.
-{{% /admonition %}}
+> **Note**: You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard.
 
 The following image shows the search results when you search using dashboard name.
 
@@ -90,21 +88,4 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
   All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
 
-{{% admonition type="note" %}}
-When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
-{{% /admonition %}}
-
-## Command palette
-
-The command palette enables you to:
-
-- Search for and open dashboards and folders
-- Create dashboards and alert rules
-- Locate pages within Grafana
-- Change the theme to dark or light
-
-![Command Palette screenshot](/media/docs/grafana/CommandPalette_doc_1.png)
-
-To open the command palette, press `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input located in the navigation bar.
-
-> **Note:** To go to the previous step, press `backspace` with the command palette input empty.
+> **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.

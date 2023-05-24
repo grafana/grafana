@@ -49,9 +49,7 @@ Complete the following steps to delete a contact point.
 1. Find the contact point to delete, then click **Delete** (trash icon).
 1. In the confirmation dialog, click **Yes, delete**.
 
-{{% admonition type="note" %}}
-You cannot delete contact points that are in use by a notification policy. You will have to either delete the notification policy or update it to use another contact point.
-{{% /admonition %}}
+> **Note:** You cannot delete contact points that are in use by a notification policy. You will have to either delete the notification policy or update it to use another contact point.
 
 ## Test a contact point
 
