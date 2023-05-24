@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionState } from './types';
+import { ConnectionState } from '../../types';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;

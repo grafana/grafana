@@ -319,26 +319,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, len(permQueryResult), 0)
 			})
 
-			t.Run("Should be able to return if user is admin of teams or not", func(t *testing.T) {
-				sqlStore = db.InitTestDB(t)
-				setup()
-				groupId := team2.ID
-				err := teamSvc.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
-				require.NoError(t, err)
-				err = teamSvc.AddTeamMember(userIds[1], testOrgID, groupId, false, dashboards.PERMISSION_ADMIN)
-				require.NoError(t, err)
-
-				query := &team.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[0]}}
-				queryResult, err := teamSvc.IsAdminOfTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.False(t, queryResult)
-
-				query = &team.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[1]}}
-				queryResult, err = teamSvc.IsAdminOfTeams(context.Background(), query)
-				require.NoError(t, err)
-				require.True(t, queryResult)
-			})
-
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()

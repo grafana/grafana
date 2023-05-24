@@ -287,6 +287,9 @@ const (
 )
 
 // Shape of a CloudWatch Annotation query
+//
+// TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
+// #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
 type CloudWatchAnnotationQuery struct {
 	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
 	AccountId *string `json:"accountId,omitempty"`
