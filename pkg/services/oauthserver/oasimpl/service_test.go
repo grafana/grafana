@@ -362,6 +362,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		name       string
 		init       func(*TestEnv)
 		mockChecks func(*testing.T, *TestEnv)
+		wantPerm   []ac.Permission
 		wantErr    bool
 	}{
 		{
@@ -372,6 +373,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertNotCalled(t, "GetExternalService", mock.Anything, mock.Anything)
 			},
+			wantPerm: []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
 		},
 		{
 			name: "should return error when the client was not found",
@@ -416,6 +418,25 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
 				env.SAService.AssertCalled(t, "RetrieveServiceAccount", mock.Anything, int64(1), int64(1))
 			},
+			wantPerm: []ac.Permission{{Action: "users:impersonate", Scope: "users:*"}},
+		},
+		{
+			name: "should return correctly when the client has no service account",
+			init: func(env *TestEnv) {
+				client := &oauthserver.ExternalService{
+					Name:             serviceName,
+					ClientID:         "RANDOMID",
+					Secret:           "RANDOMSECRET",
+					GrantTypes:       "client_credentials",
+					PublicPem:        []byte("-----BEGIN PUBLIC KEY-----"),
+					ServiceAccountID: oauthserver.NoServiceAccountID,
+				}
+				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(client, nil)
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				env.OAuthStore.AssertCalled(t, "GetExternalService", mock.Anything, mock.Anything)
+			},
+			wantPerm: []ac.Permission{},
 		},
 	}
 	for _, tt := range testCases {
@@ -437,8 +458,8 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			}
 
 			require.Equal(t, serviceName, client.Name)
-			require.ElementsMatch(t, client.SelfPermissions, []ac.Permission{{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}})
-			assertArrayInMap(t, client.SignedInUser.Permissions[1], map[string][]string{"users:impersonate": {"users:*"}})
+			require.ElementsMatch(t, client.SelfPermissions, tt.wantPerm)
+			assertArrayInMap(t, client.SignedInUser.Permissions[1], ac.GroupScopesByAction(tt.wantPerm))
 
 			env.OAuthStore.AssertExpectations(t)
 			env.SAService.AssertExpectations(t)

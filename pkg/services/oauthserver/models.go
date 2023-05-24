@@ -49,7 +49,6 @@ type Store interface {
 	SaveExternalService(ctx context.Context, client *ExternalService) error
 	GetExternalService(ctx context.Context, id string) (*ExternalService, error)
 	GetExternalServiceByName(ctx context.Context, name string) (*ExternalService, error)
-
 	GetExternalServicePublicKey(ctx context.Context, clientID string) (*jose.JSONWebKey, error)
 }
 

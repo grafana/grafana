@@ -137,7 +137,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	if ok {
 		client, ok := entry.(oauthserver.ExternalService)
 		if ok {
-			s.logger.Debug("GetExternalService: cache hit", "client id", id)
+			s.logger.Debug("GetExternalService: cache hit", "id", id)
 			return &client, nil
 		}
 	}
@@ -147,14 +147,27 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		return nil, err
 	}
 
+	// Handle the case where the external service has no service account
+	if client.ServiceAccountID == oauthserver.NoServiceAccountID {
+		s.logger.Debug("GetExternalService: service has no service account, hence no permission", "id", id, "name", client.Name)
+		// Create a signed in user with no role and no permissions
+		client.SignedInUser = &user.SignedInUser{
+			UserID:      oauthserver.NoServiceAccountID,
+			OrgID:       oauthserver.TmpOrgID,
+			Name:        client.Name,
+			Permissions: map[int64]map[string][]string{oauthserver.TmpOrgID: {}},
+		}
+		s.cache.Set(id, *client, cacheExpirationTime)
+		return client, nil
+	}
+
 	// Retrieve self permissions and generate a signed in user
 	s.logger.Debug("GetExternalService: fetch permissions", "client id", id)
 	sa, err := s.saService.RetrieveServiceAccount(ctx, oauthserver.TmpOrgID, client.ServiceAccountID)
 	if err != nil {
-		s.logger.Error("GetExternalService: error fetching service account", "client id", id, "error", err)
+		s.logger.Error("GetExternalService: error fetching service account", "id", id, "error", err)
 		return nil, err
 	}
-
 	client.SignedInUser = &user.SignedInUser{
 		UserID:      sa.Id,
 		OrgID:       oauthserver.TmpOrgID,
@@ -165,13 +178,12 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 	}
 	client.SelfPermissions, err = s.acService.GetUserPermissions(ctx, client.SignedInUser, ac.Options{})
 	if err != nil {
-		s.logger.Error("GetExternalService: error fetching permissions", "client id", id, "error", err)
+		s.logger.Error("GetExternalService: error fetching permissions", "id", id, "error", err)
 		return nil, err
 	}
 	client.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(client.SelfPermissions)
 
 	s.cache.Set(id, *client, cacheExpirationTime)
-
 	return client, nil
 }
 
