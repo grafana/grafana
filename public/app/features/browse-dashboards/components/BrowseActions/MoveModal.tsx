@@ -29,7 +29,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
 
   return (
     <Modal title="Move" onDismiss={onDismiss} {...props}>
-      {selectedFolders.length > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
+      {selectedFolders.length > 0 && <Alert severity="info" title="Moving this item may change its permissions." />}
 
       <P>This action will move the following content:</P>
 
