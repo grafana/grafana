@@ -5,8 +5,9 @@ import { useOverlay } from '@react-aria/overlays';
 import React, { createRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime';
-import { Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, Modal, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { MediaType, PickerTabType, ResourceFolderName } from '../types';
@@ -98,12 +99,11 @@ export const ResourcePickerPopover = (props: Props) => {
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
-            <ButtonGroup className={styles.buttonGroup}>
-              <Button className={styles.button} variant={'secondary'} onClick={() => onClose()} fill="outline">
+            <div className={styles.buttonRow}>
+              <Button variant={'secondary'} onClick={() => onClose()} fill="outline">
                 Cancel
               </Button>
               <Button
-                className={styles.button}
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
                 onClick={() => {
                   if (upload) {
@@ -133,7 +133,7 @@ export const ResourcePickerPopover = (props: Props) => {
               >
                 Select
               </Button>
-            </ButtonGroup>
+            </div>
           </div>
         </div>
       </section>
@@ -146,7 +146,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-radius: ${theme.shape.borderRadius()};
     box-shadow: ${theme.shadows.z3};
     background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
   `,
   resourcePickerPopoverTab: css`
     width: 50%;
@@ -185,11 +185,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
   `,
-  buttonGroup: css`
-    align-self: center;
-    flex-direction: row;
-  `,
-  button: css`
-    margin: 12px 20px 5px;
-  `,
+  buttonRow: css({
+    display: 'flex',
+    justifyContent: 'center',
+    gap: theme.spacing(2),
+    padding: theme.spacing(1),
+  }),
 });
