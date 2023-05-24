@@ -206,7 +206,8 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 		}
 	}
 
-	client.ImpersonatePermissions = registration.ImpersonatePermissions
+	// Parse registration form to compute required permissions for the client
+	client.SelfPermissions, client.ImpersonatePermissions = s.handleRegistrationPermissions(registration)
 
 	if registration.RedirectURI != nil {
 		client.RedirectURI = *registration.RedirectURI
@@ -220,13 +221,14 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	}
 
 	s.logger.Debug("Save service account")
-	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, registration.Permissions)
+	saID, errSaveServiceAccount := s.saveServiceAccount(ctx, client.Name, client.ServiceAccountID, client.SelfPermissions)
 	if errSaveServiceAccount != nil {
 		return nil, errSaveServiceAccount
 	}
 	client.ServiceAccountID = saID
 
-	client.GrantTypes = strings.Join(s.computeGrantTypes(registration.Permissions, registration.ImpersonatePermissions), ",")
+	grantTypes := s.computeGrantTypes(registration.Self.Enabled, registration.Impersonation.Enabled)
+	client.GrantTypes = strings.Join(grantTypes, ",")
 
 	// Handle key options
 	s.logger.Debug("Handle key options")
@@ -279,17 +281,16 @@ func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
 	return id, secret, err
 }
 
-func (s *OAuth2ServiceImpl) computeGrantTypes(selfPermissions []ac.Permission, impersonatePermissions []ac.Permission) []string {
+func (s *OAuth2ServiceImpl) computeGrantTypes(selfAccessEnabled, impersonationEnabled bool) []string {
 	grantTypes := []string{}
 
 	// If the client has permissions, it can use the client credentials grant type
-	if len(selfPermissions) > 0 {
+	if selfAccessEnabled {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeClientCredentials))
 	}
 
 	// If the client has impersonate permissions, it can use the JWT bearer grant type
-	// TODO MVP: with the registration form change, check the enabled boolean
-	if len(impersonatePermissions) > 0 {
+	if impersonationEnabled {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))
 	}
 
@@ -378,11 +379,11 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 }
 
 // saveServiceAccount creates a service account if the service account ID is NoServiceAccountID, otherwise it updates the service account's permissions
-func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, selfPermissions []ac.Permission) (int64, error) {
+func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName string, saID int64, permissions []ac.Permission) (int64, error) {
 	if saID == oauthserver.NoServiceAccountID {
 		// Create a service account
 		s.logger.Debug("Create service account", "external service name", extSvcName)
-		return s.createServiceAccount(ctx, extSvcName, selfPermissions)
+		return s.createServiceAccount(ctx, extSvcName, permissions)
 	}
 
 	// check if the service account exists
@@ -394,14 +395,14 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 	}
 
 	// update the service account's permissions
-	if len(selfPermissions) > 0 {
+	if len(permissions) > 0 {
 		s.logger.Debug("Update role permissions", "external service name", extSvcName, "saID", saID)
 		if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 			OrgID:             ac.GlobalOrgID,
 			Global:            true,
 			ExternalServiceID: extSvcName,
 			ServiceAccountID:  sa.Id,
-			Permissions:       selfPermissions,
+			Permissions:       permissions,
 		}); err != nil {
 			return oauthserver.NoServiceAccountID, err
 		}
@@ -409,15 +410,17 @@ func (s *OAuth2ServiceImpl) saveServiceAccount(ctx context.Context, extSvcName s
 	}
 
 	// remove the service account
-	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
-	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, sa.Id); err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
-	if err := s.acService.DeleteExternalServiceRole(ctx, extSvcName); err != nil {
-		return oauthserver.NoServiceAccountID, err
-	}
+	errDelete := s.deleteServiceAccount(ctx, extSvcName, sa.Id)
+	return oauthserver.NoServiceAccountID, errDelete
+}
 
-	return oauthserver.NoServiceAccountID, nil
+// deleteServiceAccount deletes a service account by ID and removes its associated role
+func (s *OAuth2ServiceImpl) deleteServiceAccount(ctx context.Context, extSvcName string, saID int64) error {
+	s.logger.Debug("Delete service account", "external service name", extSvcName, "saID", saID)
+	if err := s.saService.DeleteServiceAccount(ctx, oauthserver.TmpOrgID, saID); err != nil {
+		return err
+	}
+	return s.acService.DeleteExternalServiceRole(ctx, extSvcName)
 }
 
 // createServiceAccount creates a service account with the given permissions
@@ -463,4 +466,27 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	}
 
 	return sa.Id, nil
+}
+
+// handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default
+// permissions when impersonation is requested
+func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserver.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
+	selfPermissions := []ac.Permission{}
+	impersonatePermissions := []ac.Permission{}
+
+	if registration.Self.Enabled {
+		selfPermissions = append(selfPermissions, registration.Self.Permissions...)
+	}
+	if registration.Impersonation.Enabled {
+		requiredForToken := []ac.Permission{
+			{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf},
+			{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf},
+		}
+		if registration.Impersonation.Groups {
+			requiredForToken = append(requiredForToken, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
+		}
+		impersonatePermissions = append(requiredForToken, registration.Impersonation.Permissions...)
+		selfPermissions = append(selfPermissions, ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll})
+	}
+	return selfPermissions, impersonatePermissions
 }

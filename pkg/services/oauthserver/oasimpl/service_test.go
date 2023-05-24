@@ -13,6 +13,7 @@ import (
 	"github.com/ory/fosite/storage"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -142,14 +143,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 					return name == serviceName
 				}))
 				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.ExternalService) bool {
-					ok := client.Name == serviceName
-					ok = ok && client.ClientID != ""
-					ok = ok && client.Secret != ""
-					ok = ok && len(client.GrantTypes) == 0
-					ok = ok && len(client.PublicPem) > 0
-					ok = ok && client.ServiceAccountID == 0
-					ok = ok && len(client.ImpersonatePermissions) == 0
-					return ok
+					return client.Name == serviceName && client.ClientID != "" && client.Secret != "" &&
+						len(client.GrantTypes) == 0 && len(client.PublicPem) > 0 && client.ServiceAccountID == 0 &&
+						len(client.ImpersonatePermissions) == 0
 				}))
 			},
 		},
@@ -162,9 +158,12 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				Name:        serviceName,
-				Key:         &oauthserver.KeyOption{Generate: true},
-				Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
+				Name: serviceName,
+				Key:  &oauthserver.KeyOption{Generate: true},
+				Self: oauthserver.SelfCfg{
+					Enabled:     true,
+					Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
+				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the client has a service account and the correct grant type
@@ -191,9 +190,11 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				Name:        serviceName,
-				Key:         &oauthserver.KeyOption{Generate: true},
-				Permissions: []ac.Permission{},
+				Name: serviceName,
+				Key:  &oauthserver.KeyOption{Generate: true},
+				Self: oauthserver.SelfCfg{
+					Enabled: false,
+				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				// Check that the service has no service account anymore
@@ -222,31 +223,54 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				Name:        serviceName,
-				Key:         &oauthserver.KeyOption{Generate: true},
-				Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
+				Name: serviceName,
+				Key:  &oauthserver.KeyOption{Generate: true},
+				Self: oauthserver.SelfCfg{
+					Enabled:     true,
+					Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
+				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
-						return cmd.ServiceAccountID == sa1.Id &&
-							len(cmd.Permissions) == 1 &&
-							cmd.OrgID == int64(ac.GlobalOrgID) &&
-							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"} &&
-							cmd.ExternalServiceID == client1().Name
+						return cmd.ServiceAccountID == sa1.Id && cmd.ExternalServiceID == client1().Name &&
+							cmd.OrgID == int64(ac.GlobalOrgID) && len(cmd.Permissions) == 1 &&
+							cmd.Permissions[0] == ac.Permission{Action: "dashboards:create", Scope: "folders:uid:general"}
 					}))
 			},
 		},
 		{
-			name: "should allow jwt bearer grant",
+			name: "should allow jwt bearer grant and set default permissions",
 			init: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
+				// The service account needs to be created with a permission to impersonate users
+				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
+				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
-				Name:                   serviceName,
-				Key:                    &oauthserver.KeyOption{Generate: true},
-				ImpersonatePermissions: []ac.Permission{{Action: "users:read", Scope: "global.users:self"}},
+				Name: serviceName,
+				Key:  &oauthserver.KeyOption{Generate: true},
+				Impersonation: oauthserver.ImpersonationCfg{
+					Enabled:     true,
+					Groups:      true,
+					Permissions: []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
+				},
+			},
+			mockChecks: func(t *testing.T, env *TestEnv) {
+				// Check that the external service impersonate permissions contains the default permissions required to populate the access token
+				env.OAuthStore.AssertCalled(t, "SaveExternalService", mock.Anything, mock.MatchedBy(func(client *oauthserver.ExternalService) bool {
+					impPerm := client.ImpersonatePermissions
+					return slices.Contains(impPerm, ac.Permission{Action: "dashboards:read", Scope: "dashboards:*"}) &&
+						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf}) &&
+						slices.Contains(impPerm, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf}) &&
+						slices.Contains(impPerm, ac.Permission{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf})
+				}))
+				// Check that despite no credential_grants the service account still has a permission to impersonate users
+				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
+					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
+						return len(cmd.Permissions) == 1 && cmd.Permissions[0] == ac.Permission{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll}
+					}))
 			},
 		},
 	}
@@ -277,14 +301,14 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			}
 
 			// Check that we computed grant types and created or updated the service account
-			if len(tt.cmd.Permissions) > 0 {
+			if tt.cmd.Self.Enabled {
 				require.NotNil(t, dto.GrantTypes)
 				require.Contains(t, dto.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should contain client_credentials")
 			} else {
 				require.NotContains(t, dto.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should not contain client_credentials")
 			}
 			// Check that we updated grant types
-			if tt.cmd.ImpersonatePermissions != nil && len(tt.cmd.ImpersonatePermissions) > 0 {
+			if tt.cmd.Impersonation.Enabled {
 				require.NotNil(t, dto.GrantTypes)
 				require.Contains(t, dto.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should contain JWT Bearer grant")
 			} else {
@@ -294,6 +318,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			// Check that mocks were called as expected
 			env.OAuthStore.AssertExpectations(t)
 			env.SAService.AssertExpectations(t)
+			env.AcStore.AssertExpectations(t)
 
 			// Additional checks performed
 			if tt.mockChecks != nil {
