@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import React, { useEffect } from 'react';
-import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Stack } from '@grafana/experimental';
@@ -14,8 +13,6 @@ import { RuleFormType } from '../../../types/rule-form';
 
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
 import { MimirFlavoredType } from './MimirOrLokiAlert';
-import { RecordingRuleType } from './MimirOrLokiRecordingRule';
-
 interface RuleTypePickerProps {
   onChange: (value: RuleFormType) => void;
   selected: RuleFormType;
@@ -32,10 +29,7 @@ const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProp
 
   const styles = useStyles2(getStyles);
 
-  const history = useHistory();
-
   const handleChange = (type: RuleFormType) => {
-    history.push(`/alerting/new/${type}`);
     onChange(type);
   };
 
@@ -48,13 +42,6 @@ const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProp
         {enabledTypes.includes(RuleFormType.cloudAlerting) && (
           <MimirFlavoredType
             selected={selected === RuleFormType.cloudAlerting}
-            onClick={handleChange}
-            disabled={!hasLotexDatasources}
-          />
-        )}
-        {enabledTypes.includes(RuleFormType.cloudRecording) && (
-          <RecordingRuleType
-            selected={selected === RuleFormType.cloudRecording}
             onClick={handleChange}
             disabled={!hasLotexDatasources}
           />
