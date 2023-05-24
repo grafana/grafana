@@ -12,9 +12,7 @@ weight: 200
 
 This topic helps you get started with Grafana and build your first dashboard using the built-in `Grafana` data source. To learn more about Grafana, refer to [Introduction to Grafana]({{< relref "../introduction" >}}).
 
-{{% admonition type="note" %}}
-Grafana also offers a [free account with Grafana Cloud](/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
-{{% /admonition %}}
+> **Note:** Grafana also offers a [free account with Grafana Cloud](/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
 
 #### Install Grafana
 
@@ -35,9 +33,7 @@ To sign in to Grafana for the first time:
 
 1. Click **OK** on the prompt and change your password.
 
-{{% admonition type="note" %}}
-We strongly recommend that you change the default administrator password.
-{{% /admonition %}}
+> **Note:** We strongly recommend that you change the default administrator password.
 
 #### Create a dashboard
 

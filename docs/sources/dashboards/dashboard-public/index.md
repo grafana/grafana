@@ -157,9 +157,7 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
-{{% /admonition %}}
+> **note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
