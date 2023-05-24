@@ -56,14 +56,9 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 	return m.client.download(ctx, pluginZipURL, "")
 }
 
-// GetPluginDownloadOptions returns the options for downloading the requested plugin (with optional `version`)
-<<<<<<< Updated upstream
-func (m *Manager) GetPluginDownloadOptions(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
-	v, err := m.pluginVersion(pluginID, version, compatOpts)
-=======
+// GetPluginArchiveInfo returns the options for downloading the requested plugin (with optional `version`)
 func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
-	plugin, err := m.pluginMetadata(pluginID, compatOpts)
->>>>>>> Stashed changes
+	v, err := m.pluginVersion(pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}

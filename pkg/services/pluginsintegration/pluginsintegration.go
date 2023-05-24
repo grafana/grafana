@@ -60,6 +60,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
 	wire.Bind(new(repo.PluginArchiveGetter), new(*repo.Manager)),
+	wire.Bind(new(repo.PluginArchiveInfoGetter), new(*repo.Manager)),
 	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),

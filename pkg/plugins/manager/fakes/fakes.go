@@ -199,14 +199,17 @@ func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
 	return nil
 }
 
-type FakePluginRepo struct {
-	GetPluginArchiveFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginArchiveByURLFunc    func(_ context.Context, archiveURL string) (*repo.PluginArchive, error)
-	GetPluginDownloadOptionsFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
+type FakePluginArchiveGetter struct {
+	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string) (*repo.PluginArchive, error)
+}
+
+type FakePluginArchiveInfoGetter struct {
+	GetPluginArchiveInfoFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
-func (r *FakePluginRepo) GetPluginArchive(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
+func (r *FakePluginArchiveGetter) GetPluginArchive(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
 	if r.GetPluginArchiveFunc != nil {
 		return r.GetPluginArchiveFunc(ctx, pluginID, version, opts)
 	}
@@ -215,7 +218,7 @@ func (r *FakePluginRepo) GetPluginArchive(ctx context.Context, pluginID, version
 }
 
 // GetPluginArchiveByURL fetches the requested plugin from the specified URL.
-func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL string) (*repo.PluginArchive, error) {
+func (r *FakePluginArchiveGetter) GetPluginArchiveByURL(ctx context.Context, archiveURL string) (*repo.PluginArchive, error) {
 	if r.GetPluginArchiveByURLFunc != nil {
 		return r.GetPluginArchiveByURLFunc(ctx, archiveURL)
 	}
@@ -223,10 +226,10 @@ func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL s
 	return &repo.PluginArchive{}, nil
 }
 
-// GetPluginDownloadOptions fetches information for downloading the requested plugin.
-func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
-	if r.GetPluginDownloadOptionsFunc != nil {
-		return r.GetPluginDownloadOptionsFunc(ctx, pluginID, version, opts)
+// GetPluginArchiveInfo fetches information for downloading the requested plugin.
+func (r *FakePluginArchiveInfoGetter) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+	if r.GetPluginArchiveInfoFunc != nil {
+		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
 	}
 	return &repo.PluginDownloadOptions{}, nil
 }
