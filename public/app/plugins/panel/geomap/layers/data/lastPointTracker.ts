@@ -4,7 +4,7 @@ import Feature from 'ol/Feature';
 import * as style from 'ol/style';
 import * as source from 'ol/source';
 import * as layer from 'ol/layer';
-import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
+import { getGeometryField, getLocationMatchers } from 'app/features/visualization/geo/utils/location';
 
 export interface LastPointConfig {
   icon?: string;

@@ -1,6 +1,5 @@
+import countriesJSON from 'gazetteer/countries.json';
 import { toLonLat } from 'ol/proj';
-
-import countriesJSON from '../../../../gazetteer/countries.json';
 
 import { getGazetteer } from './gazetteer';
 

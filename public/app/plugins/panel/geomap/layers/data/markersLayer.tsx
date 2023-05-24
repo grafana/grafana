@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
+import { getLocationMatchers } from 'app/features/visualization/geo/utils/location';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ReplaySubject } from 'rxjs';
@@ -18,7 +18,7 @@ import { StyleEditor } from '../../editor/StyleEditor';
 import { getStyleConfigState } from '../../style/utils';
 import VectorLayer from 'ol/layer/Vector';
 import { isNumber } from 'lodash';
-import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { FrameVectorSource } from 'app/features/visualization/geo/utils/frameVectorSource';
 import { getStyleDimension} from '../../utils/utils';
 
 // Configuration options for Circle overlays

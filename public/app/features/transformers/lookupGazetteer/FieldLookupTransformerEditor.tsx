@@ -11,7 +11,10 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
+import {
+  GazetteerPathEditor,
+  GazetteerPathEditorConfigSettings,
+} from 'app/features/visualization/geo/editor/GazetteerPathEditor';
 
 import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
 

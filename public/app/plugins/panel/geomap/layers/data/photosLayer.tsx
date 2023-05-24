@@ -10,9 +10,9 @@ import {
 import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
+import { getLocationMatchers } from 'app/features/visualization/geo/utils/location';
 import VectorLayer from 'ol/layer/Vector';
-import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { FrameVectorSource } from 'app/features/visualization/geo/utils/frameVectorSource';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 import { findField } from 'app/features/dimensions';

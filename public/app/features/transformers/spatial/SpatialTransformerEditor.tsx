@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
-import { addLocationFields } from 'app/features/geo/editor/locationEditor';
+import { addLocationFields } from 'app/features/visualization/geo/editor/locationEditor';
 
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
