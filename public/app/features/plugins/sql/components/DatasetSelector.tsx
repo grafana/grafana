@@ -28,8 +28,6 @@ export const DatasetSelector = ({
     with or without a default database (preconfiguredDataset). If the user configured a default database, this selector
     should only allow that single preconfigured database option to be selected. If the user chose to NOT assign/configure a default database,
     then the user should be able to use this component to choose between multiple databases available to the datasource.
-    NOTE: Postgres is NOT configured to be able to connect WITHOUT a default database, so if the datasource is Postgres (isPostgresInstance),
-    this component will become disabled.
   */
   // `hasPreconfigCondition` is true if either 1) the sql datasource has a preconfigured default database,
   // OR if 2) the datasource is Postgres. In either case the only option available to the user is the preconfigured database.
