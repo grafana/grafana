@@ -277,7 +277,7 @@ func TestCheckContactPoints(t *testing.T) {
 			},
 		},
 		{
-			name:      "editing a provisioned object should fail",
+			name:      "editing secure settings of a provisioned object should fail",
 			shouldErr: true,
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
@@ -288,6 +288,20 @@ func TestCheckContactPoints(t *testing.T) {
 					receiver.GrafanaManagedReceivers[0].SecureSettings = map[string]string{
 						"url": "newUrl",
 					}
+					return receiver
+				}(),
+			},
+		},
+		{
+			name:      "editing settings of a provisioned object should fail",
+			shouldErr: true,
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-1")
+					receiver.GrafanaManagedReceivers[0].Settings = definitions.RawMessage(`{ "hello": "data", "data": { "test": "test"}}`)
 					return receiver
 				}(),
 			},
@@ -320,7 +334,8 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 						"url": true,
 					},
 					Settings: definitions.RawMessage(`{
-						"hello": "world"
+						"hello": "world",
+						"data": {}
 					}`),
 				},
 			},
@@ -339,7 +354,8 @@ func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiR
 					Type:                  "slack",
 					DisableResolveMessage: true,
 					Settings: definitions.RawMessage(`{
-						"hello": "world"
+						"hello": "world",
+						"data" : {}
 					}`),
 				},
 			},
