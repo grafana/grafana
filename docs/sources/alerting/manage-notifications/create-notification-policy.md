@@ -57,7 +57,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. To add a top level specific policy, go to the Specific routing section and click **+ New specific policy**.
+1. To add a top level specific policy, go to the Specific routing section and click **+New specific policy**.
 1. In the Matching labels section, add one or more rules for matching alert labels.
 1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
@@ -70,7 +70,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
-1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-specific-policy).
+1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-nested-policy).
 1. Click **Save policy** to save your changes.
 
 ## Edit specific policy
@@ -78,7 +78,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies**.
 1. Find the policy you want to edit, then click **Edit**.
-1. Make any changes using instructions in [Add new specific policy](#add-new-specific-policy).
+1. Make any changes using instructions in [Add new specific policy](#add-new-nested-policy).
 1. Click **Save policy**.
 
 ## Searching for policies
