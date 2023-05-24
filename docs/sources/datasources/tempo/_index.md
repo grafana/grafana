@@ -53,8 +53,10 @@ You can also configure settings specific to the Tempo data source. These options
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
-> **Note:** Available in Grafana v7.4 and higher.
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+Available in Grafana v7.4 and higher.
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Tempo.
 
@@ -110,8 +112,10 @@ The following table describes the ways in which you can configure your trace to 
 
 ### Trace to metrics
 
-> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
 
@@ -350,8 +354,10 @@ To open the Service Graph view:
 1. Run the query.
 1. _(Optional)_ Filter your results.
 
-> **Note:** Grafana uses the `traces_spanmetrics_calls_total` metric to display the name, rate, and error rate columns, and `traces_spanmetrics_latency_bucket` to display the duration column.
-> These metrics must exist in your Prometheus data source.
+{{% admonition type="note" %}}
+Grafana uses the `traces_spanmetrics_calls_total` metric to display the name, rate, and error rate columns, and `traces_spanmetrics_latency_bucket` to display the duration column.
+These metrics must exist in your Prometheus data source.
+{{% /admonition %}}
 
 To open a query in Prometheus with the span name of that row automatically set in the query, click a row in the **rate**, **error rate**, or **duration** columns.
 
@@ -359,8 +365,10 @@ To open a query in Tempo with the span name of that row automatically set in the
 
 ## Span Filters
 
-> **Note:** This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
