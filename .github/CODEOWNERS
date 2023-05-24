@@ -358,6 +358,8 @@ lerna.json @grafana/frontend-ops
 /public/app/features/annotations/ @grafana/grafana-frontend-platform
 /public/app/features/api-keys/ @grafana/grafana-frontend-platform
 /public/app/features/canvas/ @grafana/dataviz-squad
+/public/app/features/geo/ @grafana/dataviz-squad
+/public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/explore-squad
@@ -370,7 +372,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/folders/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
 /public/app/features/invites/ @grafana/grafana-frontend-platform
-/public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/library-panels/ @grafana/grafana-frontend-platform
 /public/app/features/logs/ @grafana/observability-logs
 /public/app/features/live/ @grafana/grafana-app-platform-squad
