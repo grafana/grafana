@@ -43,6 +43,26 @@ func TestCheck(t *testing.T) {
 	}
 }
 
+func TestInvalidCheck(t *testing.T) {
+	// Test case: some dependencies missing an owner, check fails
+	buf := &bytes.Buffer{}
+	logger := log.New(buf, "", 0)
+	filesystem := fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
+	require (
+		cloud.google.com/go/storage v1.28.1
+		cuelang.org/go v0.5.0 // @as-code @backend-platform
+		github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
+		github.com/Masterminds/semver v1.5.0
+	)
+	`)}}
+	err := check(filesystem, logger, []string{"go.txd"})
+	expectedErr := "modfile is invalid"
+
+	if err == nil || err.Error() != expectedErr {
+		t.Error(err, buf.String())
+	}
+}
+
 func TestModules(t *testing.T) {
 	buf := &bytes.Buffer{}
 	logger := log.New(buf, "", 0)
