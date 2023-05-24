@@ -224,13 +224,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
                 name="copy"
                 onClick={() => onDuplicate(index)}
                 data-testid="duplicate-value-mapping"
-                tooltip="Copy value"
+                aria-label="Duplicate value mapping"
+                tooltip="Duplicate"
               />
               <IconButton
                 name="trash-alt"
                 onClick={() => onRemove(index)}
                 data-testid="remove-value-mapping"
-                tooltip="Delete value"
+                aria-label="Delete value mapping"
+                tooltip="Delete"
               />
             </HorizontalGroup>
           </td>
