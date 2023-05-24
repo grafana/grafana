@@ -41,18 +41,12 @@ func TestExternalService_GetScopesOnUser(t *testing.T) {
 		expectedScopes         []string
 	}{
 		{
-			name: "should return nil when the service account has no impersonate permissions",
-			initTestEnv: func(c *ExternalService) {
-				c.SelfPermissions = []ac.Permission{}
-			},
+			name:           "should return nil when the service account has no impersonate permissions",
 			expectedScopes: nil,
 		},
 		{
 			name: "should return the 'profile', 'email' and associated RBAC action",
 			initTestEnv: func(c *ExternalService) {
-				c.SelfPermissions = []ac.Permission{
-					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
-				}
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					1: {
 						ac.ActionUsersImpersonate: {ac.ScopeUsersAll},
@@ -67,9 +61,6 @@ func TestExternalService_GetScopesOnUser(t *testing.T) {
 		{
 			name: "should return 'entitlements' and associated RBAC action scopes",
 			initTestEnv: func(c *ExternalService) {
-				c.SelfPermissions = []ac.Permission{
-					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
-				}
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					1: {
 						ac.ActionUsersImpersonate: {ac.ScopeUsersAll},
@@ -84,9 +75,6 @@ func TestExternalService_GetScopesOnUser(t *testing.T) {
 		{
 			name: "should return 'groups' and associated RBAC action scopes",
 			initTestEnv: func(c *ExternalService) {
-				c.SelfPermissions = []ac.Permission{
-					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
-				}
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					1: {
 						ac.ActionUsersImpersonate: {ac.ScopeUsersAll},
@@ -101,9 +89,6 @@ func TestExternalService_GetScopesOnUser(t *testing.T) {
 		{
 			name: "should return all scopes",
 			initTestEnv: func(c *ExternalService) {
-				c.SelfPermissions = []ac.Permission{
-					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
-				}
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					1: {
 						ac.ActionUsersImpersonate: {ac.ScopeUsersAll},
@@ -161,6 +146,13 @@ func TestExternalService_GetScopes(t *testing.T) {
 			expectedScopes: []string{"profile", "email", "entitlements", "groups"},
 		},
 		{
+			name: "should return default scopes when the signed in user has no permissions",
+			initTestEnv: func(c *ExternalService) {
+				c.SignedInUser.Permissions = map[int64]map[string][]string{}
+			},
+			expectedScopes: []string{"profile", "email", "entitlements", "groups"},
+		},
+		{
 			name: "should return additional scopes from signed in user's permissions",
 			initTestEnv: func(c *ExternalService) {
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
@@ -170,13 +162,6 @@ func TestExternalService_GetScopes(t *testing.T) {
 				}
 			},
 			expectedScopes: []string{"profile", "email", "entitlements", "groups", "dashboards:read"},
-		},
-		{
-			name: "should return default scopes when the signed in user has no permissions",
-			initTestEnv: func(c *ExternalService) {
-				c.SignedInUser.Permissions = map[int64]map[string][]string{}
-			},
-			expectedScopes: []string{"profile", "email", "entitlements", "groups"},
 		},
 		{
 			name: "should return stored scopes when the client's scopes has already been set",
