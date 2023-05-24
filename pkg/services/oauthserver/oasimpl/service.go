@@ -296,12 +296,10 @@ func (s *OAuth2ServiceImpl) genCredentials() (string, string, error) {
 func (s *OAuth2ServiceImpl) computeGrantTypes(selfAccessEnabled, impersonationEnabled bool) []string {
 	grantTypes := []string{}
 
-	// If the client has permissions, it can use the client credentials grant type
 	if selfAccessEnabled {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeClientCredentials))
 	}
 
-	// If the client has impersonate permissions, it can use the JWT bearer grant type
 	if impersonationEnabled {
 		grantTypes = append(grantTypes, string(fosite.GrantTypeJWTBearer))
 	}
@@ -435,15 +433,14 @@ func (s *OAuth2ServiceImpl) deleteServiceAccount(ctx context.Context, extSvcName
 	return s.acService.DeleteExternalServiceRole(ctx, extSvcName)
 }
 
-// createServiceAccount creates a service account with the given permissions
-// and returns the ID of the service account
+// createServiceAccount creates a service account with the given permissions and returns the ID of the service account
 // When no permission is given, the account isn't created and NoServiceAccountID is returned
 // This first design does not use a single transaction for the whole service account creation process => database consistency is not guaranteed.
 // Consider changing this in the future.
 func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName string, permissions []ac.Permission) (int64, error) {
 	if len(permissions) == 0 {
-		// No permissions, no service account
-		s.logger.Debug("No permissions, no service account", "external service name", extSvcName)
+		// No permission, no service account
+		s.logger.Debug("No permission, no service account", "external service name", extSvcName)
 		return oauthserver.NoServiceAccountID, nil
 	}
 
