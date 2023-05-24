@@ -45,7 +45,7 @@ The following table contains the integrations supported in Grafana:
 | ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
-| [Email](#email)                                  | `email`                   | Supported            | Supported                                                                                                |
+| Email                                            | `email`                   | Supported            | Supported                                                                                                |
 | [Google Hangouts](https://hangouts.google.com/)  | `googlechat`              | Supported            | N/A                                                                                                      |
 | [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
 | [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
@@ -59,9 +59,9 @@ The following table contains the integrations supported in Grafana:
 | [Telegram](https://telegram.org/)                | `telegram`                | Supported            | N/A                                                                                                      |
 | [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
 | [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
-| [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
-| [Cisco Webex Teams](#webex)                      | `webex`                   | Supported            | Supported                                                                                                |
-| [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
+| Webhook                                          | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| Cisco Webex Teams                                | `webex`                   | Supported            | Supported                                                                                                |
+| WeCom                                            | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
 
 ## Templating notifications
