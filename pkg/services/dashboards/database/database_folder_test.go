@@ -338,24 +338,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.Equal(t, hits[0].ID, folder1.ID)
 					require.Equal(t, hits[1].ID, folder2.ID)
 				})
-
-				t.Run("should have edit permission in folders", func(t *testing.T) {
-					query := &folder.HasEditPermissionInFoldersQuery{
-						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleAdmin},
-					}
-					queryResult, err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
-					require.NoError(t, err)
-					require.True(t, queryResult)
-				})
-
-				t.Run("should have admin permission in folders", func(t *testing.T) {
-					query := &folder.HasAdminPermissionInDashboardsOrFoldersQuery{
-						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleAdmin},
-					}
-					queryResult, err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
-					require.NoError(t, err)
-					require.True(t, queryResult)
-				})
 			})
 
 			t.Run("Editor users", func(t *testing.T) {
@@ -386,24 +368,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.Equal(t, len(hits), 1)
 					require.Equal(t, hits[0].ID, folder2.ID)
 				})
-
-				t.Run("should have edit permission in folders", func(t *testing.T) {
-					query := &folder.HasEditPermissionInFoldersQuery{
-						SignedInUser: &user.SignedInUser{UserID: editorUser.ID, OrgID: 1, OrgRole: org.RoleEditor},
-					}
-					queryResult, err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
-					go require.NoError(t, err)
-					require.True(t, queryResult)
-				})
-
-				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &folder.HasAdminPermissionInDashboardsOrFoldersQuery{
-						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleEditor},
-					}
-					queryResult, err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
-					require.NoError(t, err)
-					require.False(t, queryResult)
-				})
 			})
 
 			t.Run("Viewer users", func(t *testing.T) {
@@ -431,58 +395,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					require.Equal(t, len(hits), 1)
 					require.Equal(t, hits[0].ID, folder1.ID)
-				})
-
-				t.Run("should not have edit permission in folders", func(t *testing.T) {
-					setup3()
-
-					query := &folder.HasEditPermissionInFoldersQuery{
-						SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
-					}
-					queryResult, err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
-					go require.NoError(t, err)
-					require.False(t, queryResult)
-				})
-
-				t.Run("should not have admin permission in folders", func(t *testing.T) {
-					query := &folder.HasAdminPermissionInDashboardsOrFoldersQuery{
-						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
-					}
-					queryResult, err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
-					require.NoError(t, err)
-					require.False(t, queryResult)
-				})
-
-				t.Run("and admin permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder1.ID, dashboards.DashboardACL{
-						DashboardID: folder1.ID, OrgID: 1, UserID: viewerUser.ID, Permission: dashboards.PERMISSION_ADMIN,
-					})
-					require.NoError(t, err)
-
-					t.Run("should have edit permission in folders", func(t *testing.T) {
-						query := &folder.HasEditPermissionInFoldersQuery{
-							SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
-						}
-						queryResult, err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
-						go require.NoError(t, err)
-						require.True(t, queryResult)
-					})
-				})
-
-				t.Run("and edit permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {
-					err := updateDashboardACL(t, dashboardStore, folder1.ID, dashboards.DashboardACL{
-						DashboardID: folder1.ID, OrgID: 1, UserID: viewerUser.ID, Permission: dashboards.PERMISSION_EDIT,
-					})
-					require.NoError(t, err)
-
-					t.Run("should have edit permission in folders", func(t *testing.T) {
-						query := &folder.HasEditPermissionInFoldersQuery{
-							SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
-						}
-						queryResult, err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
-						go require.NoError(t, err)
-						require.True(t, queryResult)
-					})
 				})
 			})
 		})

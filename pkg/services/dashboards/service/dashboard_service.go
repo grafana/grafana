@@ -618,14 +618,6 @@ func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
-	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
-}
-
-func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
-	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
-}
-
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }

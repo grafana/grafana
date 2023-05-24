@@ -2,6 +2,7 @@
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
+description: Intro to the key concepts in Alerting and how it works
 title: Introduction to Alerting
 weight: 105
 ---
