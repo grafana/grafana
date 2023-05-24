@@ -102,9 +102,9 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0
 	go.opentelemetry.io/otel/sdk v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
-	golang.org/x/crypto v0.7.0
+	golang.org/x/crypto v0.9.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.3.0
@@ -213,7 +213,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0
 	go.uber.org/goleak v1.2.1 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -262,10 +262,10 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a
-	github.com/grafana/tempo v1.5.1-0.20230510222136-6614b2a73bb9
+	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b
 	github.com/grafana/thema v0.0.0-20230417103609-99b482c479fe
 	github.com/redis/go-redis/v9 v9.0.2
-	github.com/weaveworks/common v0.0.0-20230315122012-918bab8e5f88
+	github.com/weaveworks/common v0.0.0-20230511094633-334485600903
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.9.0
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d
@@ -372,7 +372,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/klauspost/compress v1.16.3 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/labstack/echo/v4 v4.10.2 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
