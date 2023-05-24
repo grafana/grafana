@@ -28,7 +28,10 @@ import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
 
-const useGetPotentialInstancesByAlertManager = (alertManagerSourceName: string, potentialInstances: Labels[]) => {
+export const useGetPotentialInstancesByAlertManager = (
+  alertManagerSourceName: string,
+  potentialInstances: Labels[]
+) => {
   // get the AM configuration to get the routes
   const { value: AMConfig } = useAsync(async () => {
     const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(alertManagerSourceName);
@@ -72,7 +75,7 @@ const useGetPotentialInstancesByAlertManager = (alertManagerSourceName: string, 
   return { routesByIdMap, receiversByName, matchingMap };
 };
 
-const useGetAlertManagersSourceNames = () => {
+export const useGetAlertManagersSourceNames = () => {
   //get current alerting config
   const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
 
@@ -118,6 +121,8 @@ export const useGetPotentialInstances = (
   return potentialInstances;
 };
 
+export const NOTIFICATION_PREVIEW_TITLE = 'Alert instance routing preview';
+
 export const NotificationPreview = ({ alertQueries, customLabels, condition }: NotificationPreviewProps) => {
   const styles = useStyles2(getStyles);
 
@@ -131,7 +136,7 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
 
   return (
     <>
-      <h4>Alert instance routing preview</h4>
+      <h4>{NOTIFICATION_PREVIEW_TITLE}</h4>
       <div className={styles.textMuted}>
         Based on the labels you have added above and the labels that have been automatically assigned, alert instances
         are being route to notification policies in the way listed bellow. Expand the notification policies to see the
