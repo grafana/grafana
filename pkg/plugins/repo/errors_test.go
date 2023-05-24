@@ -14,12 +14,12 @@ func TestErrResponse4xx(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, err.StatusCode)
 
 		msg := "This is terrible news"
-		err = err.WithMessage(msg)
+		err = err.withMessage(msg)
 		require.Equal(t, "400: This is terrible news", err.Error())
 		require.Equal(t, msg, err.Message)
 
 		sysInfo := "darwin-amd64 grafana v10.0.0"
-		err = err.WithSystemInfo(sysInfo)
+		err = err.withSystemInfo(sysInfo)
 		require.Equal(t, "400: This is terrible news (darwin-amd64 grafana v10.0.0)", err.Error())
 		require.Equal(t, sysInfo, err.systemInfo)
 	})

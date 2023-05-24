@@ -13,8 +13,8 @@ import (
 )
 
 type Manager struct {
-	baseURL string
 	client  *Client
+	baseURL string
 
 	log log.PrettyLogger
 }

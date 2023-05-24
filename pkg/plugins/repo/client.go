@@ -219,9 +219,9 @@ func (c *Client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.Re
 			message = jsonBody["message"]
 		}
 
-		err4xx := newErrResponse4xx(res.StatusCode).WithMessage(message)
+		err4xx := newErrResponse4xx(res.StatusCode).withMessage(message)
 		if len(compatOpts) > 0 {
-			err4xx = err4xx.WithSystemInfo(compatOpts[0].String())
+			err4xx = err4xx.withSystemInfo(compatOpts[0].String())
 		}
 		return nil, err4xx
 	}

@@ -14,11 +14,11 @@ func newErrResponse4xx(statusCode int) ErrResponse4xx {
 	}
 }
 
-func (e ErrResponse4xx) WithMessage(message string) ErrResponse4xx {
+func (e ErrResponse4xx) withMessage(message string) ErrResponse4xx {
 	e.Message = message
 	return e
 }
-func (e ErrResponse4xx) WithSystemInfo(systemInfo string) ErrResponse4xx {
+func (e ErrResponse4xx) withSystemInfo(systemInfo string) ErrResponse4xx {
 	e.systemInfo = systemInfo
 	return e
 }
