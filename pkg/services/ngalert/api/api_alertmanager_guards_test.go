@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -309,7 +310,7 @@ func TestCheckContactPoints(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := checkContactPoints(test.currentConfig, test.newConfig)
+			err := checkContactPoints(&logtest.Fake{}, test.currentConfig, test.newConfig)
 			if test.shouldErr {
 				require.Error(t, err)
 			} else {
