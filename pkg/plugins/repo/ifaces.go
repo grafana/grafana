@@ -6,15 +6,12 @@ import (
 	"strings"
 )
 
-// PluginArchiveGetter is responsible for retrieving plugin archive information from a repository.
-type PluginArchiveGetter interface {
+// Service is responsible for retrieving plugin archive information from a repository.
+type Service interface {
 	// GetPluginArchive fetches the requested plugin archive.
 	GetPluginArchive(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginArchive, error)
 	// GetPluginArchiveByURL fetches the requested plugin from the specified URL.
 	GetPluginArchiveByURL(ctx context.Context, archiveURL string) (*PluginArchive, error)
-}
-
-type PluginArchiveInfoGetter interface {
 	// GetPluginArchiveInfo fetches information needed for downloading the requested plugin.
 	GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts CompatOpts) (*PluginDownloadOptions, error)
 }

@@ -41,7 +41,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		pluginArchiveGetter := &fakes.FakePluginArchiveGetter{
+		pluginRepo := &fakes.FakePluginRepo{
 			GetPluginArchiveFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
 				require.Equal(t, pluginID, id)
 				require.Equal(t, v1, version)
@@ -49,9 +49,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV1,
 				}, nil
 			},
-		}
-
-		pluginArchiveInfoGetter := &fakes.FakePluginArchiveInfoGetter{
 			GetPluginArchiveInfoFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
 				return &repo.PluginDownloadOptions{
 					PluginZipURL: "https://grafanaplugins.com",
@@ -69,7 +66,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginArchiveGetter, pluginArchiveInfoGetter, fs)
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
 		err := inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 
@@ -104,7 +101,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
-			pluginArchiveGetter.GetPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string) (*repo.PluginArchive, error) {
+			pluginRepo.GetPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string) (*repo.PluginArchive, error) {
 				require.Equal(t, "https://grafanaplugins.com", pluginZipURL)
 				return &repo.PluginArchive{
 					File: mockZipV2,
@@ -170,7 +167,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginArchiveGetter{}, &fakes.FakePluginArchiveInfoGetter{}, &fakes.FakePluginStorage{})
+			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 

@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -31,7 +30,7 @@ func TestGetPluginArchive(t *testing.T) {
 		{
 			name: "Incorrect SHA returns error",
 			sha:  "1a2b3c",
-			err:  errors.New("failed to download plugin archive: expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com"),
+			err:  &ErrChecksumMismatch{},
 		},
 	}
 
@@ -76,7 +75,7 @@ func TestGetPluginArchive(t *testing.T) {
 				Arch:           arch,
 			})
 			if tc.err != nil {
-				require.EqualError(t, err, tc.err.Error())
+				require.ErrorAs(t, err, tc.err)
 				return
 			}
 			require.NoError(t, err)

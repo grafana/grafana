@@ -185,7 +185,7 @@ func normalizeVersion(version string) string {
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {
-	return fmt.Sprintf("%s/%s/version/%s/download", m.baseURL, pluginID, version)
+	return fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, version)
 }
 
 // grafanaCompatiblePluginVersions will get version info from /api/plugins/repo/$pluginID based on

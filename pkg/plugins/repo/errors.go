@@ -8,22 +8,22 @@ type ErrResponse4xx struct {
 	systemInfo string
 }
 
-func newErrResponse4xx(statusCode int) *ErrResponse4xx {
-	return &ErrResponse4xx{
+func newErrResponse4xx(statusCode int) ErrResponse4xx {
+	return ErrResponse4xx{
 		StatusCode: statusCode,
 	}
 }
 
-func (e *ErrResponse4xx) WithMessage(message string) *ErrResponse4xx {
+func (e ErrResponse4xx) WithMessage(message string) ErrResponse4xx {
 	e.Message = message
 	return e
 }
-func (e *ErrResponse4xx) WithSystemInfo(systemInfo string) *ErrResponse4xx {
+func (e ErrResponse4xx) WithSystemInfo(systemInfo string) ErrResponse4xx {
 	e.systemInfo = systemInfo
 	return e
 }
 
-func (e *ErrResponse4xx) Error() string {
+func (e ErrResponse4xx) Error() string {
 	if len(e.Message) > 0 {
 		if len(e.systemInfo) > 0 {
 			return fmt.Sprintf("%d: %s (%s)", e.StatusCode, e.Message, e.systemInfo)
@@ -60,4 +60,12 @@ type ErrArcNotFound struct {
 
 func (e ErrArcNotFound) Error() string {
 	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.PluginID, e.SystemInfo)
+}
+
+type ErrChecksumMismatch struct {
+	archiveURL string
+}
+
+func (e ErrChecksumMismatch) Error() string {
+	return fmt.Sprintf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", e.archiveURL)
 }
