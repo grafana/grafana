@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -470,16 +469,17 @@ type Claims struct {
 	Entitlements map[string][]string `json:"entitlements"`
 }
 
-func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
+var (
+	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
+)
+
+func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserver.ExternalService)) {
 	now := time.Now()
-	client1Key, errGenRsa := rsa.GenerateKey(rand.Reader, 4096)
-	require.NoError(t, errGenRsa)
-	client1Secret := "RANDOMSECRET"
-	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client1Secret), bcrypt.DefaultCost)
+	hashedSecret, err := bcrypt.GenerateFromPassword([]byte("CLIENT1SECRET"), bcrypt.DefaultCost)
 	require.NoError(t, err)
 	client1 := &oauthserver.ExternalService{
-		Name:             "testapp",
-		ClientID:         "RANDOMID",
+		Name:             "client-1",
+		ClientID:         "CLIENT1ID",
 		Secret:           string(hashedSecret),
 		GrantTypes:       string(fosite.GrantTypeClientCredentials + "," + fosite.GrantTypeJWTBearer),
 		ServiceAccountID: 2,
@@ -497,10 +497,16 @@ func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 		},
 		Audiences: AppURL,
 	}
+
+	// Apply any option the test case might need
+	if opt != nil {
+		opt(client1)
+	}
+
 	sa1 := &serviceaccounts.ServiceAccountProfileDTO{
 		Id:         client1.ServiceAccountID,
-		Name:       "testapp",
-		Login:      "testapp",
+		Name:       client1.Name,
+		Login:      client1.Name,
 		OrgId:      oauthserver.TmpOrgID,
 		IsDisabled: false,
 		Created:    now,
@@ -526,25 +532,35 @@ func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 		{ID: 2, Name: "Team 2", OrgID: 1},
 	}
 
+	// To retrieve the Client, its publicKey and its permissions
+	env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
+	env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: Client1Key.Public(), Algorithm: "RS256"}, nil)
+	env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
+	env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
+	// To retrieve the user to impersonate, its permissions and its teams
+	env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
+		user56.ID: user56Permissions}, nil)
+	env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
+		user56.ID: {"Viewer"}}, nil)
+	env.TeamService.ExpectedTeamsByUser = user56Teams
+	env.UserService.ExpectedUser = user56
+}
+
+func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 	tests := []struct {
-		name       string
-		initEnv    func(env *TestEnv)
-		urlValues  url.Values
-		wantCode   int
-		wantScope  []string
-		wantClaims *Claims
+		name        string
+		tweakClient func(*oauthserver.ExternalService)
+		reqParams   url.Values
+		wantCode    int
+		wantScope   []string
+		wantClaims  *Claims
 	}{
 		{
 			name: "should allow client credentials grant",
-			initEnv: func(env *TestEnv) {
-				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
-				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
-			},
-			urlValues: url.Values{
+			reqParams: url.Values{
 				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
-				"client_id":     {client1.ClientID},
-				"client_secret": {client1Secret},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
 				"scope":         {"profile email groups entitlements"},
 				"audience":      {AppURL},
 			},
@@ -556,10 +572,9 @@ func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 					Issuer:   AppURL,      // From env.S.Config.Issuer
 					Audience: jwt.Audience{AppURL},
 				},
-				ClientID: client1.ClientID,
-				Name:     "testapp",
-				Login:    "testapp",
-				// Scopes:       []string{"profile", "email", "groups", "entitlements"}, // TODO SHOULD WE ADD SCOPE TO THE JWT WITH CLIENT_CREDENTIALS?
+				ClientID: "CLIENT1ID",
+				Name:     "client-1",
+				Login:    "client-1",
 				Entitlements: map[string][]string{
 					"users:impersonate": {"users:*"},
 				},
@@ -567,26 +582,12 @@ func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 		},
 		{
 			name: "should allow jwt-bearer grant",
-			initEnv: func(env *TestEnv) {
-				// To retrieve the Client, its publicKey and its permissions
-				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
-				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
-				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
-				// To retrieve the user to impersonate, its permissions and its teams
-				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
-					user56.ID: user56Permissions}, nil)
-				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
-					user56.ID: {"Viewer"}}, nil)
-				env.TeamService.ExpectedTeamsByUser = user56Teams
-				env.UserService.ExpectedUser = user56
-			},
-			urlValues: url.Values{
+			reqParams: url.Values{
 				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
-				"client_id":     {client1.ClientID},
-				"client_secret": {client1Secret},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
 				"assertion": {
-					genAssertion(t, client1Key, client1.ClientID, "user:id:56", TokenURL, AppURL),
+					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, AppURL),
 				},
 				"scope": {"profile email groups entitlements"},
 			},
@@ -594,16 +595,15 @@ func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
-					Subject:  fmt.Sprintf("user:id:%v", user56.ID), // To match the assertion
-					Issuer:   AppURL,                               // From env.S.Config.Issuer
+					Subject:  "user:id:56", // To match the assertion
+					Issuer:   AppURL,       // From env.S.Config.Issuer
 					Audience: jwt.Audience{TokenURL, AppURL},
 				},
-				ClientID: client1.ClientID,
-				Email:    user56.Email,
-				Name:     user56.Name,
-				Login:    user56.Login,
+				ClientID: "CLIENT1ID",
+				Email:    "user56@example.org",
+				Name:     "User 56",
+				Login:    "user56",
 				Groups:   []string{"Team 1", "Team 2"},
-				// Scopes:   []string{"profile", "email", "groups", "entitlements"}, // TODO scopes have not been added to the jwt
 				Entitlements: map[string][]string{
 					"dashboards:read": {"folders:uid:UID1"},
 					"folders:read":    {"folders:uid:UID1"},
@@ -613,41 +613,24 @@ func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 		},
 		{
 			name: "should deny jwt-bearer grant with wrong audience",
-			initEnv: func(env *TestEnv) {
-				// To retrieve the Client, its publicKey and its permissions
-				env.OAuthStore.On("GetExternalService", mock.Anything, client1.ClientID).Return(client1, nil)
-				env.OAuthStore.On("GetExternalServicePublicKey", mock.Anything, client1.ClientID).Return(&jose.JSONWebKey{Key: client1Key.Public(), Algorithm: "RS256"}, nil)
-				env.SAService.On("RetrieveServiceAccount", mock.Anything, oauthserver.TmpOrgID, client1.ServiceAccountID).Return(sa1, nil)
-				env.AcStore.On("GetUserPermissions", mock.Anything, mock.Anything).Return(client1.SelfPermissions, nil)
-				// To retrieve the user to impersonate, its permissions and its teams
-				env.AcStore.On("SearchUsersPermissions", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]ac.Permission{
-					user56.ID: user56Permissions}, nil)
-				env.AcStore.On("GetUsersBasicRoles", mock.Anything, mock.Anything, mock.Anything).Return(map[int64][]string{
-					user56.ID: {"Viewer"}}, nil)
-				env.TeamService.ExpectedTeamsByUser = user56Teams
-				env.UserService.ExpectedUser = user56
-			},
-			urlValues: url.Values{
+			reqParams: url.Values{
 				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
-				"client_id":     {client1.ClientID},
-				"client_secret": {client1Secret},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
 				"assertion": {
-					genAssertion(t, client1Key, client1.ClientID, "user:id:56", TokenURL, "invalid_audience"),
+					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, "invalid audience"),
 				},
 				"scope": {"profile email groups entitlements"},
 			},
-			wantCode:  http.StatusForbidden,
-			wantScope: []string{"profile", "email", "groups", "entitlements"},
+			wantCode: http.StatusForbidden,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			env := setupTestEnv(t)
-			if tt.initEnv != nil {
-				tt.initEnv(env)
-			}
+			setupHandleTokenRequestEnv(t, env, tt.tweakClient)
 
-			req := httptest.NewRequest("POST", "/oauth2/token", strings.NewReader(tt.urlValues.Encode()))
+			req := httptest.NewRequest("POST", "/oauth2/token", strings.NewReader(tt.reqParams.Encode()))
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			resp := httptest.NewRecorder()
