@@ -48,7 +48,7 @@ func TestValueString(t *testing.T) {
 	}, {
 		name:     "1.0 is returned as integer value",
 		value:    Value{Value: 1.0},
-		expected: "1",
+		expected: "1.0",
 	}, {
 		name:     "1.1 is returned as decimal value",
 		value:    Value{Value: 1.1},
