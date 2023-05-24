@@ -15,27 +15,21 @@ import { SelectedView } from './types';
 type Props = {
   app: CoreApp;
   search: string;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
-  setRangeMin: (range: number) => void;
-  setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
   selectedView: SelectedView;
   setSelectedView: (view: SelectedView) => void;
   containerWidth: number;
+  onReset: () => void;
 };
 
 const FlameGraphHeader = ({
   app,
   search,
-  setTopLevelIndex,
-  setSelectedBarIndex,
-  setRangeMin,
-  setRangeMax,
   setSearch,
   selectedView,
   setSelectedView,
   containerWidth,
+  onReset,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
 
@@ -52,16 +46,6 @@ const FlameGraphHeader = ({
     });
   }
 
-  const onResetView = () => {
-    setTopLevelIndex(0);
-    setSelectedBarIndex(0);
-    setRangeMin(0);
-    setRangeMax(1);
-    // We could set only one and wait them to sync but there is no need to debounce this.
-    setSearch('');
-    setLocalSearch('');
-  };
-
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
   return (
@@ -77,7 +61,16 @@ const FlameGraphHeader = ({
             width={44}
           />
         </div>
-        <Button type={'button'} variant="secondary" onClick={onResetView}>
+        <Button
+          type={'button'}
+          variant="secondary"
+          onClick={() => {
+            onReset();
+            // We could set only one and wait them to sync but there is no need to debounce this.
+            setSearch('');
+            setLocalSearch('');
+          }}
+        >
           Reset view
         </Button>
       </div>
