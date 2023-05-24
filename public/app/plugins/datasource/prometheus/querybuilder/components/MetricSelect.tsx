@@ -149,16 +149,23 @@ export function MetricSelect({
           {children}
         </CustomScrollbar>
         <div className={styles.footer}>
+          <div>
+            Browse metrics
+            <div className={`${styles.description} metric-encyclopedia-open`}>
+              Browse and filter metrics and metadata with a fuzzy search
+            </div>
+          </div>
+
           <Button
             size="sm"
             variant="secondary"
             fill="text"
-            className={`metric-encyclopedia-open`}
+            className="metric-encyclopedia-open"
             onClick={() => {
               setState({ ...state, metricsModalOpen: true });
             }}
           >
-            Open advanced metric browser
+            Open
             <Icon name="arrow-right" />
           </Button>
         </div>
@@ -240,7 +247,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   footer: css`
     flex: 0;
     display: flex;
-    flex-direction: row-reverse;
     justify-content: space-between;
     padding: ${theme.spacing(1.5)};
     border-top: 1px solid ${theme.colors.border.weak};
@@ -253,6 +259,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 480px;
     background: ${theme.colors.background.primary};
     box-shadow: ${theme.shadows.z3};
+  `,
+  description: css`
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.size.xs};
+    opacity: 50%;
   `,
 });
 
