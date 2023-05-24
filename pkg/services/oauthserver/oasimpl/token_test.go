@@ -582,7 +582,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			wantCode: http.StatusBadRequest,
 		},
 		{
-			name: "should deny client_credentials grant wrong secret",
+			name: "should deny client_credentials grant with wrong secret",
 			reqParams: url.Values{
 				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
 				"client_id":     {"CLIENT1ID"},
@@ -596,7 +596,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			wantCode: http.StatusUnauthorized,
 		},
 		{
-			name: "should deny jwt-bearer grant for clients wrong secret",
+			name: "should deny jwt-bearer grant with wrong secret",
 			reqParams: url.Values{
 				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
 				"client_id":     {"CLIENT1ID"},
