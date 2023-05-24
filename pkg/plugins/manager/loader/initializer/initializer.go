@@ -10,7 +10,7 @@ import (
 )
 
 type Initializer struct {
-	envVarProvider  *envvars.Service
+	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
 }
 
