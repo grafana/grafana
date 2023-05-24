@@ -29,7 +29,7 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10.0/index.md" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
+For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10-0/" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
 
 <!-- Template below
 ## Feature
