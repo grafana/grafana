@@ -141,7 +141,7 @@ func (c *ExternalService) GetScopesOnUser(ctx context.Context, accessControl ac.
 				ret = append(ret, "groups", ac.ActionTeamsRead)
 				continue
 			}
-			// Add all other action that the plugin is allowed to request
+			// Add all actions that the plugin is allowed to request
 			ret = append(ret, perms[i].Action)
 		}
 	}
