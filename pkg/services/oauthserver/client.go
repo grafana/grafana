@@ -104,7 +104,7 @@ func (c *ExternalService) GetScopes() fosite.Arguments {
 	if c.SignedInUser != nil && c.SignedInUser.Permissions != nil {
 		perms := c.SignedInUser.Permissions[TmpOrgID]
 		for action := range perms {
-			// Add all other action that the plugin is allowed to request
+			// Add all actions that the plugin is allowed to request
 			ret = append(ret, action)
 		}
 	}
