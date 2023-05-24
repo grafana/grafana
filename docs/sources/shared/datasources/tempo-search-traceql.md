@@ -2,15 +2,11 @@
 headless: true
 ---
 
-
-[//]: # (This file documents the Search query type for the Tempo data source. It is available as a public preview.)
-
-[//]: # (This shared file is included in these locations:)
-[//]: # (/grafana/docs/sources/datasources/tempo/query-editor/index.md)
-
-[//]: # (If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.)
-
-[//]: # (Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.) 
+[//]: # 'This file documents the Search query type for the Tempo data source. It is available as a public preview.'
+[//]: # 'This shared file is included in these locations:'
+[//]: # '/grafana/docs/sources/datasources/tempo/query-editor/index.md'
+[//]: # 'If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.'
+[//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
 
 # Create TraceQL queries using Search
 
@@ -34,14 +30,14 @@ The screenshot below identifies the areas used to perform a search.
 
 {{< figure src="/static/img/docs/queries/screenshot-tempods-query-search-parts.png" class="docs-image--no-shadow" max-width="750px" caption="Parts of Tempo Search query type" >}}
 
-|Number|Name|Action|Comment|
-|:----|:----|:----|:----|
-|1|Data source|Use the data source drop-down to select a Tempo data source.|Each data source has its own version of search. This Search is specific to the Tempo data source.|
-|2|Query type tab|Select Search.| |
-|3|Choose filter|Choose whether to filter using **Resource Service Name**, **Span Name**, and/or **Duration**.|Optional. You can execute an empty query in the Search tab. In TraceQL, `{}` is a valid query and is the default query until you choose options.|
-|4|Filters conditions|Select options for one or more filters. For example, you can define a filter where **Resource Service Name** (`resource.service.name`) equals (`=`) `cloud-logs-archiver`.|Optional. At least one tag or filter must be defined.|
-|5|Tags|Add tags for span, resource, or unscoped and define their conditions.|Optional.|
-|6|TraceQL query|Displays the TraceQL query constructed by your selections.|This TraceQL query is executed when you select **Run query**.|
+| Number | Name               | Action                                                                                                                                                                     | Comment                                                                                                                                          |
+| :----- | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1      | Data source        | Use the data source drop-down to select a Tempo data source.                                                                                                               | Each data source has its own version of search. This Search is specific to the Tempo data source.                                                |
+| 2      | Query type tab     | Select Search.                                                                                                                                                             |                                                                                                                                                  |
+| 3      | Choose filter      | Choose whether to filter using **Resource Service Name**, **Span Name**, and/or **Duration**.                                                                              | Optional. You can execute an empty query in the Search tab. In TraceQL, `{}` is a valid query and is the default query until you choose options. |
+| 4      | Filters conditions | Select options for one or more filters. For example, you can define a filter where **Resource Service Name** (`resource.service.name`) equals (`=`) `cloud-logs-archiver`. | Optional. At least one tag or filter must be defined.                                                                                            |
+| 5      | Tags               | Add tags for span, resource, or unscoped and define their conditions.                                                                                                      | Optional.                                                                                                                                        |
+| 6      | TraceQL query      | Displays the TraceQL query constructed by your selections.                                                                                                                 | This TraceQL query is executed when you select **Run query**.                                                                                    |
 
 Every query searches the data for the selected time frame.
 By default, queries run against data from the last hour.
@@ -62,7 +58,6 @@ Grafana administrators can change the default filters using the Tempo data sourc
 Filters can be limited by the operators. The available operators are determined by the field type.
 For example, **Span Name** and **Resource Service Name** are string fields so the comparison operators are equals (`=`), not equal (`!=`), or regular expressions (`=~`).
 **Duration** is a duration field type and uses range selections (`>`, `>=`, `<`, `<=`).
-
 
 To define filters, follow these steps:
 
