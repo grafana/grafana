@@ -304,8 +304,8 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 	}
 
 	q.Dimensions = map[string][]string{}
-	if metricsDataQuery.MetricStat.Dimensions != nil {
-		q.Dimensions, err = parseDimensions(*metricsDataQuery.MetricStat.Dimensions)
+	if metricsDataQuery.Dimensions != nil {
+		q.Dimensions, err = parseDimensions(*metricsDataQuery.Dimensions)
 		if err != nil {
 			return fmt.Errorf("failed to parse dimensions: %v", err)
 		}
