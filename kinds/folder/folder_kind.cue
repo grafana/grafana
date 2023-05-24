@@ -4,27 +4,22 @@ name:        "Folder"
 maturity:    "merged"
 description: "A folder is a collection of resources that are grouped together and can share permissions."
 
-lineage: seqs: [
-	{
-		schemas: [
-			//0.0
-			{
+lineage: schemas: [{
+	version: [0, 0]
+	schema: {
+		spec: {
+			// Unique folder id. (will be k8s name)
+			uid: string
 
-				spec: {
-					// Unique folder id. (will be k8s name)
-					uid: string
+			// Folder title
+			title: string
 
-					// Folder title
-					title: string
-
-					// Description of the folder.
-					description?: string
-				} @cuetsy(kind="interface")
-				//
-				// TODO: 
-				// common metadata will soon support setting the parent folder in the metadata
-				//
-			},
-		]
-	},
-]
+			// Description of the folder.
+			description?: string
+		} @cuetsy(kind="interface")
+		//
+		// TODO:
+		// common metadata will soon support setting the parent folder in the metadata
+		//
+	}
+}]

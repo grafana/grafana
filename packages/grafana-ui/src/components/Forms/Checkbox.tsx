@@ -78,8 +78,6 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       display: inline-grid;
       align-items: center;
       column-gap: ${theme.spacing(labelPadding)};
-      grid-template-columns: auto 1fr;
-      grid-template-rows: auto auto;
       position: relative;
       vertical-align: middle;
     `,
