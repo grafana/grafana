@@ -3,7 +3,6 @@ import { map } from 'lodash';
 import { DataSourceInstanceSettings, DataSourceRef, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
