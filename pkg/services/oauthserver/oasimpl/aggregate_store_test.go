@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var cachedUser = func() *oauthserver.ExternalService {
+var cachedExternalService = func() *oauthserver.ExternalService {
 	return &oauthserver.ExternalService{
 		Name:             "my-ext-service",
 		ClientID:         "RANDOMID",
@@ -53,7 +53,7 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 		{
 			name: "should return error when the user id cannot be parsed",
 			initTestEnv: func(env *TestEnv) {
-				env.S.cache.Set("my-ext-service", *cachedUser(), time.Minute)
+				env.S.cache.Set("my-ext-service", *cachedExternalService(), time.Minute)
 			},
 			userID:  "user:3",
 			wantErr: true,
@@ -61,7 +61,7 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 		{
 			name: "should return error when the user does not have the impersonate permission",
 			initTestEnv: func(env *TestEnv) {
-				currentUser := cachedUser()
+				currentUser := cachedExternalService()
 				currentUser.ImpersonatePermissions = []ac.Permission{}
 				env.S.cache.Set("my-ext-service", *currentUser, time.Minute)
 			},
@@ -72,8 +72,8 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 		{
 			name: "should return the required scopes when the user has the impersonate permission",
 			initTestEnv: func(env *TestEnv) {
-				env.S.cache.Set("my-ext-service", *cachedUser(), time.Minute)
-				currentUser := cachedUser()
+				env.S.cache.Set("my-ext-service", *cachedExternalService(), time.Minute)
+				currentUser := cachedExternalService()
 				currentUser.ImpersonatePermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 					{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf},
