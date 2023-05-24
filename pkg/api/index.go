@@ -22,11 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TODO this will be removed when we remove legacy AC fallback from HasAccess method
-func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
-	return false
-}
-
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
