@@ -116,9 +116,9 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       height: 30px;
       background: none;
       border: none;
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       & > * {
-        border-radius: 50%;
+        border-radius: ${theme.shape.radius.circle};
       }
     `,
     content: css`
@@ -160,7 +160,7 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       height: 6px;
       width: 6px;
       background-color: ${theme.colors.primary.main};
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       display: inline-block;
       margin-left: ${theme.spacing(1)};
     `,

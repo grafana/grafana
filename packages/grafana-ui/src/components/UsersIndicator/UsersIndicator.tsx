@@ -21,7 +21,8 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
   if (!users.length) {
     return null;
   }
-
+  // Make sure limit is never negative
+  limit = limit > 0 ? limit : 4;
   const limitReached = users.length > limit;
   const extraUsers = users.length - limit;
   // Prevent breaking the layout when there's more than 99 users

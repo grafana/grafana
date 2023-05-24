@@ -7,7 +7,7 @@ import mdx from './UsersIndicator.mdx';
 const meta: ComponentMeta<typeof UsersIndicator> = {
   title: 'General/UsersIndicator',
   component: UsersIndicator,
-  argTypes: {},
+  argTypes: { limit: { control: { type: 'number', min: 1 } } },
   parameters: {
     docs: {
       page: mdx,
