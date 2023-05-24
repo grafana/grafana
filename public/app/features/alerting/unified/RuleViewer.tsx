@@ -305,6 +305,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};
+
+      max-width: 250px;
+      word-break: break-all;
+      overflow: hidden;
     `,
     rightSideDetails: css`
       & > div:first-child {
