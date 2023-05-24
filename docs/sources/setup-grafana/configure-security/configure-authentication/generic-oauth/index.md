@@ -45,6 +45,7 @@ auth_url =
 token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
+allowed_groups = ["Admins", "Software Engineers"]
 tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
