@@ -43,7 +43,11 @@ func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
 	if r.HTTPRequest == nil {
 		return false
 	}
-	return !strings.HasPrefix(r.HTTPRequest.RequestURI, "/oauth2/introspect") && looksLikeBasicAuthRequest(r)
+	// The OAuth2 introspection endpoint uses basic auth but is handled by the oauthserver package.
+	if strings.HasPrefix(r.HTTPRequest.RequestURI, "/oauth2/introspect") {
+		return false
+	}
+	return looksLikeBasicAuthRequest(r)
 }
 
 func (c *Basic) Priority() uint {

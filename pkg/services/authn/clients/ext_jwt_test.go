@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oauthtest"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -518,7 +518,7 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 	signingKeysSvc.ExpectedServerPublicKey = &pk.PublicKey
 
 	userSvc := &usertest.FakeUserService{}
-	oauthSvc := &oauthtest.FakeService{}
+	oauthSvc := &oastest.FakeService{}
 
 	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc, oauthSvc)
 
@@ -530,7 +530,7 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 }
 
 type testEnv struct {
-	oauthSvc *oauthtest.FakeService
+	oauthSvc *oastest.FakeService
 	userSvc  *usertest.FakeUserService
 	s        *ExtendedJWT
 }

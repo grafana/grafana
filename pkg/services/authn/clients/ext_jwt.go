@@ -31,22 +31,22 @@ const (
 	rfc9068MediaType      = "application/at+jwt"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service, oauthService oauthserver.OAuth2Service) *ExtendedJWT {
+func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service, oauthServer oauthserver.OAuth2Server) *ExtendedJWT {
 	return &ExtendedJWT{
-		cfg:          cfg,
-		log:          log.New(authn.ClientExtendedJWT),
-		userService:  userService,
-		signingKeys:  signingKeys,
-		oauthService: oauthService,
+		cfg:         cfg,
+		log:         log.New(authn.ClientExtendedJWT),
+		userService: userService,
+		signingKeys: signingKeys,
+		oauthServer: oauthServer,
 	}
 }
 
 type ExtendedJWT struct {
-	cfg          *setting.Cfg
-	log          log.Logger
-	userService  user.Service
-	signingKeys  signingkeys.Service
-	oauthService oauthserver.OAuth2Service
+	cfg         *setting.Cfg
+	log         log.Logger
+	userService user.Service
+	signingKeys signingkeys.Service
+	oauthServer oauthserver.OAuth2Server
 }
 
 type ExtendedJWTClaims struct {
@@ -214,7 +214,7 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims Extended
 		return fmt.Errorf("missing 'client_id' claim")
 	}
 
-	if _, err := s.oauthService.GetExternalService(ctx, claims.ClientID); err != nil {
+	if _, err := s.oauthServer.GetExternalService(ctx, claims.ClientID); err != nil {
 		return fmt.Errorf("invalid 'client_id' claim: %s", claims.ClientID)
 	}
 

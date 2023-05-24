@@ -271,9 +271,23 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
 	}
 
+	// Check and deduplicate permissions
 	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
 		return errors.New("no permissions provided")
 	}
+	dedupMap := map[Permission]bool{}
+	dedup := make([]Permission, 0, len(cmd.Permissions))
+	for i := range cmd.Permissions {
+		if len(cmd.Permissions[i].Action) == 0 {
+			return fmt.Errorf("external service %v requests a permission with no Action", cmd.ExternalServiceID)
+		}
+		if dedupMap[cmd.Permissions[i]] {
+			continue
+		}
+		dedupMap[cmd.Permissions[i]] = true
+		dedup = append(dedup, cmd.Permissions[i])
+	}
+	cmd.Permissions = dedup
 
 	if cmd.ServiceAccountID <= 0 {
 		return fmt.Errorf("invalid service account id %d", cmd.ServiceAccountID)

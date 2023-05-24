@@ -12,6 +12,7 @@ azure_tenant = "azure_tenant"
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
 rgm_github_token = "github_token"
+rgm_dagger_token = "dagger_token"
 
 def from_secret(secret):
     return {"from_secret": secret}
@@ -132,6 +133,11 @@ def secrets():
             rgm_destination,
             "infra/data/ci/grafana-release-eng/rgm",
             "destination",
+        ),
+        vault_secret(
+            rgm_dagger_token,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "dagger_token",
         ),
         vault_secret(
             rgm_github_token,

@@ -171,10 +171,6 @@ const (
 	// Show trace ids for requests
 	FlagShowTraceId = "showTraceId"
 
-	// FlagDatasourceOnboarding
-	// Enable data source onboarding page
-	FlagDatasourceOnboarding = "datasourceOnboarding"
-
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
@@ -312,12 +308,16 @@ const (
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
 	// FlagFaroDatasourceSelector
-	// Enable the data source selector within the Frontend Apps section of the Frontend Observability 
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagDataSourcePageHeader
+	// Apply new pageHeader UI in data source edit page
+	FlagDataSourcePageHeader = "dataSourcePageHeader"
 
 	// FlagExtraThemes
 	// Enables extra themes

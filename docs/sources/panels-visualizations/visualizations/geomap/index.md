@@ -90,7 +90,9 @@ There are also five alpha layer types.
 - [Route layer (Alpha)]({{< relref "#route-layer-alpha" >}}) render data points as a route.
 - [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders a photo at each data point.
 
-> **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
+{{% admonition type="note" %}}
+[Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
+{{% /admonition %}}
 
 ### Layer Controls
 
@@ -433,7 +435,9 @@ Displays scale information in the bottom left corner.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" caption="Geomap panel scale" >}}
 
-> **Note:** Currently only displays units in [m]/[km].
+{{% admonition type="note" %}}
+Currently only displays units in [m]/[km].
+{{% /admonition %}}
 
 ### Show measure tools
 
@@ -445,7 +449,9 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 - **Continue clicking** to continue measurement
 - **Double-click** to end measurement
 
-> **Note:** <br /> - When you change measurement type or units, the previous measurement is removed from the map. <br /> - If the control is closed and then re-opened, the most recent measurement is displayed. <br /> - A measurement can be modified by clicking and dragging on it.
+{{% admonition type="note" %}}
+<br /- When you change measurement type or units, the previous measurement is removed from the map. <br /- If the control is closed and then re-opened, the most recent measurement is displayed. <br /- A measurement can be modified by clicking and dragging on it.
+{{% /admonition %}}
 
 #### Length
 

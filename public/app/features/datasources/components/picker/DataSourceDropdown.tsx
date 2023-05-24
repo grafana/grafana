@@ -8,7 +8,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
-import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 
@@ -17,6 +17,7 @@ import { useDatasource } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
+import { applyMaxSize, maxSize } from './popperModifiers';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
@@ -79,6 +80,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           offset: [0, 4],
         },
       },
+      maxSize,
+      applyMaxSize,
     ],
   });
 
@@ -161,7 +164,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               ref={setSelectorElement}
               {...restProps}
               onDismiss={onClose}
-            ></PickerContent>
+              {...popper.attributes.popper}
+            />
           </div>
         </Portal>
       ) : null}
@@ -208,19 +212,21 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <DataSourceList
-        {...props}
-        enableKeyboardNavigation
-        className={styles.dataSourceList}
-        current={current}
-        onChange={changeCallback}
-        filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
-        onClickEmptyStateCTA={() =>
-          reportInteraction(INTERACTION_EVENT_NAME, {
-            item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
-          })
-        }
-      ></DataSourceList>
+      <CustomScrollbar>
+        <DataSourceList
+          {...props}
+          enableKeyboardNavigation
+          className={styles.dataSourceList}
+          current={current}
+          onChange={changeCallback}
+          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
+          onClickEmptyStateCTA={() =>
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+            })
+          }
+        ></DataSourceList>
+      </CustomScrollbar>
       <div className={styles.footer}>
         <ModalsController>
           {({ showModal, hideModal }) => (
@@ -265,8 +271,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      height: 412px;
-      width: 480px;
+      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
@@ -275,7 +280,6 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     `,
     dataSourceList: css`
       flex: 1;
-      overflow: scroll;
     `,
     footer: css`
       flex: 0;

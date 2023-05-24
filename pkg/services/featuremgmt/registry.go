@@ -278,12 +278,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "datasourceOnboarding",
-			Description: "Enable data source onboarding page",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaDashboardsSquad,
-		},
-		{
 			Name:         "emptyDashboardPage",
 			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
 			State:        FeatureStateStable,
@@ -513,7 +507,7 @@ var (
 		},
 		{
 			Name:         "faroDatasourceSelector",
-			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
@@ -524,6 +518,13 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dataSourcePageHeader",
+			Description:  "Apply new pageHeader UI in data source edit page",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        enterpriseDatasourcesSquad,
 		},
 		{
 			Name:         "extraThemes",

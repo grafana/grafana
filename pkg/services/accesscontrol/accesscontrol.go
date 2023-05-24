@@ -261,6 +261,7 @@ func Reduce(ps []Permission) map[string][]string {
 	return reduced
 }
 
+// intersectScopes computes the minimal list of scopes common to two slices.
 func intersectScopes(s1, s2 []string) []string {
 	if len(s1) == 0 || len(s2) == 0 {
 		return []string{}
@@ -297,7 +298,7 @@ func intersectScopes(s1, s2 []string) []string {
 	// intersect wildcards
 	wildcards := make(map[string]bool)
 	for s := range s1Wildcards {
-		// if s1 wildcard is included in s2
+		// if s1 wildcard is included in s2 wildcards
 		// then it is included in the intersection
 		if includes(s2Wildcards, s) {
 			wildcards[s] = true
@@ -305,7 +306,7 @@ func intersectScopes(s1, s2 []string) []string {
 		}
 	}
 	for s := range s2Wildcards {
-		// if s2 wildcard is included in s1
+		// if s2 wildcard is included in s1 wildcards
 		// then it is included in the intersection
 		if includes(s1Wildcards, s) {
 			wildcards[s] = true
@@ -315,10 +316,6 @@ func intersectScopes(s1, s2 []string) []string {
 	// intersect scopes
 	scopes := make(map[string]bool)
 	for s := range s1Scopes {
-		// if s1 scope is included in the intersection of wildcards, skip it
-		if includes(wildcards, s) {
-			continue
-		}
 		// if s1 scope is included in s2 wilcards or s2 scopes
 		// then it is included in the intersection
 		if includes(s2Wildcards, s) || s2Scopes[s] {
@@ -326,10 +323,6 @@ func intersectScopes(s1, s2 []string) []string {
 		}
 	}
 	for s := range s2Scopes {
-		// if s2 scope is included in the intersection of wildcards, skip it
-		if includes(wildcards, s) {
-			continue
-		}
 		// if s2 scope is included in s1 wilcards
 		// then it is included in the intersection
 		if includes(s1Wildcards, s) {
@@ -349,7 +342,6 @@ func intersectScopes(s1, s2 []string) []string {
 }
 
 // Intersect returns the intersection of two slices of permissions, grouping scopes by action.
-// TODO: think of how that needs to handle intersection between: dashboards:create scoped and unscoped.
 func Intersect(p1, p2 []Permission) map[string][]string {
 	if len(p1) == 0 || len(p2) == 0 {
 		return map[string][]string{}
