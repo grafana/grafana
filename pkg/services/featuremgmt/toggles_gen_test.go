@@ -39,6 +39,12 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.State == FeatureStateUnknown {
 				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
 			}
+			if flag.Description != strings.TrimSpace(flag.Description) {
+				t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
+			}
+			if flag.Name != strings.TrimSpace(flag.Name) {
+				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
+			}
 		}
 	})
 

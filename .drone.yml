@@ -4447,13 +4447,60 @@ volumes:
 clone:
   retries: 3
 depends_on:
+- release-oss-build-e2e-publish
+- release-enterprise-build-e2e-publish
+- release-enterprise2-build-e2e-publish
+- release-oss-windows
+- release-enterprise-windows
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  depends_on:
+  - clone
+  environment:
+    BUCKET:
+      from_secret: prerelease_bucket
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: gsutil-stat
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
 - main-test-backend
 - main-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging
-  to main'
+name: rgm-main-prerelease
 node:
   type: no-parallel
 platform:
@@ -4501,7 +4548,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging'
+name: rgm-tag-prerelease
 node:
   type: no-parallel
 platform:
@@ -4533,6 +4580,49 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  depends_on:
+  - clone
+  environment:
+    BUCKET: grafana-prerelease-dev
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk
+  name: gsutil-stat
 trigger:
   event:
     exclude:
@@ -7110,6 +7200,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: b672e3a75c9e262486985d34c31c246dd5dfb291324c53b99588a3da5f92abf5
+hmac: 6b3dd328b2c09e1580a9b5add265651af159349a07488796a937d61e1112a3fe
 
 ...
