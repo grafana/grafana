@@ -221,21 +221,25 @@ function metricTypeHints(metric: string): string | undefined {
   return undefined;
 }
 
-export function tracking(event: string, state: MetricsModalState, metric: string) {
+export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
   switch (event) {
     case 'grafana_prom_metric_encycopedia_tracking':
       reportInteraction(event, {
         metric: metric,
-        hasMetadata: state.hasMetadata,
-        totalMetricCount: state.totalMetricCount,
-        fuzzySearchQuery: state.fuzzySearchQuery,
-        fullMetaSearch: state.fullMetaSearch,
-        selectedTypes: state.selectedTypes,
-        inferType: state.inferType,
+        hasMetadata: state?.hasMetadata,
+        totalMetricCount: state?.totalMetricCount,
+        fuzzySearchQuery: state?.fuzzySearchQuery,
+        fullMetaSearch: state?.fullMetaSearch,
+        selectedTypes: state?.selectedTypes,
+        inferType: state?.inferType,
       });
     case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
       reportInteraction(event, {
-        disableTextWrap: state.disableTextWrap,
+        disableTextWrap: state?.disableTextWrap,
+      });
+    case 'grafana_prometheus_metric_encyclopedia_open':
+      reportInteraction(event, {
+        query: query,
       });
   }
 }

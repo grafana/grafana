@@ -23,6 +23,7 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricsModal } from './metrics-modal/MetricsModal';
+import { tracking } from './metrics-modal/state/helpers';
 
 // We are matching words split with space
 const splitSeparator = ' ';
@@ -163,6 +164,7 @@ export function MetricSelect({
             className="metric-encyclopedia-open"
             onClick={() => {
               setState({ ...state, metricsModalOpen: true });
+              tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
             }}
           >
             Open
