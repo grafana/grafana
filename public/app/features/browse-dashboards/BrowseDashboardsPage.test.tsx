@@ -1,5 +1,5 @@
 import 'whatwg-fetch'; // fetch polyfill
-import { render as rtlRender, screen, waitFor } from '@testing-library/react';
+import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
@@ -20,6 +20,10 @@ const [mockTree, { dashbdD, folderA, folderA_folderA }] = wellFormedTree();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    unifiedAlertingEnabled: true,
+  },
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -32,7 +36,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
-  rtlRender(
+  const { rerender } = rtlRender(
     <TestProvider
       storeState={{
         navIndex: {
@@ -47,6 +51,26 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
     </TestProvider>,
     options
   );
+
+  const wrappedRerender = (ui: React.ReactElement) => {
+    rerender(
+      <TestProvider
+        storeState={{
+          navIndex: {
+            'dashboards/browse': {
+              text: 'Dashboards',
+              id: 'dashboards/browse',
+            },
+          },
+        }}
+      >
+        {ui}
+      </TestProvider>
+    );
+  };
+  return {
+    rerender: wrappedRerender,
+  };
 }
 
 jest.mock('app/features/search/service/folders', () => {
@@ -107,6 +131,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         canCreateFolder: true,
       };
     });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -123,6 +148,39 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('displays a search input', async () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
+    });
+
+    it('shows the "New" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
+    });
+
+    it('does not show the "New" button if the user does not have permissions', async () => {
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          canEditInFolder: false,
+          canCreateDashboards: false,
+          canCreateFolder: false,
+        };
+      });
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
+    });
+
+    it('does not show "Folder actions"', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('does not show any tabs', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+
+      expect(screen.queryByRole('tab', { name: 'Tab Dashboards' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Tab Panels' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Tab Alert rules' })).not.toBeInTheDocument();
     });
 
     it('displays the filters and hides the actions initially', async () => {
@@ -152,7 +210,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('navigating into a child item resets the selected state', async () => {
-      render(<BrowseDashboardsPage {...props} />);
+      const { rerender } = render(<BrowseDashboardsPage {...props} />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
       await userEvent.click(checkbox);
@@ -161,38 +219,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('link', { name: folderA.item.title }));
+      const updatedProps = { ...props };
+      updatedProps.match.params = { uid: folderA.item.uid };
+      rerender(<BrowseDashboardsPage {...updatedProps} />);
+
+      // Check the filters are now visible again
+      expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
+      expect(await screen.findByText('Sort')).toBeInTheDocument();
 
       // Check the actions are no longer visible
-      waitFor(() => {
-        expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-      });
-    });
-
-    it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
-    });
-
-    it('does not show the "New" button if the user does not have permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          canEditInFolder: false,
-          canCreateDashboards: false,
-          canCreateFolder: false,
-        };
-      });
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
-    });
-
-    it('does not show "Folder actions"', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Move' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 
@@ -209,6 +246,48 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('displays a search input', async () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
+    });
+
+    it('shows the "New" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
+    });
+
+    it('does not show the "New" button if the user does not have permissions', async () => {
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          canEditInFolder: false,
+          canCreateDashboards: false,
+          canCreateFolder: false,
+        };
+      });
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
+    });
+
+    it('shows the "Folder actions" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
+    });
+
+    it('does not show the "Folder actions" button if the user does not have permissions', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toHaveAttribute('aria-selected', 'true');
+
+      expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Tab Panels' })).toHaveAttribute('aria-selected', 'false');
+
+      expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: 'Tab Alert rules' })).toHaveAttribute('aria-selected', 'false');
     });
 
     it('displays the filters and hides the actions initially', async () => {
@@ -237,37 +316,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       // Check the actions are now visible
       expect(screen.getByRole('button', { name: 'Move' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
-    });
-
-    it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
-    });
-
-    it('does not show the "New" button if the user does not have permissions', async () => {
-      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-        return {
-          canEditInFolder: false,
-          canCreateDashboards: false,
-          canCreateFolder: false,
-        };
-      });
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
-    });
-
-    it('shows the "Folder actions" button if the user has permissions', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
-    });
-
-    it('does not show the "Folder actions" button if the user does not have permissions', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      render(<BrowseDashboardsPage {...props} />);
-      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
   });
 });
