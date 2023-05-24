@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"io/fs"
 	"log"
 	"strings"
 	"testing"
@@ -20,6 +21,28 @@ func TestCommonElement(t *testing.T) {
 		{[]string{"a"}, []string{"b"}, false},
 	} {
 		if hasCommonElement(test.A, test.B) != test.Result {
+			t.Error(test)
+		}
+	}
+}
+
+func TestCheckTable(t *testing.T) {
+	for _, test := range []struct {
+		fakeMod       fs.FS
+		logger        *log.Logger
+		args          []string
+		expectedError error
+	}{
+		{fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
+		require (
+			cloud.google.com/go/storage v1.28.1 // @delivery
+			cuelang.org/go v0.5.0 // @as-code @backend-platform
+			github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
+			github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
+		)
+		`)}}, log.New(&bytes.Buffer{}, "", 0), []string{"go.txd"}, nil},
+	} {
+		if check(test.fakeMod, test.logger, test.args) != test.expectedError {
 			t.Error(test)
 		}
 	}
