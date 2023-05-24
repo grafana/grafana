@@ -13,12 +13,12 @@ title: StatusHistoryPanelCfg kind
 
 
 
-| Property           | Type                        | Required | Default | Description |
-|--------------------|-----------------------------|----------|---------|-------------|
-| `PanelFieldConfig` | [object](#panelfieldconfig) | **Yes**  |         |             |
-| `PanelOptions`     | [object](#paneloptions)     | **Yes**  |         |             |
+| Property      | Type                   | Required | Default | Description |
+|---------------|------------------------|----------|---------|-------------|
+| `FieldConfig` | [object](#fieldconfig) | **Yes**  |         |             |
+| `Options`     | [object](#options)     | **Yes**  |         |             |
 
-### PanelFieldConfig
+### FieldConfig
 
 It extends [HideableFieldConfig](#hideablefieldconfig).
 
@@ -46,7 +46,7 @@ TODO docs
 |------------|---------------------------------------|----------|---------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
-### PanelOptions
+### Options
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
 
@@ -54,7 +54,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 |-------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------------|
 | `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
 | `rowHeight` | number                                  | **Yes**  | `0.9`   | Set the height of the rows<br/>Constraint: `>=0 & <=1`.                    |
-| `showValue` | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `auto`, `never`, `always`.              |
+| `showValue` | string                                  | **Yes**  |         | Show values on the columns                                                 |
 | `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
 | `colWidth`  | number                                  | No       | `0.9`   | Controls the column width                                                  |
 | `timezone`  | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))*           |

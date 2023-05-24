@@ -364,8 +364,8 @@ func (f *FakePluginFiles) Base() string {
 	return f.base
 }
 
-func (f *FakePluginFiles) Files() []string {
-	return []string{}
+func (f *FakePluginFiles) Files() ([]string, error) {
+	return []string{}, nil
 }
 
 func (f *FakePluginFiles) Remove() error {

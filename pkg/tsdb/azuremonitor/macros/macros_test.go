@@ -123,6 +123,16 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 			expected: "",
 			Err:      require.Error,
 		},
+		{
+			name: "traces time field should remain as timestamp",
+			query: backend.DataQuery{
+				QueryType: "Azure Traces",
+				TimeRange: timeRange,
+			},
+			kql:      `$__timeFilter()`,
+			expected: "['timestamp'] >= datetime('2018-03-15T13:00:00Z') and ['timestamp'] <= datetime('2018-03-15T13:34:00Z')",
+			Err:      require.NoError,
+		},
 	}
 
 	for _, tt := range tests {

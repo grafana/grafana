@@ -4,7 +4,7 @@ describe('Trace view', () => {
   it('Can lazy load big traces', () => {
     e2e.flows.login('admin', 'admin');
     e2e()
-      .intercept('GET', '**/api/traces/long-trace', {
+      .intercept('GET', '**/api/traces/trace', {
         fixture: 'long-trace-response.json',
       })
       .as('longTrace');
@@ -13,7 +13,9 @@ describe('Trace view', () => {
 
     e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-jaeger{enter}');
 
-    e2e.components.QueryField.container().should('be.visible').type('long-trace');
+    e2e().wait(500);
+
+    e2e.components.QueryField.container().should('be.visible').type('trace', { delay: 100 });
 
     e2e().wait(500);
 

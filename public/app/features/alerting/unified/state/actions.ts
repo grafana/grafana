@@ -1,13 +1,14 @@
 import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
+  Matcher,
   Receiver,
   Silence,
   SilenceCreatePayload,
@@ -31,9 +32,8 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, trackNewAlerRuleFormSaved, withPerformanceLogging } from '../Analytics';
+import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -101,7 +101,19 @@ function getDataSourceRulerConfig(getState: () => unknown, rulesSourceName: stri
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
   async (
-    { rulesSourceName, filter }: { rulesSourceName: string; filter?: FetchPromRulesFilter },
+    {
+      rulesSourceName,
+      filter,
+      limitAlerts,
+      matcher,
+      state,
+    }: {
+      rulesSourceName: string;
+      filter?: FetchPromRulesFilter;
+      limitAlerts?: number;
+      matcher?: Matcher[];
+      state?: string[];
+    },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
@@ -111,7 +123,7 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter));
+    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state));
   }
 );
 
@@ -339,7 +351,17 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Promise<void>> {
+interface FetchPromRulesRulesActionProps {
+  filter?: FetchPromRulesFilter;
+  limitAlerts?: number;
+  matcher?: Matcher[];
+  state?: string[];
+}
+
+export function fetchAllPromAndRulerRulesAction(
+  force = false,
+  options: FetchPromRulesRulesActionProps = {}
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
@@ -359,7 +381,7 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<Prom
           (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
 
         await Promise.allSettled([
-          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName })),
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
           shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
         ]);
       })
@@ -489,14 +511,6 @@ export const saveRuleFormAction = createAsyncThunk(
 
           logInfo(LogMessages.successSavingAlertRule, { type, isNew: (!existing).toString() });
 
-          if (!existing) {
-            trackNewAlerRuleFormSaved({
-              grafana_version: config.buildInfo.version,
-              org_id: contextSrv.user.orgId,
-              user_id: contextSrv.user.id,
-            });
-          }
-
           if (redirectOnSave) {
             locationService.push(redirectOnSave);
           } else {
@@ -557,7 +571,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
 
           if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
             throw new Error(
-              'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+              'A newer Alertmanager configuration is available. Please reload the page and try again to not overwrite recent changes.'
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));

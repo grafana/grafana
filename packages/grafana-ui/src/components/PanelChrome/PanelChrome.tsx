@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
-import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -53,6 +52,10 @@ export interface PanelChromeProps {
   actions?: ReactNode;
   displayMode?: 'default' | 'transparent';
   onCancelQuery?: () => void;
+  /**
+   * callback when opening the panel menu
+   */
+  onOpenMenu?: () => void;
 }
 
 /**
@@ -83,17 +86,15 @@ export function PanelChrome({
   leftItems,
   actions,
   onCancelQuery,
+  onOpenMenu,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const pointerQuery = '(pointer: coarse)';
-  // detect if we are on touch devices
-  const isTouchDevice = useMedia(pointerQuery);
-  const hasHeader = !hoverHeader || isTouchDevice;
+  const hasHeader = !hoverHeader;
 
   // hover menu is only shown on hover when not on touch devices
-  const showOnHoverClass = !isTouchDevice ? 'show-on-hover' : '';
+  const showOnHoverClass = 'show-on-hover';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -157,9 +158,15 @@ export function PanelChrome({
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
-      {hoverHeader && !isTouchDevice && (
+      {hoverHeader && (
         <>
-          <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
+          <HoverWidget
+            menu={menu}
+            title={title}
+            offset={hoverHeaderOffset}
+            dragClass={dragClass}
+            onOpenMenu={onOpenMenu}
+          >
             {headerContent}
           </HoverWidget>
 
@@ -186,12 +193,8 @@ export function PanelChrome({
               menu={menu}
               title={title}
               placement="bottom-end"
-              menuButtonClass={cx(
-                { [styles.hiddenMenu]: !isTouchDevice },
-                styles.menuItem,
-                dragClassCancel,
-                showOnHoverClass
-              )}
+              menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
+              onOpenMenu={onOpenMenu}
             />
           )}
         </div>

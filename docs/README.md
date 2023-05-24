@@ -1,13 +1,18 @@
 # Building the docs locally
 
-When you contribute to documentation, it is a good practice to build the docs on your local machine to make sure your changes appear as you expect. This README explains the process for doing that.
+When you contribute to documentation, it's a good practice to build the docs on your local machine to make sure your changes appear as you expect. This README explains the process for doing that.
+
+To build a local version, you need to run a process in a Docker container.
+Grafana periodically updates the Docker image, [`docs-base`](https://hub.docker.com/r/grafana/docs-base), to update the styling of the Docs.
 
 ## Requirements
 
-Docker >= 2.1.0.3
-Yarn >= 1.22.4
+- Docker >= 2.1.0.3
+- Yarn >= 1.22.4
 
 ## Build the doc site
+
+First, make sure the Docker daemon is running on your machine. Then, follow these steps:
 
 1. On the command line, first change to the docs folder: `cd docs`.
 1. Run `make docs`. This launches a preview of the website with the current grafana docs at `http://localhost:3002/docs/grafana/latest/` which will refresh automatically when changes are made to content in the `sources` directory.

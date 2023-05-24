@@ -105,7 +105,7 @@ export const ConfirmModal = ({
           onClick={onConfirm}
           disabled={disabled}
           ref={buttonRef}
-          aria-label={selectors.pages.ConfirmModal.delete}
+          data-testid={selectors.pages.ConfirmModal.delete}
         >
           {confirmText}
         </Button>

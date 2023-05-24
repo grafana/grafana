@@ -75,9 +75,9 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
             const valueFieldIndex = timeFieldIndex === 0 ? 1 : 0;
 
             dataFrame.add({
-              [TIME_SERIES_TIME_FIELD_NAME]: frame.fields[timeFieldIndex].values.get(valueIndex),
+              [TIME_SERIES_TIME_FIELD_NAME]: frame.fields[timeFieldIndex].values[valueIndex],
               [TIME_SERIES_METRIC_FIELD_NAME]: getFrameDisplayName(frame),
-              [TIME_SERIES_VALUE_FIELD_NAME]: frame.fields[valueFieldIndex].values.get(valueIndex),
+              [TIME_SERIES_VALUE_FIELD_NAME]: frame.fields[valueFieldIndex].values[valueIndex],
             });
           }
         }

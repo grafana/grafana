@@ -3,6 +3,7 @@ labels:
   products:
     - cloud
 title: Grafana Cloud
+description: Learn about Grafana Cloud.
 weight: 300
 ---
 

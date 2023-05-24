@@ -70,6 +70,7 @@ import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
+  getLokiQueryFromDataQuery,
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
@@ -192,7 +193,7 @@ export class LokiDatasource
         return {
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
-          instant: false,
+          queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
           expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
         };
@@ -205,6 +206,7 @@ export class LokiDatasource
         }
         return {
           ...normalizedQuery,
+          queryType: LokiQueryType.Range,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
@@ -654,11 +656,19 @@ export class LokiDatasource
     options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    return await this.logContextProvider.getLogRowContext(row, options, origQuery);
+    return await this.logContextProvider.getLogRowContext(row, options, getLokiQueryFromDataQuery(origQuery));
+  };
+
+  getLogRowContextQuery = async (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<DataQuery> => {
+    return await this.logContextProvider.getLogRowContextQuery(row, options, getLokiQueryFromDataQuery(origQuery));
   };
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, origQuery);
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
@@ -824,6 +834,22 @@ export class LokiDatasource
 
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
     return getQueryHints(query.expr, result);
+  }
+
+  getDefaultQuery(app: CoreApp): LokiQuery {
+    const defaults = { refId: 'A', expr: '' };
+
+    if (app === CoreApp.UnifiedAlerting) {
+      return {
+        ...defaults,
+        queryType: LokiQueryType.Instant,
+      };
+    }
+
+    return {
+      ...defaults,
+      queryType: LokiQueryType.Range,
+    };
   }
 }
 
