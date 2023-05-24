@@ -7,8 +7,8 @@ import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
-import { MetaInfoText } from './MetaInfoText';
-import { getFieldLinksForExplore } from './utils/links';
+import { MetaInfoText } from '../MetaInfoText';
+import { getFieldLinksForExplore } from '../utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
