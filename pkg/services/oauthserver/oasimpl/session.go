@@ -63,6 +63,9 @@ func (s *AuthSession) GetExpiresAt(key fosite.TokenType) time.Time {
 }
 
 func (s *AuthSession) GetUsername() string {
+	if s == nil {
+		return ""
+	}
 	return s.Username
 }
 
@@ -71,25 +74,28 @@ func (s *AuthSession) SetSubject(subject string) {
 }
 
 func (s *AuthSession) GetSubject() string {
+	if s == nil {
+		return ""
+	}
+
 	return s.Subject
 }
 
 func (s *AuthSession) Clone() fosite.Session {
+	if s == nil {
+		return nil
+	}
+
 	return deepcopy.Copy(s).(fosite.Session)
 }
 
 // GetExtraClaims implements ExtraClaimsSession for JWTSession.
 // The returned value is a copy of JWTSession claims.
 func (s *AuthSession) GetExtraClaims() map[string]interface{} {
-	// We make a clone so that WithScopeField does not change the original value.
-	return deepcopy.Copy(s).(*AuthSession).GetJWTClaims().WithScopeField(jwt.JWTScopeFieldString).ToMapClaims()
-}
-
-func (s *AuthSession) SetClientID(clientID string) *jwt.JWTClaims {
-	if s.JWTClaims == nil {
-		s.JWTClaims = &jwt.JWTClaims{}
+	if s == nil {
+		return nil
 	}
 
-	s.JWTClaims.Add("client_id", clientID)
-	return s.JWTClaims
+	// We make a clone so that WithScopeField does not change the original value.
+	return s.Clone().(*AuthSession).GetJWTClaims().WithScopeField(jwt.JWTScopeFieldString).ToMapClaims()
 }
