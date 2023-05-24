@@ -87,7 +87,7 @@ require (
 	github.com/prometheus/client_golang v1.15.1
 	github.com/prometheus/client_model v0.3.0
 	github.com/prometheus/common v0.42.0
-	github.com/prometheus/prometheus v1.8.2-0.20210621150501-ff58416a0b02
+	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.2.0
 	github.com/stretchr/testify v1.8.2
@@ -104,15 +104,15 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0
 	go.opentelemetry.io/otel/sdk v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
-	golang.org/x/crypto v0.7.0
-	golang.org/x/exp v0.0.0-20230307190834-24139beb5833
-	golang.org/x/net v0.9.0
+	golang.org/x/crypto v0.9.0
+	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
+	golang.org/x/net v0.10.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.7.0
-	gonum.org/v1/gonum v0.11.0
-	google.golang.org/api v0.111.0
+	gonum.org/v1/gonum v0.12.0
+	google.golang.org/api v0.114.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
@@ -120,7 +120,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -264,6 +264,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
+	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b
 	github.com/grafana/thema v0.0.0-20230523123227-db9596a7096e
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903
@@ -300,7 +301,7 @@ require (
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
-	github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd // indirect
+	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
@@ -336,8 +337,8 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.18.0 // indirect
-	cloud.google.com/go/iam v0.8.0 // indirect
+	cloud.google.com/go/compute v1.19.0 // indirect
+	cloud.google.com/go/iam v0.13.0 // indirect
 	filippo.io/age v1.1.1
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect

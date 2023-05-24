@@ -32,7 +32,7 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 	s.logger.Debug("New stream call", "path", request.Path, "json", string(request.Data))
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
-		tempoDatasource, err := s.getDSInfo(request.PluginContext)
+		tempoDatasource, err := s.getDSInfo(ctx, request.PluginContext)
 		if err != nil {
 			return err
 		}

@@ -22,7 +22,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		return result, err
 	}
 
-	dsInfo, err := s.getDSInfo(pCtx)
+	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
 		return nil, err
 	}
