@@ -13,11 +13,11 @@ title: GaugePanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default | Description |
-|----------------|-------------------------|----------|---------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
+| Property  | Type               | Required | Default | Description |
+|-----------|--------------------|----------|---------|-------------|
+| `Options` | [object](#options) | **Yes**  |         |             |
 
-### PanelOptions
+### Options
 
 It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 

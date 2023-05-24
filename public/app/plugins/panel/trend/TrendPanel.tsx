@@ -9,7 +9,7 @@ import { findFieldIndex } from 'app/features/dimensions';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export const TrendPanel = ({
   data,
@@ -21,7 +21,7 @@ export const TrendPanel = ({
   fieldConfig,
   replaceVariables,
   id,
-}: PanelProps<PanelOptions>) => {
+}: PanelProps<Options>) => {
   const { sync } = usePanelContext();
 
   const info = useMemo(() => {
@@ -66,7 +66,7 @@ export const TrendPanel = ({
     }
 
     return { frames: prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx) };
-  }, [data, options.xField]);
+  }, [data.series, options.xField]);
 
   if (info.warning || !info.frames) {
     return (

@@ -105,6 +105,7 @@ def pr_pipelines():
                 include_paths = [
                     "pkg/**",
                     "packaging/**",
+                    ".drone.yml",
                     "conf/**",
                     "go.sum",
                     "go.mod",

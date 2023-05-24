@@ -8,8 +8,6 @@ import (
 )
 
 func TestTimeGrain_createISO8601Duration(t *testing.T) {
-	tg := &TimeGrain{}
-
 	testCases := []struct {
 		name     string
 		value    int
@@ -26,15 +24,13 @@ func TestTimeGrain_createISO8601Duration(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			d := tg.createISO8601Duration(tc.value, tc.unit)
+			d := createISO8601Duration(tc.value, tc.unit)
 			assert.Equal(t, tc.expected, d)
 		})
 	}
 }
 
 func TestTimeGrain_createISO8601DurationFromIntervalMS(t *testing.T) {
-	tg := &TimeGrain{}
-
 	testCases := []struct {
 		name     string
 		interval int64
@@ -48,7 +44,7 @@ func TestTimeGrain_createISO8601DurationFromIntervalMS(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			d, err := tg.createISO8601DurationFromIntervalMS(tc.interval)
+			d, err := CreateISO8601DurationFromIntervalMS(tc.interval)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, d)
 		})

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, ConfirmModal, TextArea, HorizontalGroup, Field, Form } from '@grafana/ui';
+import { Button, ConfirmModal, Field, Form, HorizontalGroup, TextArea } from '@grafana/ui';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -60,7 +60,7 @@ export const ConfigEditor = ({
 
               <HorizontalGroup>
                 <Button type="submit" variant="primary" disabled={loading}>
-                  Save
+                  Save configuration
                 </Button>
                 {onReset && (
                   <Button type="button" disabled={loading} variant="destructive" onClick={onReset}>

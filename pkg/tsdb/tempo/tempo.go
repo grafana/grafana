@@ -95,8 +95,8 @@ func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query b
 	return nil, fmt.Errorf("unsupported query type: '%s' for query with refID '%s'", query.QueryType, query.RefID)
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*Datasource, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*Datasource, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

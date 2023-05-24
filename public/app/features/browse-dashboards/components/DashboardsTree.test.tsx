@@ -112,7 +112,7 @@ describe('browse-dashboards DashboardsTree', () => {
         onAllSelectionChange={noop}
       />
     );
-    expect(screen.queryByText('Empty folder')).toBeInTheDocument();
+    expect(screen.queryByText('No items')).toBeInTheDocument();
     expect(screen.queryByText(emptyFolderIndicator.item.kind)).not.toBeInTheDocument();
   });
 });

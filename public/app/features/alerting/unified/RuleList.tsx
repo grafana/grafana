@@ -12,7 +12,7 @@ import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
-import { LogMessages } from './Analytics';
+import { LogMessages, trackRuleListNavigation } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -79,6 +79,10 @@ const RuleList = withErrorBoundary(
         await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
     }, [loading, limitAlerts, dispatch]);
+
+    useEffect(() => {
+      trackRuleListNavigation().catch(() => {});
+    }, []);
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
