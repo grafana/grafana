@@ -1067,6 +1067,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0 h1:jELbsqee5kRz9vD1hZeP8+984xMZDU/M6uGv0RhOR34=
 github.com/grafana/grafana-plugin-sdk-go v0.160.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
+github.com/grafana/grafana-plugin-sdk-go v0.162.0 h1:ij2ARWohf0IoK9yCVC1Wup4Gp6zwBq2AueVXRYsv/to=
+github.com/grafana/grafana-plugin-sdk-go v0.162.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
 github.com/grafana/kindsys v0.0.0-20230323180930-c2a9ced5c751 h1:X5jwaMcpUMQ+xv7fKhs9U+oBxfo2x+x8GpHWybDSgk0=
 github.com/grafana/kindsys v0.0.0-20230323180930-c2a9ced5c751/go.mod h1:213a3clTiegHfheYcLPLeEyHv/azK/fAF67OEbzuLzw=
 github.com/grafana/kindsys v0.0.0-20230427152021-bb328815be7a h1:i2YhC6eTyDp+7Ftv5c6VZDUQskmKX4oIPGf38qfiZiU=
