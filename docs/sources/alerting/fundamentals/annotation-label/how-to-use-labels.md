@@ -21,7 +21,7 @@ This topic explains why labels are a fundamental component of alerting.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-edit-details-8-0.png" max-width="550px" caption="Alert details" >}}
 
-# External Alertmanager Compatibility
+## External Alertmanager Compatibility
 
 Grafana's built-in Alertmanager supports both Unicode label keys and values. If you are using an external Prometheus Alertmanager, label keys must be compatible with their [data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 This means that label keys must only contain **ASCII letters**, **numbers**, as well as **underscores** and match the regex `[a-zA-Z_][a-zA-Z0-9_]*`.
@@ -35,7 +35,7 @@ Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514=
 
 **Note** If multiple label keys are sanitized to the same value, the duplicates will have a short hash of the original label appended as a suffix.
 
-# Grafana reserved labels
+## Grafana reserved labels
 
 {{% admonition type="note" %}}
 Labels prefixed with `grafana_` are reserved by Grafana for special use. If a manually configured label is added beginning with `grafana_` it may be overwritten in case of collision.
