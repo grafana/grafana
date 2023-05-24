@@ -31,7 +31,7 @@ import (
 )
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
-	client1 := &oauthserver.Client{
+	client1 := &oauthserver.ExternalService{
 		Name:             "testapp",
 		ClientID:         "RANDOMID",
 		GrantTypes:       string(fosite.GrantTypeClientCredentials),
@@ -53,13 +53,13 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 	tests := []struct {
 		name           string
 		scopes         []string
-		client         *oauthserver.Client
+		client         *oauthserver.ExternalService
 		expectedClaims map[string]interface{}
 		wantErr        bool
 	}{
 		{
 			name: "no claim without client_credentials grant type",
-			client: &oauthserver.Client{
+			client: &oauthserver.ExternalService{
 				Name:             "testapp",
 				ClientID:         "RANDOMID",
 				GrantTypes:       string(fosite.GrantTypeJWTBearer),
@@ -135,7 +135,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 
 func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 	now := time.Now()
-	client1 := &oauthserver.Client{
+	client1 := &oauthserver.ExternalService{
 		Name:             "testapp",
 		ClientID:         "RANDOMID",
 		GrantTypes:       string(fosite.GrantTypeJWTBearer),
@@ -164,7 +164,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		{ID: 1, Name: "Team 1", OrgID: 1},
 		{ID: 2, Name: "Team 2", OrgID: 1},
 	}
-	client1WithPerm := func(perms []ac.Permission) *oauthserver.Client {
+	client1WithPerm := func(perms []ac.Permission) *oauthserver.ExternalService {
 		client := *client1
 		client.ImpersonatePermissions = perms
 		return &client
@@ -174,14 +174,14 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		name           string
 		initEnv        func(*TestEnv)
 		scopes         []string
-		client         *oauthserver.Client
+		client         *oauthserver.ExternalService
 		subject        string
 		expectedClaims map[string]interface{}
 		wantErr        bool
 	}{
 		{
 			name: "no claim without jwtbearer grant type",
-			client: &oauthserver.Client{
+			client: &oauthserver.ExternalService{
 				Name:             "testapp",
 				ClientID:         "RANDOMID",
 				GrantTypes:       string(fosite.GrantTypeClientCredentials),
@@ -196,7 +196,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		},
 		{
 			name: "err client is not allowed to impersonate",
-			client: &oauthserver.Client{
+			client: &oauthserver.ExternalService{
 				Name:             "testapp",
 				ClientID:         "RANDOMID",
 				GrantTypes:       string(fosite.GrantTypeJWTBearer),
@@ -477,7 +477,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 	client1Secret := "RANDOMSECRET"
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client1Secret), bcrypt.DefaultCost)
 	require.NoError(t, err)
-	client1 := &oauthserver.Client{
+	client1 := &oauthserver.ExternalService{
 		Name:             "testapp",
 		ClientID:         "RANDOMID",
 		Secret:           string(hashedSecret),

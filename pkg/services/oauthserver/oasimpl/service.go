@@ -132,10 +132,10 @@ func newProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 // GetExternalService retrieves an external service from store by client_id. It populates the SelfPermissions and
 // SignedInUser from the associated service account.
 // For performance reason, the service uses caching.
-func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
+func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.ExternalService, error) {
 	entry, ok := s.cache.Get(id)
 	if ok {
-		client, ok := entry.(oauthserver.Client)
+		client, ok := entry.(oauthserver.ExternalService)
 		if ok {
 			s.logger.Debug("GetExternalService: cache hit", "client id", id)
 			return &client, nil
@@ -178,7 +178,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 // it ensures that the associated service account has the correct permissions.
 // Database consistency is not guaranteed, consider changing this in the future.
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ExternalServiceDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
@@ -199,7 +199,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	// Otherwise, create a new client
 	if client == nil {
 		s.logger.Debug("External service does not yet exist", "external service name", registration.Name)
-		client = &oauthserver.Client{
+		client = &oauthserver.ExternalService{
 			Name:             registration.Name,
 			ServiceAccountID: oauthserver.NoServiceAccountID,
 			Audiences:        s.cfg.AppURL,

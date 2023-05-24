@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestEnv(t *testing.T) *Client {
+func setupTestEnv(t *testing.T) *ExternalService {
 	t.Helper()
 
-	client := &Client{
+	client := &ExternalService{
 		Name:             "my-ext-service",
 		ClientID:         "RANDOMID",
 		Secret:           "RANDOMSECRET",
@@ -37,19 +37,19 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		impersonatePermissions []ac.Permission
-		initTestEnv            func(*Client)
+		initTestEnv            func(*ExternalService)
 		expectedScopes         []string
 	}{
 		{
 			name: "should return nil when the service account has no impersonate permissions",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SelfPermissions = []ac.Permission{}
 			},
 			expectedScopes: nil,
 		},
 		{
 			name: "should return the 'profile', 'email' and associated RBAC action",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 				}
@@ -66,7 +66,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 		},
 		{
 			name: "should return 'entitlements' and associated RBAC action scopes",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 				}
@@ -83,7 +83,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 		},
 		{
 			name: "should return 'groups' and associated RBAC action scopes",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 				}
@@ -100,7 +100,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 		},
 		{
 			name: "should return all scopes",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SelfPermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 				}
@@ -123,7 +123,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 		},
 		{
 			name: "should return stored scopes when the client's impersonate scopes has already been set",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					1: {
 						ac.ActionUsersImpersonate: {ac.ScopeUsersAll},
@@ -150,19 +150,19 @@ func TestClient_GetScopes(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		impersonatePermissions []ac.Permission
-		initTestEnv            func(*Client)
+		initTestEnv            func(*ExternalService)
 		expectedScopes         []string
 	}{
 		{
 			name: "should return default scopes when the signed in user is nil",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SignedInUser = nil
 			},
 			expectedScopes: []string{"profile", "email", "entitlements", "groups"},
 		},
 		{
 			name: "should return additional scopes from signed in user's permissions",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SignedInUser.Permissions = map[int64]map[string][]string{
 					1: {
 						dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll},
@@ -173,14 +173,14 @@ func TestClient_GetScopes(t *testing.T) {
 		},
 		{
 			name: "should return default scopes when the signed in user has no permissions",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.SignedInUser.Permissions = map[int64]map[string][]string{}
 			},
 			expectedScopes: []string{"profile", "email", "entitlements", "groups"},
 		},
 		{
 			name: "should return stored scopes when the client's scopes has already been set",
-			initTestEnv: func(c *Client) {
+			initTestEnv: func(c *ExternalService) {
 				c.Scopes = []string{"profile", "email", "entitlements", "groups"}
 			},
 			expectedScopes: []string{"profile", "email", "entitlements", "groups"},
@@ -199,7 +199,7 @@ func TestClient_GetScopes(t *testing.T) {
 }
 
 func TestClient_ToDTO(t *testing.T) {
-	client := &Client{
+	client := &ExternalService{
 		ID:          1,
 		Name:        "my-ext-service",
 		ClientID:    "test",
