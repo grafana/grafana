@@ -123,14 +123,16 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   return null;
 }
 
-export function renderDetailsForDataSource(
-  dataSource: DataSourceApi,
-  details: HealthCheckResultDetails
-): ReactNode | null {
+export function renderDetailsForDataSource(dataSource: DataSourceApi, details: HealthCheckResultDetails): ReactNode {
   const hasDetails = details && Object.entries(details).length > 0;
 
   if (hasDetails && dataSource.renderHealthCheckDetails) {
-    return dataSource.renderHealthCheckDetails(details);
+    try {
+      return dataSource.renderHealthCheckDetails(details);
+    } catch (err) {
+      // TODO we should probably log this somehow
+      return null;
+    }
   }
 
   return null;
