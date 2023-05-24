@@ -313,9 +313,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	isEnabled := true
 	savePubDashboardCmd := &SavePublicDashboardDTO{
 		DashboardUid: dashboard.UID,
-		OrgId:        dashboard.OrgID,
 		PublicDashboard: &PublicDashboardDTO{
 			IsEnabled: &isEnabled,
+			OrgId:     dashboard.OrgID,
 		},
 	}
 
