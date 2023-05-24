@@ -375,7 +375,7 @@ abstract class DataSourceApi<
    * Optionally, use this method to render details for the health check
    * Don't forget to change the file extension to "tsx" to enable webpack's JSX transformer
    */
-  renderHealthCheckDetails?(details: Record<string, unknown> | undefined): JSX.Element;
+  renderHealthCheckDetails?(details: unknown): JSX.Element;
 }
 
 export interface MetadataInspectorProps<

@@ -31,7 +31,6 @@ import {
   FetchError,
   FetchResponse,
   getBackendSrv,
-  HealthCheckResultDetails,
   isFetchError,
   toDataQueryResponse,
 } from '@grafana/runtime';
@@ -974,10 +973,7 @@ export class PrometheusDatasource
     }
   }
 
-  renderHealthCheckDetails(details: HealthCheckResultDetails) {
-    // TODO remove type assertion here; use custom type-guard?
-    const buildInfo = details as unknown as PromApiFeatures;
-
+  renderHealthCheckDetails(buildInfo: PromApiFeatures) {
     const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
     const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled" />;
     const unsupported = (
@@ -1021,11 +1017,7 @@ export class PrometheusDatasource
         text={
           <span>
             {logo && (
-              <img
-                style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
-                src={logo}
-                alt={application}
-              />
+              <img style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }} src={logo} alt={application} />
             )}{' '}
             {application ? AppDisplayNames[application] : 'Unknown'}
           </span>
