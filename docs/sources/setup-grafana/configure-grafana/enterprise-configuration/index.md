@@ -8,7 +8,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../../configure-grafana" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../" >}}) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -19,9 +19,7 @@ Defaults to `<paths.data>/license.jwt`.
 
 ### license_text
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 When set to the text representation (i.e. content of the license file)
 of the license, Grafana will evaluate and apply the given license to
@@ -29,9 +27,7 @@ the instance.
 
 ### auto_refresh_license
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 When enabled, Grafana will send the license and usage statistics to
 the license issuer. If the license has been updated on the issuer's
@@ -41,11 +37,9 @@ automatically. Defaults to `true`.
 
 ### license_validation_type
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 8.3 and later.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise version 8.3 and later.
 
-When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license" >}}).
+When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license/" >}}).
 
 ## [white_labeling]
 
@@ -84,7 +78,7 @@ List the link IDs to use here. Grafana will look for matching link configuration
 
 ## [usage_insights.export]
 
-By [exporting usage logs]({{< relref "../../configure-security/export-logs" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+By [exporting usage logs]({{< relref "../../configure-security/export-logs/" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
 ### enabled
 
@@ -107,10 +101,6 @@ Set the address for writing logs to Loki (format must be host:port).
 ### tls
 
 Decide whether or not to enable the TLS (Transport Layer Security) protocol when establishing the connection to Loki. Defaults to true.
-
-### tenant_id
-
-Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
 ## [analytics.summaries]
 
@@ -172,7 +162,7 @@ Name of the TrueType font file with italic style.
 
 ## [auditing]
 
-[Auditing]({{< relref "../../configure-security/audit-grafana" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+[Auditing]({{< relref "../../configure-security/audit-grafana/" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
 ### enabled
 
@@ -221,10 +211,6 @@ Set the URL for writing logs to Loki.
 ### tls
 
 If true, it establishes a secure connection to Loki. Defaults to true.
-
-### tenant_id
-
-Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
 ## [auth.saml]
 
@@ -348,9 +334,7 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ## [security.egress]
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise version 7.4 and later.
 
 Security egress makes it possible to control outgoing traffic from the Grafana server.
 
@@ -378,9 +362,7 @@ Encryption algorithm used to encrypt secrets stored in the database and cookies.
 
 ## [caching]
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.5 and later.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise version 7.5 and later.
 
 When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 
@@ -396,9 +378,7 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-{{% admonition type="note" %}}
-This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../administration/data-source-management#enable-and-configure-query-caching" >}}).
-{{% /admonition %}}
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../administration/data-source-management/#enable-and-configure-query-caching" >}}).
 
 ### ttl
 
@@ -410,9 +390,7 @@ The max duration that a query result is stored in the caching system before it i
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
-Disabling this constraint is not recommended in production environments.
-{{% /admonition %}}
+> **Note:** Disabling this constraint is not recommended in production environments.
 
 ### max_value_mb
 
@@ -432,9 +410,7 @@ This setting defines the duration to wait for the caching backend to return a ca
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
-Disabling this timeout is not recommended in production environments.
-{{% /admonition %}}
+> **Note:** Disabling this timeout is not recommended in production environments.
 
 ### write_timeout
 
@@ -442,9 +418,7 @@ This setting defines the number of seconds to wait for the caching backend to st
 
 The default is `0s` (disabled).
 
-{{% admonition type="note" %}}
-Disabling this timeout is not recommended in production environments.
-{{% /admonition %}}
+> **Note:** Disabling this timeout is not recommended in production environments.
 
 ## [caching.encryption]
 
@@ -476,30 +450,24 @@ To disable the maximum, set this value to `0`.
 
 The default is `25`.
 
-{{% admonition type="note" %}}
-Disabling the maximum is not recommended in production environments.
-{{% /admonition %}}
+> **Note:** Disabling the maximum is not recommended in production environments.
 
 ## [caching.redis]
 
 ### url
 
-The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6379`. To enable TLS, use the `redis` scheme.
+The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6739/0`. To enable TLS, use the `redis` scheme.
 
 The default is `"redis://localhost:6379"`.
 
 ### cluster
 
-A comma-separated list of Redis cluster members, either in `host:port` format or using the full Redis URLs (`redis://username:password@localhost:6379`). For example, `localhost:7000, localhost: 7001, localhost:7002`.
+A comma-separated list of Redis cluster members, either in `host:port` format or using the full Redis URLs (`redis://username:password@localhost:6739`). For example, `localhost:7000, localhost: 7001, localhost:7002`.
 If you use the full Redis URLs, then you can specify the scheme, username, and password only once. For example, `redis://username:password@localhost:0000,localhost:1111,localhost:2222`. You cannot specify a different username and password for each URL.
 
-{{% admonition type="note" %}}
-If you have specify `cluster`, the value for `url` is ignored.
-{{% /admonition %}}
+> **Note:** If you have specify `cluster`, the value for `url` is ignored.
 
-{{% admonition type="note" %}}
-You can enable TLS for cluster mode using the `redis` scheme in Grafana Enterprise v8.5 and later versions.
-{{% /admonition %}}
+> **Note:** You can enable TLS for cluster mode using the `redis` scheme in Grafana Enterprise v8.5 and later versions.
 
 ### prefix
 

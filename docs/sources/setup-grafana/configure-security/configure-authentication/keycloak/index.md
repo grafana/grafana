@@ -16,7 +16,7 @@ weight: 200
 
 Keycloak OAuth2 authentication allows users to log in to Grafana using their Keycloak credentials. This guide explains how to set up Keycloak as an authentication provider in Grafana.
 
-Refer to [Generic OAuth authentication]({{< relref "../generic-oauth" >}}) for extra configuration options available for this provider.
+Refer to [Generic OAuth authentication](../generic-oauth) for extra configuration options available for this provider.
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
@@ -43,10 +43,8 @@ role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`
 and `<REALM_NAME>` can be `grafana`.
 
-{{% admonition type="note" %}}
-api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
-It is useful as a fallback or if the user has more than 150 group memberships.
-{{% /admonition %}}
+> **Note**: api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
+> It is useful as a fallback or if the user has more than 150 group memberships.
 
 ## Keycloak configuration
 
@@ -77,9 +75,7 @@ profile
 roles
 ```
 
-{{% admonition type="warning" %}}
-these scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
-{{% /admonition %}}
+> **Warning**: these scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
 
 3. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
@@ -92,11 +88,9 @@ viewer
 
 ## Teamsync
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
 
-[Teamsync]({{< relref "../../configure-team-sync" >}}) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
+[Teamsync](../../configure-team-sync/) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 
 To enable teamsync, you need to add a `groups` mapper to the client configuration in Keycloak.
 This will add the `groups` claim to the id_token. You can then use the `groups` claim to map groups to teams in Grafana.
@@ -115,14 +109,7 @@ This will add the `groups` claim to the id_token. You can then use the `groups` 
 
 ```ini
 [auth.generic_oauth]
-groups_attribute_path = groups
-```
-
-If you use nested groups containing special characters such as quotes or colons, the JMESPath parser can perform a harmless reverse function so Grafana can properly evaluate nested groups. The following example shows a parent group named `Global` with nested group `department` that contains a list of groups:
-
-```ini
-[auth.generic_oauth]
-groups_attribute_path = reverse("Global:department")
+group_attribute_path = groups
 ```
 
 ## Enable Single Logout

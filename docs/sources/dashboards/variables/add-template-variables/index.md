@@ -81,9 +81,7 @@ Query variables are generally only supported for strings. If your query returns 
 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
-{{% admonition type="note" %}}
-Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
-{{% /admonition %}}
+> **Note:** Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
 
 1. [Enter general options](#enter-general-options).
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
@@ -178,9 +176,7 @@ groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5
 
 _Ad hoc filters_ enable you to add key/value filters that are automatically added to all metric queries that use the specified data source. Unlike other variables, you do not use ad hoc filters in queries. Instead, you use ad hoc filters to write filters for existing queries.
 
-{{% admonition type="note" %}}
-Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticsearch data sources.
-{{% /admonition %}}
+> **Note:** Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticsearch data sources.
 
 1. [Enter general options](#enter-general-options).
 1. In the **Data source** list, select the target data source. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
@@ -198,9 +194,7 @@ Ad hoc filters are one of the most complex and flexible variable options availab
 
 Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
 
-{{% admonition type="note" %}}
-The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If it is left blank, then Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value will be something like `*` or `all`.
-{{% /admonition %}}
+> **Note:** The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If it is left blank, then Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value will be something like `*` or `all`.
 
 #### Multi-value variables with a Graphite data source
 
@@ -251,9 +245,7 @@ This variable is the name of the current dashboard.
 
 Grafana has two built-in time range variables: `$__from` and `$__to`. They are currently always interpolated as epoch milliseconds by default, but you can control date formatting.
 
-{{% admonition type="note" %}}
-This special formatting syntax is only available in Grafana 7.1.2+
-{{% /admonition %}}
+> **Note:** This special formatting syntax is only available in Grafana 7.1.2+
 
 | Syntax                   | Example result           | Description                                                                                               |
 | ------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------- |
@@ -289,9 +281,7 @@ This variable is the `$__interval` variable in milliseconds, not a time interval
 
 This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
-{{% admonition type="note" %}}
-The Singlestat panel is no longer available from Grafana 8.0.
-{{% /admonition %}}
+> **Note:** The Singlestat panel is no longer available from Grafana 8.0.
 
 ### $\_\_org
 
@@ -390,9 +380,7 @@ The query returns all servers associated with `fakesite`, including `web_server_
 
 ##### More variables
 
-{{% admonition type="note" %}}
-This example is theoretical. The Graphite server used in the example does not contain CPU metrics.
-{{% /admonition %}}
+> **Note:** This example is theoretical. The Graphite server used in the example does not contain CPU metrics.
 
 The dashboard stops at two levels, but you could keep going. For example, if you wanted to get CPU metrics for selected servers, you could copy the `server` variable and extend the query so that it reads:
 
@@ -452,9 +440,7 @@ The query returns all servers associated with `Europe`, including `server3`, `se
 
 ##### More variables
 
-{{% admonition type="note" %}}
-This example is theoretical. The InfluxDB server used in the example does not contain CPU metrics.
-{{% /admonition %}}
+> **Note:** This example is theoretical. The InfluxDB server used in the example does not contain CPU metrics.
 
 The dashboard stops at two levels, but you could keep going. For example, if you wanted to get CPU metrics for selected hosts, you could copy the `host` variable and extend the query so that it reads:
 
@@ -579,9 +565,7 @@ demo.robustperception.io:9100
 
 ### Filter and modify using named text and value capture groups
 
-{{% admonition type="note" %}}
-This feature is available in Grafana 7.4+.
-{{% /admonition %}}
+> **Note:** This feature is available in Grafana 7.4+.
 
 Using named capture groups, you can capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable drop-down list to contain a friendly name for each value that can be selected.
 

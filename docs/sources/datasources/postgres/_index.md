@@ -138,9 +138,7 @@ datasources:
       timescaledb: false
 ```
 
-{{% admonition type="note" %}}
-In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
-{{% /admonition %}}
+> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
 
 #### Troubleshoot provisioning
 

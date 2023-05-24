@@ -61,9 +61,7 @@ Status codes:
 
 ## Add license
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise v7.4+.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 `POST /api/licensing/token`
 
@@ -123,9 +121,7 @@ Status Codes:
 
 ## Manually force license refresh
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise v7.4+.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 `POST /api/licensing/token/renew`
 
@@ -184,9 +180,7 @@ Status Codes:
 
 ## Remove license from database
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise v7.4+.
-{{% /admonition %}}
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 `DELETE /api/licensing/token`
 
