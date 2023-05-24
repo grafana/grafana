@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { filterSpansNewTraceView, filterSpans, TraceSpan } from './components';
+import { filterSpansNewTraceViewHeader, filterSpans, TraceSpan } from './components';
 
 export interface SearchProps {
   serviceName?: string;
@@ -41,16 +41,16 @@ export const defaultFilters = {
  * Controls the state of search input that highlights spans if they match the search string.
  * @param spans
  */
-export function useSearchNewTraceView(spans?: TraceSpan[]) {
-  const [newTraceViewSearch, setNewTraceViewSearch] = useState<SearchProps>(defaultFilters);
+export function useSearchNewTraceViewHeader(spans?: TraceSpan[]) {
+  const [newTraceViewHeaderSearch, setNewTraceViewHeaderSearch] = useState<SearchProps>(defaultFilters);
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
-    return spans && filterSpansNewTraceView(newTraceViewSearch, spans);
-  }, [newTraceViewSearch, spans]);
+    return spans && filterSpansNewTraceViewHeader(newTraceViewHeaderSearch, spans);
+  }, [newTraceViewHeaderSearch, spans]);
 
-  return { newTraceViewSearch, setNewTraceViewSearch, spanFilterMatches };
+  return { newTraceViewHeaderSearch, setNewTraceViewHeaderSearch, spanFilterMatches };
 }
 
-// legacy code that will be removed when the newTraceView feature flag is removed
+// legacy code that will be removed when the newTraceViewHeader feature flag is removed
 export function useSearch(spans?: TraceSpan[]) {
   const [search, setSearch] = useState('');
   const spanFindMatches: Set<string> | undefined = useMemo(() => {

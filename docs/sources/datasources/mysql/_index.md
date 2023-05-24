@@ -178,7 +178,9 @@ The response from MySQL can be formatted as either a table or as a time series. 
 
 ### Dataset and Table selection
 
-> **Note:** If your table or database name contains a reserved word or a [not permitted character](https://dev.mysql.com/doc/refman/8.0/en/identifiers.html) the editor will put quotes around them. For example a table name like `table-name` will be quoted with backticks `` `table-name` ``.
+{{% admonition type="note" %}}
+If your table or database name contains a reserved word or a [not permitted character](https://dev.mysql.com/doc/refman/8.0/en/identifiers.html) the editor will put quotes around them. For example a table name like `table-name` will be quoted with backticks `` `table-name` ``.
+{{% /admonition %}}
 
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
@@ -283,7 +285,7 @@ To optionally customize the default series name formatting, refer to [Standard o
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time,'5m'),
+  $__timeGroupAlias(time_date_time,'5m'),
   min(value_double),
   'min' as metric
 FROM test_data
@@ -305,11 +307,11 @@ Data frame result:
 +---------------------+-----------------+
 ```
 
-**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
+**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
-  $__timeGroup(createdAt,'5m',0),
+  $__timeGroupAlias(createdAt,'5m',0),
   sum(value_double) as value,
   hostname
 FROM test_data
@@ -338,7 +340,7 @@ Data frame result:
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time,'5m'),
+  $__timeGroupAlias(time_date_time,'5m'),
   min(value_double) as min_value,
   max(value_double) as max_value
 FROM test_data

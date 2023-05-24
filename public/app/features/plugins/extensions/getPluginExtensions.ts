@@ -6,7 +6,13 @@ import {
 } from '@grafana/data';
 
 import type { PluginExtensionRegistry } from './types';
-import { isPluginExtensionLinkConfig, deepFreeze, logWarning, generateExtensionId, getEventHelpers } from './utils';
+import {
+  isPluginExtensionLinkConfig,
+  getReadOnlyProxy,
+  logWarning,
+  generateExtensionId,
+  getEventHelpers,
+} from './utils';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
 type GetExtensions = ({
@@ -21,7 +27,7 @@ type GetExtensions = ({
 
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, registry }) => {
-  const frozenContext = context ? deepFreeze(context) : {};
+  const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];

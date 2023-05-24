@@ -23,6 +23,7 @@ var (
 // Team model
 type Team struct {
 	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
+	UID   string `json:"uid" xorm:"uid"`
 	OrgID int64  `json:"orgId" xorm:"org_id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -57,7 +58,6 @@ type GetTeamByIDQuery struct {
 	ID           int64
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
-	UserIdFilter int64
 }
 
 // FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
@@ -75,13 +75,13 @@ type SearchTeamsQuery struct {
 	Limit        int
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
-	UserIDFilter int64 `xorm:"user_id_filter"`
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
 }
 
 type TeamDTO struct {
 	ID            int64                     `json:"id" xorm:"id"`
+	UID           string                    `json:"uid" xorm:"uid"`
 	OrgID         int64                     `json:"orgId" xorm:"org_id"`
 	Name          string                    `json:"name"`
 	Email         string                    `json:"email"`
@@ -96,10 +96,6 @@ type SearchTeamQueryResult struct {
 	Teams      []*TeamDTO `json:"teams"`
 	Page       int        `json:"page"`
 	PerPage    int        `json:"perPage"`
-}
-
-type IsAdminOfTeamsQuery struct {
-	SignedInUser *user.SignedInUser
 }
 
 // TeamMember model
@@ -145,6 +141,7 @@ type RemoveTeamMemberCommand struct {
 type GetTeamMembersQuery struct {
 	OrgID        int64
 	TeamID       int64
+	TeamUID      string
 	UserID       int64
 	External     bool
 	SignedInUser *user.SignedInUser
@@ -156,6 +153,7 @@ type GetTeamMembersQuery struct {
 type TeamMemberDTO struct {
 	OrgID      int64                     `json:"orgId" xorm:"org_id"`
 	TeamID     int64                     `json:"teamId" xorm:"team_id"`
+	TeamUID    string                    `json:"teamUID" xorm:"uid"`
 	UserID     int64                     `json:"userId" xorm:"user_id"`
 	External   bool                      `json:"-"`
 	AuthModule string                    `json:"auth_module"`

@@ -461,7 +461,7 @@ export default class ListView extends React.Component<TListViewProps> {
           end = dataLength - 1;
         }
       } else {
-        start = this._startIndexDrawn;
+        start = this._startIndexDrawn > dataLength - 1 ? 0 : this._startIndexDrawn;
         end = this._endIndexDrawn > dataLength - 1 ? dataLength - 1 : this._endIndexDrawn;
       }
     }

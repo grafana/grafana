@@ -47,7 +47,6 @@ const (
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
-	Test             = "test"
 	ApplicationName  = "Grafana"
 )
 
@@ -167,6 +166,7 @@ type Cfg struct {
 	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
+	MinTLSVersion    string
 
 	// Security settings
 	SecretKey             string
@@ -237,6 +237,7 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
+	PluginForcePublicKeyDownload     bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -270,6 +271,9 @@ type Cfg struct {
 	AdminEmail                   string
 	DisableSyncLock              bool
 	DisableLoginForm             bool
+	// Not documented & not supported
+	// stand in until a more complete solution is implemented
+	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -310,6 +314,11 @@ type Cfg struct {
 	JWTAuthRoleAttributeStrict     bool
 	JWTAuthAllowAssignGrafanaAdmin bool
 	JWTAuthSkipOrgRoleSync         bool
+
+	// Extended JWT Auth
+	ExtendedJWTAuthEnabled    bool
+	ExtendedJWTExpectIssuer   string
+	ExtendedJWTExpectAudience string
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -359,9 +368,6 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
-
-	// Sentry config
-	Sentry Sentry
 
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
@@ -510,8 +516,6 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
-	// Override default fixed role assignments
-	RBACGrantOverrides map[string][]string
 
 	// GRPC Server.
 	GRPCServerNetwork   string
@@ -519,6 +523,12 @@ type Cfg struct {
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+
+	// DatabaseInstrumentQueries is used to decide if database queries
+	// should be instrumented with metrics, logs and traces.
+	// This needs to be on the global object since its used in the
+	// sqlstore package and HTTP middlewares.
+	DatabaseInstrumentQueries bool
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -556,6 +566,10 @@ func ToAbsUrl(relativeUrl string) string {
 }
 
 func RedactedValue(key, value string) string {
+	if value == "" {
+		return ""
+	}
+
 	uppercased := strings.ToUpper(key)
 	// Sensitive information: password, secrets etc
 	for _, pattern := range []string{
@@ -1180,7 +1194,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
-	cfg.readSentryConfig()
 	cfg.readGrafanaJavascriptAgentConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
@@ -1188,6 +1201,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.LogConfigSources()
+
+	databaseSection := iniFile.Section("database")
+	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 
 	return nil
 }
@@ -1390,44 +1406,44 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	return nil
 }
-func readAuthAzureADSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.azuread")
+func readAuthAzureADSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.azuread")
 	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
 	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.grafana_com")
+func readAuthGrafanaComSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
 	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.github")
+func readAuthGithubSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.github")
 	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.google")
+func readAuthGoogleSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.gitlab")
+func readAuthGitlabSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.gitlab")
 	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.generic_oauth")
+func readGenericOAuthSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.generic_oauth")
 	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
-func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.okta")
+func readAuthOktaSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.okta")
 	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
@@ -1460,7 +1476,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
-
+	// Do not use
+	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
@@ -1488,19 +1505,25 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Azure Auth
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
-	readAuthAzureADSettings(iniFile, cfg)
+	readAuthAzureADSettings(cfg)
 
 	// Google Auth
-	readAuthGoogleSettings(iniFile, cfg)
+	readAuthGoogleSettings(cfg)
 
 	// GitLab Auth
-	readAuthGitlabSettings(iniFile, cfg)
+	readAuthGitlabSettings(cfg)
 
 	// Generic OAuth
-	readGenericOAuthSettings(iniFile, cfg)
+	readGenericOAuthSettings(cfg)
 
 	// Okta Auth
-	readAuthOktaSettings(iniFile, cfg)
+	readAuthOktaSettings(cfg)
+
+	// GrafanaCom
+	readAuthGrafanaComSettings(cfg)
+
+	// Github
+	readAuthGithubSettings(cfg)
 
 	// anonymous access
 	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1530,6 +1553,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
+	// Extended JWT auth
+	authExtendedJWT := iniFile.Section("auth.extended_jwt")
+	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
+	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
+	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
+
+	// Auth Proxy
 	authProxy := iniFile.Section("auth.proxy")
 	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
@@ -1554,11 +1584,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
-	// GrafanaCom
-	readAuthGrafanaComSettings(iniFile, cfg)
-
-	// Github
-	readAuthGithubSettings(iniFile, cfg)
 	return nil
 }
 
@@ -1568,17 +1593,6 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
-
-	rbacOverrides := iniFile.Section("rbac.overrides")
-	cfg.RBACGrantOverrides = map[string][]string{}
-	for _, key := range rbacOverrides.Keys() {
-		value := key.MustString("")
-		grants := strings.Split(value, ",")
-		for i, grant := range grants {
-			grants[i] = strings.TrimSpace(grant)
-		}
-		cfg.RBACGrantOverrides[key.Name()] = grants
-	}
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1590,7 +1604,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
@@ -1798,6 +1812,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	}
+
+	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
+	if cfg.MinTLSVersion == "TLS1.0" || cfg.MinTLSVersion == "TLS1.1" {
+		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
 	}
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")

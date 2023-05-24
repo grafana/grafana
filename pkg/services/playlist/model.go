@@ -22,7 +22,7 @@ type Playlist struct {
 	OrgId    int64  `json:"-" db:"org_id"`
 }
 
-type PlaylistDTO = playlist.Playlist
+type PlaylistDTO = playlist.Spec
 type PlaylistItemDTO = playlist.Item
 type PlaylistItemType = playlist.ItemType
 

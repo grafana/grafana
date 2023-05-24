@@ -11,10 +11,13 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
 const (
 	TimeSeries = "time_series"
+	Table      = "table"
+	Trace      = "trace"
 )
 
 var (
@@ -27,10 +30,22 @@ type AzRoute struct {
 	Headers map[string]string
 }
 
+type AzureSettings struct {
+	AzureMonitorSettings
+	AzureClientSettings
+}
+
 type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
+}
+
+type AzureClientSettings struct {
+	AzureAuthType string
+	CloudName     string
+	TenantId      string
+	ClientId      string
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
@@ -54,19 +69,24 @@ type DatasourceInfo struct {
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
+
+	DatasourceName string
+	DatasourceUID  string
 }
 
 // AzureMonitorQuery is the query for all the services as they have similar queries
 // with a url, a querystring and an alias field
 type AzureMonitorQuery struct {
-	URL        string
-	Target     string
-	Params     url.Values
-	RefID      string
-	Alias      string
-	TimeRange  backend.TimeRange
-	BodyFilter string
-	Dimensions []AzureMonitorDimensionFilter
+	URL          string
+	Target       string
+	Params       url.Values
+	RefID        string
+	Alias        string
+	TimeRange    backend.TimeRange
+	BodyFilter   string
+	Dimensions   []AzureMonitorDimensionFilter
+	Resources    map[string]AzureMonitorResource
+	Subscription string
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -183,12 +203,46 @@ type LogJSONQuery struct {
 		Query        string   `json:"query"`
 		ResultFormat string   `json:"resultFormat"`
 		Resources    []string `json:"resources"`
+		OperationId  string   `json:"operationId"`
 
 		// Deprecated: Queries should be migrated to use Resource instead
 		Workspace string `json:"workspace"`
 		// Deprecated: Use Resources instead
 		Resource string `json:"resource"`
 	} `json:"azureLogAnalytics"`
+}
+
+type TracesJSONQuery struct {
+	AzureTraces struct {
+		// Filters for property values.
+		Filters []TracesFilters `json:"filters"`
+
+		// Operation ID. Used only for Traces queries.
+		OperationId *string `json:"operationId"`
+
+		// KQL query to be executed.
+		Query *string `json:"query"`
+
+		// Array of resource URIs to be queried.
+		Resources []string `json:"resources"`
+
+		// Specifies the format results should be returned as.
+		ResultFormat *dataquery.AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat"`
+
+		// Types of events to filter by.
+		TraceTypes []string `json:"traceTypes"`
+	} `json:"azureTraces"`
+}
+
+type TracesFilters struct {
+	// Values to filter by.
+	Filters []string `json:"filters"`
+
+	// Comparison operator to use. Either equals or not equals.
+	Operation string `json:"operation"`
+
+	// Property name, auto-populated based on available traces.
+	Property string `json:"property"`
 }
 
 // MetricChartDefinition is the JSON model for a metrics chart definition
@@ -232,6 +286,13 @@ type LogAnalyticsWorkspaceResponse struct {
 	PublicNetworkAccessForIngestion string                          `json:"publicNetworkAccessForIngestion"`
 	PublicNetworkAccessForQuery     string                          `json:"publicNetworkAccessForQuery"`
 	RetentionInDays                 int                             `json:"retentionInDays"`
+}
+
+type SubscriptionsResponse struct {
+	ID             string `json:"id"`
+	SubscriptionID string `json:"subscriptionId"`
+	TenantID       string `json:"tenantId"`
+	DisplayName    string `json:"displayName"`
 }
 
 var ErrorAzureHealthCheck = errors.New("health check failed")

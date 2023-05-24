@@ -366,11 +366,17 @@ func GetLatestMainBuild(ctx context.Context, bucket *storage.BucketHandle, path 
 		return "", ErrorNilBucket
 	}
 
-	it := bucket.Objects(ctx, &storage.Query{
+	query := &storage.Query{
 		Prefix: path,
-	})
+	}
+	err := query.SetAttrSelection([]string{"Name", "Generation"})
+	if err != nil {
+		return "", fmt.Errorf("failed to set attribute selector, err: %q", err)
+	}
+	it := bucket.Objects(ctx, query)
 
 	var files []string
+	var oldGeneration int64
 	for {
 		attrs, err := it.Next()
 		if errors.Is(err, iterator.Done) {
@@ -379,12 +385,16 @@ func GetLatestMainBuild(ctx context.Context, bucket *storage.BucketHandle, path 
 		if err != nil {
 			return "", fmt.Errorf("failed to iterate through bucket, err: %w", err)
 		}
-
-		files = append(files, attrs.Name)
+		if attrs.Generation >= oldGeneration {
+			files = append([]string{attrs.Name}, files...)
+			oldGeneration = attrs.Generation
+		} else {
+			files = append(files, attrs.Name)
+		}
 	}
 
 	var latestVersion string
-	for i := len(files) - 1; i >= 0; i-- {
+	for i := 0; i < len(files); i++ {
 		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+pre)`)
 		if captureVersion.MatchString(files[i]) {
 			latestVersion = captureVersion.FindString(files[i])

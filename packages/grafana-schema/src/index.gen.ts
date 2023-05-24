@@ -91,6 +91,9 @@ export {
   defaultFieldConfig
 } from './veneer/dashboard.types';
 
+// Raw generated types from Folder kind.
+export type { Folder } from './raw/folder/x/folder_types.gen';
+
 // Raw generated types from LibraryPanel kind.
 export type {
   LibraryElementDTOMetaUser,
@@ -137,6 +140,3 @@ export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_typ
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
-
-// Raw generated enums and default consts from team kind.
-export { Permission } from './raw/team/x/team_types.gen';

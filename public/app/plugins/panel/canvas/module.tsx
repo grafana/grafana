@@ -2,12 +2,13 @@ import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@gr
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
+import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { canvasMigrationHandler } from './migrations';
-import { PanelOptions } from './models.gen';
+import { Options } from './models.gen';
 
-export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
+export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: 'Inline editing',
@@ -23,7 +24,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
   });
 };
 
-export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
+export const plugin = new PanelPlugin<Options>(CanvasPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig({
     standardOptions: {
@@ -44,6 +45,8 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;
+      const connectionSelection = state.selectedConnection;
+
       if (selection?.length === 1) {
         const element = selection[0];
         if (!(element instanceof FrameState)) {
@@ -55,6 +58,16 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
             })
           );
         }
+      }
+
+      if (connectionSelection) {
+        builder.addNestedOptions(
+          getConnectionEditor({
+            category: ['Selected connection'],
+            connection: connectionSelection,
+            scene: state.scene,
+          })
+        );
       }
     }
   });

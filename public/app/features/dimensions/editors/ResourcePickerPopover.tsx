@@ -99,7 +99,7 @@ export const ResourcePickerPopover = (props: Props) => {
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
             <ButtonGroup className={styles.buttonGroup}>
-              <Button className={styles.button} variant={'secondary'} onClick={() => onClose()}>
+              <Button className={styles.button} variant={'secondary'} onClick={() => onClose()} fill="outline">
                 Cancel
               </Button>
               <Button

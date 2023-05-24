@@ -548,7 +548,8 @@ policies:
     repeat_interval: 4h
     # <list> Zero or more child routes
     # routes:
-    # ...
+    #   - Another recursively nested policy...
+    #     ...
 ```
 
 Here is an example of a configuration file for resetting notification policies.

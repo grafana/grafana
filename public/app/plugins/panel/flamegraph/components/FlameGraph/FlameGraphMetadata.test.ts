@@ -1,10 +1,10 @@
-import { MutableDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data';
 
 import { getMetadata } from './FlameGraphMetadata';
 import { FlameGraphDataContainer } from './dataTransform';
 
 function makeDataFrame(fields: Record<string, Array<number | string>>, unit?: string) {
-  return new MutableDataFrame({
+  return createDataFrame({
     fields: Object.keys(fields).map((key) => ({
       name: key,
       values: fields[key],
