@@ -5,12 +5,11 @@ import tinycolor from 'tinycolor2';
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { Button, Themeable2, withTheme2 } from '@grafana/ui';
 
-import { LogMessageAnsi } from '../logs/components/LogMessageAnsi';
-import { getLogRowStyles } from '../logs/components/getLogRowStyles';
-import { sortLogRows } from '../logs/utils';
-
-import { ElapsedTime } from './ElapsedTime';
-import { filterLogRowsByIndex } from './state/utils';
+import { LogMessageAnsi } from '../../logs/components/LogMessageAnsi';
+import { getLogRowStyles } from '../../logs/components/getLogRowStyles';
+import { sortLogRows } from '../../logs/utils';
+import { ElapsedTime } from '../ElapsedTime';
+import { filterLogRowsByIndex } from '../state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
