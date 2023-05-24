@@ -12,8 +12,7 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
-
-import { renderValue } from '../utils/uiUtils';
+import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 export interface Props {
   data?: DataFrame; // source data
