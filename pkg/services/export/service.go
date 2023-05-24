@@ -51,14 +51,6 @@ var exporters = []Exporter{
 		Name:        "Dashboards",
 		Description: "Save dashboard JSON",
 		process:     exportDashboards,
-		Exporters: []Exporter{
-			{
-				Key:         "dash_thumbs",
-				Name:        "Dashboard thumbnails",
-				Description: "Save current dashboard preview images",
-				process:     exportDashboardThumbnails,
-			},
-		},
 	},
 	{
 		Key:         "alerts",
