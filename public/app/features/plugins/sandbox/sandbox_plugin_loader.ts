@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { getPluginSettings } from '../pluginSettings';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
+import { getSandboxDocument, isDomElement } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 
 type CompartmentDependencyModule = unknown;
@@ -31,8 +32,27 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
   const generalDistortionMap = getGeneralSandboxDistortionMap();
 
-  function distortionCallback(v: ProxyTarget): ProxyTarget {
-    return generalDistortionMap.get(v) ?? v;
+  const sandboxDocument = getSandboxDocument(meta.id);
+
+  function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
+    // console.log()
+    if (isDomElement(originalValue)) {
+      switch (originalValue.nodeName.toLowerCase()) {
+        case 'body':
+          return sandboxDocument.body;
+        case 'head':
+          return sandboxDocument.head;
+        case 'html':
+          return sandboxDocument.documentElement;
+        default:
+          return originalValue;
+      }
+    }
+    const distortion = generalDistortionMap.get(originalValue);
+    if (distortion) {
+      return distortion(originalValue) as ProxyTarget;
+    }
+    return originalValue;
   }
 
   return new Promise(async (resolve, reject) => {
