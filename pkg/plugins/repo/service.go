@@ -48,7 +48,7 @@ func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string
 		return nil, err
 	}
 
-	return m.client.download(ctx, dlOpts.PluginZipURL, dlOpts.Checksum)
+	return m.client.download(ctx, dlOpts.URL, dlOpts.Checksum)
 }
 
 // GetPluginArchiveByURL fetches the requested plugin archive from the provided `pluginZipURL`
@@ -57,16 +57,16 @@ func (m *Manager) GetPluginArchiveByURL(ctx context.Context, pluginZipURL string
 }
 
 // GetPluginArchiveInfo returns the options for downloading the requested plugin (with optional `version`)
-func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginDownloadOptions, error) {
+func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version string, compatOpts CompatOpts) (*PluginArchiveInfo, error) {
 	v, err := m.pluginVersion(pluginID, version, compatOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PluginDownloadOptions{
-		Version:      v.Version,
-		Checksum:     v.Checksum,
-		PluginZipURL: m.downloadURL(pluginID, v.Version),
+	return &PluginArchiveInfo{
+		PluginVersion: v.Version,
+		Checksum:      v.Checksum,
+		URL:           m.downloadURL(pluginID, v.Version),
 	}, nil
 }
 

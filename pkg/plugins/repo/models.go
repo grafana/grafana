@@ -6,10 +6,10 @@ type PluginArchive struct {
 	File *zip.ReadCloser
 }
 
-type PluginDownloadOptions struct {
-	PluginZipURL string
-	Version      string
-	Checksum     string
+type PluginArchiveInfo struct {
+	URL           string
+	PluginVersion string
+	Checksum      string
 }
 
 // PluginRepo is (a subset of) the JSON response from /api/plugins/repo/$pluginID

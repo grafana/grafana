@@ -57,19 +57,19 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// get plugin update information to confirm if target update is possible
-		dlOpts, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
+		pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
 
 		// if existing plugin version is the same as the target update version
-		if dlOpts.Version == plugin.Info.Version {
+		if pluginArchiveInfo.PluginVersion == plugin.Info.Version {
 			return plugins.DuplicateError{
 				PluginID: plugin.ID,
 			}
 		}
 
-		if dlOpts.PluginZipURL == "" && dlOpts.Version == "" {
+		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.PluginVersion == "" {
 			return fmt.Errorf("could not determine update options for %s", pluginID)
 		}
 
@@ -79,13 +79,13 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 			return err
 		}
 
-		if dlOpts.PluginZipURL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL)
+		if pluginArchiveInfo.URL != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL)
 			if err != nil {
 				return err
 			}
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.PluginVersion, compatOpts)
 			if err != nil {
 				return err
 			}

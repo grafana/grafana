@@ -49,9 +49,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV1,
 				}, nil
 			},
-			GetPluginArchiveInfoFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
-				return &repo.PluginDownloadOptions{
-					PluginZipURL: "https://grafanaplugins.com",
+			GetPluginArchiveInfoFunc: func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+				return &repo.PluginArchiveInfo{
+					URL: "https://grafanaplugins.com",
 				}, nil
 			},
 		}
