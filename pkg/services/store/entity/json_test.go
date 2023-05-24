@@ -24,10 +24,6 @@ func TestRawEncoders(t *testing.T) {
 		ETag:    "d",
 		Body:    body,
 		Folder:  "f0",
-		Access: []*EntityAccess{
-			{Role: "viewer", Subject: "dashboards", Verb: "read"},
-			{Role: "viewer", Subject: "playlist", Verb: "write"},
-		},
 	}
 
 	expect := `{

@@ -63,23 +63,8 @@ message Entity {
   // Entity summary as JSON
   bytes summary_json = 14;
 
-  // Access information (attached to the single instance)
-  repeated EntityAccess access = 15;
-
   // External location info
   EntityOriginInfo origin = 16;
-}
-
-// Manage access control
-message EntityAccess {
-  // Who (team or user)
-  string role = 1;
-
-  // What kind of things (ie, dashboard or dashboard.permissions)
-  string subject = 2;
-
-  // What you can do (read/write/etc)
-  string verb = 3;
 }
 
 // This stores additional metadata for items entities that were synced from external systmes

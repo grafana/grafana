@@ -90,27 +90,6 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteObjectField("folder")
 		stream.WriteString(obj.Folder)
 	}
-	if obj.Access != nil {
-		stream.WriteMore()
-		stream.WriteObjectField("access")
-		stream.WriteArrayStart()
-		for idx, v := range obj.Access {
-			if idx > 0 {
-				stream.WriteMore()
-			}
-			stream.WriteObjectStart()
-			stream.WriteObjectField("role")
-			stream.WriteString(v.Role)
-			stream.WriteMore()
-			stream.WriteObjectField("subject")
-			stream.WriteString(v.Subject)
-			stream.WriteMore()
-			stream.WriteObjectField("verb")
-			stream.WriteString(v.Verb)
-			stream.WriteObjectEnd()
-		}
-		stream.WriteArrayEnd()
-	}
 	if obj.Body != nil {
 		stream.WriteMore()
 		if json.Valid(obj.Body) {
@@ -178,21 +157,6 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "origin":
 			raw.Origin = &EntityOriginInfo{}
 			iter.ReadVal(raw.Origin)
-		case "access":
-			for iter.ReadArray() {
-				a := &EntityAccess{}
-				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
-					switch l2Field {
-					case "role":
-						a.Role = iter.ReadString()
-					case "subject":
-						a.Subject = iter.ReadString()
-					case "verb":
-						a.Verb = iter.ReadString()
-					}
-				}
-				raw.Access = append(raw.Access, a)
-			}
 
 		case "summary":
 			var val interface{}

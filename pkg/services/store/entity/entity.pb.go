@@ -70,7 +70,7 @@ func (x WriteEntityResponse_Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use WriteEntityResponse_Status.Descriptor instead.
 func (WriteEntityResponse_Status) EnumDescriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{11, 0}
+	return file_entity_proto_rawDescGZIP(), []int{10, 0}
 }
 
 // Status enumeration
@@ -120,7 +120,7 @@ func (x EntityWatchResponse_Action) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use EntityWatchResponse_Action.Descriptor instead.
 func (EntityWatchResponse_Action) EnumDescriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{20, 0}
+	return file_entity_proto_rawDescGZIP(), []int{19, 0}
 }
 
 type GRN struct {
@@ -228,8 +228,6 @@ type Entity struct {
 	Status []byte `protobuf:"bytes,13,opt,name=status,proto3" json:"status,omitempty"`
 	// Entity summary as JSON
 	SummaryJson []byte `protobuf:"bytes,14,opt,name=summary_json,json=summaryJson,proto3" json:"summary_json,omitempty"`
-	// Access information (attached to the single instance)
-	Access []*EntityAccess `protobuf:"bytes,15,rep,name=access,proto3" json:"access,omitempty"`
 	// External location info
 	Origin *EntityOriginInfo `protobuf:"bytes,16,opt,name=origin,proto3" json:"origin,omitempty"`
 }
@@ -364,85 +362,11 @@ func (x *Entity) GetSummaryJson() []byte {
 	return nil
 }
 
-func (x *Entity) GetAccess() []*EntityAccess {
-	if x != nil {
-		return x.Access
-	}
-	return nil
-}
-
 func (x *Entity) GetOrigin() *EntityOriginInfo {
 	if x != nil {
 		return x.Origin
 	}
 	return nil
-}
-
-// Manage access control
-type EntityAccess struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Who (team or user)
-	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
-	// What kind of things (ie, dashboard or dashboard.permissions)
-	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
-	// What you can do (read/write/etc)
-	Verb string `protobuf:"bytes,3,opt,name=verb,proto3" json:"verb,omitempty"`
-}
-
-func (x *EntityAccess) Reset() {
-	*x = EntityAccess{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *EntityAccess) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EntityAccess) ProtoMessage() {}
-
-func (x *EntityAccess) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EntityAccess.ProtoReflect.Descriptor instead.
-func (*EntityAccess) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *EntityAccess) GetRole() string {
-	if x != nil {
-		return x.Role
-	}
-	return ""
-}
-
-func (x *EntityAccess) GetSubject() string {
-	if x != nil {
-		return x.Subject
-	}
-	return ""
-}
-
-func (x *EntityAccess) GetVerb() string {
-	if x != nil {
-		return x.Verb
-	}
-	return ""
 }
 
 // This stores additional metadata for items entities that were synced from external systmes
@@ -462,7 +386,7 @@ type EntityOriginInfo struct {
 func (x *EntityOriginInfo) Reset() {
 	*x = EntityOriginInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[3]
+		mi := &file_entity_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -475,7 +399,7 @@ func (x *EntityOriginInfo) String() string {
 func (*EntityOriginInfo) ProtoMessage() {}
 
 func (x *EntityOriginInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[3]
+	mi := &file_entity_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -488,7 +412,7 @@ func (x *EntityOriginInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityOriginInfo.ProtoReflect.Descriptor instead.
 func (*EntityOriginInfo) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{3}
+	return file_entity_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *EntityOriginInfo) GetSource() string {
@@ -530,7 +454,7 @@ type EntityErrorInfo struct {
 func (x *EntityErrorInfo) Reset() {
 	*x = EntityErrorInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[4]
+		mi := &file_entity_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -543,7 +467,7 @@ func (x *EntityErrorInfo) String() string {
 func (*EntityErrorInfo) ProtoMessage() {}
 
 func (x *EntityErrorInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[4]
+	mi := &file_entity_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -556,7 +480,7 @@ func (x *EntityErrorInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityErrorInfo.ProtoReflect.Descriptor instead.
 func (*EntityErrorInfo) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{4}
+	return file_entity_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *EntityErrorInfo) GetCode() int64 {
@@ -605,7 +529,7 @@ type EntityVersionInfo struct {
 func (x *EntityVersionInfo) Reset() {
 	*x = EntityVersionInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[5]
+		mi := &file_entity_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -618,7 +542,7 @@ func (x *EntityVersionInfo) String() string {
 func (*EntityVersionInfo) ProtoMessage() {}
 
 func (x *EntityVersionInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[5]
+	mi := &file_entity_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +555,7 @@ func (x *EntityVersionInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityVersionInfo.ProtoReflect.Descriptor instead.
 func (*EntityVersionInfo) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{5}
+	return file_entity_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *EntityVersionInfo) GetVersion() uint64 {
@@ -698,7 +622,7 @@ type ReadEntityRequest struct {
 func (x *ReadEntityRequest) Reset() {
 	*x = ReadEntityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[6]
+		mi := &file_entity_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -711,7 +635,7 @@ func (x *ReadEntityRequest) String() string {
 func (*ReadEntityRequest) ProtoMessage() {}
 
 func (x *ReadEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[6]
+	mi := &file_entity_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +648,7 @@ func (x *ReadEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadEntityRequest.ProtoReflect.Descriptor instead.
 func (*ReadEntityRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{6}
+	return file_entity_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ReadEntityRequest) GetGRN() *GRN {
@@ -780,7 +704,7 @@ type BatchReadEntityRequest struct {
 func (x *BatchReadEntityRequest) Reset() {
 	*x = BatchReadEntityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[7]
+		mi := &file_entity_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -793,7 +717,7 @@ func (x *BatchReadEntityRequest) String() string {
 func (*BatchReadEntityRequest) ProtoMessage() {}
 
 func (x *BatchReadEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[7]
+	mi := &file_entity_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -806,7 +730,7 @@ func (x *BatchReadEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchReadEntityRequest.ProtoReflect.Descriptor instead.
 func (*BatchReadEntityRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{7}
+	return file_entity_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BatchReadEntityRequest) GetBatch() []*ReadEntityRequest {
@@ -827,7 +751,7 @@ type BatchReadEntityResponse struct {
 func (x *BatchReadEntityResponse) Reset() {
 	*x = BatchReadEntityResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[8]
+		mi := &file_entity_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -840,7 +764,7 @@ func (x *BatchReadEntityResponse) String() string {
 func (*BatchReadEntityResponse) ProtoMessage() {}
 
 func (x *BatchReadEntityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[8]
+	mi := &file_entity_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -853,7 +777,7 @@ func (x *BatchReadEntityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchReadEntityResponse.ProtoReflect.Descriptor instead.
 func (*BatchReadEntityResponse) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{8}
+	return file_entity_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BatchReadEntityResponse) GetResults() []*Entity {
@@ -887,7 +811,7 @@ type WriteEntityRequest struct {
 func (x *WriteEntityRequest) Reset() {
 	*x = WriteEntityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[9]
+		mi := &file_entity_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -900,7 +824,7 @@ func (x *WriteEntityRequest) String() string {
 func (*WriteEntityRequest) ProtoMessage() {}
 
 func (x *WriteEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[9]
+	mi := &file_entity_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -913,7 +837,7 @@ func (x *WriteEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteEntityRequest.ProtoReflect.Descriptor instead.
 func (*WriteEntityRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{9}
+	return file_entity_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *WriteEntityRequest) GetGRN() *GRN {
@@ -1013,7 +937,7 @@ type AdminWriteEntityRequest struct {
 func (x *AdminWriteEntityRequest) Reset() {
 	*x = AdminWriteEntityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[10]
+		mi := &file_entity_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1026,7 +950,7 @@ func (x *AdminWriteEntityRequest) String() string {
 func (*AdminWriteEntityRequest) ProtoMessage() {}
 
 func (x *AdminWriteEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[10]
+	mi := &file_entity_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1039,7 +963,7 @@ func (x *AdminWriteEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdminWriteEntityRequest.ProtoReflect.Descriptor instead.
 func (*AdminWriteEntityRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{10}
+	return file_entity_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *AdminWriteEntityRequest) GetGRN() *GRN {
@@ -1170,7 +1094,7 @@ type WriteEntityResponse struct {
 func (x *WriteEntityResponse) Reset() {
 	*x = WriteEntityResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[11]
+		mi := &file_entity_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1183,7 +1107,7 @@ func (x *WriteEntityResponse) String() string {
 func (*WriteEntityResponse) ProtoMessage() {}
 
 func (x *WriteEntityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[11]
+	mi := &file_entity_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1196,7 +1120,7 @@ func (x *WriteEntityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WriteEntityResponse.ProtoReflect.Descriptor instead.
 func (*WriteEntityResponse) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{11}
+	return file_entity_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *WriteEntityResponse) GetError() *EntityErrorInfo {
@@ -1283,7 +1207,7 @@ type DeleteEntityRequest struct {
 func (x *DeleteEntityRequest) Reset() {
 	*x = DeleteEntityRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[12]
+		mi := &file_entity_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1296,7 +1220,7 @@ func (x *DeleteEntityRequest) String() string {
 func (*DeleteEntityRequest) ProtoMessage() {}
 
 func (x *DeleteEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[12]
+	mi := &file_entity_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1309,7 +1233,7 @@ func (x *DeleteEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteEntityRequest.ProtoReflect.Descriptor instead.
 func (*DeleteEntityRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{12}
+	return file_entity_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteEntityRequest) GetGRN() *GRN {
@@ -1337,7 +1261,7 @@ type DeleteEntityResponse struct {
 func (x *DeleteEntityResponse) Reset() {
 	*x = DeleteEntityResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[13]
+		mi := &file_entity_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1350,7 +1274,7 @@ func (x *DeleteEntityResponse) String() string {
 func (*DeleteEntityResponse) ProtoMessage() {}
 
 func (x *DeleteEntityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[13]
+	mi := &file_entity_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1363,7 +1287,7 @@ func (x *DeleteEntityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteEntityResponse.ProtoReflect.Descriptor instead.
 func (*DeleteEntityResponse) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{13}
+	return file_entity_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteEntityResponse) GetOK() bool {
@@ -1389,7 +1313,7 @@ type EntityHistoryRequest struct {
 func (x *EntityHistoryRequest) Reset() {
 	*x = EntityHistoryRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[14]
+		mi := &file_entity_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1402,7 +1326,7 @@ func (x *EntityHistoryRequest) String() string {
 func (*EntityHistoryRequest) ProtoMessage() {}
 
 func (x *EntityHistoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[14]
+	mi := &file_entity_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1415,7 +1339,7 @@ func (x *EntityHistoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityHistoryRequest.ProtoReflect.Descriptor instead.
 func (*EntityHistoryRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{14}
+	return file_entity_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *EntityHistoryRequest) GetGRN() *GRN {
@@ -1455,7 +1379,7 @@ type EntityHistoryResponse struct {
 func (x *EntityHistoryResponse) Reset() {
 	*x = EntityHistoryResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[15]
+		mi := &file_entity_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1468,7 +1392,7 @@ func (x *EntityHistoryResponse) String() string {
 func (*EntityHistoryResponse) ProtoMessage() {}
 
 func (x *EntityHistoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[15]
+	mi := &file_entity_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1481,7 +1405,7 @@ func (x *EntityHistoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityHistoryResponse.ProtoReflect.Descriptor instead.
 func (*EntityHistoryResponse) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{15}
+	return file_entity_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *EntityHistoryResponse) GetGRN() *GRN {
@@ -1535,7 +1459,7 @@ type EntitySearchRequest struct {
 func (x *EntitySearchRequest) Reset() {
 	*x = EntitySearchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[16]
+		mi := &file_entity_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1548,7 +1472,7 @@ func (x *EntitySearchRequest) String() string {
 func (*EntitySearchRequest) ProtoMessage() {}
 
 func (x *EntitySearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[16]
+	mi := &file_entity_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1561,7 +1485,7 @@ func (x *EntitySearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntitySearchRequest.ProtoReflect.Descriptor instead.
 func (*EntitySearchRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{16}
+	return file_entity_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *EntitySearchRequest) GetNextPageToken() string {
@@ -1678,7 +1602,7 @@ type EntitySearchResult struct {
 func (x *EntitySearchResult) Reset() {
 	*x = EntitySearchResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[17]
+		mi := &file_entity_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1691,7 +1615,7 @@ func (x *EntitySearchResult) String() string {
 func (*EntitySearchResult) ProtoMessage() {}
 
 func (x *EntitySearchResult) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[17]
+	mi := &file_entity_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1704,7 +1628,7 @@ func (x *EntitySearchResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntitySearchResult.ProtoReflect.Descriptor instead.
 func (*EntitySearchResult) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{17}
+	return file_entity_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *EntitySearchResult) GetGRN() *GRN {
@@ -1839,7 +1763,7 @@ type EntitySearchResponse struct {
 func (x *EntitySearchResponse) Reset() {
 	*x = EntitySearchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[18]
+		mi := &file_entity_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1852,7 +1776,7 @@ func (x *EntitySearchResponse) String() string {
 func (*EntitySearchResponse) ProtoMessage() {}
 
 func (x *EntitySearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[18]
+	mi := &file_entity_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1865,7 +1789,7 @@ func (x *EntitySearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntitySearchResponse.ProtoReflect.Descriptor instead.
 func (*EntitySearchResponse) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{18}
+	return file_entity_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *EntitySearchResponse) GetResults() []*EntitySearchResult {
@@ -1908,7 +1832,7 @@ type EntityWatchRequest struct {
 func (x *EntityWatchRequest) Reset() {
 	*x = EntityWatchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[19]
+		mi := &file_entity_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1921,7 +1845,7 @@ func (x *EntityWatchRequest) String() string {
 func (*EntityWatchRequest) ProtoMessage() {}
 
 func (x *EntityWatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[19]
+	mi := &file_entity_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1934,7 +1858,7 @@ func (x *EntityWatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityWatchRequest.ProtoReflect.Descriptor instead.
 func (*EntityWatchRequest) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{19}
+	return file_entity_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *EntityWatchRequest) GetSince() int64 {
@@ -2009,7 +1933,7 @@ type EntityWatchResponse struct {
 func (x *EntityWatchResponse) Reset() {
 	*x = EntityWatchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_entity_proto_msgTypes[20]
+		mi := &file_entity_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2022,7 +1946,7 @@ func (x *EntityWatchResponse) String() string {
 func (*EntityWatchResponse) ProtoMessage() {}
 
 func (x *EntityWatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_entity_proto_msgTypes[20]
+	mi := &file_entity_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2035,7 +1959,7 @@ func (x *EntityWatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityWatchResponse.ProtoReflect.Descriptor instead.
 func (*EntityWatchResponse) Descriptor() ([]byte, []int) {
-	return file_entity_proto_rawDescGZIP(), []int{20}
+	return file_entity_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *EntityWatchResponse) GetTimestamp() int64 {
@@ -2068,7 +1992,7 @@ var file_entity_proto_rawDesc = []byte{
 	0x52, 0x08, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6b, 0x69,
 	0x6e, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x12, 0x10,
 	0x0a, 0x03, 0x55, 0x49, 0x44, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x49, 0x44,
-	0x22, 0xd4, 0x03, 0x0a, 0x06, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x1d, 0x0a, 0x03, 0x47,
+	0x22, 0xa6, 0x03, 0x0a, 0x06, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x1d, 0x0a, 0x03, 0x47,
 	0x52, 0x4e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74,
 	0x79, 0x2e, 0x47, 0x52, 0x4e, 0x52, 0x03, 0x47, 0x52, 0x4e, 0x12, 0x12, 0x0a, 0x04, 0x67, 0x75,
 	0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x67, 0x75, 0x69, 0x64, 0x12, 0x18,
@@ -2091,18 +2015,10 @@ var file_entity_proto_rawDesc = []byte{
 	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x06, 0x73, 0x74,
 	0x61, 0x74, 0x75, 0x73, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x5f,
 	0x6a, 0x73, 0x6f, 0x6e, 0x18, 0x0e, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0b, 0x73, 0x75, 0x6d, 0x6d,
-	0x61, 0x72, 0x79, 0x4a, 0x73, 0x6f, 0x6e, 0x12, 0x2c, 0x0a, 0x06, 0x61, 0x63, 0x63, 0x65, 0x73,
-	0x73, 0x18, 0x0f, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79,
-	0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x52, 0x06, 0x61,
-	0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x30, 0x0a, 0x06, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x18,
-	0x10, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x2e, 0x45,
-	0x6e, 0x74, 0x69, 0x74, 0x79, 0x4f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x06, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x22, 0x50, 0x0a, 0x0c, 0x45, 0x6e, 0x74, 0x69, 0x74,
-	0x79, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73,
-	0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73, 0x75,
-	0x62, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x76, 0x65, 0x72, 0x62, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x04, 0x76, 0x65, 0x72, 0x62, 0x22, 0x50, 0x0a, 0x10, 0x45, 0x6e, 0x74,
+	0x61, 0x72, 0x79, 0x4a, 0x73, 0x6f, 0x6e, 0x12, 0x30, 0x0a, 0x06, 0x6f, 0x72, 0x69, 0x67, 0x69,
+	0x6e, 0x18, 0x10, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79,
+	0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x4f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x49, 0x6e, 0x66,
+	0x6f, 0x52, 0x06, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x22, 0x50, 0x0a, 0x10, 0x45, 0x6e, 0x74,
 	0x69, 0x74, 0x79, 0x4f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x16, 0x0a,
 	0x06, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73,
 	0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01,
@@ -2401,84 +2317,82 @@ func file_entity_proto_rawDescGZIP() []byte {
 }
 
 var file_entity_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_entity_proto_goTypes = []interface{}{
 	(WriteEntityResponse_Status)(0), // 0: entity.WriteEntityResponse.Status
 	(EntityWatchResponse_Action)(0), // 1: entity.EntityWatchResponse.Action
 	(*GRN)(nil),                     // 2: entity.GRN
 	(*Entity)(nil),                  // 3: entity.Entity
-	(*EntityAccess)(nil),            // 4: entity.EntityAccess
-	(*EntityOriginInfo)(nil),        // 5: entity.EntityOriginInfo
-	(*EntityErrorInfo)(nil),         // 6: entity.EntityErrorInfo
-	(*EntityVersionInfo)(nil),       // 7: entity.EntityVersionInfo
-	(*ReadEntityRequest)(nil),       // 8: entity.ReadEntityRequest
-	(*BatchReadEntityRequest)(nil),  // 9: entity.BatchReadEntityRequest
-	(*BatchReadEntityResponse)(nil), // 10: entity.BatchReadEntityResponse
-	(*WriteEntityRequest)(nil),      // 11: entity.WriteEntityRequest
-	(*AdminWriteEntityRequest)(nil), // 12: entity.AdminWriteEntityRequest
-	(*WriteEntityResponse)(nil),     // 13: entity.WriteEntityResponse
-	(*DeleteEntityRequest)(nil),     // 14: entity.DeleteEntityRequest
-	(*DeleteEntityResponse)(nil),    // 15: entity.DeleteEntityResponse
-	(*EntityHistoryRequest)(nil),    // 16: entity.EntityHistoryRequest
-	(*EntityHistoryResponse)(nil),   // 17: entity.EntityHistoryResponse
-	(*EntitySearchRequest)(nil),     // 18: entity.EntitySearchRequest
-	(*EntitySearchResult)(nil),      // 19: entity.EntitySearchResult
-	(*EntitySearchResponse)(nil),    // 20: entity.EntitySearchResponse
-	(*EntityWatchRequest)(nil),      // 21: entity.EntityWatchRequest
-	(*EntityWatchResponse)(nil),     // 22: entity.EntityWatchResponse
-	nil,                             // 23: entity.EntitySearchRequest.LabelsEntry
-	nil,                             // 24: entity.EntitySearchResult.LabelsEntry
-	nil,                             // 25: entity.EntityWatchRequest.LabelsEntry
+	(*EntityOriginInfo)(nil),        // 4: entity.EntityOriginInfo
+	(*EntityErrorInfo)(nil),         // 5: entity.EntityErrorInfo
+	(*EntityVersionInfo)(nil),       // 6: entity.EntityVersionInfo
+	(*ReadEntityRequest)(nil),       // 7: entity.ReadEntityRequest
+	(*BatchReadEntityRequest)(nil),  // 8: entity.BatchReadEntityRequest
+	(*BatchReadEntityResponse)(nil), // 9: entity.BatchReadEntityResponse
+	(*WriteEntityRequest)(nil),      // 10: entity.WriteEntityRequest
+	(*AdminWriteEntityRequest)(nil), // 11: entity.AdminWriteEntityRequest
+	(*WriteEntityResponse)(nil),     // 12: entity.WriteEntityResponse
+	(*DeleteEntityRequest)(nil),     // 13: entity.DeleteEntityRequest
+	(*DeleteEntityResponse)(nil),    // 14: entity.DeleteEntityResponse
+	(*EntityHistoryRequest)(nil),    // 15: entity.EntityHistoryRequest
+	(*EntityHistoryResponse)(nil),   // 16: entity.EntityHistoryResponse
+	(*EntitySearchRequest)(nil),     // 17: entity.EntitySearchRequest
+	(*EntitySearchResult)(nil),      // 18: entity.EntitySearchResult
+	(*EntitySearchResponse)(nil),    // 19: entity.EntitySearchResponse
+	(*EntityWatchRequest)(nil),      // 20: entity.EntityWatchRequest
+	(*EntityWatchResponse)(nil),     // 21: entity.EntityWatchResponse
+	nil,                             // 22: entity.EntitySearchRequest.LabelsEntry
+	nil,                             // 23: entity.EntitySearchResult.LabelsEntry
+	nil,                             // 24: entity.EntityWatchRequest.LabelsEntry
 }
 var file_entity_proto_depIdxs = []int32{
 	2,  // 0: entity.Entity.GRN:type_name -> entity.GRN
-	4,  // 1: entity.Entity.access:type_name -> entity.EntityAccess
-	5,  // 2: entity.Entity.origin:type_name -> entity.EntityOriginInfo
-	2,  // 3: entity.ReadEntityRequest.GRN:type_name -> entity.GRN
-	8,  // 4: entity.BatchReadEntityRequest.batch:type_name -> entity.ReadEntityRequest
-	3,  // 5: entity.BatchReadEntityResponse.results:type_name -> entity.Entity
-	2,  // 6: entity.WriteEntityRequest.GRN:type_name -> entity.GRN
-	2,  // 7: entity.AdminWriteEntityRequest.GRN:type_name -> entity.GRN
-	5,  // 8: entity.AdminWriteEntityRequest.origin:type_name -> entity.EntityOriginInfo
-	6,  // 9: entity.WriteEntityResponse.error:type_name -> entity.EntityErrorInfo
-	2,  // 10: entity.WriteEntityResponse.GRN:type_name -> entity.GRN
-	7,  // 11: entity.WriteEntityResponse.entity:type_name -> entity.EntityVersionInfo
-	0,  // 12: entity.WriteEntityResponse.status:type_name -> entity.WriteEntityResponse.Status
-	2,  // 13: entity.DeleteEntityRequest.GRN:type_name -> entity.GRN
-	2,  // 14: entity.EntityHistoryRequest.GRN:type_name -> entity.GRN
-	2,  // 15: entity.EntityHistoryResponse.GRN:type_name -> entity.GRN
-	7,  // 16: entity.EntityHistoryResponse.versions:type_name -> entity.EntityVersionInfo
-	23, // 17: entity.EntitySearchRequest.labels:type_name -> entity.EntitySearchRequest.LabelsEntry
-	2,  // 18: entity.EntitySearchResult.GRN:type_name -> entity.GRN
-	24, // 19: entity.EntitySearchResult.labels:type_name -> entity.EntitySearchResult.LabelsEntry
-	19, // 20: entity.EntitySearchResponse.results:type_name -> entity.EntitySearchResult
-	2,  // 21: entity.EntityWatchRequest.GRN:type_name -> entity.GRN
-	25, // 22: entity.EntityWatchRequest.labels:type_name -> entity.EntityWatchRequest.LabelsEntry
-	3,  // 23: entity.EntityWatchResponse.entity:type_name -> entity.Entity
-	1,  // 24: entity.EntityWatchResponse.action:type_name -> entity.EntityWatchResponse.Action
-	8,  // 25: entity.EntityStore.Read:input_type -> entity.ReadEntityRequest
-	9,  // 26: entity.EntityStore.BatchRead:input_type -> entity.BatchReadEntityRequest
-	11, // 27: entity.EntityStore.Write:input_type -> entity.WriteEntityRequest
-	14, // 28: entity.EntityStore.Delete:input_type -> entity.DeleteEntityRequest
-	16, // 29: entity.EntityStore.History:input_type -> entity.EntityHistoryRequest
-	18, // 30: entity.EntityStore.Search:input_type -> entity.EntitySearchRequest
-	21, // 31: entity.EntityStore.Watch:input_type -> entity.EntityWatchRequest
-	12, // 32: entity.EntityStore.AdminWrite:input_type -> entity.AdminWriteEntityRequest
-	12, // 33: entity.EntityStoreAdmin.AdminWrite:input_type -> entity.AdminWriteEntityRequest
-	3,  // 34: entity.EntityStore.Read:output_type -> entity.Entity
-	10, // 35: entity.EntityStore.BatchRead:output_type -> entity.BatchReadEntityResponse
-	13, // 36: entity.EntityStore.Write:output_type -> entity.WriteEntityResponse
-	15, // 37: entity.EntityStore.Delete:output_type -> entity.DeleteEntityResponse
-	17, // 38: entity.EntityStore.History:output_type -> entity.EntityHistoryResponse
-	20, // 39: entity.EntityStore.Search:output_type -> entity.EntitySearchResponse
-	22, // 40: entity.EntityStore.Watch:output_type -> entity.EntityWatchResponse
-	13, // 41: entity.EntityStore.AdminWrite:output_type -> entity.WriteEntityResponse
-	13, // 42: entity.EntityStoreAdmin.AdminWrite:output_type -> entity.WriteEntityResponse
-	34, // [34:43] is the sub-list for method output_type
-	25, // [25:34] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	4,  // 1: entity.Entity.origin:type_name -> entity.EntityOriginInfo
+	2,  // 2: entity.ReadEntityRequest.GRN:type_name -> entity.GRN
+	7,  // 3: entity.BatchReadEntityRequest.batch:type_name -> entity.ReadEntityRequest
+	3,  // 4: entity.BatchReadEntityResponse.results:type_name -> entity.Entity
+	2,  // 5: entity.WriteEntityRequest.GRN:type_name -> entity.GRN
+	2,  // 6: entity.AdminWriteEntityRequest.GRN:type_name -> entity.GRN
+	4,  // 7: entity.AdminWriteEntityRequest.origin:type_name -> entity.EntityOriginInfo
+	5,  // 8: entity.WriteEntityResponse.error:type_name -> entity.EntityErrorInfo
+	2,  // 9: entity.WriteEntityResponse.GRN:type_name -> entity.GRN
+	6,  // 10: entity.WriteEntityResponse.entity:type_name -> entity.EntityVersionInfo
+	0,  // 11: entity.WriteEntityResponse.status:type_name -> entity.WriteEntityResponse.Status
+	2,  // 12: entity.DeleteEntityRequest.GRN:type_name -> entity.GRN
+	2,  // 13: entity.EntityHistoryRequest.GRN:type_name -> entity.GRN
+	2,  // 14: entity.EntityHistoryResponse.GRN:type_name -> entity.GRN
+	6,  // 15: entity.EntityHistoryResponse.versions:type_name -> entity.EntityVersionInfo
+	22, // 16: entity.EntitySearchRequest.labels:type_name -> entity.EntitySearchRequest.LabelsEntry
+	2,  // 17: entity.EntitySearchResult.GRN:type_name -> entity.GRN
+	23, // 18: entity.EntitySearchResult.labels:type_name -> entity.EntitySearchResult.LabelsEntry
+	18, // 19: entity.EntitySearchResponse.results:type_name -> entity.EntitySearchResult
+	2,  // 20: entity.EntityWatchRequest.GRN:type_name -> entity.GRN
+	24, // 21: entity.EntityWatchRequest.labels:type_name -> entity.EntityWatchRequest.LabelsEntry
+	3,  // 22: entity.EntityWatchResponse.entity:type_name -> entity.Entity
+	1,  // 23: entity.EntityWatchResponse.action:type_name -> entity.EntityWatchResponse.Action
+	7,  // 24: entity.EntityStore.Read:input_type -> entity.ReadEntityRequest
+	8,  // 25: entity.EntityStore.BatchRead:input_type -> entity.BatchReadEntityRequest
+	10, // 26: entity.EntityStore.Write:input_type -> entity.WriteEntityRequest
+	13, // 27: entity.EntityStore.Delete:input_type -> entity.DeleteEntityRequest
+	15, // 28: entity.EntityStore.History:input_type -> entity.EntityHistoryRequest
+	17, // 29: entity.EntityStore.Search:input_type -> entity.EntitySearchRequest
+	20, // 30: entity.EntityStore.Watch:input_type -> entity.EntityWatchRequest
+	11, // 31: entity.EntityStore.AdminWrite:input_type -> entity.AdminWriteEntityRequest
+	11, // 32: entity.EntityStoreAdmin.AdminWrite:input_type -> entity.AdminWriteEntityRequest
+	3,  // 33: entity.EntityStore.Read:output_type -> entity.Entity
+	9,  // 34: entity.EntityStore.BatchRead:output_type -> entity.BatchReadEntityResponse
+	12, // 35: entity.EntityStore.Write:output_type -> entity.WriteEntityResponse
+	14, // 36: entity.EntityStore.Delete:output_type -> entity.DeleteEntityResponse
+	16, // 37: entity.EntityStore.History:output_type -> entity.EntityHistoryResponse
+	19, // 38: entity.EntityStore.Search:output_type -> entity.EntitySearchResponse
+	21, // 39: entity.EntityStore.Watch:output_type -> entity.EntityWatchResponse
+	12, // 40: entity.EntityStore.AdminWrite:output_type -> entity.WriteEntityResponse
+	12, // 41: entity.EntityStoreAdmin.AdminWrite:output_type -> entity.WriteEntityResponse
+	33, // [33:42] is the sub-list for method output_type
+	24, // [24:33] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_entity_proto_init() }
@@ -2512,18 +2426,6 @@ func file_entity_proto_init() {
 			}
 		}
 		file_entity_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EntityAccess); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_entity_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityOriginInfo); i {
 			case 0:
 				return &v.state
@@ -2535,7 +2437,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityErrorInfo); i {
 			case 0:
 				return &v.state
@@ -2547,7 +2449,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityVersionInfo); i {
 			case 0:
 				return &v.state
@@ -2559,7 +2461,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ReadEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2571,7 +2473,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BatchReadEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2583,7 +2485,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BatchReadEntityResponse); i {
 			case 0:
 				return &v.state
@@ -2595,7 +2497,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*WriteEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2607,7 +2509,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AdminWriteEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2619,7 +2521,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*WriteEntityResponse); i {
 			case 0:
 				return &v.state
@@ -2631,7 +2533,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2643,7 +2545,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteEntityResponse); i {
 			case 0:
 				return &v.state
@@ -2655,7 +2557,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityHistoryRequest); i {
 			case 0:
 				return &v.state
@@ -2667,7 +2569,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityHistoryResponse); i {
 			case 0:
 				return &v.state
@@ -2679,7 +2581,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntitySearchRequest); i {
 			case 0:
 				return &v.state
@@ -2691,7 +2593,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntitySearchResult); i {
 			case 0:
 				return &v.state
@@ -2703,7 +2605,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntitySearchResponse); i {
 			case 0:
 				return &v.state
@@ -2715,7 +2617,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityWatchRequest); i {
 			case 0:
 				return &v.state
@@ -2727,7 +2629,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EntityWatchResponse); i {
 			case 0:
 				return &v.state
@@ -2746,7 +2648,7 @@ func file_entity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_entity_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   24,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
