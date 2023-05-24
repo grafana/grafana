@@ -33,7 +33,7 @@ func setupTestEnv(t *testing.T) *ExternalService {
 	return client
 }
 
-func TestClient_GetScopesOnUser(t *testing.T) {
+func TestExternalService_GetScopesOnUser(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		impersonatePermissions []ac.Permission
@@ -146,7 +146,7 @@ func TestClient_GetScopesOnUser(t *testing.T) {
 	}
 }
 
-func TestClient_GetScopes(t *testing.T) {
+func TestExternalService_GetScopes(t *testing.T) {
 	testCases := []struct {
 		name                   string
 		impersonatePermissions []ac.Permission
@@ -198,7 +198,7 @@ func TestClient_GetScopes(t *testing.T) {
 	}
 }
 
-func TestClient_ToDTO(t *testing.T) {
+func TestExternalService_ToDTO(t *testing.T) {
 	client := &ExternalService{
 		ID:          1,
 		Name:        "my-ext-service",
