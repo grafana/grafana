@@ -44,14 +44,14 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 		wantErr                bool
 	}{
 		{
-			name: "should return error when GetExternalService returns error",
+			name: "should error out when GetExternalService returns error",
 			initTestEnv: func(env *TestEnv) {
 				env.OAuthStore.On("GetExternalService", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound("my-ext-service"))
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return error when the user id cannot be parsed",
+			name: "should error out when the user id cannot be parsed",
 			initTestEnv: func(env *TestEnv) {
 				env.S.cache.Set("my-ext-service", *cachedExternalService(), time.Minute)
 			},
@@ -59,27 +59,38 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return error when the user does not have the impersonate permission",
+			name: "should return no scope when the external service is not allowed to impersonate the user",
 			initTestEnv: func(env *TestEnv) {
-				currentUser := cachedExternalService()
-				currentUser.ImpersonatePermissions = []ac.Permission{}
-				env.S.cache.Set("my-ext-service", *currentUser, time.Minute)
+				client := cachedExternalService()
+				client.SignedInUser.Permissions = map[int64]map[string][]string{}
+				env.S.cache.Set("my-ext-service", *client, time.Minute)
+			},
+			userID:         "user:id:3",
+			expectedScopes: nil,
+			wantErr:        false,
+		},
+		{
+			name: "should return no scope when the external service has an no impersonate permission",
+			initTestEnv: func(env *TestEnv) {
+				client := cachedExternalService()
+				client.ImpersonatePermissions = []ac.Permission{}
+				env.S.cache.Set("my-ext-service", *client, time.Minute)
 			},
 			userID:         "user:id:3",
 			expectedScopes: []string{},
 			wantErr:        false,
 		},
 		{
-			name: "should return the required scopes when the user has the impersonate permission",
+			name: "should return the scopes when the external service has impersonate permissions",
 			initTestEnv: func(env *TestEnv) {
 				env.S.cache.Set("my-ext-service", *cachedExternalService(), time.Minute)
-				currentUser := cachedExternalService()
-				currentUser.ImpersonatePermissions = []ac.Permission{
+				client := cachedExternalService()
+				client.ImpersonatePermissions = []ac.Permission{
 					{Action: ac.ActionUsersImpersonate, Scope: ac.ScopeUsersAll},
 					{Action: ac.ActionUsersRead, Scope: oauthserver.ScopeGlobalUsersSelf},
 					{Action: ac.ActionUsersPermissionsRead, Scope: oauthserver.ScopeUsersSelf},
 					{Action: ac.ActionTeamsRead, Scope: oauthserver.ScopeTeamsSelf}}
-				env.S.cache.Set("my-ext-service", *currentUser, time.Minute)
+				env.S.cache.Set("my-ext-service", *client, time.Minute)
 			},
 			userID: "user:id:3",
 			expectedScopes: []string{"users:impersonate",
