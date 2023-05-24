@@ -11,7 +11,7 @@ import { createUrl } from './utils/url';
 
 interface Props {}
 
-export function CreateRuleButtons({}: Props) {
+export function MoreActionsRuleButtons({}: Props) {
   const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
   const location = useLocation();
   const newMenu = (

@@ -11,7 +11,7 @@ import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
 import { trackRuleListNavigation } from './Analytics';
-import { CreateRuleButtons } from './CreateRuleButton';
+import { MoreActionsRuleButtons } from './MoreActionsRuleButtons';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -111,7 +111,7 @@ const RuleList = withErrorBoundary(
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
               <Stack direction="row" gap={0.5}>
-                <CreateRuleButtons />
+                <MoreActionsRuleButtons />
               </Stack>
             </div>
           </>
