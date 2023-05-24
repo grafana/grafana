@@ -18,7 +18,7 @@ Grafana-managed rules are the most flexible alert rule type. They allow you to c
 
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
-For information on Grafana Alerting, see [Introduction to Grafana Alerting](/docs/grafana/next/alerting/fundamentals/), which explains the key concepts and features of Grafana Alerting.
+For information on Grafana Alerting, see [Introduction to Grafana Alerting]({{< relref "../fundamentals" >}}), which explains the key concepts and features of Grafana Alerting.
 
 Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
@@ -32,14 +32,14 @@ To create a Grafana-managed alert rule, complete the following steps.
 5. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
 
    - For queries, select a data source from the dropdown.
-   - Specify a [time range](/docs/grafana/latest/dashboards/use-dashboards/?pg=blog&plcmt=body-txt#time-units-and-relative-ranges).
+   - Specify a [time range]({{< relref "../../dashboards/use-dashboards#time-units-and-relative-ranges" >}}).
 
      **Note:**
      Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
 
      It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
 
-   - Add one or more [queries]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
+   - Add one or more [queries]({{< relref "../../panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
@@ -75,7 +75,7 @@ For Grafana managed alerts, you can create a rule with a classic condition or yo
 
 Use the classic condition expression to create a rule that triggers a single alert when its condition is met. For a query that returns multiple series, Grafana does not track the alert state of each series. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
 
-For more information, see [expressions documentation]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
+For more information, see [expressions documentation]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
 
 **Multi-dimensional rule**
 
