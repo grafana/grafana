@@ -2,10 +2,13 @@ package apiserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +22,8 @@ import (
 
 var _ storage.Interface = (*entityStorage)(nil)
 
+const MaxUpdateAttempts = 30
+
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
 	store        entity.EntityStoreServer
@@ -30,6 +35,7 @@ type entityStorage struct {
 	getAttrsFunc storage.AttrFunc
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
+	watchSet     *WatchSet
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -50,17 +56,21 @@ func NewEntityStorage(
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
 ) (storage.Interface, factory.DestroyFunc, error) {
+	ws := NewWatchSet()
 	return &entityStorage{
-		store:        store,
-		gr:           config.GroupResource,
-		codec:        config.Codec,
-		keyFunc:      keyFunc,
-		newFunc:      newFunc,
-		newListFunc:  newListFunc,
-		getAttrsFunc: getAttrsFunc,
-		trigger:      trigger,
-		indexers:     indexers,
-	}, func() {}, nil
+			store:        store,
+			gr:           config.GroupResource,
+			codec:        config.Codec,
+			keyFunc:      keyFunc,
+			newFunc:      newFunc,
+			newListFunc:  newListFunc,
+			getAttrsFunc: getAttrsFunc,
+			trigger:      trigger,
+			indexers:     indexers,
+			watchSet:     ws,
+		}, func() {
+			ws.cleanupWatchers()
+		}, nil
 }
 
 // Returns Versioner associated with this storage.
@@ -171,23 +181,16 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	grn, err := s.toGRN(key)
-
-	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
-		GRN:      grn,
-		WithBody: true,
+	res := dashboard.NewK8sResource("hello", &dashboard.Spec{
+		Title: utils.Pointer("the title"),
 	})
-	if err != nil {
-		return err
-	}
+	res.APIVersion = "dashboard.kinds.grafana.com/v1"
 
-	fmt.Print("GOT:" + rsp.ETag)
+	jjj, _ := json.MarshalIndent(res, "", "  ")
+	fmt.Printf("XXX: %s", string(jjj))
 
-	// ?????
-	obj := s.newFunc()
-	objPtr = obj.DeepCopyObject()
-
-	return nil
+	_, _, err := s.codec.Decode(jjj, nil, objPtr)
+	return err
 }
 
 // GetList unmarshalls objects found at key into a *List api object (an object
@@ -201,33 +204,45 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		return fmt.Errorf("list requires a namespace (for now)")
 	}
 
-	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
-		Kind:     []string{s.gr.Resource},
-		WithBody: true,
-	})
-	if err != nil {
-		return err
-	}
+	// rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
+	// 	Kind:     []string{s.gr.Resource},
+	// 	WithBody: true,
+	// })
+	// if err != nil {
+	// 	return err
+	// }
 
 	u := listObj.(*unstructured.UnstructuredList)
 	u.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   s.gr.Group,
-		Version: "v1alpha1",
+		Version: "v1",
 		Kind:    "DashboardList",
 	})
 	u.SetResourceVersion(opts.ResourceVersion) // ???
 
-	for _, r := range rsp.Results {
-		obj := s.newFunc()
-		// convert r to object pointer???
-		fmt.Printf("FOUND:" + r.Slug)
+	res := dashboard.NewK8sResource("hello", &dashboard.Spec{
+		Title: utils.Pointer("the title"),
+	})
+	res.APIVersion = "dashboard.kinds.grafana.com/v1"
 
-		resource, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-		if err != nil {
-			return err
-		}
-		u.Items = append(u.Items, unstructured.Unstructured{Object: resource})
+	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
+	if err != nil {
+		return err
 	}
+
+	u.Items = append(u.Items, unstructured.Unstructured{Object: out})
+
+	// for _, r := range rsp.Results {
+	// 	obj := s.newFunc()
+	// 	// convert r to object pointer???
+	// 	fmt.Printf("FOUND:" + r.Slug)
+
+	// 	resource, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	u.Items = append(u.Items, unstructured.Unstructured{Object: resource})
+	// }
 
 	return nil
 }
@@ -248,6 +263,62 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 func (s *entityStorage) GuaranteedUpdate(
 	ctx context.Context, key string, destination runtime.Object, ignoreNotFound bool,
 	preconditions *storage.Preconditions, tryUpdate storage.UpdateFunc, cachedExistingObject runtime.Object) error {
+
+	//	var res storage.ResponseMeta
+	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
+		//var objPtr runtime.Object
+		// filename := filepath.Join(s.root, key) + ".json"
+
+		// if !exists(filename) {
+		// 	if ignoreNotFound {
+		// 		return nil
+		// 	}
+		// 	return storage.NewKeyNotFoundError(key, 0)
+		// }
+
+		// obj, err := readFile(s.codec, filename, func() runtime.Object {
+		// 	return objPtr
+		// })
+		// if err != nil {
+		// 	return err
+		// }
+
+		// updatedObj, _, err := tryUpdate(obj, res)
+		// if err != nil {
+		// 	if attempt == MaxUpdateAttempts {
+		// 		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
+		// 	} else {
+		// 		continue
+		// 	}
+		// }
+
+		// if unchanged, _ := isUnchanged(s.codec, obj, updatedObj); unchanged {
+		// 	destination = obj.DeepCopyObject()
+		// } else {
+		// 	generatedRV, err := getResourceVersion()
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	if err := s.Versioner().UpdateObject(updatedObj, *generatedRV); err != nil {
+		// 		return err
+		// 	}
+		// 	if err := writeFile(s.codec, filename, updatedObj); err != nil {
+		// 		return err
+		// 	}
+
+		// 	if err := s.Get(ctx, key, storage.GetOptions{}, destination); err != nil {
+		// 		return err
+		// 	}
+
+		// 	s.watchSet.notifyWatchers(watch.Event{
+		// 		Object: destination.DeepCopyObject(),
+		// 		Type:   watch.Modified,
+		// 	})
+		// }
+	}
 	return nil
 }
 

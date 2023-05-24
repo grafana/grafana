@@ -40,7 +40,7 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 	Status   *Status                 `json:"status,omitempty"`
 
 	// Avoid extending
-	_ interface{}
+	_ interface{} `json:"-"`
 }
 
 // Annotation keys

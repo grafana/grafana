@@ -269,7 +269,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/grafana-apiserver v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana-apiserver v0.0.0-20230523194731-0f2091017e2b
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
 	github.com/grafana/thema v0.0.0-20230523123227-db9596a7096e
 	github.com/redis/go-redis/v9 v9.0.2
