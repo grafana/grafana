@@ -66,29 +66,6 @@ describe('ConfirmModal', () => {
     expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
   });
 
-  it('typing the confirmation text should enable the confirm button', async () => {
-    render(
-      <ConfirmModal
-        title="Some Title"
-        body="Some Body"
-        confirmText="Please Confirm"
-        alternativeText="Alternative Text"
-        dismissText="Dismiss Text"
-        isOpen={true}
-        confirmationText="My confirmation text"
-        onConfirm={() => {}}
-        onDismiss={() => {}}
-        onAlternative={() => {}}
-      />
-    );
-
-    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeDisabled();
-
-    await userEvent.type(screen.getByPlaceholderText('Type "My confirmation text" to confirm'), 'My confirmation text');
-    expect(screen.getByRole('button', { name: 'Please Confirm' })).not.toBeDisabled();
-  });
-
   it('typing the confirmation text should enable the confirm button regardless of case', async () => {
     render(
       <ConfirmModal
