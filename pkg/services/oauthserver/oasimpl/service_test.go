@@ -32,6 +32,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	AppURL   = "https://oauth.test/"
+	TokenURL = AppURL + "oauth2/token"
+)
+
 type TestEnv struct {
 	S           *OAuth2ServiceImpl
 	Cfg         *setting.Cfg
@@ -48,13 +53,13 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	cfg.AppURL = "https://oauth.test/"
+	cfg.AppURL = AppURL
 
 	config := &fosite.Config{
 		AccessTokenLifespan: time.Hour,
-		TokenURL:            fmt.Sprintf("%voauth2/token", cfg.AppURL),
-		AccessTokenIssuer:   cfg.AppURL,
-		IDTokenIssuer:       cfg.AppURL,
+		TokenURL:            TokenURL,
+		AccessTokenIssuer:   AppURL,
+		IDTokenIssuer:       AppURL,
 		ScopeStrategy:       fosite.WildcardScopeStrategy,
 	}
 

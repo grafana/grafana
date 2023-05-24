@@ -470,7 +470,7 @@ type Claims struct {
 	Entitlements map[string][]string `json:"entitlements"`
 }
 
-func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
+func TestOAuth2ServiceImpl_HandleTokenRequest_Client(t *testing.T) {
 	now := time.Now()
 	client1Key, errGenRsa := rsa.GenerateKey(rand.Reader, 4096)
 	require.NoError(t, errGenRsa)
@@ -495,7 +495,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 		SelfPermissions: []ac.Permission{
 			{Action: "users:impersonate", Scope: "users:*"},
 		},
-		Audiences: "https://oauth.test/",
+		Audiences: AppURL,
 	}
 	sa1 := &serviceaccounts.ServiceAccountProfileDTO{
 		Id:         client1.ServiceAccountID,
@@ -546,15 +546,15 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
 				"scope":         {"profile email groups entitlements"},
-				"audience":      {"https://oauth.test/"},
+				"audience":      {AppURL},
 			},
 			wantCode:  http.StatusOK,
 			wantScope: []string{"profile", "email", "groups", "entitlements"},
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
-					Subject:  "user:id:2",           // From client1.ServiceAccountID
-					Issuer:   "https://oauth.test/", // From env.S.Config.Issuer
-					Audience: jwt.Audience{"https://oauth.test/"},
+					Subject:  "user:id:2", // From client1.ServiceAccountID
+					Issuer:   AppURL,      // From env.S.Config.Issuer
+					Audience: jwt.Audience{AppURL},
 				},
 				ClientID: client1.ClientID,
 				Name:     "testapp",
@@ -586,7 +586,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
 				"assertion": {
-					genAssertion(t, client1Key, client1.ClientID, "user:id:56", "https://oauth.test/oauth2/token", "https://oauth.test/"),
+					genAssertion(t, client1Key, client1.ClientID, "user:id:56", TokenURL, AppURL),
 				},
 				"scope": {"profile email groups entitlements"},
 			},
@@ -595,8 +595,8 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 			wantClaims: &Claims{
 				Claims: jwt.Claims{
 					Subject:  fmt.Sprintf("user:id:%v", user56.ID), // To match the assertion
-					Issuer:   "https://oauth.test/",                // From env.S.Config.Issuer
-					Audience: jwt.Audience{"https://oauth.test/oauth2/token", "https://oauth.test/"},
+					Issuer:   AppURL,                               // From env.S.Config.Issuer
+					Audience: jwt.Audience{TokenURL, AppURL},
 				},
 				ClientID: client1.ClientID,
 				Email:    user56.Email,
@@ -632,7 +632,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 				"client_id":     {client1.ClientID},
 				"client_secret": {client1Secret},
 				"assertion": {
-					genAssertion(t, client1Key, client1.ClientID, "user:id:56", "https://oauth.test/oauth2/token", "invalid_audience"),
+					genAssertion(t, client1Key, client1.ClientID, "user:id:56", TokenURL, "invalid_audience"),
 				},
 				"scope": {"profile email groups entitlements"},
 			},

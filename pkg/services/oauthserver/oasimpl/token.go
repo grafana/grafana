@@ -137,6 +137,7 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 		}
 	}
 
+	// Populate claims' suject from the session subject
 	oauthSession.JWTClaims.Subject = oauthSession.Subject
 
 	// Split scopes into actions and claims
