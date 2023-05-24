@@ -105,7 +105,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "foo has value 1",
+		expected: "foo has value 1.0",
 	}, {
 		name: "values can be passed to template functions such as printf",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A.Value | printf \"%.1f\" }}",
@@ -131,7 +131,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "[no value] has value 1",
+		expected: "[no value] has value 1.0",
 	}, {
 		name: "missing value in $values is returned as NaN",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
