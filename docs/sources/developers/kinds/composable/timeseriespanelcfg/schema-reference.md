@@ -13,10 +13,10 @@ title: TimeSeriesPanelCfg kind
 
 
 
-| Property           | Type                                  | Required | Default | Description |
-|--------------------|---------------------------------------|----------|---------|-------------|
-| `PanelFieldConfig` | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs   |
-| `PanelOptions`     | [object](#paneloptions)               | **Yes**  |         |             |
+| Property      | Type                                  | Required | Default | Description |
+|---------------|---------------------------------------|----------|---------|-------------|
+| `FieldConfig` | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs   |
+| `Options`     | [object](#options)                    | **Yes**  |         |             |
 
 ### GraphFieldConfig
 
@@ -178,7 +178,7 @@ TODO docs
 | `group`  | string | No       |         |                                                                 |
 | `mode`   | string | No       |         | TODO docs<br/>Possible values are: `none`, `normal`, `percent`. |
 
-### PanelOptions
+### Options
 
 It extends [OptionsWithTimezones](#optionswithtimezones).
 
