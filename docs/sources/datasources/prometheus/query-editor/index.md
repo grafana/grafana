@@ -98,7 +98,9 @@ This ensures a consistent display of metrics data, but it can result in a small 
 
 Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
 
-> **Note:** There is no option to add exemplars with an **Instant** query type.
+{{% admonition type="note" %}}
+There is no option to add exemplars with an **Instant** query type.
+{{% /admonition %}}
 
 ### Inspector
 
@@ -192,7 +194,9 @@ You can then select one or more labels shown in Step 2.
 Select one or more values in Step 3 for each label to tighten your query scope.
 In Step 4, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
-> **Note:** If you do not remember a metric name, you can also select a few labels to narrow down the list, then find relevant label values.
+{{% admonition type="note" %}}
+If you do not remember a metric name, you can also select a few labels to narrow down the list, then find relevant label values.
+{{% /admonition %}}
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string.
 The values section has only one search field, and its filtering applies to all labels to help you find values across labels once selected.
