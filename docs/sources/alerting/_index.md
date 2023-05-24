@@ -87,4 +87,4 @@ Here are some tips on how to create an effective alert management set up for you
 
 ## Useful links
 
-- [Introduction to Alerting]({{< relref "/docs/grafana/latest/alerting/fundamentals" >}})
+- [Introduction to Alerting]({{< relref "./fundamentals" >}})
