@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { Constraint, HorizontalConstraint, VerticalConstraint } from 'app/features/canvas';
+import { Constraint, HorizontalConstraint, VerticalConstraint } from 'app/features/visualization/canvas';
 
 interface Props {
   onVerticalConstraintChange: (v: VerticalConstraint) => void;

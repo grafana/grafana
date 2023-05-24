@@ -1,5 +1,5 @@
-import { CanvasConnection } from '../../../features/canvas';
-import { ElementState } from '../../../features/canvas/runtime/element';
+import { CanvasConnection } from 'app/features/visualization/canvas';
+import { ElementState } from 'app/features/visualization/canvas/runtime/element';
 
 export enum LayerActionID {
   Delete = 'delete',

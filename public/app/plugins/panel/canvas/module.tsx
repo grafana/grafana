@@ -1,5 +1,5 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
-import { FrameState } from 'app/features/canvas/runtime/frame';
+import { FrameState } from 'app/features/visualization/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { getConnectionEditor } from './editor/connectionEditor';

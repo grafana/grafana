@@ -15,8 +15,8 @@ import {
   TextDimensionConfig,
 } from '@grafana/schema';
 import { Portal, stylesFactory } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
@@ -25,14 +25,14 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/visualization/canvas';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
+import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/CanvasTooltip';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import appEvents from '../../../core/app_events';
-import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';

@@ -2,14 +2,14 @@ import React, { CSSProperties } from 'react';
 import { OnDrag, OnResize } from 'react-moveable/declaration/types';
 
 import { LayerElement } from 'app/core/components/Layers/types';
+import { DimensionContext } from 'app/features/dimensions';
 import {
   BackgroundImageSize,
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
-} from 'app/features/canvas';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { DimensionContext } from 'app/features/dimensions';
+} from 'app/features/visualization/canvas';
+import { notFoundItem } from 'app/features/visualization/canvas/elements/notFound';
 import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';

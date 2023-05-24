@@ -6,7 +6,7 @@ import React, { createRef } from 'react';
 import { GrafanaTheme2, LinkModel } from '@grafana/data/src';
 import { LinkButton, Portal, useStyles2, VerticalGroup, VizTooltipContainer } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { Scene } from 'app/features/visualization/canvas/runtime/scene';
 
 interface Props {
   scene: Scene;

@@ -6,7 +6,7 @@ import React, { Key, useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
-import { ElementState } from 'app/features/canvas/runtime/element';
+import { ElementState } from 'app/features/visualization/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
 import { getGlobalStyles } from '../globalStyles';

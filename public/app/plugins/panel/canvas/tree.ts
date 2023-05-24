@@ -1,8 +1,8 @@
 import { CSSProperties } from 'react';
 
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { FrameState } from 'app/features/canvas/runtime/frame';
-import { RootElement } from 'app/features/canvas/runtime/root';
+import { ElementState } from 'app/features/visualization/canvas/runtime/element';
+import { FrameState } from 'app/features/visualization/canvas/runtime/frame';
+import { RootElement } from 'app/features/visualization/canvas/runtime/root';
 
 import { DragNode, DropNode } from './types';
 

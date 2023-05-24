@@ -8,8 +8,8 @@ import { Input, usePanelContext, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
-import { getDataLinks } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';

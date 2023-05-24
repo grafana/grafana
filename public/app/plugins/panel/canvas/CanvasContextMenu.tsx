@@ -4,10 +4,9 @@ import { first } from 'rxjs/operators';
 
 import { SelectableValue } from '@grafana/data';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
-import { Scene } from 'app/features/canvas/runtime/scene';
-
-import { ElementState } from '../../../features/canvas/runtime/element';
-import { FrameState } from '../../../features/canvas/runtime/frame';
+import { ElementState } from 'app/features/visualization/canvas/runtime/element';
+import { FrameState } from 'app/features/visualization/canvas/runtime/frame';
+import { Scene } from 'app/features/visualization/canvas/runtime/scene';
 
 import { CanvasPanel } from './CanvasPanel';
 import { AnchorPoint, LayerActionID } from './types';

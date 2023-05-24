@@ -1,12 +1,12 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/visualization/canvas';
+import { notFoundItem } from 'app/features/visualization/canvas/elements/notFound';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
+import { updateConnectionsForSource } from 'app/plugins/panel/canvas/utils';
 
-import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';
 import { CanvasElementItem } from '../element';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 

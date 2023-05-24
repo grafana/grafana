@@ -1,9 +1,9 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { CanvasConnection } from 'app/features/canvas';
-import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+import { CanvasConnection } from 'app/features/visualization/canvas';
+import { Scene } from 'app/features/visualization/canvas/runtime/scene';
 
 import { ConnectionState } from '../types';
 

@@ -4,9 +4,9 @@ import { ReplaySubject, Subscription } from 'rxjs';
 import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
-import { CanvasFrameOptions } from 'app/features/canvas';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { Scene } from 'app/features/canvas/runtime/scene';
+import { CanvasFrameOptions } from 'app/features/visualization/canvas';
+import { ElementState } from 'app/features/visualization/canvas/runtime/element';
+import { Scene } from 'app/features/visualization/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { InlineEdit } from './InlineEdit';

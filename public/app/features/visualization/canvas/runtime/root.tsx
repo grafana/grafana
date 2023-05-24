@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CanvasElementOptions, CanvasFrameOptions } from 'app/features/canvas';
+import { CanvasElementOptions, CanvasFrameOptions } from 'app/features/visualization/canvas';
 
 import { FrameState } from './frame';
 import { Scene } from './scene';
