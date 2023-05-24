@@ -13,12 +13,12 @@ title: TextPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default     | Description                                                                                             |
-|----------------|-------------------------|----------|-------------|---------------------------------------------------------------------------------------------------------|
-| `CodeLanguage` | string                  | **Yes**  | `plaintext` | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. |
-| `CodeOptions`  | [object](#codeoptions)  | **Yes**  |             |                                                                                                         |
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |                                                                                                         |
-| `TextMode`     | string                  | **Yes**  |             | Possible values are: `html`, `markdown`, `code`.                                                        |
+| Property       | Type                   | Required | Default     | Description                                                                                             |
+|----------------|------------------------|----------|-------------|---------------------------------------------------------------------------------------------------------|
+| `CodeLanguage` | string                 | **Yes**  | `plaintext` | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. |
+| `CodeOptions`  | [object](#codeoptions) | **Yes**  |             |                                                                                                         |
+| `Options`      | [object](#options)     | **Yes**  |             |                                                                                                         |
+| `TextMode`     | string                 | **Yes**  |             | Possible values are: `html`, `markdown`, `code`.                                                        |
 
 ### CodeOptions
 
@@ -28,7 +28,7 @@ title: TextPanelCfg kind
 | `showLineNumbers` | boolean | **Yes**  | `false`     |                                                                                                         |
 | `showMiniMap`     | boolean | **Yes**  | `false`     |                                                                                                         |
 
-### PanelOptions
+### Options
 
 | Property  | Type                        | Required | Default                                                                        | Description                                      |
 |-----------|-----------------------------|----------|--------------------------------------------------------------------------------|--------------------------------------------------|

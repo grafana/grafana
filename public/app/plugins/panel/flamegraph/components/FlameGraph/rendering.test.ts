@@ -1,10 +1,10 @@
-import { MutableDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getRectDimensionsForLevel } from './rendering';
 
 function makeDataFrame(fields: Record<string, Array<number | string>>) {
-  return new MutableDataFrame({
+  return createDataFrame({
     fields: Object.keys(fields).map((key) => ({
       name: key,
       values: fields[key],

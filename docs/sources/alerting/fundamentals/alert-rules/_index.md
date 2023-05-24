@@ -8,9 +8,9 @@ title: Alert rules
 weight: 101
 ---
 
-# About alert rules
+# Alert rules
 
-An alerting rule is a set of evaluation criteria that determines whether an alert instance will fire. The rule consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
+An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of one or more queries and expressions, a condition, and the duration over which the condition needs to be met to start firing.
 
 While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert.
 

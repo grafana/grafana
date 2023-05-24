@@ -120,7 +120,7 @@ const ConfigPublicDashboard = () => {
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
-          value={generatePublicDashboardUrl(publicDashboard!)}
+          value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
           disabled={!publicDashboard?.isEnabled}
           data-testid={selectors.CopyUrlInput}
@@ -129,7 +129,7 @@ const ConfigPublicDashboard = () => {
               data-testid={selectors.CopyUrlButton}
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
-              getText={() => generatePublicDashboardUrl(publicDashboard!)}
+              getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
             >
               Copy
             </ClipboardButton>

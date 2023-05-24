@@ -13,17 +13,17 @@ title: StatPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default | Description |
-|----------------|-------------------------|----------|---------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
+| Property  | Type               | Required | Default | Description |
+|-----------|--------------------|----------|---------|-------------|
+| `Options` | [object](#options) | **Yes**  |         |             |
 
-### PanelOptions
+### Options
 
 It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property        | Type                                            | Required | Default | Description                                                                                                                                 |
 |-----------------|-------------------------------------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `colorMode`     | string                                          | **Yes**  |         | TODO docs<br/>Possible values are: `value`, `background`, `none`.                                                                           |
+| `colorMode`     | string                                          | **Yes**  |         | TODO docs<br/>Possible values are: `value`, `background`, `background_solid`, `none`.                                                       |
 | `graphMode`     | string                                          | **Yes**  |         | TODO docs<br/>Possible values are: `none`, `line`, `area`.                                                                                  |
 | `justifyMode`   | string                                          | **Yes**  |         | TODO docs<br/>Possible values are: `auto`, `center`.                                                                                        |
 | `textMode`      | string                                          | **Yes**  |         | TODO docs<br/>Possible values are: `auto`, `value`, `value_and_name`, `name`, `none`.                                                       |

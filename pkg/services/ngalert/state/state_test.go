@@ -584,7 +584,7 @@ func TestShouldTakeImage(t *testing.T) {
 		name:          "should not take image for alerting state with image",
 		state:         eval.Alerting,
 		previousState: eval.Alerting,
-		previousImage: &ngmodels.Image{Path: "foo.png", URL: "https://example.com/foo.png"},
+		previousImage: &ngmodels.Image{URL: "https://example.com/foo.png"},
 	}}
 
 	for _, test := range tests {

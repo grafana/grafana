@@ -138,7 +138,7 @@ const createKeyFactory = (
 
   return (frameIndex: number, valueIndex: number): string => {
     return factoryIndex[frameIndex].reduce((key: string, fieldIndex: number) => {
-      return key + data[frameIndex].fields[fieldIndex].values.get(valueIndex);
+      return key + data[frameIndex].fields[fieldIndex].values[valueIndex];
     }, '');
   };
 };
@@ -173,7 +173,7 @@ const createValueMapper = (
         continue;
       }
 
-      value[fieldName] = field.values.get(valueIndex);
+      value[fieldName] = field.values[valueIndex];
     }
 
     return value;

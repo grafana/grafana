@@ -47,18 +47,6 @@ export interface LicenseInfo {
 }
 
 /**
- * Describes Sentry integration config
- *
- * @public
- */
-export interface SentryConfig {
-  enabled: boolean;
-  dsn: string;
-  customEndpoint: string;
-  sampleRate: number;
-}
-
-/**
  * Describes GrafanaJavascriptAgentConfig integration config
  *
  * @public
@@ -74,6 +62,8 @@ export interface GrafanaJavascriptAgentConfig {
 
 export interface UnifiedAlertingConfig {
   minInterval: string;
+  // will be undefined if alerStateHistory is not enabled
+  alertStateHistoryBackend?: string;
 }
 
 /** Supported OAuth services
@@ -196,6 +186,8 @@ export interface GrafanaConfig {
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
+  trustedTypesDefaultPolicyEnabled: boolean;
+  cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
@@ -205,7 +197,6 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
-  sentry: SentryConfig;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
@@ -216,6 +207,7 @@ export interface GrafanaConfig {
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
+  secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;
@@ -223,6 +215,13 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  sqlConnectionLimits: SqlConnectionLimits;
+}
+
+export interface SqlConnectionLimits {
+  maxOpenConns: number;
+  maxIdleConns: number;
+  connMaxLifetime: number;
 }
 
 export interface AuthSettings {

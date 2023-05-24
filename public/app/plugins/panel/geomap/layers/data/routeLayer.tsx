@@ -234,7 +234,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 if (pointIdx !== null) {
                   const out = getGeometryField(frame, location);
                   if (out.field) {
-                    crosshairFeature.setGeometry(out.field.values.get(pointIdx));
+                    crosshairFeature.setGeometry(out.field.values[pointIdx]);
                     crosshairFeature.setStyle(crosshairStyle);
                   }
                 }

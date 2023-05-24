@@ -18,7 +18,7 @@ var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
 	pluginRepo     repo.Service
-	pluginStorage  storage.Manager
+	pluginStorage  storage.ZipExtractor
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
 	log            log.Logger
@@ -30,7 +30,7 @@ func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLo
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.Manager) *PluginInstaller {
+	pluginStorage storage.ZipExtractor) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:   pluginLoader,
 		pluginRegistry: pluginRegistry,
@@ -45,7 +45,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
-		if !plugin.IsExternalPlugin() {
+		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
 
@@ -97,7 +97,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 	}
 
-	extractedArchive, err := m.pluginStorage.Add(ctx, pluginID, pluginArchive.File)
+	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, pluginArchive.File)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		depArchive, err := m.pluginStorage.Add(ctx, dep.ID, d.File)
+		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}
@@ -134,7 +134,7 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if !plugin.IsExternalPlugin() {
+	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 

@@ -3,13 +3,16 @@ package usagestatssvcs
 import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideUsageStatsProvidersRegistry(
 	accesscontrol accesscontrol.Service,
+	user user.Service,
 ) *UsageStatsProvidersRegistry {
 	return NewUsageStatsProvidersRegistry(
 		accesscontrol,
+		user,
 	)
 }
 

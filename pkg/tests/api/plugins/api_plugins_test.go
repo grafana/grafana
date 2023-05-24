@@ -76,6 +76,10 @@ func TestIntegrationPlugins(t *testing.T) {
 		})
 	})
 
+	//
+	// NOTE:
+	// If this test is failing due to changes in plugins just rerun with updateSnapshotFlag = true at the top.
+	//
 	t.Run("List", func(t *testing.T) {
 		testCases := []testCase{
 			{

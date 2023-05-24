@@ -1,3 +1,5 @@
+import { makeArrayIndexableVector } from '../types';
+
 import { FunctionalVector } from './FunctionalVector';
 
 interface CircularOptions<T> {
@@ -34,6 +36,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> {
     if (options.capacity) {
       this.setCapacity(options.capacity);
     }
+    return makeArrayIndexableVector(this);
   }
 
   /**

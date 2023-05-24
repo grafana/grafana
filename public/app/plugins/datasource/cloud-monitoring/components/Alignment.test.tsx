@@ -8,7 +8,7 @@ import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { MetricKind, ValueTypes } from '../types';
+import { MetricKind, ValueTypes } from '../types/query';
 
 import { Alignment } from './Alignment';
 

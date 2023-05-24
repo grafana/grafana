@@ -1,4 +1,4 @@
-import { Vector } from '../types/vector';
+import { makeArrayIndexableVector, Vector } from '../types/vector';
 
 import { FunctionalVector } from './FunctionalVector';
 import { vectorToArray } from './vectorToArray';
@@ -11,6 +11,7 @@ import { vectorToArray } from './vectorToArray';
 export class SortedVector<T = any> extends FunctionalVector<T> {
   constructor(private source: Vector<T>, private order: number[]) {
     super();
+    return makeArrayIndexableVector(this);
   }
 
   get length(): number {

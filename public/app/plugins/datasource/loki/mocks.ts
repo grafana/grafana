@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   DataFrameType,
   DataSourceInstanceSettings,
@@ -117,38 +116,38 @@ export function getMockFrames() {
         name: 'Time',
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([3, 4]),
+        values: [3, 4],
       },
       {
         name: 'Line',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector(['line1', 'line2']),
+        values: ['line1', 'line2'],
       },
       {
         name: 'labels',
         type: FieldType.other,
         config: {},
-        values: new ArrayVector([
+        values: [
           {
             label: 'value',
           },
           {
             otherLabel: 'other value',
           },
-        ]),
+        ],
       },
       {
         name: 'tsNs',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector(['3000000', '4000000']),
+        values: ['3000000', '4000000'],
       },
       {
         name: 'id',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector(['id1', 'id2']),
+        values: ['id1', 'id2'],
       },
     ],
     meta: {
@@ -170,35 +169,35 @@ export function getMockFrames() {
         name: 'Time',
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([1, 2]),
+        values: [1, 2],
       },
       {
         name: 'Line',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector(['line3', 'line4']),
+        values: ['line3', 'line4'],
       },
       {
         name: 'labels',
         type: FieldType.other,
         config: {},
-        values: new ArrayVector([
+        values: [
           {
             otherLabel: 'other value',
           },
-        ]),
+        ],
       },
       {
         name: 'tsNs',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector(['1000000', '2000000']),
+        values: ['1000000', '2000000'],
       },
       {
         name: 'id',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector(['id3', 'id4']),
+        values: ['id3', 'id4'],
       },
     ],
     meta: {
@@ -220,13 +219,13 @@ export function getMockFrames() {
         name: 'Time',
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([3000000, 4000000]),
+        values: [3000000, 4000000],
       },
       {
         name: 'Value',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([5, 4]),
+        values: [5, 4],
         labels: {
           level: 'debug',
         },
@@ -249,13 +248,13 @@ export function getMockFrames() {
         name: 'Time',
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([1000000, 2000000]),
+        values: [1000000, 2000000],
       },
       {
         name: 'Value',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([6, 7]),
+        values: [6, 7],
         labels: {
           level: 'debug',
         },
@@ -279,13 +278,13 @@ export function getMockFrames() {
         name: 'Time',
         type: FieldType.time,
         config: {},
-        values: new ArrayVector([3000000, 4000000]),
+        values: [3000000, 4000000],
       },
       {
         name: 'Value',
         type: FieldType.number,
         config: {},
-        values: new ArrayVector([6, 7]),
+        values: [6, 7],
         labels: {
           level: 'error',
         },

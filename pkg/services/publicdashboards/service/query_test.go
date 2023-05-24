@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -743,21 +744,21 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: "dashboard",
+			Type: util.Pointer("dashboard"),
 		}
 		grafanaTagAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
@@ -816,8 +817,8 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
@@ -876,26 +877,26 @@ func TestFindAnnotations(t *testing.T) {
 		disabledGrafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     false,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 		}
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: true,
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: "dashboard",
+			Type: util.Pointer("dashboard"),
 		}
 		queryAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("prometheus", "abc123"),
 			Enable:     true,
-			Name:       &name,
+			Name:       name,
 		}
 		annos := []DashAnnotation{grafanaAnnotation, queryAnnotation, disabledGrafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
@@ -975,15 +976,15 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: "dashboard",
+			Type: util.Pointer("dashboard"),
 		}
 		annos := []DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)
@@ -1010,8 +1011,8 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
+			Name:       name,
+			IconColor:  color,
 			Target: &dashboard2.AnnotationTarget{
 				Limit:    100,
 				MatchAny: false,
@@ -1039,9 +1040,9 @@ func TestFindAnnotations(t *testing.T) {
 		grafanaAnnotation := DashAnnotation{
 			Datasource: CreateDatasource("grafana", "grafana"),
 			Enable:     true,
-			Name:       &name,
-			IconColor:  &color,
-			Type:       "dashboard",
+			Name:       name,
+			IconColor:  color,
+			Type:       util.Pointer("dashboard"),
 			Target:     nil,
 		}
 
@@ -1563,7 +1564,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 }
 
 func TestSanitizeMetadataFromQueryData(t *testing.T) {
-	t.Run("can remove metadata from query", func(t *testing.T) {
+	t.Run("can remove ExecutedQueryString from metadata", func(t *testing.T) {
 		fakeResponse := &backend.QueryDataResponse{
 			Responses: backend.Responses{
 				"A": backend.DataResponse{
@@ -1594,9 +1595,6 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 							Name: "3",
 							Meta: &data.FrameMeta{
 								ExecutedQueryString: "Test3",
-								Custom: map[string]string{
-									"test3": "test3",
-								},
 							},
 						},
 					},
@@ -1604,13 +1602,12 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 			},
 		}
 		sanitizeMetadataFromQueryData(fakeResponse)
-		for k := range fakeResponse.Responses {
-			frames := fakeResponse.Responses[k].Frames
-			for i := range frames {
-				require.Empty(t, frames[i].Meta.ExecutedQueryString)
-				require.Empty(t, frames[i].Meta.Custom)
-			}
-		}
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.ExecutedQueryString, "")
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom, map[string]string{"test1": "test1"})
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.ExecutedQueryString, "")
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom, map[string]string{"test2": "test2"})
+		assert.Equal(t, fakeResponse.Responses["B"].Frames[0].Meta.ExecutedQueryString, "")
+		assert.Nil(t, fakeResponse.Responses["B"].Frames[0].Meta.Custom)
 	})
 }
 

@@ -11,7 +11,7 @@ interface Props {
   exploreId: ExploreId;
 }
 export function ResponseErrorContainer(props: Props) {
-  const queryResponse = useSelector((state) => state.explore[props.exploreId]?.queryResponse);
+  const queryResponse = useSelector((state) => state.explore.panes[props.exploreId]!.queryResponse);
   const queryError = queryResponse?.state === LoadingState.Error ? queryResponse?.error : undefined;
 
   // Errors with ref ids are shown below the corresponding query

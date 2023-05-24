@@ -1,29 +1,26 @@
 import { Field, FieldType } from '../types';
 
-import { FunctionalVector } from './FunctionalVector';
-
 /**
  * IndexVector is a simple vector implementation that returns the index value
  * for each element in the vector.  It is functionally equivolant a vector backed
  * by an array with values: `[0,1,2,...,length-1]`
  *
- * @deprecated use a simple Arrays
+ * @deprecated use a simple Arrays.  NOTE: not used in grafana core
  */
-export class IndexVector extends FunctionalVector<number> {
-  constructor(private len: number) {
+export class IndexVector extends Array<number> {
+  constructor(len: number) {
     super();
-  }
-
-  get length() {
-    return this.len;
-  }
-
-  get(index: number): number {
-    return index;
+    const arr = new Array(len);
+    for (let i = 0; i < len; i++) {
+      arr[i] = i;
+    }
+    return arr as IndexVector;
   }
 
   /**
    * Returns a field representing the range [0 ... length-1]
+   *
+   * @deprecated
    */
   static newField(len: number): Field<number> {
     return {

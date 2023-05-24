@@ -109,12 +109,6 @@ var (
 
 	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
 	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
-
-	MApiAPIkeysGet prometheus.Counter
-
-	MApiAPIkeysCreate prometheus.Counter
-
-	MApiAPIkeysDelete prometheus.Counter
 )
 
 // Timers
@@ -452,24 +446,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
 
-	MApiAPIkeysGet = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "api_api_keys_get_total",
-		Help:      "counter for getting api keys",
-		Namespace: ExporterName,
-	})
-
-	MApiAPIkeysCreate = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "api_api_keys_create_total",
-		Help:      "counter for creating api keys",
-		Namespace: ExporterName,
-	})
-
-	MApiAPIkeysDelete = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "api_api_keys_delete_total",
-		Help:      "counter for deleting api keys",
-		Namespace: ExporterName,
-	})
-
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
 		Help:      "total amount of dashboards",
@@ -739,8 +715,5 @@ func initMetricVars() {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
-		MApiAPIkeysGet,
-		MApiAPIkeysCreate,
-		MApiAPIkeysDelete,
 	)
 }

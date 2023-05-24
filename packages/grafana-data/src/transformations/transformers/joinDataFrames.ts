@@ -1,7 +1,7 @@
 import intersect from 'fast_array_intersect';
 
 import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
+import { DataFrame, Field, FieldMatcher, FieldType } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -351,7 +351,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector | [], samples = 50) {
+export function isLikelyAscendingVector(data: any[], samples = 50) {
   const len = data.length;
 
   // empty or single value

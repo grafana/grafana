@@ -38,6 +38,10 @@ type Service interface {
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(registrations ...RoleRegistration) error
+	// SaveExternalServiceRole creates or updates an external service's role and assigns it to a given service account id.
+	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
+	// DeleteExternalServiceRole removes an external service's role and its assignment.
+	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 }

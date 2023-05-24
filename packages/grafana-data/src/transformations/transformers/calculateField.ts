@@ -3,11 +3,8 @@ import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
-import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode } from '../../types';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
-import { BinaryOperationVector, ConstantVector } from '../../vector';
-import { AsNumberVector } from '../../vector/AsNumberVector';
-import { RowVector } from '../../vector/RowVector';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -61,7 +58,7 @@ export interface CalculateFieldTransformerOptions {
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
-type ValuesCreator = (data: DataFrame) => Vector;
+type ValuesCreator = (data: DataFrame) => any[];
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
@@ -181,7 +178,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns: Vector[] = [];
+    const columns: any[] = [];
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
         columns.push(field.values);
@@ -189,26 +186,31 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
     }
 
     // Prepare a "fake" field for the row
-    const iter = new RowVector(columns);
+    const size = columns.length;
     const row: Field = {
       name: 'temp',
-      values: iter,
+      values: new Array(size),
       type: FieldType.number,
       config: {},
     };
     const vals: number[] = [];
 
     for (let i = 0; i < frame.length; i++) {
-      iter.rowIndex = i;
-      const val = reducer(row, ignoreNulls, nullAsZero)[options.reducer];
-      vals.push(val);
+      for (let j = 0; j < size; j++) {
+        row.values[j] = columns[j][i];
+      }
+      vals.push(reducer(row, ignoreNulls, nullAsZero)[options.reducer]);
     }
 
     return vals;
   };
 }
 
-function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFrames: DataFrame[]): Vector | undefined {
+function findFieldValuesWithNameOrConstant(
+  frame: DataFrame,
+  name: string,
+  allFrames: DataFrame[]
+): number[] | undefined {
   if (!name) {
     return undefined;
   }
@@ -216,7 +218,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
       if (f.type === FieldType.boolean) {
-        return new AsNumberVector(f.values);
+        return f.values.map((v) => (v ? 1 : 0));
       }
       return f.values;
     }
@@ -224,7 +226,7 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
 
   const v = parseFloat(name);
   if (!isNaN(v)) {
-    return new ConstantVector(v, frame.length);
+    return new Array(frame.length).fill(v);
   }
 
   return undefined;
@@ -237,10 +239,14 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return undefined as unknown as Vector;
+      return undefined as unknown as any[];
     }
 
-    return new BinaryOperationVector(left, right, operator.operation);
+    const arr = new Array(left.length);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = operator.operation(left[i], right[i]);
+    }
+    return arr;
   };
 }
 

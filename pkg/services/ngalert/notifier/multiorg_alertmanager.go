@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -49,14 +48,14 @@ type MultiOrgAlertmanager struct {
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
-	decryptFn receivers.GetDecryptedValueFn
+	decryptFn alertingNotify.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn receivers.GetDecryptedValueFn,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn alertingNotify.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -72,14 +71,44 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 		decryptFn:     decryptFn,
 		metrics:       m,
 		ns:            ns,
+		peer:          &NilPeer{},
 	}
+	if err := moa.setupClustering(cfg); err != nil {
+		return nil, err
+	}
+	return moa, nil
+}
 
-	clusterLogger := l.New("component", "cluster")
-	moa.peer = &NilPeer{}
+func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
+	clusterLogger := moa.logger.New("component", "clustering")
+	// We set the settlement timeout to be a multiple of the gossip interval,
+	// ensuring that a sufficient number of broadcasts have occurred, thereby
+	// increasing the probability of success when waiting for the cluster to settle.
+	const settleTimeout = cluster.DefaultGossipInterval * 10
+	// Redis setup.
+	if cfg.UnifiedAlerting.HARedisAddr != "" {
+		redisPeer, err := newRedisPeer(redisConfig{
+			addr:     cfg.UnifiedAlerting.HARedisAddr,
+			name:     cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:   cfg.UnifiedAlerting.HARedisPrefix,
+			password: cfg.UnifiedAlerting.HARedisPassword,
+			username: cfg.UnifiedAlerting.HARedisUsername,
+			db:       cfg.UnifiedAlerting.HARedisDB,
+		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
+		if err != nil {
+			return fmt.Errorf("unable to initialize redis: %w", err)
+		}
+		var ctx context.Context
+		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
+		go redisPeer.Settle(ctx, settleTimeout)
+		moa.peer = redisPeer
+		return nil
+	}
+	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
 		peer, err := cluster.Create(
 			clusterLogger,
-			m.Registerer,
+			moa.metrics.Registerer,
 			cfg.UnifiedAlerting.HAListenAddr,
 			cfg.UnifiedAlerting.HAAdvertiseAddr,
 			cfg.UnifiedAlerting.HAPeers, // peers
@@ -91,25 +120,26 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 			cluster.DefaultProbeInterval,
 			nil,
 			true,
+			cfg.UnifiedAlerting.HALabel,
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("unable to initialize gossip mesh: %w", err)
+			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
 		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
 		if err != nil {
-			l.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
+			moa.logger.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
 		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
 		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
 		var ctx context.Context
 		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
-		go peer.Settle(ctx, cluster.DefaultGossipInterval*10)
+		go peer.Settle(ctx, settleTimeout)
 		moa.peer = peer
+		return nil
 	}
-
-	return moa, nil
+	return nil
 }
 
 func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
@@ -307,6 +337,11 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 		if err := p.Leave(10 * time.Second); err != nil {
 			moa.logger.Warn("unable to leave the gossip mesh", "error", err)
 		}
+	}
+	r, ok := moa.peer.(*redisPeer)
+	if ok {
+		moa.settleCancel()
+		r.Shutdown()
 	}
 }
 

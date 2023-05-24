@@ -57,7 +57,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
             description += '...';
             break;
           }
-          description += f.values.get(i);
+          description += f.values[i];
         }
 
         if (description.length > 50) {

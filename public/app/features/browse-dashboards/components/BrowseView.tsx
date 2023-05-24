@@ -1,9 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
-import { getFolderChildren } from 'app/features/search/service/folders';
+import { Spinner } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
+import { useDispatch } from 'app/types';
 
-import { DashboardsTreeItem } from '../types';
+import {
+  useFlatTreeState,
+  useCheckboxSelectionState,
+  fetchChildren,
+  setFolderOpenState,
+  setItemSelectionState,
+  useChildrenByParentUIDState,
+  setAllSelection,
+  useBrowseLoadingStatus,
+} from '../state';
+import { DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -11,70 +23,133 @@ interface BrowseViewProps {
   height: number;
   width: number;
   folderUID: string | undefined;
+  canSelect: boolean;
 }
 
-export function BrowseView({ folderUID, width, height }: BrowseViewProps) {
-  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({ [folderUID ?? '$$root']: true });
+export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
+  const status = useBrowseLoadingStatus(folderUID);
+  const dispatch = useDispatch();
+  const flatTree = useFlatTreeState(folderUID);
+  const selectedItems = useCheckboxSelectionState();
+  const childrenByParentUID = useChildrenByParentUIDState();
 
-  // Rather than storing an actual tree structure (requiring traversing the tree to update children), instead
-  // we keep track of children for each UID and then later combine them in the format required to display them
-  const [childrenByUID, setChildrenByUID] = useState<Record<string, DashboardViewItem[] | undefined>>({});
+  const handleFolderClick = useCallback(
+    (clickedFolderUID: string, isOpen: boolean) => {
+      dispatch(setFolderOpenState({ folderUID: clickedFolderUID, isOpen }));
 
-  async function loadChildrenForUID(uid: string | undefined) {
-    const folderKey = uid ?? '$$root';
-
-    const childItems = await getFolderChildren(uid, undefined, true);
-    setChildrenByUID((v) => ({ ...v, [folderKey]: childItems }));
-  }
-
-  useEffect(() => {
-    loadChildrenForUID(folderUID);
-  }, [folderUID]);
-
-  const flatTree = useMemo(
-    () => createFlatTree(folderUID, childrenByUID, openFolders),
-    [folderUID, childrenByUID, openFolders]
+      if (isOpen) {
+        dispatch(fetchChildren(clickedFolderUID));
+      }
+    },
+    [dispatch]
   );
 
-  const handleFolderClick = useCallback((uid: string, folderIsOpen: boolean) => {
-    if (folderIsOpen) {
-      loadChildrenForUID(uid);
-    }
+  useEffect(() => {
+    dispatch(fetchChildren(folderUID));
+  }, [handleFolderClick, dispatch, folderUID]);
 
-    setOpenFolders((v) => ({ ...v, [uid]: folderIsOpen }));
-  }, []);
+  const handleItemSelectionChange = useCallback(
+    (item: DashboardViewItem, isSelected: boolean) => {
+      dispatch(setItemSelectionState({ item, isSelected }));
+    },
+    [dispatch]
+  );
 
-  return <DashboardsTree items={flatTree} width={width} height={height} onFolderClick={handleFolderClick} />;
-}
+  const isSelected = useCallback(
+    (item: DashboardViewItem | '$all'): SelectionState => {
+      if (item === '$all') {
+        // We keep the boolean $all state up to date in redux, so we can short-circut
+        // the logic if we know this has been selected
+        if (selectedItems.$all) {
+          return SelectionState.Selected;
+        }
 
-// Creates a flat list of items, with nested children indicated by its increasing level
-function createFlatTree(
-  rootFolderUID: string | undefined,
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
-  openFolders: Record<string, boolean>,
-  level = 0
-): DashboardsTreeItem[] {
-  function mapItem(item: DashboardViewItem, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, childrenByUID, openFolders, level + 1);
+        // Otherwise, if we have any selected items, then it should be in 'mixed' state
+        for (const selection of Object.values(selectedItems)) {
+          if (typeof selection === 'boolean') {
+            continue;
+          }
 
-    const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.length === 0;
-    if (isOpen && emptyFolder) {
-      mappedChildren.push({ isOpen: false, level: level + 1, item: { kind: 'ui-empty-folder' } });
-    }
+          for (const uid in selection) {
+            const isSelected = selection[uid];
+            if (isSelected) {
+              return SelectionState.Mixed;
+            }
+          }
+        }
 
-    const thisItem = {
-      item,
-      level,
-      isOpen,
-    };
+        // Otherwise otherwise, nothing is selected and header should be unselected
+        return SelectionState.Unselected;
+      }
 
-    return [thisItem, ...mappedChildren];
+      const isSelected = selectedItems[item.kind][item.uid];
+      if (isSelected) {
+        return SelectionState.Selected;
+      }
+
+      // Because if _all_ children, then the parent is selected (and bailed in the previous check),
+      // this .some check will only return true if the children are partially selected
+      const isMixed = hasSelectedDescendants(item, childrenByParentUID, selectedItems);
+      if (isMixed) {
+        return SelectionState.Mixed;
+      }
+
+      return SelectionState.Unselected;
+    },
+    [selectedItems, childrenByParentUID]
+  );
+
+  if (status === 'pending') {
+    return <Spinner />;
   }
 
-  const folderKey = rootFolderUID ?? '$$root';
-  const isOpen = Boolean(openFolders[folderKey]);
-  const items = (isOpen && childrenByUID[folderKey]) || [];
+  if (status === 'fulfilled' && flatTree.length === 0) {
+    return (
+      <div style={{ width }}>
+        <EmptyListCTA
+          title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
+          buttonIcon="plus"
+          buttonTitle="Create Dashboard"
+          buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+          proTip={folderUID && 'Add/move dashboards to your folder at ->'}
+          proTipLink={folderUID && 'dashboards'}
+          proTipLinkTitle={folderUID && 'Browse dashboards'}
+          proTipTarget=""
+        />
+      </div>
+    );
+  }
 
-  return items.flatMap((item) => mapItem(item, level));
+  return (
+    <DashboardsTree
+      canSelect={canSelect}
+      items={flatTree}
+      width={width}
+      height={height}
+      isSelected={isSelected}
+      onFolderClick={handleFolderClick}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
+      onItemSelectionChange={handleItemSelectionChange}
+    />
+  );
+}
+
+function hasSelectedDescendants(
+  item: DashboardViewItem,
+  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>,
+  selectedItems: DashboardTreeSelection
+): boolean {
+  const children = childrenByParentUID[item.uid];
+  if (!children) {
+    return false;
+  }
+
+  return children.some((v) => {
+    const thisIsSelected = selectedItems[v.kind][v.uid];
+    if (thisIsSelected) {
+      return thisIsSelected;
+    }
+
+    return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
+  });
 }

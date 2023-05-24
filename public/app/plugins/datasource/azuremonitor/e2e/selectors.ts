@@ -61,11 +61,13 @@ export const components = {
       },
     },
     metricsQueryEditor: {
+      container: { input: 'data-testid azure-monitor-metrics-query-editor-with-experimental-ui' },
       metricName: {
         input: 'data-testid metric-name',
       },
     },
     logsQueryEditor: {
+      container: { input: 'data-testid azure-monitor-logs-query-editor-with-experimental-ui' },
       formatSelection: {
         input: 'data-testid format-selection',
       },
@@ -76,6 +78,14 @@ export const components = {
       },
       subscriptions: {
         input: 'data-testid azure-monitor-args-subscription',
+      },
+    },
+    tracesQueryEditor: {
+      container: {
+        input: 'data-testid azure-monitor-traces-query-editor-with-experimental-ui',
+      },
+      traceTypes: {
+        select: 'data-testid azure-monitor-traces-query-editor-trace-types',
       },
     },
   },

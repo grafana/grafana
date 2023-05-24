@@ -26,7 +26,8 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
 
-  const helpNode = enrichHelpItem(cloneDeep(navIndex['help']));
+  const helpNode = cloneDeep(navIndex['help']);
+  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
   const profileNode = navIndex['profile'];
 
   let homeUrl = config.appSubUrl || '/';
@@ -49,8 +50,8 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
 
       <TopSearchBarSection align="right">
         <QuickAdd />
-        {helpNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
+        {enrichedHelpNode && (
+          <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}

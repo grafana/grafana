@@ -52,24 +52,55 @@ export interface DataQuery {
 }
 
 export interface BaseDimensionConfig {
+  /**
+   * fixed: T -- will be added by each element
+   */
   field?: string;
-  fixed: (string | number);
+}
+
+export enum ScaleDimensionMode {
+  Linear = 'linear',
+  Quad = 'quad',
 }
 
 export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  fixed?: number;
   max: number;
   min: number;
+  mode?: ScaleDimensionMode; // | *"linear"
 }
 
-/**
- * This is actually an empty interface used mainly for naming?
- */
-export interface ColorDimensionConfig extends BaseDimensionConfig {}
+export interface ColorDimensionConfig extends BaseDimensionConfig {
+  fixed?: string; // color value
+}
+
+export enum ScalarDimensionMode {
+  Clamped = 'clamped',
+  Mod = 'mod',
+}
+
+export interface ScalarDimensionConfig extends BaseDimensionConfig {
+  fixed?: number;
+  max: number;
+  min: number;
+  mode?: ScalarDimensionMode;
+}
 
 export enum TextDimensionMode {
   Field = 'field',
   Fixed = 'fixed',
   Template = 'template',
+}
+
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  fixed?: string;
+  mode: TextDimensionMode;
+}
+
+export enum ResourceDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Mapping = 'mapping',
 }
 
 export interface MapLayerOptions {
@@ -771,6 +802,7 @@ export enum VariableFormatID {
   SQLString = 'sqlstring',
   SingleQuote = 'singlequote',
   Text = 'text',
+  UriEncode = 'uriencode',
 }
 
 export interface DataSourceRef {
@@ -784,8 +816,12 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-export interface TextDimensionConfig extends BaseDimensionConfig {
-  mode: TextDimensionMode;
+/**
+ * Links to a resource (image/svg path)
+ */
+export interface ResourceDimensionConfig extends BaseDimensionConfig {
+  fixed?: string;
+  mode: ResourceDimensionMode;
 }
 
 export interface FrameGeometrySource {

@@ -156,7 +156,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         )}
       </FieldSet>
 
-      {config.featureToggles.secureSocksDatasourceProxy && (
+      {config.secureSocksDSProxyEnabled && (
         <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
       )}
 
