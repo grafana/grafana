@@ -7,7 +7,7 @@ cascade:
       - cloud
       - oss
 title: Breaking changes
-weight: 1
+weight: 2
 ---
 
 # Breaking changes in Grafana
