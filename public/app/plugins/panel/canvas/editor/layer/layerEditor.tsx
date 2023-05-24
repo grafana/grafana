@@ -6,11 +6,11 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { InstanceState } from '../CanvasPanel';
+import { InstanceState } from '../../CanvasPanel';
+import { PlacementEditor } from '../element/PlacementEditor';
+import { optionBuilder } from '../options';
 
-import { PlacementEditor } from './PlacementEditor';
 import { TreeNavigationEditor } from './TreeNavigationEditor';
-import { optionBuilder } from './options';
 
 export interface LayerEditorProps {
   scene: Scene;

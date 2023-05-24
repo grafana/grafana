@@ -8,14 +8,14 @@ import {
   defaultElementItems,
 } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { FrameState } from '../../../../features/canvas/runtime/frame';
-import { getElementTypes } from '../utils';
+import { getElementTypes } from '../../utils';
+import { optionBuilder } from '../options';
 
 import { PlacementEditor } from './PlacementEditor';
-import { optionBuilder } from './options';
 
 export interface CanvasEditorOptions {
   element: ElementState;

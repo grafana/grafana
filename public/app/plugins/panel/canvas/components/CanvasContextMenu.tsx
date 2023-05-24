@@ -4,14 +4,13 @@ import { first } from 'rxjs/operators';
 
 import { SelectableValue } from '@grafana/data';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ElementState } from '../../../features/canvas/runtime/element';
-import { FrameState } from '../../../features/canvas/runtime/frame';
-
-import { CanvasPanel } from './CanvasPanel';
-import { AnchorPoint, LayerActionID } from './types';
-import { getElementTypes, onAddItem } from './utils';
+import { CanvasPanel } from '../CanvasPanel';
+import { AnchorPoint, LayerActionID } from '../types';
+import { getElementTypes, onAddItem } from '../utils';
 
 type Props = {
   scene: Scene;

@@ -3,13 +3,13 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
-import { LayerName } from '../../../../core/components/Layers/LayerName';
-import { TreeElement } from '../tree';
-import { LayerActionID } from '../types';
+import { LayerActionID } from '../../types';
+import { TreeViewEditorProps } from '../element/elementEditor';
 
-import { TreeViewEditorProps } from './elementEditor';
+import { TreeElement } from './tree';
 
 interface Props {
   settings: TreeViewEditorProps;

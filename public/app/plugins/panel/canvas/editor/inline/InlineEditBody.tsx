@@ -14,13 +14,14 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { activePanelSubject, InstanceState } from './CanvasPanel';
-import { TabsEditor } from './editor/TabsEditor';
-import { getElementEditor } from './editor/elementEditor';
-import { getLayerEditor } from './editor/layerEditor';
-import { addStandardCanvasEditorOptions } from './module';
-import { InlineEditTabs } from './types';
-import { getElementTypes, onAddItem } from './utils';
+import { activePanelSubject, InstanceState } from '../../CanvasPanel';
+import { addStandardCanvasEditorOptions } from '../../module';
+import { InlineEditTabs } from '../../types';
+import { getElementTypes, onAddItem } from '../../utils';
+import { getElementEditor } from '../element/elementEditor';
+import { getLayerEditor } from '../layer/layerEditor';
+
+import { TabsEditor } from './TabsEditor';
 
 export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
