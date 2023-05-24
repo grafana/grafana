@@ -9,7 +9,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export interface PanelOptions {
+export interface Options {
   /**
    * Name of the alertmanager used as a source for alerts
    */

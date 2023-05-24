@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export interface PanelOptions {
+export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   enableLogDetails: boolean;
   prettifyLogMessage: boolean;

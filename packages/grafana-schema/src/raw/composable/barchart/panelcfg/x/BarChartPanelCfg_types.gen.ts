@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithTextFormatting {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithTextFormatting {
   /**
    * Controls the radius of each bar.
    */
@@ -64,7 +64,7 @@ export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWi
   xTickLabelSpacing?: number;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   barRadius: 0,
   barWidth: 0.97,
   fullHighlight: false,
@@ -76,7 +76,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   xTickLabelSpacing: 0,
 };
 
-export interface PanelFieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */
@@ -96,7 +96,7 @@ export interface PanelFieldConfig extends common.AxisConfig, common.HideableFiel
   thresholdsStyle?: common.GraphThresholdsStyleConfig;
 }
 
-export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
+export const defaultFieldConfig: Partial<FieldConfig> = {
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,

@@ -23,7 +23,7 @@ export enum DebugMode {
   ThrowError = 'ThrowError',
 }
 
-export interface PanelOptions {
+export interface Options {
   counters?: UpdateConfig;
   mode: DebugMode;
 }

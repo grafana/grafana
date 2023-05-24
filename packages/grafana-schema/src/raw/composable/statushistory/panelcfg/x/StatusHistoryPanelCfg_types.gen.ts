@@ -11,7 +11,7 @@
 
 import * as ui from '@grafana/schema';
 
-export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
+export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
    * Controls the column width
    */
@@ -26,18 +26,18 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
   showValue: ui.VisibilityMode;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   colWidth: 0.9,
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };
 
-export interface PanelFieldConfig extends ui.HideableFieldConfig {
+export interface FieldConfig extends ui.HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
 }
 
-export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
+export const defaultFieldConfig: Partial<FieldConfig> = {
   fillOpacity: 70,
   lineWidth: 1,
 };

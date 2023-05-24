@@ -9,10 +9,10 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export interface PanelOptions {
+export interface Options {
   selectedSeries: number;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   selectedSeries: 0,
 };
