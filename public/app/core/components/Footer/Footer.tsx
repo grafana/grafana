@@ -40,11 +40,11 @@ export let getFooterLinks = (): FooterLink[] => {
 };
 
 export function getVersionMeta(version: string) {
-  const isBeta = version.includes('-beta');
+  const isPreview = version.includes('-preview');
 
   return {
     hasReleaseNotes: true,
-    isBeta,
+    isPreview,
   };
 }
 
