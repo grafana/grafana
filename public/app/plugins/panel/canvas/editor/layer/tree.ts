@@ -4,7 +4,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { RootElement } from 'app/features/canvas/runtime/root';
 
-import { DragNode, DropNode } from './types';
+import { DragNode, DropNode } from '../../types';
 
 export interface TreeElement {
   key: number;

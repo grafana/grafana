@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { Tab, TabsBar } from '@grafana/ui/src';
 
-import { InlineEditTabs } from '../types';
+import { InlineEditTabs } from '../../types';
 
 type Props = {
   onTabChange: (v: string) => void;

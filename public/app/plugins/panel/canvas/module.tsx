@@ -3,8 +3,8 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { getConnectionEditor } from './editor/connectionEditor';
-import { getElementEditor } from './editor/elementEditor';
-import { getLayerEditor } from './editor/layerEditor';
+import { getElementEditor } from './editor/element/elementEditor';
+import { getLayerEditor } from './editor/layer/layerEditor';
 import { canvasMigrationHandler } from './migrations';
 import { Options } from './models.gen';
 

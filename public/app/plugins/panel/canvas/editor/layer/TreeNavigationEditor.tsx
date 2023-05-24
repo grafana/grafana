@@ -6,17 +6,17 @@ import React, { Key, useEffect, useMemo, useState } from 'react';
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
-import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
-import { getGlobalStyles } from '../globalStyles';
-import { Options } from '../models.gen';
-import { getTreeData, onNodeDrop, TreeElement } from '../tree';
-import { DragNode, DropNode } from '../types';
-import { doSelect, getElementTypes, onAddItem } from '../utils';
+import { getGlobalStyles } from '../../globalStyles';
+import { Options } from '../../models.gen';
+import { DragNode, DropNode } from '../../types';
+import { doSelect, getElementTypes, onAddItem } from '../../utils';
+import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
-import { TreeViewEditorProps } from './elementEditor';
+import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 
