@@ -215,7 +215,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": ["public/app/plugins/panel/canvas/**/*", "/public/app/features/visualization/canvas/**/*"],
+    "matches": ["public/app/plugins/panel/canvas/**/*", "/public/app/features/canvas/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/canvas"
   },
@@ -243,7 +243,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": ["public/app/plugins/panel/geomap/**/*", "/public/app/features/visualization/geo/**/*"],
+    "matches": ["public/app/plugins/panel/geomap/**/*", "/public/app/features/geo/**/*"],
     "action": "updateLabel",
     "addLabel": "area/panel/geomap"
   },
