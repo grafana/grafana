@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useEnabled } from 'react-enable';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -65,6 +66,9 @@ const AmRoutes = () => {
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
 
+  const isPreviewEnabled = useEnabled('notification-policies.v2.matching-instances');
+  console.log('NotificationPolicies.tsx: isPreviewEnabled', isPreviewEnabled);
+
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
@@ -102,7 +106,7 @@ const AmRoutes = () => {
   // Combining with useEffect gives more predictable results because the condition is in useEffect
   const [{ value: routeAlertGroupsMap, error: instancesPreviewError }, triggerGetRouteGroupsMap] = useAsyncFn(
     getRouteGroupsMap,
-    []
+    [getRouteGroupsMap]
   );
 
   useEffect(() => {
@@ -216,7 +220,7 @@ const AmRoutes = () => {
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
 
   return (
-    <AlertingPageWrapper pageId="am-routes">
+    <>
       <AlertManagerPicker
         current={alertManagerSourceName}
         onChange={setAlertManagerSourceName}
@@ -292,7 +296,7 @@ const AmRoutes = () => {
           </>
         )}
       </TabContent>
-    </AlertingPageWrapper>
+    </>
   );
 };
 
@@ -356,4 +360,12 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   };
 }
 
-export default withErrorBoundary(AmRoutes, { style: 'page' });
+function NotificationPoliciesPage() {
+  return (
+    <AlertingPageWrapper pageId="am-routes">
+      <AmRoutes />
+    </AlertingPageWrapper>
+  );
+}
+
+export default withErrorBoundary(NotificationPoliciesPage, { style: 'page' });

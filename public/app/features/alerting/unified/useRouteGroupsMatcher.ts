@@ -1,5 +1,6 @@
 import * as comlink from 'comlink';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useEnabled } from 'react-enable';
 
 import { config, logError } from '@grafana/runtime';
 
@@ -7,48 +8,81 @@ import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/aler
 
 import { logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
+import { AlertingFeature } from './features';
 import type { RouteGroupsMatcher } from './routeGroupsMatcher.worker';
 
-const matchingRoutesPreviewEnabled = Boolean(config.featureToggles.alertingNotificationsPoliciesMatchingInstances);
+// const matchingRoutesPreviewEnabled = Boolean(config.featureToggles.alertingNotificationsPoliciesMatchingInstances);
 
 let routeMatcher: comlink.Remote<RouteGroupsMatcher> | undefined;
-if (matchingRoutesPreviewEnabled) {
-  try {
-    const worker = createWorker();
-    routeMatcher = comlink.wrap<RouteGroupsMatcher>(worker);
-  } catch (e: unknown) {
-    if (e instanceof Error) {
-      logError(e);
+
+function loadWorker() {
+  let worker: Worker | undefined;
+
+  if (routeMatcher === undefined) {
+    try {
+      worker = createWorker();
+      routeMatcher = comlink.wrap<RouteGroupsMatcher>(worker);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        logError(e);
+      }
+      console.error('CANNOT LOAD WORKER', e);
     }
-    console.error('CANNOT LOAD WORKER', e);
   }
+
+  const disposeWorker = () => {
+    if (worker && routeMatcher) {
+      routeMatcher[comlink.releaseProxy]();
+      worker.terminate();
+
+      routeMatcher = undefined;
+      worker = undefined;
+    }
+  };
+
+  return { disposeWorker };
 }
 
 export function useRouteGroupsMatcher() {
-  const getRouteGroupsMap = useCallback(async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) => {
-    if (!matchingRoutesPreviewEnabled) {
-      throw new Error('Matching routes preview is disabled');
+  const workerPreviewEnabled = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
+  console.log('workerPreviewEnabled', workerPreviewEnabled);
+
+  useEffect(() => {
+    if (workerPreviewEnabled) {
+      const { disposeWorker } = loadWorker();
+      return disposeWorker;
     }
 
-    if (!routeMatcher) {
-      throw new Error('Route Matcher has not been initialized');
-    }
+    return () => null;
+  }, [workerPreviewEnabled]);
 
-    const startTime = performance.now();
+  const getRouteGroupsMap = useCallback(
+    async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) => {
+      if (!workerPreviewEnabled) {
+        throw new Error('Matching routes preview is disabled');
+      }
 
-    const result = await routeMatcher.getRouteGroupsMap(rootRoute, alertGroups);
+      if (!routeMatcher) {
+        throw new Error('Route Matcher has not been initialized');
+      }
 
-    const timeSpent = performance.now() - startTime;
+      const startTime = performance.now();
 
-    logInfo(`Route Groups Matched in  ${timeSpent} ms`, {
-      matchingTime: timeSpent.toString(),
-      alertGroupsCount: alertGroups.length.toString(),
-      // Counting all nested routes might be too time-consuming, so we only count the first level
-      topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
-    });
+      const result = await routeMatcher.getRouteGroupsMap(rootRoute, alertGroups);
 
-    return result;
-  }, []);
+      const timeSpent = performance.now() - startTime;
+
+      logInfo(`Route Groups Matched in  ${timeSpent} ms`, {
+        matchingTime: timeSpent.toString(),
+        alertGroupsCount: alertGroups.length.toString(),
+        // Counting all nested routes might be too time-consuming, so we only count the first level
+        topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
+      });
+
+      return result;
+    },
+    [workerPreviewEnabled]
+  );
 
   return { getRouteGroupsMap };
 }
