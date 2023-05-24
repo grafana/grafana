@@ -258,12 +258,13 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 			titleUpdates = append(titleUpdates, update)
 		}
 	}
-	// This short circuit detects when no intermediate unique constraint violations are possible.
-	// It may return false positives, but never false negatives.
+
+	// If there is no overlap then an intermediate unique constraint violation is not possible. If there is an overlap,
+	// then there is the possibility of intermediate unique constraint violation.
 	if !newTitlesOverlapExisting(titleUpdates) {
-		// No possibility of an intermediate unique constraint violation.
 		return nil
 	}
+	st.Logger.Debug("detected possible intermediate unique constraint violation, creating temporary title updates", "updates", len(titleUpdates))
 
 	for _, update := range titleUpdates {
 		r := update.Existing

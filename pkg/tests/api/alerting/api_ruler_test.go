@@ -387,6 +387,28 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		assert.Equal(t, http.StatusAccepted, status)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
 	})
+
+	t.Run("trying to swap titles of existing alerts in the same folder should work", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		title0 := rulesWithUID.Rules[0].GrafanaManagedAlert.Title
+		title1 := rulesWithUID.Rules[1].GrafanaManagedAlert.Title
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = title1
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = title0
+
+		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+	})
+
+	t.Run("trying to update titles of existing alerts in a chain in the same folder should work", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = rulesWithUID.Rules[1].GrafanaManagedAlert.Title
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "something new"
+
+		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+	})
 }
 
 func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
