@@ -105,7 +105,6 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
           includeInternal={true}
           onChange={(v) => onTimezoneChange(v)}
           onBlur={() => setEditing(false)}
-          menuShouldPortal={true}
           openMenuOnFocus={false}
           width={100}
           autoFocus

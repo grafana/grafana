@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Button, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import {
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export function CreateNewButton({ inFolder, canCreateDashboard, canCreateFolder }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
   const newMenu = (
     <Menu>
       {canCreateDashboard && (
@@ -33,10 +34,10 @@ export function CreateNewButton({ inFolder, canCreateDashboard, canCreateFolder 
   );
 
   return (
-    <Dropdown overlay={newMenu}>
+    <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
       <Button>
         {getNewPhrase()}
-        <Icon name="angle-down" />
+        <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
       </Button>
     </Dropdown>
   );
