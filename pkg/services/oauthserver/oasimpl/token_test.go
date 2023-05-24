@@ -29,6 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+var (
+	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
+)
+
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 	client1 := &oauthserver.ExternalService{
 		Name:             "testapp",
@@ -451,14 +455,14 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 	}
 }
 
-type TokenResponse struct {
+type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
 	Scope       string `json:"scope"`
 	TokenType   string `json:"token_type"`
 }
 
-type Claims struct {
+type claims struct {
 	jwt.Claims
 	ClientID     string              `json:"client_id"`
 	Groups       []string            `json:"groups"`
@@ -469,10 +473,221 @@ type Claims struct {
 	Entitlements map[string][]string `json:"entitlements"`
 }
 
-var (
-	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
-)
+func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
+	tests := []struct {
+		name            string
+		tweakTestClient func(*oauthserver.ExternalService)
+		reqParams       url.Values
+		wantCode        int
+		wantScope       []string
+		wantClaims      *claims
+	}{
+		{
+			name: "should allow client credentials grant",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
+				"scope":         {"profile email groups entitlements"},
+				"audience":      {AppURL},
+			},
+			wantCode:  http.StatusOK,
+			wantScope: []string{"profile", "email", "groups", "entitlements"},
+			wantClaims: &claims{
+				Claims: jwt.Claims{
+					Subject:  "user:id:2", // From client1.ServiceAccountID
+					Issuer:   AppURL,      // From env.S.Config.Issuer
+					Audience: jwt.Audience{AppURL},
+				},
+				ClientID: "CLIENT1ID",
+				Name:     "client-1",
+				Login:    "client-1",
+				Entitlements: map[string][]string{
+					"users:impersonate": {"users:*"},
+				},
+			},
+		},
+		{
+			name: "should allow jwt-bearer grant",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
+				"assertion": {
+					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, AppURL),
+				},
+				"scope": {"profile email groups entitlements"},
+			},
+			wantCode:  http.StatusOK,
+			wantScope: []string{"profile", "email", "groups", "entitlements"},
+			wantClaims: &claims{
+				Claims: jwt.Claims{
+					Subject:  "user:id:56", // To match the assertion
+					Issuer:   AppURL,       // From env.S.Config.Issuer
+					Audience: jwt.Audience{TokenURL, AppURL},
+				},
+				ClientID: "CLIENT1ID",
+				Email:    "user56@example.org",
+				Name:     "User 56",
+				Login:    "user56",
+				Groups:   []string{"Team 1", "Team 2"},
+				Entitlements: map[string][]string{
+					"dashboards:read": {"folders:uid:UID1"},
+					"folders:read":    {"folders:uid:UID1"},
+					"users:read":      {"global.users:id:56"},
+				},
+			},
+		},
+		{
+			name: "should deny jwt-bearer grant with wrong audience",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
+				"assertion": {
+					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, "invalid audience"),
+				},
+				"scope": {"profile email groups entitlements"},
+			},
+			wantCode: http.StatusForbidden,
+		},
+		{
+			name: "should deny jwt-bearer grant for clients without the grant",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
+				"assertion": {
+					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, AppURL),
+				},
+				"scope": {"profile email groups entitlements"},
+			},
+			tweakTestClient: func(es *oauthserver.ExternalService) {
+				es.GrantTypes = string(fosite.GrantTypeClientCredentials)
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name: "should deny client_credentials grant for clients without the grant",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"CLIENT1SECRET"},
+				"scope":         {"profile email groups entitlements"},
+				"audience":      {AppURL},
+			},
+			tweakTestClient: func(es *oauthserver.ExternalService) {
+				es.GrantTypes = string(fosite.GrantTypeJWTBearer)
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name: "should deny client_credentials grant wrong secret",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"WRONG_SECRET"},
+				"scope":         {"profile email groups entitlements"},
+				"audience":      {AppURL},
+			},
+			tweakTestClient: func(es *oauthserver.ExternalService) {
+				es.GrantTypes = string(fosite.GrantTypeClientCredentials)
+			},
+			wantCode: http.StatusUnauthorized,
+		},
+		{
+			name: "should deny jwt-bearer grant for clients wrong secret",
+			reqParams: url.Values{
+				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
+				"client_id":     {"CLIENT1ID"},
+				"client_secret": {"WRONG_SECRET"},
+				"assertion": {
+					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, AppURL),
+				},
+				"scope": {"profile email groups entitlements"},
+			},
+			tweakTestClient: func(es *oauthserver.ExternalService) {
+				es.GrantTypes = string(fosite.GrantTypeJWTBearer)
+			},
+			wantCode: http.StatusUnauthorized,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := setupTestEnv(t)
+			setupHandleTokenRequestEnv(t, env, tt.tweakTestClient)
 
+			req := httptest.NewRequest("POST", "/oauth2/token", strings.NewReader(tt.reqParams.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			resp := httptest.NewRecorder()
+
+			env.S.HandleTokenRequest(resp, req)
+
+			require.Equal(t, tt.wantCode, resp.Code)
+			if tt.wantCode != http.StatusOK {
+				return
+			}
+
+			body := resp.Body.Bytes()
+			require.NotEmpty(t, body)
+
+			var tokenResp tokenResponse
+			require.NoError(t, json.Unmarshal(body, &tokenResp))
+
+			// Check token response
+			require.NotEmpty(t, tokenResp.Scope)
+			require.ElementsMatch(t, tt.wantScope, strings.Split(tokenResp.Scope, " "))
+			require.Positive(t, tokenResp.ExpiresIn)
+			require.Equal(t, "bearer", tokenResp.TokenType)
+			require.NotEmpty(t, tokenResp.AccessToken)
+
+			// Check access token
+			parsedToken, err := jwt.ParseSigned(tokenResp.AccessToken)
+			require.NoError(t, err)
+			require.Len(t, parsedToken.Headers, 1)
+			typeHeader := parsedToken.Headers[0].ExtraHeaders["typ"]
+			require.Equal(t, "at+jwt", strings.ToLower(typeHeader.(string)))
+			require.Equal(t, "RS256", parsedToken.Headers[0].Algorithm)
+			// Check access token claims
+			var claims claims
+			require.NoError(t, parsedToken.Claims(pk.Public(), &claims))
+			// Check times and remove them
+			require.Positive(t, claims.IssuedAt.Time())
+			require.Positive(t, claims.Expiry.Time())
+			claims.IssuedAt = jwt.NewNumericDate(time.Time{})
+			claims.Expiry = jwt.NewNumericDate(time.Time{})
+			// Check the ID and remove it
+			require.NotEmpty(t, claims.ID)
+			claims.ID = ""
+			// Compare the rest
+			require.Equal(t, tt.wantClaims, &claims)
+		})
+	}
+}
+
+func genAssertion(t *testing.T, signKey *rsa.PrivateKey, clientID, sub string, audience ...string) string {
+	key := jose.SigningKey{Algorithm: jose.RS256, Key: signKey}
+	assertion := jwt.Claims{
+		ID:       uuid.New().String(),
+		Issuer:   clientID,
+		Subject:  sub,
+		Audience: audience,
+		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		IssuedAt: jwt.NewNumericDate(time.Now()),
+	}
+
+	var signerOpts = jose.SignerOptions{}
+	signerOpts.WithType("JWT")
+	rsaSigner, errSigner := jose.NewSigner(key, &signerOpts)
+	require.NoError(t, errSigner)
+	builder := jwt.Signed(rsaSigner)
+	rawJWT, errSign := builder.Claims(assertion).CompactSerialize()
+	require.NoError(t, errSign)
+	return rawJWT
+}
+
+// setupHandleTokenRequestEnv creates a client and a user and sets all Mocks call for the handleTokenRequest test cases
 func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserver.ExternalService)) {
 	now := time.Now()
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte("CLIENT1SECRET"), bcrypt.DefaultCost)
@@ -544,158 +759,4 @@ func setupHandleTokenRequestEnv(t *testing.T, env *TestEnv, opt func(*oauthserve
 		user56.ID: {"Viewer"}}, nil)
 	env.TeamService.ExpectedTeamsByUser = user56Teams
 	env.UserService.ExpectedUser = user56
-}
-
-func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
-	tests := []struct {
-		name        string
-		tweakClient func(*oauthserver.ExternalService)
-		reqParams   url.Values
-		wantCode    int
-		wantScope   []string
-		wantClaims  *Claims
-	}{
-		{
-			name: "should allow client credentials grant",
-			reqParams: url.Values{
-				"grant_type":    {string(fosite.GrantTypeClientCredentials)},
-				"client_id":     {"CLIENT1ID"},
-				"client_secret": {"CLIENT1SECRET"},
-				"scope":         {"profile email groups entitlements"},
-				"audience":      {AppURL},
-			},
-			wantCode:  http.StatusOK,
-			wantScope: []string{"profile", "email", "groups", "entitlements"},
-			wantClaims: &Claims{
-				Claims: jwt.Claims{
-					Subject:  "user:id:2", // From client1.ServiceAccountID
-					Issuer:   AppURL,      // From env.S.Config.Issuer
-					Audience: jwt.Audience{AppURL},
-				},
-				ClientID: "CLIENT1ID",
-				Name:     "client-1",
-				Login:    "client-1",
-				Entitlements: map[string][]string{
-					"users:impersonate": {"users:*"},
-				},
-			},
-		},
-		{
-			name: "should allow jwt-bearer grant",
-			reqParams: url.Values{
-				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
-				"client_id":     {"CLIENT1ID"},
-				"client_secret": {"CLIENT1SECRET"},
-				"assertion": {
-					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, AppURL),
-				},
-				"scope": {"profile email groups entitlements"},
-			},
-			wantCode:  http.StatusOK,
-			wantScope: []string{"profile", "email", "groups", "entitlements"},
-			wantClaims: &Claims{
-				Claims: jwt.Claims{
-					Subject:  "user:id:56", // To match the assertion
-					Issuer:   AppURL,       // From env.S.Config.Issuer
-					Audience: jwt.Audience{TokenURL, AppURL},
-				},
-				ClientID: "CLIENT1ID",
-				Email:    "user56@example.org",
-				Name:     "User 56",
-				Login:    "user56",
-				Groups:   []string{"Team 1", "Team 2"},
-				Entitlements: map[string][]string{
-					"dashboards:read": {"folders:uid:UID1"},
-					"folders:read":    {"folders:uid:UID1"},
-					"users:read":      {"global.users:id:56"},
-				},
-			},
-		},
-		{
-			name: "should deny jwt-bearer grant with wrong audience",
-			reqParams: url.Values{
-				"grant_type":    {string(fosite.GrantTypeJWTBearer)},
-				"client_id":     {"CLIENT1ID"},
-				"client_secret": {"CLIENT1SECRET"},
-				"assertion": {
-					genAssertion(t, Client1Key, "CLIENT1ID", "user:id:56", TokenURL, "invalid audience"),
-				},
-				"scope": {"profile email groups entitlements"},
-			},
-			wantCode: http.StatusForbidden,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			env := setupTestEnv(t)
-			setupHandleTokenRequestEnv(t, env, tt.tweakClient)
-
-			req := httptest.NewRequest("POST", "/oauth2/token", strings.NewReader(tt.reqParams.Encode()))
-			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-			resp := httptest.NewRecorder()
-
-			env.S.HandleTokenRequest(resp, req)
-
-			require.Equal(t, tt.wantCode, resp.Code)
-			if tt.wantCode != http.StatusOK {
-				return
-			}
-
-			body := resp.Body.Bytes()
-			require.NotEmpty(t, body)
-
-			var tokenResp TokenResponse
-			require.NoError(t, json.Unmarshal(body, &tokenResp))
-
-			// Check token response
-			require.NotEmpty(t, tokenResp.Scope)
-			require.ElementsMatch(t, tt.wantScope, strings.Split(tokenResp.Scope, " "))
-			require.Positive(t, tokenResp.ExpiresIn)
-			require.Equal(t, "bearer", tokenResp.TokenType)
-			require.NotEmpty(t, tokenResp.AccessToken)
-
-			// Check access token
-			parsedToken, err := jwt.ParseSigned(tokenResp.AccessToken)
-			require.NoError(t, err)
-			require.Len(t, parsedToken.Headers, 1)
-			typeHeader := parsedToken.Headers[0].ExtraHeaders["typ"]
-			require.Equal(t, "at+jwt", strings.ToLower(typeHeader.(string)))
-			require.Equal(t, "RS256", parsedToken.Headers[0].Algorithm)
-			// Check access token claims
-			var claims Claims
-			require.NoError(t, parsedToken.Claims(pk.Public(), &claims))
-			// Check times and remove them
-			require.Positive(t, claims.IssuedAt.Time())
-			require.Positive(t, claims.Expiry.Time())
-			claims.IssuedAt = jwt.NewNumericDate(time.Time{})
-			claims.Expiry = jwt.NewNumericDate(time.Time{})
-			// Check the ID and remove it
-			require.NotEmpty(t, claims.ID)
-			claims.ID = ""
-			// Compare the rest
-			require.Equal(t, tt.wantClaims, &claims)
-		})
-	}
-}
-
-func genAssertion(t *testing.T, signKey *rsa.PrivateKey, clientID, sub string, audience ...string) string {
-	key := jose.SigningKey{Algorithm: jose.RS256, Key: signKey}
-	assertion := jwt.Claims{
-		ID:       uuid.New().String(),
-		Issuer:   clientID,
-		Subject:  sub,
-		Audience: audience,
-		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		IssuedAt: jwt.NewNumericDate(time.Now()),
-	}
-
-	var signerOpts = jose.SignerOptions{}
-	signerOpts.WithType("JWT")
-	rsaSigner, errSigner := jose.NewSigner(key, &signerOpts)
-	require.NoError(t, errSigner)
-	builder := jwt.Signed(rsaSigner)
-	rawJWT, errSign := builder.Claims(assertion).CompactSerialize()
-	require.NoError(t, errSign)
-	return rawJWT
 }
