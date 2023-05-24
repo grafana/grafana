@@ -60,4 +60,4 @@ export const defaultOptions: Partial<Options> = {
   displayLabels: [],
 };
 
-export interface PanelFieldConfig extends common.HideableFieldConfig {}
+export interface FieldConfig extends common.HideableFieldConfig {}
