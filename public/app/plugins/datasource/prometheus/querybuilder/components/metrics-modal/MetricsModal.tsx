@@ -236,7 +236,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
-      title="Browse metrics"
+      title="Metrics explorer"
       onDismiss={onClose}
       aria-label="Browse metrics"
       className={styles.modal}

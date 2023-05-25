@@ -22,7 +22,7 @@ describe('MetricsModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Browse metrics')).toBeInTheDocument();
+      expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
     });
   });
 

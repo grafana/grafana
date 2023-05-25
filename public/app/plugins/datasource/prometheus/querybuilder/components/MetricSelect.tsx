@@ -205,7 +205,7 @@ export function MetricSelect({
                 const metricsModalOption: SelectableValue[] = [
                   {
                     value: 'BrowseMetrics',
-                    label: 'Browse metrics',
+                    label: 'Metrics explorer',
                     description: 'Browse and filter metrics and metadata with a fuzzy search',
                   },
                 ];
