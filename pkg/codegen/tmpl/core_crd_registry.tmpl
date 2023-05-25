@@ -1,0 +1,83 @@
+package {{ .PackageName }}
+
+import (
+	"encoding/json"
+	"fmt"
+  "context"
+
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/registry/corekind"
+  "github.com/grafana/dskit/services"
+	"github.com/grafana/thema"
+	"gopkg.in/yaml.v3"
+  grdClientset "github.com/grafana/grafana-apiserver/pkg/client/clientset/clientset/typed/kinds/v1"
+  applyConfig "github.com/grafana/grafana-apiserver/pkg/client/applyconfiguration/kinds/v1"
+)
+
+// New constructs a new [Registry].
+//
+// All calling code within grafana/grafana is expected to use Grafana's
+// singleton [thema.Runtime], returned from [cuectx.GrafanaThemaRuntime]. If nil
+// is passed, the singleton will be used.
+func New(
+  rt *thema.Runtime,
+  restConfigProvider apiserver.RestConfigProvider
+) *Registry {
+	breg := corekind.NewBase(rt)
+	r := doNewRegistry(
+    breg,
+    restConfigProvider,
+  )
+  r.BasicService = services.NewBasicService(r.start, r.run, nil).WithName(modules.KubernetesGRDs)
+  return r
+}
+
+// Registry is a list of all of Grafana's core structured kinds, wrapped in a
+// standard [crd.CRD] interface that makes them usable for interactions
+// with certain Kubernetes controller and apimachinery libraries.
+//
+// There are two access methods: individually via literal named methods, or as
+// a slice returned from All() method.
+//
+// Prefer the individual named methods for use cases where the particular kind(s)
+// that are needed are known to the caller. Prefer All() when performing operations
+// generically across all kinds.
+type Registry struct {
+  *services.BasicService
+   restConfigProvider apiserver.RestConfigProvider
+}
+
+func (r *Registry) start(ctx context.Context) error {
+   var (
+    err error
+    b []byte
+  )
+  clientSet, err := grdClientset.NewForConfig(r.restConfigProvider.GetRestConfig())
+  if err != nil {
+    return err 
+  }
+  {{range $i, $k := .Kinds }}
+  /************************ {{ $k.Props.Name }} ************************/
+  err = clientSet.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
+  if err != nil {
+    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
+  }
+
+{{end}}
+  return nil
+}
+
+func (r *Registry) run(ctx context.Context) error {
+  <-ctx.Done()
+  return nil
+}
+
+func doNewRegistry(
+  breg *corekind.Base,
+   restConfigProvider apiserver.RestConfigProvider
+) *Registry {
+  reg := &Registry{}
+  reg.restConfigProvider = restConfigProvider
+	return reg
+}

@@ -7,8 +7,9 @@ const (
 
 	HTTPServer string = "http-server"
 
-	KubernetesAPIServer string = "kubernetes-apiserver"
-	Kubernetes          string = "kubernetes"
+	KubernetesAPIServer    string = "kubernetes-apiserver"
+	KubernetesRegistration string = "kubernetes-registration"
+	Kubernetes             string = "kubernetes"
 
 	Provisioning string = "provisioning"
 )
@@ -19,7 +20,7 @@ var DependencyMap = map[string][]string{
 	HTTPServer: {CertGenerator},
 
 	KubernetesAPIServer: {CertGenerator},
-	Kubernetes:          {KubernetesAPIServer},
+	Kubernetes:          {KubernetesAPIServer, KubernetesRegistration},
 
 	Provisioning: {},
 
