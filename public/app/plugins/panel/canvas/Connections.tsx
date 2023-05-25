@@ -1,12 +1,15 @@
 import React from 'react';
+import { BehaviorSubject } from 'rxjs';
 
-import { ConnectionPath } from 'app/features/canvas';
+import { config } from '@grafana/runtime';
+import { CanvasConnection, ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { CONNECTION_ANCHOR_ALT, ConnectionAnchors } from './ConnectionAnchors';
+import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
-import { isConnectionSource, isConnectionTarget } from './utils';
+import { ConnectionState } from './types';
+import { getConnections, isConnectionSource, isConnectionTarget } from './utils';
 
 export class Connections {
   scene: Scene;
@@ -16,10 +19,35 @@ export class Connections {
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
+  didConnectionLeaveHighlight?: boolean;
+  state: ConnectionState[] = [];
+  readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
 
   constructor(scene: Scene) {
     this.scene = scene;
+    this.updateState();
   }
+
+  select = (connection: ConnectionState | undefined) => {
+    if (connection === this.selection.value) {
+      return;
+    }
+    this.selection.next(connection);
+  };
+
+  updateState = () => {
+    const s = this.selection.value;
+    this.state = getConnections(this.scene.byName);
+
+    if (s) {
+      for (let c of this.state) {
+        if (c.source === s.source && c.index === s.index) {
+          this.selection.next(c);
+          break;
+        }
+      }
+    }
+  };
 
   setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
@@ -118,11 +146,19 @@ export class Connections {
     this.connectionLine.setAttribute('x2', `${x}`);
     this.connectionLine.setAttribute('y2', `${y}`);
 
+    const connectionLineX1 = this.connectionLine.x1.baseVal.value;
+    const connectionLineY1 = this.connectionLine.y1.baseVal.value;
+    if (!this.didConnectionLeaveHighlight) {
+      const connectionLength = Math.hypot(x - connectionLineX1, y - connectionLineY1);
+      if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET && this.connectionSVG) {
+        this.didConnectionLeaveHighlight = true;
+        this.connectionSVG.style.display = 'block';
+        this.isDrawingConnection = true;
+      }
+    }
+
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-        const connectionLineX1 = this.connectionLine.x1.baseVal.value;
-        const connectionLineY1 = this.connectionLine.y1.baseVal.value;
-
         const sourceRect = this.connectionSource.div.getBoundingClientRect();
         const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
 
@@ -165,8 +201,14 @@ export class Connections {
             y: targetY,
           },
           targetName: targetName,
-          color: 'white',
-          size: 10,
+          color: {
+            fixed: config.theme2.colors.text.primary,
+          },
+          size: {
+            fixed: 2,
+            min: 1,
+            max: 10,
+          },
           path: ConnectionPath.Straight,
         };
 
@@ -174,9 +216,10 @@ export class Connections {
         if (!options.connections) {
           options.connections = [];
         }
-        this.connectionSource.options.connections = [...options.connections, connection];
-
-        this.connectionSource.onChange(this.connectionSource.options);
+        if (this.didConnectionLeaveHighlight) {
+          this.connectionSource.options.connections = [...options.connections, connection];
+          this.connectionSource.onChange(this.connectionSource.options);
+        }
       }
 
       if (this.connectionSVG) {
@@ -189,6 +232,8 @@ export class Connections {
       }
 
       this.isDrawingConnection = false;
+      this.updateState();
+      this.scene.save();
     }
   };
 
@@ -198,10 +243,8 @@ export class Connections {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
       const parentBoundingRect = this.scene.div.parentElement.getBoundingClientRect();
 
-      // TODO: Make this not as magic numbery -> related to the height / width of highlight ellipse
-      const connectionAnchorHighlightOffset = 8;
-      const x = connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorHighlightOffset;
-      const y = connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorHighlightOffset;
+      const x = connectionStartTargetBox.x - parentBoundingRect.x + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
+      const y = connectionStartTargetBox.y - parentBoundingRect.y + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
 
       const mouseX = clientX - parentBoundingRect.x;
       const mouseY = clientY - parentBoundingRect.y;
@@ -210,12 +253,17 @@ export class Connections {
       this.connectionLine.setAttribute('y1', `${y}`);
       this.connectionLine.setAttribute('x2', `${mouseX}`);
       this.connectionLine.setAttribute('y2', `${mouseY}`);
-      this.connectionSVG.style.display = 'block';
-
-      this.isDrawingConnection = true;
+      this.didConnectionLeaveHighlight = false;
     }
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
+  };
+
+  onChange = (current: ConnectionState, update: CanvasConnection) => {
+    const connections = current.source.options.connections?.splice(0) ?? [];
+    connections[current.index] = update;
+    current.source.onChange({ ...current.source.options, connections });
+    this.updateState();
   };
 
   // used for moveable actions

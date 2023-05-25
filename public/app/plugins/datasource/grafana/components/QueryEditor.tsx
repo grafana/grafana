@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { PureComponent } from 'react';
+import { DropEvent, FileRejection } from 'react-dropzone';
 
 import {
   QueryEditorProps,
@@ -15,7 +16,7 @@ import {
   getValueFormat,
   formattedValueToString,
 } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
   InlineField,
   Select,
@@ -30,7 +31,7 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { hasAlphaPanels } from 'app/core/config';
-import { readSpreadsheet } from 'app/core/utils/sheet';
+import * as DFImport from 'app/features/dataframe-import';
 import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
@@ -133,7 +134,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
           next: (rsp) => {
             if (rsp.data.length) {
               const names = (rsp.data[0] as DataFrame).fields[0];
-              const folders = names.values.toArray().map((v) => ({
+              const folders = names.values.map((v) => ({
                 value: v,
                 label: v,
               }));
@@ -376,8 +377,31 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     return null;
   };
 
-  onDropAccepted = (files: File[]) => {
-    this.props.onChange({ ...this.props.query, file: { name: files[0].name, size: files[0].size } });
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      this.props.onChange({
+        ...this.props.query,
+        file: { name: next.file.name, size: next.file.size },
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot,
+      });
+      this.props.onRunQuery();
+
+      reportInteraction('grafana_datasource_drop_files', {
+        number_of_files: fileRejections.length + acceptedFiles.length,
+        accepted_files: acceptedFiles.map((a) => {
+          return { type: a.type, size: a.size };
+        }),
+        rejected_files: fileRejections.map((r) => {
+          return { type: r.file.type, size: r.file.size };
+        }),
+      });
+    });
   };
 
   renderSnapshotQuery() {
@@ -399,20 +423,15 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
               readAs="readAsArrayBuffer"
               fileListRenderer={this.fileListRenderer}
               options={{
-                onDropAccepted: this.onDropAccepted,
-                maxSize: 200000,
+                onDrop: this.onFileDrop,
+                maxSize: DFImport.maxFileSize,
                 multiple: false,
-                accept: {
-                  'text/plain': ['.csv', '.txt'],
-                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-                  'application/vnd.ms-excel': ['.xls'],
-                  'application/vnd.apple.numbers': ['.numbers'],
-                  'application/vnd.oasis.opendocument.spreadsheet': ['.ods'],
-                },
+                accept: DFImport.acceptedFiles,
               }}
-              onLoad={this.onFileDrop}
             >
-              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+              <FileDropzoneDefaultChildren
+                primaryText={this.props?.query?.file ? 'Replace file' : 'Drop file here or click to upload'}
+              />
             </FileDropzone>
             {file && (
               <div className={styles.file}>
@@ -436,28 +455,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
       search,
     });
     onRunQuery();
-  };
-
-  onFileDrop = (result: ArrayBuffer | String | null) => {
-    const snapshot: DataFrameJSON[] = [];
-
-    if (result) {
-      if (!result || result instanceof String) {
-        return;
-      }
-      const dataFrames = readSpreadsheet(result);
-      dataFrames.forEach((df) => {
-        const dataframeJson = dataFrameToJSON(df);
-        snapshot.push(dataframeJson);
-      });
-    }
-
-    this.props.onChange({
-      ...this.props.query,
-      queryType: GrafanaQueryType.Snapshot,
-      snapshot,
-    });
-    this.props.onRunQuery();
   };
 
   render() {

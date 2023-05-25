@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -10,7 +10,7 @@ import mdx from './ContextMenu.mdx';
 import { renderMenuItems } from './ContextMenuStoryHelper';
 import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
 
-const meta: ComponentMeta<typeof ContextMenu> = {
+const meta: Meta<typeof ContextMenu> = {
   title: 'General/ContextMenu',
   component: ContextMenu,
   decorators: [withCenteredStory],
@@ -34,11 +34,11 @@ const renderHeader = (): React.ReactNode => {
   return <h6>Menu</h6>;
 };
 
-export const Basic: ComponentStory<typeof ContextMenu> = (args: ContextMenuProps) => {
+export const Basic: StoryFn<typeof ContextMenu> = (args: ContextMenuProps) => {
   return <ContextMenu {...args} onClose={() => action('onClose')('closed menu')} renderHeader={renderHeader} />;
 };
 
-export const WithState: ComponentStory<typeof WithContextMenu> = (args: WithContextMenuProps) => {
+export const WithState: StoryFn<typeof WithContextMenu> = (args: WithContextMenuProps) => {
   return (
     <WithContextMenu {...args}>
       {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}

@@ -9,6 +9,7 @@ import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
@@ -35,32 +36,10 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
 >;
 
 class RootComponent extends Component<AppRootProps> {
-  static timesMounted = 0;
-  componentDidMount() {
-    RootComponent.timesMounted += 1;
-    const node: NavModelItem = {
-      text: 'My Great plugin',
-      children: [
-        {
-          text: 'A page',
-          url: '/apage',
-          id: 'a',
-        },
-        {
-          text: 'Another page',
-          url: '/anotherpage',
-          id: 'b',
-        },
-      ],
-    };
-    this.props.onNavChanged({
-      main: node,
-      node,
-    });
-  }
-
+  static timesRendered = 0;
   render() {
-    return <p>my great plugin</p>;
+    RootComponent.timesRendered += 1;
+    return <p>my great component</p>;
   }
 }
 
@@ -90,14 +69,16 @@ function renderUnderRouter() {
   appPluginNavItem.parentItem = appsSection;
 
   const store = configureStore();
-  const route = { component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} /> };
+  const route = {
+    component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
+  } as unknown as RouteDescriptor;
   locationService.push('/a/my-awesome-plugin');
 
   render(
     <Router history={locationService.getHistory()}>
       <Provider store={store}>
         <GrafanaContext.Provider value={getGrafanaContextMock()}>
-          <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+          <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route} />} />
         </GrafanaContext.Provider>
       </Provider>
     </Router>
@@ -116,35 +97,8 @@ describe('AppRootPage', () => {
     enabled: true,
   });
 
-  it('should not mount plugin twice if nav is changed', async () => {
-    // reproduces https://github.com/grafana/grafana/pull/28105
-    getPluginSettingsMock.mockResolvedValue(pluginMeta);
-
-    const plugin = new AppPlugin();
-    plugin.meta = pluginMeta;
-    plugin.root = RootComponent;
-
-    importAppPluginMock.mockResolvedValue(plugin);
-
-    renderUnderRouter();
-
-    // check that plugin and nav links were rendered, and plugin is mounted only once
-    expect(await screen.findByText('my great plugin')).toBeVisible();
-    expect(await screen.findByLabelText('Tab A page')).toBeVisible();
-    expect(await screen.findByLabelText('Tab Another page')).toBeVisible();
-    expect(RootComponent.timesMounted).toEqual(1);
-  });
-
   it('should not render component if not at plugin path', async () => {
     getPluginSettingsMock.mockResolvedValue(pluginMeta);
-
-    class RootComponent extends Component<AppRootProps> {
-      static timesRendered = 0;
-      render() {
-        RootComponent.timesRendered += 1;
-        return <p>my great component</p>;
-      }
-    }
 
     const plugin = new AppPlugin();
     plugin.meta = pluginMeta;
@@ -157,18 +111,18 @@ describe('AppRootPage', () => {
     expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(RootComponent.timesRendered).toEqual(4);
+    expect(RootComponent.timesRendered).toEqual(2);
   });
 });

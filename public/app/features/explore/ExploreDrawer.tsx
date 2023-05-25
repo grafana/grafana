@@ -43,7 +43,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       left: calc(50% - 100px) !important;
       top: -4px !important;
       cursor: grab;
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.pill};
       &:hover {
         background: ${theme.colors.secondary.shade};
       }

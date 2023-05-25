@@ -31,7 +31,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
 
-	testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
+	u := testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -55,13 +55,13 @@ func TestIntegrationPrometheus(t *testing.T) {
 	}
 
 	uid := "prometheus"
-	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgId:          1,
+	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "Prometheus",
 		Type:           datasources.DS_PROMETHEUS,
-		Uid:            uid,
-		Url:            outgoingServer.URL,
+		UID:            uid,
+		URL:            outgoingServer.URL,
 		BasicAuth:      true,
 		BasicAuthUser:  "basicAuthUser",
 		JsonData:       jsonData,

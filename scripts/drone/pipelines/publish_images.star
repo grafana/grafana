@@ -39,7 +39,7 @@ def publish_image_steps(edition, mode, docker_repo):
 
     if edition == "oss":
         steps.append(
-            publish_images_step(edition, "release", mode, "grafana/grafana-oss"),
+            publish_images_step(edition, "release", mode, "grafana-oss"),
         )
 
     return steps

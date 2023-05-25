@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
@@ -66,12 +67,12 @@ describe('Cloudwatch SQLGroupBy', () => {
 
     const addButton = screen.getByRole('button', { name: 'Add' });
     expect(addButton).toBeInTheDocument();
-    addButton.click();
+    await userEvent.click(addButton);
 
-    expect(await screen.findByText('Choose')).toBeInTheDocument();
+    expect(screen.getByText('Choose')).toBeInTheDocument();
 
     selectEvent.openMenu(screen.getByLabelText(/Group by/));
-    expect(await screen.findByText('Template Variables')).toBeInTheDocument();
+    expect(screen.getByText('Template Variables')).toBeInTheDocument();
   });
 
   it('should allow removing a dimension filter', async () => {
@@ -84,10 +85,8 @@ describe('Cloudwatch SQLGroupBy', () => {
 
     const removeButton = screen.getByRole('button', { name: 'remove' });
     expect(removeButton).toBeInTheDocument();
-    removeButton.click();
+    await userEvent.click(removeButton);
 
-    await waitFor(() => {
-      expect(screen.queryByText('InstanceId')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText('InstanceId')).not.toBeInTheDocument();
   });
 });

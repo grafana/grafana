@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
 
@@ -6,7 +6,7 @@ interface Props {
   pageName?: string;
 }
 
-const PageLoader: FC<Props> = ({ pageName = '' }) => {
+const PageLoader = ({ pageName = '' }: Props) => {
   const loadingText = `Loading ${pageName}...`;
   return (
     <div className="page-loader-wrapper">

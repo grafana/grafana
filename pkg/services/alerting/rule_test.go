@@ -91,11 +91,11 @@ func TestAlertRuleModel(t *testing.T) {
 		return &FakeCondition{}, nil
 	})
 
-	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-	err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
+	firstNotification := models.CreateAlertNotificationCommand{UID: "notifier1", OrgID: 1, Name: "1"}
+	_, err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 	require.Nil(t, err)
-	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-	err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
+	secondNotification := models.CreateAlertNotificationCommand{UID: "notifier2", OrgID: 1, Name: "2"}
+	_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
@@ -124,10 +124,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 
 			Settings: alertJSON,
 		}
@@ -163,10 +163,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 
 			Settings: alertJSON,
 		}
@@ -193,10 +193,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 			Frequency:   0,
 
 			Settings: alertJSON,
@@ -231,10 +231,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 			Frequency:   0,
 
 			Settings: alertJSON,

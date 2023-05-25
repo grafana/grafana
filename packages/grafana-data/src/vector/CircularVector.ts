@@ -1,7 +1,6 @@
-import { MutableVector } from '../types/vector';
+import { makeArrayIndexableVector } from '../types';
 
 import { FunctionalVector } from './FunctionalVector';
-import { vectorToArray } from './vectorToArray';
 
 interface CircularOptions<T> {
   buffer?: T[];
@@ -17,8 +16,9 @@ interface CircularOptions<T> {
  * to match a configured capacity.
  *
  * @public
+ * @deprecated use a simple Arrays
  */
-export class CircularVector<T = any> extends FunctionalVector<T> implements MutableVector<T> {
+export class CircularVector<T = any> extends FunctionalVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
@@ -36,6 +36,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
     if (options.capacity) {
       this.setCapacity(options.capacity);
     }
+    return makeArrayIndexableVector(this);
   }
 
   /**
@@ -43,7 +44,7 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
    *  * head vs tail
    *  * growing buffer vs overwriting values
    */
-  private getAddFunction() {
+  private getAddFunction(): (value: T) => void {
     // When we are not at capacity, it should actually modify the buffer
     if (this.capacity > this.buffer.length) {
       if (this.tail) {
@@ -114,31 +115,18 @@ export class CircularVector<T = any> extends FunctionalVector<T> implements Muta
   }
 
   reverse() {
-    this.buffer.reverse();
+    return this.buffer.reverse();
   }
-
-  /**
-   * Add the value to the buffer
-   */
-  add: (value: T) => void;
 
   get(index: number) {
     return this.buffer[(index + this.index) % this.buffer.length];
   }
 
-  set(index: number, value: T) {
+  set(index: number, value: any) {
     this.buffer[(index + this.index) % this.buffer.length] = value;
   }
 
   get length() {
     return this.buffer.length;
-  }
-
-  toArray(): T[] {
-    return vectorToArray(this);
-  }
-
-  toJSON(): T[] {
-    return vectorToArray(this);
   }
 }

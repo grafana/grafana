@@ -115,7 +115,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
 function runRequestScenarioThatThrows(desc: string, fn: (ctx: ScenarioCtx) => void) {
   describe(desc, () => {
     const ctx = new ScenarioCtx();
-    let consoleSpy: jest.SpyInstance<any>;
+    let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
       consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -220,6 +220,49 @@ describe('runRequest', () => {
           },
         ]
       `);
+    });
+  });
+
+  runRequestScenario('When the response contains traceIds', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'data-a', refId: 'A' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-b', refId: 'B' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-c', refId: 'C' } as DataFrame],
+        traceIds: ['t1', 't2'],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-d', refId: 'D' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-e', refId: 'E' } as DataFrame],
+        traceIds: ['t3', 't4'],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-e', refId: 'E' } as DataFrame],
+        traceIds: ['t4', 't4'],
+      });
+    });
+    it('should collect traceIds correctly', () => {
+      const { results } = ctx;
+      expect(results).toHaveLength(6);
+      expect(results[0].traceIds).toBeUndefined();
+
+      // this is the result of adding no-traces data to no-traces state
+      expect(results[1].traceIds).toBeUndefined();
+      // this is the result of adding with-traces data to no-traces state
+      expect(results[2].traceIds).toStrictEqual(['t1', 't2']);
+      // this is the result of adding no-traces data to with-traces state
+      expect(results[3].traceIds).toStrictEqual(['t1', 't2']);
+      // this is the result of adding with-traces data to with-traces state
+      expect(results[4].traceIds).toStrictEqual(['t1', 't2', 't3', 't4']);
+      // this is the result of adding with-traces data to with-traces state with duplicate traceIds
+      expect(results[5].traceIds).toStrictEqual(['t1', 't2', 't3', 't4']);
     });
   });
 

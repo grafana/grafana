@@ -9,7 +9,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	alertingModels "github.com/grafana/alerting/alerting/models"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -130,7 +130,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					for k, v := range alertState.Annotations {
 						expected[k] = v
 					}
-					expected["__alertImageToken__"] = alertState.Image.Token
+					expected["__alertImageToken__"] = "token://" + alertState.Image.Token
 
 					require.Equal(t, expected, result.Annotations)
 				})

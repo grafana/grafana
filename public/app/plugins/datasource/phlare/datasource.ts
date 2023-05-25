@@ -1,17 +1,29 @@
 import Prism, { Grammar } from 'prismjs';
 import { Observable, of } from 'rxjs';
 
-import { AbstractQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import {
+  AbstractQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  ScopedVars,
+} from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
 import { normalizeQuery } from './QueryEditor/QueryEditor';
-import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
+import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
-  constructor(instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>) {
+  backendType: BackendType;
+
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
+    this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
   }
 
   query(request: DataQueryRequest<Query>): Observable<DataQueryResponse> {
@@ -40,13 +52,24 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('profileTypes');
   }
 
-  async getSeries(): Promise<SeriesMessage> {
-    // For now, we send empty matcher to get all the series
-    return await super.getResource('series', { matchers: ['{}'] });
+  async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
+    return await super.getResource('labelNames', { query, start, end });
   }
 
-  async getLabelNames(): Promise<string[]> {
-    return await super.getResource('labelNames');
+  async getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]> {
+    return await super.getResource('labelValues', { label, query, start, end });
+  }
+
+  // We need the URL here because it may not be saved on the backend yet when used from config page.
+  async getBackendType(url: string): Promise<{ backendType: BackendType | 'unknown' }> {
+    return await super.getResource('backendType', { url });
+  }
+
+  applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
+    return {
+      ...query,
+      labelSelector: this.templateSrv.replace(query.labelSelector ?? '', scopedVars),
+    };
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<Query[]> {
@@ -59,6 +82,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       labelSelector: toPromLikeExpr(labelBasedQuery),
       queryType: 'both',
       profileTypeId: '',
+      maxNodes: 16,
       groupBy: [''],
     };
   }

@@ -15,7 +15,8 @@ import (
 
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider          func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error)
-	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error)
+	RotateTokenProvider          func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
+	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider  func(ctx context.Context, userId int64) error
@@ -34,8 +35,8 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 				UnhashedToken: "",
 			}, nil
 		},
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error) {
-			return false, nil
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
+			return false, nil, nil
 		},
 		LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -74,12 +75,16 @@ func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *user.U
 	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
 }
 
+func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+	return s.RotateTokenProvider(ctx, cmd)
+}
+
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 	return s.LookupTokenProvider(context.Background(), unhashedToken)
 }
 
 func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-	userAgent string) (bool, error) {
+	userAgent string) (bool, *auth.UserToken, error) {
 	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
 }
 

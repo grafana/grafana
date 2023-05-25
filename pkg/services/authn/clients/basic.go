@@ -2,10 +2,8 @@ package clients
 
 import (
 	"context"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -23,14 +21,18 @@ type Basic struct {
 	client authn.PasswordClient
 }
 
+func (c *Basic) String() string {
+	return c.Name()
+}
+
 func (c *Basic) Name() string {
 	return authn.ClientBasic
 }
 
 func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	username, password, err := util.DecodeBasicAuthHeader(getBasicAuthHeaderFromRequest(r))
-	if err != nil {
-		return nil, errDecodingBasicAuthHeader.Errorf("failed to decode basic auth header: %w", err)
+	username, password, ok := getBasicAuthFromRequest(r)
+	if !ok {
+		return nil, errDecodingBasicAuthHeader.Errorf("failed to decode basic auth header")
 	}
 
 	return c.client.AuthenticatePassword(ctx, r, username, password)
@@ -45,22 +47,14 @@ func (c *Basic) Priority() uint {
 }
 
 func looksLikeBasicAuthRequest(r *authn.Request) bool {
-	return getBasicAuthHeaderFromRequest(r) != ""
+	_, _, ok := getBasicAuthFromRequest(r)
+	return ok
 }
 
-func getBasicAuthHeaderFromRequest(r *authn.Request) string {
+func getBasicAuthFromRequest(r *authn.Request) (string, string, bool) {
 	if r.HTTPRequest == nil {
-		return ""
+		return "", "", false
 	}
 
-	header := r.HTTPRequest.Header.Get(authorizationHeaderName)
-	if header == "" {
-		return ""
-	}
-
-	if !strings.HasPrefix(header, basicPrefix) {
-		return ""
-	}
-
-	return header
+	return r.HTTPRequest.BasicAuth()
 }

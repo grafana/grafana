@@ -28,9 +28,9 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			alertmanagerChoice: definitions.ExternalAlertmanagers,
 			datasources: []*datasources.DataSource{
 				{
-					OrgId: 1,
+					OrgID: 1,
 					Type:  datasources.DS_ALERTMANAGER,
-					Url:   "http://localhost:9000",
+					URL:   "http://localhost:9000",
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
 						definitions.HandleGrafanaManagedAlerts: true,
 					}),
@@ -44,9 +44,9 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			alertmanagerChoice: definitions.ExternalAlertmanagers,
 			datasources: []*datasources.DataSource{
 				{
-					OrgId:    1,
+					OrgID:    1,
 					Type:     datasources.DS_ALERTMANAGER,
-					Url:      "http://localhost:9000",
+					URL:      "http://localhost:9000",
 					JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 				},
 			},

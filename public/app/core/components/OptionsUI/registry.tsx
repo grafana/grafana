@@ -33,7 +33,7 @@ import { ThresholdsValueEditor } from 'app/features/dimensions/editors/Threshold
 import { ValueMappingsEditor } from 'app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor';
 
 import { DashboardPicker, DashboardPickerOptions } from './DashboardPicker';
-import { ColorValueEditor } from './color';
+import { ColorValueEditor, ColorValueEditorSettings } from './color';
 import { FieldColorEditor } from './fieldColor';
 import { DataLinksValueEditor } from './links';
 import { MultiSelectValueEditor } from './multiSelect';
@@ -87,21 +87,21 @@ export const getAllOptionEditors = () => {
     },
   };
 
-  const select: StandardEditorsRegistryItem<any> = {
+  const select: StandardEditorsRegistryItem = {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
     editor: SelectValueEditor as any,
   };
 
-  const multiSelect: StandardEditorsRegistryItem<any> = {
+  const multiSelect: StandardEditorsRegistryItem = {
     id: 'multi-select',
     name: 'Multi select',
     description: 'Allows for multiple option selection',
     editor: MultiSelectValueEditor as any,
   };
 
-  const radio: StandardEditorsRegistryItem<any> = {
+  const radio: StandardEditorsRegistryItem = {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
@@ -117,12 +117,14 @@ export const getAllOptionEditors = () => {
     editor: UnitValueEditor as any,
   };
 
-  const color: StandardEditorsRegistryItem<string> = {
+  const color: StandardEditorsRegistryItem<string, ColorValueEditorSettings> = {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',
     editor(props) {
-      return <ColorValueEditor value={props.value} onChange={props.onChange} />;
+      return (
+        <ColorValueEditor value={props.value} onChange={props.onChange} settings={props.item.settings} details={true} />
+      );
     },
   };
 

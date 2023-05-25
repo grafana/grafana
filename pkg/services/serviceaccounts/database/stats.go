@@ -25,5 +25,7 @@ func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (*servic
 		return nil, err
 	}
 
+	sqlStats.ForcedExpiryEnabled = s.cfg.SATokenExpirationDayLimit != 0
+
 	return &sqlStats, nil
 }

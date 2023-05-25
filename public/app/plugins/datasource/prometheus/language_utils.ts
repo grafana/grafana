@@ -1,11 +1,20 @@
 import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
-import { DataQuery, AbstractQuery, AbstractLabelOperator, AbstractLabelMatcher } from '@grafana/data';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
+  DataQuery,
+  dateMath,
+  DateTime,
+  incrRoundDn,
+  TimeRange,
+} from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -55,6 +64,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 export const selectorRegexp = /\{[^}]*?(\}|$)/;
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
+
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
     // Special matcher for metrics
@@ -231,6 +241,11 @@ export function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
+// Returns number of minutes rounded up to the nearest nth minute
+export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
+  return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
+}
+
 export function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
 }
@@ -248,6 +263,7 @@ export function addLimitInfo(items: any[] | undefined): string {
 // the list of metacharacters is: *+?()|\.[]{}^$
 // we make a javascript regular expression that matches those characters:
 const RE2_METACHARACTERS = /[*+?()|\\.\[\]{}^$]/g;
+
 function escapePrometheusRegexp(value: string): string {
   return value.replace(RE2_METACHARACTERS, '\\$&');
 }
@@ -343,4 +359,60 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
   }
 
   return labelMatchers;
+}
+
+/**
+ * Calculates new interval "snapped" to the closest Nth minute, depending on cache level datasource setting
+ * @param cacheLevel
+ * @param range
+ */
+export function getRangeSnapInterval(
+  cacheLevel: PrometheusCacheLevel,
+  range: TimeRange
+): { start: string; end: string } {
+  // Don't round the range if we're not caching
+  if (cacheLevel === PrometheusCacheLevel.None) {
+    return {
+      start: getPrometheusTime(range.from, false).toString(),
+      end: getPrometheusTime(range.to, true).toString(),
+    };
+  }
+  // Otherwise round down to the nearest nth minute for the start time
+  const startTime = getPrometheusTime(range.from, false);
+  // const startTimeQuantizedSeconds = roundSecToLastMin(startTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+  const startTimeQuantizedSeconds = incrRoundDn(startTime, getClientCacheDurationInMinutes(cacheLevel) * 60);
+
+  // And round up to the nearest nth minute for the end time
+  const endTime = getPrometheusTime(range.to, true);
+  const endTimeQuantizedSeconds = roundSecToNextMin(endTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+
+  // If the interval was too short, we could have rounded both start and end to the same time, if so let's add one step to the end
+  if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
+    const endTimePlusOneStep = endTimeQuantizedSeconds + getClientCacheDurationInMinutes(cacheLevel) * 60;
+    return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
+  }
+
+  const start = startTimeQuantizedSeconds.toString();
+  const end = endTimeQuantizedSeconds.toString();
+
+  return { start, end };
+}
+
+export function getClientCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
+  switch (cacheLevel) {
+    case PrometheusCacheLevel.Medium:
+      return 10;
+    case PrometheusCacheLevel.High:
+      return 60;
+    default:
+      return 1;
+  }
+}
+
+export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
+  if (typeof date === 'string') {
+    date = dateMath.parse(date, roundUp)!;
+  }
+
+  return Math.ceil(date.valueOf() / 1000);
 }

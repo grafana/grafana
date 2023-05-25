@@ -1,29 +1,22 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
+import { DataQuery, AnnotationQuery as SchemaAnnotationQuery } from '@grafana/schema';
+
 import { DataFrame } from './dataFrame';
 import { QueryEditorProps } from './datasource';
-import { DataQuery, DataSourceRef } from './query';
 
 /**
  * This JSON object is stored in the dashboard json model.
  */
-export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource?: DataSourceRef | null;
-
-  enable: boolean;
-  name: string;
-  iconColor: string;
-  hide?: boolean;
-  builtIn?: number;
-  type?: string;
+export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> extends SchemaAnnotationQuery<TQuery> {
   snapshotData?: any;
-
-  // Standard datasource query
-  target?: TQuery;
 
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
+
+  // When using the 'grafana' datasource, this may be dashboard
+  type?: string;
 
   // Sadly plugins can set any property directly on the main object
   [key: string]: any;
@@ -51,7 +44,7 @@ export interface AnnotationEvent {
   newState?: string;
 
   // Currently used to merge annotations from alerts and dashboard
-  source?: any; // source.type === 'dashboard'
+  source?: any; // source.type === 'dashboard' -- should be AnnotationQuery
 }
 
 export interface AnnotationEventUIModel {

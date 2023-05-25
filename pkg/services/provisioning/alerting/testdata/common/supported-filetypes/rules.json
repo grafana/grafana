@@ -41,7 +41,7 @@
                   "from": 0,
                   "to": 0
                 },
-                "datasourceUID": "-100",
+                "datasourceUid": "__expr__",
                 "model": {
                   "conditions": [
                     {
@@ -61,7 +61,7 @@
                       },
                       "reducer": {
                         "params": [
-  
+
                         ],
                         "type": "last"
                       },
@@ -70,7 +70,7 @@
                   ],
                   "datasource": {
                     "type": "__expr__",
-                    "uid": "-100"
+                    "uid": "__expr__"
                   },
                   "hide": false,
                   "intervalMs": 1000,

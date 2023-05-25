@@ -10,9 +10,7 @@
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
-  AnnotationQuery,
-  AdHocVariableFilter,
-  VariableOption,
+  AnnotationPanelFilter,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -27,7 +25,6 @@ export type {
   RegexMap,
   SpecialValueMap,
   ValueMappingResult,
-  Transformation,
   LibraryPanelRef,
   RowPanel,
   GraphPanel,
@@ -37,10 +34,7 @@ export type {
 // Raw generated enums and default consts from dashboard kind.
 export {
   defaultAnnotationTarget,
-  defaultAnnotationQuery,
-  VariableHide,
-  VariableRefresh,
-  VariableSort,
+  defaultAnnotationPanelFilter,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -65,22 +59,11 @@ export {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
   Dashboard,
+  AnnotationContainer,
+  AnnotationQuery,
   VariableModel,
-  BaseVariableModel,
-  AdHocVariableModel,
-  SystemVariable,
-  DashSystemVariableModel,
-  OrgSystemVariableModel,
-  UserSystemVariableModel,
-  VariableWithOptions,
-  TextBoxVariableModel,
-  ConstantVariableModel,
-  IntervalVariableModel,
-  VariableWithMultiSupport,
-  QueryVariableModel,
-  DataSourceVariableModel,
-  CustomVariableModel,
   DataSourceRef,
+  DataTransformerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,
@@ -98,14 +81,18 @@ export type {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export {
   defaultDashboard,
-  defaultBaseVariableModel,
-  defaultAdHocVariableModel,
-  defaultVariableWithOptions,
+  defaultAnnotationContainer,
+  defaultAnnotationQuery,
+  defaultVariableModel,
+  VariableHide,
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,
   defaultFieldConfig
 } from './veneer/dashboard.types';
+
+// Raw generated types from Folder kind.
+export type { Folder } from './raw/folder/x/folder_types.gen';
 
 // Raw generated types from LibraryPanel kind.
 export type {
@@ -153,6 +140,3 @@ export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_typ
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
-
-// Raw generated enums and default consts from team kind.
-export { Permission } from './raw/team/x/team_types.gen';

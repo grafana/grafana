@@ -26,32 +26,37 @@ beforeAll(() => {
 });
 
 describe('filterRules', function () {
-  it('should filter out rules by name filter', function () {
+  // Typos there are deliberate to test the fuzzy search
+  it.each(['cpu', 'hi usage', 'usge'])('should filter out rules by name filter = "%s"', function (nameFilter) {
     const rules = [mockCombinedRule({ name: 'High CPU usage' }), mockCombinedRule({ name: 'Memory too low' })];
 
     const ns = mockCombinedRuleNamespace({
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ ruleName: 'cpu' }));
+    const filtered = filterRules([ns], getFilter({ ruleName: nameFilter }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
   });
 
-  it('should filter out rules by evaluation group name', function () {
-    const ns = mockCombinedRuleNamespace({
-      groups: [
-        mockCombinedRuleGroup('Performance group', [mockCombinedRule({ name: 'High CPU usage' })]),
-        mockCombinedRuleGroup('Availability group', [mockCombinedRule({ name: 'Memory too low' })]),
-      ],
-    });
+  // Typos there are deliberate to test the fuzzy search
+  it.each(['availability', 'avialability', 'avail group'])(
+    'should filter out rules by evaluation group name = "%s"',
+    function (groupFilter) {
+      const ns = mockCombinedRuleNamespace({
+        groups: [
+          mockCombinedRuleGroup('Performance group', [mockCombinedRule({ name: 'High CPU usage' })]),
+          mockCombinedRuleGroup('Availability group', [mockCombinedRule({ name: 'Memory too low' })]),
+        ],
+      });
 
-    const filtered = filterRules([ns], getFilter({ groupName: 'availability' }));
+      const filtered = filterRules([ns], getFilter({ groupName: groupFilter }));
 
-    expect(filtered[0].groups).toHaveLength(1);
-    expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
-  });
+      expect(filtered[0].groups).toHaveLength(1);
+      expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+    }
+  );
 
   it('should filter out rules by label filter', function () {
     const rules = [
@@ -155,7 +160,28 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ dataSourceName: 'loki' }));
+    const filtered = filterRules([ns], getFilter({ dataSourceNames: ['loki'] }));
+
+    expect(filtered[0].groups[0].rules).toHaveLength(1);
+    expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+  });
+
+  // Typos there are deliberate to test the fuzzy search
+  it.each(['nasa', 'alrt rul', 'nasa ruls'])('should filter out rules by namespace = "%s"', (namespaceFilter) => {
+    const cpuRule = mockCombinedRule({ name: 'High CPU usage' });
+    const memoryRule = mockCombinedRule({ name: 'Memory too low' });
+
+    const teamEmeaNs = mockCombinedRuleNamespace({
+      name: 'EMEA Alerting',
+      groups: [mockCombinedRuleGroup('CPU group', [cpuRule])],
+    });
+
+    const teamNasaNs = mockCombinedRuleNamespace({
+      name: 'NASA Alert Rules',
+      groups: [mockCombinedRuleGroup('Memory group', [memoryRule])],
+    });
+
+    const filtered = filterRules([teamEmeaNs, teamNasaNs], getFilter({ namespace: namespaceFilter }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');

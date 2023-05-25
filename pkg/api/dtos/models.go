@@ -29,7 +29,6 @@ type LoginCommand struct {
 type CurrentUser struct {
 	IsSignedIn                 bool               `json:"isSignedIn"`
 	Id                         int64              `json:"id"`
-	ExternalUserId             string             `json:"externalUserId"`
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
@@ -48,6 +47,12 @@ type CurrentUser struct {
 	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
+	Analytics                  AnalyticsSettings  `json:"analytics"`
+}
+
+type AnalyticsSettings struct {
+	Identifier         string `json:"identifier"`
+	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
 }
 
 type UserPermissionsMap map[string]bool

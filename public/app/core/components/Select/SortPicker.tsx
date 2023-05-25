@@ -4,8 +4,7 @@ import { useAsync } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { Icon, Select } from '@grafana/ui';
 import { DEFAULT_SORT } from 'app/features/search/constants';
-
-import { SearchSrv } from '../../services/search_srv';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
@@ -17,9 +16,7 @@ export interface Props {
 }
 
 const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
-  return new SearchSrv().getSortOptions().then(({ sortOptions }) => {
-    return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
-  });
+  return getGrafanaSearcher().getSortOptions();
 };
 
 export function SortPicker({ onChange, value, placeholder, filter, getSortOptions, isClearable }: Props) {

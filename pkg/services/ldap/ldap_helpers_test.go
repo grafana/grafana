@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/ldap.v3"
 )
 
 func TestIsMemberOf(t *testing.T) {

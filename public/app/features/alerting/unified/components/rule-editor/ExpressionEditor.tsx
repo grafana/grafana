@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -19,12 +19,12 @@ export interface ExpressionEditorProps {
   showPreviewAlertsButton: boolean;
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({
+export const ExpressionEditor = ({
   value,
   onChange,
   dataSourceName,
   showPreviewAlertsButton = true,
-}) => {
+}: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
@@ -119,7 +119,7 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
   mapToQuery: (existing: T, value: string | undefined) => T;
 };
 
-function useQueryMappers(dataSourceName: string): QueryMappers {
+export function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
 

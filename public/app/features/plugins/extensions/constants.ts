@@ -1,0 +1,1 @@
+export const MAX_EXTENSIONS_PER_POINT = 2;

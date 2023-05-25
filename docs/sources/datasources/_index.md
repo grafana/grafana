@@ -2,6 +2,12 @@
 aliases:
   - data-sources/
   - overview/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 title: Data sources
 weight: 60
 ---
@@ -48,9 +54,21 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data]({{< relref "../panels-visualizations/query-transform-data/" >}}).
 
+## Special data sources
+
+Grafana includes three special data sources:
+
+- **Grafana:** A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+- **Mixed:** An abstraction that lets you query multiple data sources in the same panel.
+  When you select Mixed, you can then select a different data source for each new query that you add.
+  - The first query uses the data source that was selected before you selected **Mixed**.
+  - You can't change an existing query to use the **Mixed** data source.
+  - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
+- **Dashboard:** A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
+
 ## Built-in core data sources
 
-These built-in core data sources are included in the Grafana documentation:
+These built-in core data sources are also included in the Grafana documentation:
 
 - [Alertmanager]({{< relref "./alertmanager/" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
@@ -69,16 +87,3 @@ These built-in core data sources are included in the Grafana documentation:
 - [Tempo]({{< relref "./tempo/" >}})
 - [Testdata]({{< relref "./testdata/" >}})
 - [Zipkin]({{< relref "./zipkin/" >}})
-
-## Special data sources
-
-Grafana also includes three special data sources:
-
-- **Grafana:** A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source.
-  This helps you test visualizations and run experiments.
-- **Mixed:** An abstraction that lets you query multiple data sources in the same panel.
-  When you select Mixed, you can then select a different data source for each new query that you add.
-  - The first query uses the data source that was selected before you selected **Mixed**.
-  - You can't change an existing query to use the Mixed data source.
-  - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
-- **Dashboard:** A data source that uses the result set from another panel in the same dashboard.

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
 import { AdHocVariableFilter } from 'app/features/variables/types';
@@ -18,7 +18,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export const AdHocFilterRenderer: FC<Props> = ({
+export const AdHocFilterRenderer = ({
   datasource,
   filter: { key, operator, value },
   onKeyChange,
@@ -27,7 +27,7 @@ export const AdHocFilterRenderer: FC<Props> = ({
   placeHolder,
   getTagKeysOptions,
   disabled,
-}) => {
+}: Props) => {
   return (
     <>
       <AdHocFilterKey

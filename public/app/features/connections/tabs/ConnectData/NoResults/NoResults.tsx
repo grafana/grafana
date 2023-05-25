@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
@@ -11,7 +11,7 @@ const getStyles = () => ({
   `,
 });
 
-export const NoResults: FC = () => {
+export const NoResults = () => {
   const styles = useStyles2(getStyles);
 
   return <p className={styles.noResults}>No results matching your query were found.</p>;

@@ -14,17 +14,17 @@ interface SaveDashboardErrorProxyProps {
   /** original dashboard */
   dashboard: DashboardModel;
   /** dashboard save model with applied modifications, i.e. title */
-  dashboardSaveModel: any;
+  dashboardSaveModel: DashboardModel;
   error: FetchError;
   onDismiss: () => void;
 }
 
-export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({
+export const SaveDashboardErrorProxy = ({
   dashboard,
   dashboardSaveModel,
   error,
   onDismiss,
-}) => {
+}: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {

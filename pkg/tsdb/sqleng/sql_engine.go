@@ -23,6 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+// XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
+var XormDriverMu sync.RWMutex
+
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
@@ -67,6 +70,7 @@ type JsonData struct {
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
 	Database            string `json:"database"`
+	SecureDSProxy       bool   `json:"enableSecureSocksProxy"`
 }
 
 type DataSourceInfo struct {
@@ -78,6 +82,13 @@ type DataSourceInfo struct {
 	Updated                 time.Time
 	UID                     string
 	DecryptedSecureJSONData map[string]string
+}
+
+// Defaults for the xorm connection pool
+type DefaultConnectionInfo struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime int
 }
 
 type DataPluginConfiguration struct {
@@ -98,6 +109,7 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 }
+
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
 	Fill         bool    `json:"fill"`
@@ -300,9 +312,13 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	frame.Meta.ExecutedQueryString = interpolatedQuery
 
-	// If no rows were returned, no point checking anything else.
+	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
+	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
+	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
+	// additionally-needed frame data stays intact and is correctly passed to our visulization.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{}
+		frame.Fields = []*data.Field{}
+		queryResult.dataResponse.Frames = data.Frames{frame}
 		ch <- queryResult
 		return
 	}

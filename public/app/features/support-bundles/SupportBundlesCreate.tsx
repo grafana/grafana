@@ -56,9 +56,6 @@ export const SupportBundlesCreateUnconnected = ({
   return (
     <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
-        <Page.OldNavOnly>
-          <h3 className="page-sub-heading">Create support bundle</h3>
-        </Page.OldNavOnly>
         {loadCollectorsError && <Alert title={loadCollectorsError} severity="error" />}
         {createBundleError && <Alert title={createBundleError} severity="error" />}
         {!!collectors.length && (
@@ -66,20 +63,22 @@ export const SupportBundlesCreateUnconnected = ({
             {({ register, errors }) => {
               return (
                 <>
-                  {collectors.map((component) => {
-                    return (
-                      <Field key={component.uid}>
-                        <Checkbox
-                          {...register(component.uid)}
-                          label={component.displayName}
-                          id={component.uid}
-                          description={component.description}
-                          defaultChecked={component.default}
-                          disabled={component.includedByDefault}
-                        />
-                      </Field>
-                    );
-                  })}
+                  {[...collectors]
+                    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+                    .map((component) => {
+                      return (
+                        <Field key={component.uid}>
+                          <Checkbox
+                            {...register(component.uid)}
+                            label={component.displayName}
+                            id={component.uid}
+                            description={component.description}
+                            defaultChecked={component.default}
+                            disabled={component.includedByDefault}
+                          />
+                        </Field>
+                      );
+                    })}
                   <HorizontalGroup>
                     <Button type="submit">Create</Button>
                     <LinkButton href="/support-bundles" variant="secondary">

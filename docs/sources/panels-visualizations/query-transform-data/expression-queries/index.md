@@ -19,13 +19,17 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ### Using expressions
 
-Expressions are primarily used by [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are most commonly used for [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
-> **Note:** Expressions do not work with legacy dashboard alerts.
+{{% admonition type="note" %}}
+Expressions do not work with legacy dashboard alerts.
+{{% /admonition %}}
 
 Expressions are meant to augment data sources by enabling queries from different data sources to be combined or by providing operations unavailable in a data source.
 
-> **Note:** When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
+{{% admonition type="note" %}}
+When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
+{{% /admonition %}}
 
 Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../../../fundamentals/timeseries-dimensions/" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
 
@@ -111,7 +115,9 @@ abs returns the absolute value of its argument which can be a number or a series
 
 is_inf takes a number or a series and returns `1` for `Inf` values (negative or positive) and `0` for other values. For example `is_inf($A)`.
 
-> **Note:** If you need to specifically check for negative infinity for example, you can do a comparison like `$A == infn()`.
+{{% admonition type="note" %}}
+If you need to specifically check for negative infinity for example, you can do a comparison like `$A == infn()`.
+{{% /admonition %}}
 
 ###### is_nan
 
@@ -223,4 +229,7 @@ For more information about expressions, refer to [About expressions]({{< relref 
 ## Special cases
 
 When any queried data source returns no series or numbers, the expression engine returns `NoData`. For example, if a request contains two data source queries that are merged by an expression, if `NoData` is returned by at least one of the data source queries, then the returned result for the entire query is `NoData`.
+
 For more information about how [Grafana Alerting]({{< relref "../../../alerting/" >}}) processes `NoData` results, refer to [No data and error handling]({{< relref "../../../alerting/alerting-rules/create-grafana-managed-rule/#no-data-and-error-handling" >}}).
+
+In the case of using an expression on multiple queries, the expression engine requires that all of the queries return an identical timestamp. For example, if using math to combine the results of multiple SQL queries which each use `SELECT NOW() AS "time"`, the expression will only work if all queries evaluate `NOW()` to an identical timestamp; which does not always happen. To resolve this, you can replace `NOW()` with an arbitrary time, such as `SELECT 1 AS "time"`, or any other valid UNIX timestamp.

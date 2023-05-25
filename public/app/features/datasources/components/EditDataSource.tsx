@@ -117,9 +117,13 @@ export function EditDataSourceView({
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onUpdate({ ...dataSource });
+    try {
+      await onUpdate({ ...dataSource });
+    } catch (err) {
+      return;
+    }
 
     onTest();
   };
@@ -140,7 +144,7 @@ export function EditDataSourceView({
   if (pageId) {
     return (
       <DataSourcePluginContextProvider instanceSettings={dsi}>
-        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />;
+        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />
       </DataSourcePluginContextProvider>
     );
   }
@@ -173,15 +177,14 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} />
+      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
       <ButtonRow
         onSubmit={onSubmit}
-        onDelete={onDelete}
         onTest={onTest}
-        exploreUrl={exploreUrl}
-        canSave={!readOnly && hasWriteRights}
+        onDelete={onDelete}
         canDelete={!readOnly && hasDeleteRights}
+        canSave={!readOnly && hasWriteRights}
       />
     </form>
   );

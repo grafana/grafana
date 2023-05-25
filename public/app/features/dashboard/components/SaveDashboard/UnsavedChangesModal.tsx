@@ -14,12 +14,7 @@ interface UnsavedChangesModalProps {
   onSaveSuccess?: () => void;
 }
 
-export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
-  dashboard,
-  onSaveSuccess,
-  onDiscard,
-  onDismiss,
-}) => {
+export const UnsavedChangesModal = ({ dashboard, onSaveSuccess, onDiscard, onDismiss }: UnsavedChangesModalProps) => {
   return (
     <Modal
       isOpen={true}

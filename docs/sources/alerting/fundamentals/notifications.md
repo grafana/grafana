@@ -21,13 +21,15 @@ Grafana uses Alertmanagers to send notifications for firing and resolved alerts.
 
 Notification policies control when and where notifications are sent. A notification policy can choose to send all alerts together in the same notification, send alerts in grouped notifications based on a set of labels, or send alerts as separate notifications. You can configure each notification policy to control how often notifications should be sent as well as having one or more mute timings to inhibit notifications at certain times of the day and on certain days of the week.
 
-Notification policies are organized in a tree structure where at the root of the tree there is a notification policy called the root policy. There can be only one root policy and the root policy cannot be deleted.
+Notification policies are organized in a tree structure where at the root of the tree there is a notification policy called the default policy. There can be only one default policy and the default policy cannot be deleted.
 
-Specific routing policies are children of the root policy and can be used to match either all alerts or a subset of alerts based on a set of matching labels. A notification policy matches an alert when its matching labels match the labels in the alert.
+Specific routing policies are children of the default policy and can be used to match either all alerts or a subset of alerts based on a set of matching labels. A notification policy matches an alert when its matching labels match the labels in the alert.
 
-A specific routing policy can have its own child policies, called nested policies, which allow for additional matching of alerts. An example of a specific routing policy could be sending infrastructure alerts to the Ops team; while a child policy might send high priority alerts to Pagerduty and low priority alerts as emails.
+A nested policy can have its own nested policies, which allow for additional matching of alerts. An example of a nested policy could be sending infrastructure alerts to the Ops team; while a nested policy might send high priority alerts to Pagerduty and low priority alerts as emails.
 
-All alerts, irrespective of their labels, match the root policy. However, when the root policy receives an alert it looks at each specific routing policy and sends the alert to the first specific routing policy that matches the alert. If the specific routing policy has further child policies, then it can attempt to the match the alert against one of its nested policies. If no nested policies match the alert then the specific routing policy is the matching policy. If there are no specific routing policies, or no specific routing policies match the alert, then the root policy is the matching policy.
+All alerts, irrespective of their labels, match the default policy. However, when the default policy receives an alert it looks at each nested policy and sends the alert to the first nested policy that matches the alert. If the nested policy has further nested policies, then it can attempt to the match the alert against one of its nested policies. If no nested policies match the alert then the policy itself is the matching policy. If there are no nested policies, or no nested policies match the alert, then the default policy is the matching policy.
+
+<!-- This definitely needs a diagram and some examples (Gilles) -->
 
 ## Contact points
 
@@ -43,7 +45,7 @@ The following table contains the integrations supported in Grafana:
 | ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
-| [Email](#email)                                  | `email`                   | Supported            | Supported                                                                                                |
+| Email                                            | `email`                   | Supported            | Supported                                                                                                |
 | [Google Hangouts](https://hangouts.google.com/)  | `googlechat`              | Supported            | N/A                                                                                                      |
 | [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
 | [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
@@ -57,9 +59,9 @@ The following table contains the integrations supported in Grafana:
 | [Telegram](https://telegram.org/)                | `telegram`                | Supported            | N/A                                                                                                      |
 | [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
 | [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
-| [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
-| [Cisco Webex Teams](#webex)                      | `webex`                   | Supported            | Supported                                                                                                |
-| [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
+| Webhook                                          | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| Cisco Webex Teams                                | `webex`                   | Supported            | Supported                                                                                                |
+| WeCom                                            | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
 
 ## Templating notifications

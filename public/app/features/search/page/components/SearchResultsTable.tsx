@@ -7,9 +7,10 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { TableCellHeight } from '@grafana/schema';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
-import { getTableStyles } from '@grafana/ui/src/components/Table/styles';
+import { useTableStyles } from '@grafana/ui/src/components/Table/styles';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { QueryResponse } from '../../service';
@@ -51,7 +52,7 @@ export const SearchResultsTable = React.memo(
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const columnStyles = useStyles2(getColumnStyles);
-    const tableStyles = useStyles2(getTableStyles);
+    const tableStyles = useTableStyles(useTheme2(), TableCellHeight.Sm);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
     const [listEl, setListEl] = useState<FixedSizeList | null>(null);
     const highlightIndex = useSearchKeyboardNavigation(keyboardEvents, 0, response);
@@ -102,12 +103,34 @@ export const SearchResultsTable = React.memo(
 
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
 
+    const handleLoadMore = useCallback(
+      async (startIndex: number, endIndex: number) => {
+        await response.loadMoreItems(startIndex, endIndex);
+
+        // After we load more items, select them if the "select all" checkbox
+        // is selected
+        const isAllSelected = selection?.('*', '*');
+        if (!selectionToggle || !selection || !isAllSelected) {
+          return;
+        }
+
+        for (let index = startIndex; index < response.view.length; index++) {
+          const item = response.view.get(index);
+          const itemIsSelected = selection(item.kind, item.uid);
+          if (!itemIsSelected) {
+            selectionToggle(item.kind, item.uid);
+          }
+        }
+      },
+      [response, selection, selectionToggle]
+    );
+
     const RenderRow = useCallback(
       ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
         const row = rows[rowIndex];
         prepareRow(row);
 
-        const url = response.view.fields.url?.values.get(rowIndex);
+        const url = response.view.fields.url?.values[rowIndex];
         let className = styles.rowContainer;
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
@@ -163,7 +186,7 @@ export const SearchResultsTable = React.memo(
             ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}
             itemCount={rows.length}
-            loadMoreItems={response.loadMoreItems}
+            loadMoreItems={handleLoadMore}
           >
             {({ onItemsRendered, ref }) => (
               <FixedSizeList

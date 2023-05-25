@@ -83,31 +83,33 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, org
 
 // GetAlertRuleByUID is a handler for retrieving an alert rule from that database by its UID and organisation ID.
 // It returns ngmodels.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
-func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (result *ngmodels.AlertRule, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		alertRule, err := getAlertRuleByUID(sess, query.UID, query.OrgID)
 		if err != nil {
 			return err
 		}
-		query.Result = alertRule
+		result = alertRule
 		return nil
 	})
+	return result, err
 }
 
 // GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
-func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var result []*ngmodels.AlertRule
+func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) (result []*ngmodels.AlertRule, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rules []*ngmodels.AlertRule
 		err := sess.Table("alert_rule").Alias("a").Join(
 			"INNER",
 			"alert_rule AS b", "a.org_id = b.org_id AND a.namespace_uid = b.namespace_uid AND a.rule_group = b.rule_group AND b.uid = ?", query.UID,
-		).Where("a.org_id = ?", query.OrgID).Select("a.*").Find(&result)
+		).Where("a.org_id = ?", query.OrgID).Select("a.*").Find(&rules)
 		if err != nil {
 			return err
 		}
-		query.Result = result
+		result = rules
 		return nil
 	})
+	return result, err
 }
 
 // InsertAlertRules is a handler for creating/updating alert rules.
@@ -243,8 +245,8 @@ func (st DBstore) CountAlertRulesInFolder(ctx context.Context, query *ngmodels.C
 }
 
 // ListAlertRules is a handler for retrieving alert rules of specific organisation.
-func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (result ngmodels.RulesGroup, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		q := sess.Table("alert_rule")
 
 		if query.OrgID >= 0 {
@@ -275,13 +277,30 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		if err := q.Find(&alertRules); err != nil {
+		rule := new(ngmodels.AlertRule)
+		rows, err := q.Rows(rule)
+		if err != nil {
 			return err
 		}
+		defer func() {
+			_ = rows.Close()
+		}()
 
-		query.Result = alertRules
+		// Deserialize each rule separately in case any of them contain invalid JSON.
+		for rows.Next() {
+			rule := new(ngmodels.AlertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRules", "error", err)
+				continue
+			}
+			alertRules = append(alertRules, rule)
+		}
+
+		result = alertRules
 		return nil
 	})
+	return result, err
 }
 
 // Count returns either the number of the alert rules under a specific org (if orgID is not zero)
@@ -402,38 +421,24 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return folder, nil
 }
 
-func (st DBstore) getFilterByOrgsString() (string, []interface{}) {
-	if len(st.Cfg.DisabledOrgs) == 0 {
-		return "", nil
-	}
-	builder := strings.Builder{}
-	builder.WriteString("org_id NOT IN(")
-	idx := len(st.Cfg.DisabledOrgs)
-	args := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
-	for orgId := range st.Cfg.DisabledOrgs {
-		args = append(args, orgId)
-		builder.WriteString("?")
-		idx--
-		if idx == 0 {
-			builder.WriteString(")")
-			break
-		}
-		builder.WriteString(",")
-	}
-	return builder.String(), args
-}
-
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		alertRulesSql := "SELECT org_id, uid, version FROM alert_rule"
-		filter, args := st.getFilterByOrgsString()
-		if filter != "" {
-			alertRulesSql += " WHERE " + filter
+		alertRulesSql := sess.Table("alert_rule").Select("org_id, uid, version")
+		var disabledOrgs []int64
+
+		for orgID := range st.Cfg.DisabledOrgs {
+			disabledOrgs = append(disabledOrgs, orgID)
 		}
-		if err := sess.SQL(alertRulesSql, args...).Find(&result); err != nil {
+
+		if len(disabledOrgs) > 0 {
+			alertRulesSql = alertRulesSql.NotIn("org_id", disabledOrgs)
+		}
+
+		if err := alertRulesSql.Find(&result); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	return result, err
@@ -447,20 +452,53 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		foldersSql := "SELECT D.uid, D.title FROM dashboard AS D WHERE is_folder IS TRUE AND EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)"
-		alertRulesSql := "SELECT * FROM alert_rule"
-		filter, args := st.getFilterByOrgsString()
-		if filter != "" {
-			foldersSql += " AND " + filter
-			alertRulesSql += " WHERE " + filter
+		var disabledOrgs []int64
+		for orgID := range st.Cfg.DisabledOrgs {
+			disabledOrgs = append(disabledOrgs, orgID)
 		}
 
-		if err := sess.SQL(alertRulesSql, args...).Find(&rules); err != nil {
+		alertRulesSql := sess.Table("alert_rule")
+		if len(disabledOrgs) > 0 {
+			alertRulesSql.NotIn("org_id", disabledOrgs)
+		}
+
+		if len(query.RuleGroups) > 0 {
+			alertRulesSql.In("rule_group", query.RuleGroups)
+		}
+
+		rule := new(ngmodels.AlertRule)
+		rows, err := alertRulesSql.Rows(rule)
+		if err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
+		defer func() {
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("unable to close rows session", "error", err)
+			}
+		}()
+
+		// Deserialize each rule separately in case any of them contain invalid JSON.
+		for rows.Next() {
+			rule := new(ngmodels.AlertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
+				continue
+			}
+			rules = append(rules, rule)
+		}
+
 		query.ResultRules = rules
+
 		if query.PopulateFolders {
-			if err := sess.SQL(foldersSql, args...).Find(&folders); err != nil {
+			foldersSql := sess.Table("dashboard").Alias("d").Select("d.uid, d.title").
+				Where("is_folder = ?", st.SQLStore.GetDialect().BooleanStr(true)).
+				And(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid)`)
+			if len(disabledOrgs) > 0 {
+				foldersSql.NotIn("org_id", disabledOrgs)
+			}
+
+			if err := foldersSql.Find(&folders); err != nil {
 				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 			}
 			query.ResultFoldersTitles = make(map[string]string, len(folders))

@@ -210,21 +210,25 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID         int64                  `json:"id,omitempty"`
-	UID        string                 `json:"uid,omitempty"`
-	Type       string                 `json:"type"`
-	Name       string                 `json:"name"`
-	PluginMeta *PluginMetaDTO         `json:"meta"`
-	URL        string                 `json:"url,omitempty"`
-	IsDefault  bool                   `json:"isDefault"`
-	Access     string                 `json:"access,omitempty"`
-	Preload    bool                   `json:"preload"`
-	Module     string                 `json:"module,omitempty"`
-	JSONData   map[string]interface{} `json:"jsonData"`
-	ReadOnly   bool                   `json:"readOnly"`
+	ID              int64                  `json:"id,omitempty"`
+	UID             string                 `json:"uid,omitempty"`
+	Type            string                 `json:"type"`
+	Name            string                 `json:"name"`
+	PluginMeta      *PluginMetaDTO         `json:"meta"`
+	URL             string                 `json:"url,omitempty"`
+	IsDefault       bool                   `json:"isDefault"`
+	Access          string                 `json:"access,omitempty"`
+	Preload         bool                   `json:"preload"`
+	Module          string                 `json:"module,omitempty"`
+	JSONData        map[string]interface{} `json:"jsonData"`
+	ReadOnly        bool                   `json:"readOnly"`
+	AngularDetected bool                   `json:"angularDetected"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
+
+	// This is populated by an Enterprise hook
+	CachingConfig QueryCachingConfig `json:"cachingConfig,omitempty"`
 
 	// InfluxDB
 	Username string `json:"username,omitempty"`
@@ -238,16 +242,25 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Info          Info   `json:"info"`
-	HideFromList  bool   `json:"hideFromList"`
-	Sort          int    `json:"sort"`
-	SkipDataQuery bool   `json:"skipDataQuery"`
-	ReleaseState  string `json:"state"`
-	BaseURL       string `json:"baseUrl"`
-	Signature     string `json:"signature"`
-	Module        string `json:"module"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	Info            Info   `json:"info"`
+	HideFromList    bool   `json:"hideFromList"`
+	Sort            int    `json:"sort"`
+	SkipDataQuery   bool   `json:"skipDataQuery"`
+	ReleaseState    string `json:"state"`
+	BaseURL         string `json:"baseUrl"`
+	Signature       string `json:"signature"`
+	Module          string `json:"module"`
+	AngularDetected bool   `json:"angularDetected"`
+}
+
+type AppDTO struct {
+	ID              string `json:"id"`
+	Path            string `json:"path"`
+	Version         string `json:"version"`
+	Preload         bool   `json:"preload"`
+	AngularDetected bool   `json:"angularDetected"`
 }
 
 const (
@@ -261,11 +274,6 @@ type ErrorCode string
 type Error struct {
 	ErrorCode `json:"errorCode"`
 	PluginID  string `json:"pluginId,omitempty"`
-}
-
-type PreloadPlugin struct {
-	Path    string `json:"path"`
-	Version string `json:"version"`
 }
 
 // Access-Control related definitions
@@ -287,4 +295,9 @@ type Role struct {
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
+}
+
+type QueryCachingConfig struct {
+	Enabled bool  `json:"enabled"`
+	TTLMS   int64 `json:"TTLMs"`
 }

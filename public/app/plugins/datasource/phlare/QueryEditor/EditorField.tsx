@@ -12,7 +12,7 @@ interface EditorFieldProps extends ComponentProps<typeof Field> {
   tooltip?: PopoverContent;
 }
 
-export const EditorField: React.FC<EditorFieldProps> = (props) => {
+export const EditorField = (props: EditorFieldProps) => {
   const { label, optional, tooltip, children, width, ...fieldProps } = props;
 
   const theme = useTheme2();

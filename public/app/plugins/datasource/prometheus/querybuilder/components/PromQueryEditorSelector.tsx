@@ -1,4 +1,4 @@
-import { map } from 'lodash';
+import { isEqual, map } from 'lodash';
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
@@ -8,6 +8,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
+import { PromQueryFormat } from '../../dataquery.gen';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { buildVisualQueryFromString } from '../parsing';
@@ -21,7 +22,7 @@ import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 import { PromQueryBuilderOptions } from './PromQueryBuilderOptions';
 import { PromQueryCodeEditor } from './PromQueryCodeEditor';
 
-export const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
+export const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },
@@ -81,7 +82,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   }, [data]);
 
   const onChangeInternal = (query: PromQuery) => {
-    setDataIsStale(true);
+    if (!isEqual(query, props.query)) {
+      setDataIsStale(true);
+    }
     onChange(query);
   };
 
@@ -137,7 +140,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
-        {editorMode === QueryEditorMode.Code && <PromQueryCodeEditor {...props} query={query} showExplain={explain} />}
+        {editorMode === QueryEditorMode.Code && (
+          <PromQueryCodeEditor {...props} query={query} showExplain={explain} onChange={onChangeInternal} />
+        )}
         {editorMode === QueryEditorMode.Builder && (
           <PromQueryBuilderContainer
             query={query}

@@ -34,7 +34,7 @@ func TestCanGetRouteNameFromContext(t *testing.T) {
 
 		assert.NoError(t, err)
 
-		handler, _ := routeOperationName(req)
+		handler, _ := RouteOperationName(req)
 		assert.Equal(t, tc.expected, handler)
 	}
 }
@@ -46,13 +46,13 @@ func TestOperationNameCanOnlyBeSetOnce(t *testing.T) {
 	req = addRouteNameToContext(req, "first")
 
 	// check that the operation name is set correctly
-	value, exists := routeOperationName(req)
+	value, exists := RouteOperationName(req)
 	assert.True(t, exists, "route name should exist")
 	assert.Equal(t, "first", value)
 
 	// check that it cannot be overwritten
 	req = addRouteNameToContext(req, "second")
-	value, exists = routeOperationName(req)
+	value, exists = RouteOperationName(req)
 	assert.True(t, exists, "route name should exist")
 	assert.Equal(t, "first", value)
 }

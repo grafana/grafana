@@ -87,10 +87,10 @@ export class Registry<T extends RegistryItem> {
       this.initialize();
     }
 
-    const select = {
+    const select: RegistrySelectInfo = {
       options: [],
       current: [],
-    } as RegistrySelectInfo;
+    };
 
     const currentOptions: Record<string, SelectableValue<string>> = {};
     if (current) {

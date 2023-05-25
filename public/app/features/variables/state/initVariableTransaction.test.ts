@@ -1,5 +1,6 @@
 import { DataSourceRef, LoadingState } from '@grafana/data/src';
 import { setDataSourceSrv } from '@grafana/runtime/src';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
@@ -10,7 +11,7 @@ import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createDataSourceOptions } from '../datasource/reducer';
 import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
-import { setVariableQueryRunner } from '../query/VariableQueryRunner';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
 import { TransactionStatus, VariableModel } from '../types';
@@ -53,15 +54,15 @@ function getTestContext(variables?: VariableModel[]) {
     getInstanceSettings: getInstanceSettingsMock,
     reload: jest.fn(),
   });
-  const variableQueryRunner: any = {
+  const variableQueryRunner = {
     cancelRequest: jest.fn(),
     queueRequest: jest.fn(),
     getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: { type: 'query', id: 'query' } }),
     destroy: jest.fn(),
-  };
+  } as unknown as VariableQueryRunner;
   setVariableQueryRunner(variableQueryRunner);
 
-  const dashboard: any = { title: 'Some dash', uid: key, templating };
+  const dashboard = { title: 'Some dash', uid: key, templating } as DashboardModel;
 
   return { constant, getInstanceSettingsMock, templating, key, dashboard };
 }

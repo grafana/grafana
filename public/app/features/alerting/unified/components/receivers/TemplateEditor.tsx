@@ -4,7 +4,7 @@
  * It includes auto-complete for template data and syntax highlighting
  */
 import { editor, IDisposable } from 'monaco-editor';
-import React, { FC, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { CodeEditor } from '@grafana/ui';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
@@ -17,7 +17,7 @@ type TemplateEditorProps = Omit<CodeEditorProps, 'language' | 'theme'> & {
   autoHeight?: boolean;
 };
 
-const TemplateEditor: FC<TemplateEditorProps> = (props) => {
+const TemplateEditor = (props: TemplateEditorProps) => {
   const shouldAutoHeight = Boolean(props.autoHeight);
   const disposeSuggestions = useRef<IDisposable | null>(null);
 

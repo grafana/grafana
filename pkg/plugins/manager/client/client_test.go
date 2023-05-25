@@ -136,7 +136,6 @@ func TestCallResource(t *testing.T) {
 		res := responses[0]
 		require.Equal(t, http.StatusOK, res.Status)
 		require.Equal(t, []byte(backendResponse), res.Body)
-		require.Len(t, res.Headers, 1)
 		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
 	})
 
@@ -200,8 +199,122 @@ func TestCallResource(t *testing.T) {
 		res := responses[0]
 		require.Equal(t, http.StatusOK, res.Status)
 		require.Equal(t, []byte(backendResponse), res.Body)
-		require.Len(t, res.Headers, 1)
 		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
+	})
+
+	t.Run("Should remove non-allowed response headers", func(t *testing.T) {
+		resHeaders := map[string][]string{
+			setCookieHeaderName: {"monster"},
+			"X-Custom":          {"should not be deleted"},
+		}
+
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "pid",
+			},
+		}
+
+		responses := []*backend.CallResourceResponse{}
+		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+			responses = append(responses, res)
+			return nil
+		})
+
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				return sender.Send(&backend.CallResourceResponse{
+					Headers: resHeaders,
+					Status:  http.StatusOK,
+					Body:    []byte(backendResponse),
+				})
+			},
+		})
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry, &config.Cfg{})
+
+		err = client.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+
+		require.Len(t, responses, 1)
+		res := responses[0]
+		require.Equal(t, http.StatusOK, res.Status)
+		require.Equal(t, []byte(backendResponse), res.Body)
+		require.Empty(t, res.Headers[setCookieHeaderName])
+		require.Equal(t, "should not be deleted", res.Headers["X-Custom"][0])
+	})
+
+	t.Run("Should ensure content type header", func(t *testing.T) {
+		tcs := []struct {
+			contentType    string
+			responseStatus int
+			expContentType string
+		}{
+			{
+				contentType:    "",
+				responseStatus: http.StatusOK,
+				expContentType: defaultContentType,
+			},
+			{
+				contentType:    "text/plain",
+				responseStatus: http.StatusOK,
+				expContentType: "text/plain",
+			},
+			{
+				contentType:    "",
+				responseStatus: http.StatusNoContent,
+				expContentType: "",
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(fmt.Sprintf("content type=%s, status=%d, exp=%s", tc.contentType, tc.responseStatus, tc.expContentType), func(t *testing.T) {
+				resHeaders := map[string][]string{}
+
+				if tc.contentType != "" {
+					resHeaders[contentTypeHeaderName] = []string{tc.contentType}
+				}
+
+				req := &backend.CallResourceRequest{
+					PluginContext: backend.PluginContext{
+						PluginID: "pid",
+					},
+				}
+
+				responses := []*backend.CallResourceResponse{}
+				sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+					responses = append(responses, res)
+					return nil
+				})
+
+				p.RegisterClient(&fakePluginBackend{
+					crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+						return sender.Send(&backend.CallResourceResponse{
+							Headers: resHeaders,
+							Status:  tc.responseStatus,
+							Body:    []byte(backendResponse),
+						})
+					},
+				})
+				err := registry.Add(context.Background(), p)
+				require.NoError(t, err)
+
+				client := ProvideService(registry, &config.Cfg{})
+
+				err = client.CallResource(context.Background(), req, sender)
+				require.NoError(t, err)
+
+				require.Len(t, responses, 1)
+				res := responses[0]
+
+				if tc.expContentType != "" {
+					require.Equal(t, tc.expContentType, res.Headers[contentTypeHeaderName][0])
+				} else {
+					require.Empty(t, res.Headers[contentTypeHeaderName])
+				}
+			})
+		}
 	})
 }
 

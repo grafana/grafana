@@ -141,7 +141,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with with unit label filter', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | bar < 8mb')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | bar < 8m')).toEqual(
       noErrors({
         labels: [
           {
@@ -150,7 +150,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8mb'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8m'] }],
       })
     );
   });
@@ -299,6 +299,40 @@ describe('buildVisualQueryFromString', () => {
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.Unwrap, params: ['label', 'duration'] },
           { id: LokiOperationId.SumOverTime, params: ['5m'] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with with only decolorize', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | decolorize')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Decolorize, params: [] }],
+      })
+    );
+  });
+
+  it('parses query with with decolorize and other operations', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | logfmt | decolorize | __error__="')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Decolorize, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
         ],
       })
     );

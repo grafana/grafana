@@ -21,43 +21,36 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 	}
 	ctx := NewTestEnv(t)
 
-	adminUser := User{
-		username: "admin",
-		password: "admin",
-	}
-	editorUser := User{
-		username: "editor",
-		password: "editor",
-	}
-
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       editorUser.password,
-		Login:          editorUser.username,
-	})
-	ctx.createUser(user.CreateUserCommand{
+	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       adminUser.password,
-		Login:          adminUser.username,
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	editorUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+		OrgID:          adminUser.User.OrgID,
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgID:    adminUser.User.OrgID,
 	}
-	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.Uid
+	dataSource := ctx.createDs(createDsCommand)
+	readOnlyDS := dataSource.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: adminUser.User.OrgID,
 	}
-	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.Uid
-	writableDsOrgId := createDsCommand.Result.OrgId
+	dataSource = ctx.createDs(createDsCommand)
+	writableDs := dataSource.UID
+	writableDsOrgId := dataSource.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to update correlations", func(t *testing.T) {
 		res := ctx.Patch(PatchParams{
@@ -287,7 +280,8 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				"config": {
 					"field": "field",
 					"type": "query",
-					"target": { "expr": "bar" }
+					"target": { "expr": "bar" },
+					"transformations": [ {"type": "logfmt"} ]
 				}
 			}`,
 		})
@@ -305,6 +299,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.Equal(t, "1", response.Result.Description)
 		require.Equal(t, "field", response.Result.Config.Field)
 		require.Equal(t, map[string]interface{}{"expr": "bar"}, response.Result.Config.Target)
+		require.Equal(t, correlations.Transformation{Type: "logfmt"}, response.Result.Config.Transformations[0])
 		require.NoError(t, res.Body.Close())
 
 		// partially updating only label

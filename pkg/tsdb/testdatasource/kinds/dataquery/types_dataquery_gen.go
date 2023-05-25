@@ -11,169 +11,103 @@ package dataquery
 
 // Defines values for NodesQueryType.
 const (
-	NodesQueryTypeRandom NodesQueryType = "random"
-
+	NodesQueryTypeRandom      NodesQueryType = "random"
 	NodesQueryTypeRandomEdges NodesQueryType = "random edges"
-
-	NodesQueryTypeResponse NodesQueryType = "response"
+	NodesQueryTypeResponse    NodesQueryType = "response"
 )
 
 // Defines values for StreamingQueryType.
 const (
-	StreamingQueryTypeFetch StreamingQueryType = "fetch"
-
-	StreamingQueryTypeLogs StreamingQueryType = "logs"
-
+	StreamingQueryTypeFetch  StreamingQueryType = "fetch"
+	StreamingQueryTypeLogs   StreamingQueryType = "logs"
 	StreamingQueryTypeSignal StreamingQueryType = "signal"
 )
 
 // Defines values for ErrorType.
 const (
-	ErrorTypeFrontendException ErrorType = "frontend_exception"
-
+	ErrorTypeFrontendException  ErrorType = "frontend_exception"
 	ErrorTypeFrontendObservable ErrorType = "frontend_observable"
-
-	ErrorTypeServerPanic ErrorType = "server_panic"
+	ErrorTypeServerPanic        ErrorType = "server_panic"
 )
 
 // Defines values for NodesType.
 const (
-	NodesTypeRandom NodesType = "random"
-
+	NodesTypeRandom      NodesType = "random"
 	NodesTypeRandomEdges NodesType = "random edges"
-
-	NodesTypeResponse NodesType = "response"
+	NodesTypeResponse    NodesType = "response"
 )
 
 // Defines values for ScenarioId.
 const (
-	ScenarioIdAnnotations ScenarioId = "annotations"
-
-	ScenarioIdArrow ScenarioId = "arrow"
-
-	ScenarioIdCsvContent ScenarioId = "csv_content"
-
-	ScenarioIdCsvFile ScenarioId = "csv_file"
-
-	ScenarioIdCsvMetricValues ScenarioId = "csv_metric_values"
-
-	ScenarioIdDatapointsOutsideRange ScenarioId = "datapoints_outside_range"
-
+	ScenarioIdAnnotations                  ScenarioId = "annotations"
+	ScenarioIdArrow                        ScenarioId = "arrow"
+	ScenarioIdCsvContent                   ScenarioId = "csv_content"
+	ScenarioIdCsvFile                      ScenarioId = "csv_file"
+	ScenarioIdCsvMetricValues              ScenarioId = "csv_metric_values"
+	ScenarioIdDatapointsOutsideRange       ScenarioId = "datapoints_outside_range"
 	ScenarioIdExponentialHeatmapBucketData ScenarioId = "exponential_heatmap_bucket_data"
-
-	ScenarioIdFlameGraph ScenarioId = "flame_graph"
-
-	ScenarioIdGrafanaApi ScenarioId = "grafana_api"
-
-	ScenarioIdLinearHeatmapBucketData ScenarioId = "linear_heatmap_bucket_data"
-
-	ScenarioIdLive ScenarioId = "live"
-
-	ScenarioIdLogs ScenarioId = "logs"
-
-	ScenarioIdManualEntry ScenarioId = "manual_entry"
-
-	ScenarioIdNoDataPoints ScenarioId = "no_data_points"
-
-	ScenarioIdNodeGraph ScenarioId = "node_graph"
-
-	ScenarioIdPredictableCsvWave ScenarioId = "predictable_csv_wave"
-
-	ScenarioIdPredictablePulse ScenarioId = "predictable_pulse"
-
-	ScenarioIdRandomWalk ScenarioId = "random_walk"
-
-	ScenarioIdRandomWalkTable ScenarioId = "random_walk_table"
-
-	ScenarioIdRandomWalkWithError ScenarioId = "random_walk_with_error"
-
-	ScenarioIdRawFrame ScenarioId = "raw_frame"
-
-	ScenarioIdServerError500 ScenarioId = "server_error_500"
-
-	ScenarioIdSimulation ScenarioId = "simulation"
-
-	ScenarioIdSlowQuery ScenarioId = "slow_query"
-
-	ScenarioIdStreamingClient ScenarioId = "streaming_client"
-
-	ScenarioIdTableStatic ScenarioId = "table_static"
-
-	ScenarioIdTrace ScenarioId = "trace"
-
-	ScenarioIdUsa ScenarioId = "usa"
-
-	ScenarioIdVariablesQuery ScenarioId = "variables-query"
+	ScenarioIdFlameGraph                   ScenarioId = "flame_graph"
+	ScenarioIdGrafanaApi                   ScenarioId = "grafana_api"
+	ScenarioIdLinearHeatmapBucketData      ScenarioId = "linear_heatmap_bucket_data"
+	ScenarioIdLive                         ScenarioId = "live"
+	ScenarioIdLogs                         ScenarioId = "logs"
+	ScenarioIdManualEntry                  ScenarioId = "manual_entry"
+	ScenarioIdNoDataPoints                 ScenarioId = "no_data_points"
+	ScenarioIdNodeGraph                    ScenarioId = "node_graph"
+	ScenarioIdPredictableCsvWave           ScenarioId = "predictable_csv_wave"
+	ScenarioIdPredictablePulse             ScenarioId = "predictable_pulse"
+	ScenarioIdRandomWalk                   ScenarioId = "random_walk"
+	ScenarioIdRandomWalkTable              ScenarioId = "random_walk_table"
+	ScenarioIdRandomWalkWithError          ScenarioId = "random_walk_with_error"
+	ScenarioIdRawFrame                     ScenarioId = "raw_frame"
+	ScenarioIdServerError500               ScenarioId = "server_error_500"
+	ScenarioIdSimulation                   ScenarioId = "simulation"
+	ScenarioIdSlowQuery                    ScenarioId = "slow_query"
+	ScenarioIdStreamingClient              ScenarioId = "streaming_client"
+	ScenarioIdTableStatic                  ScenarioId = "table_static"
+	ScenarioIdTrace                        ScenarioId = "trace"
+	ScenarioIdUsa                          ScenarioId = "usa"
+	ScenarioIdVariablesQuery               ScenarioId = "variables-query"
 )
 
 // Defines values for StreamType.
 const (
-	StreamTypeFetch StreamType = "fetch"
-
-	StreamTypeLogs StreamType = "logs"
-
+	StreamTypeFetch  StreamType = "fetch"
+	StreamTypeLogs   StreamType = "logs"
 	StreamTypeSignal StreamType = "signal"
 )
 
 // Defines values for TestDataQueryType.
 const (
-	TestDataQueryTypeAnnotations TestDataQueryType = "annotations"
-
-	TestDataQueryTypeArrow TestDataQueryType = "arrow"
-
-	TestDataQueryTypeCsvContent TestDataQueryType = "csv_content"
-
-	TestDataQueryTypeCsvFile TestDataQueryType = "csv_file"
-
-	TestDataQueryTypeCsvMetricValues TestDataQueryType = "csv_metric_values"
-
-	TestDataQueryTypeDatapointsOutsideRange TestDataQueryType = "datapoints_outside_range"
-
+	TestDataQueryTypeAnnotations                  TestDataQueryType = "annotations"
+	TestDataQueryTypeArrow                        TestDataQueryType = "arrow"
+	TestDataQueryTypeCsvContent                   TestDataQueryType = "csv_content"
+	TestDataQueryTypeCsvFile                      TestDataQueryType = "csv_file"
+	TestDataQueryTypeCsvMetricValues              TestDataQueryType = "csv_metric_values"
+	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
-
-	TestDataQueryTypeFlameGraph TestDataQueryType = "flame_graph"
-
-	TestDataQueryTypeGrafanaApi TestDataQueryType = "grafana_api"
-
-	TestDataQueryTypeLinearHeatmapBucketData TestDataQueryType = "linear_heatmap_bucket_data"
-
-	TestDataQueryTypeLive TestDataQueryType = "live"
-
-	TestDataQueryTypeLogs TestDataQueryType = "logs"
-
-	TestDataQueryTypeManualEntry TestDataQueryType = "manual_entry"
-
-	TestDataQueryTypeNoDataPoints TestDataQueryType = "no_data_points"
-
-	TestDataQueryTypeNodeGraph TestDataQueryType = "node_graph"
-
-	TestDataQueryTypePredictableCsvWave TestDataQueryType = "predictable_csv_wave"
-
-	TestDataQueryTypePredictablePulse TestDataQueryType = "predictable_pulse"
-
-	TestDataQueryTypeRandomWalk TestDataQueryType = "random_walk"
-
-	TestDataQueryTypeRandomWalkTable TestDataQueryType = "random_walk_table"
-
-	TestDataQueryTypeRandomWalkWithError TestDataQueryType = "random_walk_with_error"
-
-	TestDataQueryTypeRawFrame TestDataQueryType = "raw_frame"
-
-	TestDataQueryTypeServerError500 TestDataQueryType = "server_error_500"
-
-	TestDataQueryTypeSimulation TestDataQueryType = "simulation"
-
-	TestDataQueryTypeSlowQuery TestDataQueryType = "slow_query"
-
-	TestDataQueryTypeStreamingClient TestDataQueryType = "streaming_client"
-
-	TestDataQueryTypeTableStatic TestDataQueryType = "table_static"
-
-	TestDataQueryTypeTrace TestDataQueryType = "trace"
-
-	TestDataQueryTypeUsa TestDataQueryType = "usa"
-
-	TestDataQueryTypeVariablesQuery TestDataQueryType = "variables-query"
+	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"
+	TestDataQueryTypeGrafanaApi                   TestDataQueryType = "grafana_api"
+	TestDataQueryTypeLinearHeatmapBucketData      TestDataQueryType = "linear_heatmap_bucket_data"
+	TestDataQueryTypeLive                         TestDataQueryType = "live"
+	TestDataQueryTypeLogs                         TestDataQueryType = "logs"
+	TestDataQueryTypeManualEntry                  TestDataQueryType = "manual_entry"
+	TestDataQueryTypeNoDataPoints                 TestDataQueryType = "no_data_points"
+	TestDataQueryTypeNodeGraph                    TestDataQueryType = "node_graph"
+	TestDataQueryTypePredictableCsvWave           TestDataQueryType = "predictable_csv_wave"
+	TestDataQueryTypePredictablePulse             TestDataQueryType = "predictable_pulse"
+	TestDataQueryTypeRandomWalk                   TestDataQueryType = "random_walk"
+	TestDataQueryTypeRandomWalkTable              TestDataQueryType = "random_walk_table"
+	TestDataQueryTypeRandomWalkWithError          TestDataQueryType = "random_walk_with_error"
+	TestDataQueryTypeRawFrame                     TestDataQueryType = "raw_frame"
+	TestDataQueryTypeServerError500               TestDataQueryType = "server_error_500"
+	TestDataQueryTypeSimulation                   TestDataQueryType = "simulation"
+	TestDataQueryTypeSlowQuery                    TestDataQueryType = "slow_query"
+	TestDataQueryTypeStreamingClient              TestDataQueryType = "streaming_client"
+	TestDataQueryTypeTableStatic                  TestDataQueryType = "table_static"
+	TestDataQueryTypeTrace                        TestDataQueryType = "trace"
+	TestDataQueryTypeUsa                          TestDataQueryType = "usa"
+	TestDataQueryTypeVariablesQuery               TestDataQueryType = "variables-query"
 )
 
 // CSVWave defines model for CSVWave.
@@ -242,7 +176,7 @@ type TestDataDataQuery struct {
 	Channel     *string `json:"channel,omitempty"`
 	CsvContent  *string `json:"csvContent,omitempty"`
 	CsvFileName *string `json:"csvFileName,omitempty"`
-	CsvWave     *[]struct {
+	CsvWave     []struct {
 		Labels    *string `json:"labels,omitempty"`
 		Name      *string `json:"name,omitempty"`
 		TimeStep  *int64  `json:"timeStep,omitempty"`
@@ -256,11 +190,10 @@ type TestDataDataQuery struct {
 	Datasource *interface{} `json:"datasource,omitempty"`
 	ErrorType  *ErrorType   `json:"errorType,omitempty"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
-	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key         *string `json:"key,omitempty"`
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide        *bool   `json:"hide,omitempty"`
 	Labels      *string `json:"labels,omitempty"`
 	LevelColumn *bool   `json:"levelColumn,omitempty"`
 	Lines       *int64  `json:"lines,omitempty"`
@@ -268,7 +201,7 @@ type TestDataDataQuery struct {
 		Count *int64     `json:"count,omitempty"`
 		Type  *NodesType `json:"type,omitempty"`
 	} `json:"nodes,omitempty"`
-	Points    *[][]interface{} `json:"points,omitempty"`
+	Points    [][]interface{} `json:"points,omitempty"`
 	PulseWave *struct {
 		OffCount *int64   `json:"offCount,omitempty"`
 		OffValue *float64 `json:"offValue,omitempty"`
@@ -282,7 +215,9 @@ type TestDataDataQuery struct {
 	QueryType       *string `json:"queryType,omitempty"`
 	RawFrameContent *string `json:"rawFrameContent,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId       string      `json:"refId"`
 	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
 	SeriesCount *int32      `json:"seriesCount,omitempty"`
@@ -307,10 +242,10 @@ type TestDataDataQuery struct {
 	} `json:"stream,omitempty"`
 	StringInput *string `json:"stringInput,omitempty"`
 	Usa         *struct {
-		Fields *[]string `json:"fields,omitempty"`
-		Mode   *string   `json:"mode,omitempty"`
-		Period *string   `json:"period,omitempty"`
-		States *[]string `json:"states,omitempty"`
+		Fields []string `json:"fields,omitempty"`
+		Mode   *string  `json:"mode,omitempty"`
+		Period *string  `json:"period,omitempty"`
+		States []string `json:"states,omitempty"`
 	} `json:"usa,omitempty"`
 }
 
@@ -331,8 +266,8 @@ type TestDataQueryType string
 
 // USAQuery defines model for USAQuery.
 type USAQuery struct {
-	Fields *[]string `json:"fields,omitempty"`
-	Mode   *string   `json:"mode,omitempty"`
-	Period *string   `json:"period,omitempty"`
-	States *[]string `json:"states,omitempty"`
+	Fields []string `json:"fields,omitempty"`
+	Mode   *string  `json:"mode,omitempty"`
+	Period *string  `json:"period,omitempty"`
+	States []string `json:"states,omitempty"`
 }

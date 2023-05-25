@@ -1,6 +1,8 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Role } from 'app/types';
 
+import { addDisplayNameForFixedRole } from './utils';
+
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles?delegatable=true';
   if (orgId) {
@@ -10,7 +12,7 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   if (!roles || !roles.length) {
     return [];
   }
-  return roles;
+  return roles.map(addDisplayNameForFixedRole);
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
@@ -23,7 +25,7 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    return roles;
+    return roles.map(addDisplayNameForFixedRole);
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;
@@ -54,7 +56,7 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    return roles;
+    return roles.map(addDisplayNameForFixedRole);
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;

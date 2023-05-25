@@ -1,12 +1,12 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { match } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { backendSrv } from '../../core/services/backend_srv';
-import { configureStore } from '../../store/configureStore';
 
 import { SignupInvitedPage, Props } from './SignupInvited';
 
@@ -17,7 +17,7 @@ jest.mock('app/core/core', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -30,7 +30,6 @@ const defaultGet = {
 
 async function setupTestContext({ get = defaultGet }: { get?: typeof defaultGet | null } = {}) {
   jest.clearAllMocks();
-  const store = configureStore();
 
   const getSpy = jest.spyOn(backendSrv, 'get');
   getSpy.mockResolvedValue(get);
@@ -42,14 +41,14 @@ async function setupTestContext({ get = defaultGet }: { get?: typeof defaultGet 
     ...getRouteComponentProps({
       match: {
         params: { code: 'some code' },
-      } as any,
+      } as unknown as match,
     }),
   };
 
   render(
-    <Provider store={store}>
+    <TestProvider>
       <SignupInvitedPage {...props} />
-    </Provider>
+    </TestProvider>
   );
 
   await waitFor(() => expect(getSpy).toHaveBeenCalled());

@@ -27,8 +27,31 @@ interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, '
   config: UPlotConfigBuilder;
 }
 
-export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }) => {
+/**
+ * mostly duplicates logic in PlotLegend below :(
+ *
+ * @internal
+ */
+export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFrame[]) {
+  return config.getSeries().some((s) => {
+    const fieldIndex = s.props.dataFrameFieldIndex;
+
+    if (!fieldIndex) {
+      return false;
+    }
+
+    const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+    if (!field || field.config.custom?.hideFrom?.legend) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export const PlotLegend = React.memo(
+  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
     const legendItems = config
       .getSeries()

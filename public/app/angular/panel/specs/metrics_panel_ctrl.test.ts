@@ -1,7 +1,7 @@
 jest.mock('app/core/core', () => ({}));
 jest.mock('app/core/config', () => {
   return {
-    ...(jest.requireActual('app/core/config') as unknown as object),
+    ...jest.requireActual('app/core/config'),
     bootData: {
       user: {},
     },

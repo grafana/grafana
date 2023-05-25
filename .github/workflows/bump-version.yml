@@ -17,13 +17,13 @@ jobs:
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
-          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-(?:(beta\d+)|(pre)))?$'
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ inputs.version_call != '' }}
         id: regex-match-version-call
         with:
           text: ${{ inputs.version_call }}
-          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-(?:(beta\d+)|(pre)))?$'
       - name: Validate input version
         if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
         run: |
@@ -50,7 +50,7 @@ jobs:
           echo "branch_exist=$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)" >> $GITHUB_OUTPUT
 
       - name: Check input version is aligned with branch(main)
-        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main') }}
+        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(github.event.inputs.version, 'pre') && !contains(steps.intermedia.outputs.short_ref, 'main') }}
         run: |
           echo "When you want to deliver a new new minor version, you might want to create a new branch first \
           with naming convention v[major].[minor].x, and just run the workflow on that branch. \

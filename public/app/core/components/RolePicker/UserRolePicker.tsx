@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { contextSrv } from 'app/core/core';
@@ -32,7 +32,7 @@ export interface Props {
   maxWidth?: string | number;
 }
 
-export const UserRolePicker: FC<Props> = ({
+export const UserRolePicker = ({
   basicRole,
   userId,
   orgId,
@@ -44,7 +44,7 @@ export const UserRolePicker: FC<Props> = ({
   onApplyRoles,
   pendingRoles,
   maxWidth,
-}) => {
+}: Props) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
       if (apply && Boolean(pendingRoles?.length)) {

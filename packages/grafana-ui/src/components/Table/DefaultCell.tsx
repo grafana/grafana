@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC, ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -7,7 +7,7 @@ import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schem
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
-import { Button, clearLinkButtonStyles } from '../Button';
+import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -15,7 +15,7 @@ import { TableStyles } from './styles';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 import { getCellOptions } from './utils';
 
-export const DefaultCell: FC<TableCellProps> = (props) => {
+export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
@@ -28,7 +28,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
     value = formattedValueToString(displayValue);
   }
 
-  const showFilters = field.config.filterable;
+  const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
@@ -42,21 +42,23 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
-            const content = <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             if (api.openMenu) {
               return (
-                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                  {content}
-                </Button>
+                <button
+                  className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
+                  onClick={api.openMenu}
+                >
+                  {value}
+                </button>
               );
             } else {
-              return content;
+              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             }
           }}
         </DataLinksContextMenu>
       )}
 
-      {showActions && <CellActions {...props} previewMode="text" />}
+      {showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
     </div>
   );
 };
@@ -77,10 +79,12 @@ function getCellStyle(
   if (cellOptions.type === TableCellDisplayMode.ColorText) {
     textColor = displayValue.color;
   } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-    if (cellOptions.mode === TableCellBackgroundDisplayMode.Basic) {
+    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
+
+    if (mode === TableCellBackgroundDisplayMode.Basic) {
       textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
       bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (cellOptions.mode === TableCellBackgroundDisplayMode.Gradient) {
+    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
       const bgColor2 = tinycolor(displayValue.color)
         .darken(10 * darkeningFactor)
         .spin(5);

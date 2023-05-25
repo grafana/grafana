@@ -68,22 +68,22 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// Get public dashboard
 	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
-		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
+		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboard))
 
 	// Create Public Dashboard
 	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
-		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
 	api.RouteRegister.Put("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
 	// Delete Public dashboard
 	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
@@ -196,7 +196,7 @@ func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	err := api.PublicDashboardService.Delete(c.Req.Context(), c.OrgID, uid)
+	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
 	if err != nil {
 		return response.Err(err)
 	}

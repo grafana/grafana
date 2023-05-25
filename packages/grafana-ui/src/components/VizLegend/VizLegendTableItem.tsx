@@ -28,14 +28,14 @@ export interface Props {
 /**
  * @internal
  */
-export const LegendTableItem: React.FunctionComponent<Props> = ({
+export const LegendTableItem = ({
   item,
   onLabelClick,
   onLabelMouseOver,
   onLabelMouseOut,
   className,
   readonly,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const onMouseOver = useCallback(
@@ -73,6 +73,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
           <button
             disabled={readonly}
             type="button"
+            title={item.label}
             onBlur={onMouseOut}
             onFocus={onMouseOver}
             onMouseOver={onMouseOver}
@@ -122,6 +123,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: none;
       font-size: inherit;
       padding: 0;
+      max-width: 600px;
+      text-overflow: ellipsis;
+      overflow: hidden;
     `,
     labelDisabled: css`
       label: LegendLabelDisabled;

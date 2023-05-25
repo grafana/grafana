@@ -15,13 +15,14 @@ import (
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
 	"cuelang.org/go/cue/token"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/load"
 	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
+
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 // PackageName is the name of the CUE package that Grafana will load when
@@ -57,7 +58,7 @@ func loadGP(ctx *cue.Context) cue.Value {
 func PermittedCUEImports() []string {
 	return []string{
 		"github.com/grafana/thema",
-		"github.com/grafana/grafana/pkg/kindsys",
+		"github.com/grafana/kindsys",
 		"github.com/grafana/grafana/pkg/plugins/pfs",
 		"github.com/grafana/grafana/packages/grafana-schema/src/common",
 	}
@@ -204,7 +205,13 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	})
 	bi.Files = append(bi.Files, f)
 
-	gpi := ctx.BuildInstance(bi).Unify(gpv)
+	gpi := ctx.BuildInstance(bi)
+	// Temporary hack while we figure out what in the elasticsearch lineage turns
+	// this into an endless loop in thema, and why unifying twice is anything other
+	// than a total no-op.
+	if pp.Properties.Id != "elasticsearch" {
+		gpi = gpi.Unify(gpv)
+	}
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}
@@ -235,7 +242,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 }
 
 func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
-	if modf, err := fs.ReadFile(fsys, filepath.Join("cue.mod", "module.cue")); err != nil {
+	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}

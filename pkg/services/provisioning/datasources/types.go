@@ -203,11 +203,11 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 	}
 
 	cmd := &datasources.AddDataSourceCommand{
-		OrgId:           ds.OrgID,
+		OrgID:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
 		Access:          datasources.DsAccess(ds.Access),
-		Url:             ds.URL,
+		URL:             ds.URL,
 		User:            ds.User,
 		Database:        ds.Database,
 		BasicAuth:       ds.BasicAuth,
@@ -217,11 +217,11 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		JsonData:        jsonData,
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
-		Uid:             ds.UID,
+		UID:             ds.UID,
 	}
 
-	if cmd.Uid == "" {
-		cmd.Uid = safeUIDFromName(cmd.Name)
+	if cmd.UID == "" {
+		cmd.UID = safeUIDFromName(cmd.Name)
 	}
 	return cmd
 }
@@ -242,13 +242,13 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 	}
 
 	return &datasources.UpdateDataSourceCommand{
-		Id:              id,
-		Uid:             ds.UID,
-		OrgId:           ds.OrgID,
+		ID:              id,
+		UID:             ds.UID,
+		OrgID:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
 		Access:          datasources.DsAccess(ds.Access),
-		Url:             ds.URL,
+		URL:             ds.URL,
 		User:            ds.User,
 		Database:        ds.Database,
 		BasicAuth:       ds.BasicAuth,

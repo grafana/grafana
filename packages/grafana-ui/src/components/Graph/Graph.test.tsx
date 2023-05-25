@@ -1,15 +1,15 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import $ from 'jquery';
 import React from 'react';
 
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId, DisplayProcessor } from '@grafana/data';
+import { GraphSeriesXY, FieldType, dateTime, FieldColorModeId, DisplayProcessor } from '@grafana/data';
 import { TooltipDisplayMode } from '@grafana/schema';
 
 import { VizTooltip } from '../VizTooltip';
 
 import Graph from './Graph';
 
-const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
+const display: DisplayProcessor = (v) => ({ numeric: Number(v), text: String(v), color: 'red' });
 
 const series: GraphSeriesXY[] = [
   {
@@ -25,13 +25,13 @@ const series: GraphSeriesXY[] = [
     timeField: {
       type: FieldType.time,
       name: 'time',
-      values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
+      values: [1546372800000, 1546376400000, 1546380000000],
       config: {},
     },
     valueField: {
       type: FieldType.number,
       name: 'a-series',
-      values: new ArrayVector([10, 20, 10]),
+      values: [10, 20, 10],
       config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
       display,
     },
@@ -53,13 +53,13 @@ const series: GraphSeriesXY[] = [
     timeField: {
       type: FieldType.time,
       name: 'time',
-      values: new ArrayVector([1546372800000, 1546376400000, 1546380000000]),
+      values: [1546372800000, 1546376400000, 1546380000000],
       config: {},
     },
     valueField: {
       type: FieldType.number,
       name: 'b-series',
-      values: new ArrayVector([20, 30, 40]),
+      values: [20, 30, 40],
       config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
       display,
     },
@@ -136,7 +136,9 @@ describe('Graph', () => {
             series: { seriesIndex: 0 },
           },
         };
-        $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
+        act(() => {
+          $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
+        });
         const timestamp = screen.getByLabelText('Timestamp');
         const tooltip = screen.getByTestId('SeriesTableRow').parentElement;
 
@@ -165,7 +167,9 @@ describe('Graph', () => {
           activeItem: null,
         };
         // Then
-        $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
+        act(() => {
+          $('div.graph-panel__chart').trigger('plothover', [eventArgs.pos, eventArgs.activeItem]);
+        });
         const timestamp = screen.getByLabelText('Timestamp');
 
         const tableRows = screen.getAllByTestId('SeriesTableRow');

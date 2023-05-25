@@ -123,6 +123,7 @@ export interface PluginInclude {
 interface PluginMetaInfoLink {
   name: string;
   url: string;
+  target?: '_blank' | '_self' | '_parent' | '_top';
 }
 
 export interface PluginBuildInfo {

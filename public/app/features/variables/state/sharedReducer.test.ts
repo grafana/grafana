@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { LoadingState, VariableType } from '@grafana/data';
+import { BaseVariableModel, LoadingState, VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { variableAdapters } from '../adapters';
@@ -36,11 +36,11 @@ variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVari
 describe('sharedReducer', () => {
   describe('when addVariable is dispatched', () => {
     it('then state should be correct', () => {
-      const model: any = {
+      const model = {
         name: 'name from model',
         type: 'query',
         current: undefined,
-      };
+      } as unknown as BaseVariableModel;
 
       const expected: QueryVariableModel = {
         ...initialQueryVariableModelState,
@@ -65,13 +65,13 @@ describe('sharedReducer', () => {
 
   describe('when addVariable is dispatched for a constant model', () => {
     it('then state should be correct', () => {
-      const model: any = {
+      const model = {
         name: 'constant',
         type: 'constant',
         query: 'a constant',
         current: { selected: true, text: 'A', value: 'A' },
         options: [{ selected: true, text: 'A', value: 'A' }],
-      };
+      } as unknown as BaseVariableModel;
 
       const expected: ConstantVariableModel = {
         ...initialConstantVariableModelState,

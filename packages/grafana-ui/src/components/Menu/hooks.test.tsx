@@ -1,6 +1,4 @@
-import { fireEvent } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
-import { act, renderHook } from '@testing-library/react-hooks';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import React, { createRef, KeyboardEvent, RefObject } from 'react';
 
 import { useMenuFocus } from './hooks';
@@ -155,20 +153,6 @@ describe('useMenuFocus', () => {
 
     expect(screen.getByText('Item 1').tabIndex).toBe(0);
     expect(setOpenedWithArrow).toHaveBeenCalledWith(false);
-  });
-
-  it('focuses on first item when container receives focus', () => {
-    const ref = createRef<HTMLDivElement>();
-    const { result } = renderHook(() => useMenuFocus({ localRef: ref }));
-    const [_, handleFocus] = result.current;
-
-    render(getMenuElement(ref, undefined, handleFocus));
-
-    act(() => {
-      screen.getByTestId(testid).focus();
-    });
-
-    expect(screen.getByText('Item 1').tabIndex).toBe(0);
   });
 
   it('clicks focused item when Enter key is pressed', () => {

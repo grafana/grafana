@@ -595,8 +595,8 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
-				_ = repo.Save(context.Background(), &annotations.Item{Id: 1, DashboardId: 0})
-				_ = repo.Save(context.Background(), &annotations.Item{Id: 2, DashboardId: 1})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1})
 				hs.annotationsRepo = repo
 				hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
@@ -649,8 +649,8 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 		},
 	}
 
-	dashboardAnnotation := annotations.Item{Id: 1, DashboardId: 1}
-	organizationAnnotation := annotations.Item{Id: 2}
+	dashboardAnnotation := annotations.Item{ID: 1, DashboardID: 1}
+	organizationAnnotation := annotations.Item{ID: 2}
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	_ = fakeAnnoRepo.Save(context.Background(), &dashboardAnnotation)
@@ -697,7 +697,7 @@ func setUpACL() {
 		}
 	}).Return(result, nil)
 
-	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, teamSvc)
 }
 
 func setUpRBACGuardian(t *testing.T) {

@@ -14,7 +14,7 @@ type DiffTitleProps = {
 
 const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [''], value: undefined, startLineNumber: 0 };
 
-export const DiffTitle: React.FC<DiffTitleProps> = ({ diff, title }) => {
+export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
   const styles = useStyles2(getDiffTitleStyles);
 
   return diff ? (
