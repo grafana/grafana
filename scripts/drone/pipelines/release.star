@@ -46,6 +46,7 @@ load(
     'publish_images_step',
     'trigger_oss',
     'compile_build_cmd',
+    'cloudsdk_image',
 )
 
 load(
@@ -114,7 +115,7 @@ def release_npm_packages_step():
 def fetch_images_step(edition):
     return {
         'name': 'fetch-images-{}'.format(edition),
-        'image': 'google/cloud-sdk',
+        'image': cloudsdk_image,
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'DOCKER_USER': from_secret('docker_username'),
