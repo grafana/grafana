@@ -1,6 +1,7 @@
 ---
 aliases:
   - unified-alerting/set-up/
+description: How to set up alerting features and integrations
 title: Set up Alerting
 weight: 107
 ---
@@ -9,6 +10,6 @@ weight: 107
 
 Configure the features and integrations that you need to create and manage your alerts.
 
-- [Configure Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)
-- [Provision Grafana Alerting resources](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/)
-- [Connect Grafana Alerting to Grafana OnCall](https://grafana.com/docs/oncall/latest/integrations/available-integrations/add-grafana-alerting/)
+- [Configure Alertmanager]({{< relref "./configure-alertmanager" >}})
+- [Provision Grafana Alerting resources]({{< relref "./provision-alerting-resources" >}})
+- [Connect Grafana Alerting to Grafana OnCall](/docs/oncall/latest/integrations/available-integrations/add-grafana-alerting/)

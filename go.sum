@@ -1096,10 +1096,10 @@ github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HG
 github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.160.0 h1:jELbsqee5kRz9vD1hZeP8+984xMZDU/M6uGv0RhOR34=
-github.com/grafana/grafana-plugin-sdk-go v0.160.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
-github.com/grafana/kindsys v0.0.0-20230508175818-7ad73516220b h1:x3gw5zsWZ2vxQ0GYucB2PFQ6eISAoWkba5MrQd8ZK0E=
-github.com/grafana/kindsys v0.0.0-20230508175818-7ad73516220b/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
+github.com/grafana/grafana-plugin-sdk-go v0.162.0 h1:ij2ARWohf0IoK9yCVC1Wup4Gp6zwBq2AueVXRYsv/to=
+github.com/grafana/grafana-plugin-sdk-go v0.162.0/go.mod h1:dPhljkVno3Bg/ZYafMrR/BfYjtCRJD2hU2719Nl3QzM=
+github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
+github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 h1:bBzCezZNRyYlJpXTkyZdY4fpPxHZUdyeyRWzhtw/P6I=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413/go.mod h1:IvwuGG9xa/h96UH/exgvsfy3zE+ZpctkNT9o5aaGdrU=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230508090422-7d5630522a53 h1:X3Jl4PBIGCtlPSMa6Uiu2+3FDNWmddSjivp+1DDznQs=
@@ -2904,7 +2904,6 @@ k8s.io/apimachinery v0.26.2/go.mod h1:ats7nN1LExKHvJ9TmwootT00Yz05MuYqPXEXaVeOy5
 k8s.io/client-go v0.25.3 h1:oB4Dyl8d6UbfDHD8Bv8evKylzs3BXzzufLiO27xuPs0=
 k8s.io/client-go v0.25.3/go.mod h1:t39LPczAIMwycjcXkVc+CB+PZV69jQuNx4um5ORDjQA=
 k8s.io/gengo v0.0.0-20210813121822-485abfe95c7c/go.mod h1:FiNAH4ZV3gBg2Kwh89tzAEV2be7d5xI0vBa/VySYy3E=
-k8s.io/klog v1.0.0 h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=
 k8s.io/klog v1.0.0/go.mod h1:4Bi6QPql/J/LkTDqv7R/cd3hPo4k2DG6Ptcz060Ez5I=
 k8s.io/klog/v2 v2.0.0/go.mod h1:PBfzABfn139FHAV07az/IF9Wp1bkk3vpT2XSJ76fSDE=
 k8s.io/klog/v2 v2.2.0/go.mod h1:Od+F08eJP+W3HUb4pSrPpgp9DGU4GzlpG/TmITuYh/Y=
