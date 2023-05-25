@@ -138,7 +138,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			if azureTracesTarget.ResultFormat == nil {
 				resultFormat = types.Table
 			} else {
-				resultFormat = string(*azureTracesTarget.ResultFormat)
+				resultFormat = *azureTracesTarget.ResultFormat
 				if resultFormat == "" {
 					resultFormat = types.Table
 				}
