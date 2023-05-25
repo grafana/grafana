@@ -1,21 +1,13 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { RefCallback, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import {
-  AsyncSelect,
-  Button,
-  CustomScrollbar,
-  FormatOptionLabelMeta,
-  getSelectStyles,
-  Icon,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { AsyncSelect, Button, FormatOptionLabelMeta, Icon, useStyles2 } from '@grafana/ui';
+import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
@@ -129,60 +121,50 @@ export function MetricSelect({
     datasource.getDebounceTimeInMilliseconds()
   );
 
-  interface SelectMenuProps {
-    maxHeight: number;
-    innerRef: RefCallback<HTMLDivElement>;
-    innerProps: {};
-  }
+  // No type found for the common select props so typing as any
+  // https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Select/SelectBase.tsx/#L212-L263
+  // eslint-disable-next-line
+  const CustomOption = (props: any) => {
+    const option = props.data;
 
-  // This is based off of the SelectMenu and customized to match the style of the DatasourceDropdown picker
-  // packages/grafana-ui/src/components/Select/SelectMenu.tsx
-  // public/app/features/datasources/components/picker/DataSourceDropdown.tsx
-  const CustomMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
-    const theme = useTheme2();
-    const stylesMenu = getSelectStyles(theme);
+    if (option.value === 'BrowseMetrics') {
+      const isFocused = props.isFocused ? styles.focus : '';
 
-    // Show the open modal button only if the options are loaded
-    // The children are a react node(options loading node) or an array(not a valid element)
-    const optionsLoaded = !React.isValidElement(children);
-
-    return (
-      <div
-        {...innerProps}
-        className={`${stylesMenu.menu} ${styles.container}`}
-        style={{ maxHeight }}
-        aria-label="Select options menu"
-      >
-        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
-          {children}
-        </CustomScrollbar>
-
-        {optionsLoaded && (
-          <div className={styles.footer}>
-            <div>
-              Browse metrics
-              <div className={`${styles.description} metric-encyclopedia-open`}>
-                Browse and filter metrics and metadata with a fuzzy search
+      return (
+        <div
+          {...props.innerProps}
+          ref={props.innerRef}
+          className="metric-encyclopedia-open"
+          onKeyDown={(e) => {
+            // if there is no metric and the m.e. is enabled, open the modal
+            if (e.code === 'Enter') {
+              setState({ ...state, metricsModalOpen: true });
+            }
+          }}
+        >
+          {
+            <div className={`${styles.customOption} ${isFocused} metric-encyclopedia-open`}>
+              <div>
+                <div className="metric-encyclopedia-open">{option.label}</div>
+                <div className={`${styles.customOptionDesc} metric-encyclopedia-open`}>{option.description}</div>
               </div>
+              <Button
+                fill="text"
+                size="sm"
+                variant="secondary"
+                onClick={() => setState({ ...state, metricsModalOpen: true })}
+                className="metric-encyclopedia-open"
+              >
+                Open
+                <Icon name="arrow-right" />
+              </Button>
             </div>
+          }
+        </div>
+      );
+    }
 
-            <Button
-              size="sm"
-              variant="secondary"
-              fill="text"
-              className="metric-encyclopedia-open"
-              onClick={() => {
-                setState({ ...state, metricsModalOpen: true });
-                tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-              }}
-            >
-              Open
-              <Icon name="arrow-right" />
-            </Button>
-          </div>
-        )}
-      </div>
-    );
+    return SelectMenuOptions(props);
   };
 
   return (
@@ -219,9 +201,17 @@ export function MetricSelect({
               }
 
               if (prometheusMetricEncyclopedia) {
+                // pass the initial metrics, possibly filtered by labels into the Metrics Modal
+                const metricsModalOption: SelectableValue[] = [
+                  {
+                    value: 'BrowseMetrics',
+                    label: 'Browse metrics',
+                    description: 'Browse and filter metrics and metadata with a fuzzy search',
+                  },
+                ];
                 // pass the initial metrics into the Metrics Modal
                 setState({
-                  metrics: metrics,
+                  metrics: [...metricsModalOption, ...metrics],
                   isLoading: undefined,
                   initialMetrics: initialMetrics,
                 });
@@ -234,10 +224,16 @@ export function MetricSelect({
             defaultOptions={state.metrics}
             onChange={({ value }) => {
               if (value) {
-                onChange({ ...query, metric: value });
+                // if there is no metric and the m.e. is enabled, open the modal
+                if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
+                  tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
+                  setState({ ...state, metricsModalOpen: true });
+                } else {
+                  onChange({ ...query, metric: value });
+                }
               }
             }}
-            components={prometheusMetricEncyclopedia ? { MenuList: CustomMenu } : {}}
+            components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
           />
         </EditorField>
       </EditorFieldGroup>
@@ -256,24 +252,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.contrastText};
     background-color: ${theme.colors.warning.main};
   `,
-  footer: css`
-    flex: 0;
+  customOption: css`
+    padding: 8px;
     display: flex;
     justify-content: space-between;
-    padding: ${theme.spacing(1.5)};
-    border-top: 1px solid ${theme.colors.border.weak};
-    background-color: ${theme.colors.background.secondary};
+    cursor: pointer;
+    :hover {
+      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+    }
   `,
-  container: css`
-    display: flex;
-    flex-direction: column;
-    background: ${theme.colors.background.primary};
-    box-shadow: ${theme.shadows.z3};
+  customOptionlabel: css`
+    color: ${theme.colors.text.primary};
   `,
-  description: css`
+  customOptionDesc: css`
     color: ${theme.colors.text.secondary};
     font-size: ${theme.typography.size.xs};
     opacity: 50%;
+  `,
+  focus: css`
+    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
   `,
 });
 
