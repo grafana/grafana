@@ -12,7 +12,7 @@ weight: -37
 
 # What’s new in Grafana v10.0
 
-Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and authentication and security.
+Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes, refer to the ["Breaking changes"]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}) page for this release version.
 
@@ -21,7 +21,7 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- Template below
 ## Feature
 <!-- Name of contributor -->
-<!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
+<!-- [Generally available | Available in preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
@@ -31,11 +31,11 @@ Description. Include an overview of the feature and problem it solves, and where
 
 _Available in preview in all editions of Grafana._
 
-You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing Data Links functionality and now enables you to link from any data source, to any data source.
+You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing data links functionality and now enables you to link from any data source to any other data source.
 
-Correlations enable you to seamlessly jump from one data source to another. You define relationships between your different data sources, and when Exploring simply click a button next to a related field in one data source and Grafana will run the corresponding query in the other datasource.
+Correlations enable you to seamlessly jump from one data source to another. You define relationships between your different data sources; when you're using Explore, simply click a button next to a related field in one data source and Grafana will run the corresponding query in the other data source.
 
-Correlations is currently in preview. As such, it is recommended to enable it only on test or development instances, rather than in production environments.
+Correlations is currently in preview. As such, we recommended you only enable it on test or development instances, rather than in production environments.
 
 To try out Correlations, you'll need to enable the `correlations` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
@@ -45,11 +45,11 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 <!--Dominik Prokop & Natalia Bernarte -->
 
-_Available in Experimental in all editions of Grafana._
+_Experimental in all editions of Grafana._
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
-To try it out, please check out [@grafana/scenes](https://github.com/grafana/scenes).
+To learn more and try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
 
 <!--
 - TODO: Add link to docs and resources
