@@ -7,7 +7,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { addListener, ExploreItemState, useDispatch, useSelector } from 'app/types';
+import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
 import { changeDatasource } from '../../state/datasource';
 import { initializeExplore } from '../../state/explorePane';
@@ -23,7 +23,7 @@ import { parseURL } from './parseURL';
 /**
  * Bi-directionally syncs URL changes with Explore's state.
  */
-export function useStateSync(params: Record<string, string>) {
+export function useStateSync(params: ExploreQueryParams) {
   const {
     location,
     config: {
@@ -75,7 +75,8 @@ export function useStateSync(params: Record<string, string>) {
           if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
-            const replace = Object.values(prevParams.current.panes).filter(Boolean).length === 0;
+            const replace =
+              !!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0;
 
             prevParams.current = {
               panes: JSON.stringify(panesQueryParams),

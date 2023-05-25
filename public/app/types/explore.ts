@@ -15,15 +15,13 @@ import {
   DataQueryResponse,
   ExplorePanelsState,
   SupplementaryQueryType,
+  UrlQueryMap,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
-export type ExploreQueryParams = {
-  panes?: string;
-};
-
+export type ExploreQueryParams = UrlQueryMap;
 /**
  * Global Explore state
  */

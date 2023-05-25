@@ -15,7 +15,17 @@ export interface ExploreURLV1 extends BaseExploreURL {
 
 export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
   parse: (params) => {
+    if (!params || !params.panes || typeof params.panes !== 'string') {
+      return {
+        schemaVersion: 1,
+        panes: {
+          [nanoid()]: parseUrlState(undefined),
+        },
+      };
+    }
+
     return {
+      schemaVersion: 1,
       panes: Object.entries(safeParseJson(params?.panes) || { [nanoid()]: parseUrlState(undefined) }).reduce(
         (acc, [key, value]) => {
           return {

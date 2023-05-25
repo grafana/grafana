@@ -1,18 +1,18 @@
+import { ExploreQueryParams } from 'app/types';
+
 import { v0Migrator } from './migrators/v0';
 import { ExploreURLV1, v1Migrator } from './migrators/v1';
 
-export const parseURL = (params: AnyExploreParams) => {
+type ExploreURL = ExploreURLV1;
+
+export const parseURL = (params: ExploreQueryParams) => {
   return migrate(params);
 };
 
-interface AnyExploreParams {
-  [key: string]: string | undefined;
-}
-
 const migrators = [v0Migrator, v1Migrator] as const;
 
-const migrate = (params: AnyExploreParams): ExploreURL => {
-  const schemaVersion = params && 'schemaVersion' in params ? Number.parseInt(params.schemaVersion || '0', 10) : 0;
+const migrate = (params: ExploreQueryParams): ExploreURL => {
+  const schemaVersion = getSchemaVersion(params);
 
   const [parser, ...migratorsToRun] = migrators.slice(schemaVersion);
 
@@ -27,4 +27,18 @@ const migrate = (params: AnyExploreParams): ExploreURL => {
   return final;
 };
 
-type ExploreURL = ExploreURLV1;
+function getSchemaVersion(params: ExploreQueryParams): number {
+  if (!params || !('schemaVersion' in params) || !params.schemaVersion) {
+    return 0;
+  }
+
+  if (typeof params.schemaVersion === 'number') {
+    return params.schemaVersion;
+  }
+
+  if (typeof params.schemaVersion === 'string') {
+    return Number.parseInt(params.schemaVersion, 10);
+  }
+
+  return 0;
+}

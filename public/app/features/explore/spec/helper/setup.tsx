@@ -42,7 +42,7 @@ type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceAp
 type SetupOptions = {
   clearLocalStorage?: boolean;
   datasources?: DatasourceSetup[];
-  urlParams?: ExploreQueryParams & { [key: string]: string };
+  urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
   mixedEnabled?: boolean;
 };
@@ -86,6 +86,7 @@ export function setupExplore(options?: SetupOptions): {
     },
     get(datasource?: string | DataSourceRef | null): Promise<DataSourceApi> {
       let ds: DataSourceApi | undefined;
+      // console.log('datasource', datasource);
       if (!datasource) {
         ds = dsSettings[0]?.api;
       } else {

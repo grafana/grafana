@@ -4,7 +4,7 @@ import { DEFAULT_RANGE, safeParseJson } from 'app/core/utils/explore';
 import { BaseExploreURL, MigrationHandler } from './types';
 
 export interface ExploreURLV0 extends BaseExploreURL {
-  schemaVersion: never;
+  schemaVersion: 0;
   left: ExploreUrlState;
   right?: ExploreUrlState;
 }
@@ -12,8 +12,9 @@ export interface ExploreURLV0 extends BaseExploreURL {
 export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
   parse: (params) => {
     return {
-      left: parseUrlState(params.left),
-      ...(params.right && { right: parseUrlState(params.right) }),
+      schemaVersion: 0,
+      left: parseUrlState(typeof params.left === 'string' ? params.left : undefined),
+      ...(params.right && { right: parseUrlState(typeof params.right === 'string' ? params.right : undefined) }),
     };
   },
 };

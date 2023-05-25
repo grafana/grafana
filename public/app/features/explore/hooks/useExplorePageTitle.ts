@@ -14,7 +14,7 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
 
   useEffect(() => {
     Promise.all(
-      Object.values(safeParseJson(params.panes)).map((pane) => {
+      Object.values(safeParseJson(params.panes || '{}')).map((pane) => {
         if (pane && typeof pane === 'object' && 'datasource' in pane) {
           return dsService.current.get(pane.datasource);
         }
