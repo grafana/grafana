@@ -218,12 +218,16 @@ export async function importPluginModule({
     }
   }
 
-  // This code cannot work in a nodejs environment and requires a real browser for the sandboxing mechanism to function.
-  if (!isAngular && config.featureToggles.pluginsFrontendSandbox && process.env.NODE_ENV !== 'test') {
+  // the sandboxing environment code cannot work in nodejs and requires a real browser
+  if (isFrontendSandboxSupported(isAngular)) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
   return grafanaRuntime.SystemJS.import(path);
+}
+
+function isFrontendSandboxSupported(isAngular?: boolean): boolean {
+  return !isAngular && Boolean(config.featureToggles.pluginsFrontendSandbox) && process.env.NODE_ENV !== 'test';
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
