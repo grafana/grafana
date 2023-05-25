@@ -238,6 +238,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: baseline;
   `,
   queryRow: css`
+    label: queryRow;
     display: flex;
+    flex-flow: wrap;
   `,
 });

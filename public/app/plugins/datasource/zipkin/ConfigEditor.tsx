@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -13,8 +14,10 @@ import { SpanBarSection } from 'app/features/explore/TraceView/components/settin
 export type Props = DataSourcePluginOptionsEditorProps;
 
 export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
+  const styles = useStyles2(getStyles);
+
   return (
-    <>
+    <div className={styles.container}>
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9411"
         dataSourceConfig={options}
@@ -44,6 +47,14 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         <Divider hideLine={true} />
         <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
-    </>
+    </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    label: container;
+    margin-bottom: ${theme.spacing(2)};
+    max-width: '578px';
+  `,
+});
