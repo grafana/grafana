@@ -265,7 +265,6 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-kind: pipeline
 name: hello-kat
 - commands:
   - echo "hello kat"
