@@ -6,7 +6,7 @@ import type {
 } from '@grafana/data';
 import { isPluginExtensionLink } from '@grafana/runtime';
 
-import { isPluginExtensionLinkConfig, logWarning } from './utils';
+import { isPluginExtensionComponentConfig, isPluginExtensionLinkConfig, logWarning } from './utils';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,
@@ -48,7 +48,7 @@ export function assertExtensionPointIdIsValid(extension: PluginExtensionConfig) 
   }
 }
 
-export function assertConfigureIsValid(extension: PluginExtensionConfig) {
+export function assertConfigureIsValid(extension: PluginExtensionLinkConfig) {
   if (!isConfigureFnValid(extension)) {
     throw new Error(
       `Invalid extension "${extension.title}". The "configure" property must be a function. Skipping the extension.`
@@ -82,7 +82,7 @@ export function isExtensionPointIdValid(extension: PluginExtensionConfig) {
   );
 }
 
-export function isConfigureFnValid(extension: PluginExtensionConfig) {
+export function isConfigureFnValid(extension: PluginExtensionLinkConfig) {
   return extension.configure ? typeof extension.configure === 'function' : true;
 }
 
@@ -94,9 +94,10 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
   try {
     assertStringProps(extension, ['title', 'description', 'extensionPointId']);
     assertExtensionPointIdIsValid(extension);
-    assertConfigureIsValid(extension);
 
     if (isPluginExtensionLinkConfig(extension)) {
+      assertConfigureIsValid(extension);
+
       if (!extension.path && !extension.onClick) {
         logWarning(`Invalid extension "${extension.title}". Either "path" or "onClick" is required.`);
         return false;
@@ -105,6 +106,10 @@ export function isPluginExtensionConfigValid(pluginId: string, extension: Plugin
       if (extension.path) {
         assertLinkPathIsValid(pluginId, extension.path);
       }
+    }
+
+    if (isPluginExtensionComponentConfig(extension)) {
+      assertIsReactComponent(extension.component);
     }
 
     return true;

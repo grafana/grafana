@@ -37,36 +37,47 @@ export type PluginExtension = PluginExtensionLink | PluginExtensionComponent;
 
 // Objects used for registering extensions (in app plugins)
 // --------------------------------------------------------
+export type PluginExtensionLinkConfig<Context extends object = object> = {
+  type: PluginExtensionTypes.link;
+  title: string;
+  description: string;
 
-export type PluginExtensionBaseConfig<Context extends object = object, ExtraProps extends object = object> = Pick<
-  PluginExtensionBase,
-  'title' | 'description' | 'type'
-> &
-  ExtraProps & {
-    // The unique identifier of the Extension Point
-    // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
-    extensionPointId: string;
+  // A URL path that will be used as the href for the rendered link extension
+  // (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
+  path?: string;
 
-    // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
-    configure?: (
-      context?: Readonly<Context>
-    ) => Partial<{ title: string; description: string } & ExtraProps> | undefined;
-  };
+  // A function that will be called when the link is clicked
+  // (It is called with the original event object)
+  onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
 
-export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionBaseConfig<
-  Context,
-  Pick<PluginExtensionLink, 'path'> & {
-    type: PluginExtensionTypes.link;
-    onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
-  }
->;
+  // The unique identifier of the Extension Point
+  // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+  extensionPointId: string;
 
-export type PluginExtensionComponentConfig<Context extends object = object> = PluginExtensionBaseConfig<
-  Context,
-  Pick<PluginExtensionComponent, 'component'> & {
-    type: PluginExtensionTypes.component;
-  }
->;
+  // (Optional) A function that can be used to configure the extension dynamically based on the extension point's context
+  configure?: (context?: Readonly<Context>) =>
+    | Partial<{
+        title: string;
+        description: string;
+        path: string;
+        onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+      }>
+    | undefined;
+};
+
+export type PluginExtensionComponentConfig<Context extends object = object> = {
+  type: PluginExtensionTypes.component;
+  title: string;
+  description: string;
+
+  // The React component that will be rendered as the extension
+  // (This component receives the context as a prop when it is rendered. You can just return `null` from the component to hide for certain contexts)
+  component: React.ComponentType;
+
+  // The unique identifier of the Extension Point
+  // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)
+  extensionPointId: string;
+};
 
 export type PluginExtensionConfig = PluginExtensionLinkConfig | PluginExtensionComponentConfig;
 

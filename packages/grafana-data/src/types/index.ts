@@ -58,7 +58,6 @@ export {
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionConfig,
-  type PluginExtensionBaseConfig,
   type PluginExtensionLinkConfig,
   type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
