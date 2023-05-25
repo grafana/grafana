@@ -289,7 +289,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -332,7 +332,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -950,7 +950,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -1024,7 +1024,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -1036,7 +1036,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -1054,7 +1054,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -1075,7 +1075,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -1535,7 +1535,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -1547,7 +1547,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -1627,7 +1627,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -2149,7 +2149,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -2161,7 +2161,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -2242,7 +2242,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -2764,7 +2764,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-oss
   volumes:
   - name: docker
@@ -2781,7 +2781,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -2798,7 +2798,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -2844,7 +2844,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise
   volumes:
   - name: docker
@@ -2861,7 +2861,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-enterprise
   volumes:
   - name: docker
@@ -2907,7 +2907,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-oss
   volumes:
   - name: docker
@@ -2924,7 +2924,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -2942,7 +2942,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -2988,7 +2988,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise
   volumes:
   - name: docker
@@ -3006,7 +3006,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-enterprise
   volumes:
   - name: docker
@@ -3516,7 +3516,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -3528,7 +3528,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -3608,7 +3608,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -4076,7 +4076,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -4088,7 +4088,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -4169,7 +4169,7 @@ steps:
       from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
-  image: google/cloud-sdk:367.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -4845,6 +4845,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: c308db868702a2afd6fd653165e65a2e21c77c8e5d4dae5e9ad5d5de318fdae3
+hmac: df3062e24e7276626539b8b64baadaca99c05209db56cd50fbb83811b00111d8
 
 ...

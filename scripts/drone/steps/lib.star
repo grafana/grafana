@@ -1,6 +1,7 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 grabpl_version = 'v2.9.50-fixfpm-3'
+cloudsdk_image = "google/cloud-sdk:431.0.0"
 build_image = 'grafana/build-container:1.5.5-go1.19.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -304,7 +305,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
 def e2e_tests_artifacts(edition):
     return {
         'name': 'e2e-tests-artifacts-upload' + enterprise2_suffix(edition),
-        'image': 'google/cloud-sdk:367.0.0',
+        "image": cloudsdk_image,
         'depends_on': [
             'end-to-end-tests-dashboards-suite',
             'end-to-end-tests-panels-suite',
@@ -793,7 +794,7 @@ def build_docker_images_step(edition, ver_mode, archs=None, ubuntu=False, publis
 
     return {
         'name': 'build-docker-images' + ubuntu_sfx,
-        'image': 'google/cloud-sdk',
+        "image": cloudsdk_image,
         'depends_on': ['copy-packages-for-docker'],
         'commands': [
             cmd
@@ -825,7 +826,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
     step = {
         'name': 'publish-images-{}'.format(docker_repo),
-        'image': 'google/cloud-sdk',
+        "image": cloudsdk_image,
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'DOCKER_USER': from_secret('docker_username'),
