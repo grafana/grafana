@@ -74,7 +74,7 @@ Only organization administrators can create reports by default. You can customiz
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.1.0 and later and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it is missing required fields, and the report will not be sent according to its schedule while it is a draft.
+You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
 
 ### Choose template variables
 
