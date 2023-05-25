@@ -27,11 +27,10 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 		return nil, err
 	}
 
-	logger := log.NewPrettyLogger("plugin.repository")
 	return NewManager(ManagerOpts{
 		SkipTLSVerify: false,
 		BaseURL:       defaultBaseURL,
-		Logger:        logger,
+		Logger:        log.NewPrettyLogger("plugin.repository"),
 	}), nil
 }
 
