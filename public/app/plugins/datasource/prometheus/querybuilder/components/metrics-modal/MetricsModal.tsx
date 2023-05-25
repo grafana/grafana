@@ -340,10 +340,11 @@ export const MetricsModal = (props: MetricsModalProps) => {
             placeholder="results per page"
             width={10}
             title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
+            type="number"
             onInput={(e) => {
               const value = +e.currentTarget.value;
 
-              if (isNaN(value)) {
+              if (isNaN(value) || value >= MAXIMUM_RESULTS_PER_PAGE) {
                 return;
               }
 

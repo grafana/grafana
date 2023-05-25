@@ -135,9 +135,16 @@ export function MetricSelect({
     innerProps: {};
   }
 
+  // This is based off of the SelectMenu and customized to match the style of the DatasourceDropdown picker
+  // packages/grafana-ui/src/components/Select/SelectMenu.tsx
+  // public/app/features/datasources/components/picker/DataSourceDropdown.tsx
   const CustomMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
     const theme = useTheme2();
     const stylesMenu = getSelectStyles(theme);
+
+    // Show the open modal button only if the options are loaded
+    // The children are a react node(options loading node) or an array(not a valid element)
+    const optionsLoaded = !React.isValidElement(children);
 
     return (
       <div
@@ -149,28 +156,31 @@ export function MetricSelect({
         <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
           {children}
         </CustomScrollbar>
-        <div className={styles.footer}>
-          <div>
-            Browse metrics
-            <div className={`${styles.description} metric-encyclopedia-open`}>
-              Browse and filter metrics and metadata with a fuzzy search
-            </div>
-          </div>
 
-          <Button
-            size="sm"
-            variant="secondary"
-            fill="text"
-            className="metric-encyclopedia-open"
-            onClick={() => {
-              setState({ ...state, metricsModalOpen: true });
-              tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-            }}
-          >
-            Open
-            <Icon name="arrow-right" />
-          </Button>
-        </div>
+        {optionsLoaded && (
+          <div className={styles.footer}>
+            <div>
+              Browse metrics
+              <div className={`${styles.description} metric-encyclopedia-open`}>
+                Browse and filter metrics and metadata with a fuzzy search
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              variant="secondary"
+              fill="text"
+              className="metric-encyclopedia-open"
+              onClick={() => {
+                setState({ ...state, metricsModalOpen: true });
+                tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
+              }}
+            >
+              Open
+              <Icon name="arrow-right" />
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
@@ -257,8 +267,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: flex;
     flex-direction: column;
-    height: 412px;
-    width: 480px;
     background: ${theme.colors.background.primary};
     box-shadow: ${theme.shadows.z3};
   `,
