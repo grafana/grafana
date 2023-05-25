@@ -15,14 +15,11 @@ import { SelectedView, TextAlign } from './types';
 type Props = {
   app: CoreApp;
   search: string;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
-  setRangeMin: (range: number) => void;
-  setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
   selectedView: SelectedView;
   setSelectedView: (view: SelectedView) => void;
   containerWidth: number;
+  onReset: () => void;
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
 };
@@ -30,14 +27,11 @@ type Props = {
 const FlameGraphHeader = ({
   app,
   search,
-  setTopLevelIndex,
-  setSelectedBarIndex,
-  setRangeMin,
-  setRangeMax,
   setSearch,
   selectedView,
   setSelectedView,
   containerWidth,
+  onReset,
   textAlign,
   onTextAlignChange,
 }: Props) => {
@@ -49,16 +43,6 @@ const FlameGraphHeader = ({
       ...context,
     });
   }
-
-  const onResetView = () => {
-    setTopLevelIndex(0);
-    setSelectedBarIndex(0);
-    setRangeMin(0);
-    setRangeMax(1);
-    // We could set only one and wait them to sync but there is no need to debounce this.
-    setSearch('');
-    setLocalSearch('');
-  };
 
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
@@ -75,7 +59,16 @@ const FlameGraphHeader = ({
             width={44}
           />
         </div>
-        <Button type={'button'} variant="secondary" onClick={onResetView}>
+        <Button
+          type={'button'}
+          variant="secondary"
+          onClick={() => {
+            onReset();
+            // We could set only one and wait them to sync but there is no need to debounce this.
+            setSearch('');
+            setLocalSearch('');
+          }}
+        >
           Reset view
         </Button>
       </div>
