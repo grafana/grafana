@@ -20,18 +20,17 @@ type Module struct {
 }
 
 func parseModule(mod *modfile.Require) Module {
-	// New Module struct
 	m := Module{Name: mod.Mod.String()}
 
-	// For each require, access the comment
+	// For each require, access the comment.
 	for _, comment := range mod.Syntax.Comments.Suffix {
 		owners := strings.Fields(comment.Token)
-		// For each comment, determine if it contains an owner(s)
+		// For each comment, determine if it contains owner(s).
 		for _, owner := range owners {
 			if strings.Contains(owner, "indirect") {
 				m.Indirect = true
 			}
-			// If an owner, add to owners list
+			// If there is an owner, add to owners list.
 			if strings.Contains(owner, "@") {
 				m.Owners = append(m.Owners, owner)
 			}
@@ -45,21 +44,23 @@ func parseGoMod(fileSystem fs.FS, name string) ([]Module, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close() // NOTE: will be executed at the end
+	defer file.Close()
 
-	// Turn go.mod into array of bytes
+	// Turn modfile into array of bytes.
 	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse modfile
+	// Parse modfile.
 	modFile, err := modfile.Parse(name, data, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	modules := []Module{}
-	// Iterate through requires in modfile
+
+	// Iterate through requires in modfile.
 	for _, mod := range modFile.Require {
 		m := parseModule(mod)
 		modules = append(modules, m)
@@ -68,21 +69,22 @@ func parseGoMod(fileSystem fs.FS, name string) ([]Module, error) {
 }
 
 // Validate that each module has an owner.
-// Example CLI command `go run dummy/modowners.go check dummy/go.txd`
+// An example CLI command is `go run dummy/modowners.go check dummy/go.txd`
+// TODO: replace above example with final filepath in the end
 func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	m, err := parseGoMod(fileSystem, args[0])
 	if err != nil {
-		return err // NOTE: propogating the error upwards
+		return err
 	}
 	fail := false
 	for _, mod := range m {
-		if mod.Indirect == false && len(mod.Owners) == 0 {
+		if !mod.Indirect && len(mod.Owners) == 0 {
 			logger.Println(mod.Name)
 			fail = true
 		}
 	}
 	if fail {
-		return errors.New("modfile is invalid") // NOTE: simple way to return errors
+		return errors.New("modfile is invalid")
 	}
 	return nil
 }
