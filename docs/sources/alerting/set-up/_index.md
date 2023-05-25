@@ -3,7 +3,7 @@ aliases:
   - unified-alerting/set-up/
 description: How to set up additional alerting features and integrations
 title: Additional setup
-weight: 107
+weight: 600
 ---
 
 # Additional setup
