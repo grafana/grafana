@@ -70,6 +70,7 @@ Only organization administrators can create reports by default. You can customiz
 1. Preview and save the report.
 
 ### Save as draft
+
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.1.0 and later and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{% /admonition %}}
