@@ -123,6 +123,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should create a new client without permissions",
 			init: func(env *TestEnv) {
+				// No client at the beginning
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
@@ -144,8 +145,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should create a service account",
 			init: func(env *TestEnv) {
+				// No client at the beginning
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
+				// Service account and permission creation
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
@@ -175,9 +178,11 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should delete the service account",
 			init: func(env *TestEnv) {
+				// Existing client (with a service account hence a role)
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(client1(), nil)
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
+				// No permission anymore will trigger deletion of the service account and its role
 				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
@@ -209,9 +214,11 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should update the service account",
 			init: func(env *TestEnv) {
+				// Existing client (with a service account hence a role)
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(client1(), nil)
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				env.SAService.On("RetrieveServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1Profile, nil)
+				// Update the service account permissions
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
 			cmd: &oauthserver.ExternalServiceRegistration{
@@ -223,6 +230,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
+				// Ensure new permissions are in place
 				env.AcStore.AssertCalled(t, "SaveExternalServiceRole", mock.Anything,
 					mock.MatchedBy(func(cmd ac.SaveExternalServiceRoleCommand) bool {
 						return cmd.ServiceAccountID == sa1.Id && cmd.ExternalServiceID == client1().Name &&
@@ -234,6 +242,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 		{
 			name: "should allow jwt bearer grant and set default permissions",
 			init: func(env *TestEnv) {
+				// No client at the beginning
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 				// The service account needs to be created with a permission to impersonate users
