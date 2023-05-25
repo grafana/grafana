@@ -14,7 +14,7 @@ export enum PluginExtensionTypes {
   component = 'component',
 }
 
-export type PluginExtensionBase = {
+type PluginExtensionBase = {
   id: string;
   type: PluginExtensionTypes;
   title: string;

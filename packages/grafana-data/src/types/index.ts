@@ -55,7 +55,6 @@ export {
   PluginExtensionTypes,
   PluginExtensionPoints,
   type PluginExtension,
-  type PluginExtensionBase,
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionConfig,
