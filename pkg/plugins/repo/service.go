@@ -15,7 +15,7 @@ import (
 const defaultBaseURL = "https://www.grafana.com/api/plugins"
 
 type Manager struct {
-	client  *Client
+	client  *client
 	baseURL string
 
 	log log.PrettyLogger
@@ -29,16 +29,16 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 
 	logger := log.NewPrettyLogger("plugin.repository")
 	return NewManager(ManagerOpts{
-		Client:  NewClient(false, logger),
-		BaseURL: defaultBaseURL,
-		Logger:  logger,
+		SkipTLSVerify: false,
+		BaseURL:       defaultBaseURL,
+		Logger:        logger,
 	}), nil
 }
 
 type ManagerOpts struct {
-	Client  *Client
-	BaseURL string
-	Logger  log.PrettyLogger
+	SkipTLSVerify bool
+	BaseURL       string
+	Logger        log.PrettyLogger
 }
 
 func NewManager(opts ...ManagerOpts) *Manager {
@@ -46,16 +46,16 @@ func NewManager(opts ...ManagerOpts) *Manager {
 		logger := log.NewPrettyLogger("plugin.repository")
 		opts = []ManagerOpts{
 			{
-				BaseURL: defaultBaseURL,
-				Client:  NewClient(false, logger),
-				Logger:  logger,
+				SkipTLSVerify: false,
+				BaseURL:       defaultBaseURL,
+				Logger:        logger,
 			},
 		}
 	}
 
 	return &Manager{
 		baseURL: opts[0].BaseURL,
-		client:  opts[0].Client,
+		client:  newClient(opts[0].SkipTLSVerify, opts[0].Logger),
 		log:     opts[0].Logger,
 	}
 }

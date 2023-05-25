@@ -68,9 +68,9 @@ func installCommand(c utils.CommandLine) error {
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
 	repository := repo.NewManager(repo.ManagerOpts{
-		Client:  repo.NewClient(c.Bool("insecure"), services.Logger),
-		BaseURL: c.PluginRepoURL(),
-		Logger:  services.Logger,
+		SkipTLSVerify: c.Bool("insecure"),
+		BaseURL:       c.PluginRepoURL(),
+		Logger:        services.Logger,
 	})
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)

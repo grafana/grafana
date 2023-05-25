@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-type Client struct {
+type client struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	retryCount          int
@@ -26,15 +26,15 @@ type Client struct {
 	log log.PrettyLogger
 }
 
-func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
-	return &Client{
+func newClient(skipTLSVerify bool, logger log.PrettyLogger) *client {
+	return &client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 	}
 }
 
-func (c *Client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+func (c *client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
 	req, err := c.createReq(url, compatOpts...)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error)
 	return io.ReadAll(bodyReader)
 }
 
-func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
+func (c *client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
@@ -86,7 +86,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 	return &PluginArchive{File: rc}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
+func (c *client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -168,7 +168,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
+func (c *client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
 	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
@@ -181,7 +181,7 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadC
 	return c.handleResp(res, compatOpts)
 }
 
-func (c *Client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Request, error) {
+func (c *client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
@@ -197,7 +197,7 @@ func (c *Client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Reques
 	return req, err
 }
 
-func (c *Client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.ReadCloser, error) {
+func (c *client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := io.ReadAll(res.Body)
 		defer func() {
