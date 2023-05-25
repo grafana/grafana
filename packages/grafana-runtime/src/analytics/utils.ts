@@ -48,11 +48,7 @@ export const reportInteraction = (interactionName: string, properties?: Record<s
     type: EchoEventType.Interaction,
     payload: {
       interactionName,
-      properties: {
-        url: location.href,
-        path: location.pathname,
-        ...properties,
-      },
+      properties,
     },
   });
 };
