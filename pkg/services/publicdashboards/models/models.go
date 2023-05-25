@@ -52,7 +52,7 @@ type PublicDashboard struct {
 	TimeSettings         *TimeSettings `json:"timeSettings" xorm:"time_settings"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
 	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
-	AnnotationsEnabled   bool          `json:"annotationsEnabled,omitempty" xorm:"annotations_enabled"`
+	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
 	Share                ShareType     `json:"share" xorm:"share"`
 	Recipients           []EmailDTO    `json:"recipients,omitempty" xorm:"-"`
 }
