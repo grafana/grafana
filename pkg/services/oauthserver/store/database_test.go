@@ -282,11 +282,12 @@ func TestStore_GetExternalServicePublicKey(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name     string
-		client   *oauthserver.ExternalService
-		clientID string
-		want     *jose.JSONWebKey
-		wantErr  bool
+		name        string
+		client      *oauthserver.ExternalService
+		clientID    string
+		want        *jose.JSONWebKey
+		wantKeyType string
+		wantErr     bool
 	}{
 		{
 			name:     "should return an error when clientID is empty",
@@ -310,13 +311,28 @@ func TestStore_GetExternalServicePublicKey(t *testing.T) {
 			wantErr:  true,
 		},
 		{
-			name:     "should return the JSON Web Key",
+			name:     "should return the JSON Web Key ES256",
 			clientID: clientID,
 			client: createClient(clientID, `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
 mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 -----END PUBLIC KEY-----`),
-			wantErr: false,
+			wantKeyType: oauthserver.ES256,
+			wantErr:     false,
+		},
+		{
+			name:     "should return the JSON Web Key RS256",
+			clientID: clientID,
+			client: createClient(clientID, `-----BEGIN RSA PUBLIC KEY-----
+MIIBCgKCAQEAxkly/cHvsxd6EcShGUlFAB5lIMlIbGRocCVWbIM26f6pnGr+gCNv
+s365DQdQ/jUjF8bSEQM+EtjGlv2Y7Jm7dQROpPzX/1M+53Us/Gl138UtAEgL5ZKe
+SKN5J/f9Nx4wkgb99v2Bt0nz6xv+kSJwgR0o8zi8shDR5n7a5mTdlQe2NOixzWlT
+vnpp6Tm+IE+XyXXcrCr01I9Rf+dKuYOPSJ1K3PDgFmmGvsLcjRCCK9EftfY0keU+
+IP+sh8ewNxc6KcaLBXm3Tadb1c/HyuMi6FyYw7s9m8tyAvI1CMBAcXqLIEaRgNrc
+vuO8AU0bVoUmYMKhozkcCYHudkeS08hEjQIDAQAB
+-----END RSA PUBLIC KEY-----`),
+			wantKeyType: oauthserver.RS256,
+			wantErr:     false,
 		},
 	}
 	for _, tc := range testCases {
@@ -331,7 +347,7 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 			}
 			require.NoError(t, err)
 
-			require.Equal(t, oauthserver.ES256, webKey.Algorithm)
+			require.Equal(t, tc.wantKeyType, webKey.Algorithm)
 		})
 	}
 }
