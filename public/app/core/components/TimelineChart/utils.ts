@@ -32,6 +32,7 @@ import {
   VisibilityMode,
   TimelineValueAlignment,
   HideableFieldConfig,
+  MappingType,
 } from '@grafana/schema';
 import {
   FIXED_UNIT,
@@ -113,6 +114,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
+  const hasMappedNull = (field: Field) => {
+    return (
+      field.config.mappings?.some(
+        (mapping) => mapping.type === MappingType.SpecialValue && mapping.options.match === 'null'
+      ) || false
+    );
+  };
+
   const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
 
@@ -131,6 +140,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
+    hasMappedNull: (seriesIdx) => hasMappedNull(frame.fields[seriesIdx]),
     mergeValues,
     rowHeight: rowHeight,
     colWidth: colWidth,
