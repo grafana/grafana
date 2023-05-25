@@ -69,7 +69,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceInfo, error) {
 	ctx := req.Context()
 	pluginContext := httpadapter.PluginConfigFromContext(ctx)
-	i, err := s.im.Get(pluginContext)
+	i, err := s.im.Get(ctx, pluginContext)
 	if err != nil {
 		return types.DatasourceInfo{}, err
 	}

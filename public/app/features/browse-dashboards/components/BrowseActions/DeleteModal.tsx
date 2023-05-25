@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Space } from '@grafana/experimental';
+import { ConfirmModal } from '@grafana/ui';
+import { P } from '@grafana/ui/src/unstable';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -16,8 +16,6 @@ export interface Props {
 }
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
-  const styles = useStyles2(getStyles);
-
   const onDelete = () => {
     onConfirm();
     onDismiss();
@@ -26,23 +24,18 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   return (
     <ConfirmModal
       body={
-        <div className={styles.modalBody}>
-          This action will delete the following content:
+        <>
+          <P>This action will delete the following content:</P>
           <DescendantCount selectedItems={selectedItems} />
-        </div>
+          <Space v={2} />
+        </>
       }
       confirmationText="Delete"
       confirmText="Delete"
       onDismiss={onDismiss}
       onConfirm={onDelete}
-      title="Delete Compute Resources"
+      title="Delete"
       {...props}
     />
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  modalBody: css({
-    ...theme.typography.body,
-  }),
-});
