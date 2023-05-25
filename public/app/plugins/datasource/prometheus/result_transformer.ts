@@ -617,7 +617,7 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
 }
 
 function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
-  if (frames.length === 0) {
+  if (frames.length === 0 || (frames.length === 1 && frames[0].length === 0)) {
     return [];
   }
 
