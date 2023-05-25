@@ -48,8 +48,14 @@ type Value struct {
 
 func (v Value) String() string {
 	absVal := math.Abs(v.Value)
+
 	if absVal == 0 {
 		return "0"
+	}
+
+	// Check if the number is an integer.
+	if absVal == float64(int64(absVal)) {
+		return strconv.FormatInt(int64(v.Value), 10)
 	}
 
 	// Calculate the position of the first non-zero digit

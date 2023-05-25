@@ -48,7 +48,7 @@ func TestValueString(t *testing.T) {
 	}, {
 		name:     "1.0 is returned as integer value",
 		value:    Value{Value: 1.0},
-		expected: "1.0",
+		expected: "1",
 	}, {
 		name:     "1.1 is returned as decimal value",
 		value:    Value{Value: 1.1},
@@ -105,7 +105,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "foo has value 1.0",
+		expected: "foo has value 1",
 	}, {
 		name: "values can be passed to template functions such as printf",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A.Value | printf \"%.1f\" }}",
@@ -131,7 +131,7 @@ func TestExpandTemplate(t *testing.T) {
 				},
 			},
 		},
-		expected: "[no value] has value 1.0",
+		expected: "[no value] has value 1",
 	}, {
 		name: "missing value in $values is returned as NaN",
 		text: "{{ $values.A.Labels.instance }} has value {{ $values.A }}",
