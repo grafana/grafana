@@ -192,10 +192,10 @@ export class LivePanel extends PureComponent<Props, State> {
           }),
           state: LoadingState.Streaming,
         } as PanelData;
-        const props = {
+        const props: PanelProps = {
           ...this.props,
           options: { frameIndex: 0, showHeader: true },
-        } as PanelProps<any>;
+        };
         return <TablePanel {...props} data={data} height={height} />;
       }
     }

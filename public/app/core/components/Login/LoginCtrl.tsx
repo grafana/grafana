@@ -5,6 +5,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 
+import { LoginDTO } from './types';
+
 const isOauthEnabled = () => {
   return !!config.oauth && Object.keys(config.oauth).length > 0;
 };
@@ -38,7 +40,7 @@ interface State {
 }
 
 export class LoginCtrl extends PureComponent<Props, State> {
-  result: any = {};
+  result: LoginDTO | undefined;
 
   constructor(props: Props) {
     super(props);
@@ -87,7 +89,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
 
     getBackendSrv()
-      .post('/login', formModel)
+      .post<LoginDTO>('/login', formModel)
       .then((result) => {
         this.result = result;
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
@@ -112,7 +114,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
   toGrafana = () => {
     // Use window.location.href to force page reload
-    if (this.result.redirectUrl) {
+    if (this.result?.redirectUrl) {
       if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
         window.location.assign(config.appSubUrl + this.result.redirectUrl);
       } else {
