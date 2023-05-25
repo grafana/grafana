@@ -7,7 +7,10 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
+
+import { ConfigDescriptionLink } from './ConfigDescriptionLink';
 
 export interface NodeGraphOptions {
   enabled?: boolean;
@@ -46,9 +49,21 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-export const NODE_GRAPH_TITLE = 'Node graph';
-export const NODE_GRAPH_DESCRIPTION = 'Show or hide the node graph visualization.';
-export const NODE_GRAPH_SUFFIX = '#node-graph';
+export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSubSection
+      title="Node graph"
+      description={
+        <ConfigDescriptionLink
+          description="Show or hide the node graph visualization."
+          suffix={`${options.type}/#node-graph`}
+        />
+      }
+    >
+      <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSubSection>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`

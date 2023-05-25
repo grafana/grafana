@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -246,6 +248,20 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
   );
 }
 
-export const TRACE_TO_LOGS_TITLE = 'Trace to logs';
-export const TRACE_TO_LOGS_DESCRIPTION = "Navigate from a trace span to the selected data source's logs.";
-export const TRACE_TO_LOGS_SUFFIX = '#trace-to-logs';
+export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to logs"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's logs."
+          suffix={`${options.type}/#trace-to-logs`}
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};

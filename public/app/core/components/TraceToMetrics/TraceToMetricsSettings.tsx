@@ -7,9 +7,11 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
+import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 
 export interface TraceToMetricsOptions {
@@ -208,9 +210,23 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-export const TRACE_TO_METRICS_TITLE = 'Trace to metrics';
-export const TRACE_TO_METRICS_DESCRIPTION = "Navigate from a trace span to the selected data source's metrics.";
-export const TRACE_TO_METRICS_SUFFIX = '#trace-to-metrics';
+export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to metrics"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's metrics."
+          suffix={`${options.type}/#trace-to-metrics`}
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToMetricsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`

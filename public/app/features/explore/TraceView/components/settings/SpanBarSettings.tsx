@@ -8,7 +8,10 @@ import {
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
+import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 
 export interface SpanBarOptions {
   type?: string;
@@ -76,10 +79,21 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-export const SPAN_BAR_TITLE = 'Span bar';
-export const SPAN_BAR_DESCRIPTION =
-  'Add additional info next to the service and operation on a span bar row in the trace view.';
-export const SPAN_BAR_SUFFIX = '#span-bar';
+export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSubSection
+      title="Span bar"
+      description={
+        <ConfigDescriptionLink
+          description="Add additional info next to the service and operation on a span bar row in the trace view."
+          suffix={`${options.type}/#span-bar`}
+        />
+      }
+    >
+      <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSubSection>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
