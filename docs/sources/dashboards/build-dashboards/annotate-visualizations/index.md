@@ -86,7 +86,7 @@ You can configure the panels to which annotations apply by choosing an option fr
 
 ### Add time region
 
-When adding or editing an annotation, you can define a repeating time region by setting **Query type** to **Time regions**. Then just define the **From** and **To** sections with the preferred days of the week and time. You also have the option to change the timezone, which is set to the dashboard's timezone, by default.
+When adding or editing an annotation, you can define a repeating time region by setting **Query type** to **Time regions**. Then, define the **From** and **To** sections with the preferred days of the week and time. You also have the option to change the timezone, which is set to the dashboard's timezone, by default.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-timeregions-10.png" max-width="600px" caption="Time regions business hours" >}}
 
