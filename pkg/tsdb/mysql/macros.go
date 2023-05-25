@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
@@ -20,17 +20,22 @@ var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]sessi
 type mySQLMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
 	logger log.Logger
+	userError string
 }
 
-func newMysqlMacroEngine(logger log.Logger) sqleng.SQLMacroEngine {
-	return &mySQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(), logger: logger}
+func newMysqlMacroEngine(logger log.Logger, cfg *setting.Cfg) sqleng.SQLMacroEngine {
+	return &mySQLMacroEngine{
+		SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(),
+		logger: logger,
+		userError: cfg.UserFacingDefaultError,
+	}
 }
 
 func (m *mySQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
 	matches := restrictedRegExp.FindAllStringSubmatch(sql, 1)
 	if len(matches) > 0 {
 		m.logger.Error("show grants, session_user(), current_user(), system_user() or user() not allowed in query")
-		return "", errors.New("invalid query - inspect Grafana server log for details")
+		return "", fmt.Errorf("invalid query - %s", m.userError)
 	}
 
 	// TODO: Handle error

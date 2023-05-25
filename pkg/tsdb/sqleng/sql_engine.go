@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
+	
 )
 
 // XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
@@ -101,6 +102,7 @@ type DataPluginConfiguration struct {
 	MetricColumnTypes []string
 	RowLimit          int64
 }
+
 type DataSourceHandler struct {
 	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
@@ -245,7 +247,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			} else if theErrString, ok := r.(string); ok {
 				queryResult.dataResponse.Error = fmt.Errorf(theErrString)
 			} else {
-				queryResult.dataResponse.Error = fmt.Errorf("unexpected error, see the server log for details")
+				queryResult.dataResponse.Error = fmt.Errorf("unexpected error - %s", e.userError)
 			}
 			ch <- queryResult
 		}

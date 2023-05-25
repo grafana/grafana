@@ -1319,8 +1319,8 @@ func TestTransformQueryError(t *testing.T) {
 		err         error
 		expectedErr error
 	}{
-		//{err: fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
-		//{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
+		{err: fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
+		{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
 		{err: randomErr, expectedErr: randomErr},
 	}
 
