@@ -86,7 +86,7 @@ func splitOAuthScopes(requestedScopes fosite.Arguments) (map[string]bool, map[st
 	claimsFilter := map[string]bool{}
 	for _, scope := range requestedScopes {
 		switch scope {
-		case "profile", "email", "groups", "entitlements", "org.1":
+		case "profile", "email", "groups", "entitlements":
 			claimsFilter[scope] = true
 		default:
 			actionsFilter[scope] = true
