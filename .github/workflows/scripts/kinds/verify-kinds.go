@@ -84,6 +84,12 @@ func main() {
 	}
 
 	for _, pp := range corelist.New(nil) {
+		// ElasticSearch composable kind causes the CUE evaluator to hand
+		// see https://github.com/grafana/grafana/pull/68034#discussion_r1187800059
+		if pp.Properties.Id == "elasticsearch" {
+			continue
+		}
+
 		for _, kind := range pp.ComposableKinds {
 			if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
 				continue
@@ -234,8 +240,11 @@ func findLatestDir(ctx context.Context, client *github.Client) (string, error) {
 	latestVersion := []uint64{0, 0, 0}
 	latestDir := ""
 
-	_, dir, _, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, "grafana", nil)
+	_, dir, resp, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, "grafana", nil)
 	if err != nil {
+		if resp.StatusCode == http.StatusNotFound {
+			return "", nil
+		}
 		return "", err
 	}
 
@@ -333,11 +342,11 @@ func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	}
 
 	name := kind.Props().Common().MachineName
-
 	core, ok := kind.(kindsys.Core)
 	if !ok {
 		return nil, fmt.Errorf("kind sent to KindRegistryJenny must be a core kind")
 	}
+
 	newKindBytes, err := kindToBytes(core.Def().V)
 	if err != nil {
 		return nil, err
@@ -352,9 +361,7 @@ func kindToBytes(kind cue.Value) ([]byte, error) {
 	node := kind.Syntax(
 		cue.All(),
 		cue.Schema(),
-		cue.Definitions(true),
 		cue.Docs(true),
-		cue.Hidden(true),
 	)
 
 	return cueformat.Node(node)
