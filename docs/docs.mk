@@ -1,5 +1,5 @@
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk.
-# 2.0.0 (2023-05-18)
+# 3.0.0 (2023-05-18)
 include variables.mk
 -include variables.mk.local
 

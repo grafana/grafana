@@ -1,6 +1,6 @@
 #!/bin/sh
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs.
-# 2.0.0 (2023-05-18)
+# 3.0.0 (2023-05-18)
 
 set -ef
 
@@ -13,7 +13,7 @@ readonly DOC_VALIDATOR_SKIP_CHECKS="${DOC_VALIDATOR_SKIP_CHECKS:-^image-}"
 
 readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
 readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
-readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make docs}"
+readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
 # If set, the docs-base image will run a prebuild script that sets up Hugo mounts.
 readonly WEBSITE_MOUNTS="${WEBSITE_MOUNTS:-}"
 
