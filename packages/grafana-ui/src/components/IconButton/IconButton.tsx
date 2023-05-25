@@ -59,7 +59,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     }
 
     const styles = getStyles(theme, limitedIconSize, variant);
-    const tooltipString = typeof tooltip === 'string' ? tooltip : String(tooltip);
+    const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
     // ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     return (
