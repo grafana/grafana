@@ -34,28 +34,6 @@ func newClient(skipTLSVerify bool, logger log.PrettyLogger) *client {
 	}
 }
 
-func (c *client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader, err := c.handleResp(res, compatOpts...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err = bodyReader.Close(); err != nil {
-			c.log.Warn("Failed to close stream", "err", err)
-		}
-	}()
-	return io.ReadAll(bodyReader)
-}
-
 func (c *client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
@@ -166,6 +144,28 @@ func (c *client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return ErrChecksumMismatch{archiveURL: pluginURL}
 	}
 	return nil
+}
+
+func (c *client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+	req, err := c.createReq(url, compatOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader, err := c.handleResp(res, compatOpts...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = bodyReader.Close(); err != nil {
+			c.log.Warn("Failed to close stream", "err", err)
+		}
+	}()
+	return io.ReadAll(bodyReader)
 }
 
 func (c *client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
