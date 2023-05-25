@@ -46,6 +46,7 @@ describe('FlameGraph', () => {
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         selectedView={selectedView}
+        textAlign={'left'}
       />
     );
   };

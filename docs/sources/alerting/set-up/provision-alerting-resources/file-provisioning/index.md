@@ -22,14 +22,14 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
+Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API]({{< relref "../../../../developers/http_api/admin#reload-provisioning-configurations" >}}).
 
 ### Provision alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create alert rules in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule-export) export endpoints to download a provisioning file for your alert rules.
+1. Use the [Alerting provisioning API]({{< relref "../../../../developers/http_api/alerting_provisioning" >}}) export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.

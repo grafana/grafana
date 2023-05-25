@@ -25,10 +25,10 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
-import { CanvasTooltip } from 'app/plugins/panel/canvas/CanvasTooltip';
-import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
-import { Connections } from 'app/plugins/panel/canvas/Connections';
+import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
+import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
+import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
+import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import appEvents from '../../../core/app_events';

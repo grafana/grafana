@@ -1,11 +1,11 @@
 ---
-aliases:
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - use templates
+description: Use notification templates in contact points
 title: Use notification templates
 weight: 300
 ---

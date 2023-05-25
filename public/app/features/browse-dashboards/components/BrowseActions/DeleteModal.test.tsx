@@ -28,7 +28,7 @@ describe('browse-dashboards DeleteModal', () => {
   it('renders a dialog with the correct title', async () => {
     render(<DeleteModal {...defaultProps} />);
 
-    expect(await screen.findByRole('dialog', { name: 'Delete Compute Resources' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it('displays a `Delete` button', async () => {
