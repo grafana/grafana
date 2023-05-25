@@ -32,16 +32,16 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 }
 
 export const browseDashboardsAPI = createApi({
+  tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
-  tagTypes: ['folder'],
   endpoints: (builder) => ({
     getFolder: builder.query<FolderDTO, string>({
-      providesTags: (_result, _error, arg) => [{ type: 'folder', id: arg }],
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+      providesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg }],
     }),
     saveFolder: builder.mutation<FolderDTO, FolderDTO>({
-      invalidatesTags: (_result, _error, args) => [{ type: 'folder', id: args.uid }],
+      invalidatesTags: (_result, _error, args) => [{ type: 'getFolder', id: args.uid }],
       query: (folder) => ({
         method: 'PUT',
         url: `/folders/${folder.uid}`,
@@ -80,8 +80,16 @@ export const browseDashboardsAPI = createApi({
         return { data: totalCounts };
       },
     }),
+    moveFolder: builder.mutation<void, { folderUID: string; destinationUID: string }>({
+      query: ({ folderUID, destinationUID }) => ({
+        url: `/folders/${folderUID}/move`,
+        method: 'POST',
+        data: { parentUID: destinationUID },
+      }),
+      invalidatesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg.folderUID }],
+    }),
   }),
 });
 
-export const { useGetAffectedItemsQuery, useGetFolderQuery, useSaveFolderMutation } = browseDashboardsAPI;
+export const { endpoints, useGetAffectedItemsQuery, useGetFolderQuery, useMoveFolderMutation, useSaveFolderMutation } = browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

@@ -38,7 +38,7 @@ export const Page: PageType = ({
   const pageHeaderNav = pageNav ?? navModel?.node;
 
   // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
-  // This prevents flickering sectionNav when going from dashbaord to settings for example
+  // This prevents flickering sectionNav when going from dashboard to settings for example
   useLayoutEffect(() => {
     if (navModel) {
       chrome.update({
