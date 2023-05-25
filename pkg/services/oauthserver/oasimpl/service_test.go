@@ -37,6 +37,11 @@ const (
 	TokenURL = AppURL + "oauth2/token"
 )
 
+var (
+	pk, _         = rsa.GenerateKey(rand.Reader, 4096)
+	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
+)
+
 type TestEnv struct {
 	S           *OAuth2ServiceImpl
 	Cfg         *setting.Cfg
@@ -46,11 +51,6 @@ type TestEnv struct {
 	TeamService *teamtest.FakeService
 	SAService   *satests.MockServiceAccountService
 }
-
-var (
-	pk, _         = rsa.GenerateKey(rand.Reader, 4096)
-	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
-)
 
 func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
@@ -66,6 +66,8 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		ScopeStrategy:       fosite.WildcardScopeStrategy,
 	}
 
+	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+
 	env := &TestEnv{
 		Cfg:         cfg,
 		AcStore:     &actest.MockStore{},
@@ -74,10 +76,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		TeamService: teamtest.NewFakeService(),
 		SAService:   &satests.MockServiceAccountService{},
 	}
-
-	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
-
-	s := &OAuth2ServiceImpl{
+	env.S = &OAuth2ServiceImpl{
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
 		cfg:           cfg,
 		accessControl: acimpl.ProvideAccessControl(cfg),
@@ -90,10 +89,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		teamService:   env.TeamService,
 		publicKey:     &pk.PublicKey,
 	}
-
-	s.oauthProvider = newProvider(config, s, pk)
-
-	env.S = s
+	env.S.oauthProvider = newProvider(config, env.S, pk)
 
 	return env
 }
