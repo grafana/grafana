@@ -71,7 +71,7 @@ func (m *Manager) GetPluginArchive(ctx context.Context, pluginID, version string
 		return nil, err
 	}
 
-	return m.client.download(ctx, dlOpts.URL, dlOpts.Checksum)
+	return m.client.download(ctx, dlOpts.URL, dlOpts.Checksum, compatOpts)
 }
 
 // GetPluginArchiveByURL fetches the requested plugin archive from the provided `pluginZipURL`
