@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // Make sure we implement both store + admin
@@ -56,6 +58,9 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 	if r.WithBody {
 		fields = append(fields, `body`)
 	}
+	if r.WithMeta {
+		fields = append(fields, `meta`)
+	}
 	if r.WithSummary {
 		fields = append(fields, "name", "slug", "description", "labels", "fields")
 	}
@@ -78,6 +83,9 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
+	}
+	if r.WithMeta {
+		args = append(args, &raw.Meta)
 	}
 	if r.WithSummary {
 		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
@@ -392,6 +400,35 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			return err
 		}
 
+		meta := &kinds.GrafanaResourceMetadata{}
+		if len(r.Meta) > 0 {
+			err = json.Unmarshal(r.Meta, meta)
+			if err != nil {
+				return err
+			}
+		}
+
+		if meta.UID == "" {
+			meta.UID = types.UID(uuid.New().String())
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+		meta.SetFolder(r.Folder)
+		if len(meta.Labels) > 0 {
+			if summary.model.Labels == nil {
+				summary.model.Labels = make(map[string]string)
+			}
+			for k, v := range meta.Labels {
+				summary.model.Labels[k] = v
+			}
+		}
+		r.Meta, err = json.Marshal(meta)
+		if err != nil {
+			return err
+		}
+		rsp.GUID = string(meta.UID)
+
 		// 5. Add/update the main `entity` table
 		rsp.Entity = versionInfo
 		if isUpdate {
@@ -417,7 +454,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			if createdBy == "" {
 				createdBy = updatedBy
 			}
-			rsp.GUID = uuid.New().String()
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
 				"guid, grn, tenant_id, kind, uid, folder, "+
 				"size, body, meta, status, etag, version, "+
@@ -431,7 +467,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				" ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?)",
-				rsp.GUID, oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+				meta.UID, oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
 				versionInfo.Size, body, r.Meta, r.Status, etag, versionInfo.Version,
 				updatedAt, createdBy, createdAt, createdBy,
 				summary.model.Name, summary.model.Description, summary.model.Slug,

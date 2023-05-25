@@ -58,6 +58,14 @@ const annoKeyOriginPath = "grafana.com/origin/path"
 const annoKeyOriginKey = "grafana.com/origin/key"
 const annoKeyOriginTime = "grafana.com/origin/time"
 
+func (m *GrafanaResourceMetadata) set(key string, val string) {
+	if val == "" {
+		delete(m.Annotations, key)
+	} else {
+		m.Annotations[key] = val
+	}
+}
+
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	v, ok := m.Annotations[annoKeyUpdatedTimestamp]
 	if ok {
@@ -82,7 +90,7 @@ func (m *GrafanaResourceMetadata) GetCreatedBy() string {
 }
 
 func (m *GrafanaResourceMetadata) SetCreatedBy(user string) {
-	m.Annotations[annoKeyCreatedBy] = user // user GRN
+	m.set(annoKeyCreatedBy, user)
 }
 
 func (m *GrafanaResourceMetadata) GetUpdatedBy() string {
@@ -90,7 +98,7 @@ func (m *GrafanaResourceMetadata) GetUpdatedBy() string {
 }
 
 func (m *GrafanaResourceMetadata) SetUpdatedBy(user string) {
-	m.Annotations[annoKeyUpdatedBy] = user // user GRN
+	m.set(annoKeyUpdatedBy, user)
 }
 
 func (m *GrafanaResourceMetadata) GetFolder() string {
@@ -98,7 +106,7 @@ func (m *GrafanaResourceMetadata) GetFolder() string {
 }
 
 func (m *GrafanaResourceMetadata) SetFolder(uid string) {
-	m.Annotations[annoKeyFolder] = uid
+	m.set(annoKeyFolder, uid)
 }
 
 func (m *GrafanaResourceMetadata) GetSlug() string {
@@ -106,7 +114,7 @@ func (m *GrafanaResourceMetadata) GetSlug() string {
 }
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
-	m.Annotations[annoKeySlug] = v
+	m.set(annoKeySlug, v)
 }
 
 func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {

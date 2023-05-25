@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -79,45 +81,100 @@ func (s *entityStorage) Versioner() storage.Versioner {
 }
 
 func (s *entityStorage) exists(ctx context.Context, grn *entity.GRN) bool {
-	return false
-}
-
-func (s *entityStorage) toGRN(key string) (*entity.GRN, error) {
-	return &entity.GRN{
-		TenantId: 1, // TODO, from namespace? key?
-		Kind:     s.gr.Resource,
-		UID:      key, // TODO!!!
-	}, nil
+	rsp, _ := s.store.Read(ctx, &entity.ReadEntityRequest{
+		GRN:        grn,
+		WithMeta:   false,
+		WithStatus: false,
+		WithBody:   false,
+	})
+	return rsp == nil || rsp.Guid == ""
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	grn, err := s.toGRN(key)
+	ctx, err := contextWithFakeGrafanaUser(ctx)
 	if err != nil {
 		return err
 	}
-
-	if s.exists(ctx, grn) {
-		return apierrors.NewAlreadyExists(s.gr, key)
+	grn, err := keyToGRN(key, &s.gr)
+	if err != nil {
+		return err
 	}
 
 	if err := s.Versioner().PrepareObjectForStorage(obj); err != nil {
 		return err
 	}
 
-	s.store.Write(ctx, &entity.WriteEntityRequest{
-		GRN:  grn,
-		Body: make([]byte, 0),
-	})
+	uObj, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return fmt.Errorf("failed to convert to *unstructured.Unstructured")
+	}
 
-	// TODO:
-	// - notify watchers
-	// - what to do with ttl?
-	out = obj.DeepCopyObject()
+	// Replace the default name generation strategy
+	if uObj.GetGenerateName() != "" {
+		old := grn.UID
+		grn.UID = util.GenerateShortUID()
+		uObj.SetName(grn.UID)
+		uObj.SetGenerateName("")
+		key = strings.ReplaceAll(key, old, grn.UID)
+	}
 
-	return fmt.Errorf("unimplemented")
+	req := &entity.WriteEntityRequest{
+		GRN:     grn,
+		Comment: "create from k8s: " + key, // TODO? get comment from context?
+	}
+	spec, ok := uObj.Object["spec"]
+	if ok {
+		req.Body, err = json.Marshal(spec)
+		if err != nil {
+			return err
+		}
+	}
+	status, ok := uObj.Object["status"]
+	if ok {
+		req.Status, err = json.Marshal(status)
+		if err != nil {
+			return err
+		}
+	}
+	meta, ok := uObj.Object["metadata"]
+	if ok {
+		req.Meta, err = json.Marshal(meta)
+		if err != nil {
+			return err
+		}
+	}
+
+	rsp, err := s.store.Write(ctx, req)
+	if err != nil {
+		return err
+	}
+	if rsp.Status != entity.WriteEntityResponse_CREATED {
+		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
+	}
+
+	fmt.Printf("CREATE:%s\n", uObj.GetName())
+
+	// TODO... would be better
+	return s.Get(ctx, key, storage.GetOptions{}, out)
+
+	// // if s.exists(ctx, grn) {
+	// // 	return apierrors.NewAlreadyExists(s.gr, key)
+	// // }
+
+	// res := dashboard.NewK8sResource(grn.UID, &dashboard.Spec{
+	// 	Title: utils.Pointer("the title"),
+	// })
+	// res.APIVersion = "dashboard.kinds.grafana.com/v1"
+	// res.Metadata.CreationTimestamp = v1.NewTime(time.Now())
+	// res.Metadata.SetUpdatedTimestamp(util.Pointer(time.Now()))
+	// res.Metadata.SetUpdatedBy("ryan")
+
+	// jjj, _ := json.MarshalIndent(res, "", "  ")
+	// fmt.Printf("WRITE: %s", string(jjj))
+	// _, _, err = s.codec.Decode(jjj, nil, out)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -128,7 +185,11 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 func (s *entityStorage) Delete(
 	ctx context.Context, key string, out runtime.Object, preconditions *storage.Preconditions,
 	validateDeletion storage.ValidateObjectFunc, cachedExistingObject runtime.Object) error {
-	grn, err := s.toGRN(key)
+	ctx, err := contextWithFakeGrafanaUser(ctx)
+	if err != nil {
+		return err
+	}
+	grn, err := keyToGRN(key, &s.gr)
 	if err != nil {
 		return err
 	}
@@ -181,15 +242,40 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOptions, objPtr runtime.Object) error {
-	res := dashboard.NewK8sResource("hello", &dashboard.Spec{
-		Title: utils.Pointer("the title"),
+	ctx, err := contextWithFakeGrafanaUser(ctx)
+	if err != nil {
+		return err
+	}
+	grn, err := keyToGRN(key, &s.gr)
+	if err != nil {
+		return err
+	}
+
+	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
+		GRN:        grn,
+		WithMeta:   true,
+		WithBody:   true,
+		WithStatus: true,
 	})
-	res.APIVersion = "dashboard.kinds.grafana.com/v1"
+	if err != nil {
+		return err
+	}
+	if rsp.GRN == nil {
+		return apierrors.NewNotFound(s.gr, grn.UID)
+	}
 
-	jjj, _ := json.MarshalIndent(res, "", "  ")
-	fmt.Printf("XXX: %s", string(jjj))
+	res, err := enityToResource(rsp)
+	if err != nil {
+		return err
+	}
+	res.APIVersion = "dashboard.kinds.grafana.com/v1" // ???
+	res.Kind = s.gr.Resource
 
-	_, _, err := s.codec.Decode(jjj, nil, objPtr)
+	jjj, _ := json.Marshal(res)
+	//	fmt.Printf("GET: %s", string(jjj))
+	_, _, err = s.codec.Decode(jjj, nil, objPtr)
+
+	fmt.Printf("GET:%s\n", res.Metadata.Name)
 	return err
 }
 
@@ -202,6 +288,10 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
 	if key == "" {
 		return fmt.Errorf("list requires a namespace (for now)")
+	}
+	ctx, err := contextWithFakeGrafanaUser(ctx)
+	if err != nil {
+		return err
 	}
 
 	// rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
@@ -263,6 +353,10 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 func (s *entityStorage) GuaranteedUpdate(
 	ctx context.Context, key string, destination runtime.Object, ignoreNotFound bool,
 	preconditions *storage.Preconditions, tryUpdate storage.UpdateFunc, cachedExistingObject runtime.Object) error {
+	ctx, err := contextWithFakeGrafanaUser(ctx)
+	if err != nil {
+		return err
+	}
 
 	//	var res storage.ResponseMeta
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
