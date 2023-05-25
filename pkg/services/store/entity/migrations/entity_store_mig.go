@@ -192,7 +192,7 @@ func initEntityTables(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity_access_rule",
 		Columns: []*migrator.Column{
-			{Name: "policy", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
+			{Name: "policy", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "scope", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "role", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
@@ -200,7 +200,8 @@ func initEntityTables(mg *migrator.Migrator) {
 			{Name: "target", Type: migrator.DB_NVarchar, Length: 32, Nullable: true},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"scope", "role", "kind", "verb", "target"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"policy"}, Type: migrator.IndexType},
+			//{Cols: []string{"scope", "role", "kind", "verb", "target"}, Type: migrator.UniqueIndex},
 		},
 	})
 

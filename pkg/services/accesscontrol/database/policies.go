@@ -100,9 +100,8 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 				current.Spec.Role.Kind = accesspolicy.RoleRefKindUser
 				current.Spec.Role.Name = "$TODO:" + info.RoleName
 			} else if strings.HasPrefix(info.RoleName, "managed:builtins:") {
-				parts := strings.Split(info.RoleName, ":")
 				current.Spec.Role.Kind = accesspolicy.RoleRefKindBuiltinRole
-				current.Spec.Role.Name = parts[2]
+				current.Spec.Role.Name = getBuiltinRoleName(info.RoleName)
 			}
 
 			prevKey = key
@@ -147,4 +146,9 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 
 func getKind(input string) string {
 	return strings.TrimSuffix(input, "s") // dashboards > dashboard
+}
+
+func getBuiltinRoleName(input string) string {
+	v := strings.TrimPrefix(input, "managed:builtins:")
+	return strings.TrimSuffix(v, ":permissions")
 }

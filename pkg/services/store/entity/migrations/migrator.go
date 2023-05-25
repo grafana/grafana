@@ -32,7 +32,7 @@ func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
 		return nil
 	}
 
-	marker := "Initialize entity tables (vXX)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (vAB)" // changing this key wipe+rewrite everything
 	mg := migrator.NewScopedMigrator(sql.GetEngine(), sql.Cfg, "entity")
 	mg.AddCreateMigration()
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
