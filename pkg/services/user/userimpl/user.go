@@ -378,12 +378,7 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 		if errors.Is(err, user.ErrUserAlreadyExists) {
 			return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 		}
-		// Handle or log other errors
-		/*
-			// TODO: remove me before the PR is merged, this is how I found out about the context cancellation
-			ERROR[05-25|18:51:58] not found                                logger=context userId=1 orgId=1 uname=admin error="not found" remote_addr=[::1] traceID=
-			ERROR[05-25|18:52:00] Internal server error                    logger=context userId=1 orgId=1 uname=admin error="failed to create service account: error checking for existing service account: context canceled" remote_addr=[::1] traceID=
-		*/
+		// Handles any other errors
 		return nil, fmt.Errorf("error checking for existing service account: %w", err)
 	}
 
