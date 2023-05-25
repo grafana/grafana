@@ -154,8 +154,8 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
           content: '';
           position: absolute;
           z-index: 2;
-          left: 3px;
-          right: 3px;
+          left: 2px;
+          right: 2px;
           top: calc(50% - 1.5px);
           height: 3px;
           border: 1.5px solid ${theme.colors.primary.contrastText};
