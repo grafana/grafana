@@ -61,7 +61,7 @@ PDg8aOQrI1MSW9Hoc1CummcWX+HKNPVwIzG3sCboENFzEG8GrJgoNHZgmyOYEMMD
 			wantErr: false,
 		},
 		{
-			name: "should parse the public key if it is in PKCS8 format",
+			name: "should parse the public key if it is in PKIX/X.509 format",
 			publicKeyPem: `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
 mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
