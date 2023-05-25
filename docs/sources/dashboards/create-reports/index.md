@@ -191,7 +191,6 @@ The last saved version of the report will be sent to selected emails. You can us
 
 {{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-
 ### Pause a report
 
 {{% admonition type="note" %}}
