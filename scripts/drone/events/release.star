@@ -13,6 +13,7 @@ load(
     "build_plugins_step",
     "build_storybook_step",
     "clone_enterprise_step",
+    "cloudsdk_image",
     "compile_build_cmd",
     "copy_packages_for_docker_step",
     "download_grabpl_step",
@@ -812,7 +813,7 @@ def verify_release_pipeline(
     step = {
         "name": "gsutil-stat",
         "depends_on": ["clone"],
-        "image": "google/cloud-sdk",
+        "image": cloudsdk_image,
         "environment": {
             "BUCKET": bucket,
             "GCP_KEY": gcp_key,
