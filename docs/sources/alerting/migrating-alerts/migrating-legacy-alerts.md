@@ -36,6 +36,8 @@ longer supported. We refer to these as [Differences]({{< relref "#differences" >
 
 6. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
 
+7. Grafana Alerting does not support pausing the evaluation of alert rules. After migration, all paused alert rules will become active, which may cause unexpected notifications to be sent.
+
 ## Limitations
 
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
