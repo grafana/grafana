@@ -57,6 +57,7 @@ export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginO
         <ConfigDescriptionLink
           description="Show or hide the node graph visualization."
           suffix={`${options.type}/#node-graph`}
+          feature="the node graph"
         />
       }
     >

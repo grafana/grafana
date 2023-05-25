@@ -256,6 +256,7 @@ export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePlugi
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's logs."
           suffix={`${options.type}/#trace-to-logs`}
+          feature="trace to logs"
         />
       }
       isCollapsible={true}

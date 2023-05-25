@@ -58,6 +58,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
             <ConfigDescriptionLink
               description="Select a Prometheus data source that contains the service graph data."
               suffix="tempo/#service-graph"
+              feature="the service graph"
             />
           }
         >
@@ -72,7 +73,11 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         <ConfigSubSection
           title="Tempo search"
           description={
-            <ConfigDescriptionLink description="Modify how traces are searched." suffix="tempo/#tempo-search" />
+            <ConfigDescriptionLink
+              description="Modify how traces are searched."
+              suffix="tempo/#tempo-search"
+              feature="Tempo search"
+            />
           }
         >
           {config.featureToggles.traceqlSearch ? (
@@ -90,6 +95,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
             <ConfigDescriptionLink
               description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
               suffix="tempo/#loki-search"
+              feature="Loki search"
             />
           }
         >
@@ -101,7 +107,11 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         <ConfigSubSection
           title="TraceID query"
           description={
-            <ConfigDescriptionLink description="Modify how TraceID queries are run." suffix="tempo/#traceid-query" />
+            <ConfigDescriptionLink
+              description="Modify how TraceID queries are run."
+              suffix="tempo/#traceid-query"
+              feature="the TraceID query"
+            />
           }
         >
           <QuerySettings options={options} onOptionsChange={onOptionsChange} />

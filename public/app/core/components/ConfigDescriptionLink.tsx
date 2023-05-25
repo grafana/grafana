@@ -7,11 +7,12 @@ import { useStyles2 } from '@grafana/ui';
 type Props = {
   description: string;
   suffix: string;
+  feature: string;
 };
 
 export function ConfigDescriptionLink(props: Props) {
-  const { description, suffix } = props;
-  const text = 'Learn more about this setting';
+  const { description, suffix, feature } = props;
+  const text = `Learn more about ${feature}`;
   const styles = useStyles2(getStyles);
 
   return (

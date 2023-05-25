@@ -218,6 +218,7 @@ export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePl
         <ConfigDescriptionLink
           description="Navigate from a trace span to the selected data source's metrics."
           suffix={`${options.type}/#trace-to-metrics`}
+          feature="trace to metrics"
         />
       }
       isCollapsible={true}

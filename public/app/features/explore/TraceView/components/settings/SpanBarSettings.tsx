@@ -87,6 +87,7 @@ export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOpt
         <ConfigDescriptionLink
           description="Add additional info next to the service and operation on a span bar row in the trace view."
           suffix={`${options.type}/#span-bar`}
+          feature="the span bar"
         />
       }
     >
