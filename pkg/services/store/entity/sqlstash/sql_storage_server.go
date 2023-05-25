@@ -475,8 +475,13 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, origin.Time,
 			)
 		}
-		if err == nil && entity.StandardKindFolder == r.GRN.Kind {
-			err = updateFolderTree(ctx, tx, grn.TenantId)
+		if err == nil {
+			switch r.GRN.Kind {
+			case entity.StandardKindFolder:
+				err = updateFolderTree(ctx, tx, grn.TenantId)
+			case "accesspolicy":
+				err = updateAccessControl(ctx, tx, grn.TenantId, oid, meta, r.Body)
+			}
 		}
 		if err == nil {
 			summary.folder = r.Folder
@@ -701,7 +706,7 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 	if err != nil {
 		return false, err
 	}
-	_, err = tx.Exec(ctx, "DELETE FROM entity_access WHERE grn=?", str)
+	_, err = tx.Exec(ctx, "DELETE FROM entity_access_rule WHERE policy=?", str)
 	if err != nil {
 		return false, err
 	}

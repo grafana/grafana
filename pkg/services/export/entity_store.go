@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -120,7 +123,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		folders[dash.ID] = dash.UID
 	}
 
-	for _, dash := range folderInfo {
+	for idx, dash := range folderInfo {
 		rowUser.OrgID = dash.OrgID
 		rowUser.UserID = dash.UpdatedBy
 		if dash.UpdatedBy < 0 {
@@ -147,13 +150,13 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			},
 		})
 		if err != nil {
-			e.status.Status = "error: " + err.Error()
+			e.status.Status = fmt.Sprintf("error exporting folder[%d]%s: %s", idx, dash.Title, err.Error())
 			return
 		}
 		e.status.Changed = time.Now().UnixMilli()
 		e.status.Index++
 		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
+		e.status.Last = fmt.Sprintf("FOLDER: %s", dash.UID)
 		e.broadcaster(e.status)
 	}
 
@@ -202,7 +205,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		e.status.Changed = time.Now().UnixMilli()
 		e.status.Index++
 		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
+		e.status.Last = fmt.Sprintf("DASH: %s", dash.UID)
 		e.broadcaster(e.status)
 	}
 
@@ -244,12 +247,52 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		e.status.Changed = time.Now().UnixMilli()
 		e.status.Index++
 		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("ITEM: %s", playlist.Uid)
+		e.status.Last = fmt.Sprintf("PLAYLIST: %s", playlist.Uid)
 		e.broadcaster(e.status)
 	}
 
 	// TODO.. query lookup
 	orgIDs := []int64{1}
+
+	// Load access policies
+	what = "accesspolicies"
+	for _, orgId := range orgIDs {
+		e.status.Last = "starting access policies"
+		e.status.Status = "getting access policies"
+		e.broadcaster(e.status)
+		rowUser.OrgID = orgId
+		rowUser.UserID = 1
+		policies, err := database.GetAccessPolicies(ctx, orgId, e.sess,
+			func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+				return strings.Split(scope, ":"), nil
+			})
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+		for _, policy := range policies {
+			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+				GRN: &entity.GRN{
+					UID:  uuid.NewString(),
+					Kind: "accesspolicy",
+				},
+				Body:    prettyJSON(policy.Spec),
+				Meta:    prettyJSON(policy.Metadata),
+				Comment: "export from sql",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("ROLE: %s", policy.Spec.Role.Xname)
+			e.broadcaster(e.status)
+		}
+	}
+
+	// Load snapshots
 	what = "snapshot"
 	for _, orgId := range orgIDs {
 		rowUser.OrgID = orgId
@@ -308,7 +351,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			e.status.Changed = time.Now().UnixMilli()
 			e.status.Index++
 			e.status.Count[what] += 1
-			e.status.Last = fmt.Sprintf("ITEM: %s", dto.Name)
+			e.status.Last = fmt.Sprintf("SNAPSHOT: %s", dto.Name)
 			e.broadcaster(e.status)
 		}
 	}
