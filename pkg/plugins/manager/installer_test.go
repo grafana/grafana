@@ -101,7 +101,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					URL: "https://grafanaplugins.com",
 				}, nil
 			}
-			pluginRepo.GetPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string) (*repo.PluginArchive, error) {
+			pluginRepo.GetPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
 				require.Equal(t, "https://grafanaplugins.com", pluginZipURL)
 				return &repo.PluginArchive{
 					File: mockZipV2,

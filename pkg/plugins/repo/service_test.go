@@ -67,8 +67,11 @@ func TestGetPluginArchive(t *testing.T) {
 				},
 			)
 
-			logger := &fakeLogger{}
-			m := NewManager(srv.URL, NewClient(false, logger), logger)
+			m := NewManager(ManagerOpts{
+				SkipTLSVerify: false,
+				BaseURL:       srv.URL,
+				Logger:        &fakeLogger{},
+			})
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
 				GrafanaVersion: grafanaVersion,
 				OS:             opSys,
@@ -196,7 +199,7 @@ func mockPluginRepoAPI(t *testing.T, data srvData) *httptest.Server {
 	})
 
 	// mock plugin archive
-	mux.HandleFunc(fmt.Sprintf("/%s/version/%s/download", data.pluginID, data.version), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("/%s/versions/%s/download", data.pluginID, data.version), func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/zip")
 		_, _ = w.Write(data.archive)
