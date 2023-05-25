@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
+import { safeStringifyValue } from 'app/core/utils/explore';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 export type FieldDef = {
@@ -69,9 +70,10 @@ export const getDataframeFields = memoizeOne(
       .filter((field, index) => !shouldRemoveField(field, index, row))
       .map((field) => {
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
+
         return {
           keys: [field.name],
-          values: [field.values[row.rowIndex].toString()],
+          values: [safeStringifyValue(field.values[row.rowIndex])],
           links: links,
           fieldIndex: field.index,
         };
@@ -82,7 +84,7 @@ export const getDataframeFields = memoizeOne(
 function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   // Remove field if it is:
   // "labels" field that is in Loki used to store all labels
-  if (field.name === 'labels' && field.type === FieldType.other) {
+  if (field.name === 'labels' && field.type === FieldType.other && (field.config.links?.length || 0) === 0) {
     return true;
   }
   // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
