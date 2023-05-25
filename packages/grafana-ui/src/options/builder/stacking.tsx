@@ -27,7 +27,7 @@ export const StackingEditor = ({ value, context, onChange, item }: FieldOverride
         <Input
           type="text"
           placeholder="Group"
-          suffix={<IconButton name="question-circle" tooltip="More information" tooltipPlacement="top" />}
+          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({
