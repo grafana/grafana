@@ -1608,7 +1608,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 func readOAuth2ServerSettings(cfg *Cfg) {
 	oauth2Srv := cfg.SectionWithEnvOverrides("oauth2_server")
 	cfg.OAuth2ServerEnabled = oauth2Srv.Key("enabled").MustBool(false)
-	cfg.OAuth2ServerGeneratedKeyTypeForClient = strings.ToUpper(oauth2Srv.Key("generated_key_type_for_client").In("RSA", []string{"RSA", "ECDSA"}))
+	cfg.OAuth2ServerGeneratedKeyTypeForClient = strings.ToUpper(oauth2Srv.Key("generated_key_type_for_client").In("ECDSA", []string{"RSA", "ECDSA"}))
 	cfg.OAuth2ServerAccessTokenLifespan = oauth2Srv.Key("access_token_lifespan").MustDuration(time.Minute * 3)
 }
 
