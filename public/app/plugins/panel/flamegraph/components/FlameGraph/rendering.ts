@@ -1,3 +1,6 @@
+import uFuzzy from '@leeoniya/ufuzzy';
+import { RefObject, useEffect, useMemo, useState } from 'react';
+
 import { colors } from '@grafana/ui';
 
 import {
@@ -11,6 +14,84 @@ import {
 import { TextAlign } from '../types';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+
+const ufuzzy = new uFuzzy();
+
+export function useFlameRender(
+  canvasRef: RefObject<HTMLCanvasElement>,
+  data: FlameGraphDataContainer,
+  levels: LevelItem[][],
+  wrapperWidth: number,
+  rangeMin: number,
+  rangeMax: number,
+  search: string,
+  textAlign: TextAlign,
+  focusedItemIndex?: number
+) {
+  const foundLabels = useMemo(() => {
+    if (search) {
+      const foundLabels = new Set<string>();
+      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
+
+      if (idxs) {
+        for (let idx of idxs) {
+          foundLabels.add(data.getUniqueLabels()[idx]);
+        }
+      }
+
+      return foundLabels;
+    }
+    // In this case undefined means there was no search so no attempt to highlighting anything should be made.
+    return undefined;
+  }, [search, data]);
+
+  const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
+
+  useEffect(() => {
+    if (!ctx) {
+      return;
+    }
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    const totalTicks = data.getValue(0);
+    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
+
+    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
+      const level = levels[levelIndex];
+      // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
+      // sometimes we collapse multiple bars into single rect.
+      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+      for (const rect of dimensions) {
+        const focusedLevel = focusedItemIndex ? data.getLevel(focusedItemIndex) : 0;
+        // Render each rectangle based on the computed dimensions
+        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, levelIndex, focusedLevel, foundLabels, textAlign);
+      }
+    }
+  }, [ctx, data, levels, wrapperWidth, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
+}
+
+function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
+  const [ctx, setCtx] = useState<CanvasRenderingContext2D>();
+
+  useEffect(() => {
+    if (!(numberOfLevels && canvasRef.current)) {
+      return;
+    }
+    const ctx = canvasRef.current.getContext('2d')!;
+
+    const height = PIXELS_PER_LEVEL * numberOfLevels;
+    canvasRef.current.width = Math.round(wrapperWidth * window.devicePixelRatio);
+    canvasRef.current.height = Math.round(height * window.devicePixelRatio);
+    canvasRef.current.style.width = `${wrapperWidth}px`;
+    canvasRef.current.style.height = `${height}px`;
+
+    ctx.textBaseline = 'middle';
+    ctx.font = 12 * window.devicePixelRatio + 'px monospace';
+    ctx.strokeStyle = 'white';
+    setCtx(ctx);
+  }, [canvasRef, setCtx, wrapperWidth, numberOfLevels]);
+  return ctx;
+}
 
 type RectData = {
   width: number;
@@ -80,10 +161,9 @@ export function renderRect(
   totalTicks: number,
   rangeMin: number,
   rangeMax: number,
-  query: string,
   levelIndex: number,
   topLevelIndex: number,
-  foundNames: Set<string>,
+  foundNames: Set<string> | undefined,
   textAlign: TextAlign
 ) {
   if (rect.width < HIDE_THRESHOLD) {
@@ -103,13 +183,13 @@ export function renderRect(
   if (!rect.collapsed) {
     ctx.stroke();
 
-    if (query) {
+    if (foundNames) {
       ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
     } else {
       ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
     }
   } else {
-    ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
+    ctx.fillStyle = foundNames && foundNames.has(name) ? getBarColor(h, l) : colors[55];
   }
   ctx.fill();
 

@@ -17,8 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
-import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { useStyles2 } from '@grafana/ui';
@@ -30,7 +29,7 @@ import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip from './FlameGraphTooltip';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
-import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
+import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -70,56 +69,7 @@ const FlameGraph = ({
 
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
-  const [ufuzzy] = useState(() => {
-    return new uFuzzy();
-  });
-
-  const foundLabels = useMemo(() => {
-    const foundLabels = new Set<string>();
-
-    if (search) {
-      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
-
-      if (idxs) {
-        for (let idx of idxs) {
-          foundLabels.add(data.getUniqueLabels()[idx]);
-        }
-      }
-    }
-
-    return foundLabels;
-  }, [ufuzzy, search, data]);
-
-  useEffect(() => {
-    if (!levels.length) {
-      return;
-    }
-    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
-    const ctx = graphRef.current?.getContext('2d')!;
-    const graph = graphRef.current!;
-
-    const height = PIXELS_PER_LEVEL * levels.length;
-    graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
-    graph.height = Math.round(height * window.devicePixelRatio);
-    graph.style.width = `${wrapperWidth}px`;
-    graph.style.height = `${height}px`;
-
-    ctx.textBaseline = 'middle';
-    ctx.font = 12 * window.devicePixelRatio + 'px monospace';
-    ctx.strokeStyle = 'white';
-
-    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-      const level = levels[levelIndex];
-      // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
-      // sometimes we collapse multiple bars into single rect.
-      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
-      for (const rect of dimensions) {
-        const focusedLevel = focusedItemIndex ? data.getLevel(focusedItemIndex) : 0;
-        // Render each rectangle based on the computed dimensions
-        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, focusedLevel, foundLabels, textAlign);
-      }
-    }
-  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
+  useFlameRender(graphRef, data, levels, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
 
   useEffect(() => {
     if (graphRef.current) {
@@ -189,7 +139,6 @@ const FlameGraph = ({
     rangeMin,
     rangeMax,
     totalTicks,
-    wrapperWidth,
     setRangeMin,
     setRangeMax,
     selectedView,
