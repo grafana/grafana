@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/build/git"
 )
 
 type Metadata struct {
@@ -100,8 +102,8 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 }
 
 func CheckDroneTargetBranch() (VersionMode, error) {
+	rePRCheckBranch := git.PRCheckRegexp()
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
-	rePRCheckBranch := regexp.MustCompile(`^pr-check-\d+`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")
@@ -121,6 +123,7 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 func CheckSemverSuffix() (ReleaseMode, error) {
 	reBetaRls := regexp.MustCompile(`beta.*`)
 	reTestRls := regexp.MustCompile(`test.*`)
+	reCloudRls := regexp.MustCompile(`cloud.*`)
 	tagSuffix, ok := os.LookupEnv("DRONE_SEMVER_PRERELEASE")
 	if !ok || tagSuffix == "" {
 		fmt.Println("DRONE_SEMVER_PRERELEASE doesn't exist for a tag, this is a release event...")
@@ -131,6 +134,8 @@ func CheckSemverSuffix() (ReleaseMode, error) {
 		return ReleaseMode{Mode: TagMode, IsBeta: true}, nil
 	case reTestRls.MatchString(tagSuffix):
 		return ReleaseMode{Mode: TagMode, IsTest: true}, nil
+	case reCloudRls.MatchString(tagSuffix):
+		return ReleaseMode{Mode: CloudMode}, nil
 	default:
 		fmt.Printf("DRONE_SEMVER_PRERELEASE is custom string, release event with %s suffix\n", tagSuffix)
 		return ReleaseMode{Mode: TagMode}, nil

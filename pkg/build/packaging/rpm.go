@@ -10,12 +10,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	// Consider switching this over to a community fork unless there is
+	// an option to move us away from OpenPGP.
+	"golang.org/x/crypto/openpgp"        //nolint:staticcheck
+	"golang.org/x/crypto/openpgp/armor"  //nolint:staticcheck
+	"golang.org/x/crypto/openpgp/packet" //nolint:staticcheck
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/armor"
-	"golang.org/x/crypto/openpgp/packet"
 )
 
 // UpdateRPMRepo updates the RPM repository with the new release.

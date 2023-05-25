@@ -10,13 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/jmespath/go-jmespath"
 )
 
 const (
-	InvalidJWT   = "Invalid JWT"
-	InvalidRole  = "Invalid Role"
-	UserNotFound = "User not found"
+	InvalidJWT         = "Invalid JWT"
+	InvalidRole        = "Invalid Role"
+	UserNotFound       = "User not found"
+	authQueryParamName = "auth_token"
 )
 
 func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
@@ -26,12 +28,15 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
 	if jwtToken == "" && h.Cfg.JWTAuthURLLogin {
-		jwtToken = ctx.Req.URL.Query().Get("auth_token")
+		params := ctx.Req.URL.Query()
+		jwtToken = params.Get(authQueryParamName)
 	}
 
 	if jwtToken == "" {
 		return false
 	}
+
+	stripSensitiveParam(h.Cfg, ctx.Req)
 
 	// Strip the 'Bearer' prefix if it exists.
 	jwtToken = strings.TrimPrefix(jwtToken, "Bearer ")
@@ -204,4 +209,16 @@ func looksLikeJWT(token string) bool {
 	// A JWT must have 3 parts separated by `.`.
 	parts := strings.Split(token, ".")
 	return len(parts) == 3
+}
+
+// remove sensitive query params
+// avoid JWT URL login passing auth_token in URL
+func stripSensitiveParam(cfg *setting.Cfg, httpRequest *http.Request) {
+	if cfg.JWTAuthURLLogin {
+		params := httpRequest.URL.Query()
+		if params.Has(authQueryParamName) {
+			params.Del(authQueryParamName)
+			httpRequest.URL.RawQuery = params.Encode()
+		}
+	}
 }

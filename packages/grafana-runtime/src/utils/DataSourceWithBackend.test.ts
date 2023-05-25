@@ -2,16 +2,21 @@ import { of } from 'rxjs';
 import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
 
 import {
-  DataSourceJsonData,
   DataQuery,
-  DataSourceInstanceSettings,
   DataQueryRequest,
   DataQueryResponseData,
-  MutableDataFrame,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
   DataSourceRef,
+  MutableDataFrame,
 } from '@grafana/data';
 
-import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
+import {
+  DataSourceWithBackend,
+  isExpressionReference,
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+} from './DataSourceWithBackend';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
@@ -147,6 +152,16 @@ describe('DataSourceWithBackend', () => {
     rsp.data = [frame];
     obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
+  });
+
+  describe('isExpressionReference', () => {
+    test('check all possible expression references', () => {
+      expect(isExpressionReference('__expr__')).toBeTruthy(); // New UID
+      expect(isExpressionReference('-100')).toBeTruthy(); // Legacy UID
+      expect(isExpressionReference('Expression')).toBeTruthy(); // Name
+      expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
+      expect(isExpressionReference({ type: '-100' })).toBeTruthy();
+    });
   });
 });
 

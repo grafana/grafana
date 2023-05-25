@@ -40,8 +40,8 @@ This section describes the areas of the Grafana panel editor.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-- **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../../../panels/query-a-data-source/add-a-query/" >}}).
-- **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../../../panels/transform-data/" >}}).
+- **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../../../panels-visualizations/query-transform-data#add-a-query" >}}).
+- **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../../../panels-visualizations/query-transform-data/transform-data" >}}).
 - **Alert tab:** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../../alerting/" >}}).
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
@@ -96,17 +96,17 @@ For more information about data sources, refer to [Data sources]({{< relref "../
 
    ![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
-For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../visualizations/" >}}).
+For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../panels-visualizations/visualizations" >}}).
 
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
-   - [Configure value mappings]({{< relref "../../../panels/configure-value-mappings" >}})
-   - [Visualization-specific options]({{< relref "../../../visualizations/" >}})
-   - [Override field values]({{< relref "../../../panels/configure-overrides/" >}})
-   - [Configure thresholds]({{< relref "../../../panels/configure-thresholds/" >}})
-   - [Configure standard options]({{< relref "../../../panels/configure-standard-options/" >}})
+   - [Configure value mappings]({{< relref "../../../panels-visualizations/configure-value-mappings" >}})
+   - [Visualization-specific options]({{< relref "../../../panels-visualizations/visualizations" >}})
+   - [Override field values]({{< relref "../../../panels-visualizations/configure-overrides" >}})
+   - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds" >}})
+   - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options" >}})
 
 1. Add a note to describe the visualization (or describe your changes) and then click **Save** in the upper-right corner of the page.
 

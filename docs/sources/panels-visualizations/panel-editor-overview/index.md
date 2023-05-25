@@ -6,6 +6,7 @@ aliases:
   - ../panels/add-panels-dynamically/about-repeating-panels-rows/
   - ../panels/add-panels-dynamically/configure-repeating-panels/
   - ../panels/add-panels-dynamically/configure-repeating-rows/
+  - ../panels/working-with-panels/
   - ../panels/working-with-panels/add-panel/
   - ../panels/working-with-panels/navigate-inspector-panel/
   - ../panels/working-with-panels/navigate-panel-editor/

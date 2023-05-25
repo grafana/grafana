@@ -1,4 +1,6 @@
 import { components } from '@reactour/tour';
+// there is a problem with exported members from react tour
+// @ts-ignore
 import { NavigationProps } from '@reactour/tour/dist/components/Navigation';
 import React, { FC } from 'react';
 

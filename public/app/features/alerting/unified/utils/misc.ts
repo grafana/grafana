@@ -103,6 +103,7 @@ export function makeDataSourceLink<T extends DataSourceJsonData>(dataSource: Dat
 }
 
 export function makeFolderLink(folderUID: string, slug: string): string {
+  // @PERCONA add slug to url
   return `${config.appSubUrl}/dashboards/f/${folderUID}/${slug}`;
 }
 

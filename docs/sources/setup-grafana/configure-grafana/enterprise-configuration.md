@@ -374,7 +374,7 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [Query caching]({{< relref "../../../administration/data-source-management/#enable-and-configure-query-caching" >}}).
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [Query caching]({{< relref "../../administration/data-source-management#enable-and-configure-query-caching" >}}).
 
 ### ttl
 

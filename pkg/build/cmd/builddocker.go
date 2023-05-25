@@ -14,7 +14,7 @@ func BuildDocker(c *cli.Context) error {
 		return err
 	}
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

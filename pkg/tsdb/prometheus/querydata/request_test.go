@@ -351,7 +351,7 @@ func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.F
 		Headers: map[string]string{},
 	}
 
-	promRes, err := toAPIResponse(qr)
+	promRes, err := toAPIResponse(qr) //nolint:bodyclose // fixed in main
 	if err != nil {
 		return nil, err
 	}

@@ -28,7 +28,11 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
   const { data, query, onChangeQuery } = props;
   const defaultPanel = isExpressionQuery(query.model) ? TABLE : TIMESERIES;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
-  const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+  let uid = query.datasourceUid;
+  if (isExpressionQuery(query.model)) {
+    uid = query.model.datasource?.type ?? query.datasourceUid;
+  }
+  const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
   const relativeTimeRange = query.relativeTimeRange;
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,

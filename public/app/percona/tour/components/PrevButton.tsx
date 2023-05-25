@@ -1,3 +1,5 @@
+// there is a problem with exported types from react tour
+// @ts-ignore
 import { BtnFnProps } from '@reactour/tour/dist/types';
 import React from 'react';
 

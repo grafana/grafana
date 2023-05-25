@@ -114,7 +114,7 @@ If this happens, then you have to add the certificate to the trust store. If you
 
 ```
 [root@server ~]# [ -d /usr/share/grafana/.pki/nssdb ] || mkdir -p /usr/share/grafana/.pki/nssdb
-[root@merver ~]# certutil -d sql:/usr/share/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
+[root@server ~]# certutil -d sql:/usr/share/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
 [root@server ~]# chown -R grafana: /usr/share/grafana/.pki/nssdb
 ```
 

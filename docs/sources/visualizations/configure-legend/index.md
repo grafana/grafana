@@ -1,10 +1,17 @@
 ---
 aliases:
+<<<<<<<< HEAD:docs/sources/visualizations/configure-legend/index.md
   - /docs/grafana/latest/panels/working-with-panels/configure-legend/
   - /docs/grafana/latest/visualizations/configure-legend/
   - /docs/grafana/latest/panels-visualizations/visualizations/configure-legend/
 title: Configure a legend
 weight: 1300
+========
+  - ../panels/working-with-panels/configure-legend/
+  - visualizations/configure-legend/
+title: Configure a legend
+weight: 400
+>>>>>>>> release-9.2.18:docs/sources/panels-visualizations/configure-legend/index.md
 ---
 
 # Configure a legend

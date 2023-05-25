@@ -1,3 +1,5 @@
+// there is a problem with exported types from react tour
+// @ts-ignore
 import { CloseProps } from '@reactour/tour/dist/components/Close';
 import React, { FC } from 'react';
 

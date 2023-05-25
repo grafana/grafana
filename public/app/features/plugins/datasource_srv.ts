@@ -7,15 +7,15 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import {
-  GetDataSourceListFilters,
   DataSourceSrv as DataSourceService,
-  getDataSourceSrv as getDataSourceService,
-  TemplateSrv,
-  getTemplateSrv,
-  getLegacyAngularInjector,
   getBackendSrv,
+  GetDataSourceListFilters,
+  getDataSourceSrv as getDataSourceService,
+  getLegacyAngularInjector,
+  getTemplateSrv,
+  TemplateSrv,
 } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import {
@@ -78,6 +78,13 @@ export class DatasourceSrv implements DataSourceService {
         }
       }
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
+    }
+
+    // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
+    // But we still have dashboards/panels with old expression UID (-100)
+    // To support both UIDs until we migrate them all to new one, this check is necessary
+    if (isExpressionReference(nameOrUid)) {
+      return expressionDatasource.instanceSettings;
     }
 
     // Complex logic to support template variable data source names

@@ -33,6 +33,8 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
+import { isExpressionQuery } from '../../expressions/guards';
+
 import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
@@ -135,6 +137,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   getQueryDataSourceIdentifier(): string | null | undefined {
     const { query, dataSource: dsSettings } = this.props;
+    if (isExpressionQuery(query)) {
+      return query.datasource?.type ?? dsSettings.uid;
+    }
     return query.datasource?.uid ?? dsSettings.uid;
   }
 
