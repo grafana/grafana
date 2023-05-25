@@ -2,7 +2,6 @@ package oasimpl
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
 	"net/http"
@@ -27,10 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-)
-
-var (
-	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
 
 func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {

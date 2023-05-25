@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -48,7 +47,10 @@ type TestEnv struct {
 	SAService   *satests.MockServiceAccountService
 }
 
-var pk, _ = rsa.GenerateKey(rand.Reader, 4096)
+var (
+	pk, _         = rsa.GenerateKey(rand.Reader, 4096)
+	Client1Key, _ = rsa.GenerateKey(rand.Reader, 4096)
+)
 
 func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
@@ -75,12 +77,6 @@ func setupTestEnv(t *testing.T) *TestEnv {
 
 	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
 
-	keySvc := signingkeystest.FakeSigningKeysService{
-		ExpectedServerPrivateKey: pk,
-	}
-
-	privateKey := keySvc.GetServerPrivateKey().(*rsa.PrivateKey)
-
 	s := &OAuth2ServiceImpl{
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
 		cfg:           cfg,
@@ -92,10 +88,10 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		userService:   env.UserService,
 		saService:     env.SAService,
 		teamService:   env.TeamService,
-		publicKey:     &privateKey.PublicKey,
+		publicKey:     &pk.PublicKey,
 	}
 
-	s.oauthProvider = newProvider(config, s, privateKey)
+	s.oauthProvider = newProvider(config, s, pk)
 
 	env.S = s
 
