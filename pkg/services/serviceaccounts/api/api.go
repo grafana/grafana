@@ -323,7 +323,7 @@ func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel
 	// even if the original request is cancelled (we have really short context timeouts for requests),
 	// However: we must be aware this will continue running even if the client has disconnected
 	// , which could lead to resource leaks if not handled carefully.
-	longerCtx, cancel := context.WithTimeout(context.Background(), time.Minute*5) // Set your desired timeout duration
+	longerCtx, cancel := context.WithTimeout(context.Background(), time.Minute*1) // Set your desired timeout duration
 	defer cancel()                                                                // Make sure to cancel the context when you're done to avoid leaking resources
 
 	if err := api.service.MigrateApiKeysToServiceAccounts(longerCtx, ctx.OrgID); err != nil {
