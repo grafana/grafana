@@ -258,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     cursor: pointer;
     :hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
     }
   `,
   customOptionlabel: css`
@@ -270,7 +270,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     opacity: 50%;
   `,
   focus: css`
-    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
   `,
 });
 
