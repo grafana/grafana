@@ -342,7 +342,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 			ServiceAccountID: 1,
 		}
 	}
-	cachedUser := &oauthserver.ExternalService{
+	cachedClient := &oauthserver.ExternalService{
 		Name:             serviceName,
 		ClientID:         "RANDOMID",
 		Secret:           "RANDOMSECRET",
@@ -369,7 +369,7 @@ func TestOAuth2ServiceImpl_GetExternalService(t *testing.T) {
 		{
 			name: "should hit the cache",
 			init: func(env *TestEnv) {
-				env.S.cache.Set(serviceName, *cachedUser, time.Minute)
+				env.S.cache.Set(serviceName, *cachedClient, time.Minute)
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertNotCalled(t, "GetExternalService", mock.Anything, mock.Anything)
