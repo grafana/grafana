@@ -326,9 +326,9 @@ export const fetchRulesSourceBuildInfoAction = createAsyncThunk(
 
         const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
           ? {
-            dataSourceName: name,
-            apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
-          }
+              dataSourceName: name,
+              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+            }
           : undefined;
 
         return {
@@ -560,7 +560,10 @@ interface UpdateAlertManagerConfigActionOptions {
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch, refetch }, thunkAPI): Promise<void> =>
+  (
+    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch, refetch },
+    thunkAPI
+  ): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
@@ -869,10 +872,10 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
                 newNamespaceName,
                 group.name === groupName
                   ? {
-                    ...group,
-                    name: newGroupName,
-                    interval: groupInterval,
-                  }
+                      ...group,
+                      name: newGroupName,
+                      interval: groupInterval,
+                    }
                   : group
               );
             }
