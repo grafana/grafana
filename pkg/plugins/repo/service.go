@@ -112,9 +112,9 @@ func (m *Manager) pluginMetadata(pluginID string, compatOpts CompatOpts) (Plugin
 func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts CompatOpts) (*Version, error) {
 	version = normalizeVersion(version)
 
-	var ver Version
-	latestForArch := latestSupportedVersion(plugin, compatOpts)
-	if latestForArch == nil {
+	// Get latest supported version
+	latestSupported := latestSupportedVersion(plugin, compatOpts)
+	if latestSupported == nil {
 		return nil, ErrArcNotFound{
 			PluginID:   plugin.ID,
 			SystemInfo: compatOpts.OSAndArch(),
@@ -122,8 +122,12 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	}
 
 	if version == "" {
-		return latestForArch, nil
+		// No exact version specified
+		return latestSupported, nil
 	}
+
+	// Exact version specified
+	var ver Version
 	for _, v := range plugin.Versions {
 		if v.Version == version {
 			ver = v
@@ -132,8 +136,9 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	}
 
 	if len(ver.Version) == 0 {
+		// Exact version not found
 		m.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch.Version)
+			plugin.ID, version, latestSupported.Version)
 		return nil, ErrVersionNotFound{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
@@ -141,9 +146,10 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 		}
 	}
 
-	if !supportsCurrentArch(&ver, compatOpts) {
+	if !isVersionCompatible(&ver, compatOpts) {
+		// Exact version not compatible
 		m.log.Debugf("Requested plugin version %s v%s is not supported on your system but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch.Version)
+			plugin.ID, version, latestSupported.Version)
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
@@ -166,12 +172,24 @@ func supportsCurrentArch(version *Version, compatOpts CompatOpts) bool {
 	return false
 }
 
+// isVersionCompatible returns true if the provided Version is compatible with the provided compatOpts.
+// It checks the arch and angular support status of the CompatOpts against the one in the Version.
+func isVersionCompatible(version *Version, compatOpts CompatOpts) bool {
+	if !supportsCurrentArch(version, compatOpts) {
+		return false
+	}
+	if !compatOpts.AngularSupportEnabled && version.AngularDetected {
+		return false
+	}
+	return true
+}
+
 func latestSupportedVersion(plugin *Plugin, compatOpts CompatOpts) *Version {
 	for _, v := range plugin.Versions {
-		ver := v
-		if supportsCurrentArch(&ver, compatOpts) {
-			return &ver
+		if !isVersionCompatible(&v, compatOpts) {
+			continue
 		}
+		return &v
 	}
 	return nil
 }

@@ -41,7 +41,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 }
 
 func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
+	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch, opts.AngularSupportEnabled)
 
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {

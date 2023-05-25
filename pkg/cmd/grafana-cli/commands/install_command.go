@@ -70,7 +70,8 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	skipTLSVerify := c.Bool("insecure")
 	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
 
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	// TODO: angularSupportEnabled
+	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH, true)
 
 	var archive *repo.PluginArchive
 	var err error

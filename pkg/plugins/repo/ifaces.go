@@ -17,16 +17,18 @@ type Service interface {
 }
 
 type CompatOpts struct {
-	GrafanaVersion string
-	OS             string
-	Arch           string
+	GrafanaVersion        string
+	OS                    string
+	Arch                  string
+	AngularSupportEnabled bool
 }
 
-func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
+func NewCompatOpts(grafanaVersion, os, arch string, angularSupportEnabled bool) CompatOpts {
 	return CompatOpts{
-		GrafanaVersion: grafanaVersion,
-		OS:             os,
-		Arch:           arch,
+		GrafanaVersion:        grafanaVersion,
+		OS:                    os,
+		Arch:                  arch,
+		AngularSupportEnabled: angularSupportEnabled,
 	}
 }
 

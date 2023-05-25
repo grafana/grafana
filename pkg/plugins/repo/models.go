@@ -22,10 +22,11 @@ type Plugin struct {
 }
 
 type Version struct {
-	Commit  string              `json:"commit"`
-	URL     string              `json:"repoURL"`
-	Version string              `json:"version"`
-	Arch    map[string]ArchMeta `json:"arch"`
+	Commit          string              `json:"commit"`
+	URL             string              `json:"repoURL"`
+	Version         string              `json:"version"`
+	Arch            map[string]ArchMeta `json:"arch"`
+	AngularDetected bool                `json:"angularDetected"`
 }
 
 type ArchMeta struct {

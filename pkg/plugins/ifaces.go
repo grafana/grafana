@@ -42,9 +42,10 @@ type File struct {
 }
 
 type CompatOpts struct {
-	GrafanaVersion string
-	OS             string
-	Arch           string
+	GrafanaVersion        string
+	OS                    string
+	Arch                  string
+	AngularSupportEnabled bool
 }
 
 type UpdateInfo struct {

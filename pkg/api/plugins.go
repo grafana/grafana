@@ -445,9 +445,10 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
-		GrafanaVersion: hs.Cfg.BuildVersion,
-		OS:             runtime.GOOS,
-		Arch:           runtime.GOARCH,
+		GrafanaVersion:        hs.Cfg.BuildVersion,
+		OS:                    runtime.GOOS,
+		Arch:                  runtime.GOARCH,
+		AngularSupportEnabled: hs.Cfg.AngularSupportEnabled,
 	})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
