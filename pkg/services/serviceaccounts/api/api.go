@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -317,10 +318,17 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
+	// We create a new context with longer timeout here because:
+	// MigrateApiKeysToServiceAccounts is a long-running operation that should continue
+	// even if the original request is cancelled (we have really short context timeouts for requests),
+	// However: we must be aware this will continue running even if the client has disconnected
+	// , which could lead to resource leaks if not handled carefully.
+	longerCtx, cancel := context.WithTimeout(context.Background(), time.Minute*5) // Set your desired timeout duration
+	defer cancel()                                                                // Make sure to cancel the context when you're done to avoid leaking resources
+
+	if err := api.service.MigrateApiKeysToServiceAccounts(longerCtx, ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
-
 	return response.Success("API keys migrated to service accounts")
 }
 

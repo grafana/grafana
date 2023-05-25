@@ -379,9 +379,6 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 			s.log.Debug("API key converted to service account token", "keyId", key.ID)
 		}
 	}
-	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
-		s.log.Error("Failed to write API keys migration status", err)
-	}
 	return nil
 }
 
