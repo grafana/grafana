@@ -2,7 +2,7 @@ import * as comlink from 'comlink';
 import { useCallback, useEffect } from 'react';
 import { useEnabled } from 'react-enable';
 
-import { config, logError } from '@grafana/runtime';
+import { logError } from '@grafana/runtime';
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 
@@ -11,10 +11,12 @@ import { createWorker } from './createRouteGroupsMatcherWorker';
 import { AlertingFeature } from './features';
 import type { RouteGroupsMatcher } from './routeGroupsMatcher.worker';
 
-// const matchingRoutesPreviewEnabled = Boolean(config.featureToggles.alertingNotificationsPoliciesMatchingInstances);
-
 let routeMatcher: comlink.Remote<RouteGroupsMatcher> | undefined;
 
+// Load worker loads the worker if it's not loaded yet
+// and returns a function to dispose of the worker
+// We do it to enable feature toggling. If the feature is disabled we don't wont to load the worker code at all
+// An alternative way would be to move all this code to the hook below, but it will create and terminate the worker much more often
 function loadWorker() {
   let worker: Worker | undefined;
 
@@ -45,7 +47,6 @@ function loadWorker() {
 
 export function useRouteGroupsMatcher() {
   const workerPreviewEnabled = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
-  console.log('workerPreviewEnabled', workerPreviewEnabled);
 
   useEffect(() => {
     if (workerPreviewEnabled) {

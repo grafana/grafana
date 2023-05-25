@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useEnabled } from 'react-enable';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -65,9 +64,6 @@ const AmRoutes = () => {
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-
-  const isPreviewEnabled = useEnabled('notification-policies.v2.matching-instances');
-  console.log('NotificationPolicies.tsx: isPreviewEnabled', isPreviewEnabled);
 
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
