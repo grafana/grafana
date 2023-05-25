@@ -31,6 +31,7 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 	return NewManager(ManagerOpts{
 		Client:  NewClient(false, logger),
 		BaseURL: defaultBaseURL,
+		Logger:  logger,
 	}), nil
 }
 
