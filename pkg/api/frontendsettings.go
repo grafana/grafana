@@ -236,6 +236,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
 		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
+		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {

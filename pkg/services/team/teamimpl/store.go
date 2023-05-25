@@ -30,7 +30,6 @@ type store interface {
 	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
-	IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error)
 }
 
 type xormStore struct {
@@ -557,37 +556,4 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		return nil, err
 	}
 	return queryResult, nil
-}
-
-func (ss *xormStore) IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
-	queryResult := false
-
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sql := `SELECT COUNT(team.id) AS count
-			FROM team
-			INNER JOIN team_member ON team_member.team_id = team.id
-			WHERE team.org_id = ?
-				AND team_member.user_id = ?
-				AND team_member.permission = ?`
-		params := []interface{}{
-			query.SignedInUser.OrgID,
-			query.SignedInUser.UserID,
-			dashboards.PERMISSION_ADMIN,
-		}
-
-		type teamCount struct {
-			Count int64
-		}
-
-		resp := make([]*teamCount, 0)
-		if err := sess.SQL(sql, params...).Find(&resp); err != nil {
-			return err
-		}
-
-		queryResult = len(resp) > 0 && resp[0].Count > 0
-
-		return nil
-	})
-
-	return queryResult, err
 }

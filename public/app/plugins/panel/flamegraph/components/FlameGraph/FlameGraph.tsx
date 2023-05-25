@@ -25,7 +25,7 @@ import { CoreApp } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { SelectedView, ContextMenuData } from '../types';
+import { SelectedView, ContextMenuData, TextAlign } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -48,6 +48,7 @@ type Props = {
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
+  textAlign: TextAlign;
 };
 
 const FlameGraph = ({
@@ -64,6 +65,7 @@ const FlameGraph = ({
   setRangeMin,
   setRangeMax,
   selectedView,
+  textAlign,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const totalTicks = data.getValue(0);
@@ -119,10 +121,21 @@ const FlameGraph = ({
       const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
       for (const rect of dimensions) {
         // Render each rectangle based on the computed dimensions
-        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
+        renderRect(
+          ctx,
+          rect,
+          totalTicks,
+          rangeMin,
+          rangeMax,
+          search,
+          levelIndex,
+          topLevelIndex,
+          foundLabels,
+          textAlign
+        );
       }
     }
-  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]);
+  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels, textAlign]);
 
   useEffect(() => {
     if (graphRef.current) {

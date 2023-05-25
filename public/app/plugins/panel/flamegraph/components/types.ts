@@ -44,3 +44,5 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export type TextAlign = 'left' | 'right';
