@@ -56,7 +56,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error)
 	return io.ReadAll(bodyReader)
 }
 
-func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts ...CompatOpts) (*PluginArchive, error) {
+func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
@@ -70,7 +70,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 
 	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts...)
+	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
@@ -86,7 +86,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 	return &PluginArchive{File: rc}, nil
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts ...CompatOpts) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -124,7 +124,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts...)
+				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -144,7 +144,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 
 	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
 	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := c.sendReqNoTimeout(u, compatOpts...)
+	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
 	if err != nil {
 		return err
 	}
@@ -168,8 +168,8 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts ...CompatOpts) (io.ReadCloser, error) {
-	req, err := c.createReq(url, compatOpts...)
+func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
+	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts ...CompatOpts) (io.Re
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResp(res, compatOpts...)
+	return c.handleResp(res, compatOpts)
 }
 
 func (c *Client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Request, error) {
