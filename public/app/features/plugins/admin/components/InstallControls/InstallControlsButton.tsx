@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { AppEvents } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -122,9 +122,11 @@ export function InstallControlsButton({
       </HorizontalGroup>
     );
   }
-
   return (
-    <Button disabled={isInstalling || errorInstalling} onClick={onInstall}>
+    <Button
+      disabled={isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected)}
+      onClick={onInstall}
+    >
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
