@@ -9,7 +9,7 @@ func AddMigration(mg *migrator.Migrator) {
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "client_id", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "action", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
-			{Name: "scope", Type: migrator.DB_Varchar, Length: 190, Nullable: true}, // TODO: Do we really need the scope, should we just get any scope the user has instead?
+			{Name: "scope", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"client_id", "action", "scope"}, Type: migrator.UniqueIndex},
