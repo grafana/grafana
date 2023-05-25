@@ -516,7 +516,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql/ @grafana/grafana-bi-squad
-/public/app/plugins/datasource/opentsdb/ @grafana/backend-platform
+/public/app/plugins/datasource/opentsdb/ @grafana/observability-metrics
 /public/app/plugins/datasource/postgres/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
