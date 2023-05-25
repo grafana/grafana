@@ -49,8 +49,8 @@ export const UsersActionBarUnconnected = ({
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
   const canAddToOrg: boolean = contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
-  // backend rejects invitations if the login form is disabled
-  const showInviteButton: boolean = canAddToOrg && !config.disableLoginForm;
+  // Hide Invite button in case users are managed externally
+  const showInviteButton: boolean = canAddToOrg && !config.externalUserMngInfo;
 
   return (
     <div className="page-action-bar" data-testid="users-action-bar">

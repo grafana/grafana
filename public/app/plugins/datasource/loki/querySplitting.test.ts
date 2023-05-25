@@ -9,7 +9,10 @@ import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
 import { createLokiDatasource, getMockFrames } from './mocks';
 import { runSplitQuery } from './querySplitting';
+import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryType } from './types';
+
+jest.mock('./tracking');
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -57,15 +60,36 @@ describe('runSplitQuery()', () => {
     beforeAll(() => {
       jest.spyOn(logsTimeSplit, 'splitTimeRange').mockReturnValue([]);
       jest.spyOn(metricTimeSplit, 'splitTimeRange').mockReturnValue([]);
+      jest.mocked(trackGroupedQueries).mockClear();
+      jest.useFakeTimers().setSystemTime(new Date('Wed May 17 2023 17:20:12 GMT+0200'));
     });
     afterAll(() => {
       jest.mocked(logsTimeSplit.splitTimeRange).mockRestore();
       jest.mocked(metricTimeSplit.splitTimeRange).mockRestore();
+      jest.useRealTimers();
     });
     test('Ignores hidden queries', async () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         expect(logsTimeSplit.splitTimeRange).toHaveBeenCalled();
         expect(metricTimeSplit.splitTimeRange).not.toHaveBeenCalled();
+        expect(trackGroupedQueries).toHaveBeenCalledTimes(1);
+        expect(trackGroupedQueries).toHaveBeenCalledWith(
+          {
+            data: [],
+            state: LoadingState.Done,
+          },
+          [
+            {
+              partition: [],
+              request: {
+                ...request,
+                targets: request.targets.filter((query) => !query.hide),
+              },
+            },
+          ],
+          request,
+          new Date()
+        );
       });
     });
   });
