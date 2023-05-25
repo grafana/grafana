@@ -1,0 +1,23 @@
+{
+  "name": "Test App3",
+  "redirect_uri": "https://localhost:3000/a/test-app/",
+  "self": {
+    "enabled": true,
+    "permissions": [
+      {"action": "dashboards:read", "scope": "dashboards:*"}
+    ]
+  },
+  "impersonation": {
+    "enabled": true,
+    "groups": true,
+    "permissions": [
+      {"action": "dashboards:read", "scope": "dashboards:*"},
+      {"action": "dashboards:write", "scope": "dashboards:*"},
+      {"action": "dashboards:read", "scope": "folders:*"},
+      {"action": "dashboards:write", "scope": "folders:*"},
+      {"action": "folders:read", "scope": "folders:*"},
+      {"action": "folders:write", "scope": "folders:*"}
+    ]
+  },
+  "key": { "generate": true }
+}
