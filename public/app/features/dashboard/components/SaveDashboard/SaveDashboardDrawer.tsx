@@ -132,7 +132,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       title={title}
       onClose={onDismiss}
       subtitle={dashboard.title}
-      closeOnMaskClick={false}
       tabs={
         <TabsBar>
           <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
