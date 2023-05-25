@@ -9,6 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';
+import { PluginDetailsAngularDeprecation } from '../components/PluginDetailsAngularDeprecation';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
@@ -73,6 +74,7 @@ export function PluginDetailsPage({
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
       <Page.Contents>
         <TabContent className={styles.tabContent}>
+          <PluginDetailsAngularDeprecation plugin={plugin} className={styles.alert} />
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
