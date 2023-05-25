@@ -172,9 +172,6 @@ lineage: schemas: [{
 		// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
 		#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashSystemVariableModel @cuetsy(kind="type") @grafana(TSVeneer="type")
 
-		// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
-		#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashSystemVariableModel @cuetsy(kind="type") @grafana(TSVeneer="type")
-
 		// Common information that all types of variables shares.
 		// A variable in Grafana is a container that can hold different types of data. It varies depending on the query.
 		#BaseVariableModel: {
