@@ -76,6 +76,8 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
   // will be undefined if alerStateHistory is not enabled
   alertStateHistoryBackend?: string;
+  // will be undefined if implementation is not "multiple"
+  alertStateHistoryPrimary?: string;
 }
 
 /** Supported OAuth services
