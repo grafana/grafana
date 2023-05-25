@@ -281,6 +281,13 @@ export async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.Unwrap),
   });
 
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'decolorize',
+    insertText: `${prefix}decolorize`,
+    documentation: explainOperator(LokiOperationId.Decolorize),
+  });
+
   // Let's show label options only if query has parser
   if (hasQueryParser) {
     extractedLabelKeys.forEach((key) => {
