@@ -18,7 +18,9 @@ weight: 120
 
 # Role-based access control (RBAC)
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
 
@@ -62,7 +64,9 @@ Each basic role is comprised of a number of _permissions_. For example, the view
 - `Action: annotations:write, Scope: annotations:type:dashboard`: Enables the viewer to modify annotations of a dashboard.
 - `Action: annotations:delete, Scope: annotations:type:dashboard`: Enables the viewer to remove annotations from a dashboard.
 
-> **Note:** You can't have a Grafana user without a basic role assigned.
+{{% admonition type="note" %}}
+You can't have a Grafana user without a basic role assigned.
+{{% /admonition %}}
 
 #### Basic role modification
 

@@ -59,7 +59,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
-  datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -96,5 +95,6 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
 }

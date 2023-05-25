@@ -51,8 +51,10 @@ To configure basic settings for the data source, complete the following steps:
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
-> **Note:** Available in Grafana v7.4 and higher.
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+Available in Grafana v7.4 and higher.
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Zipkin.
 
@@ -108,8 +110,10 @@ The following table describes the ways in which you can configure your trace to 
 
 ### Trace to metrics
 
-> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Zipkin.
 
@@ -264,8 +268,10 @@ If the file has multiple traces, Grafana visualizes its first trace.
 
 ## Span Filters
 
-> **Note:** This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 

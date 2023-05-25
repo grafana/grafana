@@ -15,10 +15,10 @@ import {
 import { BackendSrvRequest, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { ElasticResponse } from './ElasticResponse';
-import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { ElasticDatasource, enhanceDataFrameWithDataLinks } from './datasource';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { trackQuery } from './tracking';
-import { ElasticsearchQuery, Logs } from './types';
+import { DataLinkConfig, ElasticsearchQuery, Logs } from './types';
 
 export class LegacyQueryRunner {
   datasource: ElasticDatasource;
@@ -249,4 +249,18 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
       },
     ],
   };
+}
+
+/**
+ * Modifies dataFrame and adds dataLinks from the config.
+ * Exported for tests.
+ */
+export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
+  if (limit) {
+    dataFrame.meta = {
+      ...dataFrame.meta,
+      limit,
+    };
+  }
+  enhanceDataFrameWithDataLinks(dataFrame, dataLinks);
 }

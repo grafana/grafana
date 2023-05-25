@@ -81,3 +81,10 @@ type GetPlaylistItemsByUidQuery struct {
 	PlaylistUID string
 	OrgId       int64
 }
+
+func PlaylistToResource(p PlaylistDTO) playlist.K8sResource {
+	copy := p
+	r := playlist.NewK8sResource(p.Uid, &copy)
+	copy.Uid = "" // remove it from the payload
+	return r
+}

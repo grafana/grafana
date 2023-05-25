@@ -1,8 +1,13 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { parseMatchers, labelsMatchMatchers, removeMuteTimingFromRoute, matchersToString } from './alertmanager';
-import { parseMatcher } from './matchers';
+import {
+  parseMatcher,
+  parseMatchers,
+  labelsMatchMatchers,
+  removeMuteTimingFromRoute,
+  matchersToString,
+} from './alertmanager';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
