@@ -1,4 +1,4 @@
-import { type PluginExtension, type PluginExtensionLink, type PluginExtensionComponent } from '@grafana/data';
+import type { PluginExtension, PluginExtensionLink, PluginExtensionComponent } from '@grafana/data';
 
 import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
 
