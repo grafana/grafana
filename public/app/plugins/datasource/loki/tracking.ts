@@ -191,17 +191,20 @@ export function trackQuery(
 
 export function trackGroupedQueries(
   response: DataQueryResponse,
-  requests: LokiGroupedRequest[],
+  groupedRequests: LokiGroupedRequest[],
+  originalRequest: DataQueryRequest<LokiQuery>,
   startTime: Date
 ): void {
   const splittingPayload = {
-    split_query_group_count: requests.length,
-    split_query_largest_partition_size: Math.max(...requests.map(({ partition }) => partition.length)),
-    split_query_total_request_count: requests.reduce((total, { partition }) => total + partition.length, 0),
+    split_query_group_count: groupedRequests.length,
+    split_query_largest_partition_size: Math.max(...groupedRequests.map(({ partition }) => partition.length)),
+    split_query_total_request_count: groupedRequests.reduce((total, { partition }) => total + partition.length, 0),
     is_split: true,
+    simultaneously_executed_query_count: originalRequest.targets.filter((query) => !query.hide).length,
+    simultaneously_hidden_query_count: originalRequest.targets.filter((query) => query.hide).length,
   };
 
-  for (const group of requests) {
+  for (const group of groupedRequests) {
     const split_query_partition_size = group.partition.length;
     trackQuery(response, group.request, startTime, {
       ...splittingPayload,
