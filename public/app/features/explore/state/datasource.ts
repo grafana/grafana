@@ -5,13 +5,11 @@ import { DataSourceApi, HistoryItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
-import { getAllFromSourceUIDInfo } from 'app/features/correlations/utils';
 import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
-import { saveCorrelationsAction } from './explorePane';
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
 import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
@@ -61,9 +59,6 @@ export function changeDatasource(
         history,
       })
     );
-
-    const correlations = await getAllFromSourceUIDInfo(instance.uid);
-    dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
     if (options?.importQueries) {
       const queries = getState().explore.panes[exploreId]!.queries;

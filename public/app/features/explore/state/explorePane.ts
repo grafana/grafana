@@ -22,7 +22,6 @@ import {
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { getAllFromSourceUIDInfo } from 'app/features/correlations/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -191,9 +190,6 @@ export const initializeExplore = createAsyncThunk(
       // we already have something in the url. Adding basically the same state as additional history item prevents
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
-
-      const correlations = await getAllFromSourceUIDInfo(instance.uid);
-      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
     }
   }
 );

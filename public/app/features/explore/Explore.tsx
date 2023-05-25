@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { get } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { createRef } from 'react';
+import React, { createRef, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Unsubscribable } from 'rxjs';
@@ -34,10 +34,11 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
-import { StoreState } from 'app/types';
+import { StoreState, useDispatch } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
+import { useCorrelations } from '../correlations/useCorrelations';
 import { getTimeZone } from '../profile/state/selectors';
 
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -56,7 +57,7 @@ import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
-import { changeSize } from './state/explorePane';
+import { changeSize, saveCorrelationsAction } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
@@ -114,6 +115,22 @@ interface ExploreState {
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
+
+const UseCorrelations = ({ exploreId, datasourceUID }: { exploreId: ExploreId; datasourceUID: string }) => {
+  const dispatch = useDispatch();
+  const {
+    getAllFromSourceUIDInfo: { execute: fetchCorrelations },
+  } = useCorrelations();
+
+  useEffect(() => {
+    // logic to decide whether to refetch them or not
+    fetchCorrelations({ sourceUID: datasourceUID }).then((correlationsData) => {
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlationsData.correlations || [] }));
+    });
+  }, [datasourceUID, dispatch, exploreId, fetchCorrelations]);
+
+  return null;
+};
 
 /**
  * Explore provides an area for quick query iteration for a given datasource.
@@ -467,6 +484,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         autoHeightMin={'100%'}
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
+        {config.featureToggles.correlations && datasourceInstance?.uid && (
+          <UseCorrelations exploreId={exploreId} datasourceUID={datasourceInstance.uid} />
+        )}
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {isFromCompactUrl ? this.renderCompactUrlWarning() : null}
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
