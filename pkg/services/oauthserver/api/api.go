@@ -49,6 +49,7 @@ func (a *api) register(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "invalid registration", err)
 	}
 
+	// We should not call save here, as it would allow overwriting an existing registration (for example a plugin's one)
 	app, err := a.oauthServer.SaveExternalService(c.Req.Context(), registration)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not register app", err)
