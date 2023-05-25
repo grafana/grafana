@@ -391,9 +391,6 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 			}
 		}
 	}
-	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "migrationStatus", "1"); err != nil {
-		s.log.Error("Failed to write API keys migration status", err)
-	}
 	return migrationResult, nil
 }
 
@@ -418,11 +415,6 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 }
 
 func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
-	// TODO: Remove this once we have a way to simulate a failure
-	// Simulate a failure
-	if strings.HasPrefix(key.Name, "fail-") {
-		return fmt.Errorf("failed to migrate api key: %s", key.Name)
-	}
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgID, key.Name),
