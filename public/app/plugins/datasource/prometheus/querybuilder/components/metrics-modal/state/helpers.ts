@@ -35,7 +35,7 @@ export async function setMetrics(
 
   metricsData = initialMetrics?.map((m: string) => {
     let type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
-    let inferredType = false;
+    let inferredType;
     if (!type && inferType) {
       type = metricTypeHints(m);
 
@@ -46,6 +46,9 @@ export async function setMetrics(
 
     const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
 
+    if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
+      type += ' (histogram)';
+    }
     // possibly remove the type in favor of the type select
     const metaDataString = `${m}¦${type}¦${description}`;
 
@@ -104,7 +107,12 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
   if (state.selectedTypes.length > 0) {
     filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
       // Matches type
-      const matchesSelectedType = state.selectedTypes.some((t) => t.value === m.type);
+      const matchesSelectedType = state.selectedTypes.some((t) => {
+        if (m.type && t.value) {
+          return m.type.includes(t.value);
+        }
+        return false;
+      });
 
       // missing type
       const hasNoType = !m.type;
@@ -185,7 +193,7 @@ export async function getBackendSearchMetrics(
   return await results.then((results) => {
     return results.map((result) => {
       let type = getMetadataType(result.text, datasource.languageProvider.metricsMetadata!);
-      let inferredType = false;
+      let inferredType;
       if (!type && inferType) {
         type = metricTypeHints(result.text);
 
@@ -194,6 +202,10 @@ export async function getBackendSearchMetrics(
         }
       }
       const description = getMetadataHelp(result.text, datasource.languageProvider.metricsMetadata!);
+
+      if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
+        type += ' (histogram)';
+      }
 
       const metricData: MetricData = {
         value: result.text,
@@ -210,7 +222,7 @@ export async function getBackendSearchMetrics(
 function metricTypeHints(metric: string): string | undefined {
   const histogramMetric = metric.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
   if (histogramMetric) {
-    return 'histogram';
+    return 'counter (histogram)';
   }
 
   const counterMatch = metric.match(/\b(\w+_(total|sum|count))\b/);

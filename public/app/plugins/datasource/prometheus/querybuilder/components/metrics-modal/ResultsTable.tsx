@@ -210,7 +210,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
     `,
     typeWidth: css`
-      ${disableTextWrap ? '' : 'width: 15%;'}
+      ${disableTextWrap ? '' : 'width: 16%;'}
     `,
     stickyHeader: css`
       position: sticky;
