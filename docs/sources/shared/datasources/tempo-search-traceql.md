@@ -57,7 +57,8 @@ Using filters, you refine the data returned from the query by selecting Resource
 Grafana administrators can change the default filters using the Tempo data source configuration.
 Filters can be limited by the operators. The available operators are determined by the field type.
 For example, **Span Name** and **Resource Service Name** are string fields so the comparison operators are equals (`=`), not equal (`!=`), or regular expressions (`=~`).
-**Duration** is a duration field type and uses range selections (`>`, `>=`, `<`, `<=`).
+
+**Duration** is a duration field type and uses range selections (`>`, `>=`, `<`, `<=`). When you select multiple values for the same tag, Grafana automatically changes the operator to the regex operator `=~` and concatenates the values with a `|`.
 
 To define filters, follow these steps:
 
