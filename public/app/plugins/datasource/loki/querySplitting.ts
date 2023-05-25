@@ -1,5 +1,5 @@
 import { groupBy, partition } from 'lodash';
-import { last, Observable, Subscriber, Subscription, tap } from 'rxjs';
+import { Observable, Subscriber, Subscription, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
