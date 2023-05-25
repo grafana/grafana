@@ -3,7 +3,7 @@ import React, { HTMLAttributes, ReactNode } from 'react';
 
 import { DataSourceApi, DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TestingStatus, config, HealthCheckResultDetails } from '@grafana/runtime';
+import { TestingStatus, config, HealthCheckResultDetails, logError } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
@@ -75,8 +75,17 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
+const alertVariants = new Set<AlertVariant>(['success', 'info', 'warning', 'error']);
+const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str as AlertVariant);
+const getAlertVariant = (status: string): AlertVariant => {
+  if (status.toLowerCase() === 'ok') {
+    return 'success';
+  }
+  return isAlertVariant(status) ? status : 'info';
+};
+
 export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource }: Props) {
-  const severity = testingStatus?.status ? (testingStatus?.status as AlertVariant) : 'error';
+  const severity = getAlertVariant(testingStatus?.status ?? 'error');
   const message = testingStatus?.message;
 
   const healthCheckDetails = testingStatus?.details;
@@ -130,7 +139,9 @@ export function renderDetailsForDataSource(dataSource: DataSourceApi, details: H
     try {
       return dataSource.renderHealthCheckDetails(details);
     } catch (err) {
-      // TODO we should probably log this somehow
+      if (err instanceof Error) {
+        logError(err);
+      }
       return null;
     }
   }
