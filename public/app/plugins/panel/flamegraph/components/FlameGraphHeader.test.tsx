@@ -25,6 +25,8 @@ describe('FlameGraphHeader', () => {
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         containerWidth={1600}
+        onTextAlignChange={jest.fn()}
+        textAlign={'left'}
       />
     );
   };

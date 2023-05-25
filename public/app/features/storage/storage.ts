@@ -18,7 +18,7 @@ export interface GrafanaStorage {
   /** Called before save */
   getOptions: (path: string) => Promise<ItemOptions>;
 
-  /** Saves dashbaords */
+  /** Saves dashboards */
   write: (path: string, options: WriteValueRequest) => Promise<WriteValueResponse>;
 }
 
