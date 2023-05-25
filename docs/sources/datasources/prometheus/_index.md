@@ -176,3 +176,19 @@ This can be toggled on or off in the datasource configuration or provisioning fi
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
 
 Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
+
+# new prometheus data source section
+
+# Prometheus data source
+
+Prometheus is an open-source toolkit that collects and stores metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?](https://grafana.com/docs/grafana/next/fundamentals/intro-to-prometheus/).
+
+Grafana provides out of the box support for Prometheus.
+For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
+
+The following guides will help you get started with the Prometheus data source:
+
+- [Get started with Prometheus](/docs/grafana/latest/datasources/prometheus/get-started-with-prometheus/)
+- Configure the Prometheus data source
+- [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/)
+- [Template variables](/docs/grafana/latest/datasources/prometheus/template-variables/)

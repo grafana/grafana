@@ -36,9 +36,37 @@ Following is a list of configuration options for Prometheus. For step by step in
 
 Add your Prometheus server URL in the **Connection** section.
 
-| Option         | Description                                                                                                                      |
+**Name** - The data source name. This is how you refer to the data source in panels and queries.
+
+**Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel this will be the first selected data source.
+
+<!-- | Option         | Description                                                                                                                      |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | Name           | The data source name. This is how you refer to the data source in panels and queries.                                            |
-| Default toggle | Switch the toggle to select the default in panels. (then when you go to a panel and this will be the first selected data source) |
+| Default toggle | Switch the toggle to select the default in panels. | -->
 
 ### Auth section
+
+Choose an authentication method in the Authentication section.
+
+**Basic authentication** - The most common authentication method. Use your `data source` username and `data source` password to connect.
+
+### HTTP section
+
+**URL** - The URL of your Prometheus server. If your Prometheus server is local, use http://localhost90. If it is on a server within a network, this is the port exposed where you are running prometheus. Example: http://prometheus.example.org:9090.
+
+**Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
+
+**Timeout** - The HTTP request timeout in seconds.
+
+### Additional settings
+
+Following are additional configuration options.
+
+**Manage alerts via Alerting UI** - Toggle on to enable managing alerts.
+
+#### Interval Behavior
+
+**Scrape interval** -
+
+**Query timeout** -
