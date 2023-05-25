@@ -35,8 +35,8 @@ func ProvideService(cfg *setting.Cfg) *Service {
 	}
 }
 
-func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 
 // CheckHealth pings the connected SQL database
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
