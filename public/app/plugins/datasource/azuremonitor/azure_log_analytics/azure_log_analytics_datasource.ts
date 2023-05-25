@@ -116,7 +116,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     if (target.queryType === AzureQueryType.LogAnalytics && target.azureLogAnalytics) {
       item = target.azureLogAnalytics;
       const templateSrv = getTemplateSrv();
-      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      const resources = this.expandResourcesForMultipleVariables(item.resources, scopedVars);
       let workspace = templateSrv.replace(item.workspace, scopedVars);
 
       if (!workspace && !resources && this.firstWorkspace) {
@@ -142,7 +142,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     if (target.queryType === AzureQueryType.AzureTraces && target.azureTraces) {
       item = target.azureTraces;
       const templateSrv = getTemplateSrv();
-      const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
+      const resources = this.expandResourcesForMultipleVariables(item.resources, scopedVars);
       const query = templateSrv.replace(item.query, scopedVars, interpolateVariable);
       const traceTypes = item.traceTypes?.map((t) => templateSrv.replace(t, scopedVars));
       const filters = (item.filters ?? [])
@@ -172,6 +172,25 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return target;
+  }
+
+  private expandResourcesForMultipleVariables(
+    resources: string[] | undefined,
+    scopedVars: ScopedVars
+  ): string[] | undefined {
+    if (!resources) {
+      return undefined;
+    }
+    const expandedResources: string[] = [];
+    const templateSrv = getTemplateSrv();
+    resources.forEach((r: string) => {
+      const tempVars = templateSrv.replace(r, scopedVars, 'raw');
+      const values = tempVars.split(',');
+      values.forEach((value) => {
+        expandedResources.push(value);
+      });
+    });
+    return expandedResources;
   }
 
   /*
