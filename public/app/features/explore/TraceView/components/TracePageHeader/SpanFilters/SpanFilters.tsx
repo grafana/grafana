@@ -66,7 +66,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
 
-  const reset = useCallback(() => {
+  const clear = useCallback(() => {
     setServiceNames(undefined);
     setSpanNames(undefined);
     setTagKeys(undefined);
@@ -75,8 +75,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   }, [setSearch]);
 
   useEffect(() => {
-    reset();
-  }, [reset, trace]);
+    clear();
+  }, [clear, trace]);
 
   if (!trace) {
     return null;
@@ -369,7 +369,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
-          reset={reset}
+          clear={clear}
           totalSpans={trace.spans.length}
         />
       </Collapse>

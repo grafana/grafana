@@ -296,7 +296,6 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	if hs.Cfg == nil {
 		hs.Cfg = setting.NewCfg()
-		hs.Cfg.RBACEnabled = false
 	}
 
 	if hs.AccessControl == nil {

@@ -25,7 +25,7 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     workingQuery = migrateToDefaultNamespace(workingQuery);
     workingQuery = migrateDimensionToDimensionFilter(workingQuery);
     workingQuery = migrateDimensionFilterToArray(workingQuery);
-    workingQuery = migrateDimensionToResourceObj(workingQuery);
+    workingQuery = migrateResourceUriToResourceObj(workingQuery);
   }
 
   if (workingQuery.azureMonitor?.resourceGroup || workingQuery.azureMonitor?.resourceName) {
@@ -154,7 +154,7 @@ function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQu
   return query;
 }
 
-function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQuery {
+function migrateResourceUriToResourceObj(query: AzureMonitorQuery): AzureMonitorQuery {
   if (query.azureMonitor?.resourceUri && !query.azureMonitor.resourceUri.startsWith('$')) {
     const details = parseResourceDetails(query.azureMonitor.resourceUri);
     const isWellFormedUri = details?.subscription && details?.resourceGroup && details?.resourceName;

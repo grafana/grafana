@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/thema/encoding/openapi"
 )
 
+var schPath = cue.MakePath(cue.Hid("_#schema", "github.com/grafana/thema"))
+
 type ResourceGoTypesJenny struct {
 	ApplyFuncs       []dstutil.ApplyFunc
 	ExpandReferences bool
@@ -31,7 +33,7 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	}
 	sch := sfg.Schema
 
-	iter, err := sch.Underlying().Fields()
+	iter, err := sch.Underlying().LookupPath(schPath).Fields()
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +48,7 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
 		PackageName:      mname,
 		KindName:         kind.Props().Common().Name,
+		Version:          sch.Version().String(),
 		SubresourceNames: subr,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core resource template: %w", err)
@@ -77,7 +80,7 @@ func (g *SubresourceGoTypesJenny) Generate(kind kindsys.Kind) (codejen.Files, er
 
 	// Iterate through all top-level fields and make go types for them
 	// (this should consist of "spec" and arbitrary subresources)
-	i, err := sch.Underlying().Fields()
+	i, err := sch.Underlying().LookupPath(schPath).Fields()
 	if err != nil {
 		return nil, err
 	}
