@@ -32,4 +32,4 @@ The notification logs and silences are persisted in the database periodically an
 
 ## Useful links
 
-[Configure alerting high availability](https://grafana.com/docs/grafana/next/alerting/set-up/configure-high-availability)
+[Configure alerting high availability]({{< relref "../../set-up/configure-high-availability" >}})

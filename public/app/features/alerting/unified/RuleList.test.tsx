@@ -41,6 +41,7 @@ jest.mock('./api/ruler');
 jest.mock('../../../core/hooks/useMediaQueryChange');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
