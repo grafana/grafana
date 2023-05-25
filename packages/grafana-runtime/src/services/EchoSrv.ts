@@ -92,9 +92,6 @@ export enum EchoEventType {
  * @public
  */
 export interface EchoSrv {
-  // Can be used to store not yet flushed events
-  events?: unknown[];
-
   /**
    * Call this to flush current events to the echo backends.
    */
@@ -123,9 +120,9 @@ let singletonInstance: EchoSrv;
  */
 export function setEchoSrv(instance: EchoSrv) {
   // Check if there were any events reported to the FakeEchoSrv (before the main EchoSrv was initialized), and track them
-  if (singletonInstance && singletonInstance.events) {
-    for (const event of singletonInstance.events) {
-      instance.addEvent(event as Omit<EchoEvent, 'meta'>);
+  if (singletonInstance instanceof FakeEchoSrv) {
+    for (const item of singletonInstance.buffer) {
+      instance.addEvent(item.event, item.meta);
     }
   }
 
@@ -157,15 +154,15 @@ export const registerEchoBackend = (backend: EchoBackend) => {
 };
 
 export class FakeEchoSrv implements EchoSrv {
-  events: unknown[] = [];
+  buffer: Array<{ event: Omit<EchoEvent, 'meta'>; meta?: {} | undefined }> = [];
 
   flush(): void {
-    this.events = [];
+    this.buffer = [];
   }
 
   addBackend(backend: EchoBackend): void {}
 
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {} | undefined): void {
-    this.events.push({ event, ...meta });
+    this.buffer.push({ event, meta });
   }
 }
