@@ -198,9 +198,8 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
         width: 100%;
         border-right: 0;
         padding-right: 0;
-        flex: 1;
-        // This is a hack to make the height of the list work on mobile
-        height: calc(100% - 104px);
+        flex: 2;
+        overflow-y: auto
       }
     `,
     rightColumn: css`
@@ -215,7 +214,7 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       ${theme.breakpoints.down('md')} {
         width: 100%;
         padding-left: 0;
-        flex: 0;
+        flex: 1;
       }
     `,
     builtInDataSources: css`
