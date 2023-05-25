@@ -265,11 +265,10 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-steps:
-  - name: hello-kat
-    image: alpine
-    commands:
-      - echo "hello kat"
+- name: hello-kat
+  image: alpine
+  commands:
+    - echo "hello kat"
 name: pr-test-backend
 node:
   type: no-parallel
