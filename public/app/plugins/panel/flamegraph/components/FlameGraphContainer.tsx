@@ -12,7 +12,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
+import { SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -27,6 +27,8 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
+
   const theme = useTheme2();
 
   const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
@@ -76,6 +78,8 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMax(1);
               setFocusedItemIndex(undefined);
             }}
+            textAlign={textAlign}
+            onTextAlignChange={setTextAlign}
           />
 
           <div className={styles.body}>
@@ -113,6 +117,7 @@ const FlameGraphContainer = (props: Props) => {
                 selectedView={selectedView}
                 onItemFocused={(itemIndex) => setFocusedItemIndex(itemIndex)}
                 focusedItemIndex={focusedItemIndex}
+                textAlign={textAlign}
               />
             )}
           </div>
@@ -130,7 +135,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
     }),
     body: css({
       display: 'flex',

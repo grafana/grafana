@@ -48,6 +48,7 @@ describe('FlameGraph', () => {
           setFocusedItemIndex(itemIndex);
         }}
         focusedItemIndex={focusedItemIndex}
+        textAlign={'left'}
       />
     );
   };

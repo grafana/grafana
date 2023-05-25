@@ -24,7 +24,7 @@ import { useMeasure } from 'react-use';
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { SelectedView, ClickedItemData } from '../types';
+import { SelectedView, ClickedItemData, TextAlign } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -44,6 +44,7 @@ type Props = {
   style?: React.CSSProperties;
   onItemFocused: (itemIndex: number) => void;
   focusedItemIndex?: number;
+  textAlign: TextAlign;
 };
 
 const FlameGraph = ({
@@ -57,6 +58,7 @@ const FlameGraph = ({
   selectedView,
   onItemFocused,
   focusedItemIndex,
+  textAlign,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const totalTicks = data.getValue(0);
@@ -114,10 +116,10 @@ const FlameGraph = ({
       for (const rect of dimensions) {
         const focusedLevel = focusedItemIndex ? data.getLevel(focusedItemIndex) : 0;
         // Render each rectangle based on the computed dimensions
-        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, focusedLevel, foundLabels);
+        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, focusedLevel, foundLabels, textAlign);
       }
     }
-  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, focusedItemIndex, foundLabels]);
+  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
 
   useEffect(() => {
     if (graphRef.current) {

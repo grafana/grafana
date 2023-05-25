@@ -24,6 +24,8 @@ describe('FlameGraphHeader', () => {
         onReset={() => {
           setSearch('');
         }}
+        onTextAlignChange={jest.fn()}
+        textAlign={'left'}
       />
     );
   };
