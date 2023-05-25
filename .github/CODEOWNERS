@@ -94,7 +94,7 @@
 /pkg/models/ @grafana/backend-platform
 /pkg/server/ @grafana/backend-platform
 /pkg/services/annotations/ @grafana/backend-platform
-/pkg/services/apikey/ @grafana/backend-platform
+/pkg/services/apikey/ @grafana/grafana-authnz-team
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/backend-platform
