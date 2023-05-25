@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io/fs"
 	"log"
 	"strings"
 	"testing"
@@ -26,63 +25,44 @@ func TestCommonElement(t *testing.T) {
 	}
 }
 
-func TestCheckTable(t *testing.T) {
+func TestCheck(t *testing.T) {
 	for _, test := range []struct {
-		fakeMod       fs.FS
-		logger        *log.Logger
-		args          []string
-		expectedError error
+		description    string
+		fileName       string
+		contents       string
+		args           []string
+		valid          bool
+		expectedOutput string
 	}{
-		{fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
+		{"Test valid modfile", "go.mod", `
 		require (
 			cloud.google.com/go/storage v1.28.1 // @delivery
 			cuelang.org/go v0.5.0 // @as-code @backend-platform
 			github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
 			github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
 		)
-		`)}}, log.New(&bytes.Buffer{}, "", 0), []string{"go.txd"}, nil},
+		`, []string{"go.mod"}, true, ""},
+		{"Test invalid modfile", "go.mod", `
+		require (
+			cloud.google.com/go/storage v1.28.1
+			cuelang.org/go v0.5.0 // @as-code @backend-platform
+			github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
+			github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
+		)
+		`, []string{"go.mod"}, false, "cloud.google.com/go/storage@v1.28.1\n"},
 	} {
-		if check(test.fakeMod, test.logger, test.args) != test.expectedError {
-			t.Error(test)
+		buf := &bytes.Buffer{}
+		logger := log.New(buf, "", 0)
+		filesystem := fstest.MapFS{test.fileName: &fstest.MapFile{Data: []byte(test.contents)}}
+		err := check(filesystem, logger, test.args)
+		if test.valid && err != nil {
+			t.Error(test.description, err)
+		} else if !test.valid && err == nil {
+			t.Error(test.description, "error expected")
 		}
-	}
-}
-
-func TestCheck(t *testing.T) {
-	// Test case: all dependencies have an owner, check passes
-	buf := &bytes.Buffer{}        // NOTE: empty buffer, growing list of bytes
-	logger := log.New(buf, "", 0) // NOTE: uses buffer as writer, appends data to buffer
-	filesystem := fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
-	require (
-		cloud.google.com/go/storage v1.28.1 // @delivery
-		cuelang.org/go v0.5.0 // @as-code @backend-platform
-		github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
-		github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
-	)
-	`)}}
-	err := check(filesystem, logger, []string{"go.txd"})
-	if err != nil {
-		t.Error(err, buf.String()) // NOTE: print output of check cmd
-	}
-}
-
-func TestInvalidCheck(t *testing.T) {
-	// Test case: some dependencies missing an owner, check fails
-	buf := &bytes.Buffer{}
-	logger := log.New(buf, "", 0)
-	filesystem := fstest.MapFS{"go.txd": &fstest.MapFile{Data: []byte(`
-	require (
-		cloud.google.com/go/storage v1.28.1
-		cuelang.org/go v0.5.0 // @as-code @backend-platform
-		github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
-		github.com/Masterminds/semver v1.5.0
-	)
-	`)}}
-	err := check(filesystem, logger, []string{"go.txd"})
-	expectedErr := "modfile is invalid"
-
-	if err == nil || err.Error() != expectedErr {
-		t.Error(err, buf.String())
+		if buf.String() != test.expectedOutput {
+			t.Error(test.description, buf.String())
+		}
 	}
 }
 
