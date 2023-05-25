@@ -16,20 +16,15 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// TODO this will be removed when we remove legacy AC fallback from HasAccess method
 func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
-	hasEditPermissionInFoldersQuery := folder.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	hasEditPermissionInFoldersQueryResult, err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery)
-	if err != nil {
-		return false
-	}
-	return hasEditPermissionInFoldersQueryResult
+	return false
 }
 
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {

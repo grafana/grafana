@@ -507,7 +507,7 @@ var (
 		},
 		{
 			Name:         "faroDatasourceSelector",
-			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
@@ -518,6 +518,13 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dataSourcePageHeader",
+			Description:  "Apply new pageHeader UI in data source edit page",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        enterpriseDatasourcesSquad,
 		},
 		{
 			Name:         "extraThemes",

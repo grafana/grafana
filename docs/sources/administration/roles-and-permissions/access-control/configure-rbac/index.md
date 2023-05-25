@@ -9,7 +9,9 @@ weight: 30
 
 # Configure RBAC in Grafana
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
 
 The table below describes all RBAC configuration options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../../../../setup-grafana/configure-grafana/#configure-with-environment-variables" >}}).
 

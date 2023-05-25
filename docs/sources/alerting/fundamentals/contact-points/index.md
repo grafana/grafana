@@ -33,7 +33,7 @@ The following table lists the contact point integrations supported by Grafana.
 | ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
-| [Email](#email)                                  | `email`                   | Supported            | Supported                                                                                                |
+| Email                                            | `email`                   | Supported            | Supported                                                                                                |
 | [Google Hangouts](https://hangouts.google.com/)  | `googlechat`              | Supported            | N/A                                                                                                      |
 | [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
 | [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
@@ -47,13 +47,13 @@ The following table lists the contact point integrations supported by Grafana.
 | [Telegram](https://telegram.org/)                | `telegram`                | Supported            | N/A                                                                                                      |
 | [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
 | [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
-| [Webhook](#webhook)                              | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
-| [Cisco Webex Teams](#webex)                      | `webex`                   | Supported            | Supported                                                                                                |
-| [WeCom](#wecom)                                  | `wecom`                   | Supported            | N/A                                                                                                      |
+| Webhook                                          | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
+| Cisco Webex Teams                                | `webex`                   | Supported            | Supported                                                                                                |
+| WeCom                                            | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
 
 ## Useful links
 
-[Manage contact points](/docs/grafana/latest/alerting/manage-notifications/manage-contact-points/)
+[Manage contact points]({{< relref "../../manage-notifications/manage-contact-points" >}})
 
-[Create and edit notification templates](/docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/)
+[Create and edit notification templates]({{< relref "../../manage-notifications/template-notifications/create-notification-templates" >}})

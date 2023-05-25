@@ -3,6 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
@@ -132,38 +133,41 @@ export const Permissions = ({
 
   return (
     <div>
-      {config.featureToggles.nestedFolders && resource === 'folders' && (
+      {canSetPermissions && (
         <>
-          This will change permissions for this folder and all its descendants. In total, this will affect:
-          <DescendantCount
-            selectedItems={{
-              folder: { [resourceId]: true },
-              dashboard: {},
-              panel: {},
-              $all: false,
-            }}
-          />
+          {config.featureToggles.nestedFolders && resource === 'folders' && (
+            <>
+              This will change permissions for this folder and all its descendants. In total, this will affect:
+              <DescendantCount
+                selectedItems={{
+                  folder: { [resourceId]: true },
+                  dashboard: {},
+                  panel: {},
+                  $all: false,
+                }}
+              />
+              <Space v={2} />
+            </>
+          )}
+          <Button
+            className={styles.addPermissionButton}
+            variant={'primary'}
+            key="add-permission"
+            onClick={() => setIsAdding(true)}
+          >
+            {buttonLabel}
+          </Button>
+          <SlideDown in={isAdding}>
+            <AddPermission
+              title={addPermissionTitle}
+              onAdd={onAdd}
+              permissions={desc.permissions}
+              assignments={desc.assignments}
+              onCancel={() => setIsAdding(false)}
+            />
+          </SlideDown>
         </>
       )}
-      {canSetPermissions && (
-        <Button
-          className={styles.addPermissionButton}
-          variant={'primary'}
-          key="add-permission"
-          onClick={() => setIsAdding(true)}
-        >
-          {buttonLabel}
-        </Button>
-      )}
-      <SlideDown in={isAdding}>
-        <AddPermission
-          title={addPermissionTitle}
-          onAdd={onAdd}
-          permissions={desc.permissions}
-          assignments={desc.assignments}
-          onCancel={() => setIsAdding(false)}
-        />
-      </SlideDown>
       {items.length === 0 && (
         <table className="filter-table gf-form-group">
           <tbody>
