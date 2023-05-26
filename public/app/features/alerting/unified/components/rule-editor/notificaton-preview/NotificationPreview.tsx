@@ -75,20 +75,28 @@ export const useGetPotentialInstancesByAlertManager = (
   return { routesByIdMap, receiversByName, matchingMap: matchingMapArray };
 };
 
-export const useGetAlertManagersSourceNames = () => {
+interface AlertManagerNameWithImage {
+  name: string;
+  img: string;
+}
+
+export const useGetAlertManagersSourceNamesAndImage = () => {
   //get current alerting config
   const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
 
-  const externalDsAlertManagers = useExternalDataSourceAlertmanagers().map((ds) => ds.dataSource.name);
+  const externalDsAlertManagers: AlertManagerNameWithImage[] = useExternalDataSourceAlertmanagers().map((ds) => ({
+    name: ds.dataSource.name,
+    img: ds.dataSource.meta.info.logos.small,
+  }));
   const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
-  const alertManagerSourceNames: string[] =
+  const alertManagerSourceNamesWithImage: AlertManagerNameWithImage[] =
     alertmanagerChoice === AlertmanagerChoice.Internal
-      ? [GRAFANA_RULES_SOURCE_NAME]
+      ? [{ name: GRAFANA_RULES_SOURCE_NAME, img: 'public/img/grafana_icon.svg' }]
       : alertmanagerChoice === AlertmanagerChoice.External
       ? externalDsAlertManagers
-      : [GRAFANA_RULES_SOURCE_NAME, ...externalDsAlertManagers];
+      : [{ name: GRAFANA_RULES_SOURCE_NAME, img: 'public/img/grafana_icon.svg' }, ...externalDsAlertManagers];
 
-  return alertManagerSourceNames;
+  return alertManagerSourceNamesWithImage;
 };
 
 interface NotificationPreviewProps {
@@ -127,9 +135,9 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
   };
 
   // Get alert managers source names
-  const alertManagerSourceNames = useGetAlertManagersSourceNames();
+  const alertManagerSourceNamesAndImage = useGetAlertManagersSourceNamesAndImage();
 
-  const onlyOneAM = alertManagerSourceNames.length === 1;
+  const onlyOneAM = alertManagerSourceNamesAndImage.length === 1;
   const renderHowToPreview = !data?.schema && !isLoading;
 
   return (
@@ -154,13 +162,13 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
         </div>
       )}
       {!isLoading &&
-        alertManagerSourceNames.map((alertManagerSourceName) => {
+        alertManagerSourceNamesAndImage.map((alertManagerSource) => {
           return (
             <NotificationPreviewByAlertManager
-              alertManagerSourceName={alertManagerSourceName}
+              alertManagerSource={alertManagerSource}
               potentialInstances={potentialInstances}
               onlyOneAM={onlyOneAM}
-              key={alertManagerSourceName}
+              key={alertManagerSource.name}
             />
           );
         })}
@@ -169,18 +177,18 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
 };
 
 export function NotificationPreviewByAlertManager({
-  alertManagerSourceName,
+  alertManagerSource,
   potentialInstances,
   onlyOneAM,
 }: {
-  alertManagerSourceName: string;
+  alertManagerSource: AlertManagerNameWithImage;
   potentialInstances: Labels[];
   onlyOneAM: boolean;
 }) {
   const styles = useStyles2(getStyles);
 
   const { routesByIdMap, receiversByName, matchingMap } = useGetPotentialInstancesByAlertManager(
-    alertManagerSourceName,
+    alertManagerSource.name,
     potentialInstances
   );
 
@@ -191,7 +199,12 @@ export function NotificationPreviewByAlertManager({
       {!onlyOneAM && (
         <Stack direction="row" alignItems="center">
           <div className={styles.firstAlertManagerLine}></div>
-          <div className={styles.alertManagerName}> Alert manager: {alertManagerSourceName}</div>
+          <div className={styles.alertManagerName}>
+            {' '}
+            Alert manager:
+            <img src={alertManagerSource.img} alt="" className={styles.img} />
+            {alertManagerSource.name}
+          </div>
           <div className={styles.secondAlertManagerLine}></div>
         </Stack>
       )}
@@ -210,7 +223,7 @@ export function NotificationPreviewByAlertManager({
               receiver={receiver}
               key={routeId}
               routesByIdMap={routesByIdMap}
-              alertManagerSourceName={alertManagerSourceName}
+              alertManagerSourceName={alertManagerSource.name}
             />
           );
         })}
@@ -604,5 +617,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   link: css`
     display: block;
     color: ${theme.colors.text.link};
+  `,
+  img: css`
+    margin-left: ${theme.spacing(2)};
+    width: ${theme.spacing(3)};
+    height: ${theme.spacing(3)};
+    margin-right: ${theme.spacing(1)};
   `,
 });
