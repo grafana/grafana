@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -354,6 +355,57 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			e.status.Last = fmt.Sprintf("SNAPSHOT: %s", dto.Name)
 			e.broadcaster(e.status)
 		}
+	}
+
+	// Load teams
+	what = "teams"
+	rowUser.OrgID = 0   // admin
+	rowUser.UserID = -1 // admin
+	type teamInfoType struct {
+		Id      int64
+		Name    string
+		OrgID   int64     `db:"org_id"`
+		Created time.Time `db:"created"`
+		Updated time.Time `db:"updated"`
+		UID     string    `db:"uid"`
+		Email   string
+	}
+	teams := []teamInfoType{}
+
+	e.status.Last = "starting teams"
+	e.status.Status = "executing team query"
+	e.broadcaster(e.status)
+	err = e.sess.Select(ctx, &teams, "SELECT * FROM team")
+	if err != nil {
+		e.status.Status = "team error: " + err.Error()
+		return
+	}
+	for _, info := range teams {
+		team := team.NewK8sResource(info.UID, &team.Spec{
+			Name: info.Name,
+		})
+		team.Metadata.Namespace = "default" // TODO >> based on orgid
+		if info.Email != "" {
+			team.Spec.Email = &info.Email
+		}
+		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+			GRN: &entity.GRN{
+				UID:  uuid.NewString(),
+				Kind: "accesspolicy",
+			},
+			Body:    prettyJSON(team.Spec),
+			Meta:    prettyJSON(team.Metadata),
+			Comment: "export from sql",
+		})
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+		e.status.Changed = time.Now().UnixMilli()
+		e.status.Index++
+		e.status.Count[what] += 1
+		e.status.Last = fmt.Sprintf("TEAM: %s", team.Spec.Name)
+		e.broadcaster(e.status)
 	}
 }
 
