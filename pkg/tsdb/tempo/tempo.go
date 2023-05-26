@@ -3,18 +3,14 @@ package tempo
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"github.com/grafana/tempo/pkg/tempopb"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"net/http"
-	url2 "net/url"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	"github.com/grafana/tempo/pkg/tempopb"
+	"net/http"
 )
 
 type Service struct {
@@ -47,15 +43,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		url, err := url2.Parse(settings.URL)
+		streamingClient, err := newGrpcClient(settings, opts)
 		if err != nil {
 			return nil, err
 		}
-		clientConn, err := grpc.Dial(url.Host, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		if err != nil {
-			return nil, err
-		}
-		streamingClient := tempopb.NewStreamingQuerierClient(clientConn)
 
 		model := &Datasource{
 			HTTPClient:      client,
