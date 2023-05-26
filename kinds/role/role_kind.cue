@@ -1,8 +1,11 @@
 package kind
 
-name:        "Role"
-maturity:    "merged"
-description: "Roles represent a set of users+teams that should share similar access"
+name:              "Role"
+maturity:          "merged"
+description:       "Roles represent a set of users+teams that should share similar access"
+pluralName:        "Roles"
+machineName:       "role"
+pluralMachineName: "roles"
 
 lineage: schemas: [{
 	version: [0, 0]

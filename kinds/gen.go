@@ -42,6 +42,7 @@ func main() {
 		&codegen.SubresourceGoTypesJenny{},
 		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
+		codegen.GRDKindRegistryJenny(filepath.Join("pkg", "registry", "coregrd")),
 		codegen.LatestMajorsOrXJenny(
 			cuectx.TSCoreKindParentPath,
 			true, // forcing group so that we ignore the top level resource (for now)

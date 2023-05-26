@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/folder"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
+	"github.com/grafana/grafana/pkg/kinds/preference"
 	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/kinds/role"
 	"github.com/grafana/grafana/pkg/kinds/rolebinding"
@@ -49,7 +49,7 @@ type Base struct {
 	folder          *folder.Kind
 	librarypanel    *librarypanel.Kind
 	playlist        *playlist.Kind
-	preferences     *preferences.Kind
+	preference      *preference.Kind
 	publicdashboard *publicdashboard.Kind
 	role            *role.Kind
 	rolebinding     *rolebinding.Kind
@@ -64,7 +64,7 @@ var (
 	_ kindsys.Core = &folder.Kind{}
 	_ kindsys.Core = &librarypanel.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
-	_ kindsys.Core = &preferences.Kind{}
+	_ kindsys.Core = &preference.Kind{}
 	_ kindsys.Core = &publicdashboard.Kind{}
 	_ kindsys.Core = &role.Kind{}
 	_ kindsys.Core = &rolebinding.Kind{}
@@ -97,9 +97,9 @@ func (b *Base) Playlist() *playlist.Kind {
 	return b.playlist
 }
 
-// Preferences returns the [kindsys.Interface] implementation for the preferences kind.
-func (b *Base) Preferences() *preferences.Kind {
-	return b.preferences
+// Preference returns the [kindsys.Interface] implementation for the preference kind.
+func (b *Base) Preference() *preference.Kind {
+	return b.preference
 }
 
 // PublicDashboard returns the [kindsys.Interface] implementation for the publicdashboard kind.
@@ -161,11 +161,11 @@ func doNewBase(rt *thema.Runtime) *Base {
 	}
 	reg.all = append(reg.all, reg.playlist)
 
-	reg.preferences, err = preferences.NewKind(rt)
+	reg.preference, err = preference.NewKind(rt)
 	if err != nil {
-		panic(fmt.Sprintf("error while initializing the preferences Kind: %s", err))
+		panic(fmt.Sprintf("error while initializing the preference Kind: %s", err))
 	}
-	reg.all = append(reg.all, reg.preferences)
+	reg.all = append(reg.all, reg.preference)
 
 	reg.publicdashboard, err = publicdashboard.NewKind(rt)
 	if err != nil {

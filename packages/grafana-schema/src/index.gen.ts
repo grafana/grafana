@@ -131,11 +131,11 @@ export type {
 // Raw generated enums and default consts from playlist kind.
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
-// Raw generated types from Preferences kind.
+// Raw generated types from Preference kind.
 export type {
-  Preferences,
+  Preference,
   QueryHistoryPreference
-} from './raw/preferences/x/preferences_types.gen';
+} from './raw/preference/x/preference_types.gen';
 
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
