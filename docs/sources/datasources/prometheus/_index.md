@@ -61,12 +61,16 @@ To configure basic settings for the data source, complete the following steps:
     | `Version`                       | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected.                                                                                                                                                                                               |
     | `Disable metrics lookup`        | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                   |
     | `Custom query parameters`       | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                         |
-    | **Exemplars configuration**     |                                                                                                                                                                                                                                                                                                                 |
-    | `Internal link`                 | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                                                                             |
-    | `Data source`                   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                                                                                   |
-    | `URL`                           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}).                                                  |
-    | `URL Label`                     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                                                                       |
-    | `Label name`                    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                                                                                  |
+
+    **Exemplars configuration:**
+
+    | Name              | Description                                                                                                                                                                                                                                                    |
+    | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data.                                                                                            |
+    | **Data source**   | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data.                                                                                                                                                  |
+    | **URL**           | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}). |
+    | **URL label**     | _(Optional)_ Adds a custom display label to override the value of the `Label name` field.                                                                                                                                                                      |
+    | **Label name**    | Adds a name for the exemplar traceID property.                                                                                                                                                                                                                 |
 
 ### Provision the data source
 
@@ -131,7 +135,9 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 #### AWS Signature Version 4 authentication
 
-> **Note:** Available in Grafana v7.3.5 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.3.5 and higher.
+{{% /admonition %}}
 
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
@@ -139,7 +145,9 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 ### Configure exemplars
 
-> **Note:** Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% admonition type="note" %}}
+Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% /admonition %}}
 
 Grafana 7.4 and higher can show exemplars data alongside a metric both in Explore and in Dashboards.
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data.

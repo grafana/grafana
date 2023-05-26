@@ -41,6 +41,15 @@ export interface Prometheus extends common.DataQuery {
    */
   instant?: boolean;
   /**
+   * @deprecated Used to specify how many times to divide max data points by. We use max data points under query options
+   * See https://github.com/grafana/grafana/issues/48081
+   */
+  intervalFactor?: number;
+  /**
+   * Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
+   */
+  legendFormat?: string;
+  /**
    * Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
    */
   range?: boolean;

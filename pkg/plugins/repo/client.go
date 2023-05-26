@@ -53,7 +53,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
 		}
-		return nil, fmt.Errorf("%v: %w", "failed to download plugin archive", err)
+		return nil, fmt.Errorf("%w: failed to download plugin archive (%s)", err, pluginZipURL)
 	}
 
 	rc, err := zip.OpenReader(tmpFile.Name())
@@ -143,7 +143,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com")
+		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive (%s) - please contact security@grafana.com", pluginURL)
 	}
 	return nil
 }

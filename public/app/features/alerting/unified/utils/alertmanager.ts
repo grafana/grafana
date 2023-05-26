@@ -1,12 +1,14 @@
+import { isEqual, uniqWith } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
-  MatcherOperator,
-  Route,
   Matcher,
+  MatcherOperator,
+  ObjectMatcher,
+  Route,
   TimeInterval,
   TimeRange,
-  ObjectMatcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
@@ -173,7 +175,7 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
     const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
     matchers.push({
       name: key,
-      value: value.trim(),
+      value: isRegex ? getValidRegexString(value.trim()) : value.trim(),
       isEqual,
       isRegex,
     });
@@ -181,6 +183,16 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
   });
 
   return matchers;
+}
+
+function getValidRegexString(regex: string): string {
+  // Regexes provided by users might be invalid, so we need to catch the error
+  try {
+    new RegExp(regex);
+    return regex;
+  } catch (error) {
+    return '';
+  }
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
@@ -206,6 +218,12 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
   });
 }
 
+export function combineMatcherStrings(...matcherStrings: string[]): string {
+  const matchers = matcherStrings.map(parseMatchers).flat();
+  const uniqueMatchers = uniqWith(matchers, isEqual);
+  return matchersToString(uniqueMatchers);
+}
+
 export function getAllAlertmanagerDataSources() {
   return getAllDataSources().filter((ds) => ds.type === DataSourceType.Alertmanager);
 }
@@ -215,8 +233,8 @@ export function getAlertmanagerByUid(uid?: string) {
 }
 
 export function timeIntervalToString(timeInterval: TimeInterval): string {
-  const { times, weekdays, days_of_month, months, years } = timeInterval;
-  const timeString = getTimeString(times);
+  const { times, weekdays, days_of_month, months, years, location } = timeInterval;
+  const timeString = getTimeString(times, location);
   const weekdayString = getWeekdayString(weekdays);
   const daysString = getDaysOfMonthString(days_of_month);
   const monthsString = getMonthsString(months);
@@ -225,10 +243,12 @@ export function timeIntervalToString(timeInterval: TimeInterval): string {
   return [timeString, weekdayString, daysString, monthsString, yearsString].join(', ');
 }
 
-export function getTimeString(times?: TimeRange[]): string {
+export function getTimeString(times?: TimeRange[], location?: string): string {
   return (
     'Times: ' +
-    (times ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} UTC`).join(' and ') : 'All')
+    (times
+      ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} [${location ?? 'UTC'}]`).join(' and ')
+      : 'All')
   );
 }
 
