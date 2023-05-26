@@ -9,7 +9,7 @@ import { pluginLog } from '../utils';
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;
   config: UPlotConfigBuilder;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
 }
 
 // min px width that triggers zoom
@@ -21,7 +21,7 @@ const MIN_ZOOM_DIST = 5;
 export const ZoomPlugin = ({ onZoom, config, timeRange }: ZoomPluginProps) => {
   const [selection, setSelection] = useState<PlotSelection | null>(null);
 
-  const refTimeRange = useRef<TimeRange>(timeRange);
+  const refTimeRange = useRef<TimeRange | undefined>(timeRange);
   useEffect(() => {
     refTimeRange.current = timeRange;
   }, [timeRange]);
@@ -60,11 +60,13 @@ export const ZoomPlugin = ({ onZoom, config, timeRange }: ZoomPluginProps) => {
     config.setCursor({
       bind: {
         dblclick: () => () => {
-          const frTs = refTimeRange.current.from.valueOf();
-          const toTs = refTimeRange.current.to.valueOf();
-          const pad = (toTs - frTs) / 2;
+          if (refTimeRange.current) {
+            const frTs = refTimeRange.current.from.valueOf();
+            const toTs = refTimeRange.current.to.valueOf();
+            const pad = (toTs - frTs) / 2;
 
-          onZoom({ from: frTs - pad, to: toTs + pad });
+            onZoom({ from: frTs - pad, to: toTs + pad });
+          }
 
           return null;
         },
