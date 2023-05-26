@@ -61,6 +61,7 @@ func New() (*Client, error) {
 	return client, nil
 }
 
+// SetRetryer adds a retry strategy for the googleapi client calls that fail.
 func (client *Client) SetRetryer() {
 	client.SetRetry([]storage.RetryOption{
 		storage.WithPolicy(storage.RetryAlways),
