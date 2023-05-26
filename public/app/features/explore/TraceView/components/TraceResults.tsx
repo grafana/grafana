@@ -53,7 +53,15 @@ export function TraceResults(props: Props) {
                       <div className={styles.span} key={i2}>
                         <div className={styles.spanHeader}>
                           <span className={styles.matched}>Match {i2 + 1}</span>
-                          <span className={styles.attrs}>{spanSetAttrs[i2]}</span>
+                          <span className={styles.attrs}>
+                            {spanSetAttrs[i2].map((spanSetAttr, i3) => {
+                              return (
+                                <span className={styles.attr} key={i3}>
+                                  {spanSetAttr}
+                                </span>
+                              );
+                            })}
+                          </span>
                         </div>
                         <div className={styles.set}>
                           <AutoSizer style={{ width: '100%', height: tableHeight }}>
@@ -140,6 +148,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     attrs: css`
       label: attrs;
+    `,
+    attr: css`
+      label: attr;
+      margin-left: 20px;
     `,
     set: css`
       label: set;
