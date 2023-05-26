@@ -40,13 +40,14 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 	Status   *Status                 `json:"status,omitempty"`
 
 	// Avoid extending
-	_ interface{}
+	_ interface{} `json:"-"`
 }
 
 // Annotation keys
 const annoKeyCreatedBy = "grafana.com/createdBy"
 const annoKeyUpdatedTimestamp = "grafana.com/updatedTimestamp"
 const annoKeyUpdatedBy = "grafana.com/updatedBy"
+const AnnotationKeyCommitMessage = "grafana.com/commitMessage"
 
 // The folder identifier
 const annoKeyFolder = "grafana.com/folder"
@@ -57,6 +58,14 @@ const annoKeyOriginName = "grafana.com/origin/name"
 const annoKeyOriginPath = "grafana.com/origin/path"
 const annoKeyOriginKey = "grafana.com/origin/key"
 const annoKeyOriginTime = "grafana.com/origin/time"
+
+func (m *GrafanaResourceMetadata) set(key string, val string) {
+	if val == "" {
+		delete(m.Annotations, key)
+	} else {
+		m.Annotations[key] = val
+	}
+}
 
 func (m *GrafanaResourceMetadata) GetUpdatedTimestamp() *time.Time {
 	v, ok := m.Annotations[annoKeyUpdatedTimestamp]
@@ -82,7 +91,7 @@ func (m *GrafanaResourceMetadata) GetCreatedBy() string {
 }
 
 func (m *GrafanaResourceMetadata) SetCreatedBy(user string) {
-	m.Annotations[annoKeyCreatedBy] = user // user GRN
+	m.set(annoKeyCreatedBy, user)
 }
 
 func (m *GrafanaResourceMetadata) GetUpdatedBy() string {
@@ -90,7 +99,7 @@ func (m *GrafanaResourceMetadata) GetUpdatedBy() string {
 }
 
 func (m *GrafanaResourceMetadata) SetUpdatedBy(user string) {
-	m.Annotations[annoKeyUpdatedBy] = user // user GRN
+	m.set(annoKeyUpdatedBy, user)
 }
 
 func (m *GrafanaResourceMetadata) GetFolder() string {
@@ -98,7 +107,7 @@ func (m *GrafanaResourceMetadata) GetFolder() string {
 }
 
 func (m *GrafanaResourceMetadata) SetFolder(uid string) {
-	m.Annotations[annoKeyFolder] = uid
+	m.set(annoKeyFolder, uid)
 }
 
 func (m *GrafanaResourceMetadata) GetSlug() string {
@@ -106,7 +115,17 @@ func (m *GrafanaResourceMetadata) GetSlug() string {
 }
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
-	m.Annotations[annoKeySlug] = v
+	m.set(annoKeySlug, v)
+}
+
+func (m *GrafanaResourceMetadata) GetCommitMessage() string {
+	return m.Annotations[AnnotationKeyCommitMessage]
+}
+
+// SetCommitMessage will add a message used in the resource history.
+// NOTE: this will be removed from the resource when persisted and added to the history subresource
+func (m *GrafanaResourceMetadata) SetCommitMessage(msg string) {
+	m.set(AnnotationKeyCommitMessage, msg)
 }
 
 func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {

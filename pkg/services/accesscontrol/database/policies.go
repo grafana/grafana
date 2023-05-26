@@ -84,7 +84,7 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 						Xname: info.RoleName,
 					},
 					Scope: accesspolicy.ResourceRef{
-						Kind: scope[0],
+						Kind: getKind(scope[0]),
 						Name: scope[2],
 					},
 					Rules: make([]accesspolicy.AccessRule, 0),
@@ -99,6 +99,9 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 			if strings.HasPrefix(info.RoleName, "managed:users:") {
 				current.Spec.Role.Kind = accesspolicy.RoleRefKindUser
 				current.Spec.Role.Name = "$TODO:" + info.RoleName
+			} else if strings.HasPrefix(info.RoleName, "managed:builtins:") {
+				current.Spec.Role.Kind = accesspolicy.RoleRefKindBuiltinRole
+				current.Spec.Role.Name = getBuiltinRoleName(info.RoleName)
 			}
 
 			prevKey = key
@@ -139,4 +142,13 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 		policies = append(policies, *current)
 	}
 	return policies, err
+}
+
+func getKind(input string) string {
+	return strings.TrimSuffix(input, "s") // dashboards > dashboard
+}
+
+func getBuiltinRoleName(input string) string {
+	v := strings.TrimPrefix(input, "managed:builtins:")
+	return strings.TrimSuffix(v, ":permissions")
 }

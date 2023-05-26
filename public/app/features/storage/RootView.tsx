@@ -6,6 +6,7 @@ import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import {
   Alert,
   Button,
+  LinkButton,
   Card,
   FilterInput,
   HorizontalGroup,
@@ -99,6 +100,9 @@ export function RootView({ root, onPathChange }: Props) {
         <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
           Add Root
         </Button>
+        <LinkButton className="pull-right" href="admin/storage/export">
+          Export
+        </LinkButton>
       </div>
 
       <div>{renderRoots('', roots.base)}</div>

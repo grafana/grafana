@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -20,6 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // Make sure we implement both store + admin
@@ -34,6 +38,7 @@ func ProvideSQLEntityServer(db db.DB, cfg *setting.Cfg, grpcServerProvider grpcs
 		resolver: resolver,
 	}
 	entity.RegisterEntityStoreServer(grpcServerProvider.GetServer(), entityServer)
+	entity.WireCircularDependencyHack = entityServer
 	return entityServer
 }
 
@@ -54,6 +59,9 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 
 	if r.WithBody {
 		fields = append(fields, `body`)
+	}
+	if r.WithMeta {
+		fields = append(fields, `meta`)
 	}
 	if r.WithSummary {
 		fields = append(fields, "name", "slug", "description", "labels", "fields")
@@ -77,6 +85,9 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
+	}
+	if r.WithMeta {
+		args = append(args, &raw.Meta)
 	}
 	if r.WithSummary {
 		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
@@ -126,8 +137,8 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 	if grn.UID == "" {
 		return nil, fmt.Errorf("GRN missing UID")
 	}
-	if len(grn.UID) > 40 {
-		return nil, fmt.Errorf("GRN UID is too long (>40)")
+	if len(grn.UID) > 64 {
+		return nil, fmt.Errorf("GRN UID is too long (>64)")
 	}
 	if strings.ContainsAny(grn.UID, "/#$@?") {
 		return nil, fmt.Errorf("invalid character in GRN")
@@ -136,7 +147,7 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 }
 
 func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
-	if r.Version != "" {
+	if r.Version > 0 {
 		return s.readFromHistory(ctx, r)
 	}
 	grn, err := s.validateGRN(ctx, r.GRN)
@@ -241,7 +252,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 
 		where := "grn=?"
 		args = append(args, grn.ToGRNString())
-		if r.Version != "" {
+		if r.Version > 0 {
 			return nil, fmt.Errorf("version not supported for batch read (yet?)")
 		}
 		constraints = append(constraints, where)
@@ -303,7 +314,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		return nil, err
 	}
 
-	etag := createContentsHash(body)
+	var access []byte //
+	etag := createContentsHash(body, r.Meta, r.Status)
 	rsp := &entity.WriteEntityResponse{
 		GRN:    grn,
 		Status: entity.WriteEntityResponse_CREATED, // Will be changed if not true
@@ -330,7 +342,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			}
 			versionInfo = &entity.EntityVersionInfo{}
 		} else {
-			versionInfo, err = s.selectForUpdate(ctx, tx, oid)
+			versionInfo, rsp.GUID, err = s.selectForUpdate(ctx, tx, oid)
 			if err != nil {
 				return err
 			}
@@ -344,7 +356,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		}
 
 		// Optimistic locking
-		if r.PreviousVersion != "" {
+		if r.PreviousVersion > 0 { // require it to be set???
 			if r.PreviousVersion != versionInfo.Version {
 				return fmt.Errorf("optimistic lock failed")
 			}
@@ -352,23 +364,14 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 
 		// Set the comment on this write
 		versionInfo.Comment = r.Comment
-		if r.Version == "" {
-			if versionInfo.Version == "" {
-				versionInfo.Version = "1"
-			} else {
-				// Increment the version
-				i, _ := strconv.ParseInt(versionInfo.Version, 0, 64)
-				if i < 1 {
-					i = timestamp
-				}
-				versionInfo.Version = fmt.Sprintf("%d", i+1)
-				isUpdate = true
-			}
+		if rsp.GUID == "" {
+			versionInfo.Version = 1
 		} else {
-			versionInfo.Version = r.Version
-		}
+			isUpdate = true
 
-		if isUpdate {
+			// Increment the version
+			versionInfo.Version += 1
+
 			// Clear the labels+refs
 			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=? OR parent_grn=?", oid, oid); err != nil {
 				return err
@@ -388,29 +391,90 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		versionInfo.UpdatedBy = updatedBy
 		_, err = tx.Exec(ctx, `INSERT INTO entity_history (`+
 			"grn, version, message, "+
-			"size, body, etag, "+
+			"size, body, etag, folder, access, "+
 			"updated_at, updated_by) "+
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			oid, versionInfo.Version, versionInfo.Comment,
-			versionInfo.Size, body, versionInfo.ETag,
+			versionInfo.Size, body, versionInfo.ETag, r.Folder, access,
 			updatedAt, versionInfo.UpdatedBy,
 		)
 		if err != nil {
 			return err
 		}
 
+		meta := &kinds.GrafanaResourceMetadata{}
+		if len(r.Meta) > 0 {
+			err = json.Unmarshal(r.Meta, meta)
+			if err != nil {
+				return err
+			}
+		}
+		meta.Name = grn.UID
+		if meta.Namespace == "" {
+			meta.Namespace = "default" // USE tenant id
+		}
+
+		if meta.UID == "" {
+			meta.UID = types.UID(uuid.New().String())
+		}
+		if meta.Annotations == nil {
+			meta.Annotations = make(map[string]string)
+		}
+		meta.SetFolder(r.Folder)
+
+		if !isUpdate {
+			if createdAt < 1000 {
+				createdAt = updatedAt
+			}
+			if createdBy == "" {
+				createdBy = updatedBy
+			}
+		}
+		if createdAt > 0 {
+			meta.CreationTimestamp = v1.NewTime(time.UnixMilli(createdAt))
+		}
+		if updatedAt > 0 {
+			meta.SetUpdatedTimestamp(util.Pointer(time.UnixMilli(updatedAt)))
+		}
+
+		if origin != nil {
+			var ts *time.Time
+			if origin.Time > 0 {
+				ts = util.Pointer(time.UnixMilli(origin.Time))
+			}
+			meta.SetOriginInfo(&kinds.ResourceOriginInfo{
+				Name:      origin.Source,
+				Key:       origin.Key,
+				Timestamp: ts,
+			})
+		}
+
+		if len(meta.Labels) > 0 {
+			if summary.model.Labels == nil {
+				summary.model.Labels = make(map[string]string)
+			}
+			for k, v := range meta.Labels {
+				summary.model.Labels[k] = v
+			}
+		}
+		r.Meta, err = json.Marshal(meta)
+		if err != nil {
+			return err
+		}
+		rsp.GUID = string(meta.UID)
+
 		// 5. Add/update the main `entity` table
 		rsp.Entity = versionInfo
 		if isUpdate {
 			rsp.Status = entity.WriteEntityResponse_UPDATED
 			_, err = tx.Exec(ctx, "UPDATE entity SET "+
-				"body=?, size=?, etag=?, version=?, "+
+				"body=?, meta=?, status=?, size=?, etag=?, version=?, "+
 				"updated_at=?, updated_by=?,"+
 				"name=?, description=?,"+
 				"labels=?, fields=?, errors=?, "+
 				"origin=?, origin_key=?, origin_ts=? "+
 				"WHERE grn=?",
-				body, versionInfo.Size, etag, versionInfo.Version,
+				body, r.Meta, r.Status, versionInfo.Size, etag, versionInfo.Version,
 				updatedAt, versionInfo.UpdatedBy,
 				summary.model.Name, summary.model.Description,
 				summary.labels, summary.fields, summary.errors,
@@ -418,36 +482,34 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				oid,
 			)
 		} else {
-			if createdAt < 1000 {
-				createdAt = updatedAt
-			}
-			if createdBy == "" {
-				createdBy = updatedBy
-			}
-
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
-				"grn, tenant_id, kind, uid, folder, "+
-				"size, body, etag, version, "+
+				"guid, grn, tenant_id, kind, uid, folder, "+
+				"size, body, meta, status, etag, version, "+
 				"updated_at, updated_by, created_at, created_by, "+
 				"name, description, slug, "+
 				"labels, fields, errors, "+
 				"origin, origin_key, origin_ts) "+
-				"VALUES (?, ?, ?, ?, ?, "+
-				" ?, ?, ?, ?, "+
+				"VALUES (?, ?, ?, ?, ?, ?, "+
+				" ?, ?, ?, ?, ?, ?, "+
 				" ?, ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?, "+
 				" ?, ?, ?)",
-				oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
-				versionInfo.Size, body, etag, versionInfo.Version,
+				meta.UID, oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+				versionInfo.Size, body, r.Meta, r.Status, etag, versionInfo.Version,
 				updatedAt, createdBy, createdAt, createdBy,
 				summary.model.Name, summary.model.Description, summary.model.Slug,
 				summary.labels, summary.fields, summary.errors,
 				origin.Source, origin.Key, origin.Time,
 			)
 		}
-		if err == nil && entity.StandardKindFolder == r.GRN.Kind {
-			err = updateFolderTree(ctx, tx, grn.TenantId)
+		if err == nil {
+			switch r.GRN.Kind {
+			case entity.StandardKindFolder:
+				err = updateFolderTree(ctx, tx, grn.TenantId)
+			case "accesspolicy":
+				err = updateAccessControl(ctx, tx, grn.TenantId, oid, meta, r.Body)
+			}
 		}
 		if err == nil {
 			summary.folder = r.Folder
@@ -456,6 +518,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		}
 		return err
 	})
+	rsp.Body = body           // k8s
+	rsp.MetaJson = r.Meta     // k8s
+	rsp.StatusJson = r.Status // k8s
 	rsp.SummaryJson = summary.marshaled
 	if err != nil {
 		rsp.Status = entity.WriteEntityResponse_ERROR
@@ -489,26 +554,27 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	return errClose
 }
 
-func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
-	q := "SELECT etag,version,updated_at,size FROM entity WHERE grn=?"
+func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, string, error) {
+	q := "SELECT guid,etag,version,updated_at,size FROM entity WHERE grn=?"
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
+	guid := ""
 	rows, err := tx.Query(ctx, q, grn)
 	if err != nil {
-		return nil, err
+		return nil, guid, err
 	}
 	current := &entity.EntityVersionInfo{}
 	if rows.Next() {
-		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
+		err = rows.Scan(&guid, &current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
 
 	errClose := rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, guid, err
 	}
 
-	return current, errClose
+	return current, guid, errClose
 }
 
 func (s *sqlEntityServer) writeSearchInfo(
@@ -668,6 +734,10 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 	if err != nil {
 		return false, err
 	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_access_rule WHERE policy=?", str)
+	if err != nil {
+		return false, err
+	}
 
 	if grn.Kind == entity.StandardKindFolder {
 		err = updateFolderTree(ctx, tx, grn.TenantId)
@@ -728,14 +798,14 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	fields := []string{
-		"grn", "tenant_id", "kind", "uid",
+		"grn", "guid", "tenant_id", "kind", "uid",
 		"version", "folder", "slug", "errors", // errors are always returned
 		"size", "updated_at", "updated_by",
 		"name", "description", // basic summary
 	}
 
 	if r.WithBody {
-		fields = append(fields, "body")
+		fields = append(fields, "body", "meta", "status")
 	}
 
 	if r.WithLabels {
@@ -794,13 +864,13 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		summaryjson := summarySupport{}
 
 		args := []interface{}{
-			&oid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
+			&oid, &result.Guid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
 			&result.Version, &result.Folder, &result.Slug, &summaryjson.errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
 			&result.Name, &summaryjson.description,
 		}
 		if r.WithBody {
-			args = append(args, &result.Body)
+			args = append(args, &result.Body, &result.Meta, &result.Status)
 		}
 		if r.WithLabels {
 			args = append(args, &summaryjson.labels)
