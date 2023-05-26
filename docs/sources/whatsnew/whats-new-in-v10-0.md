@@ -291,7 +291,7 @@ Currently, you can add one or more of the following filters:
 - Duration,
 - Tags (which include tags, process tags, and log fields).
 
-To try it out, you'll need to enable the `newTraceViewHeader` feature toggle. This feature is enabled by default in Grafana Cloud. 
+To try it out, you'll need to enable the `newTraceViewHeader` feature toggle. This feature is enabled by default in Grafana Cloud.
 
 ### OpenTelemetry replacing OpenTracing
 
@@ -349,6 +349,10 @@ Use the improved State history view to get insight into how your alert instances
 <!-- Brenda Muir -->
 
 Preview how your notification templates will look before using them in your contact points.
+
+{{< figure src="/media/docs/alerting/template-preview.png" max-width="750px" caption="Preview notification templates" >}}
+
+/media/docs/alerting/template-preview.png
 
 ## Security
 
