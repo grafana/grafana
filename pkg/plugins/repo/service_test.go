@@ -74,8 +74,10 @@ func TestGetPluginArchive(t *testing.T) {
 			})
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
 				GrafanaVersion: grafanaVersion,
-				OS:             opSys,
-				Arch:           arch,
+				System: SystemCompatOpts{
+					OS:   opSys,
+					Arch: arch,
+				},
 			})
 			if tc.err != nil {
 				require.ErrorAs(t, err, tc.err)
@@ -85,49 +87,6 @@ func TestGetPluginArchive(t *testing.T) {
 			verifyArchive(t, archive)
 		})
 	}
-}
-
-func TestSelectVersion(t *testing.T) {
-	i := &Manager{log: &fakeLogger{}}
-
-	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
-		_, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "version"}), "test", "1.1.1", CompatOpts{})
-		require.Error(t, err)
-	})
-
-	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
-		_, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "version", arch: []string{"non-existent"}}), "test", "", CompatOpts{})
-		require.Error(t, err)
-	})
-
-	t.Run("Should return error when requested version does not support current arch", func(t *testing.T) {
-		_, err := i.SelectSystemCompatibleVersion(createPluginVersions(
-			versionArg{version: "2.0.0"},
-			versionArg{version: "1.1.1", arch: []string{"non-existent"}},
-		), "test", "1.1.1", CompatOpts{})
-		require.Error(t, err)
-	})
-
-	t.Run("Should return latest available for arch when no version specified", func(t *testing.T) {
-		ver, err := i.SelectSystemCompatibleVersion(createPluginVersions(
-			versionArg{version: "2.0.0", arch: []string{"non-existent"}},
-			versionArg{version: "1.0.0"},
-		), "test", "", CompatOpts{})
-		require.NoError(t, err)
-		require.Equal(t, "1.0.0", ver.Version)
-	})
-
-	t.Run("Should return latest version when no version specified", func(t *testing.T) {
-		ver, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "test", "", CompatOpts{})
-		require.NoError(t, err)
-		require.Equal(t, "2.0.0", ver.Version)
-	})
-
-	t.Run("Should return requested version", func(t *testing.T) {
-		ver, err := i.SelectSystemCompatibleVersion(createPluginVersions(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "test", "1.0.0", CompatOpts{})
-		require.NoError(t, err)
-		require.Equal(t, "1.0.0", ver.Version)
-	})
 }
 
 func verifyArchive(t *testing.T, archive *PluginArchive) {

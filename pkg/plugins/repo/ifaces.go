@@ -18,22 +18,28 @@ type Service interface {
 
 type CompatOpts struct {
 	GrafanaVersion string
-	OS             string
-	Arch           string
+	System         SystemCompatOpts
+}
+
+type SystemCompatOpts struct {
+	OS   string
+	Arch string
 }
 
 func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
 	return CompatOpts{
 		GrafanaVersion: grafanaVersion,
-		OS:             os,
-		Arch:           arch,
+		System: SystemCompatOpts{
+			OS:   os,
+			Arch: arch,
+		},
 	}
 }
 
-func (co CompatOpts) OSAndArch() string {
+func (co SystemCompatOpts) OSAndArch() string {
 	return fmt.Sprintf("%s-%s", strings.ToLower(co.OS), co.Arch)
 }
 
 func (co CompatOpts) String() string {
-	return fmt.Sprintf("Grafana v%s %s", co.GrafanaVersion, co.OSAndArch())
+	return fmt.Sprintf("Grafana v%s %s", co.GrafanaVersion, co.System.OSAndArch())
 }

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-type client struct {
+type Client struct {
 	httpClient          http.Client
 	httpClientNoTimeout http.Client
 	retryCount          int
@@ -26,15 +26,15 @@ type client struct {
 	log log.PrettyLogger
 }
 
-func newClient(skipTLSVerify bool, logger log.PrettyLogger) *client {
-	return &client{
+func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
+	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 	}
 }
 
-func (c *client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
+func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, compatOpts ...CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
@@ -48,12 +48,12 @@ func (c *client) download(_ context.Context, pluginZipURL, checksum string, comp
 
 	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
+	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts...)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
 		}
-		return nil, fmt.Errorf("failed to download plugin archive: %w", err)
+		return nil, fmt.Errorf("failed to Download plugin archive: %w", err)
 	}
 
 	rc, err := zip.OpenReader(tmpFile.Name())
@@ -64,7 +64,29 @@ func (c *client) download(_ context.Context, pluginZipURL, checksum string, comp
 	return &PluginArchive{File: rc}, nil
 }
 
-func (c *client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
+func (c *Client) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+	req, err := c.createReq(url, compatOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader, err := c.handleResp(res, compatOpts...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = bodyReader.Close(); err != nil {
+			c.log.Warn("Failed to close stream", "err", err)
+		}
+	}()
+	return io.ReadAll(bodyReader)
+}
+
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts ...CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -102,7 +124,7 @@ func (c *client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts)
+				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts...)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -120,9 +142,9 @@ func (c *client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return err
 	}
 
-	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
-	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
-	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
+	// Using no timeout as some plugin archives make take longer to fetch due to size, network performance, etc.
+	// Note: This is also used as part of the grafana plugin install CLI operation
+	bodyReader, err := c.sendReqNoTimeout(u, compatOpts...)
 	if err != nil {
 		return err
 	}
@@ -146,30 +168,8 @@ func (c *client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *client) sendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
+func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts ...CompatOpts) (io.ReadCloser, error) {
 	req, err := c.createReq(url, compatOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader, err := c.handleResp(res, compatOpts...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err = bodyReader.Close(); err != nil {
-			c.log.Warn("Failed to close stream", "err", err)
-		}
-	}()
-	return io.ReadAll(bodyReader)
-}
-
-func (c *client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
-	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -178,10 +178,10 @@ func (c *client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadC
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResp(res, compatOpts)
+	return c.handleResp(res, compatOpts...)
 }
 
-func (c *client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Request, error) {
+func (c *Client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
@@ -189,15 +189,15 @@ func (c *client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Reques
 
 	if len(compatOpts) > 0 {
 		req.Header.Set("grafana-version", compatOpts[0].GrafanaVersion)
-		req.Header.Set("grafana-os", compatOpts[0].OS)
-		req.Header.Set("grafana-arch", compatOpts[0].Arch)
+		req.Header.Set("grafana-os", compatOpts[0].System.OS)
+		req.Header.Set("grafana-arch", compatOpts[0].System.Arch)
 		req.Header.Set("User-Agent", "grafana "+compatOpts[0].GrafanaVersion)
 	}
 
 	return req, err
 }
 
-func (c *client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := io.ReadAll(res.Body)
 		defer func() {
@@ -232,23 +232,21 @@ func (c *client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.Re
 }
 
 func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
-	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: skipTLSVerify,
-		},
-	}
-
 	return http.Client{
-		Timeout:   timeout,
-		Transport: tr,
+		Timeout: timeout,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: skipTLSVerify,
+			},
+		},
 	}
 }
