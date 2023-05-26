@@ -34,30 +34,9 @@ export async function setMetrics(
   let metricsData: MetricsData | undefined;
 
   metricsData = initialMetrics?.map((m: string) => {
-    let type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
-    let inferredType;
-    if (!type && inferType) {
-      type = metricTypeHints(m);
+    const metricData = buildMetricData(m, inferType, datasource);
 
-      if (type) {
-        inferredType = true;
-      }
-    }
-
-    const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
-
-    if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
-      type += ' (histogram)';
-    }
-    // possibly remove the type in favor of the type select
-    const metaDataString = `${m}¦${type}¦${description}`;
-
-    const metricData: MetricData = {
-      value: m,
-      type: type,
-      description: description,
-      inferred: inferredType,
-    };
+    const metaDataString = `${m}¦${metricData.type}¦${metricData.description}`;
 
     nameHaystackDictionaryData[m] = metricData;
     metaHaystackDictionaryData[metaDataString] = metricData;
@@ -77,6 +56,40 @@ export async function setMetrics(
 }
 
 /**
+ * Builds the metric data object with type, description and inferred flag
+ *
+ * @param   metric  The metric name
+ * @param   inferType  state attribute that the infer type setting is on or off
+ * @param   datasource  The Prometheus datasource for mapping metradata to the metric name
+ * @returns A MetricData object.
+ */
+function buildMetricData(metric: string, inferType: boolean, datasource: PrometheusDatasource): MetricData {
+  let type = getMetadataType(metric, datasource.languageProvider.metricsMetadata!);
+  let inferredType;
+  if (!type && inferType) {
+    type = metricTypeHints(metric);
+
+    if (type) {
+      inferredType = true;
+    }
+  }
+  const description = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!);
+
+  if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
+    type += ' (histogram)';
+  }
+
+  const metricData: MetricData = {
+    value: metric,
+    type: type,
+    description: description,
+    inferred: inferredType,
+  };
+
+  return metricData;
+}
+
+/**
  * The filtered and paginated metrics displayed in the modal
  * */
 export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispatch<AnyAction>) {
@@ -91,7 +104,6 @@ export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispa
 
 /**
  * Filter the metrics with all the options, fuzzy, type, null metadata
- * @returns
  */
 export function filterMetrics(state: MetricsModalState): MetricsData {
   let filteredMetrics: MetricsData = state.metrics;
@@ -172,7 +184,6 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
  * @param metricText
  * @param labels
  * @param datasource
- * @returns
  */
 export async function getBackendSearchMetrics(
   metricText: string,
@@ -191,35 +202,11 @@ export async function getBackendSearchMetrics(
   const results = datasource.metricFindQuery(params);
 
   return await results.then((results) => {
-    return results.map((result) => {
-      let type = getMetadataType(result.text, datasource.languageProvider.metricsMetadata!);
-      let inferredType;
-      if (!type && inferType) {
-        type = metricTypeHints(result.text);
-
-        if (type) {
-          inferredType = true;
-        }
-      }
-      const description = getMetadataHelp(result.text, datasource.languageProvider.metricsMetadata!);
-
-      if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
-        type += ' (histogram)';
-      }
-
-      const metricData: MetricData = {
-        value: result.text,
-        type: type,
-        description: description,
-        inferred: inferredType,
-      };
-
-      return metricData;
-    });
+    return results.map((result) => buildMetricData(result.text, inferType, datasource));
   });
 }
 
-function metricTypeHints(metric: string): string | undefined {
+function metricTypeHints(metric: string): string {
   const histogramMetric = metric.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
   if (histogramMetric) {
     return 'counter (histogram)';
@@ -230,7 +217,7 @@ function metricTypeHints(metric: string): string | undefined {
     return 'counter';
   }
 
-  return undefined;
+  return '';
 }
 
 export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
