@@ -29,12 +29,7 @@ export const BucketAggregationsEditor = ({ nextId }: Props) => {
           <BucketAggregationEditor value={bucketAgg} />
 
           {index === 0 && (
-            <IconButton
-              iconName="plus"
-              onClick={() => dispatch(addBucketAggregation(nextId))}
-              label="add"
-              tooltip="Add"
-            />
+            <IconButton iconName="plus" onClick={() => dispatch(addBucketAggregation(nextId))} label="add" />
           )}
         </QueryEditorRow>
       ))}
