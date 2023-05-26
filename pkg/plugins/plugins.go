@@ -98,10 +98,6 @@ func (p PluginDTO) IsApp() bool {
 	return p.Type == App
 }
 
-func (p PluginDTO) IsDataSource() bool {
-	return p.Type == DataSource
-}
-
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
