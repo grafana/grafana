@@ -44,7 +44,7 @@ func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 	// The OAuth2 introspection endpoint uses basic auth but is handled by the oauthserver package.
-	if strings.HasPrefix(r.HTTPRequest.RequestURI, "/oauth2/introspect") {
+	if strings.EqualFold(r.HTTPRequest.RequestURI, "/oauth2/introspect") {
 		return false
 	}
 	return looksLikeBasicAuthRequest(r)
