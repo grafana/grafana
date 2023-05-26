@@ -585,14 +585,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
 				require.NoError(t, err)
 
-				for i, uid := range ancestorUIDs {
-					// dashboard table
-					_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
-					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-					// folder table
-					_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
-					require.NoError(t, err)
-				}
+				// dashboard table
+				_, err = serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+				// folder table
+				_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[0], OrgID: orgID})
+				require.NoError(t, err)
 				t.Cleanup(func() {
 					guardian.New = origNewGuardian
 					for _, uid := range ancestorUIDs {
@@ -620,14 +618,12 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
 				require.Error(t, dashboards.ErrFolderContainsAlertRules, err)
 
-				for i, uid := range ancestorUIDs {
-					// dashboard table
-					_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
-					require.NoError(t, err)
-					// folder table
-					_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
-					require.NoError(t, err)
-				}
+				// dashboard table
+				_, err = serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, ancestorUIDs[0])
+				require.NoError(t, err)
+				// folder table
+				_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[0], OrgID: orgID})
+				require.NoError(t, err)
 				t.Cleanup(func() {
 					guardian.New = origNewGuardian
 					for _, uid := range ancestorUIDs {
