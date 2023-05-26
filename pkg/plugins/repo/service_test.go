@@ -50,45 +50,63 @@ func TestSelectVersion(t *testing.T) {
 		require.Equal(t, "1.0.0", ver.Version)
 	})
 
-	t.Run("angular support disabled", func(t *testing.T) {
-		t.Run("all versions use angular", func(t *testing.T) {
-			ver, err := i.selectVersion(createPlugin(
-				versionArg{version: "2.0.0", angularDetected: true},
-				versionArg{version: "1.0.0", angularDetected: true},
-			), "", CompatOpts{AngularSupportEnabled: false})
-			require.Error(t, err)
-			require.True(t, errors.As(err, &ErrSupportedVersionNotFound{}))
-			require.Nil(t, ver)
-		})
+	t.Run("angular support", func(t *testing.T) {
+		const versionLatest = "2.0.0"
+		const versionOld = "1.0.0"
+		pluginAlwaysAngular := createPlugin(
+			versionArg{version: versionLatest, angularDetected: true},
+			versionArg{version: versionOld, angularDetected: true},
+		)
 
-		t.Run("first version that doesn't use angular", func(t *testing.T) {
-			ver, err := i.selectVersion(createPlugin(
-				versionArg{version: "2.0.0", angularDetected: true},
-				versionArg{version: "1.0.0", angularDetected: false},
-			), "", CompatOpts{AngularSupportEnabled: false})
-			require.NoError(t, err)
-			require.NotNil(t, ver)
-			require.Equal(t, ver.Version, "1.0.0")
-		})
+		const versionAngular = "2.0.0"
+		const versionNotAngular = "1.0.0"
+		// Not realistic, but easier to test with
+		pluginAlsoNotAngular := createPlugin(
+			versionArg{version: versionAngular, angularDetected: true},
+			versionArg{version: versionNotAngular, angularDetected: false},
+		)
+		t.Run("disabled", func(t *testing.T) {
+			t.Run("all versions use angular", func(t *testing.T) {
+				ver, err := i.selectVersion(pluginAlwaysAngular, "", CompatOpts{AngularSupportEnabled: false})
+				require.Error(t, err)
+				require.True(t, errors.As(err, &ErrSupportedVersionNotFound{}))
+				require.Nil(t, ver)
+			})
 
-		t.Run("exact version using angular", func(t *testing.T) {
-			ver, err := i.selectVersion(createPlugin(
-				versionArg{version: "2.0.0", angularDetected: true},
-				versionArg{version: "1.0.0", angularDetected: false},
-			), "2.0.0", CompatOpts{AngularSupportEnabled: false})
-			require.Error(t, err)
-			require.True(t, errors.As(err, &ErrVersionUnsupported{}))
-			require.Nil(t, ver)
-		})
+			t.Run("first version that doesn't use angular", func(t *testing.T) {
+				ver, err := i.selectVersion(pluginAlsoNotAngular, "", CompatOpts{AngularSupportEnabled: false})
+				require.NoError(t, err)
+				require.NotNil(t, ver)
+				require.Equal(t, ver.Version, versionNotAngular)
+			})
 
-		t.Run("exact version not using angular", func(t *testing.T) {
-			ver, err := i.selectVersion(createPlugin(
-				versionArg{version: "2.0.0", angularDetected: true},
-				versionArg{version: "1.0.0", angularDetected: false},
-			), "1.0.0", CompatOpts{AngularSupportEnabled: false})
-			require.NoError(t, err)
-			require.NotNil(t, ver)
-			require.Equal(t, ver.Version, "1.0.0")
+			t.Run("exact version using angular", func(t *testing.T) {
+				ver, err := i.selectVersion(pluginAlsoNotAngular, versionAngular, CompatOpts{AngularSupportEnabled: false})
+				require.Error(t, err)
+				require.True(t, errors.As(err, &ErrVersionUnsupported{}))
+				require.Nil(t, ver)
+			})
+
+			t.Run("exact version not using angular", func(t *testing.T) {
+				ver, err := i.selectVersion(pluginAlsoNotAngular, versionNotAngular, CompatOpts{AngularSupportEnabled: false})
+				require.NoError(t, err)
+				require.NotNil(t, ver)
+				require.Equal(t, ver.Version, versionNotAngular)
+			})
+		})
+		t.Run("enabled", func(t *testing.T) {
+			t.Run("latest version", func(t *testing.T) {
+				ver, err := i.selectVersion(pluginAlwaysAngular, "", CompatOpts{AngularSupportEnabled: true})
+				require.NoError(t, err)
+				require.NotNil(t, ver)
+				require.Equal(t, ver.Version, versionLatest)
+			})
+			t.Run("exact versions", func(t *testing.T) {
+				ver, err := i.selectVersion(pluginAlwaysAngular, versionOld, CompatOpts{AngularSupportEnabled: true})
+				require.NoError(t, err)
+				require.NotNil(t, ver)
+				require.Equal(t, ver.Version, versionOld)
+			})
 		})
 	})
 }
