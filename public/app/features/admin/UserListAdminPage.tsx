@@ -91,6 +91,7 @@ const UserListAdminPageUnConnected = ({
               value={query}
               onChange={changeQuery}
             />
+           </div>
             <RadioButtonGroup
               options={[
                 { label: 'All users', value: false },
@@ -103,7 +104,6 @@ const UserListAdminPageUnConnected = ({
             {extraFilters.map((FilterComponent, index) => (
               <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
             ))}
-          </div>
         </InlineField>
         {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
           <LinkButton href="admin/users/create" variant="primary">
