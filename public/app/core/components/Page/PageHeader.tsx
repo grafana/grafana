@@ -25,17 +25,17 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   const titleElement = onEditTitle ? (
     <EditableTitle value={navItem.text} onEdit={onEditTitle} />
   ) : (
-    <h1>{navItem.text}</h1>
+    <div className={styles.title}>
+      {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
+      {renderTitle ? renderTitle(navItem.text) : navItem.text}
+    </div>
   );
 
   return (
     <div className={styles.pageHeader}>
       <div className={styles.topRow}>
         <div className={styles.titleInfoContainer}>
-          <div className={styles.title}>
-            {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-            {renderTitle ? renderTitle(navItem.text) : titleElement}
-          </div>
+          {titleElement}
           {info && <PageInfo info={info} />}
         </div>
         <div className={styles.actions}>{actions}</div>
