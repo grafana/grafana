@@ -3367,7 +3367,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -4845,6 +4845,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: df3062e24e7276626539b8b64baadaca99c05209db56cd50fbb83811b00111d8
+hmac: 087981735e122f482d03e964763bf12786708c904cad5b5b3db8fbc97aec3ab2
 
 ...
