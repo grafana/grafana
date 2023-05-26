@@ -73,7 +73,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       minHeight: '36px',
-      width: '400px',
+      minWidth: 0,
     }),
     field: css({
       marginBottom: 0,
