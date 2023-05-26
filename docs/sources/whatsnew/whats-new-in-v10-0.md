@@ -344,6 +344,8 @@ Resources:
 
 Use the improved State history view to get insight into how your alert instances behave over time. View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
 
+{{< figure src="/media/docs/alerting/state-history.png" max-width="750px" caption="State history view" >}}
+
 ### Preview notification templates
 
 <!-- Brenda Muir -->
