@@ -29,7 +29,16 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
 
-1. In the first line of the **Query** tab, click the dropdown list and select a data source.
+1. In the modal that opens:
+
+   - Select one of your existing data sources.
+   - Select one of the Grafana's built-in special data sources.
+   - Click **Configure a new data source** to set up a new one.
+
+   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
+
+   You can change the panel data source using the dropdown in the **Query** tab.
+
 1. Write or construct a query in the query language of your data source.
 
    For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
@@ -65,6 +74,8 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
 
    ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
+
+   When you add additional panels to the dashboard, you're taken straight to the panel editor mode where you can choose a data source in the dropdown in the **Query** tab.
 
 ## Configure repeating rows
 
