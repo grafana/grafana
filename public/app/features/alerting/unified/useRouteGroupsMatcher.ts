@@ -28,7 +28,6 @@ function loadWorker() {
       if (e instanceof Error) {
         logError(e);
       }
-      console.error('CANNOT LOAD WORKER', e);
     }
   }
 
