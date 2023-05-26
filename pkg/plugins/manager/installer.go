@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -42,7 +43,10 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 }
 
 func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
+	compatOpts, err := repoCompatOpts(opts)
+	if err != nil {
+		return err
+	}
 
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
@@ -153,4 +157,20 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins
 	}
 
 	return p, true
+}
+
+func repoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
+	os := opts.OS()
+	arch := opts.Arch()
+	if len(os) == 0 || len(arch) == 0 {
+		return repo.CompatOpts{}, errors.New("")
+	}
+	grafanaVersion := opts.GrafanaVersion()
+	var compatOpts repo.CompatOpts
+	if len(grafanaVersion) > 0 {
+		compatOpts = repo.NewCompatOpts(grafanaVersion, os, arch)
+	}
+	compatOpts = repo.NewSystemCompatOpts(os, arch)
+
+	return compatOpts, nil
 }
