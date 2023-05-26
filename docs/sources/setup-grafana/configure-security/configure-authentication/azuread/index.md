@@ -212,7 +212,7 @@ interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.i
 
 ### Configure automatic login
 
-Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+To bypass the login screen and log in automatically, enable the "auto_login" feature.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
 ```
