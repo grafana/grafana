@@ -56,6 +56,7 @@ import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
+import TraceResults from './TraceView/components/TraceResults';
 import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
@@ -505,7 +506,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showRawPrometheus && (
                             <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                           )}
-                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                          {/* {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>} */}
+                          {showTable && (
+                            <TraceResults
+                              dataFrames={queryResponse.tableFrames}
+                              exploreId={exploreId}
+                              splitOpenFn={this.onSplitOpen('table')}
+                            />
+                          )}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}

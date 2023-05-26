@@ -14,10 +14,17 @@ import {
   TraceSpanRow,
   dateTimeFormat,
   FieldDTO,
+  getDisplayProcessor,
+  createTheme,
+  ValueLinkConfig,
+  SplitOpen,
+  TimeRange,
+  DataSourceJsonData,
 } from '@grafana/data';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { createGraphFrames } from './graphTransform';
-import { Span, TraceSearchMetadata } from './types';
+import { Span, Spanset, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame,
@@ -676,6 +683,24 @@ export function createTableFrameFromTraceQlQuery(
   return [frame, ...subDataFrames];
 }
 
+export function createTraceResultsFromTraceQlQuery(
+  data: TraceSearchMetadata[],
+  instanceSettings: DataSourceInstanceSettings
+) {
+  const resultRows = data
+    // Show the most recent traces
+    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
+    .reduce((rows: TraceTableData[], trace) => {
+      const traceData: TraceTableData = transformToTraceData(trace);
+      traceData['spanSets'] = trace.spanSets;
+      traceData['instanceSettings'] = instanceSettings;
+      rows.push(traceData);
+      return rows;
+    }, []);
+
+  return [resultRows];
+}
+
 const traceSubFrame = (
   trace: TraceSearchMetadata,
   instanceSettings: DataSourceInstanceSettings,
@@ -776,23 +801,166 @@ const traceSubFrame = (
   return subFrame;
 };
 
+export const traceSpanSetFrame = (
+  traceID: string,
+  spanSets: Spanset[],
+  instanceSettings: DataSourceInstanceSettings,
+  splitOpenFn: SplitOpen,
+  range: TimeRange
+): DataFrame[] => {
+  const frames = spanSets.map((spanSet) => {
+    const spanDynamicAttrs: Record<string, { name: string; type: FieldType; config: { displayNameFromDS: string } }> =
+      {};
+    let hasNameAttribute = false;
+    spanSet.spans.forEach((span: Span) => {
+      if (span.name) {
+        hasNameAttribute = true;
+      }
+      span.attributes?.forEach((attr) => {
+        spanDynamicAttrs[attr.key] = {
+          name: attr.key,
+          type: FieldType.string,
+          config: { displayNameFromDS: attr.key },
+        };
+      });
+    });
+
+    const fields = [
+      {
+        name: 'traceIdHidden',
+        config: {
+          custom: { hidden: true },
+        },
+      },
+      {
+        name: 'spanID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Span ID',
+          custom: {
+            width: 200,
+          },
+          links: [
+            {
+              title: 'Span: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: traceID,
+                  queryType: 'traceql',
+                },
+                panelsState: {
+                  trace: {
+                    spanId: '${__value.raw}',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        name: 'startTime',
+        type: FieldType.string,
+        config: {
+          displayNameFromDS: 'Start time',
+          custom: {
+            width: 200,
+          },
+        },
+      },
+      {
+        name: 'name',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Name', custom: { hidden: !hasNameAttribute } },
+      },
+      ...Object.values(spanDynamicAttrs),
+      {
+        name: 'duration',
+        type: FieldType.number,
+        config: {
+          displayNameFromDS: 'Duration',
+          unit: 'ns',
+          custom: {
+            width: 120,
+          },
+        },
+      },
+    ];
+
+    const frame = new MutableDataFrame({
+      fields: fields,
+      meta: {
+        preferredVisualisationType: 'table',
+      },
+    });
+
+    const theme = createTheme();
+    for (const field of frame.fields) {
+      field.display = getDisplayProcessor({ field, theme });
+      field.getLinks = (config: ValueLinkConfig) => {
+        return getFieldLinksForExplore({
+          field,
+          rowIndex: config.valueRowIndex!,
+          splitOpenFn,
+          range,
+          dataFrame: frame!,
+        });
+      };
+    }
+
+    spanSet.spans.forEach((span: Span) => {
+      frame.add(transformSpanToTraceData(span));
+    });
+
+    return frame;
+  });
+
+  return frames;
+};
+
+export const traceSpanSetAttrs = (spanSets: Spanset[]): string[][] => {
+  const attrs = spanSets.map((spanSet) => {
+    const spanDynamicAttrs: string[] = [];
+    spanSet.attributes?.forEach((attr) => {
+      const key = attr.key;
+      const value = getAttributeValue(attr.value);
+      spanDynamicAttrs.push(`${key}: ${value}`);
+    });
+
+    return spanDynamicAttrs;
+  });
+
+  return attrs;
+};
+
 interface TraceTableData {
-  [key: string]: string | number | boolean | undefined; // dynamic attribute name
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | undefined
+    | [{ spans: Span[] }]
+    | DataSourceInstanceSettings<DataSourceJsonData>; // dynamic attribute name
   traceID?: string;
   spanID?: string;
   startTime?: string;
   name?: string;
   traceDuration?: string;
+  spanSets?: [{ spans: Span[] }];
 }
 
-function transformSpanToTraceData(span: Span, traceID: string): TraceTableData {
+function transformSpanToTraceData(span: Span, traceID?: string): TraceTableData {
   const spanStartTimeUnixMs = parseInt(span.startTimeUnixNano, 10) / 1000000;
   let spanStartTime = dateTimeFormat(spanStartTimeUnixMs);
 
   const data: TraceTableData = {
     traceIdHidden: traceID,
     spanID: span.spanID,
-    spanStartTime,
+    startTime: spanStartTime,
     duration: parseInt(span.durationNanos, 10),
     name: span.name,
   };

@@ -56,6 +56,7 @@ export type TraceSearchMetadata = {
   startTimeUnixNano?: string;
   durationMs?: number;
   spanSet?: { spans: Span[] };
+  spanSets?: [{ spans: Span[] }];
 };
 
 export type SearchMetrics = {
