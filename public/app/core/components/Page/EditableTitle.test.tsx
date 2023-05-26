@@ -60,6 +60,9 @@ describe('EditableTitle', () => {
     expect(await screen.findByText('Saved!')).toBeInTheDocument();
 
     await user.click(document.body);
+    act(() => {
+      jest.runAllTimers();
+    });
     await waitFor(() => {
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
       expect(screen.getByRole('heading')).toBeInTheDocument();
