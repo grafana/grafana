@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/kindsys"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/kinds"
@@ -29,6 +30,7 @@ const MaxUpdateAttempts = 30
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
 	store        entity.EntityStoreServer
+	kind         kindsys.Core
 	gr           schema.GroupResource
 	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
@@ -49,6 +51,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
 	store entity.EntityStoreServer,
+	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
 	keyFunc func(obj runtime.Object) (string, error),
@@ -61,6 +64,7 @@ func NewEntityStorage(
 	ws := NewWatchSet()
 	return &entityStorage{
 			store:        store,
+			kind:         kind,
 			gr:           config.GroupResource,
 			codec:        config.Codec,
 			keyFunc:      keyFunc,
@@ -277,8 +281,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 
 			res := historyAsResource(grn, rsp)
 			res.Metadata.Namespace = info.Namespace
-			res.APIVersion = "dashboard.kinds.grafana.com" + "/" + "v0.0-alpha"
-			res.Kind = "Dashboard"
+			res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+			res.Kind = s.kind.Name()
 			jjj, _ := json.Marshal(res)
 			_, _, err = s.codec.Decode(jjj, nil, objPtr)
 			fmt.Printf("HISTORY:%s\n", grn.UID)
@@ -308,8 +312,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = "dashboard.kinds.grafana.com" + "/" + "v0.0-alpha"
-	res.Kind = "Dashboard"
+	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
 	//	fmt.Printf("GET: %s", string(jjj))
@@ -368,8 +372,8 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = "dashboard.kinds.grafana.com" + "/" + "v0.0-alpha"
-		res.Kind = "Dashboard"
+		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.Kind = s.kind.Name()
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
 		if err != nil {
