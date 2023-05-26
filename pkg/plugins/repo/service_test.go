@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -48,11 +49,54 @@ func TestSelectVersion(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "1.0.0", ver.Version)
 	})
+
+	t.Run("angular support disabled", func(t *testing.T) {
+		t.Run("all versions use angular", func(t *testing.T) {
+			ver, err := i.selectVersion(createPlugin(
+				versionArg{version: "2.0.0", angularDetected: true},
+				versionArg{version: "1.0.0", angularDetected: true},
+			), "", CompatOpts{AngularSupportEnabled: false})
+			require.Error(t, err)
+			require.True(t, errors.As(err, &ErrSupportedVersionNotFound{}))
+			require.Nil(t, ver)
+		})
+
+		t.Run("first version that doesn't use angular", func(t *testing.T) {
+			ver, err := i.selectVersion(createPlugin(
+				versionArg{version: "2.0.0", angularDetected: true},
+				versionArg{version: "1.0.0", angularDetected: false},
+			), "", CompatOpts{AngularSupportEnabled: false})
+			require.NoError(t, err)
+			require.NotNil(t, ver)
+			require.Equal(t, ver.Version, "1.0.0")
+		})
+
+		t.Run("exact version using angular", func(t *testing.T) {
+			ver, err := i.selectVersion(createPlugin(
+				versionArg{version: "2.0.0", angularDetected: true},
+				versionArg{version: "1.0.0", angularDetected: false},
+			), "2.0.0", CompatOpts{AngularSupportEnabled: false})
+			require.Error(t, err)
+			require.True(t, errors.As(err, &ErrVersionUnsupported{}))
+			require.Nil(t, ver)
+		})
+
+		t.Run("exact version not using angular", func(t *testing.T) {
+			ver, err := i.selectVersion(createPlugin(
+				versionArg{version: "2.0.0", angularDetected: true},
+				versionArg{version: "1.0.0", angularDetected: false},
+			), "1.0.0", CompatOpts{AngularSupportEnabled: false})
+			require.NoError(t, err)
+			require.NotNil(t, ver)
+			require.Equal(t, ver.Version, "1.0.0")
+		})
+	})
 }
 
 type versionArg struct {
-	version string
-	arch    []string
+	version         string
+	arch            []string
+	angularDetected bool
 }
 
 func createPlugin(versions ...versionArg) *Plugin {
@@ -62,9 +106,10 @@ func createPlugin(versions ...versionArg) *Plugin {
 
 	for _, version := range versions {
 		ver := Version{
-			Version: version.version,
-			Commit:  fmt.Sprintf("commit_%s", version.version),
-			URL:     fmt.Sprintf("url_%s", version.version),
+			Version:         version.version,
+			Commit:          fmt.Sprintf("commit_%s", version.version),
+			URL:             fmt.Sprintf("url_%s", version.version),
+			AngularDetected: version.angularDetected,
 		}
 		if version.arch != nil {
 			ver.Arch = map[string]ArchMeta{}
