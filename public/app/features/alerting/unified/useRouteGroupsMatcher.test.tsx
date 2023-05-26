@@ -14,6 +14,11 @@ jest.mock('comlink');
 const createWorkerMock = jest.mocked(createWorker);
 const wrapMock = jest.mocked(comlink.wrap);
 
+beforeEach(() => {
+  createWorkerMock.mockReset();
+  wrapMock.mockReset();
+});
+
 describe('useRouteGroupsMatcher', () => {
   it('should not load web worker if the feature flag is disabled', function () {
     const featureFlag = getInstancePreviewFeature(false);
