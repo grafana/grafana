@@ -4572,7 +4572,6 @@ volumes:
   name: docker
 ---
 clone:
->>>>>>> 68fe1e1cb0 (fix verify_release_pipeline script execution (#69191))
   disable: true
 depends_on: []
 environment:
