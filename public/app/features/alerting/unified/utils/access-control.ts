@@ -1,4 +1,5 @@
 import { contextSrv } from 'app/core/services/context_srv';
+import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
@@ -45,6 +46,11 @@ export const notificationsPermissions = {
     grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
+};
+
+export const provisioningPermissions = {
+  read: AccessControlAction.AlertingProvisioningRead,
+  write: AccessControlAction.AlertingProvisioningWrite,
 };
 
 const rulesPermissions = {
@@ -118,5 +124,6 @@ export function getRulesAccess() {
         rulesSourceName === GRAFANA_RULES_SOURCE_NAME ? contextSrv.hasEditPermissionInFolders : contextSrv.isEditor;
       return contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, permissionFallback);
     },
+    canReadProvisioning: contextSrv.hasAccess(provisioningPermissions.read, isOrgAdmin()),
   };
 }

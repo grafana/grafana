@@ -103,7 +103,13 @@ func Test_union(t *testing.T) {
 				},
 			},
 			unionsAre: assert.EqualValues,
-			unions:    []*Union{},
+			unions: []*Union{
+				{
+					Labels: nil,
+					A:      makeSeries("a", data.Labels{"id": "1"}),
+					B:      NewNoData(),
+				},
+			},
 		},
 		{
 			name: "incompatible tags of different length with will result in no unions when len(A) != 1 && len(B) != 1",
@@ -256,6 +262,30 @@ func Test_union(t *testing.T) {
 				{
 					Labels: data.Labels{"id": "1", "fish": "red snapper"},
 					A:      makeSeries("bb", data.Labels{"id": "1", "fish": "red snapper"}),
+					B:      makeSeries("a", data.Labels{"id": "1"}),
+				},
+			},
+		},
+		{
+			name: "A is no-data and B is anything makes no-data",
+			// Is this the behavior we want? A result within the results will no longer
+			// be uniquely identifiable.
+			aResults: Results{
+				Values: Values{
+					NewNoData(),
+				},
+			},
+			bResults: Results{
+				Values: Values{
+					makeSeries("a", data.Labels{"id": "1"}),
+					makeSeries("aa", data.Labels{"id": "1", "fish": "herring"}),
+				},
+			},
+			unionsAre: assert.EqualValues,
+			unions: []*Union{
+				{
+					Labels: nil,
+					A:      NewNoData(),
 					B:      makeSeries("a", data.Labels{"id": "1"}),
 				},
 			},

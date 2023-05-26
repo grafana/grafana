@@ -1,17 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { MappingType } from '@grafana/data';
+import { MappingType, StandardEditorsRegistryItem } from '@grafana/data';
 
 import { ValueMappingsEditor, Props } from './ValueMappingsEditor';
 
-const setup = (spy?: any, propOverrides?: object) => {
+const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    onChange: (mappings: any) => {
-      if (spy) {
-        spy(mappings);
-      }
-    },
+    onChange: jest.fn(),
     value: [
       {
         type: MappingType.ValueToText,
@@ -28,8 +24,10 @@ const setup = (spy?: any, propOverrides?: object) => {
         },
       },
     ],
-    item: {} as any,
-    context: {} as any,
+    item: {} as StandardEditorsRegistryItem,
+    context: {
+      data: [],
+    },
   };
 
   Object.assign(props, propOverrides);
@@ -45,8 +43,8 @@ describe('Render', () => {
   });
 
   it('should render icon picker when icon exists and icon setting is set to true', () => {
-    const propOverrides = {
-      item: { settings: { icon: true } },
+    const propOverrides: Partial<Props> = {
+      item: { settings: { icon: true } } as StandardEditorsRegistryItem,
       value: [
         {
           type: MappingType.ValueToText,
@@ -56,7 +54,7 @@ describe('Render', () => {
         },
       ],
     };
-    setup({}, propOverrides);
+    setup(propOverrides);
 
     const iconPicker = screen.getByTestId('iconPicker');
 

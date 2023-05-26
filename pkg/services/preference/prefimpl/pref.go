@@ -65,12 +65,12 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.Language = p.JSONData.Language
 			}
 
-			if len(p.JSONData.Navbar.SavedItems) > 0 {
-				res.JSONData.Navbar = p.JSONData.Navbar
-			}
-
 			if p.JSONData.QueryHistory.HomeTab != "" {
 				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
+			}
+
+			if p.JSONData.CookiePreferences != nil {
+				res.JSONData.CookiePreferences = p.JSONData.CookiePreferences
 			}
 		}
 	}
@@ -95,6 +95,11 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
+	jsonData, err := preferenceData(cmd)
+	if err != nil {
+		return err
+	}
+
 	preference, err := s.store.Get(ctx, &pref.Preference{
 		OrgID:  cmd.OrgID,
 		UserID: cmd.UserID,
@@ -112,9 +117,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
-				JSONData: &pref.PreferenceJSONData{
-					Language: cmd.Language,
-				},
+				JSONData:        jsonData,
 			}
 			_, err = s.store.Insert(ctx, preference)
 			if err != nil {
@@ -130,16 +133,8 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	preference.Updated = time.Now()
 	preference.Version += 1
 	preference.HomeDashboardID = cmd.HomeDashboardID
-	preference.JSONData = &pref.PreferenceJSONData{
-		Language: cmd.Language,
-	}
+	preference.JSONData = jsonData
 
-	if cmd.Navbar != nil {
-		preference.JSONData.Navbar = *cmd.Navbar
-	}
-	if cmd.QueryHistory != nil {
-		preference.JSONData.QueryHistory = *cmd.QueryHistory
-	}
 	return s.store.Update(ctx, preference)
 }
 
@@ -173,15 +168,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	if cmd.Navbar != nil {
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		if cmd.Navbar.SavedItems != nil {
-			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
-		}
-	}
-
 	if cmd.QueryHistory != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -193,6 +179,18 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	if cmd.HomeDashboardID != nil {
 		preference.HomeDashboardID = *cmd.HomeDashboardID
+	}
+
+	if cmd.CookiePreferences != nil {
+		cookies, err := parseCookiePreferences(cmd.CookiePreferences)
+		if err != nil {
+			return err
+		}
+
+		if preference.JSONData == nil {
+			preference.JSONData = &pref.PreferenceJSONData{}
+		}
+		preference.JSONData.CookiePreferences = cookies
 	}
 
 	if cmd.Timezone != nil {
@@ -209,16 +207,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	preference.Updated = time.Now()
 	preference.Version += 1
-
-	// Wrap this in an if statement to maintain backwards compatibility
-	if cmd.Navbar != nil {
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		if cmd.Navbar.SavedItems != nil {
-			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
-		}
-	}
 
 	if exists {
 		err = s.store.Update(ctx, preference)
@@ -246,4 +234,41 @@ func (s *Service) GetDefaults() *pref.Preference {
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
+}
+
+func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error) {
+	allowed := map[pref.CookieType]struct{}{
+		"analytics":   {},
+		"performance": {},
+		"functional":  {},
+	}
+
+	m := map[string]struct{}{}
+	for _, c := range prefs {
+		if _, ok := allowed[c]; !ok {
+			return nil, pref.ErrUnknownCookieType.Errorf("'%s' is not an allowed cookie type", c)
+		}
+
+		m[string(c)] = struct{}{}
+	}
+	return m, nil
+}
+
+func preferenceData(cmd *pref.SavePreferenceCommand) (*pref.PreferenceJSONData, error) {
+	jsonData := &pref.PreferenceJSONData{
+		Language: cmd.Language,
+	}
+
+	if cmd.QueryHistory != nil {
+		jsonData.QueryHistory = *cmd.QueryHistory
+	}
+	if cmd.CookiePreferences != nil {
+		cookies, err := parseCookiePreferences(cmd.CookiePreferences)
+		if err != nil {
+			return nil, err
+		}
+		jsonData.CookiePreferences = cookies
+	}
+
+	return jsonData, nil
 }

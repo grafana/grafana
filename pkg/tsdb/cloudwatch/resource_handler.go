@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,8 +19,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
-	mux.HandleFunc("/describe-log-groups", routes.ResourceRequestMiddleware(routes.LogGroupsHandler, logger, e.getRequestContext))
-	mux.HandleFunc("/all-log-groups", handleResourceReq(e.handleGetAllLogGroups))
+	mux.HandleFunc("/log-groups", routes.ResourceRequestMiddleware(routes.LogGroupsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/metrics", routes.ResourceRequestMiddleware(routes.MetricsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/dimension-keys", routes.ResourceRequestMiddleware(routes.DimensionKeysHandler, logger, e.getRequestContext))
@@ -29,7 +29,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	return mux
 }
 
-type handleFn func(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
+type handleFn func(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
 
 func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
@@ -38,19 +38,23 @@ func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *ht
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
-		data, err := handleFunc(pluginContext, req.URL.Query())
+		data, err := handleFunc(ctx, pluginContext, req.URL.Query())
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		body, err := json.Marshal(data)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
 			logger.Error("Unable to write HTTP response", "error", err)
+			return
 		}
 	}
 }

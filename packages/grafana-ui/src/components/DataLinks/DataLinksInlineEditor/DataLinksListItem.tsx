@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
@@ -18,7 +18,7 @@ export interface DataLinksListItemProps {
   isEditing?: boolean;
 }
 
-export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, onRemove }) => {
+export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemProps) => {
   const theme = useTheme2();
   const styles = getDataLinkListItemStyles(theme);
   const { title = '', url = '' } = link;

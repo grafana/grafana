@@ -10,11 +10,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 
-	alertingModels "github.com/grafana/alerting/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -50,7 +50,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	}
 
 	if alertState.Image != nil {
-		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
+		nA[alertingModels.ImageTokenAnnotation] = generateImageURI(alertState.Image)
 	}
 
 	if alertState.StateReason != "" {
@@ -152,18 +152,28 @@ func FromStateTransitionToPostableAlerts(firingStates []state.StateTransition, s
 	return alerts
 }
 
-// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
-// Returns a list of alert instances that have expiration time.Now
-func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+// FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
+// and converts them to models.PostableAlert with EndsAt set to time.Now
+func FromAlertsStateToStoppedAlert(firingStates []state.StateTransition, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
-	for _, alertState := range firingStates {
-		if alertState.State == eval.Normal || alertState.State == eval.Pending {
+	for _, transition := range firingStates {
+		if transition.PreviousState == eval.Normal || transition.PreviousState == eval.Pending {
 			continue
 		}
-		postableAlert := stateToPostableAlert(alertState, appURL)
+		postableAlert := stateToPostableAlert(transition.State, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}
 	return alerts
+}
+
+// generateImageURI returns a string that serves as an identifier for the image.
+// It first checks if there is an image URL available, and if not,
+// it prefixes the image token with `token://` and uses it as the URI.
+func generateImageURI(image *ngModels.Image) string {
+	if image.URL != "" {
+		return image.URL
+	}
+	return "token://" + image.Token
 }

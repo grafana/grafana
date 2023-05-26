@@ -8,22 +8,26 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Manager struct {
 	client  *Client
 	baseURL string
 
-	log logger.Logger
+	log log.PrettyLogger
 }
 
-func ProvideService() *Manager {
-	defaultBaseURL := "https://grafana.com/api/plugins"
-	return New(false, defaultBaseURL, logger.NewLogger("plugin.repository"))
+func ProvideService(cfg *config.Cfg) (*Manager, error) {
+	defaultBaseURL, err := url.JoinPath(cfg.GrafanaComURL, "/api/plugins")
+	if err != nil {
+		return nil, err
+	}
+	return New(false, defaultBaseURL, log.NewPrettyLogger("plugin.repository")), nil
 }
 
-func New(skipTLSVerify bool, baseURL string, logger logger.Logger) *Manager {
+func New(skipTLSVerify bool, baseURL string, logger log.PrettyLogger) *Manager {
 	return &Manager{
 		client:  newClient(skipTLSVerify, logger),
 		baseURL: baseURL,
@@ -111,10 +115,9 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	var ver Version
 	latestForArch := latestSupportedVersion(plugin, compatOpts)
 	if latestForArch == nil {
-		return nil, ErrVersionUnsupported{
-			PluginID:         plugin.ID,
-			RequestedVersion: version,
-			SystemInfo:       compatOpts.String(),
+		return nil, ErrArcNotFound{
+			PluginID:   plugin.ID,
+			SystemInfo: compatOpts.OSAndArch(),
 		}
 	}
 

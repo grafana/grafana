@@ -81,7 +81,7 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
+				a.service = &fakeServiceAccountService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
 			})
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
@@ -159,7 +159,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedServiceAccountProfile: tt.expectedSA}
+				a.service = &fakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d", tt.id))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
@@ -221,7 +221,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedServiceAccountProfile: tt.expectedSA}
+				a.service = &fakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), strings.NewReader(tt.body))
@@ -240,7 +240,7 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 	cfg := setting.NewCfg()
 	api := &ServiceAccountsAPI{
 		cfg:                  cfg,
-		service:              &fakeService{},
+		service:              &fakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
 		accesscontrol:        acimpl.ProvideAccessControl(cfg),
 		RouterRegister:       routing.NewRouteRegister(),
@@ -255,42 +255,41 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 	return webtest.NewServer(t, api.RouterRegister)
 }
 
-var _ service = new(fakeService)
+var _ service = new(fakeServiceAccountService)
 
-type fakeService struct {
+type fakeServiceAccountService struct {
 	service
 	ExpectedErr                   error
-	ExpectedApiKey                *apikey.APIKey
+	ExpectedAPIKey                *apikey.APIKey
 	ExpectedServiceAccountTokens  []apikey.APIKey
 	ExpectedServiceAccount        *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfile *serviceaccounts.ServiceAccountProfileDTO
 }
 
-func (f *fakeService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (f *fakeServiceAccountService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return f.ExpectedServiceAccount, f.ExpectedErr
 }
 
-func (f *fakeService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
+func (f *fakeServiceAccountService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
 	return f.ExpectedErr
 }
 
-func (f *fakeService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+func (f *fakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
 
-func (f *fakeService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+func (f *fakeServiceAccountService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return f.ExpectedServiceAccountTokens, f.ExpectedErr
 }
 
-func (f *fakeService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+func (f *fakeServiceAccountService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
 
-func (f *fakeService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	cmd.Result = f.ExpectedApiKey
-	return f.ExpectedErr
+func (f *fakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	return f.ExpectedAPIKey, f.ExpectedErr
 }
 
-func (f *fakeService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {
+func (f *fakeServiceAccountService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {
 	return f.ExpectedErr
 }

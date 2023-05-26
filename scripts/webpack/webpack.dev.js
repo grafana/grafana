@@ -1,5 +1,7 @@
 'use strict';
 
+const browserslist = require('browserslist');
+const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -10,7 +12,7 @@ const { merge } = require('webpack-merge');
 
 const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -34,10 +36,10 @@ module.exports = (env = {}) =>
         {
           test: /\.tsx?$/,
           use: {
-            loader: 'babel-loader',
+            loader: 'esbuild-loader',
             options: {
-              cacheDirectory: true,
-              cacheCompression: false,
+              loader: 'tsx',
+              target: esbuildTargets,
             },
           },
           exclude: /node_modules/,
@@ -86,8 +88,8 @@ module.exports = (env = {}) =>
               },
             },
           }),
-      // next major version of ForkTsChecker is dropping support for ESLint
       new ESLintPlugin({
+        cache: true,
         lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
       }),
@@ -114,8 +116,5 @@ module.exports = (env = {}) =>
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      // new BundleAnalyzerPlugin({
-      //   analyzerPort: 8889
-      // })
     ],
   });

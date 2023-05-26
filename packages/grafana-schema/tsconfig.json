@@ -5,8 +5,7 @@
     "isolatedModules": true,
     "rootDirs": ["."]
   },
-  // dashboard_experimental.gen.ts needs ignoring as isolatedModules requires it to contain an import or export statement.
-  "exclude": ["dist/**/*", "src/schema/*/*_experimental.gen.ts"],
+  "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
   "include": ["src/**/*.ts*"]
 }

@@ -1,5 +1,6 @@
 import { DataQueryRequest, DataQueryResponse, dateMath } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { CloudWatchQuery } from '../types';
 
@@ -29,7 +30,7 @@ describe('addDataLinksToLogsResponse', () => {
       ],
     };
 
-    const mockOptions: any = {
+    const mockOptions = {
       targets: [
         {
           refId: 'A',
@@ -39,7 +40,7 @@ describe('addDataLinksToLogsResponse', () => {
           region: 'us-east-1',
         },
       ],
-    };
+    } as DataQueryRequest<CloudWatchQuery>;
 
     setDataSourceSrv({
       async get() {
@@ -47,7 +48,7 @@ describe('addDataLinksToLogsResponse', () => {
           name: 'Xray',
         };
       },
-    } as any);
+    } as DatasourceSrv);
 
     await addDataLinksToLogsResponse(
       mockResponse,

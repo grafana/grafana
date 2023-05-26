@@ -2,9 +2,10 @@ import { ComponentType } from 'react';
 
 import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 
-import { DimensionContext } from '../dimensions/context';
+import { DimensionContext } from '../dimensions';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
@@ -27,6 +28,28 @@ export interface CanvasElementOptions<TConfig = any> {
   placement?: Placement;
   background?: BackgroundConfig;
   border?: LineConfig;
+  connections?: CanvasConnection[];
+}
+
+// Unit is percentage from the middle of the element
+// 0, 0 middle; -1, -1 bottom left; 1, 1 top right
+export interface ConnectionCoordinates {
+  x: number;
+  y: number;
+}
+
+export enum ConnectionPath {
+  Straight = 'straight',
+}
+
+export interface CanvasConnection {
+  source: ConnectionCoordinates;
+  target: ConnectionCoordinates;
+  targetName?: string;
+  path: ConnectionPath;
+  color?: ColorDimensionConfig;
+  size?: ScaleDimensionConfig;
+  // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
 export interface CanvasElementProps<TConfig = any, TData = any> {

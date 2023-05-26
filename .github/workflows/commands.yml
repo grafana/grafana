@@ -22,5 +22,5 @@ jobs:
         uses: ./actions/commands
         with:
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          token: ${{secrets.ISSUE_COMMANDS_TOKEN}}
           configPath: commands

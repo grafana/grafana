@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -17,7 +17,7 @@ interface Props {
 const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
-export const FilterList: FC<Props> = ({ options, values, caseSensitive, onChange }) => {
+export const FilterList = ({ options, values, caseSensitive, onChange }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');

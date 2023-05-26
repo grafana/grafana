@@ -367,7 +367,7 @@ describe('optionsPickerReducer', () => {
         .whenActionIsDispatched(moveOptionsHighlight(-1))
         .thenStateShouldEqual({
           ...initialState,
-          highlightIndex: 0,
+          highlightIndex: -1,
         });
     });
   });

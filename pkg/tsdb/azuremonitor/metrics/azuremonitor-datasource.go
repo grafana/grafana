@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -41,6 +41,8 @@ const AzureMonitorAPIVersion = "2021-05-01"
 func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
 	e.Proxy.Do(rw, req, cli)
 }
+
+var subscriptions = map[string]string{}
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
@@ -110,20 +112,36 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		filterInBody := true
 		if azJSONModel.Region != "" {
 			params.Add("region", azJSONModel.Region)
-		} else {
-			// Deprecated, if no region is specified, only one resource group and name is supported
+		}
+		resourceIDs := []string{}
+		resourceMap := map[string]types.AzureMonitorResource{}
+		if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
 			ub := urlBuilder{
 				ResourceURI: azJSONModel.ResourceURI,
 				// Alternative, used to reconstruct resource URI if it's not present
 				DefaultSubscription: dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       azJSONModel.ResourceGroup,
+				ResourceGroup:       resourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        azJSONModel.ResourceName,
+				ResourceName:        resourceName,
 			}
 			azureURL = ub.BuildMetricsURL()
 			// POST requests are only supported at the subscription level
 			filterInBody = false
+			resourceMap[ub.buildResourceURI()] = types.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
+		} else {
+			for _, r := range azJSONModel.Resources {
+				ub := urlBuilder{
+					DefaultSubscription: dsInfo.Settings.SubscriptionId,
+					Subscription:        queryJSONModel.Subscription,
+					ResourceGroup:       r.ResourceGroup,
+					MetricNamespace:     azJSONModel.MetricNamespace,
+					ResourceName:        r.ResourceName,
+				}
+				resourceUri := ub.buildResourceURI()
+				resourceMap[resourceUri] = r
+				resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", resourceUri))
+			}
 		}
 
 		// old model
@@ -147,17 +165,6 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			}
 		}
 
-		resourceIDs := []string{}
-		for _, r := range azJSONModel.Resources {
-			ub := urlBuilder{
-				DefaultSubscription: dsInfo.Settings.SubscriptionId,
-				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       r.ResourceGroup,
-				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        r.ResourceName,
-			}
-			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
-		}
 		filterString := strings.Join(resourceIDs, " or ")
 
 		if dimSB.String() != "" {
@@ -166,9 +173,10 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			} else {
 				filterString = dimSB.String()
 			}
-			if azJSONModel.Top != "" {
-				params.Add("top", azJSONModel.Top)
-			}
+		}
+
+		if azJSONModel.Top != "" {
+			params.Add("top", azJSONModel.Top)
 		}
 
 		target = params.Encode()
@@ -178,13 +186,15 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		}
 
 		query := &types.AzureMonitorQuery{
-			URL:        azureURL,
-			Target:     target,
-			Params:     params,
-			RefID:      query.RefID,
-			Alias:      alias,
-			TimeRange:  query.TimeRange,
-			Dimensions: azJSONModel.DimensionFilters,
+			URL:          azureURL,
+			Target:       target,
+			Params:       params,
+			RefID:        query.RefID,
+			Alias:        alias,
+			TimeRange:    query.TimeRange,
+			Dimensions:   azJSONModel.DimensionFilters,
+			Resources:    resourceMap,
+			Subscription: queryJSONModel.Subscription,
 		}
 		if filterString != "" {
 			if filterInBody {
@@ -197,6 +207,51 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 	}
 
 	return azureMonitorQueries, nil
+}
+
+func retrieveSubscriptionDetails(e *AzureMonitorDatasource, cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) {
+	req, err := e.createRequest(ctx, logger, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
+	if err != nil {
+		logger.Error("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
+	}
+	values := req.URL.Query()
+	values.Add("api-version", "2022-12-01")
+	req.URL.RawQuery = values.Encode()
+
+	ctx, span := tracer.Start(ctx, "azuremonitor query")
+	span.SetAttributes("subscription", subscriptionId, attribute.Key("subscription").String(subscriptionId))
+	span.SetAttributes("datasource_id", dsId, attribute.Key("datasource_id").Int64(dsId))
+	span.SetAttributes("org_id", orgId, attribute.Key("org_id").Int64(orgId))
+
+	defer span.End()
+	tracer.Inject(ctx, req.Header, span)
+	logger.Debug("AzureMonitor", "Subscription Details Req")
+	res, err := cli.Do(req)
+	if err != nil {
+		logger.Warn("failed to request subscription details: %s", err)
+	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		logger.Warn("failed to read response body: %s", err)
+	}
+
+	if res.StatusCode/100 != 2 {
+		logger.Warn("request failed, status: %s, error: %s", res.Status, string(body))
+	}
+
+	var data types.SubscriptionsResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		logger.Warn("Failed to unmarshal subscription detail response", "error", err, "status", res.Status, "body", string(body))
+	}
+
+	subscriptions[data.SubscriptionID] = data.DisplayName
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Logger, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
@@ -245,10 +300,14 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	azurePortalUrl, err := resourcegraph.GetAzurePortalUrl(dsInfo.Cloud)
+	azurePortalUrl, err := loganalytics.GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
+	}
+
+	if _, ok := subscriptions[query.Subscription]; !ok {
+		retrieveSubscriptionDetails(e, cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
 	}
 
 	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
@@ -279,7 +338,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 
 	if res.StatusCode/100 != 2 {
 		logger.Debug("Request failed", "status", res.Status, "body", string(body))
-		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return types.AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
 	}
 
 	var data types.AzureMonitorResponse
@@ -316,7 +375,13 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 				Unit: toGrafanaUnit(amr.Value[0].Unit),
 			})
 		}
-		resourceID := labels["microsoft.resourceid"]
+
+		resourceIdLabel := "microsoft.resourceid"
+		resourceID, ok := labels[resourceIdLabel]
+		if !ok {
+			resourceIdLabel = "Microsoft.ResourceId"
+			resourceID = labels[resourceIdLabel]
+		}
 		resourceIDSlice := strings.Split(resourceID, "/")
 		resourceName := ""
 		if len(resourceIDSlice) > 1 {
@@ -327,8 +392,14 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceName = extractResourceNameFromMetricsURL(query.URL)
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
+		if _, ok := labels[resourceIdLabel]; ok {
+			delete(labels, resourceIdLabel)
+			labels["resourceName"] = resourceName
+		}
+
+		currentResource := query.Resources[resourceID]
 		if query.Alias != "" {
-			displayName := formatAzureMonitorLegendKey(query.Alias, resourceName,
+			displayName := formatAzureMonitorLegendKey(query.Alias, query.Subscription, currentResource,
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
 
 			if dataField.Config != nil {
@@ -366,8 +437,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 		if err != nil {
 			return nil, err
 		}
-
-		frameWithLink := resourcegraph.AddConfigLinks(*frame, queryUrl)
+		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl, nil)
 		frames = append(frames, &frameWithLink)
 	}
 
@@ -482,12 +552,8 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatAzureMonitorLegendKey(alias string, resourceName string, metricName string, metadataName string,
+func formatAzureMonitorLegendKey(alias string, subscriptionId string, resource types.AzureMonitorResource, metricName string, metadataName string,
 	metadataValue string, namespace string, seriesID string, labels data.Labels) string {
-	startIndex := strings.Index(seriesID, "/resourceGroups/") + 16
-	endIndex := strings.Index(seriesID, "/providers")
-	resourceGroup := seriesID[startIndex:endIndex]
-
 	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
 	lowerLabels := data.Labels{}
 	for k, v := range labels {
@@ -504,8 +570,20 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
 		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
 
+		if metaPartName == "subscriptionid" {
+			return []byte(subscriptionId)
+		}
+
+		if metaPartName == "subscription" {
+			if subscription, ok := subscriptions[subscriptionId]; ok {
+				return []byte(subscription)
+			} else {
+				return []byte{}
+			}
+		}
+
 		if metaPartName == "resourcegroup" {
-			return []byte(resourceGroup)
+			return []byte(resource.ResourceGroup)
 		}
 
 		if metaPartName == "namespace" {
@@ -513,7 +591,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "resourcename" {
-			return []byte(resourceName)
+			return []byte(resource.ResourceName)
 		}
 
 		if metaPartName == "metric" {
@@ -594,4 +672,19 @@ func extractResourceNameFromMetricsURL(url string) string {
 
 func extractResourceIDFromMetricsURL(url string) string {
 	return strings.Split(url, "/providers/microsoft.insights/metrics")[0]
+}
+
+func hasOneResource(query types.AzureMonitorJSONQuery) (bool, string, string) {
+	azJSONModel := query.AzureMonitor
+	if len(azJSONModel.Resources) > 1 {
+		return false, "", ""
+	}
+	if len(azJSONModel.Resources) == 1 {
+		return true, azJSONModel.Resources[0].ResourceGroup, azJSONModel.Resources[0].ResourceName
+	}
+	if azJSONModel.ResourceGroup != "" || azJSONModel.ResourceName != "" {
+		// Deprecated, Resources should be used instead
+		return true, azJSONModel.ResourceGroup, azJSONModel.ResourceName
+	}
+	return false, "", ""
 }

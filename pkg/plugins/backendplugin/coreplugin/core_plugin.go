@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -62,6 +63,10 @@ func (cp *corePlugin) Decommission() error {
 
 func (cp *corePlugin) IsDecommissioned() bool {
 	return false
+}
+
+func (cp *corePlugin) Target() backendplugin.Target {
+	return backendplugin.TargetInMemory
 }
 
 func (cp *corePlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {

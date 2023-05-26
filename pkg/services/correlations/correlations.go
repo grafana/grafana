@@ -6,27 +6,47 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus) *CorrelationsService {
+var (
+	logger = log.New("correlations")
+)
+
+func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, cfg *setting.Cfg,
+) (*CorrelationsService, error) {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
-		log:               log.New("correlations"),
+		log:               logger,
 		DataSourceService: ds,
 		AccessControl:     ac,
+		QuotaService:      qs,
 	}
 
 	s.registerAPIEndpoints()
 
 	bus.AddEventListener(s.handleDatasourceDeletion)
 
-	return s
+	defaultLimits, err := readQuotaConfig(cfg)
+	if err != nil {
+		return s, err
+	}
+
+	if err := qs.RegisterQuotaReporter(&quota.NewUsageReporter{
+		TargetSrv:     QuotaTargetSrv,
+		DefaultLimits: defaultLimits,
+		Reporter:      s.Usage,
+	}); err != nil {
+		return s, err
+	}
+
+	return s, nil
 }
 
 type Service interface {
@@ -42,9 +62,19 @@ type CorrelationsService struct {
 	log               log.Logger
 	DataSourceService datasources.DataSourceService
 	AccessControl     accesscontrol.AccessControl
+	QuotaService      quota.Service
 }
 
 func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
+	quotaReached, err := s.QuotaService.CheckQuotaReached(ctx, QuotaTargetSrv, nil)
+	if err != nil {
+		logger.Warn("Error getting correlation quota.", "error", err)
+		return Correlation{}, ErrCorrelationsQuotaFailed
+	}
+	if quotaReached {
+		return Correlation{}, ErrCorrelationsQuotaReached
+	}
+
 	return s.createCorrelation(ctx, cmd)
 }
 
@@ -92,4 +122,24 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 
 		return nil
 	})
+}
+
+func (s *CorrelationsService) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	return s.CountCorrelations(ctx)
+}
+
+func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
+	limits := &quota.Map{}
+
+	if cfg == nil {
+		return limits, nil
+	}
+
+	globalQuotaTag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return limits, err
+	}
+
+	limits.Set(globalQuotaTag, cfg.Quota.Global.Correlations)
+	return limits, nil
 }

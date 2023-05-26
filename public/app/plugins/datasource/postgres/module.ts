@@ -1,6 +1,7 @@
 import { DataSourcePlugin } from '@grafana/data';
 import { SQLQuery } from 'app/features/plugins/sql/types';
 
+import { CheatSheet } from './CheatSheet';
 import { QueryEditor } from './QueryEditor';
 import { PostgresConfigEditor } from './configuration/ConfigurationEditor';
 import { PostgresDatasource } from './datasource';
@@ -10,4 +11,5 @@ export const plugin = new DataSourcePlugin<PostgresDatasource, SQLQuery, Postgre
   PostgresDatasource
 )
   .setQueryEditor(QueryEditor)
+  .setQueryEditorHelp(CheatSheet)
   .setConfigEditor(PostgresConfigEditor);

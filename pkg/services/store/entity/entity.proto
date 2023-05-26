@@ -36,20 +36,23 @@ message Entity {
   // Who updated the entity
   string updated_by = 6;
 
-  // Content Length
-  int64 size = 7;
+  // The folder UID (not stored in the body)
+  string folder = 7;
 
   // MD5 digest of the body
   string ETag = 8;
 
+  // Content Length
+  int64 size = 9;
+
   // Raw bytes of the storage entity.  The kind will determine what is a valid payload
-  bytes body = 9;
+  bytes body = 10;
 
   // Entity summary as JSON
-  bytes summary_json = 10;
+  bytes summary_json = 11;
 
   // External location info
-  EntityOriginInfo origin = 11;
+  EntityOriginInfo origin = 12;
 }
 
 // This stores additional metadata for items entities that were synced from external systmes
@@ -356,6 +359,54 @@ message EntitySearchResponse {
   string next_page_token = 2;
 }
 
+//-----------------------------------------------
+// Watch request/response
+//-----------------------------------------------
+
+message EntityWatchRequest {
+  // Timestamp of last changes. Empty will default to  
+  int64 since = 1; 
+  
+  // Watch sppecific entities
+  repeated GRN GRN = 2;
+
+  // limit to a specific kind (empty is all)
+  repeated string kind = 3;
+
+  // Limit results to items in a specific folder
+  string folder = 4;
+
+  // Must match all labels
+  map<string,string> labels = 5;
+
+  // Return the full body in each payload
+  bool with_body = 6;
+
+  // Return the full body in each payload
+  bool with_labels = 7;
+
+  // Return the full body in each payload
+  bool with_fields = 8;
+}
+
+message EntityWatchResponse {
+  // Timestamp the event was sent
+  int64 timestamp = 1; 
+
+  // List of entities with the same action
+  repeated Entity entity = 2;
+
+  // Action code
+  Action action = 3;
+
+  // Status enumeration
+  enum Action {
+    UNKNOWN = 0;
+    UPDATED = 1;
+    DELETED = 2;
+  }
+}
+
 
 //-----------------------------------------------
 // Storage interface
@@ -369,11 +420,8 @@ service EntityStore {
   rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
-
-// Ideally an additional search endpoint with more flexibility to limit what you actually care about
-//  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/proto/backend.proto#L129
-//  rpc SearchEX(EntitySearchRequest) returns (DataResponse);
-
+  rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
+  
   // TEMPORARY... while we split this into a new service (see below)
   rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
 }

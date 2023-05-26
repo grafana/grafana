@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React, { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataQuery } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -23,11 +22,13 @@ import { AddToDashboard } from '.';
 const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => {
   const store = configureStore({
     explore: {
-      left: {
-        queries,
-        queryResponse: createEmptyQueryResponse(),
+      panes: {
+        left: {
+          queries,
+          queryResponse: createEmptyQueryResponse(),
+        },
       },
-    } as ExploreState,
+    } as unknown as ExploreState,
   });
 
   return render(<Provider store={store}>{children}</Provider>);
@@ -202,7 +203,6 @@ describe('AddToDashboardButton', () => {
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -244,7 +244,6 @@ describe('AddToDashboardButton', () => {
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -360,7 +359,6 @@ describe('AddToDashboardButton', () => {
         {
           uid: 'someUid',
           isStarred: false,
-          items: [],
           title: 'Dashboard Title',
           tags: [],
           type: DashboardSearchItemType.DashDB,

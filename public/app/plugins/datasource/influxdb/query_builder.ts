@@ -25,7 +25,17 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
-  return str + '"' + tag.key + '" ' + operator + ' ' + value;
+  let escapedKey = `"${tag.key}"`;
+
+  if (tag.key.endsWith('::tag')) {
+    escapedKey = `"${tag.key.slice(0, -5)}"::tag`;
+  }
+
+  if (tag.key.endsWith('::field')) {
+    escapedKey = `"${tag.key.slice(0, -7)}"::field`;
+  }
+
+  return str + escapedKey + ' ' + operator + ' ' + value;
 }
 
 export class InfluxQueryBuilder {
@@ -54,13 +64,18 @@ export class InfluxQueryBuilder {
       measurement = this.target.measurement;
       policy = this.target.policy;
 
-      if (!measurement.match('^/.*/')) {
+      // If there is a measurement and it is not empty string
+      if (!measurement.match(/^\/.*\/|^$/)) {
         measurement = '"' + measurement + '"';
 
         if (policy && policy !== 'default') {
           policy = '"' + policy + '"';
           measurement = policy + '.' + measurement;
         }
+      }
+
+      if (measurement === '') {
+        return 'SHOW FIELD KEYS';
       }
 
       return 'SHOW FIELD KEYS FROM ' + measurement;
@@ -79,11 +94,19 @@ export class InfluxQueryBuilder {
         measurement = policy + '.' + measurement;
       }
 
-      query += ' FROM ' + measurement;
+      if (measurement !== '') {
+        query += ' FROM ' + measurement;
+      }
     }
 
     if (withKey) {
-      query += ' WITH KEY = "' + withKey + '"';
+      let keyIdentifier = withKey;
+
+      if (keyIdentifier.endsWith('::tag')) {
+        keyIdentifier = keyIdentifier.slice(0, -5);
+      }
+
+      query += ' WITH KEY = "' + keyIdentifier + '"';
     }
 
     if (this.target.tags && this.target.tags.length > 0) {

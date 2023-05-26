@@ -6,7 +6,7 @@ import SVG from 'react-inlinesvg';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
 
-import { DashboardSectionItem } from '../types';
+import { DashboardViewItem } from '../types';
 
 import { getThumbnailURL } from './SearchCard';
 
@@ -14,7 +14,7 @@ export interface Props {
   className?: string;
   imageHeight: number;
   imageWidth: number;
-  item: DashboardSectionItem;
+  item: DashboardViewItem;
   lastUpdated?: string | null;
   onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
@@ -25,7 +25,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
   const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(theme, imageHeight, imageWidth);
 
-  const folderTitle = item.folderTitle || 'General';
+  const folderTitle = item.parentTitle || 'General';
 
   return (
     <a className={classNames(className, styles.card)} key={item.uid} href={item.url} onClick={onClick}>
@@ -66,7 +66,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
           )}
         </div>
         <div>
-          <TagList className={styles.tagList} tags={item.tags} />
+          <TagList className={styles.tagList} tags={item.tags ?? []} />
         </div>
       </div>
     </a>

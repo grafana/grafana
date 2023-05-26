@@ -9,22 +9,22 @@ import (
 	"github.com/grafana/thema"
 )
 
-func makeTreeOrPanic(path string, pkgname string, rt *thema.Runtime) *pfs.Tree {
+func parsePluginOrPanic(path string, pkgname string, rt *thema.Runtime) pfs.ParsedPlugin {
   sub, err := fs.Sub(grafana.CueSchemaFS, path)
   if err != nil {
     panic("could not create fs sub to " + path)
   }
-  tree, err := pfs.ParsePluginFS(sub, rt)
+  pp, err := pfs.ParsePluginFS(sub, rt)
   if err != nil {
     panic(fmt.Sprintf("error parsing plugin metadata for %s: %s", pkgname, err))
   }
-  return tree
+  return pp
 }
 
-func coreTreeList(rt *thema.Runtime) pfs.TreeList{
-  return pfs.TreeList{
+func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin{
+  return []pfs.ParsedPlugin{
     {{- range .Plugins }}
-    makeTreeOrPanic("{{ .Path }}", "{{ .PkgName }}", rt),
+    parsePluginOrPanic("{{ .Path }}", "{{ .PkgName }}", rt),
     {{- end }}
   }
 }

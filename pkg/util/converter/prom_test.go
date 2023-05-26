@@ -16,9 +16,6 @@ import (
 const update = true
 
 func TestReadPromFrames(t *testing.T) {
-	// FIXME:
-	// skipping test due to flaky behavior
-	t.Skip()
 	files := []string{
 		"prom-labels",
 		"prom-matrix",
@@ -68,7 +65,7 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		}
 
 		fname := name + "-frame"
-		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
+		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, update)
 	}
 }
 

@@ -24,7 +24,7 @@ import { Options } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
-export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
+export const LogsPanel = ({
   data,
   timeZone,
   fieldConfig,
@@ -40,7 +40,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   },
   title,
   id,
-}) => {
+}: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles(title, isAscending));
   const [scrollTop, setScrollTop] = useState(0);

@@ -9,16 +9,15 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const DefaultAdminUserId = 1
 
-func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
+func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 	newPassword := ""
 	adminId := int64(c.Int("user-id"))
 
@@ -46,7 +45,7 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 }
 
 func resetPassword(adminId int64, newPassword string, userSvc user.Service) error {
-	password := models.Password(newPassword)
+	password := user.Password(newPassword)
 	if password.IsWeak() {
 		return fmt.Errorf("new password is too short")
 	}

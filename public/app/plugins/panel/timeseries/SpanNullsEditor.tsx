@@ -18,10 +18,12 @@ const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
   },
 ];
 
-export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number, any>> = ({ value, onChange }) => {
+type Props = FieldOverrideEditorProps<boolean | number, unknown>;
+
+export const SpanNullsEditor = ({ value, onChange }: Props) => {
   const isThreshold = typeof value === 'number';
-  const formattedTime = isThreshold ? rangeUtil.secondsToHms((value as number) / 1000) : undefined;
-  GAPS_OPTIONS[2].value = isThreshold ? (value as number) : 3600000; // 1h
+  const formattedTime = isThreshold ? rangeUtil.secondsToHms(value / 1000) : undefined;
+  GAPS_OPTIONS[2].value = isThreshold ? value : 3600000; // 1h
 
   const checkAndUpdate = (txt: string) => {
     let val: boolean | number = false;
@@ -39,11 +41,11 @@ export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number
     if (e.key !== 'Enter') {
       return;
     }
-    checkAndUpdate((e.target as any).value);
+    checkAndUpdate(e.currentTarget.value);
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    checkAndUpdate(e.target.value);
+    checkAndUpdate(e.currentTarget.value);
   };
 
   return (

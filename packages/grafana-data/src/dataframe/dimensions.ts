@@ -29,11 +29,11 @@ export const getColumnFromDimension = (dimension: Dimension, column: number) => 
 };
 
 export const getValueFromDimension = (dimension: Dimension, column: number, row: number) => {
-  return dimension.columns[column].values.get(row);
+  return dimension.columns[column].values[row];
 };
 
 export const getAllValuesFromDimension = (dimension: Dimension, column: number, row: number) => {
-  return dimension.columns.map((c) => c.values.get(row));
+  return dimension.columns.map((c) => c.values[row]);
 };
 
 export const getDimensionByName = (dimensions: Dimensions, name: string) => dimensions[name];

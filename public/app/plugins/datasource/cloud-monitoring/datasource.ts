@@ -8,6 +8,7 @@ import {
   DataSourceInstanceSettings,
   ScopedVars,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse, BackendSrv } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -16,16 +17,8 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
 import { getMetricType, setMetricType } from './functions';
-import {
-  CloudMonitoringOptions,
-  CloudMonitoringQuery,
-  Filter,
-  MetricDescriptor,
-  QueryType,
-  PostResponse,
-  Aggregation,
-  MetricQuery,
-} from './types';
+import { CloudMonitoringQuery, QueryType, MetricQuery, Filter } from './types/query';
+import { CloudMonitoringOptions, MetricDescriptor, PostResponse, Aggregation } from './types/types';
 import { CloudMonitoringVariableSupport } from './variables';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
@@ -39,7 +32,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
     public templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -89,7 +82,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     };
   }
 
-  async getLabels(metricType: string, refId: string, projectName: string, aggregation?: Aggregation) {
+  async getLabels(
+    metricType: string,
+    refId: string,
+    projectName: string,
+    aggregation?: Aggregation,
+    timeRange?: TimeRange
+  ) {
     const options = {
       targets: [
         {
@@ -107,7 +106,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           ),
         },
       ],
-      range: this.timeSrv.timeRange(),
+      range: timeRange ?? this.timeSrv.timeRange(),
     };
 
     const queries = options.targets;
@@ -189,6 +188,17 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     ) as Promise<MetricDescriptor[]>;
   }
 
+  async filterMetricsByType(projectName: string, filter: string): Promise<MetricDescriptor[]> {
+    if (!projectName) {
+      return [];
+    }
+
+    return this.getResource(
+      `metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`,
+      { filter: `metric.type : "${filter}"` }
+    );
+  }
+
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
     return this.getResource(`services/v3/projects/${this.templateSrv.replace(projectName)}/services?pageSize=1000`);
   }
@@ -216,14 +226,16 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   // This is a manual port of the migration code in cloudmonitoring.go
   // DO NOT UPDATE THIS CODE WITHOUT UPDATING THE BACKEND CODE
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
+    const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
     if (
       !query.hasOwnProperty('metricQuery') &&
       !query.hasOwnProperty('sloQuery') &&
       !query.hasOwnProperty('timeSeriesQuery') &&
       !query.hasOwnProperty('timeSeriesList')
     ) {
-      const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
       return {
+        datasource,
+        key,
         refId,
         intervalMs,
         hide,
@@ -235,7 +247,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       };
     }
 
-    if (has(query, 'metricQuery') && ['metrics', QueryType.ANNOTATION].includes(query.queryType)) {
+    if (has(query, 'metricQuery') && ['metrics', QueryType.ANNOTATION].includes(query.queryType ?? '')) {
       const metricQuery: MetricQuery = get(query, 'metricQuery')!;
       if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
@@ -307,7 +319,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!query.timeSeriesQuery && !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
     }
 
-    if ([QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType)) {
+    if (query.queryType && [QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType)) {
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 

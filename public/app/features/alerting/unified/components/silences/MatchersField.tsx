@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +13,7 @@ interface Props {
   className?: string;
 }
 
-const MatchersField: FC<Props> = ({ className }) => {
+const MatchersField = ({ className }: Props) => {
   const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {

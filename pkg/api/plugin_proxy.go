@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
+func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	var once sync.Once
 	var pluginProxyTransport *http.Transport
 	once.Do(func() {
@@ -63,6 +63,6 @@ func extractProxyPath(originalRawPath string) string {
 	return pluginProxyPathRegexp.ReplaceAllString(originalRawPath, "")
 }
 
-func getProxyPath(c *models.ReqContext) string {
+func getProxyPath(c *contextmodel.ReqContext) string {
 	return extractProxyPath(c.Req.URL.EscapedPath())
 }

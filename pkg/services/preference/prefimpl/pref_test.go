@@ -174,51 +174,15 @@ func TestGetDefaults_JSONData(t *testing.T) {
 	queryPreference := pref.QueryHistoryPreference{
 		HomeTab: "hometab",
 	}
-	userNavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "explore",
-			Text: "Explore",
-			Url:  "/explore",
-		}},
-	}
-	orgNavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "alerting",
-			Text: "Alerting",
-			Url:  "/alerting",
-		}},
-	}
-	team1NavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "dashboards",
-			Text: "Dashboards",
-			Url:  "/dashboards",
-		}},
-	}
-	team2NavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "home",
-			Text: "Home",
-			Url:  "/home",
-		}},
-	}
 	userPreferencesJsonData := pref.PreferenceJSONData{
-		Navbar:       userNavbarPreferences,
 		QueryHistory: queryPreference,
 	}
-	orgPreferencesJsonData := pref.PreferenceJSONData{
-		Navbar: orgNavbarPreferences,
-	}
+	orgPreferencesJsonData := pref.PreferenceJSONData{}
 	orgPreferencesWithLanguageJsonData := pref.PreferenceJSONData{
-		Navbar:   orgNavbarPreferences,
 		Language: "en-GB",
 	}
-	team2PreferencesJsonData := pref.PreferenceJSONData{
-		Navbar: team2NavbarPreferences,
-	}
-	team1PreferencesJsonData := pref.PreferenceJSONData{
-		Navbar: team1NavbarPreferences,
-	}
+	team2PreferencesJsonData := pref.PreferenceJSONData{}
+	team1PreferencesJsonData := pref.PreferenceJSONData{}
 
 	t.Run("users have precedence over org", func(t *testing.T) {
 		prefService := &Service{
@@ -274,7 +238,6 @@ func TestGetDefaults_JSONData(t *testing.T) {
 			WeekStart: &weekStart,
 			JSONData: &pref.PreferenceJSONData{
 				Language:     "en-GB",
-				Navbar:       userNavbarPreferences,
 				QueryHistory: queryPreference,
 			},
 		}, preference)

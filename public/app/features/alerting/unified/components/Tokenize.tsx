@@ -31,15 +31,15 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
 
   const output: React.ReactElement[] = [];
 
-  lines.forEach((line, index) => {
+  lines.forEach((line, lineIndex) => {
     const matches = Array.from(line.matchAll(regex));
 
-    matches.forEach((match, index) => {
+    matches.forEach((match, matchIndex) => {
       const before = match.groups?.before;
       const token = match.groups?.token?.trim();
 
       if (before) {
-        output.push(<span key={`${index}-before`}>{before}</span>);
+        output.push(<span key={`${lineIndex}-${matchIndex}-before`}>{before}</span>);
       }
 
       if (token) {
@@ -47,11 +47,18 @@ function Tokenize({ input, delimiter = ['{{', '}}'] }: TokenizerProps) {
         const description = type === TokenType.Variable ? token : '';
         const tokenContent = `${open} ${token} ${close}`;
 
-        output.push(<Token key={`${index}-token`} content={tokenContent} type={type} description={description} />);
+        output.push(
+          <Token
+            key={`${lineIndex}-${matchIndex}-token`}
+            content={tokenContent}
+            type={type}
+            description={description}
+          />
+        );
       }
     });
 
-    output.push(<br key={`${index}-newline`} />);
+    output.push(<br key={`${lineIndex}-newline`} />);
   });
 
   return <span className={styles.wrapper}>{output}</span>;
@@ -81,12 +88,12 @@ function Token({ content, description, type }: TokenProps) {
       disabled={disableCard}
       content={
         <div className={styles.hoverTokenItem}>
-          <Badge text={<>{type}</>} color={'blue'} /> {description && <code>{description}</code>}
+          <Badge tabIndex={0} text={<>{type}</>} color={'blue'} /> {description && <code>{description}</code>}
         </div>
       }
     >
       <span>
-        <Badge className={styles.token} text={content} color={'blue'} />
+        <Badge tabIndex={0} className={styles.token} text={content} color={'blue'} />
       </span>
     </HoverCard>
   );

@@ -3,7 +3,8 @@ import angular from 'angular';
 import coreModule from '../core_module';
 
 class DynamicDirectiveSrv {
-  /** @ngInject */
+  static $inject = ['$compile'];
+
   constructor(private $compile: angular.ICompileService) {}
 
   addDirective(element: any, name: string, scope: any) {

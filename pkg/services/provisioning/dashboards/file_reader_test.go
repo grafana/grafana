@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -114,8 +113,8 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Folder = "Team A"
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{Id: 2}, nil).Times(2)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 2}, nil).Times(2)
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 			reader.dashboardProvisioningService = fakeService
@@ -132,7 +131,7 @@ func TestDashboardFileReader(t *testing.T) {
 			inserted := 0
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
 			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).
-				Return(&models.Dashboard{}, nil).Once().
+				Return(&dashboards.Dashboard{}, nil).Once().
 				Run(func(args mock.Arguments) {
 					inserted++
 				})
@@ -163,10 +162,10 @@ func TestDashboardFileReader(t *testing.T) {
 			checksum, err := util.Md5Sum(file)
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
 					CheckSum:   checksum,
 				},
@@ -190,17 +189,17 @@ func TestDashboardFileReader(t *testing.T) {
 			stat, err := os.Stat(oneDashboard + "/dashboard1.json")
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
 					CheckSum:   "fakechecksum",
 				},
 			}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 			reader.dashboardProvisioningService = fakeService
@@ -226,10 +225,10 @@ func TestDashboardFileReader(t *testing.T) {
 			checksum, err := util.Md5Sum(file)
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
 					CheckSum:   checksum,
 				},
@@ -253,17 +252,17 @@ func TestDashboardFileReader(t *testing.T) {
 			stat, err := os.Stat(oneDashboard + "/dashboard1.json")
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
 					CheckSum:   "fakechecksum",
 				},
 			}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 			reader.dashboardProvisioningService = fakeService
@@ -278,7 +277,7 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Options["path"] = containingID
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 			reader.dashboardProvisioningService = fakeService
@@ -294,8 +293,8 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg.Options["foldersFromFilesStructure"] = true
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(2)
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(3)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(3)
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 			reader.dashboardProvisioningService = fakeService
@@ -332,8 +331,8 @@ func TestDashboardFileReader(t *testing.T) {
 			cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return(nil, nil).Times(2)
-			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(2)
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(2)
+			fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
 
 			reader1, err := NewDashboardFileReader(cfg1, logger, nil, fakeStore)
 			reader1.dashboardProvisioningService = fakeService
@@ -380,7 +379,7 @@ func TestDashboardFileReader(t *testing.T) {
 				"folder": defaultDashboards,
 			},
 		}
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{Id: 1}, nil).Once()
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil).Once()
 
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
@@ -431,9 +430,9 @@ func TestDashboardFileReader(t *testing.T) {
 		absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
 		require.NoError(t, err)
 
-		provisionedDashboard := []*models.DashboardProvisioning{
-			{DashboardId: 1, Name: "Default", ExternalId: absPath1},
-			{DashboardId: 2, Name: "Default", ExternalId: absPath2},
+		provisionedDashboard := []*dashboards.DashboardProvisioning{
+			{DashboardID: 1, Name: "Default", ExternalID: absPath1},
+			{DashboardID: 2, Name: "Default", ExternalID: absPath2},
 		}
 
 		setupFakeService := func() {
@@ -453,7 +452,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
 			fakeService.On("UnprovisionDashboard", mock.Anything, mock.Anything).Return(nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 
 			cfg.DisableDeletion = true
 
@@ -469,7 +468,7 @@ func TestDashboardFileReader(t *testing.T) {
 			setupFakeService()
 
 			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(provisionedDashboard, nil).Once()
-			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
 			fakeService.On("DeleteProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 			reader, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
@@ -513,6 +512,6 @@ func (ffi FakeFileInfo) Sys() interface{} {
 
 type fakeDashboardStore struct{}
 
-func (fds *fakeDashboardStore) GetDashboard(_ context.Context, _ *models.GetDashboardQuery) error {
-	return dashboards.ErrDashboardNotFound
+func (fds *fakeDashboardStore) GetDashboard(_ context.Context, _ *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	return nil, dashboards.ErrDashboardNotFound
 }

@@ -20,6 +20,7 @@ export interface Props {
   invalidLabel?: boolean;
   invalidValue?: boolean;
   getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  debounceDuration: number;
 }
 
 export function LabelFilterItem({
@@ -32,6 +33,7 @@ export function LabelFilterItem({
   invalidLabel,
   invalidValue,
   getLabelValuesAutofillSuggestions,
+  debounceDuration,
 }: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
@@ -54,7 +56,10 @@ export function LabelFilterItem({
     return [];
   };
 
-  const labelValueSearch = debounce((query: string) => getLabelValuesAutofillSuggestions(query, item.label), 350);
+  const labelValueSearch = debounce(
+    (query: string) => getLabelValuesAutofillSuggestions(query, item.label),
+    debounceDuration
+  );
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">

@@ -3,30 +3,23 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
-  DataSourceRef,
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
 } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { SETTINGS_KEYS } from '../utils/logs';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { toRawTimeRange } from '../utils/time';
-
-export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [SupplementaryQueryType.LogsVolume];
-
-// Used to match supplementaryQueryType to corresponding local storage key
-// TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
-const supplementaryQuerySettings: { [key in SupplementaryQueryType]: string } = {
-  [SupplementaryQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
-};
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -36,27 +29,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
-  if (supplementaryQuerySettings[type]) {
-    store.set(supplementaryQuerySettings[type], enabled ? 'true' : 'false');
-  }
-};
-
-export const loadSupplementaryQueries = (): SupplementaryQueries => {
-  // We default to true for all supp queries
-  let supplementaryQueries: SupplementaryQueries = {
-    [SupplementaryQueryType.LogsVolume]: { enabled: true },
-  };
-
-  for (const type of SUPPLEMENTARY_QUERY_TYPES) {
-    // Only if "false" value in local storage, we disable it
-    if (store.get(supplementaryQuerySettings[type]) === 'false') {
-      supplementaryQueries[type] = { enabled: false };
-    }
-  }
-  return supplementaryQueries;
 };
 
 /**
@@ -87,6 +59,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  clearedAtIndex: null,
   rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
@@ -187,3 +160,19 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};

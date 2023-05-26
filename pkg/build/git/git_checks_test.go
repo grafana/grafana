@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v45/github"
-	"github.com/grafana/grafana/pkg/build/git"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/git"
 )
 
 type TestChecksService struct {

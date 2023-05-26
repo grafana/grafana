@@ -40,7 +40,7 @@ export function CloudWatchLink({ panelData, query, datasource }: Props) {
         source: sources ?? [],
       };
 
-      setHref(encodeUrl(urlProps, datasource.api.getActualRegion(query.region)));
+      setHref(encodeUrl(urlProps, datasource.resources.getActualRegion(query.region)));
     }
   }, [panelData, prevPanelData, datasource, query]);
 

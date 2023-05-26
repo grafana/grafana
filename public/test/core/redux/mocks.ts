@@ -5,8 +5,8 @@ export const mockToolkitActionCreator = <T extends string>(creator: PayloadActio
 };
 
 export type ToolkitActionCreatorWithoutPayloadMockType = typeof mockToolkitActionCreatorWithoutPayload &
-  ActionCreatorWithoutPayload<any>;
+  ActionCreatorWithoutPayload;
 
-export const mockToolkitActionCreatorWithoutPayload = (creator: ActionCreatorWithoutPayload<any>) => {
+export const mockToolkitActionCreatorWithoutPayload = (creator: ActionCreatorWithoutPayload) => {
   return Object.assign(jest.fn(), creator);
 };

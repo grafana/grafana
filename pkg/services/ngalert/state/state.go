@@ -140,6 +140,11 @@ func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
 }
 
+// IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
+func IsNormalStateWithNoReason(s *State) bool {
+	return s.State == eval.Normal && s.StateReason == ""
+}
+
 // StateTransition describes the transition from one state to another.
 type StateTransition struct {
 	*State
@@ -229,6 +234,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 
 			if result.Error != nil {
+				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and
 				// Datasource UID as labels
 				var queryError expr.QueryError
@@ -240,7 +246,6 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 							break
 						}
 					}
-					state.Annotations["Error"] = queryError.Error()
 				}
 			}
 		}
@@ -254,21 +259,29 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
-	state.Error = result.Error
-
-	if state.StartsAt.IsZero() {
-		state.StartsAt = result.EvaluatedAt
-	}
-	state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch rule.NoDataState {
 	case models.Alerting:
-		state.State = eval.Alerting
+		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
+		resultAlerting(state, rule, result, logger)
+		state.StateReason = models.NoData.String()
 	case models.NoData:
-		state.State = eval.NoData
+		if state.State == eval.NoData {
+			logger.Debug("Keeping state", "state", state.State)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		} else {
+			// This is the first occurrence of no data
+			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.NoData)
+			state.SetNoData("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		}
 	case models.OK:
-		state.State = eval.Normal
+		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
+		resultNormal(state, rule, result, logger)
+		state.StateReason = models.NoData.String()
+	default:
+		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
+		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.Annotations["Error"] = err.Error()
 	}
 }
 

@@ -652,7 +652,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 }
 
 func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
@@ -700,7 +700,7 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 			SetConfig(&data.FieldConfig{
 				Interval: float64(query.Interval.Milliseconds()),
 			}),
-		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
+		data.NewField(frameNameForQuery(query, model, index), parseLabels(model, index), floatVec),
 	)
 }
 
@@ -712,15 +712,29 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := 2.5
 
+	stateField := data.NewFieldFromFieldType(data.FieldTypeEnum, 0)
+	stateField.Name = "State"
+	stateField.Config = &data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: []string{
+					"Unknown", "Up", "Down", // 0,1,2
+				},
+			},
+		},
+	}
+
 	frame := data.NewFrame(query.RefID,
 		data.NewField("Time", nil, []*time.Time{}),
 		data.NewField("Value", nil, []*float64{}),
 		data.NewField("Min", nil, []*float64{}),
 		data.NewField("Max", nil, []*float64{}),
 		data.NewField("Info", nil, []*string{}),
+		stateField,
 	)
 
 	var info strings.Builder
+	state := data.EnumItemIndex(0)
 
 	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
@@ -729,8 +743,10 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 		info.Reset()
 		if delta > 0 {
 			info.WriteString("up")
+			state = 1
 		} else {
 			info.WriteString("down")
+			state = 2
 		}
 		if math.Abs(delta) > .4 {
 			info.WriteString(" fast")
@@ -748,11 +764,12 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 			for i := range vals {
 				if rand.Float64() > .2 {
 					vals[i] = nil
+					state = 0
 				}
 			}
 		}
 
-		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString)
+		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString, state)
 
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
@@ -826,7 +843,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 
 		frame := newSeriesForQuery(query, model, 0)
 		frame.Fields = fields
-		frame.Fields[1].Labels = parseLabelsString(subQ.Labels)
+		frame.Fields[1].Labels = parseLabelsString(subQ.Labels, 0)
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
@@ -912,7 +929,7 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
-	frame.Fields[1].Labels = parseLabels(model)
+	frame.Fields[1].Labels = parseLabels(model, 0)
 
 	return frame, nil
 }
@@ -981,12 +998,12 @@ func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index in
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model *simplejson.Json) data.Labels {
+func parseLabels(model *simplejson.Json, seriesIndex int) data.Labels {
 	labelText := model.Get("labels").MustString("")
-	return parseLabelsString(labelText)
+	return parseLabelsString(labelText, seriesIndex)
 }
 
-func parseLabelsString(labelText string) data.Labels {
+func parseLabelsString(labelText string, seriesIndex int) data.Labels {
 	if labelText == "" {
 		return data.Labels{}
 	}
@@ -1003,6 +1020,7 @@ func parseLabelsString(labelText string) data.Labels {
 		key := strings.TrimSpace(keyval[:idx])
 		val := strings.TrimSpace(keyval[idx+1:])
 		val = strings.Trim(val, "\"")
+		val = strings.ReplaceAll(val, "$seriesIndex", strconv.Itoa(seriesIndex))
 		tags[key] = val
 	}
 

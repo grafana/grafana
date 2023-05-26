@@ -29,10 +29,10 @@ const q: CloudWatchQuery = {
   alarmNamePrefix: '',
 };
 
-ds.datasource.api.getRegions = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
 
 const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> = {
@@ -51,7 +51,9 @@ describe('AnnotationQueryEditor', () => {
   });
 
   it('should return an error component in case CloudWatchQuery is not CloudWatchAnnotationQuery', async () => {
-    ds.datasource.api.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
+    ds.datasource.resources.getDimensionValues = jest
+      .fn()
+      .mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
     render(
       <AnnotationQueryEditor {...props} query={{ ...props.query, queryMode: 'Metrics' } as CloudWatchMetricsQuery} />
     );
@@ -59,7 +61,9 @@ describe('AnnotationQueryEditor', () => {
   });
 
   it('should not display wildcard option in dimension value dropdown', async () => {
-    ds.datasource.api.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
+    ds.datasource.resources.getDimensionValues = jest
+      .fn()
+      .mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
     (props.query as CloudWatchAnnotationQuery).dimensions = { instanceId: 'instance-123' };
     render(<AnnotationQueryEditor {...props} />);
     const valueElement = screen.getByText('instance-123');
@@ -72,7 +76,9 @@ describe('AnnotationQueryEditor', () => {
   });
 
   it('should not display Accounts component', async () => {
-    ds.datasource.api.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
+    ds.datasource.resources.getDimensionValues = jest
+      .fn()
+      .mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
     (props.query as CloudWatchAnnotationQuery).dimensions = { instanceId: 'instance-123' };
     await waitFor(() => render(<AnnotationQueryEditor {...props} />));
     expect(await screen.queryByText('Account')).toBeNull();

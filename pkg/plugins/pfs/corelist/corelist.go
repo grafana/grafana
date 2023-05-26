@@ -8,23 +8,23 @@ import (
 	"github.com/grafana/thema"
 )
 
-var coreTrees pfs.TreeList
+var coreTrees []pfs.ParsedPlugin
 var coreOnce sync.Once
 
-// New returns a pfs.TreeList containing the plugin trees for all core plugins
+// New returns a pfs.PluginList containing the plugin trees for all core plugins
 // in the current version of Grafana.
 //
 // Go code within the grafana codebase should only ever call this with nil.
-func New(rt *thema.Runtime) pfs.TreeList {
-	var tl pfs.TreeList
+func New(rt *thema.Runtime) []pfs.ParsedPlugin {
+	var pl []pfs.ParsedPlugin
 	if rt == nil {
 		coreOnce.Do(func() {
-			coreTrees = coreTreeList(cuectx.GrafanaThemaRuntime())
+			coreTrees = corePlugins(cuectx.GrafanaThemaRuntime())
 		})
-		tl = make(pfs.TreeList, len(coreTrees))
-		copy(tl, coreTrees)
+		pl = make([]pfs.ParsedPlugin, len(coreTrees))
+		copy(pl, coreTrees)
 	} else {
-		return coreTreeList(rt)
+		return corePlugins(rt)
 	}
-	return tl
+	return pl
 }

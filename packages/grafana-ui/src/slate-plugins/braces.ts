@@ -2,7 +2,7 @@ import { Annotation } from 'slate';
 import { Plugin } from 'slate-react';
 import { v4 as uuidv4 } from 'uuid';
 
-const BRACES: any = {
+const BRACES: Record<string, string> = {
   '[': ']',
   '{': '}',
   '(': ')',

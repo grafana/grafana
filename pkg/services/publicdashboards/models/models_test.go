@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,14 +24,14 @@ func TestBuildTimeSettings(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		dashboard  *models.Dashboard
+		dashboard  *dashboards.Dashboard
 		pubdash    *PublicDashboard
 		timeResult TimeSettings
 		reqDTO     PublicDashboardQueryDTO
 	}{
 		{
 			name:      "should use dashboard time if pubdash time empty",
-			dashboard: &models.Dashboard{Data: dashboardData},
+			dashboard: &dashboards.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
 			timeResult: TimeSettings{
 				From: defaultFromMs,
@@ -41,7 +41,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		},
 		{
 			name:      "should use dashboard time when time selection is disabled",
-			dashboard: &models.Dashboard{Data: dashboardData},
+			dashboard: &dashboards.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false, TimeSettings: &TimeSettings{From: "now-12", To: "now"}},
 			timeResult: TimeSettings{
 				From: defaultFromMs,
@@ -51,7 +51,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		},
 		{
 			name:      "should use selected values if time selection is enabled",
-			dashboard: &models.Dashboard{Data: dashboardData},
+			dashboard: &dashboards.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: true, TimeSettings: &TimeSettings{From: "now-12", To: "now"}},
 			reqDTO: PublicDashboardQueryDTO{
 				TimeRange: TimeSettings{

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-
-	"github.com/stretchr/testify/require"
 )
 
 type FakeServiceAccountStore struct {
@@ -17,9 +17,10 @@ type FakeServiceAccountStore struct {
 	ExpectedServiceAccountDTO               *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfileDTO        *serviceaccounts.ServiceAccountProfileDTO
 	ExpectedSearchServiceAccountQueryResult *serviceaccounts.SearchOrgServiceAccountsResult
-	ExpectedServiceAccountMigrationStatus   *serviceaccounts.APIKeysMigrationStatus
 	ExpectedStats                           *serviceaccounts.Stats
-	ExpectedApiKeys                         []apikey.APIKey
+	ExpectedAPIKeys                         []apikey.APIKey
+	ExpectedAPIKey                          *apikey.APIKey
+	ExpectedBoolean                         bool
 	ExpectedError                           error
 }
 
@@ -58,16 +59,6 @@ func (f *FakeServiceAccountStore) DeleteServiceAccount(ctx context.Context, orgI
 	return f.ExpectedError
 }
 
-// GetAPIKeysMigrationStatus is a fake getting the api keys migration status.
-func (f *FakeServiceAccountStore) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error) {
-	return f.ExpectedServiceAccountMigrationStatus, f.ExpectedError
-}
-
-// HideApiKeysTab is a fake hiding the api keys tab.
-func (f *FakeServiceAccountStore) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	return f.ExpectedError
-}
-
 // MigrateApiKeysToServiceAccounts is a fake migrating api keys to service accounts.
 func (f *FakeServiceAccountStore) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
 	return f.ExpectedError
@@ -85,7 +76,7 @@ func (f *FakeServiceAccountStore) RevertApiKey(ctx context.Context, saId int64, 
 
 // ListTokens is a fake listing tokens.
 func (f *FakeServiceAccountStore) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
-	return f.ExpectedApiKeys, f.ExpectedError
+	return f.ExpectedAPIKeys, f.ExpectedError
 }
 
 // RevokeServiceAccountToken is a fake revoking a service account token.
@@ -94,8 +85,8 @@ func (f *FakeServiceAccountStore) RevokeServiceAccountToken(ctx context.Context,
 }
 
 // AddServiceAccountToken is a fake adding a service account token.
-func (f *FakeServiceAccountStore) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	return f.ExpectedError
+func (f *FakeServiceAccountStore) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	return f.ExpectedAPIKey, f.ExpectedError
 }
 
 // DeleteServiceAccountToken is a fake deleting a service account token.

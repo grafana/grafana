@@ -8,12 +8,12 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   FieldType,
-  MutableDataFrame,
+  createDataFrame,
   ScopedVars,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
+import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { serializeParams } from '../../../core/utils/fetch';
 
@@ -127,7 +127,7 @@ function responseToDataQueryResponse(response: { data: ZipkinSpan[] }, nodeGraph
 
 const emptyDataQueryResponse = {
   data: [
-    new MutableDataFrame({
+    createDataFrame({
       fields: [
         {
           name: 'trace',

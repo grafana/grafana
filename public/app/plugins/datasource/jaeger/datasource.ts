@@ -15,10 +15,10 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { createGraphFrames } from './graphTransform';

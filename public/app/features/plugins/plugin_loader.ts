@@ -8,7 +8,8 @@ import prismjs from 'prismjs';
 import react from 'react';
 import reactDom from 'react-dom';
 import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
-import * as reactRouter from 'react-router-dom';
+import * as reactRouterDom from 'react-router-dom';
+import * as reactRouterCompat from 'react-router-dom-v5-compat';
 import * as redux from 'redux';
 import * as rxjs from 'rxjs';
 import * as rxjsOperators from 'rxjs/operators';
@@ -32,7 +33,9 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { locateWithCache, registerPluginInCache } from './pluginCacheBuster';
+import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
+import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
+import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
@@ -43,7 +46,12 @@ grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
+grafanaRuntime.SystemJS.registry.set('css', grafanaRuntime.SystemJS.newModule({ locate: locateCSS, fetch: fetchCSS }));
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
+grafanaRuntime.SystemJS.registry.set(
+  'cdn-loader',
+  grafanaRuntime.SystemJS.newModule({ locate: locateFromCDN, translate: translateForCDN })
+);
 
 grafanaRuntime.SystemJS.config({
   baseURL: 'public',
@@ -52,16 +60,26 @@ grafanaRuntime.SystemJS.config({
     plugins: {
       defaultExtension: 'js',
     },
+    'plugin-cdn': {
+      defaultExtension: 'js',
+    },
   },
   map: {
     text: 'vendor/plugin-text/text.js',
-    css: 'vendor/plugin-css/css.js',
   },
   meta: {
     '/*': {
       esModule: true,
       authorization: true,
       loader: 'plugin-loader',
+    },
+    '*.css': {
+      loader: 'css',
+    },
+    'plugin-cdn/*': {
+      esModule: true,
+      authorization: false,
+      loader: 'cdn-loader',
     },
   },
 });
@@ -81,7 +99,21 @@ exposeToPlugin('jquery', jquery);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs', rxjs);
 exposeToPlugin('rxjs/operators', rxjsOperators);
-exposeToPlugin('react-router-dom', reactRouter);
+
+// Migration - React Router v5 -> v6
+// =================================
+// Plugins that still use "react-router-dom@v5" don't depend on react-router directly, so they will not use this import.
+// (The react-router-dom@v5 that we expose for them depends on the "react-router" package internally from core.)
+//
+// Plugins that would like update to "react-router-dom@v6" will need to bundle "react-router-dom",
+// however they cannot bundle "react-router" - this would mean that we have two instances of "react-router"
+// in the app, which would casue issues. As the "react-router-dom-v5-compat" package re-exports everything from "react-router-dom@v6"
+// which then re-exports everything from "react-router@v6", we are in the lucky state to be able to expose a compatible v6 version of the router to plugins by
+// just exposing "react-router-dom-v5-compat".
+//
+// (This means that we are exposing two versions of the same package).
+exposeToPlugin('react-router', reactRouterCompat); // react-router-dom@v6, react-router@v6 (included)
+exposeToPlugin('react-router-dom', reactRouterDom); // react-router-dom@v5
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);

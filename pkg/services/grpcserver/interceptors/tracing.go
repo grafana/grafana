@@ -3,8 +3,9 @@ package interceptors
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"google.golang.org/grpc"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 const tracingPrefix = "gRPC Server "

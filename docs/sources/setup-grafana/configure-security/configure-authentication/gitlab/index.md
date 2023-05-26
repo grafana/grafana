@@ -7,7 +7,7 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitLab OAuth2 Authentication
+title: Configure GitLab OAuth2 authentication
 weight: 700
 ---
 
@@ -49,7 +49,8 @@ authentication:
 ```bash
 [auth.gitlab]
 enabled = true
-allow_sign_up = false
+allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -60,6 +61,7 @@ allowed_groups =
 role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
+tls_skip_verify_insecure = false
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -110,6 +112,12 @@ the group `foo`, set
 allowed_groups = example, foo/bar
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 Note that in GitLab, the group or subgroup name doesn't always match its
 display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears
@@ -122,6 +130,7 @@ the `example` and `foo/bar` groups. The example also promotes all GitLab Admins 
 [auth.gitlab]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -132,27 +141,41 @@ allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
+tls_skip_verify_insecure = false
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles
 
 You can use GitLab OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
-> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
-> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+{{% admonition type="warning" %}}
+Currently if no organization role mapping is found for a user, Grafana doesn't
+update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+enable the `skip_org_role_sync` option.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authgitlab" >}}) for more information.
+{{% /admonition %}}
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-> then the user is assigned the role specified by
-> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% admonition type="warning" %}}
+With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+then the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% /admonition %}}
 
 An example Query could look like the following:
 
@@ -205,4 +228,17 @@ the correct teams.
 
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from GitLab, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitLab.
+
+```ini
+[auth.gitlab]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```

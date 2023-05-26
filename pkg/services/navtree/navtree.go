@@ -1,10 +1,10 @@
 package navtree
 
 import (
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
 type Service interface {
-	GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*NavTreeRoot, error)
+	GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*NavTreeRoot, error)
 }

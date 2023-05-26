@@ -1,13 +1,12 @@
 import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import store from 'app/core/store';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT } from '../constants';
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
 import {
   reportDashboardListViewed,
   reportSearchFailedQueryInteraction,
@@ -21,10 +20,10 @@ import { parseRouteParams } from '../utils';
 export const initialState: SearchState = {
   query: '',
   tag: [],
-  sort: null,
   starred: false,
   layout: SearchLayout.Folders,
-  prevSort: null,
+  sort: undefined,
+  prevSort: undefined,
   eventTrackingNamespace: 'dashboard_search',
 };
 
@@ -41,29 +40,43 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
-  initStateFromUrl(folderUid?: string) {
+  lastSearchTimestamp = 0;
+
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
+    // Force list view when conditions are specified from the URL
+    if (stateFromUrl.query || stateFromUrl.datasource || stateFromUrl.panel_type) {
+      stateFromUrl.layout = SearchLayout.List;
+    }
+
     stateManager.setState({
+      ...initialState,
       ...stateFromUrl,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    this.doSearch();
+    if (doInitialSearch) {
+      this.doSearch();
+    }
   }
+
   /**
    * Updates internal and url state, then triggers a new search
    */
   setStateAndDoSearch(state: Partial<SearchState>) {
+    const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
+
     // Set internal state
-    this.setState(state);
+    this.setState({ sort, ...state });
 
     // Update url state
     this.updateLocation({
       query: this.state.query.length === 0 ? null : this.state.query,
       tag: this.state.tag,
       datasource: this.state.datasource,
+      panel_type: this.state.panel_type,
       starred: this.state.starred ? this.state.starred : null,
       sort: this.state.sort,
     });
@@ -77,6 +90,17 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       search: null,
       folder: null,
       ...defaultQueryParams,
+    });
+  };
+
+  onClearSearchAndFilters = () => {
+    this.setStateAndDoSearch({
+      query: '',
+      datasource: undefined,
+      tag: [],
+      panel_type: undefined,
+      starred: undefined,
+      sort: undefined,
     });
   };
 
@@ -104,6 +128,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     this.setStateAndDoSearch({ datasource });
   };
 
+  onPanelTypeChange = (panel_type?: string) => {
+    this.setStateAndDoSearch({ panel_type });
+  };
+
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = e.currentTarget.checked;
     this.setStateAndDoSearch({ starred });
@@ -113,7 +141,13 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     this.setStateAndDoSearch({ starred: false });
   };
 
-  onSortChange = (sort: SelectableValue | null) => {
+  onSortChange = (sort: string | undefined) => {
+    if (sort) {
+      localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+    } else {
+      localStorage.removeItem(SEARCH_SELECTED_SORT);
+    }
+
     if (this.state.layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ sort, layout: SearchLayout.List });
     } else {
@@ -125,7 +159,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
 
     if (this.state.sort && layout === SearchLayout.Folders) {
-      this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: null });
+      this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
     } else {
       this.setStateAndDoSearch({ layout, sort: this.state.prevSort });
     }
@@ -136,13 +170,18 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     store.set(SEARCH_PANELS_LOCAL_STORAGE_KEY, includePanels);
   };
 
+  hasSearchFilters() {
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type || this.state.sort;
+  }
+
   getSearchQuery() {
     const q: SearchQuery = {
       query: this.state.query,
-      tags: this.state.tag as string[],
-      ds_uid: this.state.datasource as string,
+      tags: this.state.tag,
+      ds_uid: this.state.datasource,
+      panel_type: this.state.panel_type,
       location: this.state.folderUid, // This will scope all results to the prefix
-      sort: this.state.sort?.value,
+      sort: this.state.sort,
       explain: this.state.explain,
       withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
       starred: this.state.starred,
@@ -164,8 +203,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       q.kind = ['dashboard', 'folder']; // skip panels
     }
 
-    if (q.query === '*' && !q.sort?.length) {
-      q.sort = 'name_sort';
+    if (q.panel_type?.length) {
+      q.kind = ['panel'];
     }
 
     return q;
@@ -175,7 +214,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -187,49 +226,46 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     this.setState({ loading: true });
 
-    if (this.state.starred) {
-      getGrafanaSearcher()
-        .starred(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
+    const searcher = getGrafanaSearcher();
+
+    const searchTimestamp = Date.now();
+    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
+
+    searchPromise
+      .then((result) => {
+        // Only keep the results if it's was issued after the most recently resolved search.
+        // This prevents results showing out of order if first request is slower than later ones
+        if (searchTimestamp > this.lastSearchTimestamp) {
+          this.setState({ result, loading: false });
+          this.lastSearchTimestamp = searchTimestamp;
+        }
+      })
+      .catch((error) => {
+        reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+          ...trackingInfo,
+          error: error?.message,
         });
-    } else {
-      getGrafanaSearcher()
-        .search(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
-        });
-    }
+        this.setState({ loading: false });
+      });
   }
 
   // This gets the possible tags from within the query results
   getTagOptions = (): Promise<TermCount[]> => {
-    return getGrafanaSearcher().tags(this.lastQuery!);
+    const query = this.lastQuery ?? {
+      kind: ['dashboard', 'folder'],
+      query: '*',
+    };
+    return getGrafanaSearcher().tags(query);
   };
 
   /**
    * When item is selected clear some filters and report interaction
    */
   onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
-    // Clear some filters only if we're not opening a search item in a new tab
-    if (!e.altKey && !e.ctrlKey && !e.metaKey) {
-      this.setState({ tag: [], starred: false, sort: null, query: '', folderUid: undefined });
-    }
-
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -243,7 +279,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -263,8 +299,15 @@ export function getSearchStateManager() {
       includePanels = false;
     }
 
-    stateManager = new SearchStateManager({ ...initialState, layout: layout, includePanels });
+    stateManager = new SearchStateManager({ ...initialState, layout, includePanels });
   }
 
   return stateManager;
+}
+
+export function useSearchStateManager() {
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+
+  return [state, stateManager] as const;
 }

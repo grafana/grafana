@@ -99,12 +99,16 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   interpolateMetricsQueryVariables(
     query: CloudWatchMetricsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression'> {
+  ): Pick<
+    CloudWatchMetricsQuery,
+    'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression' | 'expression'
+  > {
     return {
       alias: this.replaceVariableAndDisplayWarningIfMulti(query.alias, scopedVars),
       metricName: this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars),
       namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars),
       period: this.replaceVariableAndDisplayWarningIfMulti(query.period, scopedVars),
+      expression: this.templateSrv.replace(query.expression, scopedVars),
       sqlExpression: this.replaceVariableAndDisplayWarningIfMulti(query.sqlExpression, scopedVars),
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
     };
@@ -113,12 +117,12 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<DataQueryResponse> {
     return this.awsRequest(this.dsQueryEndpoint, request).pipe(
       map((res) => {
-        const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
+        const dataframes: DataFrame[] = toDataQueryResponse(res).data;
         if (!dataframes || dataframes.length <= 0) {
           return { data: [] };
         }
 
-        const lastError = findLast(res.results, (v) => !!v.error);
+        const lastError = findLast(res.data.results, (v) => !!v.error);
 
         dataframes.forEach((frame) => {
           frame.fields.forEach((field) => {

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -45,46 +45,46 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 		{
 			name:            "with an unsupported datasource type",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com"}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com"}},
 			err:             errors.New("unexpected datasource type. expecting loki or prometheus"),
 		},
 		{
 			name:            "with a Loki datasource",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com", Type: LokiDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: LokiDatasourceType}},
 			expected:        "/api/prom/rules",
 		},
 		{
 			name:            "with a Prometheus datasource",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Cortex",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			urlParams:       "?subtype=cortex",
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Mimir",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			urlParams:       "?subtype=mimir",
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/config/v1/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Prometheus",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			urlParams:       "?subtype=prometheus",
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/rules",
 		},
 		{
 			name:            "with a Prometheus datasource and no subtype",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
-			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{Url: "http://loki.com", Type: PrometheusDatasourceType}},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: PrometheusDatasourceType}},
 			expected:        "/rules",
 		},
 	}
@@ -98,7 +98,7 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com"+tt.urlParams, nil)
 			require.NoError(t, err)
-			ctx := &models.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
 
 			prefix, err := ruler.validateAndGetPrefix(ctx)
 			require.Equal(t, tt.expected, prefix)

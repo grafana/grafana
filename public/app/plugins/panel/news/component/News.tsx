@@ -73,7 +73,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
     > img {
       width: 100%;
-      border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
+      border-radius: ${theme.shape.radius.default} ${theme.shape.radius.default} 0 0;
     }
   `,
   socialImageWide: css`
@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: 0;
     > img {
       width: 250px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     }
   `,
   link: css`
@@ -106,7 +106,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   date: css`
     margin-bottom: ${theme.spacing(0.5)};
     font-weight: 500;
-    border-radius: 0 0 0 3px;
+    border-radius: 0 0 0 ${theme.shape.radius.default};
     color: ${theme.colors.text.secondary};
   `,
 });

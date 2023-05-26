@@ -7,9 +7,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 var (
@@ -20,139 +24,76 @@ var (
 	testUpdateOrgQuotaCmd = `{ "limit": 20 }`
 )
 
-var testOrgQuota = setting.OrgQuota{
-	User:       10,
-	DataSource: 10,
-	Dashboard:  10,
-	ApiKey:     10,
-	AlertRule:  10,
-}
-
-// setupDBAndSettingsForAccessControlQuotaTests stores users and create two orgs
-func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControlScenarioContext) {
-	t.Helper()
-
-	// Create two orgs with the context user
-	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
-}
-
-func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
+func TestAPIEndpoint_GetCurrentOrgQuotas(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Quota.Enabled = true
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
-
-	t.Run("Viewer can view CurrentOrgQuotas", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
 	})
-
-	sc.initCtx.IsSignedIn = false
-	t.Run("Unsigned user cannot view CurrentOrgQuotas", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
-		assert.Equal(t, http.StatusUnauthorized, response.Code)
-	})
-}
-
-func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Quota.Enabled = true
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	t.Run("AccessControl allows viewing CurrentOrgQuotas with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getCurrentOrgQuotasURL), userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 	t.Run("AccessControl prevents viewing CurrentOrgQuotas with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}}, 2)
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		// Set permissions in org 2, but set current org to org 1
+		user := userWithPermissions(2, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}})
+		user.OrgID = 1
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getCurrentOrgQuotasURL), user)
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 	t.Run("AccessControl prevents viewing CurrentOrgQuotas with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getCurrentOrgQuotasURL), userWithPermissions(1, []accesscontrol.Permission{{Action: "orgs:invalid"}}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
-func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
+func TestAPIEndpoint_GetOrgQuotas(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Quota.Enabled = true
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
-
-	t.Run("Viewer cannot view another org quotas", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.userService = &usertest.FakeUserService{
+			ExpectedSignedInUser: &user.SignedInUser{OrgID: 2},
+		}
 	})
-
-	sc.initCtx.SignedInUser.IsGrafanaAdmin = true
-	t.Run("Grafana admin viewer can view another org quotas", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-}
-
-func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Quota.Enabled = true
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	t.Run("AccessControl allows viewing another org quotas with correct permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}}, 2)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(fmt.Sprintf(getOrgsQuotasURL, 2)), userWithPermissions(2, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 	t.Run("AccessControl prevents viewing another org quotas with correct permissions in another org", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}}, 1)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		// Set correct permissions in org 1 and empty permissions in org 2
+		user := userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasRead}})
+		user.Permissions[2] = map[string][]string{}
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(fmt.Sprintf(getOrgsQuotasURL, 2)), user)
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 	t.Run("AccessControl prevents viewing another org quotas with incorrect permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
-		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsQuotasURL, 2), nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(fmt.Sprintf(getOrgsQuotasURL, 2)), userWithPermissions(2, []accesscontrol.Permission{{Action: "orgs:invalid"}}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
-func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.Quota.Enabled = true
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
-
-	input := strings.NewReader(testUpdateOrgQuotaCmd)
-	t.Run("Viewer cannot update another org quotas", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
-	})
-
-	sc.initCtx.SignedInUser.IsGrafanaAdmin = true
-	input = strings.NewReader(testUpdateOrgQuotaCmd)
-	t.Run("Grafana admin viewer can update another org quotas", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-}
-
-func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
+func TestAPIEndpoint_PutOrgQuotas(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,
@@ -166,30 +107,42 @@ func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
 			Org: 5,
 		},
 	}
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.userService = &usertest.FakeUserService{
+			ExpectedSignedInUser: &user.SignedInUser{OrgID: 2},
+		}
+	})
 
 	input := strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("AccessControl allows updating another org quotas with correct permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}}, 2)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		user := userWithPermissions(2, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}})
+		user.OrgID = 1
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input), user)
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 
 	input = strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("AccessControl prevents updating another org quotas with correct permissions in another org", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}}, 1)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		user := userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsQuotasWrite}})
+		user.Permissions[2] = map[string][]string{}
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input), user)
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 
 	input = strings.NewReader(testUpdateOrgQuotaCmd)
 	t.Run("AccessControl prevents updating another org quotas with incorrect permissions", func(t *testing.T) {
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
-		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		user := userWithPermissions(2, []accesscontrol.Permission{{Action: "orgs:invalid"}})
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, fmt.Sprintf(putOrgsQuotasURL, 2, "org_user"), input), user)
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 }

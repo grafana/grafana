@@ -18,7 +18,6 @@
     "public/e2e-test/**/*.ts",
     "public/test/**/*.ts",
     "public/vendor/**/*.ts",
-    "packages/jaeger-ui-components/typings",
     "packages/grafana-data/typings",
     "packages/grafana-ui/src/types"
   ]

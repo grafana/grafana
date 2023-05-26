@@ -5,8 +5,11 @@ import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme } from '@gr
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
+import { getLogRowStyles } from './getLogRowStyles';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
+  const theme = createTheme();
+  const styles = getLogRowStyles(theme);
   const props: Props = {
     displayedFields: [],
     showDuplicates: false,
@@ -17,7 +20,8 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickFilterOutLabel: () => {},
     onClickShowField: () => {},
     onClickHideField: () => {},
-    theme: createTheme(),
+    theme,
+    styles,
     ...(propOverrides || {}),
   };
 
@@ -94,7 +98,7 @@ describe('LogDetails', () => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
-                href: link.url.replace('${__value.text}', field.values.get(rowIndex)),
+                href: link.url.replace('${__value.text}', field.values[rowIndex]),
                 title: link.title,
                 target: '_blank',
                 origin: field,

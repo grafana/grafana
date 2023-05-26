@@ -1,10 +1,7 @@
 import { getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime/src/services/__mocks__/dataSourceSrv';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
-} from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -151,7 +148,7 @@ describe('Query and expressions reducer', () => {
     const expressionQuery: AlertQuery = {
       refId: 'B',
       queryType: 'expression',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       relativeTimeRange: { from: 900, to: 1000 },
       model: {
         queryType: 'query',
@@ -166,7 +163,7 @@ describe('Query and expressions reducer', () => {
     const expressionQuery2: AlertQuery = {
       refId: 'C',
       queryType: 'expression',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       relativeTimeRange: { from: 1, to: 3 },
       model: {
         queryType: 'query',
@@ -205,7 +202,7 @@ describe('Query and expressions reducer', () => {
           queryType: 'query',
         },
         {
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           relativeTimeRange: { from: 900, to: 1000 },
           model: {
             datasource: '__expr__',
@@ -219,7 +216,7 @@ describe('Query and expressions reducer', () => {
           refId: 'B',
         },
         {
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           relativeTimeRange: { from: 900, to: 1000 },
           model: {
             datasource: '__expr__',
@@ -240,7 +237,7 @@ describe('Query and expressions reducer', () => {
     const expressionQuery: AlertQuery = {
       refId: 'B',
       queryType: 'expression',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       model: {
         queryType: 'query',
         datasource: '__expr__',
@@ -275,7 +272,7 @@ describe('Query and expressions reducer', () => {
           queryType: 'query',
         },
         {
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           model: {
             datasource: '__expr__',
             expression: 'A',

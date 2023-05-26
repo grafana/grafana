@@ -2,9 +2,7 @@
 // angular is imported.
 import './global-jquery-shim';
 
-import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import angular from 'angular';
-import { configure } from 'enzyme';
 
 import { EventBusSrv } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
@@ -66,28 +64,6 @@ jest.mock('../app/core/core', () => ({
 }));
 jest.mock('../app/angular/partials', () => ({}));
 jest.mock('../app/features/plugins/plugin_loader', () => ({}));
-
-configure({ adapter: new Adapter() });
-
-const localStorageMock = (() => {
-  let store: any = {};
-  return {
-    getItem: (key: string) => {
-      return store[key];
-    },
-    setItem: (key: string, value: any) => {
-      store[key] = value.toString();
-    },
-    clear: () => {
-      store = {};
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-  };
-})();
-
-global.localStorage = localStorageMock;
 
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {

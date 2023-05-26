@@ -46,7 +46,6 @@ func doLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.ConvergentLin
 	}
 	return tsch.ConvergentLineage(), nil
 }
-
 func baseLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
 	// First, we must get the bytes of the .cue file(s) in which the "plugindef" lineage
 	// is declared, and load them into a

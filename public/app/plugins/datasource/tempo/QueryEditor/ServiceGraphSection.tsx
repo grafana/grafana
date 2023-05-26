@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
@@ -72,9 +71,7 @@ export function ServiceGraphSection({
             datasource={{ uid: graphDatasourceUid }}
             filters={filters}
             getTagKeysOptions={{
-              series: config.featureToggles.tempoApmTable
-                ? ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total']
-                : ['traces_service_graph_request_total'],
+              series: ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total'],
             }}
             addFilter={(filter: AdHocVariableFilter) => {
               onChange({

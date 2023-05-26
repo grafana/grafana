@@ -1,7 +1,11 @@
-import { isEqual } from 'lodash';
+import { countBy, isEqual } from 'lodash';
 import { useMemo, useRef } from 'react';
 
 import {
+  AlertGroupTotals,
+  AlertingRule,
+  AlertInstanceTotals,
+  AlertInstanceTotalState,
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleNamespace,
@@ -10,7 +14,12 @@ import {
   RuleNamespace,
   RulesSource,
 } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  PromAlertingRuleState,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 import {
   getAllRulesSources,
@@ -18,7 +27,13 @@ import {
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
-import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
+import {
+  isAlertingRule,
+  isAlertingRulerRule,
+  isGrafanaRulerRule,
+  isRecordingRule,
+  isRecordingRulerRule,
+} from '../utils/rules';
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -48,50 +63,48 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
     return getAllRulesSources();
   }, [rulesSourceName]);
 
-  return useMemo(
-    () =>
-      rulesSources
-        .map((rulesSource): CombinedRuleNamespace[] => {
-          const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
-          const promRules = promRulesResponses[rulesSourceName]?.result;
-          const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
+  return useMemo(() => {
+    return rulesSources
+      .map((rulesSource): CombinedRuleNamespace[] => {
+        const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
+        const promRules = promRulesResponses[rulesSourceName]?.result;
+        const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
 
-          const cached = cache.current[rulesSourceName];
-          if (cached && cached.promRules === promRules && cached.rulerRules === rulerRules) {
-            return cached.result;
-          }
-          const namespaces: Record<string, CombinedRuleNamespace> = {};
+        const cached = cache.current[rulesSourceName];
+        if (cached && cached.promRules === promRules && cached.rulerRules === rulerRules) {
+          return cached.result;
+        }
+        const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-          // first get all the ruler rules in
-          Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
-            const namespace: CombinedRuleNamespace = {
-              rulesSource,
-              name: namespaceName,
-              groups: [],
-            };
-            namespaces[namespaceName] = namespace;
-            addRulerGroupsToCombinedNamespace(namespace, groups);
+        // first get all the ruler rules in
+        Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
+          const namespace: CombinedRuleNamespace = {
+            rulesSource,
+            name: namespaceName,
+            groups: [],
+          };
+          namespaces[namespaceName] = namespace;
+          addRulerGroupsToCombinedNamespace(namespace, groups);
+        });
+
+        // then correlate with prometheus rules
+        promRules?.forEach(({ name: namespaceName, groups }) => {
+          const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
+            rulesSource,
+            name: namespaceName,
+            groups: [],
           });
 
-          // then correlate with prometheus rules
-          promRules?.forEach(({ name: namespaceName, groups }) => {
-            const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
-              rulesSource,
-              name: namespaceName,
-              groups: [],
-            });
+          addPromGroupsToCombinedNamespace(ns, groups);
+        });
 
-            addPromGroupsToCombinedNamespace(ns, groups);
-          });
+        const result = Object.values(namespaces);
 
-          const result = Object.values(namespaces);
-
-          cache.current[rulesSourceName] = { promRules, rulerRules, result };
-          return result;
-        })
-        .flat(),
-    [promRulesResponses, rulerRulesResponses, rulesSources]
-  );
+        cache.current[rulesSourceName] = { promRules, rulerRules, result };
+        return result;
+      })
+      .flat();
+  }, [promRulesResponses, rulerRulesResponses, rulesSources]);
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups
@@ -106,6 +119,7 @@ export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) 
     newNamespace.groups.push({
       name: 'default',
       rules: sortRulesByName(namespace.groups.flatMap((group) => group.rules)),
+      totals: calculateAllGroupsTotals(namespace.groups),
     });
 
     return newNamespace;
@@ -118,11 +132,18 @@ export function sortRulesByName(rules: CombinedRule[]) {
 
 function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {
   namespace.groups = groups.map((group) => {
+    const numRecordingRules = group.rules.filter((rule) => isRecordingRulerRule(rule)).length;
+    const numPaused = group.rules.filter((rule) => isGrafanaRulerRule(rule) && rule.grafana_alert.is_paused).length;
+
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,
       interval: group.interval,
       source_tenants: group.source_tenants,
       rules: [],
+      totals: {
+        paused: numPaused,
+        recording: numRecordingRules,
+      },
     };
     combinedGroup.rules = group.rules.map((rule) => rulerRuleToCombinedRule(rule, namespace, combinedGroup));
     return combinedGroup;
@@ -139,10 +160,17 @@ function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, grou
       combinedGroup = {
         name: group.name,
         rules: [],
+        totals: calculateGroupTotals(group),
       };
       namespace.groups.push(combinedGroup);
       existingGroupsByName.set(group.name, combinedGroup);
     }
+
+    // combine totals from ruler with totals from prometheus state API
+    combinedGroup.totals = {
+      ...combinedGroup.totals,
+      ...calculateGroupTotals(group),
+    };
 
     const combinedRulesByName = new Map<string, CombinedRule[]>();
     combinedGroup!.rules.forEach((r) => {
@@ -155,11 +183,81 @@ function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, grou
       const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
+        existingRule.instanceTotals = isAlertingRule(rule) ? calculateRuleTotals(rule) : {};
+        existingRule.filteredInstanceTotals = isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {};
       } else {
         combinedGroup!.rules.push(promRuleToCombinedRule(rule, namespace, combinedGroup!));
       }
     });
   });
+}
+
+export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'>): AlertInstanceTotals {
+  const result = countBy(rule.alerts, 'state');
+
+  if (rule.totals) {
+    const { normal, ...totals } = rule.totals;
+    return { ...totals, inactive: normal };
+  }
+
+  return {
+    alerting: result[AlertInstanceTotalState.Alerting],
+    pending: result[AlertInstanceTotalState.Pending],
+    inactive: result[AlertInstanceTotalState.Normal],
+    nodata: result[AlertInstanceTotalState.NoData],
+    error: result[AlertInstanceTotalState.Error] + result['err'], // Prometheus uses "err" instead of "error"
+  };
+}
+
+export function calculateRuleFilteredTotals(
+  rule: Pick<AlertingRule, 'alerts' | 'totalsFiltered'>
+): AlertInstanceTotals {
+  if (rule.totalsFiltered) {
+    const { normal, ...totals } = rule.totalsFiltered;
+    return { ...totals, inactive: normal };
+  }
+  return {};
+}
+
+export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>): AlertGroupTotals {
+  if (group.totals) {
+    const { firing, ...totals } = group.totals;
+
+    return {
+      ...totals,
+      alerting: firing,
+    };
+  }
+
+  const countsByState = countBy(group.rules, (rule) => isAlertingRule(rule) && rule.state);
+  const countsByHealth = countBy(group.rules, (rule) => rule.health);
+  const recordingCount = group.rules.filter((rule) => isRecordingRule(rule)).length;
+
+  return {
+    alerting: countsByState[PromAlertingRuleState.Firing],
+    error: countsByHealth.error,
+    nodata: countsByHealth.nodata,
+    inactive: countsByState[PromAlertingRuleState.Inactive],
+    pending: countsByState[PromAlertingRuleState.Pending],
+    recording: recordingCount,
+  };
+}
+
+function calculateAllGroupsTotals(groups: CombinedRuleGroup[]): AlertGroupTotals {
+  const totals: Record<string, number> = {};
+
+  groups.forEach((group) => {
+    const groupTotals = group.totals;
+    Object.entries(groupTotals).forEach(([key, value]) => {
+      if (!totals[key]) {
+        totals[key] = 0;
+      }
+
+      totals[key] += value;
+    });
+  });
+
+  return totals;
 }
 
 function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, group: CombinedRuleGroup): CombinedRule {
@@ -171,6 +269,8 @@ function promRuleToCombinedRule(rule: Rule, namespace: CombinedRuleNamespace, gr
     promRule: rule,
     namespace: namespace,
     group,
+    instanceTotals: isAlertingRule(rule) ? calculateRuleTotals(rule) : {},
+    filteredInstanceTotals: isAlertingRule(rule) ? calculateRuleFilteredTotals(rule) : {},
   };
 }
 
@@ -188,6 +288,8 @@ function rulerRuleToCombinedRule(
         rulerRule: rule,
         namespace,
         group,
+        instanceTotals: {},
+        filteredInstanceTotals: {},
       }
     : isRecordingRulerRule(rule)
     ? {
@@ -198,6 +300,8 @@ function rulerRuleToCombinedRule(
         rulerRule: rule,
         namespace,
         group,
+        instanceTotals: {},
+        filteredInstanceTotals: {},
       }
     : {
         name: rule.grafana_alert.title,
@@ -207,6 +311,8 @@ function rulerRuleToCombinedRule(
         rulerRule: rule,
         namespace,
         group,
+        instanceTotals: {},
+        filteredInstanceTotals: {},
       };
 }
 

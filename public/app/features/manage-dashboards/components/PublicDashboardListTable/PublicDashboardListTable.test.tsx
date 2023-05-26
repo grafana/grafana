@@ -13,7 +13,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ListPublicDashboardResponse } from '../../types';
 
-import { PublicDashboardListTable, viewPublicDashboardUrl } from './PublicDashboardListTable';
+import { PublicDashboardListTable } from './PublicDashboardListTable';
 
 const publicDashboardListResponse: ListPublicDashboardResponse[] = [
   {
@@ -57,7 +57,7 @@ const server = setupServer(
 );
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -89,12 +89,6 @@ const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
 
   waitForListRendering && (await waitForElementToBeRemoved(screen.getByTestId('Spinner'), { timeout: 3000 }));
 };
-
-describe('viewPublicDashboardUrl', () => {
-  it('has the correct url', () => {
-    expect(viewPublicDashboardUrl('abcd')).toEqual('public-dashboards/abcd');
-  });
-});
 
 describe('Show table', () => {
   it('renders loader spinner while loading', async () => {
@@ -212,7 +206,7 @@ const renderPublicDashboardItemCorrectly = (pd: ListPublicDashboardResponse, idx
   const rowDataCells = within(tableRow).getAllByRole('cell');
   expect(rowDataCells).toHaveLength(3);
 
-  const statusTag = within(rowDataCells[1]).getByText(pd.isEnabled ? 'enabled' : 'disabled');
+  const statusTag = within(rowDataCells[1]).getByText(pd.isEnabled ? 'enabled' : 'paused');
   const linkButton = within(rowDataCells[2]).getByTestId(selectors.ListItem.linkButton);
   const configButton = within(rowDataCells[2]).getByTestId(selectors.ListItem.configButton);
   const trashcanButton = within(rowDataCells[2]).queryByTestId(selectors.ListItem.trashcanButton);

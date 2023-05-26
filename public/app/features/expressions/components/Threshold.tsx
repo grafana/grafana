@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
@@ -16,7 +16,7 @@ interface Props {
 
 const defaultThresholdFunction = EvalFunction.IsAbove;
 
-export const Threshold: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
   const styles = useStyles2(getStyles);
 
   const defaultEvaluator: ClassicCondition = {

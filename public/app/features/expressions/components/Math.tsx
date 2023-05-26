@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ChangeEvent, FC } from 'react';
+import React, { ChangeEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -19,7 +19,7 @@ const mathPlaceholder =
   'Math operations on one or more queries. You reference the query by ${refId} ie. $A, $B, $C etc\n' +
   'The sum of two scalar values: $A + $B > 10';
 
-export const Math: FC<Props> = ({ labelWidth, onChange, query, onRunQuery }) => {
+export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
   const onExpressionChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ ...query, expression: event.target.value });
   };

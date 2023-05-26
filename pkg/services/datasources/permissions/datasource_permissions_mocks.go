@@ -17,9 +17,8 @@ func (m *mockDatasourcePermissionService) FilterDatasourceUidsBasedOnQueryPermis
 	return m.DsUidResult, m.ErrResult
 }
 
-func (m *mockDatasourcePermissionService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) error {
-	cmd.Result = m.DsResult
-	return m.ErrResult
+func (m *mockDatasourcePermissionService) FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) ([]*datasources.DataSource, error) {
+	return m.DsResult, m.ErrResult
 }
 
 func NewMockDatasourcePermissionService() *mockDatasourcePermissionService {

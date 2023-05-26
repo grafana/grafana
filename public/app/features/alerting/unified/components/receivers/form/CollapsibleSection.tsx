@@ -27,12 +27,15 @@ export const CollapsibleSection = ({
 
   return (
     <div className={cx(styles.wrapper, className)}>
-      <div className={styles.heading} onClick={toggleCollapse}>
-        <CollapseToggle className={styles.caret} size={size} onToggle={toggleCollapse} isCollapsed={isCollapsed} />
-        <h6>{label}</h6>
-      </div>
+      <CollapseToggle
+        className={styles.toggle}
+        size={size}
+        onToggle={toggleCollapse}
+        isCollapsed={isCollapsed}
+        text={label}
+      />
       {description && <p className={styles.description}>{description}</p>}
-      <div className={isCollapsed ? styles.hidden : undefined}>{children}</div>
+      <div className={isCollapsed ? styles.hidden : styles.content}>{children}</div>
     </div>
   );
 };
@@ -42,14 +45,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(1)};
     padding-bottom: ${theme.spacing(1)};
   `,
-  caret: css`
-    margin-left: -${theme.spacing(0.5)}; // make it align with fields despite icon size
-  `,
-  heading: css`
-    cursor: pointer;
-    h6 {
-      display: inline-block;
-    }
+  toggle: css`
+    margin: ${theme.spacing(1, 0)};
+    padding: 0;
   `,
   hidden: css`
     display: none;
@@ -59,5 +57,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
     font-weight: ${theme.typography.fontWeightRegular};
     margin: 0;
+  `,
+  content: css`
+    padding-left: ${theme.spacing(3)};
   `,
 });

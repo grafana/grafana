@@ -2,7 +2,7 @@
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
     <mj-title>
-      {{ Subject .Subject "{{ .Title }}" }}
+      {{ Subject .Subject .TemplateData "{{ .Title }}" }}
     </mj-title>
     <mj-include path="./partials/layout/head.mjml" />
     <!-- Summary of the email contents, this will go in the email preview -->

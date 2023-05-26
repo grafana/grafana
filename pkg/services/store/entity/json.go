@@ -79,6 +79,11 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 		stream.WriteObjectField("updatedBy")
 		stream.WriteString(obj.UpdatedBy)
 	}
+	if obj.Folder != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("folder")
+		stream.WriteString(obj.Folder)
+	}
 	if obj.Body != nil {
 		stream.WriteMore()
 		if json.Valid(obj.Body) {
@@ -139,6 +144,8 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 			raw.ETag = iter.ReadString()
 		case "version":
 			raw.Version = iter.ReadString()
+		case "folder":
+			raw.Folder = iter.ReadString()
 		case "origin":
 			raw.Origin = &EntityOriginInfo{}
 			iter.ReadVal(raw.Origin)

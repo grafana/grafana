@@ -42,7 +42,7 @@ export const SelectedLogGroups = ({
               onChange(selectedLogGroups.filter((slg) => slg.arn !== lg.arn));
             }}
           >
-            {`${lg.name}`}
+            {`${lg.name}${lg.accountLabel ? `(${lg.accountLabel})` : ''}`}
           </Button>
         ))}
         {visibleSelectecLogGroups.length !== selectedLogGroups.length && (

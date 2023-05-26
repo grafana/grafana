@@ -7,7 +7,7 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitHub OAuth2 Authentication
+title: Configure GitHub OAuth2 authentication
 weight: 1400
 ---
 
@@ -39,6 +39,7 @@ example:
 [auth.github]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -61,7 +62,7 @@ You may allow users to sign-up via GitHub authentication by setting the
 user successfully authenticating via GitHub authentication will be
 automatically signed up.
 
-You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
+You can also use [variable expansion]({{< relref "../../../configure-grafana#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
 ### GitHub refresh token
 
@@ -81,6 +82,8 @@ Grafana instance. For example:
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -88,7 +91,6 @@ team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 ```
 
 ### allowed_organizations
@@ -101,15 +103,25 @@ your Grafana instance. For example
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles
@@ -118,21 +130,25 @@ You can use GitHub OAuth to map roles. During mapping, Grafana checks for the pr
 
 For the path lookup, Grafana uses JSON obtained from querying GitHub's API [`/api/user`](https://docs.github.com/en/rest/users/users#get-the-authenticated-user=) endpoint and a `groups` key containing all of the user's teams (retrieved from `/api/user/teams`).
 
-The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
-> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
-> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+{{% admonition type="warning" %}}
+Currently if no organization role mapping is found for a user, Grafana doesn't
+update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+enable the `skip_org_role_sync` option in the [auth.github] section.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authgithub" >}}) for more information.
+{{% /admonition %}}
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-> then the user is assigned the role specified by
-> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% admonition type="warning" %}}
+With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+then the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% /admonition %}}
 
 An example Query could look like the following:
 
@@ -190,4 +206,17 @@ Your GitHub teams can be referenced in two ways:
 
 Example: `@grafana/developers`
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from GitHub, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitHub.
+
+```ini
+[auth.github]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```

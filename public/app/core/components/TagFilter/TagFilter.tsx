@@ -4,6 +4,7 @@ import { components } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { TagBadge } from './TagBadge';
 import { TagOption } from './TagOption';
@@ -45,7 +46,7 @@ export const TagFilter = ({
   inputId,
   isClearable,
   onChange,
-  placeholder = 'Filter by tag',
+  placeholder,
   tagOptions,
   tags,
   width,
@@ -134,10 +135,10 @@ export const TagFilter = ({
     getOptionValue: (i: any) => i.value,
     inputId,
     isMulti: true,
-    loadingMessage: 'Loading...',
-    noOptionsMessage: 'No tags found',
     onChange: onTagChange,
-    placeholder,
+    loadingMessage: t('tag-filter.loading', 'Loading...'),
+    noOptionsMessage: t('tag-filter.no-tags', 'No tags found'),
+    placeholder: placeholder || t('tag-filter.placeholder', 'Filter by tag'),
     value: currentlySelectedTags,
     width,
     components: {

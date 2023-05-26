@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -24,9 +24,9 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	tryRotateCallCount := 0
 	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, error) {
+			userAgent string) (bool, *auth.UserToken, error) {
 			tryRotateCallCount++
-			return false, nil
+			return false, nil, nil
 		},
 	}
 
@@ -46,11 +46,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
 	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, error) {
+			userAgent string) (bool, *auth.UserToken, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
 			token.AuthToken = newToken
-			return true, nil
+			return true, token, nil
 		},
 	}
 
@@ -77,7 +77,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 }
 
 func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *ContextHandler) (
-	*models.ReqContext, *httptest.ResponseRecorder, error) {
+	*contextmodel.ReqContext, *httptest.ResponseRecorder, error) {
 	t.Helper()
 
 	ctxHdlr.Cfg.LoginCookieName = "login_token"
@@ -92,7 +92,7 @@ func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *Conte
 	if err != nil {
 		return nil, nil, err
 	}
-	reqContext := &models.ReqContext{
+	reqContext := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("testlogger"),
 	}

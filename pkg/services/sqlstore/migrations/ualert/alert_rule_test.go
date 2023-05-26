@@ -5,9 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestMigrateAlertRuleQueries(t *testing.T) {
@@ -93,7 +96,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da := createTestDashAlert()
 			cnd := createTestDashAlertCondition()
 
-			ar, err := m.makeAlertRule(cnd, da, "folder")
+			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 
 			require.NoError(t, err)
 			require.Equal(t, da.Name, ar.Title)
@@ -106,7 +109,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da.Name = strings.Repeat("a", DefaultFieldMaxLength+1)
 			cnd := createTestDashAlertCondition()
 
-			ar, err := m.makeAlertRule(cnd, da, "folder")
+			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, DefaultFieldMaxLength)
@@ -116,6 +119,49 @@ func TestMakeAlertRule(t *testing.T) {
 			require.Equal(t, DefaultFieldMaxLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
 			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
+	})
+
+	t.Run("alert is not paused", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.NoError(t, err)
+		require.False(t, ar.IsPaused)
+	})
+
+	t.Run("paused dash alert is paused", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.State = "paused"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.NoError(t, err)
+		require.True(t, ar.IsPaused)
+	})
+
+	t.Run("use default if execution of NoData is not known", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.ParsedSettings.NoDataState = uuid.NewString()
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.Nil(t, err)
+		require.Equal(t, string(models.NoData), ar.NoDataState)
+	})
+
+	t.Run("use default if execution of Error is not known", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.ParsedSettings.ExecutionErrorState = uuid.NewString()
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.Nil(t, err)
+		require.Equal(t, string(models.ErrorErrState), ar.ExecErrState)
 	})
 }
 

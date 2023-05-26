@@ -7,22 +7,23 @@ import (
 	"strings"
 	"time"
 
+	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
+	"github.com/grafana/grafana/pkg/tsdb/parca/kinds/dataquery"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type queryModel struct {
-	ProfileTypeID string `json:"profileTypeId"`
-	LabelSelector string `json:"labelSelector"`
+	dataquery.ParcaDataQuery
 }
 
-// These constants need to match the ones in the frontend.
-const queryTypeProfile = "profile"
-const queryTypeMetrics = "metrics"
-const queryTypeBoth = "both"
+const (
+	queryTypeProfile = string(dataquery.ParcaQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.ParcaQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.ParcaQueryTypeBoth)
+)
 
 // query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
@@ -41,7 +42,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 			response.Error = err
 			return response
 		}
-		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeID)...)
+		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeId)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
@@ -64,7 +65,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 			Mode: v1alpha1.QueryRequest_MODE_MERGE,
 			Options: &v1alpha1.QueryRequest_Merge{
 				Merge: &v1alpha1.MergeProfile{
-					Query: fmt.Sprintf("%s%s", qm.ProfileTypeID, qm.LabelSelector),
+					Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
 					Start: &timestamppb.Timestamp{
 						Seconds: query.TimeRange.From.Unix(),
 					},
@@ -73,6 +74,8 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 					},
 				},
 			},
+			// We should change this to QueryRequest_REPORT_TYPE_FLAMEGRAPH_TABLE later on
+			// nolint:staticcheck
 			ReportType: v1alpha1.QueryRequest_REPORT_TYPE_FLAMEGRAPH_UNSPECIFIED,
 		},
 	}
@@ -81,7 +84,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[v1alpha1.QueryRangeRequest] {
 	return &connect.Request[v1alpha1.QueryRangeRequest]{
 		Msg: &v1alpha1.QueryRangeRequest{
-			Query: fmt.Sprintf("%s%s", qm.ProfileTypeID, qm.LabelSelector),
+			Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
 			Start: &timestamppb.Timestamp{
 				Seconds: query.TimeRange.From.Unix(),
 			},
@@ -140,7 +143,7 @@ type Node struct {
 }
 
 func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level int64, value int64, name string, self int64)) {
-	var stack []*Node
+	stack := make([]*Node, 0, len(tree.Children))
 	var childrenValue int64 = 0
 
 	for _, child := range tree.Children {
@@ -215,7 +218,7 @@ func normalizeUnit(unit string) string {
 }
 
 func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		frame := data.NewFrame("series")

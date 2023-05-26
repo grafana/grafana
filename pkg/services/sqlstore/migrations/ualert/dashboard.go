@@ -87,8 +87,6 @@ type saveFolderCommand struct {
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
 	IsFolder     bool             `json:"isFolder"`
-
-	Result *dashboard
 }
 
 // GetDashboardModel turns the command into the saveable model

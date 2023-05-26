@@ -5,30 +5,27 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestEmailIntegrationTest(t *testing.T) {
 	t.Run("Given the notifications service", func(t *testing.T) {
-		t.Skip()
-
-		setting.StaticRootPath = "../../../public/"
 		setting.BuildVersion = "4.0.0"
 
-		ns := &NotificationService{}
-		ns.Bus = newBus(t)
-		ns.Cfg = setting.NewCfg()
-		ns.Cfg.Smtp.Enabled = true
-		ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
-		ns.Cfg.Smtp.FromAddress = "from@address.com"
-		ns.Cfg.Smtp.FromName = "Grafana Admin"
-		ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+		cfg := setting.NewCfg()
+		cfg.Smtp.Enabled = true
+		cfg.StaticRootPath = "../../../public/"
+		cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
+		cfg.Smtp.FromAddress = "from@address.com"
+		cfg.Smtp.FromName = "Grafana Admin"
+		cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+		ns, err := ProvideService(newBus(t), cfg, NewFakeMailer(), nil)
+		require.NoError(t, err)
 
 		t.Run("When sending reset email password", func(t *testing.T) {
-			cmd := &models.SendEmailCommand{
+			cmd := &SendEmailCommand{
 
 				Data: map[string]interface{}{
 					"Title":         "[CRITICAL] Imaginary timeseries alert",
@@ -60,11 +57,19 @@ func TestEmailIntegrationTest(t *testing.T) {
 			require.NoError(t, err)
 
 			sentMsg := <-ns.mailQueue
-			require.Equal(t, sentMsg.From, "Grafana Admin <from@address.com>")
-			require.Equal(t, sentMsg.To[0], "asdf@asdf.com")
-			err = os.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body["text/html"]), 0777)
+			require.Equal(t, "\"Grafana Admin\" <from@address.com>", sentMsg.From)
+			require.Equal(t, "asdf@asdf.com", sentMsg.To[0])
+			require.Equal(t, "[CRITICAL] Imaginary timeseries alert", sentMsg.Subject)
+			require.Contains(t, sentMsg.Body["text/html"], "<title>[CRITICAL] Imaginary timeseries alert</title>")
+
+			path, err := os.MkdirTemp("../../..", "tmp")
 			require.NoError(t, err)
-			err = os.WriteFile("../../../tmp/test_email.txt", []byte(sentMsg.Body["text/plain"]), 0777)
+			t.Cleanup(func() {
+				_ = os.RemoveAll(path)
+			})
+			err = os.WriteFile(path+"/test_email.html", []byte(sentMsg.Body["text/html"]), 0777)
+			require.NoError(t, err)
+			err = os.WriteFile(path+"/test_email.txt", []byte(sentMsg.Body["text/plain"]), 0777)
 			require.NoError(t, err)
 		})
 	})

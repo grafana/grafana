@@ -12,6 +12,7 @@ type LogGroupsRequest struct {
 	ResourceRequest
 	Limit                                   int64
 	LogGroupNamePrefix, LogGroupNamePattern *string
+	ListAllLogGroups                        bool
 }
 
 func (r LogGroupsRequest) IsTargetingAllAccounts() bool {
@@ -33,6 +34,7 @@ func ParseLogGroupsRequest(parameters url.Values) (LogGroupsRequest, error) {
 		},
 		LogGroupNamePrefix:  logGroupNamePrefix,
 		LogGroupNamePattern: logGroupPattern,
+		ListAllLogGroups:    parameters.Get("listAllLogGroups") == "true",
 	}, nil
 }
 

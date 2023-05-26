@@ -177,7 +177,7 @@ export class DashboardExporter {
           model = libPanel.model;
         }
 
-        const { gridPos, id, ...rest } = model;
+        const { gridPos, id, ...rest } = model as any;
         if (!libraryPanels.has(uid)) {
           libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
         }

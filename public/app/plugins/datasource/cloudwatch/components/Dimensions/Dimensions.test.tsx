@@ -10,9 +10,9 @@ const ds = setupMockedDataSource({
   variables: [],
 });
 
-ds.datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
 const q: CloudWatchMetricsQuery = {
   id: '',

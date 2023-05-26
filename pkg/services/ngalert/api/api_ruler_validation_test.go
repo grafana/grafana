@@ -56,11 +56,11 @@ func validRule() apimodels.PostableExtendedRuleNode {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     fmt.Sprintf("TEST-ALERT-%d", rand.Int63()),
 			Condition: "A",
-			Data: []models.AlertQuery{
+			Data: []apimodels.AlertQuery{
 				{
 					RefID:     "A",
 					QueryType: "TEST",
-					RelativeTimeRange: models.RelativeTimeRange{
+					RelativeTimeRange: apimodels.RelativeTimeRange{
 						From: 10,
 						To:   0,
 					},
@@ -69,8 +69,8 @@ func validRule() apimodels.PostableExtendedRuleNode {
 				},
 			},
 			UID:          util.GenerateShortUID(),
-			NoDataState:  allNoData[rand.Intn(len(allNoData)-1)],
-			ExecErrState: allExecError[rand.Intn(len(allExecError)-1)],
+			NoDataState:  allNoData[rand.Intn(len(allNoData))],
+			ExecErrState: allExecError[rand.Intn(len(allExecError))],
 		},
 	}
 }
@@ -119,6 +119,7 @@ func TestValidateRuleGroup(t *testing.T) {
 		require.Len(t, alerts, len(rules))
 		require.Equal(t, len(rules), conditionValidations)
 	})
+
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
@@ -128,6 +129,23 @@ func TestValidateRuleGroup(t *testing.T) {
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.Equal(t, int64(cfg.DefaultRuleEvaluationInterval.Seconds()), alert.IntervalSeconds)
+			require.False(t, alert.HasPause)
+		}
+	})
+
+	t.Run("should show the payload has isPaused field", func(t *testing.T) {
+		for _, rule := range rules {
+			isPaused := true
+			rule.GrafanaManagedAlert.IsPaused = &isPaused
+			isPaused = !(isPaused)
+		}
+		g := validGroup(cfg, rules...)
+		alerts, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
+			return nil
+		}, cfg)
+		require.NoError(t, err)
+		for _, alert := range alerts {
+			require.True(t, alert.HasPause)
 		}
 	})
 }
@@ -230,7 +248,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, orgId, alert.OrgID)
 				require.Equal(t, api.GrafanaManagedAlert.Title, alert.Title)
 				require.Equal(t, api.GrafanaManagedAlert.Condition, alert.Condition)
-				require.Equal(t, api.GrafanaManagedAlert.Data, alert.Data)
+				require.Equal(t, AlertQueriesFromApiAlertQueries(api.GrafanaManagedAlert.Data), alert.Data)
 				require.Equal(t, time.Time{}, alert.Updated)
 				require.Equal(t, int64(interval.Seconds()), alert.IntervalSeconds)
 				require.Equal(t, int64(0), alert.Version)
@@ -393,7 +411,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if there are not data (empty)",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0, 1)
+				r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0, 1)
 				return &r
 			},
 		},
@@ -517,7 +535,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 				r.GrafanaManagedAlert.Condition = ""
 				r.GrafanaManagedAlert.Data = nil
 				if rand.Int63()%2 == 0 {
-					r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0)
+					r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0)
 				}
 				return &r
 			},
@@ -612,7 +630,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 			name: "fail if there are not data (empty) but condition is set",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0, 1)
+				r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0, 1)
 				r.GrafanaManagedAlert.Condition = "A"
 				return &r
 			},

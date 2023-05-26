@@ -1,15 +1,25 @@
-import { Labels, LogLevel, LogsModel, LogRowModel, LogsSortOrder, MutableDataFrame } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  FieldType,
+  Labels,
+  LogLevel,
+  LogRowModel,
+  LogsModel,
+  LogsSortOrder,
+  MutableDataFrame,
+  DataFrame,
+} from '@grafana/data';
 
 import {
-  getLogLevel,
   calculateLogsLabelStats,
-  calculateFieldStats,
-  getParser,
-  LogsParsers,
   calculateStats,
-  getLogLevelFromKey,
-  sortLogsResult,
   checkLogsError,
+  getLogLevel,
+  getLogLevelFromKey,
+  getLogsVolumeMaximumRange,
+  logRowsToReadableJson,
+  mergeLogsVolumeDataFrames,
+  sortLogsResult,
 } from './utils';
 
 describe('getLoglevel()', () => {
@@ -107,147 +117,6 @@ describe('calculateLogsLabelStats()', () => {
   });
 });
 
-describe('LogsParsers', () => {
-  describe('logfmt', () => {
-    const parser = LogsParsers.logfmt;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('foo=bar')).toBeTruthy();
-    });
-
-    test('should return detected fields', () => {
-      expect(
-        parser.getFields(
-          'foo=bar baz="42 + 1" msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1" time(ms)=50 label{foo}=bar'
-        )
-      ).toEqual([
-        'foo=bar',
-        'baz="42 + 1"',
-        'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"',
-        'time(ms)=50',
-        'label{foo}=bar',
-      ]);
-    });
-
-    test('should return label for field', () => {
-      expect(parser.getLabelFromField('foo=bar')).toBe('foo');
-      expect(parser.getLabelFromField('time(ms)=50')).toBe('time(ms)');
-    });
-
-    test('should return value for field', () => {
-      expect(parser.getValueFromField('foo=bar')).toBe('bar');
-      expect(parser.getValueFromField('time(ms)=50')).toBe('50');
-      expect(
-        parser.getValueFromField(
-          'msg="[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"'
-        )
-      ).toBe('"[resolver] received A record \\"127.0.0.1\\" for \\"localhost.\\" from udp:192.168.65.1"');
-    });
-
-    test('should build a valid value matcher', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = 'foo=bar'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('bar');
-    });
-
-    test('should build a valid complex value matcher', () => {
-      const matcher = parser.buildMatcher('time(ms)');
-      const match = 'time(ms)=50'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('50');
-    });
-  });
-
-  describe('JSON', () => {
-    const parser = LogsParsers.JSON;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('"foo"')).toBeFalsy();
-      expect(parser.test('{"foo":"bar"}')).toBeTruthy();
-    });
-
-    test('should return detected fields', () => {
-      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo":"bar"', '"baz":42']);
-    });
-
-    test('should return detected fields for nested quotes', () => {
-      expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":"bar: '[value=\\"42\\"]'"`]);
-    });
-
-    test('should return label for field', () => {
-      expect(parser.getLabelFromField('"foo" : "bar"')).toBe('foo');
-      expect(parser.getLabelFromField('"docker.memory.fail.count":0')).toBe('docker.memory.fail.count');
-    });
-
-    test('should return value for field', () => {
-      expect(parser.getValueFromField('"foo" : "bar"')).toBe('"bar"');
-      expect(parser.getValueFromField('"foo" : 42')).toBe('42');
-      expect(parser.getValueFromField('"foo" : 42.1')).toBe('42.1');
-    });
-
-    test('should build a valid value matcher for strings', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":"bar"}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('bar');
-    });
-
-    test('should build a valid value matcher for integers', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":42.1}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match![1]).toBe('42.1');
-    });
-  });
-});
-
-describe('calculateFieldStats()', () => {
-  test('should return no stats for empty rows', () => {
-    expect(calculateFieldStats([], /foo=(.*)/)).toEqual([]);
-  });
-
-  test('should return no stats if extractor does not match', () => {
-    const rows = [
-      {
-        entry: 'foo=bar',
-      },
-    ] as LogRowModel[];
-
-    expect(calculateFieldStats(rows, /baz=(.*)/)).toEqual([]);
-  });
-
-  test('should return stats for found field', () => {
-    const rows = [
-      {
-        entry: 'foo="42 + 1"',
-      },
-      {
-        entry: 'foo=503 baz=foo',
-      },
-      {
-        entry: 'foo="42 + 1"',
-      },
-      {
-        entry: 't=2018-12-05T07:44:59+0000 foo=503',
-      },
-    ] as LogRowModel[];
-
-    expect(calculateFieldStats(rows, /foo=("[^"]*"|\S+)/)).toMatchObject([
-      {
-        value: '"42 + 1"',
-        count: 2,
-      },
-      {
-        value: '503',
-        count: 2,
-      },
-    ]);
-  });
-});
-
 describe('calculateStats()', () => {
   test('should return no stats for empty array', () => {
     expect(calculateStats([])).toEqual([]);
@@ -267,25 +136,6 @@ describe('calculateStats()', () => {
         proportion: 1 / 3,
       },
     ]);
-  });
-});
-
-describe('getParser()', () => {
-  test('should return no parser on empty line', () => {
-    expect(getParser('')).toBeUndefined();
-  });
-
-  test('should return no parser on unknown line pattern', () => {
-    expect(getParser('To Be or not to be')).toBeUndefined();
-  });
-
-  test('should return logfmt parser on key value patterns', () => {
-    expect(getParser('foo=bar baz="41 + 1')).toEqual(LogsParsers.logfmt);
-  });
-
-  test('should return JSON parser on JSON log lines', () => {
-    // TODO implement other JSON value types than string
-    expect(getParser('{"foo": "bar", "baz": "41 + 1"}')).toEqual(LogsParsers.JSON);
   });
 });
 
@@ -366,5 +216,192 @@ describe('checkLogsError()', () => {
   } as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
+  });
+});
+
+describe('logRowsToReadableJson', () => {
+  const testRow: LogRowModel = {
+    rowIndex: 1,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    entry: 'test entry',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {
+      foo: 'bar',
+    },
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '123456789',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+  const testDf = new MutableDataFrame();
+  testDf.addField({ name: 'foo2', values: ['bar2'] });
+  const testRow2: LogRowModel = {
+    rowIndex: 0,
+    entryFieldIndex: -1,
+    dataFrame: testDf,
+    entry: 'test entry',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {
+      foo: 'bar',
+    },
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '123456789',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+
+  it('should format a single row', () => {
+    const result = logRowsToReadableJson([testRow]);
+
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } }]);
+  });
+
+  it('should format a df field row', () => {
+    const result = logRowsToReadableJson([testRow2]);
+
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
+  });
+});
+
+describe('mergeLogsVolumeDataFrames', () => {
+  function mockLogVolume(level: string, timestamps: number[], values: number[]): DataFrame {
+    const frame = new MutableDataFrame();
+    frame.addField({ name: 'Time', type: FieldType.time, values: timestamps });
+    frame.addField({ name: 'Value', type: FieldType.number, values, config: { displayNameFromDS: level } });
+    return frame;
+  }
+
+  it('merges log volumes', () => {
+    // timestamps: 1 2 3 4 5 6
+
+    // info 1:     1 - 1 - - -
+    // info 2:     2 3 - - - -
+    // total:      3 3 1 - - -
+    const infoVolume1 = mockLogVolume('info', [1, 3], [1, 1]);
+    const infoVolume2 = mockLogVolume('info', [1, 2], [2, 3]);
+
+    // debug 1:    - 2 3 - - -
+    // debug 2:    1 - - - 0 -
+    // total:      1 2 3 - 0 -
+    const debugVolume1 = mockLogVolume('debug', [2, 3], [2, 3]);
+    const debugVolume2 = mockLogVolume('debug', [1, 5], [1, 0]);
+
+    // error 1:    1 - - - - 1
+    // error 2:    1 - - - - -
+    // total:      2 - - - - 1
+    const errorVolume1 = mockLogVolume('error', [1, 6], [1, 1]);
+    const errorVolume2 = mockLogVolume('error', [1], [1]);
+
+    // all totals: 6 5 4 - 0 2
+
+    const { dataFrames: merged, maximum } = mergeLogsVolumeDataFrames([
+      infoVolume1,
+      infoVolume2,
+      debugVolume1,
+      debugVolume2,
+      errorVolume1,
+      errorVolume2,
+    ]);
+
+    expect(merged).toHaveLength(3);
+    expect(merged).toMatchObject([
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [1, 2, 3],
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [3, 3, 1],
+            config: {
+              displayNameFromDS: 'info',
+            },
+          },
+        ],
+      },
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [1, 2, 3, 5],
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [1, 2, 3, 0],
+            config: {
+              displayNameFromDS: 'debug',
+            },
+          },
+        ],
+      },
+      {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [1, 6],
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [2, 1],
+            config: {
+              displayNameFromDS: 'error',
+            },
+          },
+        ],
+      },
+    ]);
+    expect(maximum).toBe(6);
+  });
+});
+
+describe('getLogsVolumeDimensions', () => {
+  function mockLogVolumeDataFrame(values: number[], absoluteRange: AbsoluteTimeRange) {
+    return new MutableDataFrame({
+      meta: {
+        custom: {
+          absoluteRange,
+        },
+      },
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [],
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: values,
+        },
+      ],
+    });
+  }
+
+  it('calculates the maximum value and range of all log volumes', () => {
+    const maximumRange = getLogsVolumeMaximumRange([
+      mockLogVolumeDataFrame([], { from: 5, to: 20 }),
+      mockLogVolumeDataFrame([], { from: 10, to: 25 }),
+      mockLogVolumeDataFrame([], { from: 7, to: 23 }),
+    ]);
+
+    expect(maximumRange).toEqual({ from: 5, to: 25 });
   });
 });

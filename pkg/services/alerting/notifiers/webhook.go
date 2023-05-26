@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -145,7 +145,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	bodyJSON, _ := json.Marshal(body)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        wn.URL,
 		User:       wn.User,
 		Password:   wn.Password,

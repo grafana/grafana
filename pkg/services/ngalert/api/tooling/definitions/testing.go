@@ -7,12 +7,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/prometheus/common/model"
-
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route Post /api/v1/rule/test/grafana testing RouteTestRuleGrafanaConfig
@@ -96,8 +93,8 @@ type EvalQueriesRequest struct {
 
 // swagger:model
 type EvalQueriesPayload struct {
-	Data []models.AlertQuery `json:"data"`
-	Now  time.Time           `json:"now"`
+	Data []AlertQuery `json:"data"`
+	Now  time.Time    `json:"now"`
 }
 
 func (p *TestRulePayload) UnmarshalJSON(b []byte) error {
@@ -176,15 +173,21 @@ type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
 
+// swagger:parameters BacktestConfig
+type BacktestConfigRequest struct {
+	// in:body
+	Body BacktestConfig
+}
+
 // swagger:model
 type BacktestConfig struct {
 	From     time.Time      `json:"from"`
 	To       time.Time      `json:"to"`
 	Interval model.Duration `json:"interval,omitempty"`
 
-	Condition string              `json:"condition"`
-	Data      []models.AlertQuery `json:"data"` // TODO yuri. Create API model for AlertQuery
-	For       model.Duration      `json:"for,omitempty"`
+	Condition string         `json:"condition"`
+	Data      []AlertQuery   `json:"data"`
+	For       model.Duration `json:"for,omitempty"`
 
 	Title       string            `json:"title"`
 	Labels      map[string]string `json:"labels,omitempty"`

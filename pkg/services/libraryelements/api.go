@@ -7,9 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -38,8 +39,8 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Response {
-	cmd := CreateLibraryElementCommand{}
+func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) response.Response {
+	cmd := model.CreateLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -55,7 +56,6 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 			cmd.FolderID = folder.ID
 		}
 	}
-
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
@@ -71,7 +71,7 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 		element.Meta.FolderName = folder.Title
 	}
 
-	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, model.LibraryElementResponse{Result: element})
 }
 
 // swagger:route DELETE /library-elements/{library_element_uid} library_elements deleteLibraryElementByUID
@@ -88,13 +88,13 @@ func (l *LibraryElementService) createHandler(c *models.ReqContext) response.Res
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Response {
+func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
 	}
 
-	return response.JSON(http.StatusOK, DeleteLibraryElementResponse{
+	return response.JSON(http.StatusOK, model.DeleteLibraryElementResponse{
 		Message: "Library element deleted",
 		ID:      id,
 	})
@@ -111,13 +111,13 @@ func (l *LibraryElementService) deleteHandler(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Response {
+func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
 	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, model.LibraryElementResponse{Result: element})
 }
 
 // swagger:route GET /library-elements library_elements getLibraryElements
@@ -132,24 +132,24 @@ func (l *LibraryElementService) getHandler(c *models.ReqContext) response.Respon
 // 200: getLibraryElementsResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Response {
-	query := searchLibraryElementsQuery{
-		perPage:          c.QueryInt("perPage"),
-		page:             c.QueryInt("page"),
-		searchString:     c.Query("searchString"),
-		sortDirection:    c.Query("sortDirection"),
-		kind:             c.QueryInt("kind"),
-		typeFilter:       c.Query("typeFilter"),
-		excludeUID:       c.Query("excludeUid"),
-		folderFilter:     c.Query("folderFilter"),
-		folderFilterUIDs: c.Query("folderFilterUIDs"),
+func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) response.Response {
+	query := model.SearchLibraryElementsQuery{
+		PerPage:          c.QueryInt("perPage"),
+		Page:             c.QueryInt("page"),
+		SearchString:     c.Query("searchString"),
+		SortDirection:    c.Query("sortDirection"),
+		Kind:             c.QueryInt("kind"),
+		TypeFilter:       c.Query("typeFilter"),
+		ExcludeUID:       c.Query("excludeUid"),
+		FolderFilter:     c.Query("folderFilter"),
+		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
 	elementsResult, err := l.getAllLibraryElements(c.Req.Context(), c.SignedInUser, query)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
-	return response.JSON(http.StatusOK, LibraryElementSearchResponse{Result: elementsResult})
+	return response.JSON(http.StatusOK, model.LibraryElementSearchResponse{Result: elementsResult})
 }
 
 // swagger:route PATCH /library-elements/{library_element_uid} library_elements updateLibraryElement
@@ -166,8 +166,8 @@ func (l *LibraryElementService) getAllHandler(c *models.ReqContext) response.Res
 // 404: notFoundError
 // 412: preconditionFailedError
 // 500: internalServerError
-func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Response {
-	cmd := PatchLibraryElementCommand{}
+func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) response.Response {
+	cmd := model.PatchLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -199,7 +199,7 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 		element.Meta.FolderName = folder.Title
 	}
 
-	return response.JSON(http.StatusOK, LibraryElementResponse{Result: element})
+	return response.JSON(http.StatusOK, model.LibraryElementResponse{Result: element})
 }
 
 // swagger:route GET /library-elements/{library_element_uid}/connections/ library_elements getLibraryElementConnections
@@ -213,13 +213,13 @@ func (l *LibraryElementService) patchHandler(c *models.ReqContext) response.Resp
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) response.Response {
+func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
 	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
 	}
 
-	return response.JSON(http.StatusOK, LibraryElementConnectionsResponse{Result: connections})
+	return response.JSON(http.StatusOK, model.LibraryElementConnectionsResponse{Result: connections})
 }
 
 // swagger:route GET /library-elements/name/{library_element_name} library_elements getLibraryElementByName
@@ -233,27 +233,27 @@ func (l *LibraryElementService) getConnectionsHandler(c *models.ReqContext) resp
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) getByNameHandler(c *models.ReqContext) response.Response {
+func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) response.Response {
 	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(http.StatusOK, LibraryElementArrayResponse{Result: elements})
+	return response.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: elements})
 }
 
 func toLibraryElementError(err error, message string) response.Response {
-	if errors.Is(err, errLibraryElementAlreadyExists) {
-		return response.Error(400, errLibraryElementAlreadyExists.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementAlreadyExists) {
+		return response.Error(400, model.ErrLibraryElementAlreadyExists.Error(), err)
 	}
-	if errors.Is(err, ErrLibraryElementNotFound) {
-		return response.Error(404, ErrLibraryElementNotFound.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementNotFound) {
+		return response.Error(404, model.ErrLibraryElementNotFound.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementDashboardNotFound) {
-		return response.Error(404, errLibraryElementDashboardNotFound.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementDashboardNotFound) {
+		return response.Error(404, model.ErrLibraryElementDashboardNotFound.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementVersionMismatch) {
-		return response.Error(412, errLibraryElementVersionMismatch.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementVersionMismatch) {
+		return response.Error(412, model.ErrLibraryElementVersionMismatch.Error(), err)
 	}
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
 		return response.Error(404, dashboards.ErrFolderNotFound.Error(), err)
@@ -261,14 +261,14 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, dashboards.ErrFolderAccessDenied) {
 		return response.Error(403, dashboards.ErrFolderAccessDenied.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementHasConnections) {
-		return response.Error(403, errLibraryElementHasConnections.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementHasConnections) {
+		return response.Error(403, model.ErrLibraryElementHasConnections.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementInvalidUID) {
-		return response.Error(400, errLibraryElementInvalidUID.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementInvalidUID) {
+		return response.Error(400, model.ErrLibraryElementInvalidUID.Error(), err)
 	}
-	if errors.Is(err, errLibraryElementUIDTooLong) {
-		return response.Error(400, errLibraryElementUIDTooLong.Error(), err)
+	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
+		return response.Error(400, model.ErrLibraryElementUIDTooLong.Error(), err)
 	}
 	return response.ErrOrFallback(http.StatusInternalServerError, message, err)
 }
@@ -358,14 +358,14 @@ type GetLibraryElementsParams struct {
 type CreateLibraryElementParams struct {
 	// in:body
 	// required:true
-	Body CreateLibraryElementCommand `json:"body"`
+	Body model.CreateLibraryElementCommand `json:"body"`
 }
 
 // swagger:parameters updateLibraryElement
 type UpdateLibraryElementParam struct {
 	// in:body
 	// required:true
-	Body PatchLibraryElementCommand `json:"body"`
+	Body model.PatchLibraryElementCommand `json:"body"`
 	// in:path
 	// required:true
 	UID string `json:"library_element_uid"`
@@ -374,17 +374,17 @@ type UpdateLibraryElementParam struct {
 // swagger:response getLibraryElementsResponse
 type GetLibraryElementsResponse struct {
 	// in: body
-	Body LibraryElementSearchResponse `json:"body"`
+	Body model.LibraryElementSearchResponse `json:"body"`
 }
 
 // swagger:response getLibraryElementResponse
 type GetLibraryElementResponse struct {
 	// in: body
-	Body LibraryElementResponse `json:"body"`
+	Body model.LibraryElementResponse `json:"body"`
 }
 
 // swagger:response getLibraryElementConnectionsResponse
 type GetLibraryElementConnectionsResponse struct {
 	// in: body
-	Body LibraryElementConnectionsResponse `json:"body"`
+	Body model.LibraryElementConnectionsResponse `json:"body"`
 }

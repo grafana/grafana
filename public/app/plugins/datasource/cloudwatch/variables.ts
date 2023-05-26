@@ -9,16 +9,17 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { CloudWatchAPI } from './api';
 import { ALL_ACCOUNTS_OPTION } from './components/Account';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
+import { DEFAULT_VARIABLE_QUERY } from './defaultQueries';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
+import { ResourcesAPI } from './resources/ResourcesAPI';
 import { standardStatistics } from './standardStatistics';
 import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
-  constructor(private readonly api: CloudWatchAPI) {
+  constructor(private readonly resources: ResourcesAPI) {
     super();
     this.query = this.query.bind(this);
   }
@@ -61,38 +62,62 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
   }
-  async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
-    return this.api
-      .describeAllLogGroups({
+
+  async handleLogGroupsQuery({ region, logGroupPrefix, accountId }: VariableQuery) {
+    const interpolatedPrefix = this.resources.templateSrv.replace(logGroupPrefix);
+    return this.resources
+      .getLogGroups({
+        accountId,
         region,
-        logGroupNamePrefix: logGroupPrefix,
+        logGroupNamePrefix: interpolatedPrefix,
+        listAllLogGroups: true,
       })
-      .then((logGroups) => logGroups.map(selectableValueToMetricFindOption));
+      .then((logGroups) =>
+        logGroups.map((lg) => {
+          return {
+            text: lg.value.name,
+            value: lg.value.arn,
+            expandable: true,
+          };
+        })
+      );
   }
 
   async handleRegionsQuery() {
-    return this.api.getRegions().then((regions) => regions.map(selectableValueToMetricFindOption));
+    return this.resources.getRegions().then((regions) => regions.map(selectableValueToMetricFindOption));
   }
 
   async handleNamespacesQuery() {
-    return this.api.getNamespaces().then((namespaces) => namespaces.map(selectableValueToMetricFindOption));
+    return this.resources.getNamespaces().then((namespaces) => namespaces.map(selectableValueToMetricFindOption));
   }
 
-  async handleMetricsQuery({ namespace, region }: VariableQuery) {
-    return this.api.getMetrics({ namespace, region }).then((metrics) => metrics.map(selectableValueToMetricFindOption));
+  async handleMetricsQuery({ namespace, region, accountId }: VariableQuery) {
+    return this.resources
+      .getMetrics({ namespace, region, accountId })
+      .then((metrics) => metrics.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
-    return this.api.getDimensionKeys({ namespace, region }).then((keys) => keys.map(selectableValueToMetricFindOption));
+  async handleDimensionKeysQuery({ namespace, region, accountId }: VariableQuery) {
+    return this.resources
+      .getDimensionKeys({ namespace, region, accountId })
+      .then((keys) => keys.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
+  async handleDimensionValuesQuery({
+    namespace,
+    accountId,
+    region,
+    dimensionKey,
+    metricName,
+    dimensionFilters,
+  }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
-    return this.api
+    return this.resources
       .getDimensionValues({
         region,
+        accountId,
         namespace,
         metricName,
         dimensionKey,
@@ -105,14 +130,14 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!instanceID) {
       return [];
     }
-    return this.api.getEbsVolumeIds(region, instanceID).then((ids) => ids.map(selectableValueToMetricFindOption));
+    return this.resources.getEbsVolumeIds(region, instanceID).then((ids) => ids.map(selectableValueToMetricFindOption));
   }
 
   async handleEc2InstanceAttributeQuery({ region, attributeName, ec2Filters }: VariableQuery) {
     if (!attributeName) {
       return [];
     }
-    return this.api
+    return this.resources
       .getEc2InstanceAttribute(region, attributeName, ec2Filters ?? {})
       .then((values) => values.map(selectableValueToMetricFindOption));
   }
@@ -121,7 +146,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!resourceType) {
       return [];
     }
-    const keys = await this.api.getResourceARNs(region, resourceType, tags ?? {});
+    const keys = await this.resources.getResourceARNs(region, resourceType, tags ?? {});
     return keys.map(selectableValueToMetricFindOption);
   }
 
@@ -135,7 +160,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
   allMetricFindValue: MetricFindValue = { text: 'All', value: ALL_ACCOUNTS_OPTION.value, expandable: true };
   async handleAccountsQuery({ region }: VariableQuery) {
-    return this.api.getAccounts({ region }).then((accounts) => {
+    return this.resources.getAccounts({ region }).then((accounts) => {
       const metricFindOptions = accounts.map((account) => ({
         text: account.label,
         value: account.id,
@@ -144,6 +169,10 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
       return metricFindOptions.length ? [this.allMetricFindValue, ...metricFindOptions] : [];
     });
+  }
+
+  getDefaultQuery(): Partial<VariableQuery> {
+    return DEFAULT_VARIABLE_QUERY;
   }
 }
 

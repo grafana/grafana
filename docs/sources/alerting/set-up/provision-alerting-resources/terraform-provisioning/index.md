@@ -33,9 +33,9 @@ Complete the following tasks to create and manage your alerting resources using 
 
 ## Create an API key for provisioning
 
-You can [create a normal Grafana API key](https://grafana.com/docs/grafana/latest/administration/api-keys/) to authenticate Terraform with Grafana. Most existing tooling using API keys should automatically work with the new Grafana Alerting support.
+You can [create a normal Grafana API key]({{< relref "../../../../administration/api-keys" >}}) to authenticate Terraform with Grafana. Most existing tooling using API keys should automatically work with the new Grafana Alerting support.
 
-There are also dedicated RBAC roles for alerting provisioning. This lets you easily authenticate as a [service account](https://grafana.com/docs/grafana/latest/administration/service-accounts/) with the minimum permissions needed to provision your Alerting infrastructure.
+There are also dedicated RBAC roles for alerting provisioning. This lets you easily authenticate as a [service account]({{< relref "../../../../administration/service-accounts" >}}) with the minimum permissions needed to provision your Alerting infrastructure.
 
 To create an API key for provisioning, complete the following steps.
 
@@ -98,7 +98,7 @@ EOT
 
 2. Enter text for your notification in the text field.
 
-The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting message templates directly in Terraform.
+The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting notification templates directly in Terraform.
 
 3. Run the command ‘terraform apply’.
 
@@ -222,13 +222,13 @@ You cannot edit resources provisioned from Terraform from the UI. This ensures t
 
 ## Provision alert rules
 
-[Alert rules](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/) enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
+[Alert rules]({{< relref "../../../alerting-rules" >}}) enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
 
 To provision alert rules, complete the following steps.
 
 1. Create a data source to query and a folder to store your rules in.
 
-In this example, the [TestData](https://grafana.com/docs/grafana/latest/datasources/testdata/) data source is used.
+In this example, the [TestData]({{< relref "../../../../datasources/testdata" >}}) data source is used.
 
 Alerts can be defined against any backend datasource in Grafana.
 
@@ -245,7 +245,7 @@ resource "grafana_folder" "rule_folder" {
 
 2. Define an alert rule.
 
-For more information on alert rules, refer to [how to create Grafana-managed alerts](https://grafana.com/blog/2022/08/01/grafana-alerting-video-how-to-create-alerts-in-grafana-9/).
+For more information on alert rules, refer to [how to create Grafana-managed alerts](/blog/2022/08/01/grafana-alerting-video-how-to-create-alerts-in-grafana-9/).
 
 3. Create a rule group containing one or more rules.
 
@@ -282,7 +282,7 @@ resource "grafana_rule_group" "my_rule_group" {
 
         // The query was configured to obtain data from the last 60 seconds. Let's alert on the average value of that series using a Reduce stage.
         data {
-            datasource_uid = "-100"
+            datasource_uid = "__expr__"
             // You can also create a rule in the UI, then GET that rule to obtain the JSON.
             // This can be helpful when using more complex reduce expressions.
             model = <<EOT
@@ -298,7 +298,7 @@ EOT
         // Now, let's use a math expression as our threshold.
         // We want to alert when the value of stage "B" above exceeds 70.
         data {
-            datasource_uid = "-100"
+            datasource_uid = "__expr__"
             ref_id = "C"
             relative_time_range {
                 from = 0

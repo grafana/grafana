@@ -31,7 +31,7 @@ describe('generatePublicDashboardUrl', () => {
     updateConfig({ appUrl });
     let pubdash = { accessToken } as PublicDashboard;
 
-    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
+    expect(generatePublicDashboardUrl(pubdash.accessToken!)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
   });
 });
 
@@ -55,6 +55,12 @@ describe('getUnsupportedDashboardDatasources', () => {
       targets: [
         {
           datasource: { type: 'prometheus' } as DataSourceRef,
+        } as DataQuery,
+        {
+          datasource: { type: '__expr__' } as DataSourceRef,
+        } as DataQuery,
+        {
+          datasource: { type: 'datasource' } as DataSourceRef,
         } as DataQuery,
       ] as DataQuery[],
     } as PanelModel;

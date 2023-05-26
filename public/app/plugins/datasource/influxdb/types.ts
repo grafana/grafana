@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData, AdHocVariableFilter } from '@grafana/data';
+import { AdHocVariableFilter, DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export enum InfluxVersion {
   InfluxQL = 'InfluxQL',
@@ -10,6 +10,8 @@ export interface InfluxOptions extends DataSourceJsonData {
 
   timeInterval?: string;
   httpMode?: string;
+
+  dbName?: string;
 
   // With Flux
   organization?: string;
@@ -69,6 +71,9 @@ export interface InfluxQuery extends DataQuery {
   timeEndColumn?: string;
   titleColumn?: string;
   name?: string;
+  matchAny?: boolean;
+  type?: string;
+
   textEditor?: boolean;
   adhocFilters?: AdHocVariableFilter[];
 }

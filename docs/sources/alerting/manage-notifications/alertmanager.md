@@ -3,6 +3,7 @@ aliases:
   - ../fundamentals/alertmanager/
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
+description: Intro to the different Alertmanagers
 title: Alertmanager
 weight: 100
 ---
@@ -23,6 +24,8 @@ Grafana Alertmanager is an internal Alertmanager that is pre-configured and avai
 
 The Grafana Alertmanager can receive alerts from Grafana, but it cannot receive alerts from outside Grafana, for example, from Mimir or Loki.
 
+**Note that inhibition rules are not supported in the Grafana Alertmanager.**
+
 **External Alertmanager**
 
 If you want to use a single alertmanager to receive all your Grafana, Loki, Mimir, and Prometheus alerts, you can set up Grafana to use an external Alertmanager. This external Alertmanager can be configured and administered from within Grafana itself.
@@ -35,8 +38,10 @@ Here are two examples of when you may want to configure your own external alertm
 
 Alertmanagers are visible from the drop-down menu on the Alerting Contact Points, Notification Policies, and Silences pages.
 
+If you are provisioning your data source, set the flag `handleGrafanaManagedAlerts` in the `jsonData` field to `true` to send Grafana-managed alerts to this Alertmanager.
+
 **Useful links**
 
 [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
-[Add an external Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)
+[Add an external Alertmanager]({{< relref "../set-up/configure-alertmanager" >}})

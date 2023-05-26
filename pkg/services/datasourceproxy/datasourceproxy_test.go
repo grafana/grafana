@@ -33,6 +33,14 @@ func TestDataProxy(t *testing.T) {
 				"some/thing",
 			},
 			{
+				"/api/datasources/proxy/uid/pUWo-no4k/search",
+				"search",
+			},
+			{
+				"/api/datasources/proxy/uid/pUWo_no4k/search",
+				"search",
+			},
+			{
 				"/api/datasources/proxy/uid/26MI0wZ7k/api/services/afsd%2Fafsd/operations",
 				"api/services/afsd%2Fafsd/operations",
 			},

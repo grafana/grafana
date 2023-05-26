@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/short_url/
+canonical: /docs/grafana/latest/developers/http_api/short_url/
 description: Grafana Short URL HTTP API
 keywords:
   - grafana
@@ -36,7 +37,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON body schema:
 
-- **path** – The path to shorten, relative to the Grafana [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}).
+- **path** – The path to shorten, relative to the Grafana [root_url]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#root_url" >}}).
 
 **Example response:**
 

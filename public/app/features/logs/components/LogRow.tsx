@@ -1,4 +1,5 @@
-import { cx, css } from '@emotion/css';
+import { cx } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import {
@@ -6,32 +7,23 @@ import {
   LinkModel,
   LogRowModel,
   LogsSortOrder,
-  TimeZone,
   DataQueryResponse,
   dateTimeFormat,
-  GrafanaTheme2,
   CoreApp,
   DataFrame,
+  LogRowContextOptions,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+import { TimeZone } from '@grafana/schema';
+import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
-import {
-  LogRowContextRows,
-  LogRowContextQueryErrors,
-  HasMoreContextRows,
-  LogRowContextProvider,
-  RowContextOptions,
-} from './LogRowContextProvider';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
-import { getLogRowStyles } from './getLogRowStyles';
-
-//Components
+import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 
 interface Props extends Themeable2 {
   row: LogRowModel;
@@ -44,21 +36,21 @@ interface Props extends Themeable2 {
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
-  scrollElement?: HTMLDivElement;
-  showRowMenu?: boolean;
   app?: CoreApp;
   displayedFields?: string[];
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
+  getLogRowContextUi?: (row: LogRowModel) => React.ReactNode;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
-  toggleContextIsOpen?: () => void;
+  onOpenContext: (row: LogRowModel, onClose: () => void) => void;
+  styles: LogRowStyles;
 }
 
 interface State {
@@ -66,24 +58,6 @@ interface State {
   showDetails: boolean;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    topVerticalAlign: css`
-      label: topVerticalAlign;
-      margin-top: -${theme.spacing(0.9)};
-      margin-left: -${theme.spacing(0.25)};
-    `,
-    detailsOpen: css`
-      &:hover {
-        background-color: ${styleMixins.hoverColor(theme.colors.background.primary, theme)};
-      }
-    `,
-    errorLogRow: css`
-      label: erroredLogRow;
-      color: ${theme.colors.text.secondary};
-    `,
-  };
-};
 /**
  * Renders a log line.
  *
@@ -97,20 +71,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showDetails: false,
   };
 
-  toggleContext = (method: string) => {
-    const { datasourceType, uid: logRowUid } = this.props.row;
-    reportInteraction('grafana_explore_logs_log_context_clicked', {
-      datasourceType,
-      logRowUid,
-      type: method,
-    });
+  // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
+  debouncedContextClose = debounce(() => {
+    this.setState({ showContext: false });
+  }, 3000);
 
-    this.props.toggleContextIsOpen?.();
-    this.setState((state) => {
-      return {
-        showContext: !state.showContext,
-      };
-    });
+  onOpenContext = (row: LogRowModel) => {
+    this.setState({ showContext: true });
+    this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
   toggleDetails = () => {
@@ -135,16 +103,23 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
       timeZone: this.props.timeZone,
+      defaultWithMS: true,
     });
   }
 
-  renderLogRow(
-    context?: LogRowContextRows,
-    errors?: LogRowContextQueryErrors,
-    hasMoreContextRows?: HasMoreContextRows,
-    updateLimit?: () => void,
-    logsSortOrder?: LogsSortOrder | null
-  ) {
+  onMouseEnter = () => {
+    if (this.props.onLogRowHover) {
+      this.props.onLogRowHover(this.props.row);
+    }
+  };
+
+  onMouseLeave = () => {
+    if (this.props.onLogRowHover) {
+      this.props.onLogRowHover(undefined);
+    }
+  };
+
+  render() {
     const {
       getRows,
       onClickFilterLabel,
@@ -155,7 +130,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       showContextToggle,
-      showRowMenu,
       showLabels,
       showTime,
       displayedFields,
@@ -164,17 +138,15 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
       forceEscape,
-      onLogRowHover,
       app,
-      scrollElement,
+      styles,
     } = this.props;
     const { showDetails, showContext } = this.state;
-    const style = getLogRowStyles(theme, row.logLevel);
-    const styles = getStyles(theme);
+    const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
-    const logRowBackground = cx(style.logsRow, {
+    const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [style.contextBackground]: showContext,
+      [styles.contextBackground]: showContext,
     });
 
     const processedRow =
@@ -187,33 +159,29 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         <tr
           className={logRowBackground}
           onClick={this.toggleDetails}
-          onMouseEnter={() => {
-            onLogRowHover && onLogRowHover(row);
-          }}
-          onMouseLeave={() => {
-            onLogRowHover && onLogRowHover(undefined);
-          }}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
         >
           {showDuplicates && (
-            <td className={style.logsRowDuplicates}>
+            <td className={styles.logsRowDuplicates}>
               {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={cx({ [style.logsRowLevel]: !hasError })}>
+          <td className={hasError ? '' : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}>
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
-                <Icon className={style.logIconError} name="exclamation-triangle" size="xs" />
+                <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
               </Tooltip>
             )}
           </td>
           {enableLogDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
+            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
-          {showTime && <td className={style.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
+          {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
-            <td className={style.logsRowLabels}>
+            <td className={styles.logsRowLabels}>
               <LogLabels labels={processedRow.uniqueLabels} />
             </td>
           )}
@@ -227,20 +195,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           ) : (
             <LogRowMessage
               row={processedRow}
-              getRows={getRows}
-              errors={errors}
-              hasMoreContextRows={hasMoreContextRows}
-              updateLimit={updateLimit}
-              context={context}
-              contextIsOpen={showContext}
               showContextToggle={showContextToggle}
-              showRowMenu={showRowMenu}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
-              onToggleContext={this.toggleContext}
+              onOpenContext={this.onOpenContext}
               app={app}
-              scrollElement={scrollElement}
-              logsSortOrder={logsSortOrder}
+              styles={styles}
             />
           )}
         </tr>
@@ -259,29 +219,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             hasError={hasError}
             displayedFields={displayedFields}
             app={app}
+            styles={styles}
           />
         )}
       </>
     );
-  }
-
-  render() {
-    const { showContext } = this.state;
-    const { logsSortOrder, row, getRowContext } = this.props;
-
-    if (showContext) {
-      return (
-        <>
-          <LogRowContextProvider row={row} getRowContext={getRowContext} logsSortOrder={logsSortOrder}>
-            {({ result, errors, hasMoreContextRows, updateLimit, logsSortOrder }) => {
-              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit, logsSortOrder)}</>;
-            }}
-          </LogRowContextProvider>
-        </>
-      );
-    }
-
-    return this.renderLogRow();
   }
 }
 

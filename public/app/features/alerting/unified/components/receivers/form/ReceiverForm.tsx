@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
+import { FieldErrors, FormProvider, useForm, Validate } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
@@ -159,7 +159,7 @@ export function ReceiverForm<R extends ChannelValues>({
               variant="secondary"
               onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
             >
-              New contact point integration
+              Add contact point integration
             </Button>
           )}
           <div className={styles.buttons}>
@@ -175,7 +175,6 @@ export function ReceiverForm<R extends ChannelValues>({
             )}
             <LinkButton
               disabled={loading}
-              fill="outline"
               variant="secondary"
               data-testid="cancel-button"
               href={makeAMLink('alerting/notifications', alertManagerSourceName)}

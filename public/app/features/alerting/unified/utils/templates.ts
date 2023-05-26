@@ -1,3 +1,5 @@
+import { now } from 'lodash';
+
 export function ensureDefine(templateName: string, templateContent: string): string {
   // notification template content must be wrapped in {{ define "name" }} tag,
   // but this is not obvious because user also has to provide name separately in the form.
@@ -11,4 +13,10 @@ export function ensureDefine(templateName: string, templateContent: string): str
     content = `{{ define "${templateName}" }}\n${indentedContent}\n{{ end }}`;
   }
   return content;
+}
+export function updateDefinesWithUniqueValue(templateContent: string): string {
+  const getNewValue = (match_: string, originalDefineName: string) => {
+    return `{{ define "${originalDefineName}_NEW_${now()}" }}`;
+  };
+  return templateContent.replace(/\{\{\s*define\s*\"(?<defineName>.*)\"\s*\}\}/g, getNewValue);
 }

@@ -1,7 +1,9 @@
 import { of } from 'rxjs';
 
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { RichHistoryQuery, UserPreferencesDTO } from '../../types';
+import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
@@ -169,18 +171,6 @@ describe('RichHistoryRemoteStorage', () => {
     expect(preferencesServiceMock.patch).toBeCalledWith({
       queryHistory: { homeTab: 'starred' },
     } as Partial<UserPreferencesDTO>);
-  });
-
-  it('migrates provided rich history items', async () => {
-    const { richHistoryQuery, dto } = setup();
-    fetchMock.mockReturnValue(of({}));
-    await storage.migrate([richHistoryQuery]);
-    expect(fetchMock).toBeCalledWith({
-      url: '/api/query-history/migrate',
-      method: 'POST',
-      data: { queries: [dto] },
-      showSuccessAlert: false,
-    });
   });
 
   it('stars query history items', async () => {

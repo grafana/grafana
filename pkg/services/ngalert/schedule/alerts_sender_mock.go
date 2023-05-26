@@ -3,9 +3,9 @@
 package schedule
 
 import (
-	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	mock "github.com/stretchr/testify/mock"
 
+	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 

@@ -28,16 +28,15 @@ export const getSectionStorageKey = (title = 'General') => {
  * @param folder
  */
 export const parseRouteParams = (params: UrlQueryMap) => {
-  const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
+  const cleanedParams = Object.entries(params).reduce<Partial<SearchState>>((obj, [key, val]) => {
     if (!val) {
       return obj;
     } else if (key === 'tag' && !Array.isArray(val)) {
       return { ...obj, tag: [val] as string[] };
-    } else if (key === 'sort') {
-      return { ...obj, sort: { value: val } };
     }
+
     return { ...obj, [key]: val };
-  }, {} as Partial<SearchState>);
+  }, {});
 
   if (params.folder) {
     const folderStr = `folder:${params.folder}`;

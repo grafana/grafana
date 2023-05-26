@@ -3,7 +3,7 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
 
-import { USAQuery } from '../types';
+import { USAQuery } from '../dataquery.gen';
 
 export interface Props {
   onChange: (value: USAQuery) => void;

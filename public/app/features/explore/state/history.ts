@@ -1,17 +1,13 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataQuery, HistoryItem } from '@grafana/data';
-import { config, logError } from '@grafana/runtime';
-import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
-import store from 'app/core/store';
+import { HistoryItem } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
   getRichHistory,
   getRichHistorySettings,
-  LocalStorageMigrationStatus,
-  migrateQueryHistoryFromLocalStorage,
   updateCommentInRichHistory,
   updateRichHistorySettings,
   updateStarredInRichHistory,
@@ -23,7 +19,6 @@ import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/uti
 
 import {
   richHistoryLimitExceededAction,
-  richHistoryMigrationFailedAction,
   richHistorySearchFiltersUpdatedAction,
   richHistorySettingsUpdatedAction,
   richHistoryStorageFullAction,
@@ -72,8 +67,9 @@ const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesO
 };
 
 const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemState, exploreId: ExploreId) => void) => {
-  callback(state.left, ExploreId.left);
-  state.right && callback(state.right, ExploreId.right);
+  Object.entries(state.panes).forEach(([exploreId, item]) => {
+    callback(item!, exploreId as ExploreId);
+  });
 };
 
 export const addHistoryItem = (
@@ -135,7 +131,7 @@ export const deleteRichHistory = (): ThunkResult<void> => {
 
 export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const filters = getState().explore![exploreId]?.richHistorySearchFilters;
+    const filters = getState().explore.panes[exploreId]!.richHistorySearchFilters;
     if (filters) {
       const richHistoryResults = await getRichHistory(filters);
       dispatch(richHistoryUpdatedAction({ richHistoryResults, exploreId }));
@@ -145,8 +141,8 @@ export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
 
 export const loadMoreRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const currentFilters = getState().explore![exploreId]?.richHistorySearchFilters;
-    const currentRichHistory = getState().explore![exploreId]?.richHistory;
+    const currentFilters = getState().explore.panes[exploreId]?.richHistorySearchFilters;
+    const currentRichHistory = getState().explore.panes[exploreId]?.richHistory;
     if (currentFilters && currentRichHistory) {
       const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
       const moreRichHistory = await getRichHistory(nextFilters);
@@ -172,21 +168,6 @@ export const clearRichHistoryResults = (exploreId: ExploreId): ThunkResult<void>
  */
 export const initRichHistory = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const queriesMigrated = store.getBool(RICH_HISTORY_SETTING_KEYS.migrated, false);
-    const migrationFailedDuringThisSession = getState().explore.richHistoryMigrationFailed;
-
-    // Query history migration should always be successful, but in case of unexpected errors we ensure
-    // the migration attempt happens only once per session, and the user is informed about the failure
-    // in a way that can help with potential investigation.
-    if (config.queryHistoryEnabled && !queriesMigrated && !migrationFailedDuringThisSession) {
-      const migrationResult = await migrateQueryHistoryFromLocalStorage();
-      if (migrationResult.status === LocalStorageMigrationStatus.Failed) {
-        dispatch(richHistoryMigrationFailedAction());
-        logError(migrationResult.error!, { explore: { event: 'QueryHistoryMigrationFailed' } });
-      } else {
-        store.set(RICH_HISTORY_SETTING_KEYS.migrated, true);
-      }
-    }
     let settings = getState().explore.richHistorySettings;
     if (!settings) {
       settings = await getRichHistorySettings();

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
-
-	"github.com/prometheus/common/model"
 )
 
 type RuleDelete struct {
@@ -31,11 +31,11 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
-func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroup, error) {
-	ruleGroup := AlertRuleGroup{}
-	ruleGroup.Name = ruleGroupV1.Name.Value()
-	if strings.TrimSpace(ruleGroup.Name) == "" {
-		return AlertRuleGroup{}, errors.New("rule group has no name set")
+func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderTitle, error) {
+	ruleGroup := models.AlertRuleGroupWithFolderTitle{AlertRuleGroup: &models.AlertRuleGroup{}}
+	ruleGroup.Title = ruleGroupV1.Name.Value()
+	if strings.TrimSpace(ruleGroup.Title) == "" {
+		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no name set")
 	}
 	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
 	if ruleGroup.OrgID < 1 {
@@ -43,29 +43,21 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (AlertRuleGroup, error) {
 	}
 	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
-		return AlertRuleGroup{}, err
+		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
-	ruleGroup.Interval = time.Duration(interval)
-	ruleGroup.Folder = ruleGroupV1.Folder.Value()
-	if strings.TrimSpace(ruleGroup.Folder) == "" {
-		return AlertRuleGroup{}, errors.New("rule group has no folder set")
+	ruleGroup.Interval = int64(time.Duration(interval).Seconds())
+	ruleGroup.FolderTitle = ruleGroupV1.Folder.Value()
+	if strings.TrimSpace(ruleGroup.FolderTitle) == "" {
+		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no folder set")
 	}
 	for _, ruleV1 := range ruleGroupV1.Rules {
 		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)
 		if err != nil {
-			return AlertRuleGroup{}, err
+			return models.AlertRuleGroupWithFolderTitle{}, err
 		}
 		ruleGroup.Rules = append(ruleGroup.Rules, rule)
 	}
 	return ruleGroup, nil
-}
-
-type AlertRuleGroup struct {
-	OrgID    int64
-	Name     string
-	Folder   string
-	Interval time.Duration
-	Rules    []models.AlertRule
 }
 
 type AlertRuleV1 struct {
@@ -80,6 +72,7 @@ type AlertRuleV1 struct {
 	For          values.StringValue    `json:"for" yaml:"for"`
 	Annotations  values.StringMapValue `json:"annotations" yaml:"annotations"`
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
+	IsPaused     values.BoolValue      `json:"isPaused" yaml:"isPaused"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -136,6 +129,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if len(alertRule.Data) == 0 {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no data set", alertRule.Title)
 	}
+	alertRule.IsPaused = rule.IsPaused.Value()
 	return alertRule, nil
 }
 

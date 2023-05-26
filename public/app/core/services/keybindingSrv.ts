@@ -3,7 +3,7 @@ import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
-import { config, LocationService } from '@grafana/runtime';
+import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
@@ -23,6 +23,7 @@ import {
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
+import { RouteDescriptor } from '../navigation/types';
 
 import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
@@ -30,27 +31,24 @@ import { withFocusedPanel } from './withFocusedPanelId';
 export class KeybindingSrv {
   constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
 
-  clearAndInitGlobalBindings() {
+  clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
 
-    if (this.locationService.getLocation().pathname !== '/login') {
+    // Chromeless pages like login and signup page don't get any global bindings
+    if (!route.chromeless) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
+      this.bind('g d', this.goToDashboards);
+      this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      this.bind('s o', this.openSearch);
       this.bind('t a', this.makeAbsoluteTime);
-      this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
 
     this.bind('c t', () => toggleTheme(false));
     this.bind('c r', () => toggleTheme(true));
-
-    if (process.env.NODE_ENV === 'development') {
-      this.bind('t n', () => this.toggleNav());
-    }
   }
 
   bindGlobalEsc() {
@@ -83,18 +81,6 @@ export class KeybindingSrv {
     this.exit();
   }
 
-  toggleNav() {
-    window.location.href =
-      config.appSubUrl +
-      locationUtil.getUrlForPartial(this.locationService.getLocation(), {
-        '__feature.topnav': (!config.featureToggles.topnav).toString(),
-      });
-  }
-
-  private openSearch() {
-    this.locationService.partial({ search: 'open' });
-  }
-
   private closeSearch() {
     this.locationService.partial({ search: null });
   }
@@ -103,12 +89,20 @@ export class KeybindingSrv {
     this.locationService.push('/alerting');
   }
 
+  private goToDashboards() {
+    this.locationService.push('/dashboards');
+  }
+
   private goToHome() {
     this.locationService.push('/');
   }
 
   private goToProfile() {
     this.locationService.push('/profile');
+  }
+
+  private goToExplore() {
+    this.locationService.push('/explore');
   }
 
   private makeAbsoluteTime() {

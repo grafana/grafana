@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -415,6 +415,150 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				SocialBase:       tt.fields.SocialBase,
 				allowedGroups:    tt.fields.allowedGroups,
 				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
+			}
+
+			if tt.fields.SocialBase == nil {
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
+			}
+
+			key := []byte("secret")
+			sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
+			if err != nil {
+				panic(err)
+			}
+
+			cl := jwt.Claims{
+				Subject:   "subject",
+				Issuer:    "issuer",
+				NotBefore: jwt.NewNumericDate(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)),
+				Audience:  jwt.Audience{"leela", "fry"},
+			}
+
+			var raw string
+			if tt.claims != nil {
+				if tt.claims.ClaimNames.Groups != "" {
+					server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+						tokenParts := strings.Split(request.Header.Get("Authorization"), " ")
+						require.Len(t, tokenParts, 2)
+						require.Equal(t, "fake_token", tokenParts[1])
+
+						writer.WriteHeader(http.StatusOK)
+
+						type response struct {
+							Value []string
+						}
+						res := response{Value: []string{"from_server"}}
+						require.NoError(t, json.NewEncoder(writer).Encode(&res))
+					}))
+					// need to set the fake servers url as endpoint to capture request
+					tt.claims.ClaimSources = map[string]claimSource{
+						tt.claims.ClaimNames.Groups: {Endpoint: server.URL},
+					}
+				}
+				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
+				require.NoError(t, err)
+			} else {
+				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
+				require.NoError(t, err)
+			}
+
+			token := &oauth2.Token{
+				AccessToken: "fake_token",
+			}
+			if tt.claims != nil {
+				token = token.WithExtra(map[string]interface{}{"id_token": raw})
+			}
+
+			if tt.fields.SocialBase != nil {
+				tt.args.client = s.Client(context.Background(), token)
+			}
+
+			got, err := s.UserInfo(tt.args.client, token)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			require.EqualValues(t, tt.want, got)
+		})
+	}
+}
+
+func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
+	type fields struct {
+		SocialBase       *SocialBase
+		allowedGroups    []string
+		forceUseGraphAPI bool
+		skipOrgRoleSync  bool
+	}
+	type args struct {
+		client *http.Client
+	}
+
+	tests := []struct {
+		name                     string
+		fields                   fields
+		claims                   *azureClaims
+		args                     args
+		settingAutoAssignOrgRole string
+		want                     *BasicUserInfo
+		wantErr                  bool
+	}{
+		{
+			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should get roles, skipOrgRoleSyncBase disabled",
+			fields: fields{
+				SocialBase:      newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
+				skipOrgRoleSync: false,
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"GrafanaAdmin", "Editor"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Role:           "Admin",
+				IsGrafanaAdmin: trueBoolPtr(),
+				Groups:         []string{},
+			},
+		},
+		{
+			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should not get roles",
+			fields: fields{
+				SocialBase:      newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
+				skipOrgRoleSync: false,
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"GrafanaAdmin", "Editor"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Role:           "Admin",
+				IsGrafanaAdmin: trueBoolPtr(),
+				Groups:         []string{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &SocialAzureAD{
+				SocialBase:       tt.fields.SocialBase,
+				allowedGroups:    tt.fields.allowedGroups,
+				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
+				skipOrgRoleSync:  tt.fields.skipOrgRoleSync,
 			}
 
 			if tt.fields.SocialBase == nil {

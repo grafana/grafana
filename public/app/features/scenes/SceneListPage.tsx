@@ -3,7 +3,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
-import { Card, LinkButton } from '@grafana/ui';
+import { Card } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types
@@ -23,19 +23,17 @@ export const SceneListPage = ({}: Props) => {
     <Page navId="scenes" subTitle="Experimental new runtime and state model for dashboards">
       <Page.Contents>
         <Stack direction="column" gap={1}>
+          <h5>Apps</h5>
+          <Stack direction="column" gap={0}>
+            <Card href={`/scenes/grafana-monitoring`}>
+              <Card.Heading>Grafana monitoring</Card.Heading>
+            </Card>
+          </Stack>
           <h5>Test scenes</h5>
           <Stack direction="column" gap={0}>
             {scenes.map((scene) => (
-              <Card key={scene.title}>
+              <Card key={scene.title} href={`/scenes/${scene.title}`}>
                 <Card.Heading>{scene.title}</Card.Heading>
-                <Card.Actions>
-                  <LinkButton size="sm" href={`/scenes/${scene.title}`}>
-                    Open as standalone scene
-                  </LinkButton>
-                  <LinkButton size="sm" variant="secondary" href={`/scenes/embedded/${scene.title}`}>
-                    Open as embedded scene
-                  </LinkButton>
-                </Card.Actions>
               </Card>
             ))}
           </Stack>

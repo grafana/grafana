@@ -1,9 +1,7 @@
 import { screen, render, within } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { locationService } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -31,11 +29,9 @@ const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierD
   await store.dispatch(fetchGrafanaNotifiersAction.fulfilled(notifiers, 'initial'));
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <ReceiversTable config={config} alertManagerName="alertmanager-1" />
-      </Router>
-    </Provider>
+    <TestProvider store={store}>
+      <ReceiversTable config={config} alertManagerName="alertmanager-1" />
+    </TestProvider>
   );
 };
 

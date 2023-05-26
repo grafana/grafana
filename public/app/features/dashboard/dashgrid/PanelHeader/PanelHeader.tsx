@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2, ClickOutsideWrapper } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -27,11 +28,15 @@ export interface Props {
   data: PanelData;
 }
 
-export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
+export function PanelHeader({ panel, error, isViewing, isEditing, data, alertState, dashboard }: Props) {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
   const styles = useStyles2(panelStyles);
+
+  const onOpenMenu = () => {
+    reportInteraction('dashboards_panelheader_menu', { item: 'menu' });
+  };
 
   return (
     <>
@@ -45,7 +50,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
         error={error}
       />
       <div className={className}>
-        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
+        <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)} onOpenMenu={onOpenMenu}>
           {({ closeMenu, panelMenuOpen }) => {
             return (
               <ClickOutsideWrapper onClick={closeMenu} parent={document}>
@@ -63,9 +68,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   {!dashboard.meta.publicDashboardAccessToken && (
                     <div data-testid="panel-dropdown">
                       <Icon name="angle-down" className="panel-menu-toggle" />
-                      {panelMenuOpen ? (
-                        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} onClose={closeMenu} />
-                      ) : null}
+                      {panelMenuOpen ? <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} /> : null}
                     </div>
                   )}
                   {data.request && data.request.timeInfo && (
@@ -81,7 +84,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
       </div>
     </>
   );
-};
+}
 
 const panelStyles = (theme: GrafanaTheme2) => {
   return {

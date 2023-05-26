@@ -1,7 +1,14 @@
 ---
 aliases:
   - basics/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 title: Fundamentals
+description: Learn about the basics of observability.
 weight: 8
 ---
 

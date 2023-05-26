@@ -18,12 +18,14 @@ describe('FlameGraphHeader', () => {
         app={CoreApp.Explore}
         search={search}
         setSearch={setSearch}
-        setTopLevelIndex={jest.fn()}
-        setRangeMin={jest.fn()}
-        setRangeMax={jest.fn()}
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         containerWidth={1600}
+        onReset={() => {
+          setSearch('');
+        }}
+        onTextAlignChange={jest.fn()}
+        textAlign={'left'}
       />
     );
   };
@@ -32,7 +34,7 @@ describe('FlameGraphHeader', () => {
     render(<FlameGraphHeaderWithProps />);
     await userEvent.type(screen.getByPlaceholderText('Search..'), 'abc');
     expect(screen.getByDisplayValue('abc')).toBeInTheDocument();
-    screen.getByRole('button', { name: /Reset/i }).click();
+    await userEvent.click(screen.getByRole('button', { name: /Reset/i }));
     expect(screen.queryByDisplayValue('abc')).not.toBeInTheDocument();
   });
 });

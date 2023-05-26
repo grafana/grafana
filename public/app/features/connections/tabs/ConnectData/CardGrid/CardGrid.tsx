@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
@@ -15,7 +15,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   card: css`
     height: 90px;
     padding: 0px 24px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.6);
+    margin-bottom: 0;
   `,
   cardContent: css`
     display: flex;
@@ -39,17 +39,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
+export type CardGridItem = { id: string; name: string; description: string; url: string; logo?: string };
 export interface CardGridProps {
-  items: Array<{ id: string; name: string; url: string; logo?: string }>;
+  items: CardGridItem[];
+  onClickItem?: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
 }
 
-export const CardGrid: FC<CardGridProps> = ({ items }) => {
+export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <ul className={styles.sourcesList}>
       {items.map((item) => (
-        <Card key={item.id} className={styles.card} href={item.url}>
+        <Card
+          key={item.id}
+          className={styles.card}
+          href={item.url}
+          onClick={(e) => {
+            if (onClickItem) {
+              onClickItem(e, item);
+            }
+          }}
+        >
           <Card.Heading>
             <div className={styles.cardContent}>
               {item.logo && (

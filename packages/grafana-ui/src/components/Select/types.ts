@@ -23,6 +23,7 @@ export interface SelectCommonProps<T> {
   /** Focus is set to the Select when rendered*/
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
+  blurInputOnSelect?: boolean;
   className?: string;
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
@@ -36,7 +37,8 @@ export interface SelectCommonProps<T> {
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
-  getOptionValue?: (item: SelectableValue<T>) => string;
+  getOptionValue?: (item: SelectableValue<T>) => T | undefined;
+  hideSelectedOptions?: boolean;
   inputValue?: string;
   invalid?: boolean;
   isClearable?: boolean;
@@ -88,7 +90,7 @@ export interface SelectCommonProps<T> {
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: OptionsOrGroups<unknown, GroupBase<unknown>>
+    options: OptionsOrGroups<SelectableValue<T>, GroupBase<SelectableValue<T>>>
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;
@@ -112,9 +114,14 @@ export interface VirtualizedSelectProps<T> extends Omit<SelectCommonProps<T>, 'v
   options?: Array<Pick<SelectableValue<T>, 'label' | 'value'>>;
 }
 
+/** The AsyncVirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectAsyncProps<T>
+  extends Omit<SelectCommonProps<T>, 'virtualized'>,
+    SelectAsyncProps<T> {}
+
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
   value?: Array<SelectableValue<T>> | T[];
-  onChange: (item: Array<SelectableValue<T>>) => {} | void;
+  onChange: (item: Array<SelectableValue<T>>, actionMeta: ActionMeta) => {} | void;
 }
 
 // This is the type of *our* SelectBase component, not ReactSelect's prop, although

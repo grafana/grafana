@@ -18,12 +18,7 @@ import {
   Tooltip,
 } from '../..';
 
-export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, any>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
   return (
     <HorizontalGroup>
       <RadioButtonGroup

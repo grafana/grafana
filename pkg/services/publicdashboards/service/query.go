@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dashmodels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -19,7 +18,7 @@ import (
 
 // FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
-	pub, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+	pub, dash, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -44,17 +43,19 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		annoQuery := &annotations.ItemQuery{
 			From:         reqDTO.From,
 			To:           reqDTO.To,
-			OrgId:        dash.OrgId,
-			DashboardId:  dash.Id,
-			DashboardUid: dash.Uid,
-			Limit:        anno.Target.Limit,
-			MatchAny:     anno.Target.MatchAny,
+			OrgID:        dash.OrgID,
+			DashboardID:  dash.ID,
+			DashboardUID: dash.UID,
 			SignedInUser: anonymousUser,
 		}
 
-		if anno.Target.Type == "tags" {
-			annoQuery.DashboardId = 0
-			annoQuery.Tags = anno.Target.Tags
+		if anno.Target != nil {
+			annoQuery.Limit = anno.Target.Limit
+			annoQuery.MatchAny = anno.Target.MatchAny
+			if anno.Target.Type == "tags" {
+				annoQuery.DashboardID = 0
+				annoQuery.Tags = anno.Target.Tags
+			}
 		}
 
 		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
@@ -64,12 +65,12 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 		for _, item := range annotationItems {
 			event := models.AnnotationEvent{
-				Id:          item.Id,
-				DashboardId: item.DashboardId,
+				Id:          item.ID,
+				DashboardId: item.DashboardID,
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
-				Color:       *anno.IconColor,
+				Color:       anno.IconColor,
 				Time:        item.Time,
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
@@ -77,19 +78,19 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
 			// which is only intended for tag and org annotations.
-			if anno.Type == "dashboard" {
-				event.PanelId = item.PanelId
+			if anno.Type != nil && *anno.Type == "dashboard" {
+				event.PanelId = item.PanelID
 			}
 
 			// We want events from tag queries to overwrite existing events
 			_, has := uniqueEvents[event.Id]
-			if !has || (has && anno.Target.Type == "tags") {
+			if !has || (has && anno.Target != nil && anno.Target.Type == "tags") {
 				uniqueEvents[event.Id] = event
 			}
 		}
 	}
 
-	var results []models.AnnotationEvent
+	results := make([]models.AnnotationEvent, 0, len(uniqueEvents))
 	for _, result := range uniqueEvents {
 		results = append(results, result)
 	}
@@ -98,7 +99,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 }
 
 // GetMetricRequest returns a metric request for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *dashmodels.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	err := validation.ValidateQueryPublicDashboardRequest(queryDto, publicDashboard)
 	if err != nil {
 		return dtos.MetricRequest{}, err
@@ -119,8 +120,8 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetQueryDataResponse returns a query data response for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	publicDashboard, dashboard, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
@@ -150,7 +151,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashmodels.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
@@ -165,6 +166,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	for i := range queries {
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
+		queries[i].Set("queryCachingTTL", reqDTO.QueryCachingTTL)
 	}
 
 	return dtos.MetricRequest{
@@ -175,11 +177,11 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 }
 
 // buildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func buildAnonymousUser(ctx context.Context, dashboard *dashmodels.Dashboard) *user.SignedInUser {
+func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *user.SignedInUser {
 	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a user with blank permissions
-	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
+	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgID, Permissions: make(map[int64]map[string][]string)}
 
 	// Scopes needed for Annotation queries
 	annotationScopes := []string{accesscontrol.ScopeAnnotationsTypeDashboard}
@@ -202,7 +204,7 @@ func buildAnonymousUser(ctx context.Context, dashboard *dashmodels.Dashboard) *u
 	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
 	permissions[dashboards.ActionDashboardsRead] = dashboardScopes
 
-	anonymousUser.Permissions[dashboard.OrgId] = permissions
+	anonymousUser.Permissions[dashboard.OrgID] = permissions
 
 	return anonymousUser
 }
@@ -211,7 +213,10 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	var datasourceUids []string
 	exists := map[string]bool{}
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	// collapsed rows contain panels in a nested structure, so we need to flatten them before calculate unique uids
+	flattenedPanels := getFlattenedPanels(dashboard)
+
+	for _, panelObj := range flattenedPanels {
 		panel := simplejson.NewFromAny(panelObj)
 		uid := getDataSourceUidFromJson(panel)
 
@@ -236,36 +241,61 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 	return datasourceUids
 }
 
+func getFlattenedPanels(dashboard *simplejson.Json) []interface{} {
+	var flatPanels []interface{}
+	for _, panelObj := range dashboard.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		// if it is not collapsed, the row does not have any panels
+		if panel.Get("type").MustString() == "row" {
+			if panel.Get("collapsed").MustBool() {
+				flatPanels = append(flatPanels, panel.Get("panels").MustArray()...)
+			}
+		} else {
+			flatPanels = append(flatPanels, panelObj)
+		}
+	}
+	return flatPanels
+}
+
 func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
-	for _, panelObj := range dashboard.Get("panels").MustArray() {
+	extractQueriesFromPanels(dashboard.Get("panels").MustArray(), result)
+
+	return result
+}
+
+func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejson.Json) {
+	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			extractQueriesFromPanels(panel.Get("panels").MustArray(), result)
+			continue
+		}
 
 		var panelQueries []*simplejson.Json
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			if hideAttr, exists := query.CheckGet("hide"); !exists || !hideAttr.MustBool() {
-				// We dont support exemplars for public dashboards currently
-				query.Del("exemplar")
+			// We dont support exemplars for public dashboards currently
+			query.Del("exemplar")
 
-				// if query target has no datasource, set it to have the datasource on the panel
-				if _, ok := query.CheckGet("datasource"); !ok {
-					uid := getDataSourceUidFromJson(panel)
-					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
-					query.Set("datasource", datasource)
-				}
-
-				panelQueries = append(panelQueries, query)
+			// if query target has no datasource, set it to have the datasource on the panel
+			if _, ok := query.CheckGet("datasource"); !ok {
+				uid := getDataSourceUidFromJson(panel)
+				datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
+				query.Set("datasource", datasource)
 			}
+			panelQueries = append(panelQueries, query)
 		}
 
 		result[panel.Get("id").MustInt64()] = panelQueries
 	}
-
-	return result
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {
@@ -285,7 +315,6 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 		for i := range frames {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
-				frames[i].Meta.Custom = nil
 			}
 		}
 	}

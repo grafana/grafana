@@ -39,7 +39,8 @@ export class FormDropdownCtrl {
   startOpen: any;
   debounce: boolean;
 
-  /** @ngInject */
+  static $inject = ['$scope', '$element', '$sce', 'templateSrv'];
+
   constructor(private $scope: any, $element: JQLite, private $sce: ISCEService, private templateSrv: any) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();

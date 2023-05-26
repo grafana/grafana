@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {__name__="moon", level="error"}
@@ -24,6 +28,10 @@
         "name": "{__name__=\"moon\", level=\"error\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

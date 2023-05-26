@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestMuteTimingService(t *testing.T) {
@@ -46,7 +47,7 @@ func TestMuteTimingService(t *testing.T) {
 			sut := createMuteTimingSvcSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Return(fmt.Errorf("failed"))
+				Return(nil, fmt.Errorf("failed"))
 
 			_, err := sut.GetMuteTimings(context.Background(), 1)
 
@@ -69,7 +70,7 @@ func TestMuteTimingService(t *testing.T) {
 			sut := createMuteTimingSvcSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Return(nil)
+				Return(nil, nil)
 
 			_, err := sut.GetMuteTimings(context.Background(), 1)
 
@@ -97,7 +98,7 @@ func TestMuteTimingService(t *testing.T) {
 				timing := createMuteTiming()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
 
@@ -122,7 +123,7 @@ func TestMuteTimingService(t *testing.T) {
 				timing := createMuteTiming()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				_, err := sut.CreateMuteTiming(context.Background(), timing, 1)
 
@@ -203,7 +204,7 @@ func TestMuteTimingService(t *testing.T) {
 				timing.Name = "asdf"
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
 
@@ -230,7 +231,7 @@ func TestMuteTimingService(t *testing.T) {
 				timing.Name = "asdf"
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				_, err := sut.UpdateMuteTiming(context.Background(), timing, 1)
 
@@ -295,7 +296,7 @@ func TestMuteTimingService(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
 
@@ -318,7 +319,7 @@ func TestMuteTimingService(t *testing.T) {
 				sut := createMuteTimingSvcSut()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				err := sut.DeleteMuteTiming(context.Background(), "asdf", 1)
 
