@@ -86,6 +86,8 @@ Similarly, group mappings are made using [JMESPath](http://jmespath.org/examples
 
 Furthermore, Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
 
+You can limit access to only members of a given group or list of groups by setting the `allowed_groups` option.
+
 ### Login
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
