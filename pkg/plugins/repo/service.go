@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -81,9 +82,9 @@ func (m *Manager) GetPluginArchiveInfo(_ context.Context, pluginID, version stri
 	}
 
 	return &PluginArchiveInfo{
-		PluginVersion: v.Version,
-		Checksum:      v.Checksum,
-		URL:           m.downloadURL(pluginID, v.Version),
+		Version:  v.Version,
+		Checksum: v.Checksum,
+		URL:      m.downloadURL(pluginID, v.Version),
 	}, nil
 }
 
@@ -93,7 +94,13 @@ func (m *Manager) pluginVersion(pluginID, version string, compatOpts CompatOpts)
 	if err != nil {
 		return VersionData{}, err
 	}
-	return SelectSystemCompatibleVersion(m.log, versions, pluginID, version, compatOpts.System)
+
+	sysCompatOpts, exists := compatOpts.System()
+	if !exists {
+		return VersionData{}, errors.New("no system compatibility requirements set")
+	}
+
+	return SelectSystemCompatibleVersion(m.log, versions, pluginID, version, sysCompatOpts)
 }
 
 func (m *Manager) downloadURL(pluginID, version string) string {

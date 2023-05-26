@@ -34,7 +34,7 @@ func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	}
 }
 
-func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, compatOpts ...CompatOpts) (*PluginArchive, error) {
+func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 
 	c.log.Debugf("Installing plugin from %s", pluginZipURL)
 
-	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts...)
+	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
@@ -64,8 +64,8 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 	return &PluginArchive{File: rc}, nil
 }
 
-func (c *Client) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts...)
+func (c *Client) SendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
+	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *Client) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	bodyReader, err := c.handleResp(res, compatOpts...)
+	bodyReader, err := c.handleResp(res, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *Client) SendReq(url *url.URL, compatOpts ...CompatOpts) ([]byte, error)
 	return io.ReadAll(bodyReader)
 }
 
-func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts ...CompatOpts) (err error) {
+func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
 	// Try handling URL as a local file path first
 	if _, err := os.Stat(pluginURL); err == nil {
 		// TODO re-verify
@@ -124,7 +124,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				if err != nil {
 					return
 				}
-				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts...)
+				err = c.downloadFile(tmpFile, pluginURL, checksum, compatOpts)
 			} else {
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
@@ -144,7 +144,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 
 	// Using no timeout as some plugin archives make take longer to fetch due to size, network performance, etc.
 	// Note: This is also used as part of the grafana plugin install CLI operation
-	bodyReader, err := c.sendReqNoTimeout(u, compatOpts...)
+	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
 	if err != nil {
 		return err
 	}
@@ -168,8 +168,8 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	return nil
 }
 
-func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts ...CompatOpts) (io.ReadCloser, error) {
-	req, err := c.createReq(url, compatOpts...)
+func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
+	req, err := c.createReq(url, compatOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -178,26 +178,32 @@ func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts ...CompatOpts) (io.Re
 	if err != nil {
 		return nil, err
 	}
-	return c.handleResp(res, compatOpts...)
+	return c.handleResp(res, compatOpts)
 }
 
-func (c *Client) createReq(url *url.URL, compatOpts ...CompatOpts) (*http.Request, error) {
+func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(compatOpts) > 0 {
-		req.Header.Set("grafana-version", compatOpts[0].GrafanaVersion)
-		req.Header.Set("grafana-os", compatOpts[0].System.OS)
-		req.Header.Set("grafana-arch", compatOpts[0].System.Arch)
-		req.Header.Set("User-Agent", "grafana "+compatOpts[0].GrafanaVersion)
+	if gVer, exists := compatOpts.GrafanaVersion(); exists {
+		req.Header.Set("grafana-version", gVer)
+		req.Header.Set("User-Agent", "grafana "+gVer)
+	}
+
+	if sysOS, exists := compatOpts.system.OS(); exists {
+		req.Header.Set("grafana-os", sysOS)
+	}
+
+	if sysArch, exists := compatOpts.system.Arch(); exists {
+		req.Header.Set("grafana-arch", sysArch)
 	}
 
 	return req, err
 }
 
-func (c *Client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.ReadCloser, error) {
+func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
 		body, err := io.ReadAll(res.Body)
 		defer func() {
@@ -217,11 +223,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts ...CompatOpts) (io.Re
 			message = jsonBody["message"]
 		}
 
-		err4xx := newErrResponse4xx(res.StatusCode).withMessage(message)
-		if len(compatOpts) > 0 {
-			err4xx = err4xx.withSystemInfo(compatOpts[0].String())
-		}
-		return nil, err4xx
+		return nil, newErrResponse4xx(res.StatusCode).withMessage(message).withCompatibilityInfo(compatOpts)
 	}
 
 	if res.StatusCode/100 != 2 {

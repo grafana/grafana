@@ -18,9 +18,9 @@ func TestErrResponse4xx(t *testing.T) {
 		require.Equal(t, "400: This is terrible news", err.Error())
 		require.Equal(t, msg, err.Message())
 
-		sysInfo := "darwin-amd64 grafana v10.0.0"
-		err = err.withSystemInfo(sysInfo)
-		require.Equal(t, "400: This is terrible news (darwin-amd64 grafana v10.0.0)", err.Error())
-		require.Equal(t, sysInfo, err.systemInfo)
+		compatInfo := NewCompatOpts("10.0.0", "darwin", "amd64")
+		err = err.withCompatibilityInfo(compatInfo)
+		require.Equal(t, "400: This is terrible news (Grafana v10.0.0 darwin-amd64)", err.Error())
+		require.Equal(t, compatInfo, err.compatibilityInfo)
 	})
 }

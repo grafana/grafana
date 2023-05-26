@@ -63,13 +63,13 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// if existing plugin version is the same as the target update version
-		if pluginArchiveInfo.PluginVersion == plugin.Info.Version {
+		if pluginArchiveInfo.Version == plugin.Info.Version {
 			return plugins.DuplicateError{
 				PluginID: plugin.ID,
 			}
 		}
 
-		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.PluginVersion == "" {
+		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
 			return fmt.Errorf("could not determine update options for %s", pluginID)
 		}
 
@@ -85,7 +85,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 				return err
 			}
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.PluginVersion, compatOpts)
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
 			if err != nil {
 				return err
 			}

@@ -75,13 +75,8 @@ func TestGetPluginArchive(t *testing.T) {
 				BaseURL:       srv.URL,
 				Logger:        log.NewTestPrettyLogger(),
 			})
-			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
-				GrafanaVersion: grafanaVersion,
-				System: SystemCompatOpts{
-					OS:   opSys,
-					Arch: arch,
-				},
-			})
+			co := NewCompatOpts(grafanaVersion, opSys, arch)
+			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, co)
 			if tc.err != nil {
 				require.ErrorAs(t, err, tc.err)
 				return

@@ -7,9 +7,9 @@ type PluginArchive struct {
 }
 
 type PluginArchiveInfo struct {
-	URL           string
-	PluginVersion string
-	Checksum      string
+	URL      string
+	Version  string
+	Checksum string
 }
 
 // PluginRepo is (a subset of) the JSON response from /api/plugins/repo/$pluginID

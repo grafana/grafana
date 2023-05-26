@@ -3,9 +3,9 @@ package repo
 import "fmt"
 
 type ErrResponse4xx struct {
-	message    string
-	statusCode int
-	systemInfo string
+	message           string
+	statusCode        int
+	compatibilityInfo CompatOpts
 }
 
 func newErrResponse4xx(statusCode int) ErrResponse4xx {
@@ -27,15 +27,16 @@ func (e ErrResponse4xx) withMessage(message string) ErrResponse4xx {
 	return e
 }
 
-func (e ErrResponse4xx) withSystemInfo(systemInfo string) ErrResponse4xx {
-	e.systemInfo = systemInfo
+func (e ErrResponse4xx) withCompatibilityInfo(compatibilityInfo CompatOpts) ErrResponse4xx {
+	e.compatibilityInfo = compatibilityInfo
 	return e
 }
 
 func (e ErrResponse4xx) Error() string {
 	if len(e.message) > 0 {
-		if len(e.systemInfo) > 0 {
-			return fmt.Sprintf("%d: %s (%s)", e.statusCode, e.message, e.systemInfo)
+		compatInfo := e.compatibilityInfo.String()
+		if len(compatInfo) > 0 {
+			return fmt.Sprintf("%d: %s (%s)", e.statusCode, e.message, compatInfo)
 		}
 		return fmt.Sprintf("%d: %s", e.statusCode, e.message)
 	}
