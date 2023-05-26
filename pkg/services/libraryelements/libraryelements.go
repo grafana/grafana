@@ -18,7 +18,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
 		RouteRegister: routeRegister,
-		folderService: folderService,
+		FolderService: folderService,
 		log:           log.New("library-elements"),
 		features:      features,
 	}
@@ -41,7 +41,7 @@ type LibraryElementService struct {
 	Cfg           *setting.Cfg
 	SQLStore      db.DB
 	RouteRegister routing.RouteRegister
-	folderService folder.Service
+	FolderService folder.Service
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 }
