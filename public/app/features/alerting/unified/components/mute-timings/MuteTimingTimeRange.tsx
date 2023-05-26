@@ -80,7 +80,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                     className={styles.deleteTimeRange}
                     title="Remove"
                     name="trash-alt"
-                    type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       removeTimeRange(index);
