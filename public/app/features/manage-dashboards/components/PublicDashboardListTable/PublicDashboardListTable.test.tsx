@@ -13,7 +13,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { ListPublicDashboardResponse } from '../../types';
 
-import { PublicDashboardListTable, viewPublicDashboardUrl } from './PublicDashboardListTable';
+import { PublicDashboardListTable } from './PublicDashboardListTable';
 
 const publicDashboardListResponse: ListPublicDashboardResponse[] = [
   {
@@ -89,12 +89,6 @@ const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
 
   waitForListRendering && (await waitForElementToBeRemoved(screen.getByTestId('Spinner'), { timeout: 3000 }));
 };
-
-describe('viewPublicDashboardUrl', () => {
-  it('has the correct url', () => {
-    expect(viewPublicDashboardUrl('abcd')).toEqual('public-dashboards/abcd');
-  });
-});
 
 describe('Show table', () => {
   it('renders loader spinner while loading', async () => {

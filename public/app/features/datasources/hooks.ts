@@ -1,5 +1,6 @@
-import { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useLocalStorage } from 'react-use';
+import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 import { GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
@@ -54,4 +55,75 @@ export function useDatasource(dataSource: string | DataSourceRef | DataSourceIns
   }
 
   return dataSourceSrv.getInstanceSettings(dataSource);
+}
+
+export interface KeybaordNavigatableListProps {
+  keyboardEvents?: Observable<React.KeyboardEvent>;
+  containerRef: React.RefObject<HTMLElement>;
+}
+
+/**
+ * Allows navigating lists of elements where the data-role attribute is set to "keyboardSelectableItem"
+ * @param props
+ */
+export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps): [Record<string, string>, string] {
+  const { keyboardEvents, containerRef } = props;
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
+  const attributeName = 'data-role';
+  const roleName = 'keyboardSelectableItem';
+  const navigatableItemProps = { ...{ [attributeName]: roleName } };
+  const querySelectorNavigatableElements = `[${attributeName}="${roleName}"`;
+
+  const selectedAttributeName = 'data-selectedItem';
+  const selectedItemCssSelector = `[${selectedAttributeName}="true"]`;
+
+  useEffect(() => {
+    const listItems = containerRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
+      querySelectorNavigatableElements
+    );
+
+    const selectedItem = listItems?.item(selectedIndex % listItems?.length);
+
+    listItems?.forEach((li) => li.setAttribute(selectedAttributeName, 'false'));
+
+    if (selectedItem) {
+      selectedItem.scrollIntoView({ block: 'center' });
+      selectedItem.setAttribute(selectedAttributeName, 'true');
+    }
+  }, [selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements]);
+
+  const clickSelectedElement = () => {
+    containerRef?.current
+      ?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(selectedItemCssSelector)
+      ?.querySelector<HTMLButtonElement>('button') // This is a bit weird. The main use for this would be to select card items, however the root of the card component does not have the click event handler, instead it's attached to a button inside it.
+      ?.click();
+  };
+
+  useEffect(() => {
+    if (!keyboardEvents) {
+      return;
+    }
+    const sub = keyboardEvents.subscribe({
+      next: (keyEvent) => {
+        switch (keyEvent?.code) {
+          case 'ArrowDown': {
+            setSelectedIndex(selectedIndex + 1);
+            keyEvent.preventDefault();
+            break;
+          }
+          case 'ArrowUp':
+            setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex);
+            keyEvent.preventDefault();
+            break;
+          case 'Enter':
+            clickSelectedElement();
+            break;
+        }
+      },
+    });
+    return () => sub.unsubscribe();
+  });
+
+  return [navigatableItemProps, selectedItemCssSelector];
 }

@@ -157,3 +157,7 @@ type KeyStore interface {
 	GetLastUpdated(ctx context.Context) (*time.Time, error)
 	SetLastUpdated(ctx context.Context) error
 }
+
+type KeyRetriever interface {
+	GetPublicKey(ctx context.Context, keyID string) (string, error)
+}

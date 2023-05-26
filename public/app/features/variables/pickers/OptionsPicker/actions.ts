@@ -64,20 +64,24 @@ export const filterOrSearchOptions = (
     const { id, queryValue } = getVariablesState(rootStateKey, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id, rootStateKey: rootStateKey, type: 'query' };
     const variable = getVariable(identifier, getState());
-    if (!hasOptions(variable)) {
+
+    if (!('options' in variable)) {
       return;
     }
 
-    const { query, options } = variable;
     dispatch(toKeyedAction(rootStateKey, updateSearchQuery(searchQuery)));
 
     if (trim(queryValue) === trim(searchQuery)) {
       return;
     }
 
-    if (containsSearchFilter(query)) {
+    const { query, options } = variable;
+
+    const queryTarget = typeof query === 'string' ? query : query.target;
+    if (containsSearchFilter(queryTarget)) {
       return searchForOptionsWithDebounce(dispatch, getState, searchQuery, rootStateKey);
     }
+
     return dispatch(toKeyedAction(rootStateKey, updateOptionsAndFilter(options)));
   };
 };

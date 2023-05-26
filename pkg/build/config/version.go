@@ -19,9 +19,9 @@ type Metadata struct {
 }
 
 type ReleaseMode struct {
-	Mode   VersionMode `json:"mode,omitempty"`
-	IsBeta bool        `json:"isBeta,omitempty"`
-	IsTest bool        `json:"isTest,omitempty"`
+	Mode      VersionMode `json:"mode,omitempty"`
+	IsPreview bool        `json:"IsPreview,omitempty"`
+	IsTest    bool        `json:"isTest,omitempty"`
 }
 
 type PluginSignature struct {
@@ -121,7 +121,7 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 }
 
 func CheckSemverSuffix() (ReleaseMode, error) {
-	reBetaRls := regexp.MustCompile(`beta.*`)
+	rePreviewRls := regexp.MustCompile(`preview.*`)
 	reTestRls := regexp.MustCompile(`test.*`)
 	reCloudRls := regexp.MustCompile(`cloud.*`)
 	tagSuffix, ok := os.LookupEnv("DRONE_SEMVER_PRERELEASE")
@@ -130,8 +130,8 @@ func CheckSemverSuffix() (ReleaseMode, error) {
 		return ReleaseMode{Mode: TagMode}, nil
 	}
 	switch {
-	case reBetaRls.MatchString(tagSuffix):
-		return ReleaseMode{Mode: TagMode, IsBeta: true}, nil
+	case rePreviewRls.MatchString(tagSuffix):
+		return ReleaseMode{Mode: TagMode, IsPreview: true}, nil
 	case reTestRls.MatchString(tagSuffix):
 		return ReleaseMode{Mode: TagMode, IsTest: true}, nil
 	case reCloudRls.MatchString(tagSuffix):

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -35,82 +34,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func Test_PluginsInstallAndUninstall(t *testing.T) {
-	type tc struct {
-		pluginAdminEnabled               bool
-		pluginAdminExternalManageEnabled bool
-		expectedHTTPStatus               int
-		expectedHTTPBody                 string
-	}
-	tcs := []tc{
-		{pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
-		{pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, expectedHTTPStatus: 200, expectedHTTPBody: ""},
-		{pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
-		{pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
-	}
-
-	testName := func(action string, testCase tc) string {
-		return fmt.Sprintf("%s request returns %d when adminEnabled: %t and externalEnabled: %t",
-			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
-	}
-
-	inst := NewFakePluginInstaller()
-	for _, tc := range tcs {
-		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				PluginAdminEnabled:               tc.pluginAdminEnabled,
-				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
-			}
-			hs.pluginInstaller = inst
-			hs.QuotaService = quotatest.New(false, nil)
-		})
-
-		t.Run(testName("Install", tc), func(t *testing.T) {
-			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
-			resp, err := srv.SendJSON(req)
-			require.NoError(t, err)
-
-			body := new(strings.Builder)
-			_, err = io.Copy(body, resp.Body)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedHTTPBody, body.String())
-			require.NoError(t, resp.Body.Close())
-			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
-
-			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, inst.plugins["test"])
-			}
-		})
-
-		t.Run(testName("Uninstall", tc), func(t *testing.T) {
-			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
-			resp, err := srv.SendJSON(req)
-			require.NoError(t, err)
-
-			body := new(strings.Builder)
-			_, err = io.Copy(body, resp.Body)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedHTTPBody, body.String())
-			require.NoError(t, resp.Body.Close())
-			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
-
-			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, inst.plugins)
-			}
-		})
-	}
-}
-
-func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 

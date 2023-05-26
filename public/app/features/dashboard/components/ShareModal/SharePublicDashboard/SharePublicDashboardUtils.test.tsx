@@ -31,7 +31,7 @@ describe('generatePublicDashboardUrl', () => {
     updateConfig({ appUrl });
     let pubdash = { accessToken } as PublicDashboard;
 
-    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
+    expect(generatePublicDashboardUrl(pubdash.accessToken!)).toEqual(`${appUrl}public-dashboards/${accessToken}`);
   });
 });
 

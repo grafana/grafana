@@ -18,6 +18,7 @@ export interface EchoMeta {
   windowSize: SizeMeta;
   userAgent: string;
   url?: string;
+  path?: string;
   /**
    * A unique browser session
    */
@@ -78,7 +79,6 @@ export interface EchoEvent<T extends EchoEventType = any, P = any> {
 export enum EchoEventType {
   Performance = 'performance',
   MetaAnalytics = 'meta-analytics',
-  Sentry = 'sentry',
   Pageview = 'pageview',
   Interaction = 'interaction',
   ExperimentView = 'experimentview',

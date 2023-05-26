@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Button, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import {
@@ -13,22 +13,31 @@ interface Props {
    * Pass a folder UID in which the dashboard or folder will be created
    */
   inFolder?: string;
+  canCreateFolder: boolean;
+  canCreateDashboard: boolean;
 }
 
-export function CreateNewButton({ inFolder }: Props) {
+export function CreateNewButton({ inFolder, canCreateDashboard, canCreateFolder }: Props) {
+  const [isOpen, setIsOpen] = useState(false);
   const newMenu = (
     <Menu>
-      <MenuItem url={addFolderUidToUrl('/dashboard/new', inFolder)} label={getNewDashboardPhrase()} />
-      <MenuItem url={addFolderUidToUrl('/dashboards/folder/new', inFolder)} label={getNewFolderPhrase()} />
-      <MenuItem url={addFolderUidToUrl('/dashboard/import', inFolder)} label={getImportPhrase()} />
+      {canCreateDashboard && (
+        <MenuItem url={addFolderUidToUrl('/dashboard/new', inFolder)} label={getNewDashboardPhrase()} />
+      )}
+      {canCreateFolder && (
+        <MenuItem url={addFolderUidToUrl('/dashboards/folder/new', inFolder)} label={getNewFolderPhrase()} />
+      )}
+      {canCreateDashboard && (
+        <MenuItem url={addFolderUidToUrl('/dashboard/import', inFolder)} label={getImportPhrase()} />
+      )}
     </Menu>
   );
 
   return (
-    <Dropdown overlay={newMenu}>
+    <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
       <Button>
         {getNewPhrase()}
-        <Icon name="angle-down" />
+        <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
       </Button>
     </Dropdown>
   );

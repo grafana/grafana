@@ -35,7 +35,7 @@ e2e.scenario({
         e2e.pages.Dashboard.Annotations.marker().should('exist');
       });
 
-    e2e.pages.Dashboard.wrapper().children().children('.scrollbar-view').scrollTo('bottom');
+    cy.get('body').children().find('.scrollbar-view').first().scrollTo('bottom');
 
     e2e.components.Panels.Panel.title('05:00')
       .should('exist')

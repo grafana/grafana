@@ -12,7 +12,7 @@ import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
-import { LogMessages } from './Analytics';
+import { LogMessages, trackRuleListNavigation } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -80,6 +80,10 @@ const RuleList = withErrorBoundary(
       }
     }, [loading, limitAlerts, dispatch]);
 
+    useEffect(() => {
+      trackRuleListNavigation().catch(() => {});
+    }, []);
+
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
       dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
@@ -118,6 +122,7 @@ const RuleList = withErrorBoundary(
               <Stack direction="row" gap={0.5}>
                 {canReadProvisioning && (
                   <LinkButton
+                    variant="secondary"
                     href={createUrl('/api/v1/provisioning/alert-rules/export', {
                       download: 'true',
                       format: 'yaml',

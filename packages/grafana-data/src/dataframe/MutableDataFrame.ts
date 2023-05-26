@@ -10,10 +10,16 @@ import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from 
 /** @deprecated */
 export type MutableField<T = any> = Field<T>;
 
+/** @deprecated */
 type MutableVectorCreator = (buffer?: any[]) => any[];
 
 export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
+/**
+ * MutableDataFrame is a complex wrapper around the DataFrame interface
+ *
+ * @deprecated use standard DataFrame, or create one with PartialDataFrame
+ */
 export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;

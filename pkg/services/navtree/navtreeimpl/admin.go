@@ -163,9 +163,7 @@ func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 
 func evalAuthenticationSettings() ac.Evaluator {
 	return ac.EvalAll(
-		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
 		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
-		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth),
 		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
 	)
 }

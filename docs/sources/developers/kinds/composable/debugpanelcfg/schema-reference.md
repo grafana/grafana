@@ -16,10 +16,10 @@ title: DebugPanelCfg kind
 | Property       | Type                    | Required | Default | Description                                                               |
 |----------------|-------------------------|----------|---------|---------------------------------------------------------------------------|
 | `DebugMode`    | string                  | **Yes**  |         | Possible values are: `render`, `events`, `cursor`, `State`, `ThrowError`. |
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |                                                                           |
+| `Options`      | [object](#options)      | **Yes**  |         |                                                                           |
 | `UpdateConfig` | [object](#updateconfig) | **Yes**  |         |                                                                           |
 
-### PanelOptions
+### Options
 
 | Property   | Type                          | Required | Default | Description                                                               |
 |------------|-------------------------------|----------|---------|---------------------------------------------------------------------------|

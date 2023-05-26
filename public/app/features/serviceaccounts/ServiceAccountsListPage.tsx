@@ -154,12 +154,13 @@ export const ServiceAccountsListPageUnconnected = ({
       target="_blank"
       rel="noopener noreferrer"
     >
-      here.
+      documentation.
     </a>
   );
   const subTitle = (
     <span>
-      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more {docsLink}
+      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+      {docsLink}
     </span>
   );
 
