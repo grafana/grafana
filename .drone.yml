@@ -4400,7 +4400,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -6826,6 +6826,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: f7981ec8d7c5b485400bc8c2793d6b11b24006ff6961923a95caf09ca9023b51
+hmac: e6a04180fd41447b22ecc28d962de85fa87ed808aec2aa007c023e148654572e
 
 ...
