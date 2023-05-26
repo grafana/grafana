@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 const (
@@ -70,7 +72,7 @@ func TestGetPluginArchive(t *testing.T) {
 			m := NewManager(ManagerOpts{
 				SkipTLSVerify: false,
 				BaseURL:       srv.URL,
-				Logger:        &fakeLogger{},
+				Logger:        log.NewTestPrettyLogger(),
 			})
 			archive, err := m.GetPluginArchive(context.Background(), pluginID, version, CompatOpts{
 				GrafanaVersion: grafanaVersion,
@@ -192,16 +194,3 @@ func createPluginVersions(versions ...versionArg) []Version {
 
 	return vs
 }
-
-type fakeLogger struct{}
-
-func (f *fakeLogger) Successf(_ string, _ ...interface{}) {}
-func (f *fakeLogger) Failuref(_ string, _ ...interface{}) {}
-func (f *fakeLogger) Info(_ ...interface{})               {}
-func (f *fakeLogger) Infof(_ string, _ ...interface{})    {}
-func (f *fakeLogger) Debug(_ ...interface{})              {}
-func (f *fakeLogger) Debugf(_ string, _ ...interface{})   {}
-func (f *fakeLogger) Warn(_ ...interface{})               {}
-func (f *fakeLogger) Warnf(_ string, _ ...interface{})    {}
-func (f *fakeLogger) Error(_ ...interface{})              {}
-func (f *fakeLogger) Errorf(_ string, _ ...interface{})   {}
