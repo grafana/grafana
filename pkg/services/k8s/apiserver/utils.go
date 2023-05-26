@@ -137,3 +137,19 @@ func contextWithFakeGrafanaUser(ctx context.Context) (context.Context, error) {
 
 	return appcontext.WithUser(ctx, user), nil
 }
+
+// this is terrible... but just making it work!!!!
+func historyAsResource(grn *entity.GRN, rsp *entity.EntityHistoryResponse) kinds.GrafanaResource[map[string]interface{}, map[string]interface{}] {
+	resource := kinds.GrafanaResource[map[string]interface{}, map[string]interface{}]{
+		Metadata: kinds.GrafanaResourceMetadata{
+			Name: grn.UID,
+		},
+		Spec: &map[string]interface{}{
+			"versions": rsp.Versions,
+		},
+	}
+	if rsp.NextPageToken != "" {
+		(*resource.Spec)["next"] = rsp.NextPageToken
+	}
+	return resource
+}

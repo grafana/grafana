@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
@@ -262,6 +263,31 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 
+	// Hacking "status" as sub-resource to pretend to get history
+	info, ok := request.RequestInfoFrom(ctx)
+	if ok {
+		switch info.Subresource {
+		case "status": // aka history!!!
+			rsp, err := s.store.History(ctx, &entity.EntityHistoryRequest{
+				GRN: grn,
+			})
+			if err != nil {
+				return err
+			}
+
+			res := historyAsResource(grn, rsp)
+			res.Metadata.Namespace = info.Namespace
+			res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
+			res.Kind = s.gr.Resource
+			jjj, _ := json.Marshal(res)
+			_, _, err = s.codec.Decode(jjj, nil, objPtr)
+			fmt.Printf("HISTORY:%s\n", grn.UID)
+			return err
+		default:
+			return fmt.Errorf("unsupported sub-resouce: " + info.Subresource)
+		}
+	}
+
 	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
 		GRN:        grn,
 		WithMeta:   true,
@@ -310,7 +336,6 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
 		Kind:     []string{strings.TrimSuffix(s.gr.Resource, "s")}, // dashboards >> dashboard
 		WithBody: true,
-		Limit:    3,
 	})
 	if err != nil {
 		return err
@@ -319,7 +344,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	u := listObj.(*unstructured.UnstructuredList)
 	u.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   s.gr.Group,
-		Version: "v1",
+		Version: "v1", // List version?
 		Kind:    s.gr.Resource + "List",
 	})
 	u.SetResourceVersion(opts.ResourceVersion) // ???
@@ -341,7 +366,8 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = "dashboard.kinds.grafana.com/v1"
+		res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
+		res.Kind = s.gr.Resource
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
 		if err != nil {
