@@ -41,7 +41,7 @@ export function BrowseFolderAlertingPage({ match }: OwnProps) {
             title: newValue,
           });
           if ('error' in result) {
-            throw result.error instanceof Error ? result.error.message : result.error;
+            throw result.error;
           }
         }
       }

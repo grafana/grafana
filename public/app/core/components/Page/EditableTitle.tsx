@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import { AutoSaveField, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { H1 } from '@grafana/ui/src/unstable';
 
@@ -13,12 +14,22 @@ export interface Props {
 export const EditableTitle = ({ value, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>();
   const [changeInProgress, setChangeInProgress] = useState(false);
   const timeoutID = useRef<number>();
 
   const onFinishChange = useCallback(
     async (newValue: string) => {
-      await onEdit(newValue);
+      try {
+        await onEdit(newValue);
+      } catch (error) {
+        if (isFetchError(error)) {
+          setErrorMessage(error.data.message);
+        } else if (error instanceof Error) {
+          setErrorMessage(error.message);
+        }
+        throw error;
+      }
       timeoutID.current = window.setTimeout(() => {
         setChangeInProgress(false);
       }, 2000);
@@ -37,7 +48,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     </div>
   ) : (
     <div className={styles.inputContainer}>
-      <AutoSaveField className={styles.field} onFinishChange={onFinishChange}>
+      <AutoSaveField saveErrorMessage={errorMessage} className={styles.field} onFinishChange={onFinishChange}>
         {(onChange) => (
           <Input
             className={styles.input}

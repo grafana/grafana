@@ -44,6 +44,7 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: (_result, _error, args) => [{ type: 'getFolder', id: args.uid }],
       query: (folder) => ({
         method: 'PUT',
+        showErrorAlert: false,
         url: `/folders/${folder.uid}`,
         data: {
           title: folder.title,
