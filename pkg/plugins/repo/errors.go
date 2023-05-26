@@ -3,63 +3,72 @@ package repo
 import "fmt"
 
 type ErrResponse4xx struct {
-	Message    string
-	StatusCode int
+	message    string
+	statusCode int
 	systemInfo string
 }
 
 func newErrResponse4xx(statusCode int) ErrResponse4xx {
 	return ErrResponse4xx{
-		StatusCode: statusCode,
+		statusCode: statusCode,
 	}
 }
 
+func (e ErrResponse4xx) Message() string {
+	return e.message
+}
+
+func (e ErrResponse4xx) StatusCode() int {
+	return e.statusCode
+}
+
 func (e ErrResponse4xx) withMessage(message string) ErrResponse4xx {
-	e.Message = message
+	e.message = message
 	return e
 }
+
 func (e ErrResponse4xx) withSystemInfo(systemInfo string) ErrResponse4xx {
 	e.systemInfo = systemInfo
 	return e
 }
 
 func (e ErrResponse4xx) Error() string {
-	if len(e.Message) > 0 {
+	if len(e.message) > 0 {
 		if len(e.systemInfo) > 0 {
-			return fmt.Sprintf("%d: %s (%s)", e.StatusCode, e.Message, e.systemInfo)
+			return fmt.Sprintf("%d: %s (%s)", e.statusCode, e.message, e.systemInfo)
 		}
-		return fmt.Sprintf("%d: %s", e.StatusCode, e.Message)
+		return fmt.Sprintf("%d: %s", e.statusCode, e.message)
 	}
-	return fmt.Sprintf("%d", e.StatusCode)
+	return fmt.Sprintf("%d", e.statusCode)
 }
 
 type ErrVersionUnsupported struct {
-	PluginID         string
-	RequestedVersion string
-	SystemInfo       string
+	pluginID         string
+	requestedVersion string
+	systemInfo       string
 }
 
 func (e ErrVersionUnsupported) Error() string {
-	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
+	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.pluginID, e.requestedVersion, e.systemInfo)
 }
 
 type ErrVersionNotFound struct {
-	PluginID         string
-	RequestedVersion string
-	SystemInfo       string
+	pluginID         string
+	requestedVersion string
+	systemInfo       string
 }
 
 func (e ErrVersionNotFound) Error() string {
-	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
+	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.pluginID, e.requestedVersion, e.systemInfo)
 }
 
 type ErrArcNotFound struct {
-	PluginID   string
-	SystemInfo string
+	pluginID   string
+	systemInfo string
 }
 
 func (e ErrArcNotFound) Error() string {
-	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.PluginID, e.SystemInfo)
+	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.pluginID, e.systemInfo)
 }
 
 type ErrChecksumMismatch struct {

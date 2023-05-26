@@ -464,7 +464,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		}
 		var clientError repo.ErrResponse4xx
 		if errors.As(err, &clientError) {
-			return response.Error(clientError.StatusCode, clientError.Message, err)
+			return response.Error(clientError.StatusCode(), clientError.Message(), err)
 		}
 		if errors.Is(err, plugins.ErrInstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)

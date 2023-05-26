@@ -96,7 +96,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
-			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, id, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 				return &repo.PluginArchiveInfo{
 					URL: "https://grafanaplugins.com",
 				}, nil
