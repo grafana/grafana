@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Switch, useTheme2 } from '@grafana/ui';
+import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { testIds } from './MetricsModal';
 import { placeholders } from './state/helpers';
@@ -56,22 +56,24 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
       <div className={styles.selectItem}>
         <Switch data-testid={testIds.setUseBackend} value={state.useBackend} onChange={() => onChangeUseBackend()} />
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
-        <Icon
-          name="info-circle"
-          size="xs"
-          className={styles.settingsIcon}
-          title="Filter metric names by regex search, using an additional call on the Prometheus API."
-        />
+        <Tooltip
+          content={'Filter metric names by regex search, using an additional call on the Prometheus API.'}
+          placement="bottom-end"
+        >
+          <Icon name="info-circle" size="xs" className={styles.settingsIcon} />
+        </Tooltip>
       </div>
       <div className={styles.selectItem}>
         <Switch data-testid={testIds.inferType} value={state.inferType} onChange={() => onChangeInferType()} />
         <div className={styles.selectItemLabel}>{placeholders.inferType}&nbsp;</div>
-        <Icon
-          name="info-circle"
-          size="xs"
-          className={styles.settingsIcon}
-          title="For example, metrics ending in _sum, _count, will be given an inferred type of counter. Metrics ending in _bucket with be given a type of histogram."
-        />
+        <Tooltip
+          content={
+            'For example, metrics ending in _sum, _count, will be given an inferred type of counter. Metrics ending in _bucket with be given a type of histogram.'
+          }
+          placement="bottom-end"
+        >
+          <Icon name="info-circle" size="xs" className={styles.settingsIcon} />
+        </Tooltip>
       </div>
     </>
   );

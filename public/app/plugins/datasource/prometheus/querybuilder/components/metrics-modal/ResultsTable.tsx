@@ -3,7 +3,7 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
@@ -84,7 +84,11 @@ export function ResultsTable(props: ResultsTableProps) {
 
   function inferredType(inferred: boolean): JSX.Element | undefined {
     if (inferred) {
-      return <Icon name="info-circle" size="xs" title="This metric type has been inferred." />;
+      return (
+        <Tooltip content={'This metric type has been inferred'} placement="bottom-end">
+          <Icon name="info-circle" size="xs" />
+        </Tooltip>
+      );
     } else {
       return undefined;
     }
