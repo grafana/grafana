@@ -12,7 +12,9 @@ import {
   MetricFindValue,
   ScopedVars,
   TimeRange,
+  CoreApp,
 } from '@grafana/data';
+import { EditorMode } from '@grafana/experimental';
 import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
@@ -148,7 +150,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     }
 
     // No need to check for database change/update issues if the datasource is being used in Explore.
-    if (request.app !== 'explore') {
+    if (request.app !== CoreApp.Explore) {
       /*
         If a preconfigured datasource database has been added/updated - and the user has built ANY number of queries using a 
         database OTHER than the preconfigured one, return a database issue - since those databases are no longer available.
@@ -157,7 +159,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       if (!!this.preconfiguredDatabase) {
         for (const target of request.targets) {
           // Test for database configuration change only if query was made in `builder` mode.
-          if (target.editorMode === 'builder' && target.dataset !== this.preconfiguredDatabase) {
+          if (target.editorMode === EditorMode.Builder && target.dataset !== this.preconfiguredDatabase) {
             return `The configuration for this Panel's data source has been modified. The previous database used in this Panel's
                    saved query is no longer available. Please update the query to use the new database option.
                    Previous query parameters will be preserved until the query is updated.`;
