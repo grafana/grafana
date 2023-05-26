@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
 import { useDataSource } from '../state';
-import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
+import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -36,6 +36,7 @@ export function EditDataSourceActions({ uid }: Props) {
         variant="secondary"
         href={`dashboard/new-with-ds/${dataSource.uid}`}
         onClick={() => {
+          trackDsConfigClicked('build_a_dashboard');
           trackCreateDashboardClicked({
             grafana_version: config.buildInfo.version,
             datasource_uid: dataSource.uid,
@@ -55,6 +56,7 @@ export function EditDataSourceActions({ uid }: Props) {
           className={styles.button}
           href={constructDataSourceExploreUrl(dataSource)}
           onClick={() => {
+            trackDsConfigClicked('explore');
             trackExploreClicked({
               grafana_version: config.buildInfo.version,
               datasource_uid: dataSource.uid,
