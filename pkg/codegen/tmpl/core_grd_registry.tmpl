@@ -189,7 +189,7 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 	for sch != nil {
 		vstr := versionString(sch.Version())
 		if props.Maturity.Less(kindsys.MaturityStable) {
-			vstr = "v1"
+			vstr = "v0.0-alpha"
 		}
 
 		ver := kindsv1.GrafanaResourceDefinitionVersion{

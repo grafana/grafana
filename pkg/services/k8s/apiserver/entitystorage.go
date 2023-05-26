@@ -279,7 +279,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	if err != nil {
 		return err
 	}
-	res.APIVersion = "dashboard.kinds.grafana.com/v1" // ???
+	// HACK???  should be saved with the payload
+	res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
 	res.Kind = s.gr.Resource
 
 	jjj, _ := json.Marshal(res)
