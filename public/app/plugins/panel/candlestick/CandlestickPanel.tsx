@@ -260,7 +260,7 @@ export const CandlestickPanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} timeRange={timeRange} />
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             <TooltipPlugin
               data={alignedDataFrame}
               config={config}

@@ -88,7 +88,7 @@ export const TimeSeriesPanel = ({
         return (
           <>
             <KeyboardPlugin config={config} />
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} timeRange={timeRange} />
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 frames={frames}
