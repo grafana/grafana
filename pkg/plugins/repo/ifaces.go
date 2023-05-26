@@ -39,3 +39,7 @@ func (co CompatOpts) OSAndArch() string {
 func (co CompatOpts) String() string {
 	return fmt.Sprintf("Grafana v%s %s", co.GrafanaVersion, co.OSAndArch())
 }
+
+func (co CompatOpts) Readable() string {
+	return fmt.Sprintf("%s (angular support: %t)", co.String(), co.AngularSupportEnabled)
+}

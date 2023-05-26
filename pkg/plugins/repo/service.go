@@ -115,9 +115,9 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 	// Get latest supported version
 	latestSupported := latestSupportedVersion(plugin, compatOpts)
 	if latestSupported == nil {
-		return nil, ErrArcNotFound{
+		return nil, ErrSupportedVersionNotFound{
 			PluginID:   plugin.ID,
-			SystemInfo: compatOpts.OSAndArch(),
+			SystemInfo: compatOpts.Readable(),
 		}
 	}
 
@@ -142,7 +142,7 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 		return nil, ErrVersionNotFound{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       compatOpts.String(),
+			SystemInfo:       compatOpts.Readable(),
 		}
 	}
 
@@ -153,7 +153,7 @@ func (m *Manager) selectVersion(plugin *Plugin, version string, compatOpts Compa
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
-			SystemInfo:       compatOpts.String(),
+			SystemInfo:       compatOpts.Readable(),
 		}
 	}
 

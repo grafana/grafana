@@ -54,13 +54,13 @@ func (e Response4xxError) Error() string {
 	return fmt.Sprintf("%d", e.StatusCode)
 }
 
-type ErrArcNotFound struct {
+type ErrSupportedVersionNotFound struct {
 	PluginID   string
 	SystemInfo string
 }
 
-func (e ErrArcNotFound) Error() string {
-	return fmt.Sprintf("%s is not compatible with your system architecture: %s", e.PluginID, e.SystemInfo)
+func (e ErrSupportedVersionNotFound) Error() string {
+	return fmt.Sprintf("%s is not compatible with your system architecture or Grafana configuration: %s", e.PluginID, e.SystemInfo)
 }
 
 type ErrVersionUnsupported struct {
@@ -70,7 +70,7 @@ type ErrVersionUnsupported struct {
 }
 
 func (e ErrVersionUnsupported) Error() string {
-	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
+	return fmt.Sprintf("%s v%s is not supported on your system or Grafana configuration (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
 type ErrVersionNotFound struct {
