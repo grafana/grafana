@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { DataSourceHttpSettings, InlineField, InlineFormLabel, InlineSwitch, Select } from '@grafana/ui';
+import { Span } from '@grafana/ui/src/unstable';
 import { config } from 'app/core/config';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
@@ -75,9 +76,9 @@ export const ConfigEditor = (props: Props) => {
           </InlineField>
         </div>
         {options.jsonData.handleGrafanaManagedAlerts && (
-          <span>
-            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">admin page.</Link>
-          </span>
+          <Span variant="bodySmall" color="secondary">
+            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">admin page</Link>.
+          </Span>
         )}
       </div>
       <DataSourceHttpSettings
