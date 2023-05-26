@@ -3,7 +3,7 @@ aliases:
   - share-a-plugin/
   - package-a-plugin/
 description: Learn how to package and share your plugin.
-title: Publish a plugin
+title: Publish or update a plugin
 type: docs
 ---
 
