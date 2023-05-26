@@ -29,7 +29,7 @@ The new system is based on Prometheus Alertmanager, which offers a more comprehe
 
 Overall, the new alerting system in Grafana is a major improvement over the legacy alerting feature, providing users with a more powerful and flexible alerting experience.
 
-Additionally, legacy alerting still requires Angular to function and we are [planning to remove support for it]({{< relref "../..developers/angular_deprecation" >}}) in Grafana 11.
+Additionally, legacy alerting still requires Angular to function and we are [planning to remove support for it]({{< relref "../../developers/angular_deprecation" >}}) in Grafana 11.
 
 ## When will we remove legacy alerting completely?
 
