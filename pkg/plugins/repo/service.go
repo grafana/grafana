@@ -186,6 +186,7 @@ func isVersionCompatible(version *Version, compatOpts CompatOpts) bool {
 
 func latestSupportedVersion(plugin *Plugin, compatOpts CompatOpts) *Version {
 	for _, v := range plugin.Versions {
+		v := v
 		if !isVersionCompatible(&v, compatOpts) {
 			continue
 		}
