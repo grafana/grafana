@@ -9,7 +9,7 @@ import { InlineToast } from '../InlineToast/InlineToast';
 
 import { EllipsisAnimated } from './EllipsisAnimated';
 
-const SHOW_SUCCESS_DURATION = 2 * 1000;
+export const SHOW_SUCCESS_DURATION = 2 * 1000;
 
 export interface Props<T = string> extends Omit<FieldProps, 'children'> {
   /** Saving request that will be triggered 600ms after changing the value */

@@ -2,11 +2,8 @@ import { css, cx } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AutoSaveField } from '@grafana/ui/src/components/AutoSaveField/AutoSaveField';
-import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
-import { getInputStyles } from '@grafana/ui/src/components/Input/Input';
+import { AutoSaveField, IconButton, getInputStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
-import { useStyles2, useTheme2 } from '@grafana/ui/src/themes';
 
 export interface Props {
   value: string;
@@ -26,13 +23,13 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
       await onEdit(newValue);
       timeoutID.current = window.setTimeout(() => {
         setChangeInProgress(false);
-      }, 1000);
+      }, 2000);
     },
     [onEdit]
   );
 
-  return (
-    <div className={styles.container}>
+  return !isEditing && !changeInProgress ? (
+    <div className={styles.textContainer}>
       {!isEditing && !changeInProgress && (
         <div className={styles.textWrapper}>
           <Text as="h1" truncate>
@@ -41,28 +38,31 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
         </div>
       )}
-      {(isEditing || changeInProgress) && (
-        <AutoSaveField className={styles.field} onFinishChange={onFinishChange}>
-          {(onChange) => (
-            <input
-              className={cx(inputStyles.input, styles.input)}
-              defaultValue={value}
-              onChange={(event) => {
+    </div>
+  ) : (
+    <div className={styles.inputContainer}>
+      <AutoSaveField className={styles.field} onFinishChange={onFinishChange}>
+        {(onChange) => (
+          <input
+            className={cx(inputStyles.input, styles.input)}
+            defaultValue={value}
+            onChange={(event) => {
+              if (event.currentTarget.value) {
                 setChangeInProgress(true);
                 if (timeoutID.current) {
                   window.clearTimeout(timeoutID.current);
                 }
                 onChange(event.currentTarget.value);
-              }}
-              // perfectly reasonable to autofocus here since we've made a conscious choice by clicking the edit button
-              // eslint-disable-next-line jsx-a11y/no-autofocus
-              autoFocus
-              onBlur={() => setIsEditing(false)}
-              onFocus={() => setIsEditing(true)}
-            />
-          )}
-        </AutoSaveField>
-      )}
+              }
+            }}
+            // perfectly reasonable to autofocus here since we've made a conscious choice by clicking the edit button
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            onBlur={() => setIsEditing(false)}
+            onFocus={() => setIsEditing(true)}
+          />
+        )}
+      </AutoSaveField>
     </div>
   );
 };
@@ -71,11 +71,12 @@ EditableTitle.displayName = 'EditableTitle';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css({
+    textContainer: css({
       minHeight: '36px',
       minWidth: 0,
     }),
     field: css({
+      flex: 1,
       marginBottom: 0,
     }),
     input: css({
@@ -83,6 +84,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       // some magic numbers here to ensure the input text lines up exactly with the h1 text
       left: '-9px',
       top: '-2px',
+    }),
+    inputContainer: css({
+      display: 'flex',
+      flex: 1,
+      minWidth: '200px',
+      maxWidth: '75%',
     }),
     textWrapper: css({
       alignItems: 'center',
