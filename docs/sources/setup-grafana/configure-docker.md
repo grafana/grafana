@@ -113,7 +113,7 @@ docker run -d
 
 ## Build and run a Docker image with pre-installed plugins
 
-To create multiple images with the same plugins, you can save time by building your own customized image that includes those plugins.
+If you run multiple Grafana installations with the same plugins you can save time by building your own customized image that includes those plugins.
 
 In the Grafana GitHub repository, the `packaging/docker/custom/` folder includes a `Dockerfile` that you can use to build a custom Grafana image. The `Dockerfile` accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
 
