@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Collapse, Modal, TagList, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Modal, TagList, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
@@ -23,6 +23,7 @@ import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAm
 import { addUniqueIdentifierToRoute, normalizeMatchers, objectMatchersToString } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
+import { makeAMLink } from '../../../utils/misc';
 import { findMatchingRoutes } from '../../../utils/notification-policies';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
@@ -209,6 +210,7 @@ export function NotificationPreviewByAlertManager({
               receiver={receiver}
               key={routeId}
               routesByIdMap={routesByIdMap}
+              alertManagerSourceName={alertManagerSourceName}
             />
           );
         })}
@@ -243,11 +245,13 @@ function NotificationRouteDetailsModal({
   route,
   receiver,
   routesByIdMap,
+  alertManagerSourceName,
 }: {
   onClose: () => void;
   route: RouteWithID;
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
+  alertManagerSourceName: string;
 }) {
   const styles = useStyles2(getStyles);
   const stringMatchers = objectMatchersToString(route.object_matchers ?? []);
@@ -268,8 +272,24 @@ function NotificationRouteDetailsModal({
         <div className={styles.separator} />
         <div className={styles.textMuted}>Notification policy path</div>
         <PolicyPath route={route} routesByIdMap={routesByIdMap} />
-        Contact point:
-        <span className={styles.textMuted}>{receiver.name}</span>
+        <div className={styles.separator} />
+        <div className={styles.contactPoint}>
+          Contact point:
+          <span className={styles.textMuted}>{receiver.name}</span>
+          <Stack gap={1} direction="row" alignItems="center">
+            <a
+              href={makeAMLink(
+                `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                alertManagerSourceName
+              )}
+              className={styles.link}
+              target="_blank"
+              rel="noreferrer"
+            >
+              See details <Icon name="external-link-alt" />
+            </a>
+          </Stack>
+        </div>
         <div className={styles.button}>
           <Button variant="primary" type="button" onClick={onClose}>
             Close
@@ -285,11 +305,13 @@ function NotificationRouteHeader({
   receiver,
   routesByIdMap,
   instancesCount,
+  alertManagerSourceName,
 }: {
   route: RouteWithID;
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
+  alertManagerSourceName: string;
 }) {
   const styles = useStyles2(getStyles);
   const [showDetails, setShowDetails] = useState(false);
@@ -327,6 +349,7 @@ function NotificationRouteHeader({
           route={route}
           receiver={receiver}
           routesByIdMap={routesByIdMap}
+          alertManagerSourceName={alertManagerSourceName}
         />
       )}
     </div>
@@ -337,9 +360,16 @@ interface NotificationRouteProps {
   receiver: Receiver;
   instances: Labels[];
   routesByIdMap: Map<string, RouteWithPath>;
+  alertManagerSourceName: string;
 }
 
-function NotificationRoute({ route, instances, receiver, routesByIdMap }: NotificationRouteProps) {
+function NotificationRoute({
+  route,
+  instances,
+  receiver,
+  routesByIdMap,
+  alertManagerSourceName,
+}: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
 
@@ -351,6 +381,7 @@ function NotificationRoute({ route, instances, receiver, routesByIdMap }: Notifi
           receiver={receiver}
           routesByIdMap={routesByIdMap}
           instancesCount={instances.length}
+          alertManagerSourceName={alertManagerSourceName}
         />
       }
       className={styles.collapsableSection}
@@ -484,6 +515,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     height: 1px;
     background-color: ${theme.colors.secondary.main};
+    margin-top: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   verticalBar: css`
     width: 1px;
@@ -517,12 +550,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     justify-content: flex-start;
     flex-wrap: wrap;
-    margin-bottom: ${theme.spacing(2)};
   `,
   policyPathWrapper: css`
     display: flex;
     flex-direction: column;
-    margin-top: ${theme.spacing(2)};
+    margin-top: ${theme.spacing(1)};
   `,
   policyPathItemMatchers: css`
     display: flex;
@@ -542,4 +574,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: fit-content;
 }
 `,
+  contactPoint: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(1)};
+    align-items: center;
+    justify-content: space-between;
+    padding: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(1)};
+  `,
+  link: css`
+    display: block;
+    color: ${theme.colors.text.link};
+  `,
 });
