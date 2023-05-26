@@ -344,6 +344,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -407,6 +420,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -457,6 +483,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
+						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
@@ -530,6 +569,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -586,6 +638,20 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
 						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| where appId in ("test-app-id")` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
@@ -664,6 +730,20 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| where appId !in ("test-app-id")` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -731,6 +811,20 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| where appId !in ("test-app-id")| where clientId in ("test-client-id")` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -781,6 +875,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
 						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
+						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
@@ -854,6 +961,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
+						`| where (operation_Id != '' and operation_Id == 'test-op-id') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'test-op-id')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName` +
+						`| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -892,11 +1012,12 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"traceTypes":		["traces"]
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query:             "",
-					Resources:         []string{"/subscriptions/r1"},
-					TimeRange:         timeRange,
-					QueryType:         string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: "",
+					Query:                   "",
+					Resources:               []string{"/subscriptions/r1"},
+					TimeRange:               timeRange,
+					QueryType:               string(dataquery.AzureQueryTypeAzureTraces),
+					TraceExploreQuery:       "",
+					TraceParentExploreQuery: "",
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 				},
@@ -933,7 +1054,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -947,7 +1068,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -958,14 +1079,26 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 				},
 			},
@@ -999,7 +1132,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
@@ -1012,7 +1145,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1023,14 +1156,26 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 				},
 			},
@@ -1066,7 +1211,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1080,7 +1225,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1091,14 +1236,26 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 				},
 			},
@@ -1134,7 +1291,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests,app('r3').availabilityResults,app('r3').customEvents,app('r3').dependencies,app('r3').exceptions,app('r3').pageViews,app('r3').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1148,7 +1305,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('r2').availabilityResults,app('r2').customEvents,app('r2').dependencies,app('r2').exceptions,app('r2').pageViews,app('r2').requests,app('r3').availabilityResults,app('r3').customEvents,app('r3').dependencies,app('r3').exceptions,app('r3').pageViews,app('r3').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1159,21 +1316,33 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
+						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
+						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
+						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
+						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
+						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
+						`| extend serviceName = cloud_RoleName| extend serviceTags = bag_pack_columns(cloud_RoleInstance, cloud_RoleName)` +
+						`| extend error = todynamic(iff(itemType == "exception", "true", "false"))` +
+						`| extend tags = bag_merge(bag_pack_columns(appId,appName,application_Version,assembly,client_Browser,client_City,client_CountryOrRegion,client_IP,client_Model,client_OS,client_StateOrProvince,client_Type,data,details,duration,error,handledAt,iKey,id,innermostAssembly,innermostMessage,innermostMethod,innermostType,itemCount,itemId,itemType,location,message,method,name,operation_Id,operation_Name,operation_ParentId,operation_SyntheticSource,outerAssembly,outerMessage,outerMethod,outerType,performanceBucket,problemId,resultCode,sdkVersion,session_Id,severityLevel,size,source,success,target,timestamp,type,url,user_AccountId,user_AuthenticatedId,user_Id), customDimensions, customMeasurements)` +
+						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
+						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
+						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('r2').availabilityResults,\n" +
-						"app('r2').customEvents,\n" +
-						"app('r2').dependencies,\n" +
-						"app('r2').exceptions,\n" +
-						"app('r2').pageViews,\n" +
-						"app('r2').requests,\n" +
-						"app('r2').traces,\n" +
-						"app('r3').availabilityResults,\n" +
-						"app('r3').customEvents,\n" +
-						"app('r3').dependencies,\n" +
-						"app('r3').exceptions,\n" +
-						"app('r3').pageViews,\n" +
-						"app('r3').requests,\n" +
-						"app('r3').traces\n" +
+						"app('/subscriptions/r2').availabilityResults,\n" +
+						"app('/subscriptions/r2').customEvents,\n" +
+						"app('/subscriptions/r2').dependencies,\n" +
+						"app('/subscriptions/r2').exceptions,\n" +
+						"app('/subscriptions/r2').pageViews,\n" +
+						"app('/subscriptions/r2').requests,\n" +
+						"app('/subscriptions/r2').traces,\n" +
+						"app('/subscriptions/r3').availabilityResults,\n" +
+						"app('/subscriptions/r3').customEvents,\n" +
+						"app('/subscriptions/r3').dependencies,\n" +
+						"app('/subscriptions/r3').exceptions,\n" +
+						"app('/subscriptions/r3').pageViews,\n" +
+						"app('/subscriptions/r3').requests,\n" +
+						"app('/subscriptions/r3').traces\n" +
 						"| where operation_Id == \"op-id-non-overlapping\"",
 				},
 			},

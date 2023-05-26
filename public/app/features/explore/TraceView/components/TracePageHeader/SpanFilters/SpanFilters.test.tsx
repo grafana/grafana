@@ -183,9 +183,9 @@ describe('SpanFilters', () => {
 
   it('should allow resetting filters', async () => {
     render(<SpanFiltersWithProps />);
-    const resetFiltersButton = screen.getByRole('button', { name: 'Reset filters button' });
-    expect(resetFiltersButton).toBeInTheDocument();
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
+    expect(clearFiltersButton).toBeInTheDocument();
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
 
     const serviceValue = screen.getByLabelText('Select service name');
     const spanValue = screen.getByLabelText('Select span name');
@@ -196,8 +196,8 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
 
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
-    await user.click(resetFiltersButton);
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
+    await user.click(clearFiltersButton);
     expect(screen.queryByText('Service0')).not.toBeInTheDocument();
     expect(screen.queryByText('Span0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();

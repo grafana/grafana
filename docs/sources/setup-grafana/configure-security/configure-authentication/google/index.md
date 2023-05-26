@@ -2,7 +2,7 @@
 aliases:
   - ../../../auth/google/
 description: Grafana OAuthentication Guide
-title: Configure Google OAuth2 Authentication
+title: Configure Google OAuth2 authentication
 weight: 300
 ---
 
@@ -27,7 +27,7 @@ First, you need to create a Google OAuth Client:
 
 ## Enable Google OAuth in Grafana
 
-Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}). For example:
+Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}). For example:
 
 ```bash
 [auth.google]

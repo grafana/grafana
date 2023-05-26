@@ -50,13 +50,13 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
 			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
-			State:           FeatureStateAlpha,
+			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
 		},
@@ -87,8 +87,9 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateBeta,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // turned on by default
 			Owner:        grafanaExploreSquad,
 		},
 		{
@@ -275,12 +276,6 @@ var (
 			Description: "Show trace ids for requests",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:        "datasourceOnboarding",
-			Description: "Enable data source onboarding page",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:         "emptyDashboardPage",
@@ -504,21 +499,15 @@ var (
 		},
 		{
 			Name:         "advancedDataSourcePicker",
-			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
-			State:        FeatureStateAlpha,
+			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "opensearchDetectVersion",
-			Description:  "Enable version detection in OpenSearch",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
-		},
-		{
 			Name:         "faroDatasourceSelector",
-			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
@@ -529,6 +518,13 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dataSourcePageHeader",
+			Description:  "Apply new pageHeader UI in data source edit page",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        enterpriseDatasourcesSquad,
 		},
 		{
 			Name:         "extraThemes",

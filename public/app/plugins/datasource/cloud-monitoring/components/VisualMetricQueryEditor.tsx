@@ -10,7 +10,8 @@ import { getSelectStyles, Select, AsyncSelect, useStyles2, useTheme2 } from '@gr
 
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
-import { CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, TimeSeriesList, ValueTypes } from '../types';
+import { PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from '../types/query';
+import { CustomMetaData, MetricDescriptor } from '../types/types';
 
 import { AliasBy } from './AliasBy';
 import { Alignment } from './Alignment';
@@ -257,7 +258,13 @@ export function Editor({
                 onChange={onMetricTypeChange}
                 value={[...metrics, ...variableOptionGroup.options].find((s) => s.value === metricType)}
                 loadOptions={debounceFilter}
-                defaultOptions={metrics.slice(0, 100)}
+                defaultOptions={[
+                  {
+                    label: 'Template Variables',
+                    options: variableOptionGroup.options,
+                  },
+                  ...metrics.slice(0, 100),
+                ]}
                 placeholder="Select Metric"
                 inputId={`${refId}-select-metric`}
                 disabled={service === ''}

@@ -25,7 +25,8 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
-import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { enhanceDataFrame } from './LegacyQueryRunner';
+import { ElasticDatasource } from './datasource';
 import { createElasticDatasource } from './mocks';
 import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 

@@ -14,7 +14,8 @@ import {
   setMetricType,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
-import { AlignmentTypes, MetricDescriptor, MetricKind, TimeSeriesList, ValueTypes } from './types';
+import { AlignmentTypes, TimeSeriesList, MetricKind, ValueTypes } from './types/query';
+import { MetricDescriptor } from './types/types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
