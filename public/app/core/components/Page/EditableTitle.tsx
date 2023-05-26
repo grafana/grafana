@@ -1,9 +1,9 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AutoSaveField, IconButton, getInputStyles, useStyles2, useTheme2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/components/Text/Text';
+import { AutoSaveField, IconButton, Input, useStyles2 } from '@grafana/ui';
+import { H1 } from '@grafana/ui/src/unstable';
 
 export interface Props {
   value: string;
@@ -11,9 +11,7 @@ export interface Props {
 }
 
 export const EditableTitle = ({ value, onEdit }: Props) => {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const inputStyles = getInputStyles({ theme });
   const [isEditing, setIsEditing] = useState(false);
   const [changeInProgress, setChangeInProgress] = useState(false);
   const timeoutID = useRef<number>();
@@ -32,9 +30,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     <div className={styles.textContainer}>
       {!isEditing && !changeInProgress && (
         <div className={styles.textWrapper}>
-          <Text as="h1" truncate>
-            {value}
-          </Text>
+          <H1 truncate>{value}</H1>
           <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
         </div>
       )}
@@ -43,8 +39,8 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     <div className={styles.inputContainer}>
       <AutoSaveField className={styles.field} onFinishChange={onFinishChange}>
         {(onChange) => (
-          <input
-            className={cx(inputStyles.input, styles.input)}
+          <Input
+            className={styles.input}
             defaultValue={value}
             onChange={(event) => {
               if (event.currentTarget.value) {
@@ -72,7 +68,6 @@ EditableTitle.displayName = 'EditableTitle';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     textContainer: css({
-      minHeight: '36px',
       minWidth: 0,
     }),
     field: css({
@@ -80,10 +75,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: 0,
     }),
     input: css({
-      ...theme.typography.h1,
-      // some magic numbers here to ensure the input text lines up exactly with the h1 text
-      left: '-9px',
-      top: '-2px',
+      input: {
+        ...theme.typography.h1,
+        // magic number here to ensure the input text lines up exactly with the h1 text
+        // input has a 1px border + theme.spacing(1) padding so we need to offset that
+        left: `calc(-${theme.spacing(1)} - 1px)`,
+      },
     }),
     inputContainer: css({
       display: 'flex',
