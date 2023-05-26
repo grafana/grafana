@@ -68,6 +68,7 @@ func TestGetPluginArchive(t *testing.T) {
 					archive:        d,
 				},
 			)
+			t.Cleanup(srv.Close)
 
 			m := NewManager(ManagerOpts{
 				SkipTLSVerify: false,
@@ -95,10 +96,11 @@ func verifyArchive(t *testing.T, archive *PluginArchive) {
 	t.Helper()
 	require.NotNil(t, archive)
 
-	res, err := archive.File.Open("plugin.json")
+	pJSON, err := archive.File.Open("plugin.json")
 	require.NoError(t, err)
+	defer func() { require.NoError(t, pJSON.Close()) }()
 	buf := new(bytes.Buffer)
-	_, err = buf.ReadFrom(res)
+	_, err = buf.ReadFrom(pJSON)
 	require.NoError(t, err)
 	require.Equal(t, dummyPluginJSON, buf.String())
 }
