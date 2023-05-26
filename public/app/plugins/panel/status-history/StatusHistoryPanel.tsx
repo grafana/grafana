@@ -215,7 +215,7 @@ export const StatusHistoryPanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} timeRange={timeRange} />
             {renderTooltip(alignedFrame)}
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
