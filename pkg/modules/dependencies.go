@@ -19,8 +19,9 @@ var DependencyMap = map[string][]string{
 
 	HTTPServer: {CertGenerator},
 
-	KubernetesAPIServer: {CertGenerator},
-	Kubernetes:          {KubernetesAPIServer, KubernetesRegistration},
+	KubernetesAPIServer:    {CertGenerator},
+	KubernetesRegistration: {KubernetesAPIServer},
+	Kubernetes:             {KubernetesRegistration},
 
 	Provisioning: {},
 

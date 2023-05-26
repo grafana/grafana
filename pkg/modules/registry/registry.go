@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry/coregrd"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -22,6 +23,7 @@ func ProvideRegistry(
 	certGenerator certgenerator.Service,
 	httpServer *api.HTTPServer,
 	provisioning *provisioning.ProvisioningServiceImpl,
+	coreGRDRegistry *coregrd.Registry,
 ) *registry {
 	return NewRegistry(
 		moduleManager,
@@ -29,6 +31,7 @@ func ProvideRegistry(
 		certGenerator,
 		httpServer,
 		provisioning,
+		coreGRDRegistry,
 	)
 }
 

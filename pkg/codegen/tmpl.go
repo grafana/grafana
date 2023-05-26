@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/codejen"
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	"github.com/grafana/kindsys"
 )
 
@@ -38,7 +37,6 @@ type (
 		PackageName       string
 		KindPackagePrefix string
 		Kinds             []kindsys.Core
-		GRDs              []kindsv1.GrafanaResourceDefinition
 	}
 	tvars_resource struct {
 		PackageName      string

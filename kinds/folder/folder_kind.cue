@@ -1,8 +1,11 @@
 package kind
 
-name:        "Folder"
-maturity:    "merged"
-description: "A folder is a collection of resources that are grouped together and can share permissions."
+name:              "Folder"
+maturity:          "merged"
+description:       "A folder is a collection of resources that are grouped together and can share permissions."
+pluralName:        "Folders"
+machineName:       "folder"
+pluralMachineName: "folders"
 
 lineage: schemas: [{
 	version: [0, 0]

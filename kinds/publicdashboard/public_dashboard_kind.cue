@@ -1,8 +1,11 @@
 package kind
 
-name:        "PublicDashboard"
-maturity:    "merged"
-description: "Public dashboard configuration"
+name:              "PublicDashboard"
+maturity:          "merged"
+description:       "Public dashboard configuration"
+pluralName:        "PublicDashboards"
+machineName:       "publicdashboard"
+pluralMachineName: "publicdashboards"
 
 lineage: schemas: [{
 	version: [0, 0]

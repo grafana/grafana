@@ -1,0 +1,221 @@
+package {{ .PackageName }}
+
+import (
+	"encoding/json"
+	"fmt"
+  "context"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+  "github.com/grafana/grafana/pkg/services/k8s/apiserver"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/kindsys"
+	"github.com/grafana/grafana/pkg/registry/corekind"
+  "github.com/grafana/dskit/services"
+	"github.com/grafana/thema"
+	"gopkg.in/yaml.v3"
+  kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+  grdClientset "github.com/grafana/grafana-apiserver/pkg/client/clientset/clientset/typed/kinds/v1"
+  applyConfig "github.com/grafana/grafana-apiserver/pkg/client/applyconfiguration/kinds/v1"
+)
+
+// New constructs a new [Registry].
+//
+// All calling code within grafana/grafana is expected to use Grafana's
+// singleton [thema.Runtime], returned from [cuectx.GrafanaThemaRuntime]. If nil
+// is passed, the singleton will be used.
+func New(
+  rt *thema.Runtime,
+  restConfigProvider apiserver.RestConfigProvider,
+) *Registry {
+	breg := corekind.NewBase(rt)
+	r := doNewRegistry(
+    breg,
+    restConfigProvider,
+  )
+  r.BasicService = services.NewBasicService(r.start, r.run, nil).WithName(modules.KubernetesRegistration)
+  return r
+}
+
+type Registry struct {
+    *services.BasicService
+    breg *corekind.Base
+    restConfigProvider apiserver.RestConfigProvider
+}
+
+func (r *Registry) start(ctx context.Context) error {
+  clientSet, err := grdClientset.NewForConfig(r.restConfigProvider.GetRestConfig())
+  if err != nil {
+    return err 
+  }
+  {{range $i, $k := .Kinds }}
+  /************************ {{ $k.Props.Name }} ************************/
+  {{ $k.Props.MachineName }}GRD, err := r.getGRD(r.breg.{{ $k.Props.Name }}())
+  if err != nil {
+    return err
+  }
+
+  _, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
+ 
+//  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
+//  for _, v := range {{ $k.Props.MachineName }}GRD.Spec.Versions {
+//    subresource := applyConfig.GrafanaResourceSubresources()
+//    if v.Subresources != nil && v.Subresources.Status != nil {
+//      subresource = subresource.WithStatus(*v.Subresources.Status)
+//    }
+//
+//    version := applyConfig.GrafanaResourceDefinitionVersion().
+//      WithName(v.Name).
+//      WithServed(v.Served).
+//      WithStorage(v.Storage).
+//      WithDeprecated(v.Deprecated).
+//      WithSubresources(subresource)
+//    if v.DeprecationWarning != nil {
+//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
+//    }
+//    {{ $k.Props.MachineName }}ApplyVersions = append({{ $k.Props.MachineName }}ApplyVersions, version)
+//  }
+//
+//  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaResourceDefinitionNames().
+//    WithKind({{ $k.Props.MachineName }}GRD.Spec.Names.Kind).
+//    WithListKind({{ $k.Props.MachineName }}GRD.Spec.Names.ListKind).
+//    WithSingular({{ $k.Props.MachineName }}GRD.Spec.Names.Singular).
+//    WithPlural({{ $k.Props.MachineName }}GRD.Spec.Names.Plural).
+//    WithCategories({{ $k.Props.MachineName }}GRD.Spec.Names.Categories...).
+//    WithShortNames({{ $k.Props.MachineName }}GRD.Spec.Names.ShortNames...)
+//
+//  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
+//    WithGroup({{ $k.Props.MachineName }}GRD.Spec.Group).
+//    WithNames({{ $k.Props.MachineName }}ApplyNames).
+//    WithScope({{ $k.Props.MachineName }}GRD.Spec.Scope).
+//    WithVersions({{ $k.Props.MachineName }}ApplyVersions...).
+//    WithPreserveUnknownFields({{ $k.Props.MachineName }}GRD.Spec.PreserveUnknownFields)
+//
+//  {{ $k.Props.MachineName }}ApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
+//      WithKind({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Kind).
+//      WithListKind({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.ListKind).
+//      WithSingular({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Singular).
+//      WithPlural({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Plural).
+//      WithCategories({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Categories...).
+//      WithShortNames({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.ShortNames...)
+//
+//
+//  {{ $k.Props.MachineName }}ApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
+//  for _, c := range {{ $k.Props.MachineName }}GRD.Status.Conditions {
+//    condition := applyConfig.GrafanaResourceDefinitionCondition().
+//      WithType(c.Type).
+//      WithStatus(c.Status).
+//      WithLastTransitionTime(c.LastTransitionTime).
+//      WithReason(c.Reason).
+//      WithMessage(c.Message)
+//    {{ $k.Props.MachineName }}ApplyConditions = append({{ $k.Props.MachineName }}ApplyConditions, condition)
+//  }
+//  
+//  {{ $k.Props.MachineName }}ApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
+//    WithConditions({{ $k.Props.MachineName }}ApplyConditions...).
+//    WithAcceptedNames({{ $k.Props.MachineName }}ApplyAcceptedNames).
+//    WithStoredVersions({{ $k.Props.MachineName }}GRD.Status.StoredVersions...)
+//
+//  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaResourceDefinition({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
+//    WithSpec({{ $k.Props.MachineName }}ApplySpec).
+//    WithStatus({{ $k.Props.MachineName }}ApplyStatus).
+//    WithGenerateName({{ $k.Props.MachineName }}GRD.ObjectMeta.GenerateName).
+//    WithNamespace({{ $k.Props.MachineName }}GRD.ObjectMeta.Namespace).
+//    WithLabels({{ $k.Props.MachineName }}GRD.ObjectMeta.Labels).
+//    WithAnnotations({{ $k.Props.MachineName }}GRD.ObjectMeta.Annotations).
+//    WithFinalizers({{ $k.Props.MachineName }}GRD.ObjectMeta.Finalizers...).
+//    WithUID({{ $k.Props.MachineName }}GRD.ObjectMeta.UID).
+//    WithGeneration({{ $k.Props.MachineName }}GRD.ObjectMeta.Generation).
+//    WithCreationTimestamp({{ $k.Props.MachineName }}GRD.ObjectMeta.CreationTimestamp).
+//    WithResourceVersion({{ $k.Props.MachineName }}GRD.ObjectMeta.ResourceVersion)
+//
+//    if {{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionTimestamp != nil {
+//      {{ $k.Props.MachineName }}ApplyConfig = {{ $k.Props.MachineName }}ApplyConfig.WithDeletionTimestamp(*{{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionTimestamp)
+//    }
+//
+//    if {{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
+//      {{ $k.Props.MachineName }}ApplyConfig = {{ $k.Props.MachineName }}ApplyConfig.WithDeletionGracePeriodSeconds(*{{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionGracePeriodSeconds)
+//    }
+//  
+//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+//  if err != nil {
+//    return err
+//  }
+{{end}}
+  return nil
+}
+
+func (r *Registry) run(ctx context.Context) error {
+  <-ctx.Done()
+  return nil
+}
+
+func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, error) {
+	kind, is := k.(kindsys.Core)
+	if !is {
+		return nil, nil
+	}
+
+	props := kind.Def().Properties
+	lin := kind.Lineage()
+
+	// We need to go through every schema, as they all have to be defined in the CRD
+	sch, err := lin.Schema(thema.SV(0, 0))
+	if err != nil {
+		return nil, err
+	}
+
+	resource := kindsv1.GrafanaResourceDefinition{
+    TypeMeta: metav1.TypeMeta{
+      APIVersion: "kinds.grafana.com/v1",
+      Kind: "GrafanaResourceDefinition",
+    },
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("%s.%s.%s", props.PluralMachineName, props.MachineName, "kinds.grafana.com"),
+		},
+		Spec: kindsv1.GrafanaResourceDefinitionSpec{
+			Group: props.MachineName+ ".kinds.grafana.com",
+			Scope: "Namespaced",
+			Names: kindsv1.GrafanaResourceDefinitionNames{
+				Kind:   props.Name,
+        ListKind: props.Name + "List",
+        Singular: props.MachineName,
+				Plural: props.PluralMachineName,
+			},
+			Versions: make([]kindsv1.GrafanaResourceDefinitionVersion, 0),
+		},
+	}
+	latest := lin.Latest().Version()
+
+	for sch != nil {
+		vstr := versionString(sch.Version())
+		if props.Maturity.Less(kindsys.MaturityStable) {
+			vstr = "v1"
+		}
+
+		ver := kindsv1.GrafanaResourceDefinitionVersion{
+			Name:       vstr,
+			Served:     true,
+			Storage:    sch.Version() == latest,
+			Deprecated: false,
+		}
+
+		resource.Spec.Versions = append(resource.Spec.Versions, ver)
+		sch = sch.Successor()
+	}
+
+  return &resource, nil
+}
+
+func versionString(version thema.SyntacticVersion) string {
+	return fmt.Sprintf("v%d-%d", version[0], version[1])
+}
+
+func doNewRegistry(
+  breg *corekind.Base,
+   restConfigProvider apiserver.RestConfigProvider,
+) *Registry {
+  return &Registry{
+    breg: breg,
+    restConfigProvider:restConfigProvider,
+  }
+}

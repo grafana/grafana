@@ -1,8 +1,11 @@
 package kind
 
-name:        "Preferences"
-maturity:    "merged"
-description: "The user or team frontend preferences"
+name:              "Preference"
+maturity:          "merged"
+description:       "The user or team frontend preferences"
+pluralName:        "Preferences"
+machineName:       "preference"
+pluralMachineName: "preferences"
 
 lineage: schemas: [{
 	version: [0, 0]
