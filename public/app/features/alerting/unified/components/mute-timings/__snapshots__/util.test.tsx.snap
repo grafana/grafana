@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renderTimeIntervals should render empty time interval 1`] = `[]`;
+
+exports[`renderTimeIntervals should render time interval with kitchen sink 1`] = `
+[
+  <React.Fragment>
+    Times: 12:00 - 13:00 [Europe/Berlin] and 14:00 - 15:00 [Europe/Berlin] Weekdays: Mon, Tue-Thu, Sun
+    <br />
+    Days of the month: 1, 2:4, 31 | Months: january, february:march, december | Years: 2019, 2020:2021
+    <br />
+  </React.Fragment>,
+  <React.Fragment>
+    Times: 12:00 - 13:00 [Europe/Berlin] and 14:00 - 15:00 [Europe/Berlin] Weekdays: Mon, Tue-Thu, Sun
+    <br />
+    Days of the month: 1, 2:4, 31 | Months: january, february:march, december | Years: 2019, 2020:2021
+    <br />
+  </React.Fragment>,
+]
+`;
+
+exports[`renderTimeIntervals should render time interval with time range 1`] = `
+[
+  <React.Fragment>
+    Times: 12:00 - 13:00 [UTC] and 14:00 - 15:00 [UTC] Weekdays: All
+    <br />
+    Days of the month: All | Months: All | Years: All
+    <br />
+  </React.Fragment>,
+]
+`;
+
+exports[`renderTimeIntervals should render time interval with weekdays 1`] = `
+[
+  <React.Fragment>
+    Times: All Weekdays: Mon, Tue-Thu, Sun
+    <br />
+    Days of the month: All | Months: All | Years: All
+    <br />
+  </React.Fragment>,
+]
+`;
