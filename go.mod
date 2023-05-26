@@ -22,7 +22,7 @@ replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 
 require (
-	cloud.google.com/go/storage v1.22.1
+	cloud.google.com/go/storage v1.28.1
 	cuelang.org/go v0.4.3
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.27
