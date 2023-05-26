@@ -420,6 +420,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		if meta.Annotations == nil {
 			meta.Annotations = make(map[string]string)
 		}
+		meta.ResourceVersion = fmt.Sprintf("%d", versionInfo.Version)
+
 		meta.SetFolder(r.Folder)
 
 		if !isUpdate {
