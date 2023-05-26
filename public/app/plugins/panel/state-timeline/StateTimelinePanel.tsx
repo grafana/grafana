@@ -191,7 +191,7 @@ export const StateTimelinePanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} timeRange={timeRange} />
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
 
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
 

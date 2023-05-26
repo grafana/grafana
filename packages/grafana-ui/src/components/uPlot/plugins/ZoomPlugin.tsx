@@ -1,6 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-
-import { TimeRange } from '@grafana/data';
+import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { PlotSelection } from '../types';
@@ -9,7 +7,6 @@ import { pluginLog } from '../utils';
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;
   config: UPlotConfigBuilder;
-  timeRange?: TimeRange;
 }
 
 // min px width that triggers zoom
@@ -18,13 +15,8 @@ const MIN_ZOOM_DIST = 5;
 /**
  * @alpha
  */
-export const ZoomPlugin = ({ onZoom, config, timeRange }: ZoomPluginProps) => {
+export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
   const [selection, setSelection] = useState<PlotSelection | null>(null);
-
-  const refTimeRange = useRef<TimeRange | undefined>(timeRange);
-  useEffect(() => {
-    refTimeRange.current = timeRange;
-  }, [timeRange]);
 
   useEffect(() => {
     if (selection) {
@@ -59,14 +51,14 @@ export const ZoomPlugin = ({ onZoom, config, timeRange }: ZoomPluginProps) => {
 
     config.setCursor({
       bind: {
-        dblclick: () => () => {
-          if (refTimeRange.current) {
-            const frTs = refTimeRange.current.from.valueOf();
-            const toTs = refTimeRange.current.to.valueOf();
-            const pad = (toTs - frTs) / 2;
+        dblclick: (u) => () => {
+          let xScale = u.scales.x;
 
-            onZoom({ from: frTs - pad, to: toTs + pad });
-          }
+          const frTs = xScale.min!;
+          const toTs = xScale.max!;
+          const pad = (toTs - frTs) / 2;
+
+          onZoom({ from: frTs - pad, to: toTs + pad });
 
           return null;
         },
