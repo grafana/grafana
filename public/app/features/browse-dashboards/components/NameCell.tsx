@@ -42,7 +42,6 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
           size="md"
           onClick={() => onFolderClick(item.uid, !isOpen)}
           name={chevronIcon}
-          ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
           tooltip={isOpen ? 'Collapse folder' : 'Expand folder'}
         />
       ) : (
