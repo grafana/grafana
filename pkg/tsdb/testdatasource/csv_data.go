@@ -150,7 +150,7 @@ func LoadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
 			// Check for labels in the name
 			idx := strings.Index(fieldName, "{")
 			if idx >= 0 {
-				labels := parseLabelsString(fieldName[idx:]) // _ := data.LabelsFromString(fieldName[idx:])
+				labels := parseLabelsString(fieldName[idx:], fieldIndex) // _ := data.LabelsFromString(fieldName[idx:])
 				if len(labels) > 0 {
 					field.Labels = labels
 					fieldName = fieldName[:idx]
