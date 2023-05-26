@@ -277,12 +277,14 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 
 			res := historyAsResource(grn, rsp)
 			res.Metadata.Namespace = info.Namespace
-			res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
-			res.Kind = s.gr.Resource
+			res.APIVersion = "dashboard.kinds.grafana.com" + "/" + "v0.0-alpha"
+			res.Kind = "Dashboard"
 			jjj, _ := json.Marshal(res)
 			_, _, err = s.codec.Decode(jjj, nil, objPtr)
 			fmt.Printf("HISTORY:%s\n", grn.UID)
 			return err
+		case "":
+			// this is fine
 		default:
 			return fmt.Errorf("unsupported sub-resouce: " + info.Subresource)
 		}
@@ -306,8 +308,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
-	res.Kind = s.gr.Resource
+	res.APIVersion = "dashboard.kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.Kind = "Dashboard"
 
 	jjj, _ := json.Marshal(res)
 	//	fmt.Printf("GET: %s", string(jjj))
@@ -366,8 +368,8 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
-		res.Kind = s.gr.Resource
+		res.APIVersion = "dashboard.kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.Kind = "Dashboard"
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
 		if err != nil {

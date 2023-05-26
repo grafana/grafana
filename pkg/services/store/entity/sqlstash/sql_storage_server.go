@@ -419,7 +419,9 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 		}
 		if meta.Annotations == nil {
 			meta.Annotations = make(map[string]string)
-		}
+		} /* else {
+			delete(meta.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		} */
 		meta.ResourceVersion = fmt.Sprintf("%d", versionInfo.Version)
 
 		meta.SetFolder(r.Folder)
