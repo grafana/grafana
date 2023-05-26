@@ -43,4 +43,4 @@ Refer to our [migration instructions]({{< relref "./opt-in" >}}).
 
 - [Upgrade Alerting]({{< relref "./_index.md" >}})
 - [Legacy alerting differences and limitations]({{< relref "./_index.md" >}})
-- [Angular support deprecation]({{< relref "../../developers/angular_deprecation/" >}})
+- [Angular support deprecation]({{< relref "../../developers/angular_deprecation" >}})
