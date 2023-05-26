@@ -1,5 +1,6 @@
 import produce from 'immer';
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
@@ -75,7 +76,7 @@ export const ConfigEditor = (props: Props) => {
         </div>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <span>
-            Make sure to enable the alert forwarding on the <a href="/alerting/admin">admin page.</a>
+            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">admin page.</Link>
           </span>
         )}
       </div>
