@@ -307,6 +307,14 @@ func TestProvisioningApi(t *testing.T) {
 			require.Equal(t, 404, response.Status())
 		})
 
+		t.Run("are missing, GET returns 404", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			response := sut.RouteRouteGetAlertRule(&rc, "does not exist")
+
+			require.Equal(t, 404, response.Status())
+		})
+
 		t.Run("have reached the rule quota, POST returns 403", func(t *testing.T) {
 			env := createTestEnv(t)
 			quotas := provisioning.MockQuotaChecker{}

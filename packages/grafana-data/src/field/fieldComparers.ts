@@ -2,7 +2,6 @@ import { isNumber } from 'lodash';
 
 import { dateTime, isDateTimeInput } from '../datetime';
 import { Field, FieldType } from '../types/dataFrame';
-import { Vector } from '../types/vector';
 
 type IndexComparer = (a: number, b: number) => number;
 
@@ -79,12 +78,12 @@ const falsyComparer = (a: unknown, b: unknown): number => {
   return 0;
 };
 
-const timestampIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
+const timestampIndexComparer = (values: number[], reverse: boolean): IndexComparer => {
   let mult = reverse ? -1 : 1;
   return (a: number, b: number): number => mult * (values[a] - values[b]);
 };
 
-const timeIndexComparer = (values: Vector<unknown>, reverse: boolean): IndexComparer => {
+const timeIndexComparer = (values: unknown[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
     const vA = values[a];
     const vB = values[b];
@@ -92,7 +91,7 @@ const timeIndexComparer = (values: Vector<unknown>, reverse: boolean): IndexComp
   };
 };
 
-const booleanIndexComparer = (values: Vector<boolean>, reverse: boolean): IndexComparer => {
+const booleanIndexComparer = (values: boolean[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
     const vA = values[a];
     const vB = values[b];
@@ -100,7 +99,7 @@ const booleanIndexComparer = (values: Vector<boolean>, reverse: boolean): IndexC
   };
 };
 
-const numericIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
+const numericIndexComparer = (values: number[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
     const vA = values[a];
     const vB = values[b];
@@ -108,7 +107,7 @@ const numericIndexComparer = (values: Vector<number>, reverse: boolean): IndexCo
   };
 };
 
-const stringIndexComparer = (values: Vector<string>, reverse: boolean): IndexComparer => {
+const stringIndexComparer = (values: string[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
     const vA = values[a];
     const vB = values[b];

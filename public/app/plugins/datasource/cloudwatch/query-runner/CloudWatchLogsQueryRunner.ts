@@ -128,7 +128,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         // This queries for the results
         this.logsQuery(
           frames.map((dataFrame) => ({
-            queryId: dataFrame.fields[0].values.get(0),
+            queryId: dataFrame.fields[0].values[0],
             region: dataFrame.meta?.custom?.['Region'] ?? 'default',
             refId: dataFrame.refId!,
             statsGroups: logQueries.find((target) => target.refId === dataFrame.refId)?.statsGroups,
@@ -350,8 +350,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       limit,
       startFromHead: direction !== LogRowContextQueryDirection.Backward,
       region: query?.region,
-      logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
-      logStreamName: logStreamField!.values.get(row.rowIndex),
+      logGroupName: parseLogGroupName(logField!.values[row.rowIndex]),
+      logStreamName: logStreamField!.values[row.rowIndex],
     };
 
     if (direction === LogRowContextQueryDirection.Backward) {

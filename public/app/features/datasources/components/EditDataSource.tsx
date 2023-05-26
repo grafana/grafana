@@ -24,6 +24,7 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state';
+import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 
 import { BasicSettings } from './BasicSettings';
@@ -119,13 +120,29 @@ export function EditDataSourceView({
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onUpdate({ ...dataSource });
+    trackDsConfigClicked('save_and_test');
+
+    try {
+      await onUpdate({ ...dataSource });
+      trackDsConfigUpdated('success');
+    } catch (err) {
+      trackDsConfigUpdated('fail');
+      return;
+    }
 
     onTest();
   };
 
   if (loadError) {
-    return <DataSourceLoadError dataSourceRights={dataSourceRights} onDelete={onDelete} />;
+    return (
+      <DataSourceLoadError
+        dataSourceRights={dataSourceRights}
+        onDelete={() => {
+          trackDsConfigClicked('delete');
+          onDelete();
+        }}
+      />
+    );
   }
 
   if (loading) {
@@ -173,15 +190,20 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} />
+      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
       <ButtonRow
         onSubmit={onSubmit}
-        onDelete={onDelete}
-        onTest={onTest}
-        exploreUrl={exploreUrl}
-        canSave={!readOnly && hasWriteRights}
+        onDelete={() => {
+          trackDsConfigClicked('delete');
+          onDelete();
+        }}
+        onTest={() => {
+          trackDsConfigClicked('test');
+          onTest();
+        }}
         canDelete={!readOnly && hasDeleteRights}
+        canSave={!readOnly && hasWriteRights}
       />
     </form>
   );

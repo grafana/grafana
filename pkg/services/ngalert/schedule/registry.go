@@ -2,9 +2,15 @@ package schedule
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"hash/fnv"
+	"math"
+	"sort"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -62,10 +68,9 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 	return definitionsIDs
 }
 
-type ruleVersion int64
 type ruleVersionAndPauseStatus struct {
-	Version  ruleVersion
-	IsPaused bool
+	Fingerprint fingerprint
+	IsPaused    bool
 }
 
 type alertRuleInfo struct {
@@ -106,20 +111,15 @@ func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
 // update sends an instruction to the rule evaluation routine to update the scheduled rule to the specified version. The specified version must be later than the current version, otherwise no update will happen.
 func (a *alertRuleInfo) update(lastVersion ruleVersionAndPauseStatus) bool {
 	// check if the channel is not empty.
-	msg := lastVersion
 	select {
-	case v := <-a.updateCh:
-		// if it has a version pick the greatest one.
-		if v.Version > msg.Version {
-			msg = v
-		}
+	case <-a.updateCh:
 	case <-a.ctx.Done():
 		return false
 	default:
 	}
 
 	select {
-	case a.updateCh <- msg:
+	case a.updateCh <- lastVersion:
 		return true
 	case <-a.ctx.Done():
 		return false
@@ -232,4 +232,130 @@ func (r *alertRulesRegistry) getDiff(rules map[models.AlertRuleKey]*models.Alert
 		result.updated[key] = struct{}{}
 	}
 	return result
+}
+
+type fingerprint uint64
+
+func (f fingerprint) String() string {
+	return fmt.Sprintf("%016x", uint64(f))
+}
+
+// fingerprintSeparator used during calculation of fingerprint to separate different fields. Contains a byte sequence that cannot happen in UTF-8 strings.
+var fingerprintSeparator = []byte{255}
+
+type ruleWithFolder struct {
+	rule        *models.AlertRule
+	folderTitle string
+}
+
+// fingerprint calculates a fingerprint that includes all fields except rule's Version and Update timestamp.
+func (r ruleWithFolder) Fingerprint() fingerprint {
+	rule := r.rule
+
+	sum := fnv.New64()
+
+	writeBytes := func(b []byte) {
+		_, _ = sum.Write(b)
+		_, _ = sum.Write(fingerprintSeparator)
+	}
+	writeString := func(s string) {
+		if len(s) == 0 {
+			writeBytes(nil)
+			return
+		}
+		// TODO fix it when upgraded to in GO1.20 to
+		/*
+			writeBytes(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		*/
+		// avoid allocation when converting string to byte slice
+		writeBytes(*(*[]byte)(unsafe.Pointer(&s))) //nolint:gosec
+	}
+	// this temp slice is used to convert ints to bytes.
+	tmp := make([]byte, 8)
+	writeInt := func(u int64) {
+		binary.LittleEndian.PutUint64(tmp, uint64(u))
+		writeBytes(tmp)
+	}
+
+	// allocate a slice that will be used for sorting keys, so we allocate it only once
+	var keys []string
+	maxLen := int(math.Max(math.Max(float64(len(rule.Annotations)), float64(len(rule.Labels))), float64(len(rule.Data))))
+	if maxLen > 0 {
+		keys = make([]string, maxLen)
+	}
+
+	writeLabels := func(lbls map[string]string) {
+		// maps do not guarantee predictable sequence of keys.
+		// Therefore, to make hash stable, we need to sort keys
+		if len(lbls) == 0 {
+			return
+		}
+		idx := 0
+		for labelName := range lbls {
+			keys[idx] = labelName
+			idx++
+		}
+		sub := keys[:idx]
+		sort.Strings(sub)
+		for _, name := range sub {
+			writeString(name)
+			writeString(lbls[name])
+		}
+	}
+	writeQuery := func() {
+		// The order of queries is not important as they represent an expression tree.
+		// Therefore, the order of elements should not change the hash. Sort by RefID because it is the unique key.
+		for i, q := range rule.Data {
+			keys[i] = q.RefID
+		}
+		sub := keys[:len(rule.Data)]
+		sort.Strings(sub)
+		for _, id := range sub {
+			for _, q := range rule.Data {
+				if q.RefID == id {
+					writeString(q.RefID)
+					writeString(q.DatasourceUID)
+					writeString(q.QueryType)
+					writeInt(int64(q.RelativeTimeRange.From))
+					writeInt(int64(q.RelativeTimeRange.To))
+					writeBytes(q.Model)
+					break
+				}
+			}
+		}
+	}
+
+	// fields that determine the rule state
+	writeString(rule.UID)
+	writeString(rule.Title)
+	writeString(rule.NamespaceUID)
+	writeString(r.folderTitle)
+	writeLabels(rule.Labels)
+	writeString(rule.Condition)
+	writeQuery()
+
+	if rule.IsPaused {
+		writeInt(1)
+	} else {
+		writeInt(0)
+	}
+
+	// fields that do not affect the state.
+	// TODO consider removing fields below from the fingerprint
+	writeInt(rule.ID)
+	writeInt(rule.OrgID)
+	writeInt(rule.IntervalSeconds)
+	writeInt(int64(rule.For))
+	writeLabels(rule.Annotations)
+	if rule.DashboardUID != nil {
+		writeString(*rule.DashboardUID)
+	}
+	if rule.PanelID != nil {
+		writeInt(*rule.PanelID)
+	}
+	writeString(rule.RuleGroup)
+	writeInt(int64(rule.RuleGroupIndex))
+	writeString(string(rule.NoDataState))
+	writeString(string(rule.ExecErrState))
+	return fingerprint(sum.Sum64())
 }

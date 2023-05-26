@@ -25,7 +25,7 @@ func TestAdd(t *testing.T) {
 	pluginID := "test-app"
 
 	fs := FileSystem(&fakeLogger{}, testDir)
-	archive, err := fs.Add(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
+	archive, err := fs.Extract(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
 	require.NotNil(t, archive)
 	require.NoError(t, err)
 
@@ -46,89 +46,6 @@ func TestAdd(t *testing.T) {
 	require.Equal(t, files[4].Name(), "symlink_to_txt")
 	require.Equal(t, os.ModeSymlink, file4.Mode()&os.ModeSymlink)
 	require.Equal(t, files[5].Name(), "text.txt")
-}
-
-func TestRemove(t *testing.T) {
-	pluginDir := t.TempDir()
-	pluginJSON := filepath.Join(pluginDir, "plugin.json")
-	//nolint:gosec
-	_, err := os.Create(pluginJSON)
-	require.NoError(t, err)
-
-	pluginID := "test-datasource"
-	i := &FS{
-		pluginsDir: filepath.Dir(pluginDir),
-		store: map[string]string{
-			pluginID: pluginDir,
-		},
-		log: &fakeLogger{},
-	}
-
-	err = i.Remove(context.Background(), pluginID)
-	require.NoError(t, err)
-
-	_, err = os.Stat(pluginDir)
-	require.True(t, os.IsNotExist(err))
-
-	t.Run("Uninstall will search in nested dir folder for plugin.json", func(t *testing.T) {
-		pluginDistDir := filepath.Join(t.TempDir(), "dist")
-		err = os.Mkdir(pluginDistDir, os.ModePerm)
-		require.NoError(t, err)
-		pluginJSON = filepath.Join(pluginDistDir, "plugin.json")
-		//nolint:gosec
-		_, err = os.Create(pluginJSON)
-		require.NoError(t, err)
-
-		pluginDir = filepath.Dir(pluginDistDir)
-
-		i = &FS{
-			pluginsDir: filepath.Dir(pluginDir),
-			store: map[string]string{
-				pluginID: pluginDir,
-			},
-			log: &fakeLogger{},
-		}
-
-		err = i.Remove(context.Background(), pluginID)
-		require.NoError(t, err)
-
-		_, err = os.Stat(pluginDir)
-		require.True(t, os.IsNotExist(err))
-	})
-
-	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
-		pluginDir = t.TempDir()
-		i = &FS{
-			pluginsDir: filepath.Dir(pluginDir),
-			store: map[string]string{
-				pluginID: pluginDir,
-			},
-			log: &fakeLogger{},
-		}
-
-		err = i.Remove(context.Background(), pluginID)
-		require.EqualError(t, err, "cannot recognize as plugin folder")
-
-		_, err = os.Stat(pluginDir)
-		require.False(t, os.IsNotExist(err))
-	})
-
-	t.Run("Uninstall will not delete folder if plugin's directory is not a subdirectory of specified plugins directory", func(t *testing.T) {
-		pluginDir = t.TempDir()
-		i = &FS{
-			pluginsDir: "/some/other/path",
-			store: map[string]string{
-				pluginID: pluginDir,
-			},
-			log: &fakeLogger{},
-		}
-
-		err = i.Remove(context.Background(), pluginID)
-		require.EqualError(t, err, "cannot uninstall a plugin outside of the plugins directory")
-
-		_, err = os.Stat(pluginDir)
-		require.False(t, os.IsNotExist(err))
-	})
 }
 
 func TestExtractFiles(t *testing.T) {

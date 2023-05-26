@@ -250,9 +250,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		if signedInUser.OrgRole != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW)
-		}
+		builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW)
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err

@@ -17,7 +17,7 @@ func TestPlaylistSummary(t *testing.T) {
 	_, _, err := builder(context.Background(), "abc", []byte("{invalid json"))
 	require.Error(t, err)
 
-	playlist := playlist.Playlist{
+	playlist := playlist.Spec{
 		Interval: "30s",
 		Name:     "test",
 		Items: []playlist.Item{

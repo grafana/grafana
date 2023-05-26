@@ -16,12 +16,6 @@
     "systemjs",
     "ts-loader", // we should remove ts-loader and use babel-loader instead
     "ora", // we should bump this once we move to esm modules
-
-    // Sentry deprecated in favor of Grafana Faro for frontend logging.
-    // Major effort required to upgrade to latest Sentry, not worthwhile
-    "@sentry/browser",
-    "@sentry/types",
-    "@sentry/utils",
   ],
   "includePaths": ["package.json", "packages/**"],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],

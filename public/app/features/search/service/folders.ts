@@ -28,7 +28,7 @@ export async function getFolderChildren(
   const dashboardsResults = await searcher.search({
     kind: ['dashboard'],
     query: '*',
-    location: parentUid ?? 'general',
+    location: parentUid || 'general',
     limit: 1000,
   });
 
@@ -51,6 +51,7 @@ async function getChildFolders(parentUid?: string, parentTitle?: string): Promis
     uid: item.uid,
     title: item.title,
     parentTitle,
+    parentUID: parentUid,
     url: `/dashboards/f/${item.uid}/`,
   }));
 }

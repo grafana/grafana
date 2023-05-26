@@ -287,19 +287,16 @@ describe('timeSrv', () => {
     });
   });
 
-  describe('pauseAutoRefresh', () => {
-    it('should set autoRefreshPaused to true', () => {
-      _dashboard.refresh = '10s';
-      timeSrv.pauseAutoRefresh();
-      expect(timeSrv.autoRefreshPaused).toBe(true);
-    });
-  });
-
   describe('resumeAutoRefresh', () => {
-    it('should set refresh to empty value', () => {
-      timeSrv.autoRefreshPaused = true;
+    it('should set auto-refresh interval', () => {
+      timeSrv.setAutoRefresh('10s');
+      expect(timeSrv.refreshTimer).not.toBeUndefined();
+
+      timeSrv.stopAutoRefresh();
+      expect(timeSrv.refreshTimer).toBeUndefined();
+
       timeSrv.resumeAutoRefresh();
-      expect(timeSrv.autoRefreshPaused).toBe(false);
+      expect(timeSrv.refreshTimer).not.toBeUndefined();
     });
   });
 

@@ -21,10 +21,10 @@ import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { PanelOptions } from './types';
+import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
-interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
+interface HeatmapPanelProps extends PanelProps<Options> {}
 
 export const HeatmapPanel = ({
   data,
@@ -56,11 +56,11 @@ export const HeatmapPanel = ({
 
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data, options, theme, getFieldLinksSupplier);
+      return prepareHeatmapData(data.series, data.annotations, options, theme, getFieldLinksSupplier);
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data, options, theme, getFieldLinksSupplier]);
+  }, [data.series, data.annotations, options, theme, getFieldLinksSupplier]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field
@@ -158,7 +158,7 @@ export const HeatmapPanel = ({
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
     if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-      hoverValue = countField.values.get(hover.dataIdx);
+      hoverValue = countField.values[hover.dataIdx];
     }
 
     return (
