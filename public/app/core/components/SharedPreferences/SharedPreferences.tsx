@@ -108,7 +108,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   onTimeZoneChanged = (timezone?: string) => {
-    if (!timezone) {
+    if (typeof timezone !== 'string') {
       return;
     }
     this.setState({ timezone: timezone });
