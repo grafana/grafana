@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { useStyles2 } from '@grafana/ui';
@@ -70,81 +70,71 @@ const FlameGraph = ({
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
   useFlameRender(graphRef, data, levels, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
+  const onGraphClick = useCallback(
+    (e: ReactMouseEvent<HTMLCanvasElement>) => {
+      setTooltipItem(undefined);
+      const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+      const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+        { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
+        data,
+        pixelsPerTick,
+        levels,
+        totalTicks,
+        rangeMin
+      );
 
-  useEffect(() => {
-    if (graphRef.current) {
-      graphRef.current.onclick = (e) => {
+      // if clicking on a block in the canvas
+      if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+        const item = levels[levelIndex][barIndex];
+        setClickedItemData({
+          posY: e.clientY,
+          posX: e.clientX,
+          itemIndex: item.itemIndex,
+          label: data.getLabel(item.itemIndex),
+          start: item.start,
+        });
+      } else {
+        // if clicking on the canvas but there is no block beneath the cursor
+        setClickedItemData(undefined);
+      }
+    },
+    [data, levels, rangeMin, rangeMax, totalTicks]
+  );
+
+  const onGraphMouseMove = useCallback(
+    (e: ReactMouseEvent<HTMLCanvasElement>) => {
+      if (tooltipRef.current && clickedItemData === undefined) {
         setTooltipItem(undefined);
         const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+          { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
           data,
-          e,
           pixelsPerTick,
           levels,
           totalTicks,
           rangeMin
         );
 
-        // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          const item = levels[levelIndex][barIndex];
-          setClickedItemData({
-            posY: e.clientY,
-            posX: e.clientX,
-            itemIndex: item.itemIndex,
-            label: data.getLabel(item.itemIndex),
-            start: item.start,
-          });
-        } else {
-          // if clicking on the canvas but there is no block beneath the cursor
-          setClickedItemData(undefined);
-        }
-      };
-
-      graphRef.current!.onmousemove = (e) => {
-        if (tooltipRef.current && clickedItemData === undefined) {
-          setTooltipItem(undefined);
-          const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-          const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-            data,
-            e,
-            pixelsPerTick,
-            levels,
-            totalTicks,
-            rangeMin
-          );
-
-          if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-            tooltipRef.current.style.top = e.clientY + 'px';
-            if (document.documentElement.clientWidth - e.clientX < 400) {
-              tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
-              tooltipRef.current.style.left = 'auto';
-            } else {
-              tooltipRef.current.style.left = e.clientX + 15 + 'px';
-              tooltipRef.current.style.right = 'auto';
-            }
-
-            setTooltipItem(levels[levelIndex][barIndex]);
+          tooltipRef.current.style.top = e.clientY + 'px';
+          if (document.documentElement.clientWidth - e.clientX < 400) {
+            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
+            tooltipRef.current.style.left = 'auto';
+          } else {
+            tooltipRef.current.style.left = e.clientX + 15 + 'px';
+            tooltipRef.current.style.right = 'auto';
           }
-        }
-      };
 
-      graphRef.current!.onmouseleave = () => {
-        setTooltipItem(undefined);
-      };
-    }
-  }, [
-    data,
-    levels,
-    rangeMin,
-    rangeMax,
-    totalTicks,
-    setRangeMin,
-    setRangeMax,
-    selectedView,
-    setClickedItemData,
-    clickedItemData,
-  ]);
+          setTooltipItem(levels[levelIndex][barIndex]);
+        }
+      }
+    },
+    [data, levels, rangeMin, rangeMax, totalTicks, clickedItemData]
+  );
+
+  const onGraphMouseLeave = useCallback(() => {
+    setTooltipItem(undefined);
+  }, []);
 
   // hide context menu if outside the flame graph canvas is clicked
   useEffect(() => {
@@ -162,7 +152,13 @@ const FlameGraph = ({
     <div className={styles.graph} ref={sizeRef}>
       <FlameGraphMetadata data={data} focusedItemIndex={focusedItemIndex} totalTicks={totalTicks} />
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
-        <canvas ref={graphRef} data-testid="flameGraph" />
+        <canvas
+          ref={graphRef}
+          data-testid="flameGraph"
+          onClick={onGraphClick}
+          onMouseMove={onGraphMouseMove}
+          onMouseLeave={onGraphMouseLeave}
+        />
       </div>
       <FlameGraphTooltip tooltipRef={tooltipRef} item={tooltipItem} data={data} totalTicks={totalTicks} />
       {clickedItemData && (
@@ -197,15 +193,16 @@ const getStyles = () => ({
 // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
 // the canvas.
 const convertPixelCoordinatesToBarCoordinates = (
+  // position relative to the start of the graph
+  pos: { x: number; y: number },
   data: FlameGraphDataContainer,
-  e: MouseEvent,
   pixelsPerTick: number,
   levels: LevelItem[][],
   totalTicks: number,
   rangeMin: number
 ) => {
-  const levelIndex = Math.floor(e.offsetY / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-  const barIndex = getBarIndex(e.offsetX, data, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  const barIndex = getBarIndex(pos.x, data, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
   return { levelIndex, barIndex };
 };
 
