@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	httpClient2 "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpClient2.Options) (tempopb.StreamingQuerierClient, error) {
+func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
 		return nil, err
