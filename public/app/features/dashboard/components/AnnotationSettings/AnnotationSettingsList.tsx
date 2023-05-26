@@ -81,23 +81,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
                   {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                 </td>
                 <td role="gridcell" style={{ width: '1%' }}>
-                  {idx !== 0 && (
-                    <IconButton
-                      name="arrow-up"
-                      aria-label="move up"
-                      onClick={() => onMove(idx, -1)}
-                      tooltip="Move up"
-                    />
-                  )}
+                  {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
                 </td>
                 <td role="gridcell" style={{ width: '1%' }}>
                   {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
-                    <IconButton
-                      name="arrow-down"
-                      aria-label="move down"
-                      onClick={() => onMove(idx, 1)}
-                      tooltip="Move down"
-                    />
+                    <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
                   ) : null}
                 </td>
                 <td role="gridcell" style={{ width: '1%' }}>

@@ -213,7 +213,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} size="xl" tooltip="Go back" />
+          <IconButton name="arrow-left" onClick={onBack} size="xl" tooltip="Go back" />
         </div>
       )}
       {!onBack && (

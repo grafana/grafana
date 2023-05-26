@@ -75,32 +75,15 @@ export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListP
                 </HorizontalGroup>
               </td>
               <td style={{ width: '1%' }} role="gridcell">
-                {idx !== 0 && (
-                  <IconButton
-                    name="arrow-up"
-                    aria-label="move link up"
-                    onClick={() => moveLink(idx, -1)}
-                    tooltip="Move link up"
-                  />
-                )}
+                {idx !== 0 && <IconButton name="arrow-up" onClick={() => moveLink(idx, -1)} tooltip="Move link up" />}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 {links.length > 1 && idx !== links.length - 1 ? (
-                  <IconButton
-                    name="arrow-down"
-                    aria-label="move link down"
-                    onClick={() => moveLink(idx, 1)}
-                    tooltip="Move link down"
-                  />
+                  <IconButton name="arrow-down" onClick={() => moveLink(idx, 1)} tooltip="Move link down" />
                 ) : null}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
-                <IconButton
-                  aria-label="copy link"
-                  name="copy"
-                  onClick={() => duplicateLink(link, idx)}
-                  tooltip="Copy link"
-                />
+                <IconButton name="copy" onClick={() => duplicateLink(link, idx)} tooltip="Copy link" />
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 <DeleteButton

@@ -21,9 +21,9 @@ export const AddRemove = ({ index, onAdd, onRemove, elements }: Props) => {
         display: flex;
       `}
     >
-      {index === 0 && <IconButton iconName="plus" onClick={onAdd} label="add" />}
+      {index === 0 && <IconButton iconName="plus" onClick={onAdd} label="add" tooltip="Add" />}
 
-      {elements.length >= 2 && <IconButton iconName="minus" onClick={onRemove} label="remove" />}
+      {elements.length >= 2 && <IconButton iconName="minus" onClick={onRemove} label="remove" tooltip="Remove" />}
     </div>
   );
 };
