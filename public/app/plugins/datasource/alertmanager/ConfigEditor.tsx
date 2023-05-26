@@ -73,6 +73,11 @@ export const ConfigEditor = (props: Props) => {
             />
           </InlineField>
         </div>
+        {options.jsonData.handleGrafanaManagedAlerts && (
+          <span>
+            Make sure to enable the alert forwarding on the <a href="/alerting/admin">admin page.</a>
+          </span>
+        )}
       </div>
       <DataSourceHttpSettings
         defaultUrl={''}
