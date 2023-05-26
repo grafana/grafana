@@ -7,9 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -90,14 +89,52 @@ func (s *entityStorage) exists(ctx context.Context, grn *entity.GRN) bool {
 	return rsp == nil || rsp.Guid == ""
 }
 
+func (s *entityStorage) write(ctx context.Context, grn *entity.GRN, uObj *unstructured.Unstructured) (*entity.WriteEntityResponse, error) {
+	ctx, err := contextWithFakeGrafanaUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ok := true
+	req := &entity.WriteEntityRequest{
+		GRN: grn,
+	}
+	anno := uObj.GetAnnotations()
+	req.Comment, ok = anno[kinds.AnnotationKeyCommitMessage]
+	if ok {
+		delete(anno, kinds.AnnotationKeyCommitMessage)
+		uObj.SetAnnotations(anno)
+	}
+
+	spec, ok := uObj.Object["spec"]
+	if ok {
+		req.Body, err = json.Marshal(spec)
+		if err != nil {
+			return nil, err
+		}
+	}
+	status, ok := uObj.Object["status"]
+	if ok {
+		req.Status, err = json.Marshal(status)
+		if err != nil {
+			return nil, err
+		}
+	}
+	meta, ok := uObj.Object["metadata"]
+	if ok {
+		req.Meta, err = json.Marshal(meta)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s.store.Write(ctx, req)
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
-	if err != nil {
-		return err
-	}
 	grn, err := keyToGRN(key, &s.gr)
 	if err != nil {
 		return err
@@ -121,33 +158,7 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		key = strings.ReplaceAll(key, old, grn.UID)
 	}
 
-	req := &entity.WriteEntityRequest{
-		GRN:     grn,
-		Comment: "create from k8s: " + key, // TODO? get comment from context?
-	}
-	spec, ok := uObj.Object["spec"]
-	if ok {
-		req.Body, err = json.Marshal(spec)
-		if err != nil {
-			return err
-		}
-	}
-	status, ok := uObj.Object["status"]
-	if ok {
-		req.Status, err = json.Marshal(status)
-		if err != nil {
-			return err
-		}
-	}
-	meta, ok := uObj.Object["metadata"]
-	if ok {
-		req.Meta, err = json.Marshal(meta)
-		if err != nil {
-			return err
-		}
-	}
-
-	rsp, err := s.store.Write(ctx, req)
+	rsp, err := s.write(ctx, grn, uObj)
 	if err != nil {
 		return err
 	}
@@ -286,6 +297,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
+	fmt.Printf("LIST:" + key)
 	if key == "" {
 		return fmt.Errorf("list requires a namespace (for now)")
 	}
@@ -294,46 +306,57 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		return err
 	}
 
-	// rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
-	// 	Kind:     []string{s.gr.Resource},
-	// 	WithBody: true,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
+	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
+		Kind:     []string{strings.TrimSuffix(s.gr.Resource, "s")}, // dashboards >> dashboard
+		WithBody: true,
+		Limit:    3,
+	})
+	if err != nil {
+		return err
+	}
 
 	u := listObj.(*unstructured.UnstructuredList)
 	u.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   s.gr.Group,
 		Version: "v1",
-		Kind:    "DashboardList",
+		Kind:    s.gr.Resource + "List",
 	})
 	u.SetResourceVersion(opts.ResourceVersion) // ???
 
-	res := dashboard.NewK8sResource("hello", &dashboard.Spec{
-		Title: utils.Pointer("the title"),
-	})
-	res.APIVersion = "dashboard.kinds.grafana.com/v1"
+	for i, r := range rsp.Results {
+		// convert r to object pointer???
+		//fmt.Printf("FOUND:" + r.Slug)
 
-	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
-	if err != nil {
-		return err
+		// uggg... not the same shape
+		eee := &entity.Entity{
+			GRN:    r.GRN,
+			Guid:   r.Guid,
+			Meta:   r.Meta,
+			Body:   r.Body,
+			Status: r.Status,
+		}
+
+		res, err := enityToResource(eee)
+		if err != nil {
+			return err
+		}
+		res.APIVersion = "dashboard.kinds.grafana.com/v1"
+
+		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
+		if err != nil {
+			return err
+		}
+
+		jjj, _ := json.MarshalIndent(out, "", "  ")
+		fmt.Printf("LIST: [%d] %s\n", i, string(jjj))
+
+		u.Items = append(u.Items, unstructured.Unstructured{Object: out})
 	}
 
-	u.Items = append(u.Items, unstructured.Unstructured{Object: out})
-
-	// for _, r := range rsp.Results {
-	// 	obj := s.newFunc()
-	// 	// convert r to object pointer???
-	// 	fmt.Printf("FOUND:" + r.Slug)
-
-	// 	resource, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	u.Items = append(u.Items, unstructured.Unstructured{Object: resource})
-	// }
-
+	if rsp.NextPageToken != "" {
+		// u.SetContinue(rsp.NextPageToken)
+		fmt.Printf("CONTINUE: %s\n", rsp.NextPageToken)
+	}
 	return nil
 }
 
@@ -353,70 +376,62 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 func (s *entityStorage) GuaranteedUpdate(
 	ctx context.Context, key string, destination runtime.Object, ignoreNotFound bool,
 	preconditions *storage.Preconditions, tryUpdate storage.UpdateFunc, cachedExistingObject runtime.Object) error {
-	ctx, err := contextWithFakeGrafanaUser(ctx)
+	// ctx, err := contextWithFakeGrafanaUser(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+	grn, err := keyToGRN(key, &s.gr)
 	if err != nil {
 		return err
 	}
 
-	//	var res storage.ResponseMeta
+	var res storage.ResponseMeta
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		//var objPtr runtime.Object
-		// filename := filepath.Join(s.root, key) + ".json"
+		err = s.Get(ctx, key, storage.GetOptions{}, destination)
+		if err != nil {
+			return err
+		}
 
-		// if !exists(filename) {
-		// 	if ignoreNotFound {
-		// 		return nil
-		// 	}
-		// 	return storage.NewKeyNotFoundError(key, 0)
-		// }
+		updatedObj, _, err := tryUpdate(destination, res)
+		if err != nil {
+			if attempt == MaxUpdateAttempts {
+				return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
+			} else {
+				continue
+			}
+		}
 
-		// obj, err := readFile(s.codec, filename, func() runtime.Object {
-		// 	return objPtr
-		// })
-		// if err != nil {
-		// 	return err
-		// }
+		uObj, ok := updatedObj.(*unstructured.Unstructured)
+		if !ok {
+			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
+		}
 
-		// updatedObj, _, err := tryUpdate(obj, res)
-		// if err != nil {
-		// 	if attempt == MaxUpdateAttempts {
-		// 		return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
-		// 	} else {
-		// 		continue
-		// 	}
-		// }
+		rsp, err := s.write(ctx, grn, uObj)
+		if err != nil {
+			return err
+		}
 
-		// if unchanged, _ := isUnchanged(s.codec, obj, updatedObj); unchanged {
-		// 	destination = obj.DeepCopyObject()
-		// } else {
-		// 	generatedRV, err := getResourceVersion()
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// 	if err := s.Versioner().UpdateObject(updatedObj, *generatedRV); err != nil {
-		// 		return err
-		// 	}
-		// 	if err := writeFile(s.codec, filename, updatedObj); err != nil {
-		// 		return err
-		// 	}
+		if rsp.Status == entity.WriteEntityResponse_UNCHANGED {
+			return nil // destination is already set
+		}
 
-		// 	if err := s.Get(ctx, key, storage.GetOptions{}, destination); err != nil {
-		// 		return err
-		// 	}
+		// get the thing we just wrote
+		err = s.Get(ctx, key, storage.GetOptions{}, destination)
+		if err != nil {
+			return err
+		}
 
-		// 	s.watchSet.notifyWatchers(watch.Event{
-		// 		Object: destination.DeepCopyObject(),
-		// 		Type:   watch.Modified,
-		// 	})
-		// }
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: destination.DeepCopyObject(),
+			Type:   watch.Modified,
+		})
 	}
 	return nil
 }
 
 // Count returns number of different entries under the key (generally being path prefix).
 func (s *entityStorage) Count(key string) (int64, error) {
+	fmt.Printf("Count [%s] %s (zero for now!)\n", s.gr.Resource, key)
 	return 0, nil
 }

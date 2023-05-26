@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -407,6 +409,10 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				return err
 			}
 		}
+		meta.Name = grn.UID
+		if meta.Namespace == "" {
+			meta.Namespace = "default" // USE tenant id
+		}
 
 		if meta.UID == "" {
 			meta.UID = types.UID(uuid.New().String())
@@ -415,6 +421,34 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			meta.Annotations = make(map[string]string)
 		}
 		meta.SetFolder(r.Folder)
+
+		if !isUpdate {
+			if createdAt < 1000 {
+				createdAt = updatedAt
+			}
+			if createdBy == "" {
+				createdBy = updatedBy
+			}
+		}
+		if createdAt > 0 {
+			meta.CreationTimestamp = v1.NewTime(time.UnixMilli(createdAt))
+		}
+		if updatedAt > 0 {
+			meta.SetUpdatedTimestamp(util.Pointer(time.UnixMilli(updatedAt)))
+		}
+
+		if origin != nil {
+			var ts *time.Time
+			if origin.Time > 0 {
+				ts = util.Pointer(time.UnixMilli(origin.Time))
+			}
+			meta.SetOriginInfo(&kinds.ResourceOriginInfo{
+				Name:      origin.Source,
+				Key:       origin.Key,
+				Timestamp: ts,
+			})
+		}
+
 		if len(meta.Labels) > 0 {
 			if summary.model.Labels == nil {
 				summary.model.Labels = make(map[string]string)
@@ -448,12 +482,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				oid,
 			)
 		} else {
-			if createdAt < 1000 {
-				createdAt = updatedAt
-			}
-			if createdBy == "" {
-				createdBy = updatedBy
-			}
 			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
 				"guid, grn, tenant_id, kind, uid, folder, "+
 				"size, body, meta, status, etag, version, "+

@@ -47,6 +47,7 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 const annoKeyCreatedBy = "grafana.com/createdBy"
 const annoKeyUpdatedTimestamp = "grafana.com/updatedTimestamp"
 const annoKeyUpdatedBy = "grafana.com/updatedBy"
+const AnnotationKeyCommitMessage = "grafana.com/commitMessage"
 
 // The folder identifier
 const annoKeyFolder = "grafana.com/folder"
@@ -115,6 +116,16 @@ func (m *GrafanaResourceMetadata) GetSlug() string {
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
 	m.set(annoKeySlug, v)
+}
+
+func (m *GrafanaResourceMetadata) GetCommitMessage() string {
+	return m.Annotations[AnnotationKeyCommitMessage]
+}
+
+// SetCommitMessage will add a message used in the resource history.
+// NOTE: this will be removed from the resource when persisted and added to the history subresource
+func (m *GrafanaResourceMetadata) SetCommitMessage(msg string) {
+	m.set(AnnotationKeyCommitMessage, msg)
 }
 
 func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {

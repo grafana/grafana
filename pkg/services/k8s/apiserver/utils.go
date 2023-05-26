@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -60,11 +57,15 @@ func enityToResource(rsp *entity.Entity) (kinds.GrafanaResource[map[string]inter
 	if rrr.Metadata.Annotations == nil {
 		rrr.Metadata.Annotations = make(map[string]string)
 	}
-	rrr.Metadata.CreationTimestamp = v1.NewTime(time.UnixMilli(rsp.CreatedAt))
-	rrr.Metadata.SetUpdatedTimestamp(util.Pointer(time.UnixMilli(rsp.CreatedAt)))
-	rrr.Metadata.SetFolder(rsp.Folder)
-	rrr.Metadata.SetCreatedBy(rsp.CreatedBy)
-	rrr.Metadata.SetUpdatedBy(rsp.UpdatedBy)
+	if rsp.Folder != "" {
+		rrr.Metadata.SetFolder(rsp.Folder)
+	}
+	if rsp.CreatedBy != "" {
+		rrr.Metadata.SetCreatedBy(rsp.CreatedBy)
+	}
+	if rsp.UpdatedBy != "" {
+		rrr.Metadata.SetUpdatedBy(rsp.UpdatedBy)
+	}
 
 	// Already saved in each payload
 	// rrr.Metadata.UID = types.UID(rsp.Guid)
