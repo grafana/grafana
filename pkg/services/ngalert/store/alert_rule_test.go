@@ -80,10 +80,34 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 		require.ErrorIs(t, err, ErrOptimisticLock)
 	})
+}
+
+func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
+		FolderService: setupFolderService(t, sqlStore, cfg),
+		Logger:        &logtest.Fake{},
+	}
+
+	idMutator := models.WithUniqueID()
+	createRuleInFolder := func(title string, orgID int64, namespaceUID string) *models.AlertRule {
+		generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), idMutator, models.WithNamespace(&folder.Folder{
+			UID:   namespaceUID,
+			Title: namespaceUID,
+		}), withOrgID(orgID), models.WithTitle(title))
+		return createRule(t, store, generator)
+	}
 
 	t.Run("should handle update chains without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder(t, store, "chain-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder(t, store, "chain-rule2", 1, "my-namespace")
+		rule1 := createRuleInFolder("chain-rule1", 1, "my-namespace")
+		rule2 := createRuleInFolder("chain-rule2", 1, "my-namespace")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -123,9 +147,9 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	})
 
 	t.Run("should handle update chains with cycle without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder(t, store, "cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder(t, store, "cycle-rule2", 1, "my-namespace")
-		rule3 := createRuleInFolder(t, store, "cycle-rule3", 1, "my-namespace")
+		rule1 := createRuleInFolder("cycle-rule1", 1, "my-namespace")
+		rule2 := createRuleInFolder("cycle-rule2", 1, "my-namespace")
+		rule3 := createRuleInFolder("cycle-rule3", 1, "my-namespace")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -178,8 +202,8 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	})
 
 	t.Run("should handle case-insensitive intermediate collision without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder(t, store, "case-cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder(t, store, "case-cycle-rule2", 1, "my-namespace")
+		rule1 := createRuleInFolder("case-cycle-rule1", 1, "my-namespace")
+		rule2 := createRuleInFolder("case-cycle-rule2", 1, "my-namespace")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -219,10 +243,10 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	})
 
 	t.Run("should handle update multiple chains in different folders without unique constraint violation", func(t *testing.T) {
-		rule1 := createRuleInFolder(t, store, "multi-cycle-rule1", 1, "my-namespace")
-		rule2 := createRuleInFolder(t, store, "multi-cycle-rule2", 1, "my-namespace")
-		rule3 := createRuleInFolder(t, store, "multi-cycle-rule1", 1, "my-namespace2")
-		rule4 := createRuleInFolder(t, store, "multi-cycle-rule2", 1, "my-namespace2")
+		rule1 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace")
+		rule2 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace")
+		rule3 := createRuleInFolder("multi-cycle-rule1", 1, "my-namespace2")
+		rule4 := createRuleInFolder("multi-cycle-rule2", 1, "my-namespace2")
 
 		newRule1 := models.CopyRule(rule1)
 		newRule2 := models.CopyRule(rule2)
@@ -484,15 +508,6 @@ func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule)
 	require.NoError(t, err)
 
 	return rule
-}
-
-func createRuleInFolder(t *testing.T, store *DBstore, title string, orgID int64, namespaceUID string) *models.AlertRule {
-	t.Helper()
-	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithNamespace(&folder.Folder{
-		UID:   namespaceUID,
-		Title: namespaceUID,
-	}), withOrgID(orgID), models.WithTitle(title))
-	return createRule(t, store, generator)
 }
 
 func createFolder(t *testing.T, store *DBstore, namespace, title string, orgID int64) {
