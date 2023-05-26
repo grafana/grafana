@@ -173,7 +173,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       ${disableTextWrap ? '' : 'table-layout: fixed;'}
       border-radius: ${theme.shape.borderRadius()};
       width: 100%;
-      height: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
       td {
         padding: ${theme.spacing(1)};
