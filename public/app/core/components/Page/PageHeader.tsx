@@ -27,7 +27,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   ) : (
     <div className={styles.title}>
       {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-      {renderTitle ? renderTitle(navItem.text) : navItem.text}
+      {renderTitle ? renderTitle(navItem.text) : <h1>{navItem.text}</h1>}
     </div>
   );
 
