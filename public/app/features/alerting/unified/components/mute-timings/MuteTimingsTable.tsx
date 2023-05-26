@@ -171,7 +171,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
               </Authorize>
               <Authorize actions={[permissions.delete]}>
                 <IconButton
-                  name={'trash-alt'}
+                  name="trash-alt"
                   tooltip="Delete mute timing"
                   onClick={() => setMuteTimingName(data.name)}
                 />

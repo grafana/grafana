@@ -281,7 +281,6 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
         </Stack>
         <Spacer />
         <IconButton
-          type="button"
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}

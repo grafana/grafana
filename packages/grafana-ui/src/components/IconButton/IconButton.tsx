@@ -64,7 +64,12 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     // ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     return (
       <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
-        <button aria-label={ariaLabel || tooltipString} {...restProps} className={cx(styles.button, className)}>
+        <button
+          aria-label={ariaLabel || tooltipString}
+          {...restProps}
+          className={cx(styles.button, className)}
+          type="button"
+        >
           <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
         </button>
       </Tooltip>

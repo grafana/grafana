@@ -38,7 +38,6 @@ export const QueryOperationRowHeader = ({
         <IconButton
           name={isContentVisible ? 'angle-down' : 'angle-right'}
           tooltip={isContentVisible ? 'Collapse query row' : 'Expand query row'}
-          aria-label="toggle collapse and expand query row"
           className={styles.collapseIcon}
           onClick={onRowToggle}
           aria-expanded={isContentVisible}
