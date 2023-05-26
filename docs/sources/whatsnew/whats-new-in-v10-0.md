@@ -352,8 +352,6 @@ Preview how your notification templates will look before using them in your cont
 
 {{< figure src="/media/docs/alerting/template-preview.png" max-width="750px" caption="Preview notification templates" >}}
 
-/media/docs/alerting/template-preview.png
-
 ## Security
 
 ### Trusted Types support
