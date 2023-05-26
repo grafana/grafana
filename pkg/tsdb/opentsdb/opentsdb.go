@@ -83,7 +83,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logger.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -252,8 +252,8 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]interface{} {
 	return metric
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

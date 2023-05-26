@@ -62,6 +62,9 @@ role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
 use_pkce = true
 ```
 
@@ -82,6 +85,14 @@ to login on your Grafana instance.
 
 You can limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
+
+You can also specify the SSL/TLS configuration used by the client.
+
+- Set `tls_client_cert` to the path of the certificate.
+- Set `tls_client_key` to the path containing the key.
+- Set `tls_client_ca` to the path containing a trusted certificate authority list.
+
+`tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
 ### Configure refresh token
 
@@ -143,6 +154,9 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
 use_pkce = true
 ```
 
