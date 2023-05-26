@@ -370,6 +370,9 @@ replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
 
+// grpc v1.46.0 removed "WithBalancerName()" API, still in use by weaveworks/commons.
+replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
+
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.24.1-0.20221012142027-823cd9150293
