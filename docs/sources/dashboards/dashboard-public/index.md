@@ -70,17 +70,6 @@ The link no longer works. You must create a new public URL as in [Make a dashboa
 
 Email sharing allows you to share your public dashboard with only specific people via email, instead of having it accessible to anyone with the URL.
 
-### Enable email sharing
-
-> **Note:** For Grafana Cloud, contact support to have the feature enabled.
-
-Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboardsEmailSharing = true
-```
-
 ### Invite a viewer
 
 1. Click the sharing icon to the right of the dashboard title.
