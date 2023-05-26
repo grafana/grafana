@@ -378,6 +378,24 @@ describe('AzureLogAnalyticsDatasource', () => {
       });
     });
 
+    it('should return a logs query with multiple resources template variables replaced', () => {
+      const templateVariables = createTemplateVariables(['resource'], 'resource1,resource2');
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureLogAnalytics: Partial<AzureLogsQuery> = {};
+      azureLogAnalytics.resources = ['$resource'];
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = {
+        ...query.azureLogAnalytics,
+        ...azureLogAnalytics,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
+        resources: ['resource1', 'resource2'],
+      });
+    });
+
     it('should return a traces query with any template variables replaced', () => {
       const templateableProps = ['resource', 'query', 'traceTypes', 'property', 'operation', 'filter', 'operationId'];
       const templateVariables = createTemplateVariables(templateableProps);
@@ -409,6 +427,24 @@ describe('AzureLogAnalyticsDatasource', () => {
             property: templateVariables.get('property')?.templateVariable.current.value,
           },
         ],
+      });
+    });
+
+    it('should return a trace query with multiple resources template variables replaced', () => {
+      const templateVariables = createTemplateVariables(['resource'], 'resource1,resource2');
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureTraces: Partial<AzureTracesQuery> = {};
+      azureTraces.resources = ['$resource'];
+      query.queryType = AzureQueryType.AzureTraces;
+      query.azureTraces = {
+        ...query.azureTraces,
+        ...azureTraces,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      expect(templatedQuery[0].azureTraces).toMatchObject({
+        resources: ['resource1', 'resource2'],
       });
     });
   });

@@ -11,13 +11,11 @@ export interface PromQuery extends GenPromQuery, DataQuery {
    * Timezone offset to align start & end time on backend
    */
   utcOffsetSec?: number;
-  legendFormat?: string;
   valueWithRefId?: boolean;
   showingGraph?: boolean;
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  intervalFactor?: number;
   // store the metrics modal additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
@@ -31,6 +29,7 @@ export enum PrometheusCacheLevel {
   High = 'High',
   None = 'None',
 }
+
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
