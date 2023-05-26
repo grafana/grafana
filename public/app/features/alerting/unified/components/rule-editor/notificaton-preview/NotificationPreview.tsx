@@ -9,6 +9,7 @@ import { Button, Collapse, Icon, Modal, TagList, useStyles2 } from '@grafana/ui'
 import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
+  ObjectMatcher,
   Receiver,
   Route,
   RouteWithID,
@@ -63,17 +64,15 @@ export const useGetPotentialInstancesByAlertManager = (
     }, new Map<string, Receiver>()) ?? new Map<string, Receiver>();
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
-  const matchingMapArray = rootRoute?.id
-    ? rootRoute.routes?.map((root) => matchInstancesToPolicyTree(root, potentialInstances)) ?? [
-        new Map<string, Labels[]>(),
-      ]
-    : [new Map<string, Labels[]>()];
+  const matchingMapArray = rootRoute
+    ? matchInstancesToPolicyTree(rootRoute, potentialInstances)
+    : new Map<string, RouteInstanceMatch[]>();
 
-  const matchingMap: Map<string, Labels[]> = matchingMapArray.reduce((map, matchingMap) => {
-    return new Map([...map, ...matchingMap]);
-  }, new Map<string, Labels[]>());
+  // const matchingMap: Map<string, Labels[]> = matchingMapArray.reduce((map, matchingMap) => {
+  //   return new Map([...map, ...matchingMap]);
+  // }, new Map<string, Labels[]>());
 
-  return { routesByIdMap, receiversByName, matchingMap };
+  return { routesByIdMap, receiversByName, matchingMap: matchingMapArray };
 };
 
 export const useGetAlertManagersSourceNames = () => {
@@ -205,7 +204,8 @@ export function NotificationPreviewByAlertManager({
           }
           return (
             <NotificationRoute
-              instances={instances}
+              // TODO Use the whole instance object to display matching labels
+              instances={instances.map((i) => i.instanceLabels)}
               route={route}
               receiver={receiver}
               key={routeId}
@@ -355,6 +355,7 @@ function NotificationRouteHeader({
     </div>
   );
 }
+
 interface NotificationRouteProps {
   route: RouteWithID;
   receiver: Receiver;
@@ -406,6 +407,7 @@ function NotificationRoute({
 interface RouteWithPath extends RouteWithID {
   path: string[]; // path from root route to this route
 }
+
 // we traverse the whole tree and we create a map with <id , RouteWithPath>
 function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithPath> {
   const map = new Map<string, RouteWithPath>();
@@ -414,9 +416,11 @@ function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithPath> {
     map.set(route.id, { ...route, path: path });
     route.routes?.forEach((r) => addRoutesToMap(r, [...path, route.id]));
   }
+
   addRoutesToMap(rootRoute, []);
   return map;
 }
+
 // normalize all the nodes in the tree
 function normalizeTree(routeTree: Route) {
   const routeMatchers = normalizeMatchers(routeTree);
@@ -425,18 +429,32 @@ function normalizeTree(routeTree: Route) {
   routeTree.routes?.forEach((route) => normalizeTree(route));
 }
 
-function matchInstancesToPolicyTree(routeTree: RouteWithID, instancesToMatch: Labels[]): Map<string, Labels[]> {
-  const result = new Map<string, Labels[]>();
+interface RouteInstanceMatch {
+  route: RouteWithID;
+  instanceLabels: Labels;
+  matchDetails: Map<ObjectMatcher, Labels>;
+}
+
+function matchInstancesToPolicyTree(
+  routeTree: RouteWithID,
+  instancesToMatch: Labels[]
+): Map<string, RouteInstanceMatch[]> {
+  const result = new Map<string, RouteInstanceMatch[]>();
 
   normalizeTree(routeTree);
   instancesToMatch.forEach((instance) => {
     const matchingRoutes = findMatchingRoutes(routeTree, Object.entries(instance));
-    matchingRoutes.forEach((route) => {
+    matchingRoutes.forEach(({ route, details }) => {
+      // Only to convert Label[] to Labels[] - needs better approach
+      const matchDetails = new Map(
+        Array.from(details.entries()).map(([matcher, labels]) => [matcher, Object.fromEntries(labels)])
+      );
+
       const currentRoute = result.get(route.id);
       if (currentRoute) {
-        currentRoute.push(instance);
+        currentRoute.push({ route, instanceLabels: instance, matchDetails });
       } else {
-        result.set(route.id, [instance]);
+        result.set(route.id, [{ route, instanceLabels: instance, matchDetails }]);
       }
     });
   });
@@ -572,8 +590,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.weak};
     width: fit-content;
-}
-`,
+  }
+  `,
   contactPoint: css`
     display: flex;
     flex-direction: row;

@@ -1,16 +1,75 @@
 import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { Label, normalizeMatchers, labelsMatchObjectMatchers } from './matchers';
+import { Label, normalizeMatchers } from './matchers';
 
+export type Label = [string, string];
+type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
+
+const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
+  [MatcherOperator.equal]: (lv, mv) => lv === mv,
+  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
+  [MatcherOperator.regex]: (lv, mv) => Boolean(lv.match(new RegExp(mv))),
+  [MatcherOperator.notRegex]: (lv, mv) => !Boolean(lv.match(new RegExp(mv))),
+};
+
+function isLabelMatch(matcher: ObjectMatcher, label: Label) {
+  const [labelKey, labelValue] = label;
+  const [matcherKey, operator, matcherValue] = matcher;
+
+  // not interested, keys don't match
+  if (labelKey !== matcherKey) {
+    return false;
+  }
+
+  const matchFunction = OperatorFunctions[operator];
+  if (!matchFunction) {
+    throw new Error(`no such operator: ${operator}`);
+  }
+
+  return matchFunction(labelValue, matcherValue);
+}
+
+interface MatchingResult {
+  matches: boolean;
+  details: Map<ObjectMatcher, Label[]>;
+}
+// check if every matcher returns "true" for the set of labels
+function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult {
+  const details = new Map<ObjectMatcher, Label[]>();
+
+  const matches = matchers.every((matcher) => {
+    const matchingLabels = labels.filter((label) => isLabelMatch(matcher, label));
+
+    if (matchingLabels.length === 0) {
+      return false;
+    }
+
+    details.set(matcher, matchingLabels);
+    return matchingLabels.length > 0;
+  });
+
+  return { matches, details };
+}
+
+interface RouteMatchResult<T extends Route> {
+  route: T;
+  details: Map<ObjectMatcher, Label[]>;
+}
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
-function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
-  const matches: Route[] = [];
 
   // If the current node is not a match, return nothing
   // const normalizedMatchers = normalizeMatchers(root);
   // Normalization should have happened earlier in the code
-  if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
+ // if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
+function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<RouteMatchResult<T>> {
+  let matches: Array<RouteMatchResult<T>> = [];
+
+  // If the current node is not a match, return nothing
+  const normalizedMatchers = normalizeMatchers(root);
+
+  const matchResult = matchLabels(normalizedMatchers, labels);
+  if (!matchResult.matches) {
     return [];
   }
 
@@ -30,7 +89,7 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
 
   // If no child nodes were matches, the current node itself is a match.
   if (matches.length === 0) {
-    matches.push(root);
+    matches.push({ route: root, details: matchResult.details });
   }
 
   return matches;
