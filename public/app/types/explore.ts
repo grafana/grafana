@@ -188,6 +188,7 @@ export interface ExploreItemState {
    */
   showRawPrometheus?: boolean;
   showTrace?: boolean;
+  showTraceSearch?: boolean;
   showNodeGraph?: boolean;
   showFlameGraph?: boolean;
 
@@ -251,6 +252,7 @@ export interface ExplorePanelData extends PanelData {
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
+  traceSearchFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
   rawPrometheusFrames: DataFrame[];
   flameGraphFrames: DataFrame[];

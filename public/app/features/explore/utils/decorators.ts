@@ -32,40 +32,48 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const rawPrometheusFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
+  const traceSearchFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
-    switch (frame.meta?.preferredVisualisationType) {
-      case 'logs':
-        logsFrames.push(frame);
-        break;
-      case 'graph':
-        graphFrames.push(frame);
-        break;
-      case 'trace':
-        traceFrames.push(frame);
-        break;
-      case 'table':
-        tableFrames.push(frame);
-        break;
-      case 'rawPrometheus':
-        rawPrometheusFrames.push(frame);
-        break;
-      case 'nodeGraph':
-        nodeGraphFrames.push(frame);
-        break;
-      case 'flamegraph':
-        flameGraphFrames.push(frame);
-        break;
-      default:
-        if (isTimeSeries(frame)) {
+    if (frame.fields.filter((x) => x.name === 'spanSets').length > 0) {
+      traceSearchFrames.push(frame);
+    } else {
+      switch (frame.meta?.preferredVisualisationType) {
+        case 'logs':
+          logsFrames.push(frame);
+          break;
+        case 'graph':
           graphFrames.push(frame);
+          break;
+        case 'trace':
+          traceFrames.push(frame);
+          break;
+        case 'traceSearch':
+          traceSearchFrames.push(frame);
+          break;
+        case 'table':
           tableFrames.push(frame);
-        } else {
-          // We fallback to table if we do not have any better meta info about the dataframe.
-          tableFrames.push(frame);
-        }
+          break;
+        case 'rawPrometheus':
+          rawPrometheusFrames.push(frame);
+          break;
+        case 'nodeGraph':
+          nodeGraphFrames.push(frame);
+          break;
+        case 'flamegraph':
+          flameGraphFrames.push(frame);
+          break;
+        default:
+          if (isTimeSeries(frame)) {
+            graphFrames.push(frame);
+            tableFrames.push(frame);
+          } else {
+            // We fallback to table if we do not have any better meta info about the dataframe.
+            tableFrames.push(frame);
+          }
+      }
     }
   }
 
@@ -75,6 +83,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     tableFrames,
     logsFrames,
     traceFrames,
+    traceSearchFrames,
     nodeGraphFrames,
     flameGraphFrames,
     rawPrometheusFrames,

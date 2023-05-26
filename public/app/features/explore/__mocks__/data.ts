@@ -31,6 +31,7 @@ export const mockExplorePanelData = (props?: MockProps): Observable<ExplorePanel
     tableResult: [],
     timeRange: getDefaultTimeRange(),
     traceFrames: [],
+    traceSearchFrames: [],
   };
 
   return of(data);

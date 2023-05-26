@@ -438,6 +438,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showRawPrometheus,
       showLogs,
       showTrace,
+      showTraceSearch,
       showNodeGraph,
       showFlameGraph,
       timeZone,
@@ -460,6 +461,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.tableFrames,
         queryResponse.rawPrometheusFrames,
         queryResponse.traceFrames,
+        queryResponse.traceSearchFrames,
       ].every((e) => e.length === 0);
 
     return (
@@ -506,14 +508,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showRawPrometheus && (
                             <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                           )}
-                          {/* {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>} */}
-                          {showTable && (
+                          {showTraceSearch && (
                             <TraceResults
-                              dataFrames={queryResponse.tableFrames}
+                              dataFrames={queryResponse.traceSearchFrames}
                               exploreId={exploreId}
                               splitOpenFn={this.onSplitOpen('table')}
                             />
                           )}
+                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
@@ -569,6 +571,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showMetrics,
     showTable,
     showTrace,
+    showTraceSearch,
     absoluteRange,
     queryResponse,
     showNodeGraph,
@@ -599,6 +602,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showMetrics,
     showTable,
     showTrace,
+    showTraceSearch,
     showNodeGraph,
     showRawPrometheus,
     showFlameGraph,
