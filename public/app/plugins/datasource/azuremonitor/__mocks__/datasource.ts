@@ -1,8 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import Datasource from '../datasource';
 import { AzureDataSourceJsonData } from '../types';
