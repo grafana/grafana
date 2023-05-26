@@ -5,12 +5,9 @@ import (
 	"time"
 )
 
-name:              "LibraryPanel"
-maturity:          "experimental"
-description:       "A standalone panel"
-pluralName:        "LibraryPanels"
-machineName:       "librarypanel"
-pluralMachineName: "librarypanels"
+name:        "LibraryPanel"
+maturity:    "experimental"
+description: "A standalone panel"
 
 lineage: schemas: [{
 	version: [0, 0]

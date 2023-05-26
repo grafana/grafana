@@ -520,7 +520,7 @@ func (r *Registry) start(ctx context.Context) error {
 	//  }
 
 	/************************ Preference ************************/
-	preferenceGRD, err := r.getGRD(r.breg.Preference())
+	preferenceGRD, err := r.getGRD(r.breg.Preferences())
 	if err != nil {
 		return err
 	}

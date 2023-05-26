@@ -91,6 +91,13 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
     expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
   });
 
+  it('does not display the "Folder actions" button if the user does not have permissions', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    render(<BrowseFolderAlertingPage {...props} />);
+    expect(await screen.findByRole('heading', { name: mockFolderName })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+  });
+
   it('displays all the folder tabs and shows the "Alert rules" tab as selected', async () => {
     render(<BrowseFolderAlertingPage {...props} />);
     expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();

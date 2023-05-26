@@ -48,7 +48,6 @@ export const stateSlice = createSlice({
     setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
       state.fuzzySearchQuery = action.payload;
       state.pageNum = 1;
-      state.letterSearch = '';
       state.selectedIdx = 0;
     },
     setNameHaystack: (state, action: PayloadAction<string[][]>) => {
@@ -63,22 +62,17 @@ export const stateSlice = createSlice({
       state.fullMetaSearch = action.payload;
       state.pageNum = 1;
     },
-    setExcludeNullMetadata: (state, action: PayloadAction<boolean>) => {
-      state.excludeNullMetadata = action.payload;
+    setIncludeNullMetadata: (state, action: PayloadAction<boolean>) => {
+      state.includeNullMetadata = action.payload;
       state.pageNum = 1;
     },
     setSelectedTypes: (state, action: PayloadAction<Array<SelectableValue<string>>>) => {
       state.selectedTypes = action.payload;
       state.pageNum = 1;
     },
-    setLetterSearch: (state, action: PayloadAction<string>) => {
-      state.letterSearch = action.payload;
-      state.pageNum = 1;
-    },
     setUseBackend: (state, action: PayloadAction<boolean>) => {
       state.useBackend = action.payload;
       state.fullMetaSearch = false;
-      state.excludeNullMetadata = false;
       state.pageNum = 1;
     },
     setSelectedIdx: (state, action: PayloadAction<number>) => {
@@ -89,6 +83,9 @@ export const stateSlice = createSlice({
     },
     showAdditionalSettings: (state) => {
       state.showAdditionalSettings = !state.showAdditionalSettings;
+    },
+    setInferType: (state, action: PayloadAction<boolean>) => {
+      state.inferType = action.payload;
     },
   },
 });
@@ -114,13 +111,13 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     pageNum: 1,
     fuzzySearchQuery: '',
     fullMetaSearch: query?.fullMetaSearch ?? false,
-    excludeNullMetadata: query?.excludeNullMetadata ?? false,
+    includeNullMetadata: query?.includeNullMetadata ?? true,
     selectedTypes: [],
-    letterSearch: '',
     useBackend: query?.useBackend ?? false,
     disableTextWrap: query?.disableTextWrap ?? false,
     selectedIdx: 0,
     showAdditionalSettings: false,
+    inferType: true,
   };
 }
 
@@ -162,12 +159,10 @@ export interface MetricsModalState {
   fuzzySearchQuery: string;
   /** Enables the fuzzy meatadata search */
   fullMetaSearch: boolean;
-  /** Excludes results that are missing type and description */
-  excludeNullMetadata: boolean;
+  /** Includes results that are missing type and description */
+  includeNullMetadata: boolean;
   /** Filter by prometheus type */
   selectedTypes: Array<SelectableValue<string>>;
-  /** After results are filtered, select a letter to show metrics that start with that letter */
-  letterSearch: string;
   /** Filter by the series match endpoint instead of the fuzzy search */
   useBackend: boolean;
   /** Disable text wrap for descriptions in the results table */
@@ -176,6 +171,8 @@ export interface MetricsModalState {
   selectedIdx: number;
   /** Display toggle switches for settings */
   showAdditionalSettings: boolean;
+  /** Check metric to match on substrings to infer prometheus type */
+  inferType: boolean;
 }
 
 /**
@@ -197,7 +194,7 @@ export function getSettings(visQuery: PromVisualQuery): MetricsModalSettings {
     useBackend: visQuery?.useBackend ?? false,
     disableTextWrap: visQuery?.disableTextWrap ?? false,
     fullMetaSearch: visQuery?.fullMetaSearch ?? false,
-    excludeNullMetadata: visQuery.excludeNullMetadata ?? false,
+    includeNullMetadata: visQuery.includeNullMetadata ?? false,
   };
 }
 
@@ -205,5 +202,5 @@ export type MetricsModalSettings = {
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
-  excludeNullMetadata?: boolean;
+  includeNullMetadata?: boolean;
 };

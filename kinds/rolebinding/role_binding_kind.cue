@@ -1,11 +1,8 @@
 package kind
 
-name:              "RoleBinding"
-maturity:          "merged"
-description:       "Role bindings links a user|team to a configured role"
-pluralName:        "RoleBindings"
-machineName:       "rolebinding"
-pluralMachineName: "rolebindings"
+name:        "RoleBinding"
+maturity:    "merged"
+description: "Role bindings links a user|team to a configured role"
 
 lineage: schemas: [{
 	version: [0, 0]

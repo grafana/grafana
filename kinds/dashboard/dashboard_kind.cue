@@ -5,12 +5,9 @@ import (
 	t "time"
 )
 
-name:              "Dashboard"
-maturity:          "experimental"
-description:       "A Grafana dashboard."
-pluralName:        "Dashboards"
-machineName:       "dashboard"
-pluralMachineName: "dashboards"
+name:        "Dashboard"
+maturity:    "experimental"
+description: "A Grafana dashboard."
 
 crd: dummySchema: true
 

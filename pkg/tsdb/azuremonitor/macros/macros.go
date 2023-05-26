@@ -160,7 +160,7 @@ func (m *kqlMacroEngine) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str str
 	result := ""
 	lastIndex := 0
 
-	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
+	for _, v := range re.FindAllStringSubmatchIndex(str, -1) {
 		groups := []string{}
 		for i := 0; i < len(v); i += 2 {
 			if v[i] < 0 {

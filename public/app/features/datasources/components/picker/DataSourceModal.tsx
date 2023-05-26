@@ -99,7 +99,6 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
-            className={styles.dataSourceList}
             dashboard={false}
             mixed={false}
             variables
@@ -113,15 +112,18 @@ export function DataSourceModal({
               })
             }
           />
+          <BuiltInDataSourceList
+            className={styles.appendBuiltInDataSourcesList}
+            onChange={onChangeDataSource}
+            current={current}
+          />
         </CustomScrollbar>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <BuiltInDataSourceList
-            className={styles.builtInDataSourceList}
-            onChange={onChangeDataSource}
-            current={current}
-          />
+          <CustomScrollbar className={styles.builtInDataSourcesList}>
+            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+          </CustomScrollbar>
           {enableFileUpload && (
             <FileDropzone
               readAs="readAsArrayBuffer"
@@ -194,11 +196,10 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
 
       ${theme.breakpoints.down('md')} {
         width: 100%;
-        height: 47%;
         border-right: 0;
         padding-right: 0;
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        padding-bottom: ${theme.spacing(4)};
+        flex: 1;
+        overflow-y: auto;
       }
     `,
     rightColumn: css`
@@ -212,20 +213,30 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
 
       ${theme.breakpoints.down('md')} {
         width: 100%;
-        height: 53%;
         padding-left: 0;
-        padding-top: ${theme.spacing(4)};
+        flex: 0;
       }
     `,
     builtInDataSources: css`
-      flex: 1;
+      flex: 1 1;
+      margin-bottom: ${theme.spacing(4)};
+
+      ${theme.breakpoints.down('md')} {
+        flex: 0;
+      }
+    `,
+    builtInDataSourcesList: css`
+      ${theme.breakpoints.down('md')} {
+        display: none;
+        margin-bottom: 0;
+      }
+
       margin-bottom: ${theme.spacing(4)};
     `,
-    dataSourceList: css`
-      height: 100%;
-    `,
-    builtInDataSourceList: css`
-      margin-bottom: ${theme.spacing(4)};
+    appendBuiltInDataSourcesList: css`
+      ${theme.breakpoints.up('md')} {
+        display: none;
+      }
     `,
     newDSSection: css`
       display: flex;
@@ -240,10 +251,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       overflow: hidden;
       white-space: nowrap;
       color: ${theme.colors.text.secondary};
-
-      ${theme.breakpoints.down('md')} {
-        padding-bottom: ${theme.spacing(3)};
-      }
     `,
     searchInput: css`
       width: 100%;

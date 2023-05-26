@@ -1,11 +1,8 @@
 package kind
 
-name:              "ServiceAccount"
-maturity:          "merged"
-description:       "system account"
-pluralName:        "ServiceAccounts"
-machineName:       "serviceaccount"
-pluralMachineName: "serviceaccounts"
+name:        "ServiceAccount"
+maturity:    "merged"
+description: "system account"
 
 lineage: schemas: [{
 	version: [0, 0]
