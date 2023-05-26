@@ -56,7 +56,6 @@ import {
   transformTraceList,
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
-  createTableFrameFromTraceQlQuery,
   createTraceResultsFromTraceQlQuery,
 } from './resultTransformer';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
@@ -224,7 +223,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           });
           subQueries.push(
             this._request('/api/search', {
-              q: queryValue + ' | by(resource.service.name)', //' | avg(duration) > 10ms',
+              q: queryValue,
               limit: options.targets[0].limit ?? DEFAULT_LIMIT,
               start: options.range.from.unix(),
               end: options.range.to.unix(),
@@ -255,7 +254,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         });
         subQueries.push(
           this._request('/api/search', {
-            q: queryValue + ' | by(resource.service.name)', //' | avg(duration) > 10ms',
+            q: queryValue,
             limit: options.targets[0].limit ?? DEFAULT_LIMIT,
             start: options.range.from.unix(),
             end: options.range.to.unix(),
