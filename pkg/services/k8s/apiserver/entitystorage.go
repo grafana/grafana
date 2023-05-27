@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/grafana/kindsys"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/kinds"
@@ -267,7 +268,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	}
 
 	// Hacking "status" as sub-resource to pretend to get history
-	/* info, ok := request.RequestInfoFrom(ctx)
+	info, ok := request.RequestInfoFrom(ctx)
 	if ok {
 		switch info.Subresource {
 		case "status": // aka history!!!
@@ -291,7 +292,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		default:
 			return fmt.Errorf("unsupported sub-resouce: " + info.Subresource)
 		}
-	} */
+	}
 
 	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
 		GRN:        grn,
