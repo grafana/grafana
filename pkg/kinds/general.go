@@ -43,6 +43,12 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 	_ interface{} `json:"-"`
 }
 
+// NOTE: The below annotation keys must confirm to K8s requirements, which are:
+//
+// a qualified name must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an
+// alphanumeric character (e.g. 'MyName',  or 'my.name',  or '123-abc', regex used for validation
+// is '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]') with an optional DNS subdomain prefix and '/' (e.g. 'example.com/MyName')
+
 // Annotation keys
 const annoKeyCreatedBy = "grafana.com/createdBy"
 const annoKeyUpdatedTimestamp = "grafana.com/updatedTimestamp"
@@ -54,10 +60,10 @@ const annoKeyFolder = "grafana.com/folder"
 const annoKeySlug = "grafana.com/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/origin/name"
-const annoKeyOriginPath = "grafana.com/origin/path"
-const annoKeyOriginKey = "grafana.com/origin/key"
-const annoKeyOriginTime = "grafana.com/origin/time"
+const annoKeyOriginName = "grafana.com/originName"
+const annoKeyOriginPath = "grafana.com/originPath"
+const annoKeyOriginKey = "grafana.com/originKey"
+const annoKeyOriginTime = "grafana.com/originTime"
 
 func (m *GrafanaResourceMetadata) set(key string, val string) {
 	if val == "" {

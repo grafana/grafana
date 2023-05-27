@@ -99,10 +99,12 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 				getAttrsFunc, trigger, indexers,
 			)
 		},
-		DeleteCollectionWorkers:   0,
-		EnableGarbageCollection:   false,
-		ResourcePrefix:            path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
-		CountMetricPollPeriod:     1 * time.Second,
+		DeleteCollectionWorkers: 0,
+		EnableGarbageCollection: false,
+		ResourcePrefix:          path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
+		// NOTE: CountMetricPollPeriod > 0 starts a metric collector at KeyRootFunc for this group resource
+		// https://github.com/kubernetes/apiserver/blob/v0.27.2/pkg/registry/generic/registry/store.go#L1490
+		CountMetricPollPeriod:     0 * time.Second,
 		StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
 	}
 

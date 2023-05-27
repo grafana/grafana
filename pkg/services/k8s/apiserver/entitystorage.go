@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
@@ -268,7 +267,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	}
 
 	// Hacking "status" as sub-resource to pretend to get history
-	info, ok := request.RequestInfoFrom(ctx)
+	/* info, ok := request.RequestInfoFrom(ctx)
 	if ok {
 		switch info.Subresource {
 		case "status": // aka history!!!
@@ -292,7 +291,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		default:
 			return fmt.Errorf("unsupported sub-resouce: " + info.Subresource)
 		}
-	}
+	} */
 
 	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
 		GRN:        grn,
