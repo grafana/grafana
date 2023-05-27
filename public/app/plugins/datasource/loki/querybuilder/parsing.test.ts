@@ -304,6 +304,40 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with with only decolorize', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | decolorize')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Decolorize, params: [] }],
+      })
+    );
+  });
+
+  it('parses query with with decolorize and other operations', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | logfmt | decolorize | __error__="')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Decolorize, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+        ],
+      })
+    );
+  });
+
   it('parses metrics query with function', () => {
     expect(buildVisualQueryFromString('rate({app="frontend"} | json [5m])')).toEqual(
       noErrors({
@@ -681,6 +715,36 @@ describe('buildVisualQueryFromString', () => {
         ],
       },
     });
+  });
+
+  it('parses a log query with distinct and no labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | distinct')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Distinct, params: [] }],
+      })
+    );
+  });
+
+  it('parses a log query with distinct and labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | distinct id, email')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Distinct, params: ['id', 'email'] }],
+      })
+    );
   });
 });
 

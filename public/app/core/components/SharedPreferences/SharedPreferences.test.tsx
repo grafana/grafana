@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
@@ -84,6 +84,17 @@ const mockPreferences: UserPreferencesDTO = {
   language: '',
 };
 
+const defaultPreferences: UserPreferencesDTO = {
+  timezone: '',
+  weekStart: '',
+  theme: '',
+  homeDashboardUID: '',
+  queryHistory: {
+    homeTab: '',
+  },
+  language: '',
+};
+
 const mockPrefsPatch = jest.fn();
 const mockPrefsUpdate = jest.fn();
 const mockPrefsLoad = jest.fn().mockResolvedValue(mockPreferences);
@@ -154,7 +165,7 @@ describe('SharedPreferences', () => {
     expect(weekSelect).toHaveTextContent('Default');
   });
 
-  it("saves the user's new preferences", async () => {
+  it('saves the users new preferences', async () => {
     await selectOptionInTest(screen.getByLabelText('Interface theme'), 'Dark');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Saturday');
@@ -174,24 +185,20 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it("saves the user's default preferences", async () => {
+  it('saves the users default preferences', async () => {
     await selectOptionInTest(screen.getByLabelText('Interface theme'), 'Default');
-    await selectOptionInTest(screen.getByLabelText('Home Dashboard'), 'Default');
+
+    // there's no default option in this dropdown - there's a clear selection button
+    // get the parent container, and find the "select-clear-value" button
+    const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
+    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'select-clear-value' }));
+
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Default');
     await selectOptionInTest(screen.getByLabelText(/language/i), 'Default');
 
     await userEvent.click(screen.getByText('Save'));
-    expect(mockPrefsUpdate).toHaveBeenCalledWith({
-      timezone: 'browser',
-      weekStart: '',
-      theme: '',
-      homeDashboardUID: 'myDash',
-      queryHistory: {
-        homeTab: '',
-      },
-      language: '',
-    });
+    expect(mockPrefsUpdate).toHaveBeenCalledWith(defaultPreferences);
   });
 
   it('refreshes the page after saving preferences', async () => {

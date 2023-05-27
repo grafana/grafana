@@ -35,7 +35,7 @@ When managing large volumes of alerts, you can use extended alert rule search ca
 To view alerting details:
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page. By default, the List view displays.
-1. In **View as**, toggle between Grouped or State views by clicking the relevant option. See [Group view](#group-view) and [State view](#state-view) for more information.
+1. In **View as**, toggle between Grouped or State views by clicking the relevant option. See [Grouped view](#grouped-view) and [State view](#state-view) for more information.
 1. Expand the rule row to view the rule labels, annotations, data sources the rule queries, and a list of alert instances resulting from this rule.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-details-8-0.png" max-width="650px" caption="Alerting rule details" >}}

@@ -3,7 +3,6 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 
@@ -39,7 +38,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 			continue
 		}
 
-		dir := os.DirFS(path)
+		dir, _ := fs.Sub(root, path)
 		pp, err := ParsePluginFS(dir, psr.rt)
 		if err != nil {
 			return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)
