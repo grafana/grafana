@@ -2242,7 +2242,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@daybrush/utils@npm:1.11.0":
+"@daybrush/utils@npm:1.11.0, @daybrush/utils@npm:^1.11.0":
   version: 1.11.0
   resolution: "@daybrush/utils@npm:1.11.0"
   checksum: 876c320e5315a7fd213b16f9f85f09dc8775b8ba627923cf6694f0e20369e1072417e51c23ce060a0e544910468152523d5f0ecc6e3a8b414a9c47b02e58c7bd
@@ -2253,13 +2253,6 @@ __metadata:
   version: 1.6.0
   resolution: "@daybrush/utils@npm:1.6.0"
   checksum: 2579bc17e0d53ffbcb01c14c1f6baf32294f42b370e597d855e11cc5ab4de975502e91114c3e5bd05f76c8a6f83352c40ba60ac74c2fd1c3a741ce2e8899b137
-  languageName: node
-  linkType: hard
-
-"@daybrush/utils@npm:^1.11.0":
-  version: 1.11.0
-  resolution: "@daybrush/utils@npm:1.11.0"
-  checksum: 876c320e5315a7fd213b16f9f85f09dc8775b8ba627923cf6694f0e20369e1072417e51c23ce060a0e544910468152523d5f0ecc6e3a8b414a9c47b02e58c7bd
   languageName: node
   linkType: hard
 
