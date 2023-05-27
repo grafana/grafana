@@ -28,7 +28,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
     super(props);
 
     const { options } = props;
-    console.log({ options });
 
     this.state = {
       timeRangeFrom: options.timeRange?.from || '',
