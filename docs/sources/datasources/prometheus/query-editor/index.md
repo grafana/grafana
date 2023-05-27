@@ -49,7 +49,7 @@ Click the arrow next to each to see available options to add to your query.
 
 {{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
 
-- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
+- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select an editor mode.
 
 ## Configure common options
 
@@ -59,7 +59,7 @@ You can configure Prometheus-specific options in the query editor by setting sev
 
 ### Legend
 
-The **Legend** setting defines the time series's name. You can use a predefined or custom format.
+The **Legend** setting defines the time series' name. You can use a predefined or custom format.
 
 - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
 - **Verbose** - Displays all label names.
@@ -123,7 +123,7 @@ This video demonstrates how to use the visual Prometheus query builder available
 {{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
 
 When you are ready to create a query, you can choose the specific metric name from the dropdown list under **Metric**.
-The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
+The data source requests the list of available metrics from the Prometheus server based on the selected time range.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
 
 ### Label filters
@@ -152,7 +152,7 @@ All operations have function parameters under the operation header. Click the `o
 {{< figure src="/static/img/docs/prometheus/use-function-by-label-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Functions and labels" >}}
 
 Some operations make sense only when used in a specific order.
-If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
+If adding an operation would result in a nonsensical query, the query editor adds the operation to the correct place.
 
 #### Hints
 
