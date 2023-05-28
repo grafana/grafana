@@ -10,7 +10,7 @@ weight: 8
 
 {{% admonition type="note" %}}
 
-This feature is in public preview.
+This feature is experimental.
 
 {{% /admonition %}}
 
@@ -72,7 +72,10 @@ The link no longer works. You must create a new public URL as in [Make a dashboa
 
 {{% admonition type="note" %}}
 
-Available in public preview in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). Please contact support to have the feature enabled.
+This feature is experimental in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). The feature will have a cost by active users after being promoted into general availability.
+
+Please contact support to have the feature enabled. 
+
 
 {{% /admonition %}}
 
