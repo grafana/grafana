@@ -34,9 +34,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 		var loadedPaths []string
 		loader := &fakes.FakeLoader{
-			LoadFunc: func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-				loadedPaths = append(loadedPaths, paths...)
-				require.Equal(t, []string{zipNameV1}, paths)
+			LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV1}, nil
 			},
 		}
@@ -52,18 +52,13 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 
 		fs := &fakes.FakePluginStorage{
-			AddFunc: func(_ context.Context, id string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			ExtractFunc: func(_ context.Context, id string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginID, id)
 				require.Equal(t, mockZipV1, z)
 				return &storage.ExtractedPluginArchive{
 					Path: zipNameV1,
 				}, nil
 			},
-			RegisterFunc: func(_ context.Context, pluginID, pluginDir string) error {
-				require.Equal(t, pluginV1.ID, pluginID)
-				return nil
-			},
-			Store: map[string]struct{}{},
 		}
 
 		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
@@ -96,9 +91,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			mockZipV2 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
 				FileHeader: zip.FileHeader{Name: zipNameV2},
 			}}}}
-			loader.LoadFunc = func(_ context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-				require.Equal(t, plugins.External, class)
-				require.Equal(t, []string{zipNameV2}, paths)
+			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				require.Equal(t, plugins.External, src.PluginClass(ctx))
+				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
 			pluginRepo.GetPluginDownloadOptionsFunc = func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
@@ -112,16 +107,12 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV2,
 				}, nil
 			}
-			fs.AddFunc = func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			fs.ExtractFunc = func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginV1.ID, pluginID)
 				require.Equal(t, mockZipV2, z)
 				return &storage.ExtractedPluginArchive{
 					Path: zipNameV2,
 				}, nil
-			}
-			fs.RegisterFunc = func(_ context.Context, pluginID, pluginDir string) error {
-				require.Equal(t, pluginV2.ID, pluginID)
-				return nil
 			}
 
 			err = inst.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})

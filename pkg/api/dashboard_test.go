@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -23,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -136,11 +140,12 @@ func newTestLive(t *testing.T, store db.DB) *live.GrafanaLive {
 func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given a dashboard with a parent folder which does not have an ACL", func(t *testing.T) {
 		fakeDash := dashboards.NewDashboard("Child dash")
-		fakeDash.ID = 1
+		fakeDash.SetID(1)
+		fakeDash.SetUID("test-uid-one")
 		fakeDash.FolderID = 1
 		fakeDash.HasACL = false
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
-		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{}
+		fakeDashboardVersionService.ExpectedDashboardVersion = &dashver.DashboardVersionDTO{CreatedBy: 1}
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
@@ -156,6 +161,9 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
 			QuotaService:            quotatest.New(false, nil),
+			userService: &usertest.FakeUserService{
+				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
+			},
 		}
 
 		setUp := func() {
@@ -181,6 +189,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 					dash := getDashboardShouldReturn200WithConfig(t, sc, nil, nil, dashboardService, nil)
 
+					assert.Equal(t, fakeDash.UID, dash.Dashboard.Get("uid").MustString())
 					assert.False(t, dash.Meta.CanEdit)
 					assert.False(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
@@ -225,6 +234,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					hs.callGetDashboardVersion(sc)
 
 					assert.Equal(t, 200, sc.resp.Code)
+					var version *dashver.DashboardVersionMeta
+					err := json.NewDecoder(sc.resp.Body).Decode(&version)
+					require.NoError(t, err)
+					assert.NotEqual(t, anonString, version.CreatedBy)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
@@ -935,6 +948,129 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 }
 
+func TestDashboardVersionsAPIEndpoint(t *testing.T) {
+	fakeDash := dashboards.NewDashboard("Child dash")
+	fakeDash.ID = 1
+	fakeDash.FolderID = 1
+	fakeDash.HasACL = false
+
+	fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
+
+	teamService := &teamtest.FakeService{}
+
+	mockSQLStore := dbtest.NewFakeDB()
+
+	cfg := setting.NewCfg()
+
+	getHS := func(userSvc *usertest.FakeUserService) *HTTPServer {
+		return &HTTPServer{
+			Cfg:                     cfg,
+			pluginStore:             &plugins.FakePluginStore{},
+			SQLStore:                mockSQLStore,
+			AccessControl:           accesscontrolmock.New(),
+			Features:                featuremgmt.WithFeatures(),
+			DashboardService:        dashboardService,
+			dashboardVersionService: fakeDashboardVersionService,
+			Kinds:                   corekind.NewBase(nil),
+			QuotaService:            quotatest.New(false, nil),
+			userService:             userSvc,
+			CacheService:            localcache.New(5*time.Minute, 10*time.Minute),
+			log:                     log.New(),
+		}
+	}
+
+	setUp := func() {
+		viewerRole := org.RoleViewer
+		editorRole := org.RoleEditor
+		qResult := []*dashboards.DashboardACLInfoDTO{
+			{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
+		}
+		dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
+		guardian.InitLegacyGuardian(cfg, mockSQLStore, dashboardService, teamService)
+	}
+
+	loggedInUserScenarioWithRole(t, "When user exists and calling GET on", "GET", "/api/dashboards/id/2/versions",
+		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
+			setUp()
+			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
+				{
+					Version:   1,
+					CreatedBy: 1,
+				},
+				{
+					Version:   2,
+					CreatedBy: 1,
+				},
+			}
+			getHS(&usertest.FakeUserService{
+				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
+			}).callGetDashboardVersions(sc)
+
+			assert.Equal(t, 200, sc.resp.Code)
+			var versions []dashver.DashboardVersionMeta
+			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
+			require.NoError(t, err)
+			for _, v := range versions {
+				assert.Equal(t, "test-user", v.CreatedBy)
+			}
+		}, mockSQLStore)
+
+	loggedInUserScenarioWithRole(t, "When user does not exist and calling GET on", "GET", "/api/dashboards/id/2/versions",
+		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
+			setUp()
+			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
+				{
+					Version:   1,
+					CreatedBy: 1,
+				},
+				{
+					Version:   2,
+					CreatedBy: 1,
+				},
+			}
+			getHS(&usertest.FakeUserService{
+				ExpectedError: user.ErrUserNotFound,
+			}).callGetDashboardVersions(sc)
+
+			assert.Equal(t, 200, sc.resp.Code)
+			var versions []dashver.DashboardVersionMeta
+			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
+			require.NoError(t, err)
+			for _, v := range versions {
+				assert.Equal(t, anonString, v.CreatedBy)
+			}
+		}, mockSQLStore)
+
+	loggedInUserScenarioWithRole(t, "When failing to get user and calling GET on", "GET", "/api/dashboards/id/2/versions",
+		"/api/dashboards/id/:dashboardId/versions", org.RoleEditor, func(sc *scenarioContext) {
+			setUp()
+			fakeDashboardVersionService.ExpectedListDashboarVersions = []*dashver.DashboardVersionDTO{
+				{
+					Version:   1,
+					CreatedBy: 1,
+				},
+				{
+					Version:   2,
+					CreatedBy: 1,
+				},
+			}
+			getHS(&usertest.FakeUserService{
+				ExpectedError: fmt.Errorf("some error"),
+			}).callGetDashboardVersions(sc)
+
+			assert.Equal(t, 200, sc.resp.Code)
+			var versions []dashver.DashboardVersionMeta
+			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
+			require.NoError(t, err)
+			for _, v := range versions {
+				assert.Equal(t, anonString, v.CreatedBy)
+			}
+		}, mockSQLStore)
+}
+
 func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, provisioningService provisioning.ProvisioningService, dashboardStore dashboards.Store, dashboardService dashboards.DashboardService, folderStore folder.FolderStore) dtos.DashboardFullWithMeta {
 	t.Helper()
 
@@ -962,26 +1098,30 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
 
 	if dashboardService == nil {
-		dashboardService = service.ProvideDashboardServiceImpl(
+		dashboardService, err = service.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
 			ac, folderSvc,
 		)
+		require.NoError(t, err)
 	}
 
+	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+		ac, folderSvc,
+	)
+	require.NoError(t, err)
+
 	hs := &HTTPServer{
-		Cfg:                   cfg,
-		LibraryPanelService:   &libraryPanelsService,
-		LibraryElementService: &libraryElementsService,
-		SQLStore:              sc.sqlStore,
-		ProvisioningService:   provisioningService,
-		AccessControl:         accesscontrolmock.New(),
-		dashboardProvisioningService: service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
-			ac, folderSvc,
-		),
-		DashboardService: dashboardService,
-		Features:         featuremgmt.WithFeatures(),
-		Kinds:            corekind.NewBase(nil),
+		Cfg:                          cfg,
+		LibraryPanelService:          &libraryPanelsService,
+		LibraryElementService:        &libraryElementsService,
+		SQLStore:                     sc.sqlStore,
+		ProvisioningService:          provisioningService,
+		AccessControl:                accesscontrolmock.New(),
+		dashboardProvisioningService: dashboardProvisioningService,
+		DashboardService:             dashboardService,
+		Features:                     featuremgmt.WithFeatures(),
+		Kinds:                        corekind.NewBase(nil),
 	}
 
 	hs.callGetDashboard(sc)

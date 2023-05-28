@@ -160,7 +160,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ dataSourceName: 'loki' }));
+    const filtered = filterRules([ns], getFilter({ dataSourceNames: ['loki'] }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');

@@ -116,6 +116,8 @@ describe('InfluxDataSource', () => {
         } as FetchResponse);
       });
 
+      ctx.ds.retentionPolicies = [''];
+
       try {
         await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
@@ -197,6 +199,17 @@ describe('InfluxDataSource', () => {
       it('should not have q as a query parameter', () => {
         expect(requestQueryParameter).not.toHaveProperty('q');
       });
+    });
+  });
+
+  // Some functions are required by the parent datasource class to provide functionality
+  // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
+  describe('Datasource contract', () => {
+    it('has function called getTagKeys', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
+    });
+    it('has function called getTagValues', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
     });
   });
 

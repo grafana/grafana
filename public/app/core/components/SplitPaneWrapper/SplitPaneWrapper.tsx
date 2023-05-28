@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
       top: 50%;
       transition: 0.2s background ease-in-out;
       transform: translate(-50%, -50%);
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.default};
     }
 
     &:hover {

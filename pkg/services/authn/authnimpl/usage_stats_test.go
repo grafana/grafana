@@ -22,7 +22,7 @@ func TestService_getUsageStats(t *testing.T) {
 	svc.cfg.BasicAuthEnabled = true
 	svc.cfg.AuthProxyEnabled = true
 	svc.cfg.JWTAuthEnabled = true
-	svc.cfg.LDAPEnabled = true
+	svc.cfg.LDAPAuthEnabled = true
 	svc.cfg.EditorsCanAdmin = true
 	svc.cfg.ViewersCanEdit = true
 

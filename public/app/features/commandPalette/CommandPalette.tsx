@@ -156,7 +156,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
-      borderRadius: theme.shape.borderRadius(2),
+      borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,

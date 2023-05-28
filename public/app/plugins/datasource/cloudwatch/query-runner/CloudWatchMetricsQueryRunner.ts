@@ -117,12 +117,12 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<DataQueryResponse> {
     return this.awsRequest(this.dsQueryEndpoint, request).pipe(
       map((res) => {
-        const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
+        const dataframes: DataFrame[] = toDataQueryResponse(res).data;
         if (!dataframes || dataframes.length <= 0) {
           return { data: [] };
         }
 
-        const lastError = findLast(res.results, (v) => !!v.error);
+        const lastError = findLast(res.data.results, (v) => !!v.error);
 
         dataframes.forEach((frame) => {
           frame.fields.forEach((field) => {

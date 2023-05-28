@@ -40,7 +40,7 @@ title: Grafana documentation
         </div>
         <h5>Grafana Cloud</h5>
     </a>
-    <a href="https://grafana.com/grafana/download" class="nav-cards__item nav-cards__item--install">
+    <a href="https://grafana.com/grafana/nightly?edition=oss" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-moon-o">
         </div>
         <h5>Nightly builds</h5>
@@ -70,6 +70,7 @@ title: Grafana documentation
         <h4>Provisioning</h4>
         <p>Learn how to automate your Grafana configuration.</p>
     </a>
+
     <a href="{{< relref "whatsnew/whats-new-in-v10-0/" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>What's new in v10</h4>
         <p>Explore the features and enhancements in the latest release.</p>

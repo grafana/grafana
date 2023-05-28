@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
-import * as React from 'react';
+import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -106,7 +106,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export type TracePageHeaderEmbedProps = {
+export type TracePageHeaderProps = {
   trace: Trace | null;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
@@ -156,7 +156,7 @@ export const HEADER_ITEMS = [
   },
 ];
 
-export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
+export default function TracePageHeader(props: TracePageHeaderProps) {
   const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
 
   const styles = useStyles2(getStyles);

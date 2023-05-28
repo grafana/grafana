@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -76,6 +77,9 @@ export const Editor = (props: Props): JSX.Element => {
   const { datasource } = props;
   const { measurement, policy } = query;
 
+  const policyData = useAsync(() => getAllPolicies(datasource), [datasource]);
+  const retentionPolicies = !!policyData.error ? [] : policyData.value ?? [];
+
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
       (tag) => `${tag}::tag`
@@ -143,7 +147,7 @@ export const Editor = (props: Props): JSX.Element => {
     <div>
       <SegmentSection label="FROM" fill={true}>
         <FromSection
-          policy={policy}
+          policy={policy ?? retentionPolicies[0]}
           measurement={measurement}
           getPolicyOptions={() => getAllPolicies(datasource)}
           getMeasurementOptions={(filter) =>

@@ -46,6 +46,8 @@ export interface MenuItemProps<T = any> {
   customSubMenuContainerStyles?: CSSProperties;
   /** Shortcut key combination */
   shortcut?: string;
+  /** Test id for e2e tests and fullstory*/
+  testId?: string;
 }
 
 /** @internal */
@@ -68,6 +70,7 @@ export const MenuItem = React.memo(
       tabIndex = -1,
       customSubMenuContainerStyles,
       shortcut,
+      testId,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -150,6 +153,7 @@ export const MenuItem = React.memo(
         role={url === undefined ? role : undefined}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
+        data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         tabIndex={tabIndex}

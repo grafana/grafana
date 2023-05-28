@@ -1,6 +1,7 @@
 package historian
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -77,6 +78,18 @@ func TestLokiConfig(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("captures external labels", func(t *testing.T) {
+		set := setting.UnifiedAlertingStateHistorySettings{
+			LokiRemoteURL:  "http://url.com",
+			ExternalLabels: map[string]string{"a": "b"},
+		}
+
+		res, err := NewLokiConfig(set)
+
+		require.NoError(t, err)
+		require.Contains(t, res.ExternalLabels, "a")
+	})
 }
 
 func TestLokiHTTPClient(t *testing.T) {
@@ -104,6 +117,28 @@ func TestLokiHTTPClient(t *testing.T) {
 		exp := fmt.Sprintf(`{"streams": [{"stream": {}, "values": [["%d", "some line"]]}]}`, now.UnixNano())
 		require.JSONEq(t, exp, sent)
 	})
+
+	t.Run("range query", func(t *testing.T) {
+		t.Run("passes along page size", func(t *testing.T) {
+			req := NewFakeRequester().WithResponse(&http.Response{
+				Status:        "200 OK",
+				StatusCode:    200,
+				Body:          io.NopCloser(bytes.NewBufferString(`{}`)),
+				ContentLength: int64(0),
+				Header:        make(http.Header, 0),
+			})
+			client := createTestLokiClient(req)
+			now := time.Now().UTC().UnixNano()
+			q := `{from="state-history"}`
+
+			_, err := client.rangeQuery(context.Background(), q, now-100, now)
+
+			require.NoError(t, err)
+			params := req.lastRequest.URL.Query()
+			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
+			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
+		})
+	})
 }
 
 // This function can be used for local testing, just remove the skip call.
@@ -117,6 +152,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
+			Encoder:      JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
@@ -144,50 +180,24 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
+			Encoder:           JsonEncoder{},
 		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.
 		// client.cfg.TenantID = "<your_tenant_id>"
 
-		// Create an array of selectors that should be used for the
-		// query.
-		selectors := []Selector{
-			{Label: "probe", Op: Eq, Value: "Paris"},
-		}
+		logQL := `{probe="Paris"}`
 
 		// Define the query time range
 		start := time.Now().Add(-30 * time.Minute).UnixNano()
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.rangeQuery(context.Background(), selectors, start, end)
+		res, err := client.rangeQuery(context.Background(), logQL, start, end)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})
-}
-
-func TestSelectorString(t *testing.T) {
-	selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
-	expected := "{name=\"Bob\",age=~\"30\"}"
-	result := selectorString(selectors)
-	require.Equal(t, expected, result)
-
-	selectors = []Selector{}
-	expected = "{}"
-	result = selectorString(selectors)
-	require.Equal(t, expected, result)
-}
-
-func TestNewSelector(t *testing.T) {
-	selector, err := NewSelector("label", "=", "value")
-	require.NoError(t, err)
-	require.Equal(t, "label", selector.Label)
-	require.Equal(t, Eq, selector.Op)
-	require.Equal(t, "value", selector.Value)
-
-	selector, err = NewSelector("label", "invalid", "value")
-	require.Error(t, err)
 }
 
 func TestRow(t *testing.T) {
@@ -259,6 +269,7 @@ func createTestLokiClient(req client.Requester) *httpLokiClient {
 	cfg := LokiConfig{
 		WritePathURL: url,
 		ReadPathURL:  url,
+		Encoder:      JsonEncoder{},
 	}
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 	return newLokiClient(cfg, req, met, log.NewNopLogger())

@@ -10,7 +10,7 @@ interface Props {
 const SearchField = ({ label, tooltip, children }: Props) => {
   return (
     <InlineFieldRow>
-      <InlineField label={label} labelWidth={16} grow tooltip={tooltip}>
+      <InlineField label={label} labelWidth={28} grow tooltip={tooltip}>
         {children}
       </InlineField>
     </InlineFieldRow>

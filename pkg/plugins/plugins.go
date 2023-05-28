@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"path"
 	"runtime"
@@ -20,7 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ErrFileNotExist = errors.New("file does not exist")
+var (
+	ErrFileNotExist              = errors.New("file does not exist")
+	ErrPluginFileRead            = errors.New("file could not be read")
+	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
+	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+)
 
 type Plugin struct {
 	JSONData
@@ -44,6 +50,8 @@ type Plugin struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
+
+	AngularDetected bool
 
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
@@ -74,6 +82,8 @@ type PluginDTO struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
+
+	AngularDetected bool
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -90,25 +100,6 @@ func (p PluginDTO) IsApp() bool {
 
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
-}
-
-func (p PluginDTO) File(name string) (fs.File, error) {
-	cleanPath, err := util.CleanRelativePath(name)
-	if err != nil {
-		// CleanRelativePath should clean and make the path relative so this is not expected to fail
-		return nil, err
-	}
-
-	if p.fs == nil {
-		return nil, ErrFileNotExist
-	}
-
-	f, err := p.fs.Open(cleanPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
 }
 
 // JSONData represents the plugin's plugin.json
@@ -152,6 +143,44 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+}
+
+func ReadPluginJSON(reader io.Reader) (JSONData, error) {
+	plugin := JSONData{}
+	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+		return JSONData{}, err
+	}
+
+	if err := validatePluginJSON(plugin); err != nil {
+		return JSONData{}, err
+	}
+
+	if plugin.ID == "grafana-piechart-panel" {
+		plugin.Name = "Pie Chart (old)"
+	}
+
+	if len(plugin.Dependencies.Plugins) == 0 {
+		plugin.Dependencies.Plugins = []Dependency{}
+	}
+
+	if plugin.Dependencies.GrafanaVersion == "" {
+		plugin.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range plugin.Includes {
+		if include.Role == "" {
+			include.Role = org.RoleViewer
+		}
+	}
+
+	return plugin, nil
+}
+
+func validatePluginJSON(data JSONData) error {
+	if data.ID == "" || !data.Type.IsValid() {
+		return ErrInvalidPluginJSON
+	}
+	return nil
 }
 
 func (d JSONData) DashboardIncludes() []*Includes {
@@ -322,6 +351,25 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+func (p *Plugin) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
+	}
+
+	if p.FS == nil {
+		return nil, ErrFileNotExist
+	}
+
+	f, err := p.FS.Open(cleanPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
 	p.client = c
 }
@@ -380,6 +428,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
+		AngularDetected:   p.AngularDetected,
 	}
 }
 
@@ -426,6 +475,10 @@ const (
 	Bundled  Class = "bundled"
 	External Class = "external"
 )
+
+func (c Class) String() string {
+	return string(c)
+}
 
 var PluginTypes = []Type{
 	DataSource,

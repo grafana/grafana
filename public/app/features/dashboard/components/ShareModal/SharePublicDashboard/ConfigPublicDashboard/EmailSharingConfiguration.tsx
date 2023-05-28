@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { reportInteraction } from '@grafana/runtime/src';
 import {
   Button,
   ButtonGroup,
@@ -53,17 +55,19 @@ const EmailList = ({
   const isLoading = isDeleteLoading || isReshareLoading;
 
   const onDeleteEmail = (recipientUid: string) => {
+    reportInteraction('grafana_dashboards_public_delete_sharing_email_clicked');
     deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
+    reportInteraction('grafana_dashboards_public_reshare_email_clicked');
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
   return (
     <table className={styles.table} data-testid={selectors.EmailSharingList}>
       <tbody>
-        {recipients!.map((recipient) => (
+        {recipients!.map((recipient, idx) => (
           <tr key={recipient.uid}>
             <td>{recipient.recipient}</td>
             <td>
@@ -77,6 +81,7 @@ const EmailList = ({
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onDeleteEmail(recipient.uid)}
+                  data-testid={`${selectors.DeleteEmail}-${idx}`}
                 >
                   Revoke
                 </Button>
@@ -89,6 +94,7 @@ const EmailList = ({
                   size="sm"
                   disabled={isLoading}
                   onClick={() => onReshare(recipient.uid)}
+                  data-testid={`${selectors.ReshareLink}-${idx}`}
                 >
                   Resend
                 </Button>
@@ -102,6 +108,7 @@ const EmailList = ({
 };
 
 export const EmailSharingConfiguration = () => {
+  const { width } = useWindowSize();
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
@@ -139,6 +146,8 @@ export const EmailSharingConfiguration = () => {
   };
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
+    //TODO: add if it's domain or not when developed.
+    reportInteraction('grafana_dashboards_public_add_share_email_clicked');
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
@@ -154,8 +163,12 @@ export const EmailSharingConfiguration = () => {
             return (
               <RadioButtonGroup
                 {...rest}
+                size={width < 480 ? 'sm' : 'md'}
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
+                  reportInteraction('grafana_dashboards_public_share_type_clicked', {
+                    type: shareType,
+                  });
                   setValue('shareType', shareType);
                   onShareTypeChange(shareType);
                 }}

@@ -11,7 +11,7 @@ By default, the Stat panel displays one of the following:
 
 The Text mode can be used to control whether the text is displayed or not.
 
-The Stat panel is a replacement for the Singlestat panel, which was deprecated in Grafana v7.0 and removed in Grafana v8.4. Learn more about the now removed Singlestat panel [here](https://grafana.com/docs/grafana/v8.4/visualizations/stat-panel/).
+The Stat panel is a replacement for the Singlestat panel, which was deprecated in Grafana v7.0 and removed in Grafana v8.4.
 
 Read more about Stat panel on the docs page:
 

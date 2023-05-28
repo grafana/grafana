@@ -21,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -52,10 +51,11 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
-			SecureDSProxy:   false,
+			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:         cfg.SqlDatasourceMaxConnLifetimeDefault,
+			SecureDSProxy:           false,
+			AllowCleartextPasswords: false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -85,7 +85,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		}
 
 		// register the secure socks proxy dialer context, if enabled
-		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
 			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
 			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
 			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, uniqueIdentifier)
@@ -101,6 +101,10 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			characterEscape(dsInfo.URL, ")"),
 			characterEscape(dsInfo.Database, "?"),
 		)
+
+		if dsInfo.JsonData.AllowCleartextPasswords {
+			cnnstr += "&allowCleartextPasswords=true"
+		}
 
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
@@ -143,8 +147,8 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 	}
 }
 
-func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +158,7 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 
 // CheckHealth pings the connected SQL database
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +176,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}

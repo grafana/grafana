@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import React, { ReactNode, useState } from 'react';
 
-import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
+import { Field, FieldType, LinkModel } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
 
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
@@ -102,7 +102,7 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
             field: {
               name: '',
               type: FieldType.string,
-              values: new ArrayVector([value]),
+              values: [value],
               config: {
                 links: [{ title: '', url: field.url }],
               },

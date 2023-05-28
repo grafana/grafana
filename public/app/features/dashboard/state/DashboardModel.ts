@@ -16,7 +16,7 @@ import {
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
-import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
@@ -41,7 +41,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { GridPos, PanelModel } from './PanelModel';
+import { GridPos, PanelModel, autoMigrateAngular } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -68,6 +68,7 @@ export interface DashboardLink {
 }
 
 export class DashboardModel implements TimeModel {
+  /** @deprecated use UID */
   id: any;
   // TODO: use propert type and fix all the places where uid is set to null
   uid: any;
@@ -100,6 +101,7 @@ export class DashboardModel implements TimeModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
+  private timeRangeUpdatedDuringEdit = false;
 
   // ------------------
   // not persisted
@@ -108,6 +110,7 @@ export class DashboardModel implements TimeModel {
   // repeat process cycles
   declare meta: DashboardMeta;
   events: EventBusExtended;
+  private getVariablesFromState: GetVariables;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -124,9 +127,21 @@ export class DashboardModel implements TimeModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
+    timeRangeUpdatedDuringEdit: true,
   };
 
-  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
+  constructor(
+    data: Dashboard,
+    meta?: DashboardMeta,
+    options?: {
+      // By default this uses variables from redux state
+      getVariablesFromState?: GetVariables;
+
+      // Force the loader to migrate panels
+      autoMigrateOldPanels?: boolean;
+    }
+  ) {
+    this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
@@ -153,7 +168,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
-    this.ensurePanelsHaveIds();
+    this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -161,6 +176,17 @@ export class DashboardModel implements TimeModel {
 
     this.initMeta(meta);
     this.updateSchema(data);
+
+    // Auto-migrate old angular panels
+    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
+      this.panels.forEach((p) => {
+        const newType = autoMigrateAngular[p.type];
+        if (!p.autoMigrateFrom && newType) {
+          p.autoMigrateFrom = p.type;
+          p.type = newType;
+        }
+      });
+    }
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
@@ -269,6 +295,7 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
+    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
       .filter(
         (panel) =>
@@ -354,6 +381,10 @@ export class DashboardModel implements TimeModel {
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
+
+    if (this.panelInEdit) {
+      this.timeRangeUpdatedDuringEdit = true;
+    }
   }
 
   startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
@@ -392,9 +423,26 @@ export class DashboardModel implements TimeModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
-    getTimeSrv().pauseAutoRefresh();
+    getTimeSrv().stopAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
+    this.timeRangeUpdatedDuringEdit = false;
     return this.panelInEdit;
+  }
+
+  exitPanelEditor() {
+    this.panelInEdit!.destroy();
+    this.panelInEdit = undefined;
+
+    getTimeSrv().resumeAutoRefresh();
+
+    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
+      this.startRefresh({
+        panelIds: this.panelsAffectedByVariableChange ?? [],
+        refreshAll: this.timeRangeUpdatedDuringEdit,
+      });
+      this.panelsAffectedByVariableChange = null;
+      this.timeRangeUpdatedDuringEdit = false;
+    }
   }
 
   initViewPanel(panel: PanelModel) {
@@ -408,13 +456,6 @@ export class DashboardModel implements TimeModel {
     this.refreshIfPanelsAffectedByVariableChange();
   }
 
-  exitPanelEditor() {
-    this.panelInEdit!.destroy();
-    this.panelInEdit = undefined;
-    getTimeSrv().resumeAutoRefresh();
-    this.refreshIfPanelsAffectedByVariableChange();
-  }
-
   private refreshIfPanelsAffectedByVariableChange() {
     if (!this.panelsAffectedByVariableChange) {
       return;
@@ -424,10 +465,14 @@ export class DashboardModel implements TimeModel {
     this.panelsAffectedByVariableChange = null;
   }
 
-  private ensurePanelsHaveIds() {
+  private ensurePanelsHaveUniqueIds() {
+    const ids = new Set<number>();
     let nextPanelId = this.getNextPanelId();
     for (const panel of this.panelIterator()) {
-      panel.id ??= nextPanelId++;
+      if (!panel.id || ids.has(panel.id)) {
+        panel.id = nextPanelId++;
+      }
+      ids.add(panel.id);
     }
   }
 
@@ -549,7 +594,7 @@ export class DashboardModel implements TimeModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotTruthy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables() || this.panelInView) {
       return;
     }
 

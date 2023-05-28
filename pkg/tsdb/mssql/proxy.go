@@ -6,7 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 
-	mssql "github.com/denisenkom/go-mssqldb"
+	mssql "github.com/grafana/go-mssqldb"
 	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"

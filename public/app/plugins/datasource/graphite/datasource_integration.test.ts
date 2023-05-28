@@ -116,12 +116,12 @@ function mockBackendSrv(data: string) {
       redirected: false,
       type: 'basic',
       url: 'http://localhost:3000/api/some-mock',
-      headers: {
+      headers: new Headers({
         method: 'GET',
         url: '/functions',
         // to work around Graphite returning invalid JSON
         responseType: 'text',
-      },
+      }),
     };
     return of(mockedResponse);
   });

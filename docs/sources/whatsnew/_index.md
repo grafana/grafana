@@ -58,13 +58,16 @@ cascade:
     products:
       - cloud
       - oss
-title: What's new
+menuTitle: What's new
+title: What's new in Grafana
 weight: 1
+description: Learn about new and changed features in Grafana.
 ---
 
 # What's new in Grafana
 
 For release highlights, deprecations, and breaking changes in Grafana releases, refer to these "What's new" pages for each version.
+
 
 For major releases, breaking changes are documented separately in the corresponding ["Breaking changes"]({{< relref "../breaking-changes/" >}}) page.
 
@@ -78,26 +81,18 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 9
 
-- [What's new in 9.4]({{< relref "whats-new-in-v9-4/" >}})
-- [What's new in 9.3]({{< relref "whats-new-in-v9-3/" >}})
-- [What's new in 9.2]({{< relref "whats-new-in-v9-2/" >}})
-- [What's new in 9.1]({{< relref "whats-new-in-v9-1/" >}})
-- [What's new in 9.0]({{< relref "whats-new-in-v9-0/" >}})
+- [What's new in 9.5]({{< relref "./whats-new-in-v9-5" >}})
+- [What's new in 9.4]({{< relref "./whats-new-in-v9-4" >}})
+- [What's new in 9.3]({{< relref "./whats-new-in-v9-3" >}})
+- [What's new in 9.2]({{< relref "./whats-new-in-v9-2" >}})
+- [What's new in 9.1]({{< relref "./whats-new-in-v9-1" >}})
+- [What's new in 9.0]({{< relref "./whats-new-in-v9-0" >}})
 
 ## Grafana 8
 
-- [What's new in 8.5]({{< relref "whats-new-in-v8-5/" >}})
-- [What's new in 8.4]({{< relref "whats-new-in-v8-4/" >}})
-- [What's new in 8.3]({{< relref "whats-new-in-v8-3/" >}})
-- [What's new in 8.2]({{< relref "whats-new-in-v8-2/" >}})
-- [What's new in 8.1]({{< relref "whats-new-in-v8-1/" >}})
-- [What's new in 8.0]({{< relref "whats-new-in-v8-0/" >}})
-
-## Grafana 7
-
-- [What's new in 7.5]({{< relref "whats-new-in-v7-5/" >}})
-- [What's new in 7.4]({{< relref "whats-new-in-v7-4/" >}})
-- [What's new in 7.3]({{< relref "whats-new-in-v7-3/" >}})
-- [What's new in 7.2]({{< relref "whats-new-in-v7-2/" >}})
-- [What's new in 7.1]({{< relref "whats-new-in-v7-1/" >}})
-- [What's new in 7.0]({{< relref "whats-new-in-v7-0/" >}})
+- [What's new in 8.5]({{< relref "./whats-new-in-v8-5" >}})
+- [What's new in 8.4]({{< relref "./whats-new-in-v8-4" >}})
+- [What's new in 8.3]({{< relref "./whats-new-in-v8-3" >}})
+- [What's new in 8.2]({{< relref "./whats-new-in-v8-2" >}})
+- [What's new in 8.1]({{< relref "./whats-new-in-v8-1" >}})
+- [What's new in 8.0]({{< relref "./whats-new-in-v8-0" >}})

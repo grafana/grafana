@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -38,7 +39,7 @@ func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
 		db := dbtest.NewFakeDB()
-		store := alerting.ProvideAlertStore(db, localcache.ProvideService(), &setting.Cfg{}, nil)
+		store := alerting.ProvideAlertStore(db, localcache.ProvideService(), &setting.Cfg{}, nil, featuremgmt.WithFeatures())
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
 		ctx.result = &alerting.EvalContext{

@@ -8,21 +8,25 @@ import (
 	"github.com/grafana/kindsys"
 )
 
-// LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version,
-func LatestMajorsOrXJenny(parentdir string, inner codejen.OneToOne[SchemaForGen]) OneToMany {
+// LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version.
+//
+// TODO remove forceGroup option, it's a temporary hack to accommodate core kinds
+func LatestMajorsOrXJenny(parentdir string, forceGroup bool, inner codejen.OneToOne[SchemaForGen]) OneToMany {
 	if inner == nil {
 		panic("inner jenny must not be nil")
 	}
 
 	return &lmox{
-		parentdir: parentdir,
-		inner:     inner,
+		parentdir:  parentdir,
+		inner:      inner,
+		forceGroup: forceGroup,
 	}
 }
 
 type lmox struct {
-	parentdir string
-	inner     codejen.OneToOne[SchemaForGen]
+	parentdir  string
+	inner      codejen.OneToOne[SchemaForGen]
+	forceGroup bool
 }
 
 func (j *lmox) JennyName() string {
@@ -34,6 +38,10 @@ func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
 	sfg := SchemaForGen{
 		Name:    comm.Name,
 		IsGroup: comm.LineageIsGroup,
+	}
+
+	if j.forceGroup {
+		sfg.IsGroup = true
 	}
 
 	do := func(sfg SchemaForGen, infix string) (codejen.Files, error) {

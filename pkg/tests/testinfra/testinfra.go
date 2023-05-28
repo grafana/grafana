@@ -53,6 +53,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
+	require.NotNil(t, env.SQLStore.Cfg)
+	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
+	require.NoError(t, err)
+	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
+
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(); err != nil {
@@ -209,6 +214,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
+	require.NoError(t, err)
+
+	analyticsSect, err := cfg.NewSection("analytics")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {

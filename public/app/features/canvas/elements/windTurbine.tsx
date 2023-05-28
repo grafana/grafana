@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
@@ -63,7 +64,7 @@ const WindTurbineDisplay = ({ data }: CanvasElementProps<WindTurbineConfig, Wind
   );
 };
 
-export const windTurbineItem: CanvasElementItem<any, any> = {
+export const windTurbineItem: CanvasElementItem = {
   id: 'windTurbine',
   name: 'Wind Turbine',
   description: 'Spinny spinny',

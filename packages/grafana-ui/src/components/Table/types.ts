@@ -2,7 +2,7 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { TableStyles } from './styles';
@@ -77,7 +77,6 @@ export interface Props {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
-  showRowNums?: boolean;
   initialSortBy?: TableSortByFieldState[];
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
@@ -88,4 +87,6 @@ export interface Props {
   cellHeight?: TableCellHeight;
   /** @alpha */
   subData?: DataFrame[];
+  /** @alpha Used by SparklineCell when provided */
+  timeRange?: TimeRange;
 }

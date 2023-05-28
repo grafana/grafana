@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
@@ -14,10 +13,8 @@ export function UserInvitePage() {
     </>
   );
 
-  const navId = config.featureToggles.topnav ? 'global-users' : 'users';
-
   return (
-    <Page navId={navId} pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
+    <Page navId="global-users" pageNav={{ text: 'Invite user' }} subTitle={subTitle}>
       <Page.Contents>
         <UserInviteForm />
       </Page.Contents>

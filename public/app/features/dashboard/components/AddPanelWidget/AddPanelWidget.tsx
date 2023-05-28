@@ -77,6 +77,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
       title: 'Panel Title',
       datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+      isNew: true,
     };
 
     dashboard.addPanel(newPanel);
@@ -217,7 +218,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
       )}
       {!onBack && (
         <div className={styles.backButton}>
-          <Icon name="panel-add" size="md" />
+          <Icon name="panel-add" size="xl" />
         </div>
       )}
       {children && <span>{children}</span>}

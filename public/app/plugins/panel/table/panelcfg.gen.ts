@@ -12,7 +12,7 @@ import * as ui from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions {
+export interface Options {
   /**
    * Controls the height of the rows
    */
@@ -30,10 +30,6 @@ export interface PanelOptions {
    */
   showHeader: boolean;
   /**
-   * Controls whether the columns should be numbered
-   */
-  showRowNums?: boolean;
-  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -43,7 +39,7 @@ export interface PanelOptions {
   sortBy?: Array<ui.TableSortByFieldState>;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
   footer: {
     /**
@@ -61,7 +57,6 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   },
   frameIndex: 0,
   showHeader: true,
-  showRowNums: false,
   showTypeIcons: false,
   sortBy: [],
 };

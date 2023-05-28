@@ -10,7 +10,7 @@ const expanderContainerStyles = css`
   height: 100%;
 `;
 
-export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, void> & { __rowID: string }) {
+export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, void>) {
   return (
     <div className={expanderContainerStyles}>
       <IconButton

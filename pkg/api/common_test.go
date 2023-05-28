@@ -296,7 +296,6 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	if hs.Cfg == nil {
 		hs.Cfg = setting.NewCfg()
-		hs.Cfg.RBACEnabled = false
 	}
 
 	if hs.AccessControl == nil {
@@ -320,9 +319,8 @@ type setUpConf struct {
 
 type mockSearchService struct{ ExpectedResult model.HitList }
 
-func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
-	q.Result = mss.ExpectedResult
-	return nil
+func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) (model.HitList, error) {
+	return mss.ExpectedResult, nil
 }
 func (mss *mockSearchService) SortOptions() []model.SortOption { return nil }
 

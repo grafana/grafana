@@ -31,16 +31,17 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 	q := models.GetLatestAlertmanagerConfigurationQuery{
 		OrgID: orgID,
 	}
-	if err := store.GetLatestAlertmanagerConfiguration(ctx, &q); err != nil {
+	alertManagerConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, &q)
+	if err != nil {
 		return nil, err
 	}
 
-	if q.Result == nil {
+	if alertManagerConfig == nil {
 		return nil, fmt.Errorf("no alertmanager configuration present in this org")
 	}
 
-	concurrencyToken := q.Result.ConfigurationHash
-	cfg, err := deserializeAlertmanagerConfig([]byte(q.Result.AlertmanagerConfiguration))
+	concurrencyToken := alertManagerConfig.ConfigurationHash
+	cfg, err := deserializeAlertmanagerConfig([]byte(alertManagerConfig.AlertmanagerConfiguration))
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +49,6 @@ func getLastConfiguration(ctx context.Context, orgID int64, store AMConfigStore)
 	return &cfgRevision{
 		cfg:              cfg,
 		concurrencyToken: concurrencyToken,
-		version:          q.Result.ConfigurationVersion,
+		version:          alertManagerConfig.ConfigurationVersion,
 	}, nil
 }

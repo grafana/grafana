@@ -88,6 +88,13 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     timeRange,
   };
 
+  // we use a Set to deduplicate the traceIds
+  const traceIdSet = new Set([...(state.panelData.traceIds ?? []), ...(packet.traceIds ?? [])]);
+
+  if (traceIdSet.size > 0) {
+    panelData.traceIds = Array.from(traceIdSet);
+  }
+
   return { packets, panelData };
 }
 

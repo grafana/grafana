@@ -179,7 +179,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(getFrameDisplayName(result.data[0])).toBe(
             data.results.A.series?.length && data.results.A.series[0].target
           );
-          expect(result.data[0].fields[1].values.buffer[0]).toBe(
+          expect(result.data[0].fields[1].values[0]).toBe(
             data.results.A.series?.length && data.results.A.series[0].datapoints[0][0]
           );
         });
@@ -333,7 +333,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         expect(getFrameDisplayName(result.data[0])).toBe(
           data.results.A.series?.length && data.results.A.series[0].target
         );
-        expect(result.data[0].fields[1].values.buffer[0]).toBe(
+        expect(result.data[0].fields[1].values[0]).toBe(
           data.results.A.series?.length && data.results.A.series[0].datapoints[0][0]
         );
       });
@@ -513,8 +513,8 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
-              var2: { selected: true, value: 'var2-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
+              var2: { value: 'var2-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {
@@ -579,7 +579,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           runner.handleMetricQueries(queries, {
             ...request,
             scopedVars: {
-              var1: { selected: true, value: 'var1-foo', text: '' },
+              var1: { value: 'var1-foo', text: '' },
             },
           })
         ).toEmitValuesWith(() => {

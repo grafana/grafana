@@ -5,7 +5,15 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv, FetchResponse } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Correlation, CreateCorrelationParams, RemoveCorrelationParams, UpdateCorrelationParams } from './types';
+import {
+  Correlation,
+  CreateCorrelationParams,
+  CreateCorrelationResponse,
+  RemoveCorrelationParams,
+  RemoveCorrelationResponse,
+  UpdateCorrelationParams,
+  UpdateCorrelationResponse,
+} from './types';
 
 export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'targetUID'> {
   source: DataSourceInstanceSettings;
@@ -44,20 +52,25 @@ export const useCorrelations = () => {
 
   const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
     ({ sourceUID, ...correlation }) =>
-      backend.post(`/api/datasources/uid/${sourceUID}/correlations`, correlation).then(toEnrichedCorrelationData),
+      backend
+        .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
+        .then((response) => {
+          return toEnrichedCorrelationData(response.result);
+        }),
     [backend]
   );
 
   const [removeInfo, remove] = useAsyncFn<(params: RemoveCorrelationParams) => Promise<{ message: string }>>(
-    ({ sourceUID, uid }) => backend.delete(`/api/datasources/uid/${sourceUID}/correlations/${uid}`),
+    ({ sourceUID, uid }) =>
+      backend.delete<RemoveCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations/${uid}`),
     [backend]
   );
 
   const [updateInfo, update] = useAsyncFn<(params: UpdateCorrelationParams) => Promise<CorrelationData>>(
     ({ sourceUID, uid, ...correlation }) =>
       backend
-        .patch(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
-        .then(toEnrichedCorrelationData),
+        .patch<UpdateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
+        .then((response) => toEnrichedCorrelationData(response.result)),
     [backend]
   );
 

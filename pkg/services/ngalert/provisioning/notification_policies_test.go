@@ -29,22 +29,16 @@ func TestNotificationPolicyService(t *testing.T) {
 	t.Run("error if referenced mute time interval is not existing", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		sut.amStore = &MockAMConfigStore{}
+		cfg := createTestAlertingConfig()
+		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
+			{
+				Name:          "not-the-one-we-need",
+				TimeIntervals: []timeinterval.TimeInterval{},
+			},
+		}
+		data, _ := serializeAlertmanagerConfig(*cfg)
 		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(
-				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-					cfg := createTestAlertingConfig()
-					cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
-						{
-							Name:          "not-the-one-we-need",
-							TimeIntervals: []timeinterval.TimeInterval{},
-						},
-					}
-					data, _ := serializeAlertmanagerConfig(*cfg)
-					query.Result = &models.AlertConfiguration{
-						AlertmanagerConfiguration: string(data),
-					}
-					return nil
-				})
+			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
 		sut.amStore.(*MockAMConfigStore).EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
@@ -61,22 +55,16 @@ func TestNotificationPolicyService(t *testing.T) {
 	t.Run("pass if referenced mute time interval is existing", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		sut.amStore = &MockAMConfigStore{}
+		cfg := createTestAlertingConfig()
+		cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
+			{
+				Name:          "existing",
+				TimeIntervals: []timeinterval.TimeInterval{},
+			},
+		}
+		data, _ := serializeAlertmanagerConfig(*cfg)
 		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(
-				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-					cfg := createTestAlertingConfig()
-					cfg.AlertmanagerConfig.MuteTimeIntervals = []config.MuteTimeInterval{
-						{
-							Name:          "existing",
-							TimeIntervals: []timeinterval.TimeInterval{},
-						},
-					}
-					data, _ := serializeAlertmanagerConfig(*cfg)
-					query.Result = &models.AlertConfiguration{
-						AlertmanagerConfiguration: string(data),
-					}
-					return nil
-				})
+			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
 		sut.amStore.(*MockAMConfigStore).EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
@@ -118,16 +106,10 @@ func TestNotificationPolicyService(t *testing.T) {
 	t.Run("existing receiver reference will pass", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		sut.amStore = &MockAMConfigStore{}
+		cfg := createTestAlertingConfig()
+		data, _ := serializeAlertmanagerConfig(*cfg)
 		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(
-				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-					cfg := createTestAlertingConfig()
-					data, _ := serializeAlertmanagerConfig(*cfg)
-					query.Result = &models.AlertConfiguration{
-						AlertmanagerConfiguration: string(data),
-					}
-					return nil
-				})
+			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
 		sut.amStore.(*MockAMConfigStore).EXPECT().
 			UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
 			Return(nil)
@@ -167,9 +149,9 @@ func TestNotificationPolicyService(t *testing.T) {
 		q := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
 		}
-		err := sut.GetAMConfigStore().GetLatestAlertmanagerConfiguration(context.Background(), &q)
+		config, err := sut.GetAMConfigStore().GetLatestAlertmanagerConfiguration(context.Background(), &q)
 		require.NoError(t, err)
-		expectedConcurrencyToken := q.Result.ConfigurationHash
+		expectedConcurrencyToken := config.ConfigurationHash
 
 		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
 		require.NoError(t, err)
@@ -205,27 +187,21 @@ func TestNotificationPolicyService(t *testing.T) {
 	t.Run("deleting route with missing default receiver restores receiver", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		sut.amStore = &MockAMConfigStore{}
+		cfg := createTestAlertingConfig()
+		cfg.AlertmanagerConfig.Route = &definitions.Route{
+			Receiver: "a new receiver",
+		}
+		cfg.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
+			{
+				Receiver: config.Receiver{
+					Name: "a new receiver",
+				},
+			},
+			// No default receiver! Only our custom one.
+		}
+		data, _ := serializeAlertmanagerConfig(*cfg)
 		sut.amStore.(*MockAMConfigStore).On("GetLatestAlertmanagerConfiguration", mock.Anything, mock.Anything).
-			Return(
-				func(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-					cfg := createTestAlertingConfig()
-					cfg.AlertmanagerConfig.Route = &definitions.Route{
-						Receiver: "a new receiver",
-					}
-					cfg.AlertmanagerConfig.Receivers = []*definitions.PostableApiReceiver{
-						{
-							Receiver: config.Receiver{
-								Name: "a new receiver",
-							},
-						},
-						// No default receiver! Only our custom one.
-					}
-					data, _ := serializeAlertmanagerConfig(*cfg)
-					query.Result = &models.AlertConfiguration{
-						AlertmanagerConfiguration: string(data),
-					}
-					return nil
-				})
+			Return(&models.AlertConfiguration{AlertmanagerConfiguration: string(data)}, nil)
 		var interceptedSave = models.SaveAlertmanagerConfigurationCmd{}
 		sut.amStore.(*MockAMConfigStore).EXPECT().SaveSucceedsIntercept(&interceptedSave)
 

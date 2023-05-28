@@ -14,6 +14,7 @@ export const DashboardStoryCanvas = ({ children }: Props) => {
     height: 100%;
     padding: 32px;
     background: ${theme.colors.background.canvas};
+    overflow: auto;
   `;
 
   return <div className={style}>{children}</div>;

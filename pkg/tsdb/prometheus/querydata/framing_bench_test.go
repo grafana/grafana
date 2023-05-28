@@ -41,15 +41,17 @@ func BenchmarkExemplarJson(b *testing.B) {
 	tCtx, err := setup(true)
 	require.NoError(b, err)
 	b.ResetTimer()
-	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
 			Body:       io.NopCloser(bytes.NewReader(responseBytes)),
 		}
 		tCtx.httpProvider.setResponse(&res)
-		_, err := tCtx.queryData.Execute(context.Background(), query)
+		resp, err := tCtx.queryData.Execute(context.Background(), query)
 		require.NoError(b, err)
+		for _, r := range resp.Responses {
+			require.NoError(b, r.Error)
+		}
 	}
 }
 

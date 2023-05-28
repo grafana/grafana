@@ -69,43 +69,58 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const Field = ({
-  label,
-  description,
-  horizontal,
-  invalid,
-  loading,
-  disabled,
-  required,
-  error,
-  children,
-  className,
-  validationMessageHorizontalOverflow,
-  htmlFor,
-  ...otherProps
-}: FieldProps) => {
-  const theme = useTheme2();
-  const styles = getFieldStyles(theme);
-  const inputId = htmlFor ?? getChildId(children);
+export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
+  (
+    {
+      label,
+      description,
+      horizontal,
+      invalid,
+      loading,
+      disabled,
+      required,
+      error,
+      children,
+      className,
+      validationMessageHorizontalOverflow,
+      htmlFor,
+      ...otherProps
+    }: FieldProps,
+    ref
+  ) => {
+    const theme = useTheme2();
+    const styles = getFieldStyles(theme);
+    const inputId = htmlFor ?? getChildId(children);
 
-  const labelElement =
-    typeof label === 'string' ? (
-      <Label htmlFor={inputId} description={description}>
-        {`${label}${required ? ' *' : ''}`}
-      </Label>
-    ) : (
-      label
-    );
+    const labelElement =
+      typeof label === 'string' ? (
+        <Label htmlFor={inputId} description={description}>
+          {`${label}${required ? ' *' : ''}`}
+        </Label>
+      ) : (
+        label
+      );
 
-  const childProps = deleteUndefinedProps({ invalid, disabled, loading });
-  return (
-    <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
-      {labelElement}
-      <div>
-        {React.cloneElement(children, childProps)}
-        {invalid && error && !horizontal && (
+    const childProps = deleteUndefinedProps({ invalid, disabled, loading });
+    return (
+      <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
+        {labelElement}
+        <div>
+          <div ref={ref}>{React.cloneElement(children, childProps)}</div>
+          {invalid && error && !horizontal && (
+            <div
+              className={cx(styles.fieldValidationWrapper, {
+                [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+              })}
+            >
+              <FieldValidationMessage>{error}</FieldValidationMessage>
+            </div>
+          )}
+        </div>
+
+        {invalid && error && horizontal && (
           <div
-            className={cx(styles.fieldValidationWrapper, {
+            className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal, {
               [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
             })}
           >
@@ -113,19 +128,11 @@ export const Field = ({
           </div>
         )}
       </div>
+    );
+  }
+);
 
-      {invalid && error && horizontal && (
-        <div
-          className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal, {
-            [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
-          })}
-        >
-          <FieldValidationMessage>{error}</FieldValidationMessage>
-        </div>
-      )}
-    </div>
-  );
-};
+Field.displayName = 'Field';
 
 function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
   for (const key in obj) {

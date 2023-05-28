@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { Spinner, HorizontalGroup } from '@grafana/ui';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 
 import {
   historySrv,

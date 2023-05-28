@@ -20,6 +20,11 @@ import (
 //
 // Will return auth keys.
 //
+// Deprecated: true.
+//
+// Deprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead
+// see https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+//
 // Responses:
 // 200: getAPIkeyResponse
 // 401: unauthorisedError
@@ -29,13 +34,14 @@ import (
 func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 	query := apikey.GetApiKeysQuery{OrgID: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
-	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
+	keys, err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to list api keys", err)
 	}
 
 	ids := map[string]bool{}
-	result := make([]*dtos.ApiKeyDTO, len(query.Result))
-	for i, t := range query.Result {
+	result := make([]*dtos.ApiKeyDTO, len(keys))
+	for i, t := range keys {
 		ids[strconv.FormatInt(t.ID, 10)] = true
 		var expiration *time.Time = nil
 		if t.Expires != nil {
@@ -65,6 +71,10 @@ func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 //
 // Delete API key.
 //
+// Deletes an API key.
+// Deprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
+//
+// Deprecated: true
 // Responses:
 // 200: okResponse
 // 401: unauthorisedError
@@ -97,6 +107,11 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // Creates an API key.
 //
 // Will return details of the created API key.
+//
+// Deprecated: true
+// Deprecated. Please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens
+//
+// see: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.
 //
 // Responses:
 // 200: postAPIkeyResponse
@@ -134,7 +149,8 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	}
 
 	cmd.Key = newKeyInfo.HashedKey
-	if err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd); err != nil {
+	key, err := hs.apiKeyService.AddAPIKey(c.Req.Context(), &cmd)
+	if err != nil {
 		if errors.Is(err, apikey.ErrInvalidExpiration) {
 			return response.Error(400, err.Error(), nil)
 		}
@@ -145,8 +161,8 @@ func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   cmd.Result.ID,
-		Name: cmd.Result.Name,
+		ID:   key.ID,
+		Name: key.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
 

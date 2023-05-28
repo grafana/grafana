@@ -71,11 +71,12 @@ export function executeAnnotationQuery(
 
   return runRequest(datasource, queryRequest).pipe(
     mergeMap((panelData) => {
-      if (!panelData.series) {
+      // Some annotations set the topic already
+      const data = panelData?.series.length ? panelData.series : panelData.annotations;
+      if (!data?.length) {
         return of({ panelData, events: [] });
       }
-
-      return processor.processEvents!(annotation, panelData.series).pipe(map((events) => ({ panelData, events })));
+      return processor.processEvents!(annotation, data).pipe(map((events) => ({ panelData, events })));
     })
   );
 }

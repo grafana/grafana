@@ -79,7 +79,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'space-between',
       cursor: 'pointer',
       position: 'relative',
-      borderRadius: theme.shape.borderRadius(2),
+      borderRadius: theme.shape.radius.default,
       margin: theme.spacing(0, 1),
     }),
     activeRow: css({
@@ -93,7 +93,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
         top: 0,
         bottom: 0,
         width: theme.spacing(0.5),
-        borderRadius: theme.shape.borderRadius(2),
+        borderRadius: theme.shape.radius.default,
         backgroundImage: theme.colors.gradients.brandVertical,
       },
     }),

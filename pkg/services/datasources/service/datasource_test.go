@@ -707,6 +707,78 @@ func TestService_GetDecryptedValues(t *testing.T) {
 	})
 }
 
+func TestDataSource_CustomHeaders(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
+
+	dsService.cfg = setting.NewCfg()
+
+	testValue := "HeaderValue1"
+
+	encryptedValue, err := secretsService.Encrypt(context.Background(), []byte(testValue), secrets.WithoutScope())
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name             string
+		jsonData         *simplejson.Json
+		secureJsonData   map[string][]byte
+		expectedHeaders  map[string]string
+		expectedErrorMsg string
+	}{
+		{
+			name: "valid custom headers",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"httpHeaderName1": "X-Test-Header1",
+			}),
+			secureJsonData: map[string][]byte{
+				"httpHeaderValue1": encryptedValue,
+			},
+			expectedHeaders: map[string]string{
+				"X-Test-Header1": testValue,
+			},
+		},
+		{
+			name: "missing header value",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"httpHeaderName1": "X-Test-Header1",
+			}),
+			secureJsonData:  map[string][]byte{},
+			expectedHeaders: map[string]string{},
+		},
+		{
+			name: "non customer header value",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"someotherheader": "X-Test-Header1",
+			}),
+			secureJsonData:  map[string][]byte{},
+			expectedHeaders: map[string]string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ds := &datasources.DataSource{
+				JsonData:       tc.jsonData,
+				SecureJsonData: tc.secureJsonData,
+			}
+
+			headers, err := dsService.CustomHeaders(context.Background(), ds)
+
+			if tc.expectedErrorMsg != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErrorMsg)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedHeaders, headers)
+			}
+		})
+	}
+}
+
 const caCert string = `-----BEGIN CERTIFICATE-----
 MIIDATCCAemgAwIBAgIJAMQ5hC3CPDTeMA0GCSqGSIb3DQEBCwUAMBcxFTATBgNV
 BAMMDGNhLWs4cy1zdGhsbTAeFw0xNjEwMjcwODQyMjdaFw00NDAzMTQwODQyMjda

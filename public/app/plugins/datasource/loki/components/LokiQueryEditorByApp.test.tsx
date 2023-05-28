@@ -21,6 +21,7 @@ function setup(app: CoreApp): RenderResult {
     getQueryHints: () => [],
     getDataSamples: () => [],
     maxLines: 20,
+    getTimeRange: jest.fn(),
   } as unknown as LokiDatasource;
 
   return render(

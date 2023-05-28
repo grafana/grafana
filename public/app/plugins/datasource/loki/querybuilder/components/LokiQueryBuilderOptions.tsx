@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { usePrevious } from 'react-use';
+import React, { useState } from 'react';
 
 import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
@@ -19,13 +18,12 @@ export interface Props {
   maxLines: number;
   app?: CoreApp;
   datasource: LokiDatasource;
+  queryStats: QueryStats | null;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
-    const [queryStats, setQueryStats] = useState<QueryStats>();
-    const [chunkRangeValid, setChunkRangeValid] = useState(true);
-    const prevQuery = usePrevious(query);
+  ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats }) => {
+    const [splitDurationValid, setsplitDurationValid] = useState(true);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -44,11 +42,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
       const value = evt.currentTarget.value;
       if (!isValidDuration(value)) {
-        setChunkRangeValid(false);
+        setsplitDurationValid(false);
         return;
       }
-      setChunkRangeValid(true);
-      onChange({ ...query, chunkDuration: value });
+      setsplitDurationValid(true);
+      onChange({ ...query, splitDuration: value });
       onRunQuery();
     };
 
@@ -64,25 +62,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         onRunQuery();
       }
     }
-
-    useEffect(() => {
-      if (query.expr === prevQuery?.expr) {
-        return;
-      }
-
-      if (!query.expr) {
-        setQueryStats(undefined);
-        return;
-      }
-
-      const makeAsyncRequest = async () => {
-        const res = await datasource.getQueryStats(query);
-
-        // this filters out the case where the user has not configured loki to use tsdb, in that case all keys in the query stats will be 0
-        Object.values(res).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(res);
-      };
-      makeAsyncRequest();
-    }, [query, prevQuery, datasource]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     let showMaxLines = isLogsQuery(query.expr);
@@ -122,7 +101,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               />
             </EditorField>
           )}
-          <EditorField label="Resolution">
+          <EditorField
+            label="Resolution"
+            tooltip="Sets the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
+          >
             <Select
               isSearchable={false}
               onChange={onResolutionChange}
@@ -131,18 +113,18 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               aria-label="Select resolution"
             />
           </EditorField>
-          {config.featureToggles.lokiQuerySplitting && (
+          {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
             <EditorField
-              label="Chunk Duration"
-              tooltip="Defines the duration of a single query chunk when query chunking is used."
+              label="Split Duration"
+              tooltip="Defines the duration of a single query when query splitting is enabled."
             >
               <AutoSizeInput
                 minWidth={14}
                 type="string"
                 min={0}
-                defaultValue={query.chunkDuration ?? '1d'}
+                defaultValue={query.splitDuration ?? '1d'}
                 onCommitChange={onChunkRangeChange}
-                invalid={!chunkRangeValid}
+                invalid={!splitDurationValid}
               />
             </EditorField>
           )}
