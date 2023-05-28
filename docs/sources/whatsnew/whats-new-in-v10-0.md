@@ -45,7 +45,7 @@ _Available in Experimental in all editions of Grafana._
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
-To try it out, please check [@grafana/scenes](https://github.com/grafana/scenes).
+To try it out, please check out [@grafana/scenes](https://github.com/grafana/scenes).
 
 <!--
 - TODO: Add link to docs and resources
@@ -118,7 +118,7 @@ _Available in Experimental in all editions of Grafana_
 
 <!-- Oscar Kilhed -->
 
-it's easier than ever to view local data in Grafana - welcome drag & drop!
+It's easier than ever to view local data in Grafana - welcome drag & drop!
 The drag & drop functionality allows you to upload your csv, excel or numbers files by simply dragging and dropping them into the query editor of the Grafana data source.
 
 Drag & drop feature is disabled by default. In order to use drag and drop, enable the `editPanelCSVDragAndDrop` feature toggle.
@@ -278,7 +278,7 @@ Note that if you are running Grafana with MySQL as a database, this change does 
 
 <!-- Timur Olzhabayev -->
 
-_Available in preview in all editions of Grafana._
+_Available in public preview in Grafana Cloud Free, Cloud Pro, and Cloud Advanced._
 
 You can now work much more efficiently with traces that consist of a large number of spans.
 
@@ -322,7 +322,7 @@ This will reduce network load, and speed up now-relative dashboards, especially 
 
 <!-- Andrej Ocenus -->
 
-As a part of ongoing unification of Phlare and Pyroscope project we are renaming the Phlare data source to Grafana Pyroscope data source. This data source will support both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When creating new instance of the data source, backend type will be autodetected on the config page, or you can select it manually.
+We are renaming the Phlare data source to the Grafana Pyroscope data source as part of the ongoing unification of the Phlare and Pyroscope projects. This data source will support both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When creating a new instance of the data source, the backend type will be autodetected on the config page, or you can select it manually.
 
 ### Data plane
 

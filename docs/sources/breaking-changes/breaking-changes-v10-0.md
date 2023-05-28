@@ -59,7 +59,7 @@ Angular will be disabled by default for all new Grafana Cloud stacks. Existing s
 
 If you are using Angular plugins in Grafana, try an alternative panel or data source that does not use Angular. Here is a list of detected [Angular plugins](({{< relref "../developers/angular_deprecation/angular-plugins/" >}})), and their alternatives where they exist.
 
-If you are a developer maintaining a plugin that uses Angular, we recommend you refactor or rewrite its frontend using React.js instead. The team at Grafana is ready to help and provide tools and guidance; you can reach us here.
+If you are a developer maintaining a plugin that uses Angular, we recommend you refactor or rewrite its frontend using React.js instead. The team at Grafana is ready to help and provide tools and guidance; you can reach us in [Slack](https://grafana.slack.com/archives/C3HJV5PNE) or our [Forum](https://community.grafana.com/c/plugin-development/30).
 
 #### Learn more
 
@@ -73,7 +73,7 @@ You use Grafana legacy alerting and have requested new features or changes to it
 
 #### Description
 
-Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana 9.0, in favor of the new, improved Grafana Alerting. In Grafana 10, the legacy alerting codebase which depends on Angular will still be available, but we will no longer contribute to it or accept external contributions for it. We will continue to work on the migration path from legacy alerting to Grafana Alerting for our remaining users that are still to migrate.
+Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana 9.0, in favor of the new, improved Grafana Alerting. In Grafana 10, the legacy alerting codebase which depends on Angular will still be available, but we will no longer contribute to it or accept external contributions for it. We will continue to work on the migration path from legacy alerting to Grafana Alerting for our remaining users that need to migrate.
 
 #### Migration path:
 
