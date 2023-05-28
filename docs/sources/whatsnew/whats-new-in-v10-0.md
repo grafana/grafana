@@ -16,8 +16,6 @@ Welcome to Grafana 10.0! Read on to learn about changes to search and navigation
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes, refer to the ["Breaking changes"]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}) page for this release version.
 
-<!-- to do fix links above-->
-
 <!-- Template below
 ## Feature
 <!-- Name of contributor -->
@@ -51,10 +49,6 @@ Scenes is a new front-end library by Grafana that empowers application engineers
 
 To learn more and try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
 
-<!--
-- TODO: Add link to docs and resources
--->
-
 ## Subfolders
 
 <!-- Zsofia K. -->
@@ -72,8 +66,6 @@ To get started creating subfolders, enable the `nestedFolders` feature toggle. I
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Subfolders in Grafana" >}}
-
-<!--TO DO crop this image-->
 
 ## Dashboards and visualizations
 
@@ -119,8 +111,6 @@ Currently, the Datagrid Panel supports the following features in Grafana version
 To learn more about the Datagrid panel, refer to the official documentation.
 
 In subsequent releases, we’ll continue adding features to the Datagrid panel to further improve the user experience.
-
-<!-- TO DO add link to docs if ready -->
 
 ### Drag and drop spreadsheets into Grafana
 

@@ -12,9 +12,7 @@ weight: 2
 
 # Breaking changes in Grafana
 
-# Upgrade Grafana
-
-In some cases, major releases that introduce many new features, also introduce breaking changes. These changes are described, along with information about what to do, in the breaking changes pages specific to each release.
+In some cases, major releases that introduce many new features also introduce breaking changes. These changes are described, along with information about what to do, in the breaking changes pages specific to each release.
 
 For our purposes, a breaking change is any change that requires users or operators to do something. This includes:
 

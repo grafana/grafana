@@ -41,9 +41,9 @@ For release highlights and deprecations, refer to our [v10.0 What’s new]({{< r
 
 ### Angular is deprecated and turned off by default for new Grafana Cloud stacks
 
-#### You are affected if
+#### You are affected if...
 
-You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the list of Angular plugins [here]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}).
+You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../../developers/angular_deprecation/angular-plugins/" >}}).
 
 #### Background
 
@@ -51,7 +51,7 @@ AngularJS is an old frontend framework that stopped active development many year
 
 Angular plugin support in Grafana is deprecated, meaning it will be removed in a future release. There are still some community and private plugins built using Angular. Starting with v9.0, Grafana has a server configuration option called [angular_support_enabled]({{< relref "../setup-grafana/configure-grafana/#angular_support_enabled" >}}), that controls whether Angular plugin support is available.
 
-#### Change in Grafana v10
+#### Change in Grafana v10.0
 
 Angular will be disabled by default for all new Grafana Cloud stacks. Existing stacks in Grafana Cloud, Grafana Enterprise on-premise instances, and Grafana OSS instances will not be automatically impacted.
 
@@ -67,7 +67,7 @@ If you are a developer maintaining a plugin that uses Angular, we recommend you 
 
 ### Grafana legacy alerting is deprecated and no longer accepts internal or external contributions
 
-#### You are affected if
+#### You are affected if...
 
 You use Grafana legacy alerting and have requested new features or changes to it.
 

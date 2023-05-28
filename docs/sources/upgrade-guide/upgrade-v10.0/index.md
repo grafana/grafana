@@ -20,15 +20,17 @@ weight: 1700
 
 <!-- Vardan Torosyan -->
 
-Role-based access control (RBAC) is now always enabled in Grafana 10 and we've removed the option to disable it, no action needs to be taken.
+Role-based access control (RBAC) is now always enabled and we've removed the option to disable it.
 
-However, if you decide to **downgrade** for any reason and **disable RBAC**, you will need to run through the following guide before upgrading again.
+No action is required.
+
+However, if you decide to **downgrade** for any reason and **disable RBAC**, you'll need to run through the following guide before upgrading again.
 
 The aforementioned sequence of actions (upgrade, downgrade, disable RBAC, upgrade again) causes legacy access control and role-based access control systems to be out of sync.
 As a side effect, permissions for some Grafana resources, like dashboards, might be lost.
-To prevent that from happening, before you upgrading Grafana back again, please follow the following steps:
+To prevent that from happening, before you upgrade Grafana back again, please take the following steps:
 
-1. Stop Grafana
+1. Stop Grafana.
 2. In your database, run the following SQL queries:
 
 ```sql
@@ -78,11 +80,15 @@ WHERE migration_id IN ('teams permissions migration',
 
 <!-- Vardan Torosyan -->
 
-Usernames and email addresses are now treated as case-insensitive in Grafana. If you are not using MySQL as a database, potential user identity conflicts may arise when users try to log in.
-It is recommended to resolve any potential conflicts in advance by using the [Grafana CLI tool for managing user conflicts](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/).
+Usernames and email addresses are now treated as case-insensitive in Grafana. If you're not using MySQL as a database, potential user identity conflicts may arise when users try to log in.
+We recommend you resolve any potential conflicts in advance by using the [Grafana CLI tool for managing user conflicts](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/).
 
 ### Dashboard previews removal
 
 <!-- Artur Wierzbicki -->
 
-We have removed the Dashboard previews feature introduced behind a feature flag in Grafana v9. No action is required - the `dashboardPreviews` feature flag is no longer available and can be safely removed from the Grafana server configuration.
+We've removed the Dashboard previews feature introduced behind a feature flag in Grafana version 9.0.
+
+No action is required.
+
+The `dashboardPreviews` feature flag is no longer available and can be safely removed from the Grafana server configuration.
