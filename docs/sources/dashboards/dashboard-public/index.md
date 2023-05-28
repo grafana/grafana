@@ -74,8 +74,7 @@ The link no longer works. You must create a new public URL as in [Make a dashboa
 
 This feature is experimental in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). The feature will have a cost by active users after being promoted into general availability.
 
-Please contact support to have the feature enabled. 
-
+Please contact support to have the feature enabled.
 
 {{% /admonition %}}
 
