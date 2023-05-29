@@ -644,9 +644,7 @@ export interface OnTimeRangeUpdatedDependencies {
 const dfs = (node: Node, visited: string[], variables: VariableModel[], variablesRefreshTimeRange: VariableModel[]) => {
   if (!visited.includes(node.name)) {
     visited.push(node.name);
-    console.log('visited node', node.name);
   }
-  console.log('outputEdges of node', node.name, node.outputEdges.length, node.outputEdges);
   node.outputEdges.forEach((e) => {
     const child = e.outputNode;
     if (child && !visited.includes(child.name)) {
@@ -664,8 +662,6 @@ const dfs = (node: Node, visited: string[], variables: VariableModel[], variable
       }
     }
   });
-
-  console.log(variablesRefreshTimeRange);
   return variablesRefreshTimeRange;
 };
 
@@ -684,7 +680,7 @@ const dfs = (node: Node, visited: string[], variables: VariableModel[], variable
  *       Here, we should traverse the tree using DFS (Depth First Search), as the dependent nodes will be updated in cascade when the parent variable is updated.
  */
 
-const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): VariableWithOptions[] => {
+export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): VariableWithOptions[] => {
   const allVariables = getVariablesByKey(key, state);
 
   //create dependency graph
@@ -762,8 +758,6 @@ export const onTimeRangeUpdated =
       variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
     }
 
-    console.log('variables that need refresh', variablesThatNeedRefresh);
-
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable) =>
       dispatch(timeRangeUpdated(toKeyedVariableIdentifier(variable)))
@@ -778,7 +772,7 @@ export const onTimeRangeUpdated =
     }
   };
 
-const timeRangeUpdated =
+export const timeRangeUpdated =
   (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const variableInState = getVariable(identifier, getState());
