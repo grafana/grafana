@@ -140,24 +140,14 @@ func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 		},
 	}
 
-	failures := 0
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := store.WithDbSession(context.Background(), func(sess *DBSession) error {
 				return tc.f(t, sess)
 			})
-
-			if err == nil {
-				return
-			}
-
-			failures++
+			require.Error(t, err)
 			assert.True(t, store.Dialect.IsUniqueConstraintViolation(err))
 		})
-
-		if failures == 0 {
-			t.Log("no failures detected")
-		}
 	}
 }
 
