@@ -42,7 +42,7 @@ You must use relative references when linking to docs within the Grafana repo. P
 
 #### You are affected if:
 
-You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../../developers/angular_deprecation/angular-plugins/" >}}).
+You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}).
 
 #### Background
 
@@ -62,7 +62,7 @@ If you're a developer maintaining a plugin that uses Angular, we recommend you r
 
 #### Learn more
 
-[Angular Support Deprecation documentation]({{< relref "../developers/angular_deprecation/" >}})
+- [Angular Support Deprecation documentation]({{< relref "../developers/angular_deprecation/" >}})
 
 ### Grafana legacy alerting is deprecated and no longer accepts internal or external contributions
 
@@ -76,7 +76,7 @@ Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.
 
 #### Migration path
 
-The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Migrating Alerts documentation]({{< relref "../alerting/migrating-alerts/" >}}).
+The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/migrating-alerts/" >}}).
 
 ### API keys are migrating to service accounts
 
@@ -86,7 +86,7 @@ You use Grafana API keys and haven't yet migrated to service accounts
 
 #### Description
 
-In Grafana v8.5, we introduced [Service accounts](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/), which are a superset of API keys that support token rotation and Role-based access control (RBAC). They were promoted to general availability (GA) in v9.1, with an option to manually migrate API keys to service accounts through the UI and API since then. **When you upgrade to Grafana v10, Grafana will automatically migrate all API keys to service accounts and hide the API keys screen that was under the Admin section.**
+In Grafana v8.5, we introduced [service accounts](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/), which are a superset of API keys that support token rotation and role-based access control (RBAC). They were promoted to general availability (GA) in v9.1, with an option to manually migrate API keys to service accounts through the UI and API since then. **When you upgrade to Grafana v10, Grafana will automatically migrate all API keys to service accounts and hide the API keys screen that was under the Admin section.**
 
 This is a "breaking" change because if users are used to seeing and interacting with API keys, they won't see that page in navigation anymore and will need to navigate to the **Service accounts** page instead. However, your existing API tokens will remain fully functional and migrated to service accounts, so no automation will break. If you roll back to a previous version of Grafana, your API keys will remain intact.
 
@@ -118,7 +118,7 @@ The entire feature has been removed from Grafana. For users who enabled the `das
 
 #### Learn more
 
-- [Documentation]({{< relref "../search/dashboard-previews/" >}})
+- [Previous dashboard previews documentation](https://grafana.com/docs/grafana/v9.5/search/dashboard-previews/)
 
 ### RBAC is on by default in Grafana Enterprise and cannot be disabled
 
@@ -306,4 +306,4 @@ npx @grafana/create-plugin@latest migrate
 
 #### Learn more
 
-- [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/).
+- [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/)

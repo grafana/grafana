@@ -14,7 +14,7 @@ weight: -37
 
 Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes in this release, refer to ["Breaking changes"]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes in this release, refer to [Breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
 
 <!-- Template below
 ## Feature
@@ -80,7 +80,7 @@ _Generally available in all editions of Grafana._
 
 <!-- Nathan Marrs -->
 
-We're promoting the canvas panel out of beta and into general availability. Over the past several months we've introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We're excited to include Canvas as a first class citizen in Grafana’s core panel library. To learn more about the panel, refer to our [Canvas documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}). Also, check out our [latest blog post about canvas](https://grafana.com/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
+We're promoting the canvas panel out of beta and into general availability. Over the past several months we've introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We're excited to include Canvas as a first class citizen in Grafana’s core panel library. To learn more about the panel, refer to our [Canvas documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}). Also, check out our [latest blog post about canvas](/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
@@ -113,7 +113,7 @@ Currently, the Datagrid Panel supports the following features in Grafana version
 - Draggable columns and rows
 - Series selection when pulling data from a data source
 
-To learn more, refer to the [Datagrid documentation]({{< relref "../../../panels-visualizations/visualizations/datagrid/" >}}).
+To learn more, refer to the [Datagrid documentation]({{< relref "../panels-visualizations/visualizations/datagrid/" >}}).
 
 In subsequent releases, we’ll continue adding features to the Datagrid panel to further improve the user experience.
 
@@ -136,8 +136,6 @@ As of Grafana version 10.0, drag and drop supports the following scenarios:
 
 The data from dragged and dropped files is stored in the dashboard JSON and file size is limited to 1MB. To learn more about drag and drop functionality, refer to the official documentation.
 
-<!-- TODO: Add docs link above -->
-
 ### Select data sources more easily
 
 <!-- Ivan Ortega & Natalia Bernarte -->
@@ -158,7 +156,7 @@ _Generally available in all editions of Grafana._
 
 We've implemented support for adding time regions to the Time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday to Friday to display work weeks, right alongside your data. Time regions are also a useful way to highlight specific parts of a day like night, work hours, or whatever you want to define for each day. They allow you to quickly orient yourself in parts of the day or ignore highlighted parts of the time series.
 
-To learn more, refer to our [time region documentation]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#add-time-region" >}}).
+To learn more, refer to our [time region documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-time-region" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
@@ -170,7 +168,7 @@ _Generally available in all editions of Grafana._
 
 You can now filter dashboard annotations to apply annotations to all panels or selected panels, or use them to exclude selected panels.
 
-To learn more, refer to our [annotation filtering documentation]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#filter-by-panel" >}}).
+To learn more, refer to our [annotation filtering documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#filter-by-panel" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
@@ -220,7 +218,7 @@ With this update, we've made the following improvements:
 
 To try it out, enable the `publicDashboards` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
 
-To learn more, refer to our [public dashboards documentation]({{< relref "../../dashboards/dashboard-public" >}}).
+To learn more, refer to our [public dashboards documentation]({{< relref "../dashboards/dashboard-public" >}}).
 
 ### Public dashboards insights
 
@@ -250,7 +248,7 @@ This feature will have a cost by active users after being promoted into general 
 
 {{% /admonition %}}
 
-To learn more, check out our [public dashboards documentation]({{< relref "../../dashboards/dashboard-public" >}}).
+To learn more, refer to our [public dashboards documentation]({{< relref "../dashboards/dashboard-public" >}}).
 
 ## Authentication and authorization
 
@@ -352,8 +350,8 @@ Data types are now being defined to create a data plane layer between producers 
 
 Learn more:
 
-- [Data Plane Contract - Technical Specification](https://grafana.github.io/dataplane/contract/)
-- [Example Typed Dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
+- [Data plane contract - Technical specification](https://grafana.github.io/dataplane/contract/)
+- [Example typed dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
 - [Go library for reading and writing dataplane data](https://github.com/grafana/dataplane/tree/main/sdata)
 
 ## Alerting
@@ -406,7 +404,7 @@ Some data sources, like MySQL databases, Prometheus instances or Elasticsearch c
 
 To query these data sources from Grafana Cloud, you've had to open your private network to a range of IP addresses, a non-starter for many IT Security teams. The challenge is, how do you connect to your private data from Grafana Cloud, without exposing your network?
 
-The answer is Private Data Source Connect (PDC), available now in public preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [Private data source connect documentation](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/).
+The answer is Private Data Source Connect (PDC), available now in public preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [Private data source connect documentation](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect).
 
 ## Deprecations
 
