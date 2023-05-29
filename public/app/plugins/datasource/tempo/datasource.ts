@@ -222,9 +222,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
+            streaming: appliedQuery.streaming,
           });
 
-          if (targets.traceql[0].streaming) {
+          if (appliedQuery.streaming) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql));
           } else {
             subQueries.push(
@@ -258,24 +259,30 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           app: options.app ?? '',
           grafana_version: config.buildInfo.version,
           query: queryValue ?? '',
+          streaming: targets.traceqlSearch[0].streaming,
         });
-        subQueries.push(
-          this._request('/api/search', {
-            q: queryValue,
-            limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-            start: options.range.from.unix(),
-            end: options.range.to.unix(),
-          }).pipe(
-            map((response) => {
-              return {
-                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-              };
-            }),
-            catchError((error) => {
-              return of({ error: { message: error.data.message }, data: [] });
-            })
-          )
-        );
+
+        if (targets.traceqlSearch[0].streaming) {
+          subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch));
+        } else {
+          subQueries.push(
+            this._request('/api/search', {
+              q: queryValue,
+              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+              start: options.range.from.unix(),
+              end: options.range.to.unix(),
+            }).pipe(
+              map((response) => {
+                return {
+                  data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                };
+              }),
+              catchError((error) => {
+                return of({ error: { message: error.data.message }, data: [] });
+              })
+            )
+          );
+        }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
