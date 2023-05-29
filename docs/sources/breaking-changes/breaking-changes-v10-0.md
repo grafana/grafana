@@ -100,7 +100,7 @@ While upgrading to Grafana v10, you don't need to take any action; your API keys
 
 - [Documentation on migrating from API keys to service accounts]({{< relref "../administration/api-keys/" >}})
 
-- [Blog post announcement with a video demo including how to migrate](/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/)
+- [Blog post announcement with a video demo including how to migrate](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/)
 
 ### The experimental "dashboard previews" feature is removed
 
@@ -152,11 +152,11 @@ Grafana will start matching users without regard for case. Conflicting users wil
 
 #### Migration path
 
-We've built a [CLI tool](/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/) which users can use to resolve any potential conflicts beforehand. This breaking change was communicated already with Grafana v9.3.
+We've built a [CLI tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/) which users can use to resolve any potential conflicts beforehand. This breaking change was communicated already with Grafana v9.3.
 
 #### Learn more
 
-- [Blog post describing usage of the new CLI command](/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/)
+- [Blog post describing usage of the new CLI command](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/)
 
 ### The "Alias" field in the CloudWatch data source is removed
 

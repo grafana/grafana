@@ -81,7 +81,7 @@ WHERE migration_id IN ('teams permissions migration',
 <!-- Vardan Torosyan -->
 
 Usernames and email addresses are now treated as case-insensitive in Grafana. If you're not using MySQL as a database, potential user identity conflicts may arise when users try to log in.
-We recommend you resolve any potential conflicts in advance by using the [Grafana CLI tool for managing user conflicts](/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/).
+We recommend you resolve any potential conflicts in advance by using the [Grafana CLI tool for managing user conflicts](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/).
 
 ### Dashboard previews removal
 
