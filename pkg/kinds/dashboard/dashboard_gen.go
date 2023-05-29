@@ -35,6 +35,6 @@ func NewK8sResource(name string, s *Spec) K8sResource {
 // It currently will soon be merged into the k8s flavor (TODO be better)
 type Resource struct {
 	Metadata Metadata `json:"metadata"`
-	Spec     Spec     `json:"spec"`
-	Status   Status   `json:"status"`
+	Spec Spec `json:"spec"`
+	Status Status `json:"status"`
 }
