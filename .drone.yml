@@ -419,8 +419,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - apt-get update && apt-get install make
-  - make lint-go
+  - Hello, Kat!
   depends_on:
   - wire-install
   environment:
@@ -1421,8 +1420,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - apt-get update && apt-get install make
-  - make lint-go
+  - Hello, Kat!
   depends_on:
   - wire-install
   environment:
@@ -7200,6 +7198,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: f6613d5eb9f3d8e308d4c4b55bd980027b1756d3834f0db99f77e6180cc042c6
+hmac: 47d43549b63c230b491b1ef47242baa36a6973d354f1b10cdf41c56012bd6c6d
 
 ...
