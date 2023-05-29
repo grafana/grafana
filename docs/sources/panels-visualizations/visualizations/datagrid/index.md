@@ -54,7 +54,7 @@ Deleting a row or column will remove the data from the datagrid, while clearing 
 
 You can also access a header menu by clicking the dropdown icon next to the header title. From here, you can not only delete or clear a column, but also rename it, freeze it, or convert the field type of the column.
 
-{{< figure src="/media/docs/datagrid/screenshot-grafana-datagrid-header-menu-2.png" alt="Datagrid header menu" max-width="500px" >}}```
+{{< figure src="/media/docs/datagrid/screenshot-grafana-datagrid-header-menu-2.png" alt="Datagrid header menu" max-width="500px" >}}
 
 ## Selecting series
 
