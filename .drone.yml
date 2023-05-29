@@ -427,6 +427,14 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - echo Yer a programmer, Kat!
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.20.4
+  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -1429,6 +1437,14 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - echo Yer a programmer, Kat!
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.20.4
+  name: validate-modfile
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -7200,6 +7216,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d518288df51a41148e1fb302b80d598add4104f35588fd05e0fc6a135b45dda1
+hmac: 2827682118239047904cc9967a6d010d997331a0875114e5a65d95fc3ed2f52a
 
 ...

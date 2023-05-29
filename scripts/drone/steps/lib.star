@@ -364,6 +364,23 @@ def lint_backend_step():
         ],
     }
 
+def validate_modifle_step():
+    return {
+        "name": "validate-modfile",
+        # TODO: build_image or go_image?
+        "image": go_image,
+        "environment": {
+            # We need CGO because of go-sqlite3
+            "CGO_ENABLED": "1",
+        },
+        "depends_on": [
+            "wire-install",
+        ],
+        "commands": [
+            "echo Yer a programmer, Kat!"
+        ],
+    }
+
 def benchmark_ldap_step():
     return {
         "name": "benchmark-ldap",
