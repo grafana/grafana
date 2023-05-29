@@ -163,9 +163,9 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ## Build a Grafana Docker image with pre-installed plugins from other sources
 
-You can create a Docker image containing a plugin that is exclusive to your organization, even if it is not accessible to the public. Simply use the `GF_INSTALL_PLUGINS` build argument to specify the plugin's URL and installation folder name, such as `GF_INSTALL_PLUGINS=;`.
+You can create a Docker image containing a plugin that is exclusive to your organization, even if it is not accessible to the public. Simply use the `GF_INSTALL_PLUGINS` build argument to specify the plugin's URL and installation folder name, such as `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`
 
-The following example demonstrates creating a customized Grafana Docker image that includes the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable.
+The following example demonstrates creating a customized Grafana Docker image that includes a custom plugin from a URL link, the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable.
 
 ```bash
 #go to the folder
@@ -174,7 +174,7 @@ cd packaging/docker/custom
 #running the build command
 docker build
 --build-arg "GRAFANA_VERSION=latest"
---build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel, grafana-simple-json-datasource"
+--build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;my-custom-plugin,grafana-clock-panel,grafana-simple-json-datasource"
 -t grafana-custom .
 
 # running the docker run command
