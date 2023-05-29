@@ -48,13 +48,13 @@ To provide a more streamlined experience, the Datagrid panel has a context menu 
 
 Deleting a row or column will remove the data from the datagrid, while clearing a row or column will only remove the data from the cells, leaving the row or column intact.
 
-![Datagrid context menu](/media/docs/datagrid/screenshot-grafana-datagrid-context-menu-2.png)
+{{< figure src="/media/docs/datagrid/screenshot-grafana-datagrid-context-menu-2.png" alt="Datagrid context menu" max-width="400px" >}}
 
-### Header menu
+## Header menu
 
 You can also access a header menu by clicking the dropdown icon next to the header title. From here, you can not only delete or clear a column, but also rename it, freeze it, or convert the field type of the column.
 
-![Datagrid header menu](/media/docs/datagrid/screenshot-grafana-datagrid-header-menu-2.png)
+{{< figure src="/media/docs/datagrid/screenshot-grafana-datagrid-header-menu-2.png" alt="Datagrid header menu" max-width="500px" >}}```
 
 ## Selecting series
 
@@ -82,7 +82,7 @@ To add a new row, click a **+** button after the last row. The button is present
 
 You can edit data by taking the following steps:
 
-1. Double click on the cell that needs to be modified. This will activate the cell and allow you to edit the data.
+1. Double-click on the cell that needs to be modified. This will activate the cell and allow you to edit the data.
 1. After editing the data, click anywhere outside the cell or press the Enter key to finalize the edit.
 
 To easily clear a cell of data, you can click on a cell to focus it and then press the Delete key.
@@ -97,7 +97,7 @@ To move a column, take the following steps:
 1. Drag the column to the desired location.
 1. Release the mouse button to finalize the move.
 
-To move a row, click and hold on the row selector from the number column situated on the left side, and drag it to the desired location. Releasing the mouse button finalizes the move.
+To move a row, click and hold on the row selector from the number column situated on the far left side of the grid, and drag it to the desired location. Releasing the mouse button finalizes the move.
 
 ### Select multiple cells
 
@@ -107,9 +107,9 @@ You can select multiple cells by clicking on a single cell and dragging the mous
 
 To delete or clear multiple rows, take the following steps:
 
-1. Hover over the number column (to the left of the first column in the grid) to display its column checkbox.
+1. Hover over the number column (to the left of the first column in the grid) to display row checkbox.
 1. Select the checkboxes for the rows you want to work with.
-   To select multiple consecutive rows, you must hold the Shift key pressed while clicking on the first and last row. To select certain rows, the Ctrl (or Cmd) key must be pressed while clicking on the desired rows.
+   To select multiple consecutive rows, press and hold the Shift key while clicking on the first and last row. To select non-consecutive rows, press and hold the Ctrl (or Cmd) key while clicking the desired rows.
 1. Right-click to access the context menu.
 1. Select **Delete rows** or **Clear rows**.
 
