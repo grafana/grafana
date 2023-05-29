@@ -8,7 +8,7 @@ weight: 200
 
 # Run Grafana Docker image
 
-This topic guides you on how to install Grafana by utilizing the official Docker images. Specifically, it covers running Grafana via the Docker command line (CLI) and docker-compose.
+This topic guides you through installing Grafana via the official Docker images. Specifically, it covers running Grafana via the Docker command line interface (CLI) and docker-compose.
 
 Grafana Docker images come in two editions:
 
@@ -69,7 +69,7 @@ When you use Docker containers, their data is temporary by default. If you don't
 
 #### Use persistent storage (recommended)
 
-It is recommended to have persistent storage because without it, all data will be lost once the container is shut down. Use this method when you deploy in a production environment or when the data is critical and want the Docker service to fully manage the storage volume.
+It is recommended to have persistent storage because without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to fully manage the storage volume.
 
 To use persistent storage, complete the following steps:
 
@@ -107,7 +107,7 @@ docker run -d -p 3000:3000 --name=grafana
 grafana/grafana-enterprise
 ```
 
-### Use environment variables
+### Use environment variables to configure Grafana
 
 Grafana supports specifying custom configuration settings using [environment variables]({{< relref "../../../setup-grafana/configure-grafana#override-configuration-with-environment-variables" >}}).
 
