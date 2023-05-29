@@ -80,7 +80,7 @@ The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy
 
 ### API keys are migrating to service accounts
 
-#### You're affected if:
+#### You are affected if:
 
 You use Grafana API keys and haven't yet migrated to service accounts
 
@@ -104,7 +104,7 @@ While upgrading to Grafana v10, you don't need to take any action; your API keys
 
 ### The experimental "dashboard previews" feature is removed
 
-#### You're affected if:
+#### You are affected if:
 
 You have the `dashboardPreviews` feature toggle switched on.
 
@@ -122,7 +122,7 @@ The entire feature has been removed from Grafana. For users who enabled the `das
 
 ### RBAC is on by default in Grafana Enterprise and cannot be disabled
 
-#### You're affected if:
+#### You are affected if:
 
 You have actively disabled RBAC in Grafana's configuration.
 
@@ -272,7 +272,7 @@ Any code using Vectors will continue to work without issue. If you've implement
 
 ### grafana/toolkit CLI commands have been removed and migrated to the create-plugin package
 
-#### You're affected if:
+#### You are affected if:
 
 You develop plugins using @grafana/toolkit CLI commands.
 
