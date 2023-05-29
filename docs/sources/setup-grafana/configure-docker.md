@@ -270,7 +270,7 @@ To increase the log level to `DEBUG` mode, add the environment variable `GF_LOG_
 
 ```bash
 docker run -d -p 3000:3000 --name=grafana
--e "GF_LOG_LEVEL=DEBUG"
+-e "GF_LOG_LEVEL=debug"
 grafana/grafana-enterprise
 ```
 
