@@ -157,11 +157,8 @@ type AnnotationPanelFilter struct {
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
-	// TODO: Should be DataSourceRef
-	Datasource struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
-	} `json:"datasource"`
+	// Ref to a DataSource instance
+	Datasource DataSourceRef `json:"datasource"`
 
 	// When enabled the annotation query is issued with every dashboard refresh
 	Enable bool                   `json:"enable"`
@@ -210,24 +207,40 @@ type AnnotationTarget struct {
 // 2 for shared crosshair AND shared tooltip.
 type CursorSync int
 
-// FROM public/app/features/dashboard/state/Models.ts - ish
-// TODO docs
+// Links with references to other dashboards or external resources
 type Link struct {
-	AsDropdown  bool     `json:"asDropdown"`
-	Icon        string   `json:"icon"`
-	IncludeVars bool     `json:"includeVars"`
-	KeepTime    bool     `json:"keepTime"`
-	Tags        []string `json:"tags"`
-	TargetBlank bool     `json:"targetBlank"`
-	Title       string   `json:"title"`
-	Tooltip     string   `json:"tooltip"`
+	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+	AsDropdown bool `json:"asDropdown"`
 
-	// TODO docs
+	// Icon name to be displayed with the link
+	Icon string `json:"icon"`
+
+	// If true, includes current template variables values in the link as query params
+	IncludeVars bool `json:"includeVars"`
+
+	// If true, includes current time range in the link as query params
+	KeepTime bool `json:"keepTime"`
+
+	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+	Tags []string `json:"tags"`
+
+	// If true, the link will be opened in a new tab
+	TargetBlank bool `json:"targetBlank"`
+
+	// Title to display with the link
+	Title string `json:"title"`
+
+	// Tooltip to display when the user hovers their mouse over it
+	Tooltip string `json:"tooltip"`
+
+	// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 	Type LinkType `json:"type"`
-	Url  string   `json:"url"`
+
+	// Link URL. Only required/valid if the type is link
+	Url string `json:"url"`
 }
 
-// TODO docs
+// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 type LinkType string
 
 // Ref to a DataSource instance
@@ -353,7 +366,7 @@ type GridPos struct {
 	// H Panel
 	H int `json:"h"`
 
-	// Static true if fixed
+	// Whether the panel is fixed within the grid
 	Static *bool `json:"static,omitempty"`
 
 	// W Panel
@@ -383,7 +396,7 @@ type LibraryPanelRef struct {
 // LoadingState defines model for LoadingState.
 type LoadingState string
 
-// TODO docs
+// Supported value mapping types
 type MappingType string
 
 // MatcherConfig defines model for MatcherConfig.
@@ -410,8 +423,10 @@ type Panel struct {
 	// TODO docs
 	Id *int `json:"id,omitempty"`
 
-	// TODO docs
-	// TODO tighter constraint
+	// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
+	// This value must be formatted as a number followed by a valid time
+	// identifier like: "40s", "3d", etc.
+	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	Interval     *string          `json:"interval,omitempty"`
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
@@ -419,7 +434,7 @@ type Panel struct {
 	// TODO fill this out - seems there are a couple variants?
 	Links []Link `json:"links,omitempty"`
 
-	// TODO docs
+	// The maximum number of data points that the panel queries are retrieving.
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
 
 	// options is specified by the Options field in panel
@@ -449,15 +464,23 @@ type Panel struct {
 	// TODO docs - seems to be an old field from old dashboard alerts?
 	Thresholds []interface{} `json:"thresholds,omitempty"`
 
-	// TODO docs
-	// TODO tighter constraint
+	// Overrides the relative time range for individual panels,
+	// which causes them to be different than what is selected in
+	// the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different
+	// time periods or days on the same dashboard.
+	// The value is formatted as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far),
+	// `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
+	// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	TimeFrom *string `json:"timeFrom,omitempty"`
 
 	// TODO docs
 	TimeRegions []interface{} `json:"timeRegions,omitempty"`
 
-	// TODO docs
-	// TODO tighter constraint
+	// Overrides the time range for individual panels by shifting its start and end relative to the time picker.
+	// For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+	// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
@@ -476,13 +499,13 @@ type Panel struct {
 // TODO this is probably optional
 type PanelRepeatDirection string
 
-// TODO docs
+// Maps numeric ranges to a color or different display text
 type RangeMap struct {
 	Options struct {
 		// From to and from are `number | null` in current ts, really not sure what to do
 		From float64 `json:"from"`
 
-		// TODO docs
+		// Result used as replacement text and color for RegexMap and SpecialValueMap
 		Result ValueMappingResult `json:"result"`
 		To     float64            `json:"to"`
 	} `json:"options"`
@@ -492,12 +515,12 @@ type RangeMap struct {
 // RangeMapType defines model for RangeMap.Type.
 type RangeMapType string
 
-// TODO docs
+// Maps regular expressions to replacement text and a color
 type RegexMap struct {
 	Options struct {
 		Pattern string `json:"pattern"`
 
-		// TODO docs
+		// Result used as replacement text and color for RegexMap and SpecialValueMap
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
 	Type RegexMapType `json:"type"`
@@ -528,39 +551,43 @@ type RowPanel struct {
 // RowPanelType defines model for RowPanel.Type.
 type RowPanelType string
 
-// TODO docs
+// A dashboard snapshot shares an interactive dashboard publicly.
+// It is a read-only version of a dashboard, and is not editable.
+// It is possible to create a snapshot of a snapshot.
+// Grafana strips away all sensitive information from the dashboard.
+// Sensitive information stripped: queries (metric, template,annotation) and panel links.
 type Snapshot struct {
-	// TODO docs
+	// Time when the snapshot was created
 	Created time.Time `json:"created"`
 
-	// TODO docs
+	// Time when the snapshot expires, default is never to expire
 	Expires string `json:"expires"`
 
-	// TODO docs
+	// Is the snapshot saved in an external grafana instance
 	External bool `json:"external"`
 
-	// TODO docs
+	// ExternalUrl external url, if snapshot was shared in external grafana instance
 	ExternalUrl string `json:"externalUrl"`
 
-	// TODO docs
+	// Unique identifier of the snapshot
 	Id int `json:"id"`
 
-	// TODO docs
+	// Optional, defined the unique key of the snapshot, required if external is true
 	Key string `json:"key"`
 
-	// TODO docs
+	// Optional, name of the snapshot
 	Name string `json:"name"`
 
-	// TODO docs
+	// OrgId org id of the snapshot
 	OrgId int `json:"orgId"`
 
-	// TODO docs
+	// Updated last time when the snapshot was updated
 	Updated time.Time `json:"updated"`
 
-	// TODO docs
+	// url of the snapshot, if snapshot was shared internally
 	Url *string `json:"url,omitempty"`
 
-	// TODO docs
+	// UserId user id of the snapshot creator
 	UserId int `json:"userId"`
 }
 
@@ -578,7 +605,7 @@ type Spec struct {
 	// The month that the fiscal year starts on.  0 = January, 11 = December
 	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
 
-	// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+	// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
 	GnetId *string `json:"gnetId,omitempty"`
 
 	// 0 for no shared crosshair or tooltip (default).
@@ -590,7 +617,7 @@ type Spec struct {
 	// TODO must isolate or remove identifiers local to a Grafana instance...?
 	Id *int64 `json:"id,omitempty"`
 
-	// TODO docs
+	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -612,7 +639,11 @@ type Spec struct {
 	// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
 	SchemaVersion int `json:"schemaVersion"`
 
-	// TODO docs
+	// A dashboard snapshot shares an interactive dashboard publicly.
+	// It is a read-only version of a dashboard, and is not editable.
+	// It is possible to create a snapshot of a snapshot.
+	// Grafana strips away all sensitive information from the dashboard.
+	// Sensitive information stripped: queries (metric, template,annotation) and panel links.
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 
 	// Theme of dashboard.
@@ -621,37 +652,37 @@ type Spec struct {
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 
-	// TODO docs
+	// Contains the list of configured template variables with their saved values along with some other metadata
 	Templating *struct {
 		List []VariableModel `json:"list,omitempty"`
 	} `json:"templating,omitempty"`
 
-	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
+	// Time range for dashboard.
+	// Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.
 	Time *struct {
 		From string `json:"from"`
 		To   string `json:"to"`
 	} `json:"time,omitempty"`
 
-	// TODO docs
-	// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
+	// Configuration of the time picker shown at the top of a dashboard.
 	Timepicker *struct {
-		// Whether timepicker is collapsed or not.
+		// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
 		Collapse bool `json:"collapse"`
 
-		// Whether timepicker is enabled or not.
+		// Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
 		Enable bool `json:"enable"`
 
 		// Whether timepicker is visible or not.
 		Hidden bool `json:"hidden"`
 
-		// Selectable intervals for auto-refresh.
+		// Interval options available in the refresh picker dropdown.
 		RefreshIntervals []string `json:"refresh_intervals"`
 
-		// TODO docs
+		// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	Timezone *string `json:"timezone,omitempty"`
 
 	// Title of dashboard.
@@ -663,20 +694,21 @@ type Spec struct {
 	// Version of the dashboard, incremented each time the dashboard is updated.
 	Version *int `json:"version,omitempty"`
 
-	// TODO docs
+	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	WeekStart *string `json:"weekStart,omitempty"`
 }
 
 // Theme of dashboard.
 type SpecStyle string
 
-// TODO docs
+// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
+// and color
 type SpecialValueMap struct {
 	Options struct {
 		Match   SpecialValueMapOptionsMatch `json:"match"`
 		Pattern string                      `json:"pattern"`
 
-		// TODO docs
+		// Result used as replacement text and color for RegexMap and SpecialValueMap
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
 	Type SpecialValueMapType `json:"type"`
@@ -697,9 +729,10 @@ type SpecialValueMapType string
 // type directly to achieve the same effect.
 type Target = map[string]interface{}
 
-// TODO docs
+// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 type Threshold struct {
-	// TODO docs
+	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 	Color string `json:"color"`
 
 	// Threshold index, an old property that is not needed an should only appear in older dashboards
@@ -710,23 +743,24 @@ type Threshold struct {
 	// Some seem to be listed in typescript comment
 	State *string `json:"state,omitempty"`
 
-	// TODO docs
+	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
 	Value *float32 `json:"value,omitempty"`
 }
 
 // ThresholdsConfig defines model for ThresholdsConfig.
 type ThresholdsConfig struct {
+	// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
 	Mode ThresholdsMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []Threshold `json:"steps"`
 }
 
-// ThresholdsMode defines model for ThresholdsMode.
+// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
 type ThresholdsMode string
 
-// TODO docs
+// Maps text values to a color or different display text
 type ValueMap struct {
 	Options map[string]ValueMappingResult `json:"options"`
 	Type    ValueMapType                  `json:"type"`
@@ -735,7 +769,7 @@ type ValueMap struct {
 // ValueMapType defines model for ValueMap.Type.
 type ValueMapType string
 
-// TODO docs
+// Result used as replacement text and color for RegexMap and SpecialValueMap
 type ValueMappingResult struct {
 	Color *string `json:"color,omitempty"`
 	Icon  *string `json:"icon,omitempty"`

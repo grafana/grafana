@@ -73,7 +73,8 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
-  useClickAway(overlayRef, onClose);
+  // Close when we click outside mask (topnav) but only if closeOnMaskClick is true
+  useClickAway(overlayRef, closeOnMaskClick ? onClose : doNothing);
 
   // Apply size styles (unless deprecated width prop is used)
   const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
@@ -141,6 +142,8 @@ export function Drawer({
     </RcDrawer>
   );
 }
+
+function doNothing() {}
 
 function useBodyClassWhileOpen() {
   useEffect(() => {

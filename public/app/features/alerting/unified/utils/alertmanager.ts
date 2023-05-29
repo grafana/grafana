@@ -233,8 +233,8 @@ export function getAlertmanagerByUid(uid?: string) {
 }
 
 export function timeIntervalToString(timeInterval: TimeInterval): string {
-  const { times, weekdays, days_of_month, months, years } = timeInterval;
-  const timeString = getTimeString(times);
+  const { times, weekdays, days_of_month, months, years, location } = timeInterval;
+  const timeString = getTimeString(times, location);
   const weekdayString = getWeekdayString(weekdays);
   const daysString = getDaysOfMonthString(days_of_month);
   const monthsString = getMonthsString(months);
@@ -243,10 +243,12 @@ export function timeIntervalToString(timeInterval: TimeInterval): string {
   return [timeString, weekdayString, daysString, monthsString, yearsString].join(', ');
 }
 
-export function getTimeString(times?: TimeRange[]): string {
+export function getTimeString(times?: TimeRange[], location?: string): string {
   return (
     'Times: ' +
-    (times ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} UTC`).join(' and ') : 'All')
+    (times
+      ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} [${location ?? 'UTC'}]`).join(' and ')
+      : 'All')
   );
 }
 

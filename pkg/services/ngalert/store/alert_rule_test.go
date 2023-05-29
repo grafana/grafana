@@ -29,16 +29,17 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)) * time.Second}
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
 		FolderService: setupFolderService(t, sqlStore, cfg),
 	}
+	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
 
 	t.Run("should increase version", func(t *testing.T) {
-		rule := createRule(t, store)
+		rule := createRule(t, store, generator)
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
@@ -60,7 +61,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	})
 
 	t.Run("should fail due to optimistic locking if version does not match", func(t *testing.T) {
-		rule := createRule(t, store)
+		rule := createRule(t, store, generator)
 		rule.Version-- // simulate version discrepancy
 
 		newRule := models.CopyRule(rule)
@@ -88,15 +89,14 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
-		SQLStore: sqlStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
-		},
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
 		FolderService: setupFolderService(t, sqlStore, cfg),
 	}
 
-	rule1 := createRule(t, store)
-	rule2 := createRule(t, store)
+	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithUniqueOrgID())
+	rule1 := createRule(t, store, generator)
+	rule2 := createRule(t, store, generator)
 
 	tc := []struct {
 		name         string
@@ -169,7 +169,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 	return func(rule *models.AlertRule) {
-		rule.IntervalSeconds = int64(baseInterval.Seconds()) * rand.Int63n(10)
+		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
 		rule.For = time.Duration(rule.IntervalSeconds*rand.Int63n(9)+1) * time.Second
 	}
 }
@@ -182,7 +182,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg)}
-	rule := createRule(t, store)
+	rule := createRule(t, store, nil)
 
 	tests := map[string]struct {
 		query     *models.CountAlertRulesQuery
@@ -220,9 +220,12 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	}
 }
 
-func createRule(t *testing.T, store *DBstore) *models.AlertRule {
+func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
-	rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())()
+	if generate == nil {
+		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+	}
+	rule := generate()
 	createFolder(t, store, rule.NamespaceUID, rule.Title, rule.OrgID)
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
