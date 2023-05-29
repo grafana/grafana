@@ -177,6 +177,34 @@ Open and save each dashboard that uses the Alias field. Alias is migrated to Lab
 
 [Grafana CloudWatch documentation about the change]({{< relref "../datasources/aws-cloudwatch/query-editor/#label" >}})
 
+### Athena datasource plugin must be updated to version >=2.9.3
+
+#### You’re affected if:
+
+You have installed and are using the Athena datasource plugin
+
+#### Description:
+
+Grafana 10.0.0 is shipped with the new React 18 upgrade. Changes in batching of state updates in React 18 cause a bug in the query editor in Athena plugin versions <=2.9.2.
+
+#### Migration path:
+
+Update the plugin to version 2.9.3 or higher in your Grafana instance management console. This will ensure your plugin query editor works as intended.
+
+### Redshift datasource plugin must be updated to version >=1.8.3
+
+#### You’re affected if:
+
+You have installed and are using the Redshift datasource plugin
+
+#### Description:
+
+Grafana 10.0.0 is shipped with the new React 18 upgrade. Changes in batching of state updates in React 18 cause a bug in the query editor in Redshift plugin versions <=1.8.3.
+
+#### Migration path:
+
+Update the plugin to version 1.8.3 or higher in your Grafana instance management console. This will ensure your plugin query editor works as intended.
+
 ## For Plugin Developers
 
 ### Upgrading to React 18

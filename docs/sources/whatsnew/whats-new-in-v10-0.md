@@ -14,7 +14,7 @@ weight: -37
 
 Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes, refer to the ["Breaking changes"]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}) page for this release version.
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes in this release, refer to ["Breaking changes"]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
 
 <!-- Template below
 ## Feature
@@ -110,7 +110,7 @@ Currently, the Datagrid Panel supports the following features in Grafana version
 - Draggable columns and rows
 - Series selection when pulling data from a data source
 
-To learn more about the Datagrid panel, refer to the official documentation.
+To learn more, refer to the [Datagrid documentation]({{< relref "../../../panels-visualizations/visualizations/datagrid/" >}}).
 
 In subsequent releases, we’ll continue adding features to the Datagrid panel to further improve the user experience.
 
@@ -317,6 +317,8 @@ We've started the work to migrate to OpenTelemetry in Grafana version 8.4; now w
 
 <!-- Andreas Christou -->
 
+_Generally available in all editions of Grafana._
+
 The Azure Monitor data source now supports visualizing Application Insights Traces. A new query type, `Traces`, has been added to the service list. This can be used against Application Insights resources to query and visualize traces in both a tabular format and using the built-in Traces visualization.
 
 This also includes support for a new Azure API that will correlate trace IDs against all Application Insights resources that are accessible to the principal that the data source is configured with. To support this feature, a new query builder has been added with support for querying the Application Insights resource using an `Operation ID` or visualizing and filtering the data based on the event type and a subset of the properties available on the trace.
@@ -325,7 +327,7 @@ This also includes support for a new Azure API that will correlate trace IDs aga
 
 <!-- Galen Kistler -->
 
-_Experimental in..._
+_Experimental in Grafana Open Source._
 
 The Prometheus data source now supports delta (incremental) querying, in which values from data frames are cached and leveraged to modify future requests to avoid requesting duplicate values in dashboards with now-relative (that is, any dashboard querying until "now") queries. This feature is disabled by default as it is still experimental, but can be enabled and configured in the Prometheus data source configuration.
 
