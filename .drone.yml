@@ -429,6 +429,7 @@ steps:
   name: lint-backend
 - commands:
   - echo Yer a programmer, Kat!
+  - go run dummy/modowners.go check dummy/go.txd
   depends_on:
   - wire-install
   environment:
@@ -1439,6 +1440,7 @@ steps:
   name: lint-backend
 - commands:
   - echo Yer a programmer, Kat!
+  - go run dummy/modowners.go check dummy/go.txd
   depends_on:
   - wire-install
   environment:
@@ -7216,6 +7218,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 2827682118239047904cc9967a6d010d997331a0875114e5a65d95fc3ed2f52a
+hmac: d2f4c5c8d3436c013eb96b637f9f40a3648c738080403c947b34676078f517c8
 
 ...

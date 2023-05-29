@@ -377,7 +377,8 @@ def validate_modifle_step():
             "wire-install",
         ],
         "commands": [
-            "echo Yer a programmer, Kat!"
+            "echo Yer a programmer, Kat!",
+            "go run dummy/modowners.go check dummy/go.txd",
         ],
     }
 
