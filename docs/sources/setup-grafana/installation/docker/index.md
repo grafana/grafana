@@ -260,11 +260,15 @@ Complete the following steps to use persistent storage.
    version: '3.8'
    services:
      grafana:
-     image: grafana/grafana-enterprise
-     container_name: grafana
-     restart: unless-stopped
-     ports:
-       - '3000:3000'
+      image: grafana/grafana-enterprise
+      container_name: grafana
+      restart: unless-stopped
+      ports:
+         - '3000:3000'
+      volumes:
+         - grafana_data:/var/lib/grafana
+   volumes:
+      grafana_data: {}
    ```
 
 1. Save the file and run the following command:
@@ -282,6 +286,7 @@ To use bind mounts, complete the following steps:
 1. Create a new `docker-compose.yaml` file
 
 2. Create the folder where you will be mounting, in this case is `/data` e.g. in your current working directory:
+
    ```bash
    mkdir $PWD/data
    ```
