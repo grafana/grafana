@@ -658,10 +658,10 @@ Configuration of the time picker shown at the top of a dashboard.
 
 ### Status
 
-| Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
-|--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `additionalFields` | [object](#additionalfields)                                                      | No       |         | additionalFields is reserved for future use                                                                                                                                |
-| `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
+| Property           | Type                                                       | Required | Default | Description                                                                                                                                                                |
+|--------------------|------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `additionalFields` | [object](#additionalfields)                                | No       |         | additionalFields is reserved for future use                                                                                                                                |
+| `operatorStates`   | map[string][status.#OperatorState](#status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
 
 ### AdditionalFields
 
@@ -670,7 +670,7 @@ additionalFields is reserved for future use
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 
-### JoinSchema.Status.#OperatorState
+### Status.#OperatorState
 
 | Property           | Type               | Required | Default | Description                                                                                                                                                                      |
 |--------------------|--------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -138,7 +138,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			if azureTracesTarget.ResultFormat == nil {
 				resultFormat = types.Table
 			} else {
-				resultFormat = string(*azureTracesTarget.ResultFormat)
+				resultFormat = *azureTracesTarget.ResultFormat
 				if resultFormat == "" {
 					resultFormat = types.Table
 				}
@@ -351,7 +351,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			return dataResponse
 		}
 		traceIdVariable := "${__data.fields.traceID}"
-		resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
+		resultFormat := dataquery.ResultFormatTrace
 		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
 		queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
 		if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
@@ -360,20 +360,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 
 		logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
 		logsJSONModel := dataquery.AzureMonitorQuery{
-			AzureLogAnalytics: &struct {
-				Query        *string                                                   "json:\"query,omitempty\""
-				Resource     *string                                                   "json:\"resource,omitempty\""
-				Resources    []string                                                  "json:\"resources,omitempty\""
-				ResultFormat *dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormat "json:\"resultFormat,omitempty\""
-				Workspace    *string                                                   "json:\"workspace,omitempty\""
-			}{
-				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
-				Query:     &query.TraceLogsExploreQuery,
+			DataQuery: dataquery.DataQuery{
+				QueryType: &logsQueryType,
 			},
-			QueryType: &logsQueryType,
+			AzureLogAnalytics: &dataquery.AzureLogsQuery{
+				Query:     &query.TraceLogsExploreQuery,
+				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
+			},
 		}
 
-		if query.ResultFormat == string(dataquery.AzureMonitorQueryAzureTracesResultFormatTable) {
+		if query.ResultFormat == string(dataquery.ResultFormatTable) {
 			AddCustomDataLink(*frame, data.DataLink{
 				Title: "Explore Trace: ${__data.fields.traceID}",
 				URL:   "",
