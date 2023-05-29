@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-const defaultBaseURL = "https://www.grafana.com/api/plugins"
-
 type Manager struct {
 	client  *Client
 	baseURL string
