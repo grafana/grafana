@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ToolbarButton } from '@grafana/ui';
 import { ExploreId, useSelector } from 'app/types';
 
-import { getExploreItemSelector } from '../state/selectors';
+import { getExploreItemSelector } from '../../state/selectors';
 
 import { AddToDashboardModal } from './AddToDashboardModal';
 

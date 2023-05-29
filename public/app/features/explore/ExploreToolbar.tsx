@@ -11,20 +11,20 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
-import { DashNavButton } from '../../dashboard/components/DashNav/DashNavButton';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../../profile/state/reducers';
-import { getFiscalYearStartMonth, getTimeZone } from '../../profile/state/selectors';
-import { ExploreTimeControls } from '../ExploreTimeControls';
-import { LiveTailButton } from '../LiveTailButton';
-import { changeDatasource } from '../state/datasource';
-import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from '../state/main';
-import { cancelQueries, runQueries } from '../state/query';
-import { isSplit } from '../state/selectors';
-import { syncTimes, changeRefreshInterval } from '../state/time';
-import { LiveTailControls } from '../useLiveTailControls';
+import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
+import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
-import { ToolbarExtensionPoint } from './ToolbarExtensionPoint';
+import { ExploreTimeControls } from './ExploreTimeControls';
+import { LiveTailButton } from './LiveTailButton';
+import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
+import { changeDatasource } from './state/datasource';
+import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
+import { cancelQueries, runQueries } from './state/query';
+import { isSplit } from './state/selectors';
+import { syncTimes, changeRefreshInterval } from './state/time';
+import { LiveTailControls } from './useLiveTailControls';
 
 const rotateIcon = css({
   '> div > svg': {
@@ -118,13 +118,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval(exploreId, item));
   };
 
-  // const showExploreToDashboard = useMemo(
-  //   () =>
-  //     contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
-  //     contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor),
-  //   []
-  // );
-
   return (
     <div ref={topOfViewRef}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
@@ -183,7 +176,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" splitted={splitted} exploreId={exploreId} />,
+          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

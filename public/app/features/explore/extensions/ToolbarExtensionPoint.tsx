@@ -10,16 +10,15 @@ import { getExploreItemSelector } from '../state/selectors';
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
 
 const AddToDashboard = lazy(() =>
-  import('../AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
+  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
 );
 
 type Props = {
   exploreId: ExploreId;
-  splitted: boolean;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement {
-  const { exploreId, splitted } = props;
+  const { exploreId } = props;
   const [extension, setExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
@@ -27,7 +26,9 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
 
-  if (extensions.length === 0) {
+  // If we only have the explore core extension point registered we show the old way of
+  // adding a query to a dashboard.
+  if (extensions.length === 1) {
     return (
       <Suspense fallback={null}>
         <AddToDashboard exploreId={exploreId} />
@@ -39,7 +40,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
     <Menu>
       {extensions.map((extension) => (
         <Menu.Item
-          icon="plug"
+          icon={extension?.icon || 'plug'}
           key={extension.id}
           label={extension.title}
           onClick={(event) => {
@@ -56,8 +57,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
   return (
     <Suspense fallback={null}>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton disabled={!Boolean(noQueriesInPane)} variant="canvas" icon="plus" isOpen={isOpen}>
-          {splitted ? ' ' : 'Add to...'}
+        <ToolbarButton disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
+          Turn into...
         </ToolbarButton>
       </Dropdown>
       {!!extension && !!extension.path && (
@@ -72,9 +73,13 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
 }
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
+  const { exploreId } = props;
+
   return useMemo(() => {
-    return {};
-  }, []);
+    return {
+      exploreId,
+    };
+  }, [exploreId]);
 }
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {

@@ -74,6 +74,7 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { configureCoreExtensions } from './features/plugins/extensions/configureCoreExtensions';
 import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
@@ -191,12 +192,13 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       const preloadResults = await preloadPlugins(config.apps);
+      const coreAndPluginResults = configureCoreExtensions(preloadResults);
 
       // Create extension registry out of the preloaded plugins
       const pluginExtensionGetter: GetPluginExtensions = (options) =>
         getPluginExtensions({
           ...options,
-          registry: createPluginExtensionRegistry(preloadResults),
+          registry: createPluginExtensionRegistry(coreAndPluginResults),
         });
 
       setPluginExtensionGetter(pluginExtensionGetter);

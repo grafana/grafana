@@ -1,6 +1,7 @@
 import { DataQuery } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
+import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
 
@@ -23,6 +24,7 @@ export type PluginExtensionLink = PluginExtension & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
+  icon?: IconName;
 };
 
 // Objects used for registering extensions (in app plugins)
@@ -45,7 +47,7 @@ export type PluginExtensionConfig<Context extends object = object, ExtraProps ex
 
 export type PluginExtensionLinkConfig<Context extends object = object> = PluginExtensionConfig<
   Context,
-  Pick<PluginExtensionLink, 'path'> & {
+  Pick<PluginExtensionLink, 'path' | 'icon'> & {
     type: PluginExtensionTypes.link;
     onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   }
@@ -89,4 +91,6 @@ type Dashboard = {
   tags: string[];
 };
 
-export type PluginExtensionExploreContext = {};
+export type PluginExtensionExploreContext = {
+  exploreId: string;
+};
