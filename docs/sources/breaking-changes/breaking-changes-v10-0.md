@@ -31,10 +31,10 @@ For each change, the provided information:
 
 For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10-0/" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
 
-<!-- Template below
+<!--
 ## Feature
 
-> **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
+You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
 ## General breaking changes
 
@@ -72,7 +72,7 @@ You use Grafana legacy alerting and have requested new features or changes to it
 
 #### Description
 
-Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.0, in favor of the new, improved Grafana Alerting. In Grafana 10, the legacy alerting codebase&mdash;which depends on Angular&mdash;is still available, but we'll no longer contribute to it or accept external contributions for it. We'll continue to work on the migration path from legacy alerting to Grafana Alerting for our remaining users that need to migrate.
+Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.0, in favor of the new, improved Grafana Alerting. In Grafana v10, the legacy alerting codebase&mdash;which depends on Angular&mdash;is still available, but we'll no longer contribute to it or accept external contributions for it. We'll continue to work on the migration path from legacy alerting to Grafana Alerting for our remaining users that need to migrate.
 
 #### Migration path
 
@@ -86,7 +86,7 @@ You use Grafana API keys and haven't yet migrated to service accounts
 
 #### Description
 
-In Grafana v8.5, we introduced [Service accounts](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/), which are a superset of API keys that support token rotation and Role-based access control (RBAC). They were promoted to general availability (GA) in v9.1, with an option to manually migrate API keys to service accounts through the UI and API since then. **When you upgrade to Grafana 10, Grafana will automatically migrate all API keys to service accounts and hide the API keys screen that was under the Admin section.**
+In Grafana v8.5, we introduced [Service accounts](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/), which are a superset of API keys that support token rotation and Role-based access control (RBAC). They were promoted to general availability (GA) in v9.1, with an option to manually migrate API keys to service accounts through the UI and API since then. **When you upgrade to Grafana v10, Grafana will automatically migrate all API keys to service accounts and hide the API keys screen that was under the Admin section.**
 
 This is a "breaking" change because if users are used to seeing and interacting with API keys, they won't see that page in navigation anymore and will need to navigate to the **Service accounts** page instead. However, your existing API tokens will remain fully functional and migrated to service accounts, so no automation will break. If you roll back to a previous version of Grafana, your API keys will remain intact.
 
@@ -94,7 +94,7 @@ Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "
 
 #### Migration path
 
-While upgrading to Grafana 10, you don't need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to service accounts before upgrading to Grafana 10, follow our [migration documentation]({{< relref "../administration/api-keys/#migrate-api-keys-to-grafana-service-account" >}}").
+While upgrading to Grafana v10, you don't need to take any action; your API keys will be automatically migrated. To test or perform the migration from API keys to service accounts before upgrading to Grafana v10, follow our [migration documentation]({{< relref "../administration/api-keys/#migrate-api-keys-to-grafana-service-account" >}}").
 
 #### Learn more
 
@@ -128,7 +128,7 @@ You have actively disabled RBAC in Grafana's configuration.
 
 #### Description
 
-Starting from Grafana 9, RBAC has been enabled by default. An option to disable RBAC was introduced as an emergency mechanism and has only been used in rare cases. With Grafana 10 we removed the configuration option to disable RBAC. This ensures that Grafana works consistently across different features and decreases the risk of having issues with Grafana's legacy access control. Additionally, access control for some of the Grafana 10 features only work with the RBAC, so disabling it is no longer an option.
+Starting from Grafana 9, RBAC has been enabled by default. An option to disable RBAC was introduced as an emergency mechanism and has only been used in rare cases. With Grafana v10 we removed the configuration option to disable RBAC. This ensures that Grafana works consistently across different features and decreases the risk of having issues with Grafana's legacy access control. Additionally, access control for some of the Grafana v10 features only work with the RBAC, so disabling it is no longer an option.
 
 #### Migration path
 
@@ -278,7 +278,7 @@ You develop plugins using @grafana/toolkit CLI commands.
 
 #### Description
 
-We announced the deprecation of the grafana/toolkit in v9.3 (November 2022) and have a new tool called create-plugin now available as a replacement. We encourage you to migrate and use our updated tooling. All grafana/toolkit commands except `build` are removed in Grafana 10.
+We announced the deprecation of the grafana/toolkit in v9.3 (November 2022) and have a new tool called create-plugin now available as a replacement. We encourage you to migrate and use our updated tooling. All grafana/toolkit commands except `build` are removed in Grafana v10.
 
 Here are some of the benefits of create-plugin:
 

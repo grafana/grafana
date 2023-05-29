@@ -21,7 +21,10 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- Name of contributor -->
 <!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-> **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
+{{% admonition type="note" %}}
+You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
+{{% /admonition %}}
+-->
 
 ## Correlations
 
