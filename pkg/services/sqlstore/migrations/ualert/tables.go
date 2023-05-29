@@ -24,6 +24,10 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
 		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("add index in alert_image on url", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_image"}, &migrator.Index{
+		Cols: []string{"url"}, Type: migrator.IndexType,
+	}))
 }
 
 // historicalTableMigrations contains those migrations that existed prior to creating the improved messaging around migration immutability.
