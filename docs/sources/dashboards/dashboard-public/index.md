@@ -8,9 +8,13 @@ weight: 8
 
 # Public dashboards
 
-> **Note:** This is an opt-in alpha feature.
+{{% admonition type="note" %}}
 
-> **Caution:** Making your dashboard public could result in a large number of queries to the datasources used by your dashboard.
+This feature is experimental.
+
+{{% /admonition %}}
+
+> **Caution:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
 > This can be mitigated by utilizing the enterprise [caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) and/or rate limiting features.
 
 Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to expose your
@@ -20,7 +24,7 @@ dashboard to the world.
 
 - Anyone with the URL can access the dashboard.
 - Public dashboards are read-only.
-- Arbitrary queries **cannot** be run against your datasources through public dashboards. Public dashboards can only execute the
+- Arbitrary queries **cannot** be run against your data sources through public dashboards. Public dashboards can only execute the
   queries stored on the original dashboard.
 
 ## Enable the feature
@@ -66,20 +70,15 @@ The link no longer works. You must create a new public URL as in [Make a dashboa
 
 ## Email sharing
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+
+This feature is experimental in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). The feature will have a cost by active users after being promoted into general availability.
+
+Please contact support to have the feature enabled.
+
+{{% /admonition %}}
 
 Email sharing allows you to share your public dashboard with only specific people via email, instead of having it accessible to anyone with the URL.
-
-### Enable email sharing
-
-> **Note:** For Grafana Cloud, contact support to have the feature enabled.
-
-Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboardsEmailSharing = true
-```
 
 ### Invite a viewer
 
@@ -158,7 +157,7 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ### Unconfirmed:
 
-> **Note:** If you've confirmed one of these datasources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
+> **Note:** If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
 
 <table>
   <tr>
@@ -220,14 +219,14 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ## Limitations
 
-- Panels that use frontend datasources will fail to fetch data.
+- Panels that use frontend data sources will fail to fetch data.
 - Template variables are currently not supported, but are planned to be in the future.
 - Exemplars will be omitted from the panel.
-- Only annotations that query the `-- Grafana --` datasource are supported.
+- Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
 - Library panels are currently not supported, but are planned to be in the future.
-- Datasources using Reverse Proxy functionality are not supported.
+- Data sources using Reverse Proxy functionality are not supported.
 
 We are excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
 
