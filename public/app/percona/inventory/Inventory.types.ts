@@ -11,6 +11,7 @@ import {
 export interface CompatibleServicePayload {
   service_id: string;
   service_name: string;
+  cluster?: string;
 }
 
 export type CompatibleServiceListPayload = { [key in Databases]?: CompatibleServicePayload[] };
@@ -18,6 +19,7 @@ export type CompatibleServiceListPayload = { [key in Databases]?: CompatibleServ
 export interface Service {
   id: string;
   name: string;
+  cluster?: string;
 }
 
 export type DBServiceList = { [key in Databases]?: Service[] };

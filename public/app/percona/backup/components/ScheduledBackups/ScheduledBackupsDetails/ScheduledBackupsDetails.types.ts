@@ -5,4 +5,5 @@ export interface ScheduledBackupDetailsProps {
   description: string;
   dataModel: DataModel;
   cronExpression: string;
+  folder: string;
 }

@@ -21,6 +21,7 @@ describe('RestoreBackupModal', () => {
     status: BackupStatus.BACKUP_STATUS_SUCCESS,
     vendor: Databases.mongodb,
     mode: BackupMode.SNAPSHOT,
+    folder: 'folder1',
   };
 
   it('should render', () => {

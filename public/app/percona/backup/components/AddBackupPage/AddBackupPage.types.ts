@@ -19,6 +19,7 @@ export interface AddBackupModalProps {
 export interface SelectableService {
   vendor: Databases;
   id: string;
+  cluster?: string;
 }
 
 export interface AddBackupFormProps extends ScheduledSectionFieldsValuesProps {
@@ -37,4 +38,5 @@ export interface AddBackupFormProps extends ScheduledSectionFieldsValuesProps {
   vendor: Databases | null;
   mode: BackupMode;
   type: BackupType;
+  folder: string;
 }

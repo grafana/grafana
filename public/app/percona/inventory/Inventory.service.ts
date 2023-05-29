@@ -40,9 +40,10 @@ export const InventoryService = {
       const dbServices = response[db];
 
       if (dbServices?.length) {
-        result[db] = dbServices.map(({ service_id, service_name }) => ({
+        result[db] = dbServices.map(({ service_id, service_name, cluster }) => ({
           id: service_id,
           name: service_name,
+          cluster,
         }));
       }
     });

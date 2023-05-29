@@ -27,6 +27,7 @@ export const BackupInventoryService = {
         status,
         vendor,
         mode,
+        folder,
       }): Backup => ({
         id: artifact_id,
         name,
@@ -39,6 +40,7 @@ export const BackupInventoryService = {
         status,
         vendor,
         mode,
+        folder,
       })
     );
   },

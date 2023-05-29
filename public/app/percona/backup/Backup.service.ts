@@ -31,6 +31,7 @@ export const BackupService = {
       mode,
       type,
       dataModel,
+      folder,
     } = values;
     const strRetryInterval = `${retryInterval}s`;
     const resultRetryTimes = retryMode === RetryMode.MANUAL ? 0 : retryTimes;
@@ -44,6 +45,7 @@ export const BackupService = {
         strRetryInterval,
         resultRetryTimes!,
         dataModel,
+        folder,
         token
       );
     } else {
@@ -78,7 +80,8 @@ export const BackupService = {
           retention!,
           active!,
           mode,
-          dataModel
+          dataModel,
+          folder
         );
       }
     }
@@ -91,6 +94,7 @@ export const BackupService = {
     retryInterval: string,
     retryTimes: number,
     dataModel: DataModel,
+    folder: string,
     token?: CancelToken
   ) {
     return api.post(
@@ -103,6 +107,7 @@ export const BackupService = {
         retry_interval: retryInterval,
         retries: retryTimes,
         data_model: dataModel,
+        folder,
       },
       false,
       token
@@ -119,7 +124,8 @@ export const BackupService = {
     retention: number,
     enabled: boolean,
     mode: BackupMode,
-    dataModel: DataModel
+    dataModel: DataModel,
+    folder: string
   ) {
     return api.post(`${BASE_URL}/Schedule`, {
       service_id: serviceId,
@@ -133,6 +139,7 @@ export const BackupService = {
       retention,
       mode,
       data_model: dataModel,
+      folder,
     });
   },
   async changeScheduleBackup(

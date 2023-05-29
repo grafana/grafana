@@ -11,10 +11,7 @@ export const getStyles = ({ spacing, typography }: GrafanaTheme) => ({
 
     & > * {
       flex: 1 0 50%;
-
-      &:not(:last-child) {
-        margin-top: ${spacing.md};
-      }
+      margin-top: ${spacing.md};
     }
   `,
   detailLabel: css`

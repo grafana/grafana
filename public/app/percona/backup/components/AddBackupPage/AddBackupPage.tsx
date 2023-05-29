@@ -61,6 +61,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
   const scheduleMode: boolean = (queryParams['scheduled'] as boolean) || match.params.type === SCHEDULED_TYPE;
   const [backup, setBackup] = useState<Backup | ScheduledBackup | null>(null);
   const [pending, setPending] = useState(false);
+  const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
   const styles = useStyles2(getStyles);
   const dispatch = useAppDispatch();
   const [modalTitle, setModalTitle] = useState(Messages.getModalTitle(scheduleMode, !!backup));
@@ -162,6 +163,8 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
     setModalTitle(Messages.getModalTitle(true, editing));
   }, [editing, setQueryParams]);
 
+  const onToggle = useCallback((open) => setAdvancedSectionOpen(open), []);
+
   const pageSwitcherValues: Array<PageSwitcherValue<BackupType>> = useMemo(
     () => [
       {
@@ -208,6 +211,13 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                 tools.changeValue(state, 'dataModel', () => DataModel.LOGICAL);
               }
             }
+          },
+          changeFolder: ([cluster]: [string], state, tools) => {
+            if (!cluster) {
+              setAdvancedSectionOpen(true);
+            }
+
+            tools.changeValue(state, 'folder', () => cluster);
           },
         }}
         render={({ handleSubmit, valid, pristine, submitting, values, form }) => (
@@ -263,6 +273,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                               onChange={(service: SelectableValue<SelectableService>) => {
                                 input.onChange(service);
                                 form.mutators.changeVendor(service.value!.vendor);
+                                form.mutators.changeFolder(service.value!.cluster);
                               }}
                               className={styles.selectField}
                               data-testid="service-select-input"
@@ -306,7 +317,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                         </Field>
                       </span>
                       {scheduleMode && (
-                        <span className={styles.wideField}>
+                        <span className={styles.descriptionField}>
                           <TextareaInputField
                             fieldClassName={styles.textAreaField}
                             name="description"
@@ -314,8 +325,8 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                           />
                         </span>
                       )}
-                      <span className={cx(styles.radioButtonField, styles.backupTypeField)}>
-                        {values.type === BackupType.SCHEDULED && (
+                      {values.type === BackupType.SCHEDULED && (
+                        <span className={cx(styles.radioButtonField, styles.backupTypeField)}>
                           <RadioButtonGroupField
                             options={getBackupModeOptions(values.vendor)}
                             name="mode"
@@ -328,18 +339,28 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                                 form.mutators.changeDataModel(e.target.labels),
                             }}
                           />
-                        )}
-                      </span>
+                        </span>
+                      )}
                     </div>
                     <div className={styles.advanceSection}>
                       {values.type === BackupType.SCHEDULED && <ScheduleSection values={values} />}
                       <div className={styles.collapsableSection}>
                         <CollapsableSection
                           label={Messages.advanceSettings}
-                          isOpen={false}
+                          isOpen={advancedSectionOpen}
+                          onToggle={onToggle}
+                          controlled
                           buttonDataTestId="add-backup-advanced-settings"
                         >
                           <RetryModeSelector retryMode={values.retryMode} />
+                          <TextInputField
+                            fieldClassName={styles.textAreaField}
+                            name="folder"
+                            label={Messages.folder}
+                            disabled={editing}
+                            tooltipText={Messages.folderTooltip}
+                            tooltipLink={Messages.folderTooltipLink}
+                          />
                         </CollapsableSection>
                         {!!backupErrors.length && <BackupErrorSection backupErrors={backupErrors} />}
                       </div>

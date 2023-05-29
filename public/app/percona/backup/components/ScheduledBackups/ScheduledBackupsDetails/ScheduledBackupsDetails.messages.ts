@@ -3,4 +3,5 @@ export const Messages = {
   description: 'Description',
   dataModel: 'Data model',
   cronExpression: 'Cron expression',
+  folder: 'Folder',
 };

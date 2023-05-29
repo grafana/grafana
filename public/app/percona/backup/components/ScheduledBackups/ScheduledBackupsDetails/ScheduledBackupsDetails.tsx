@@ -14,6 +14,7 @@ export const ScheduledBackupDetails: FC<ScheduledBackupDetailsProps> = ({
   description,
   dataModel,
   cronExpression,
+  folder,
 }) => {
   const styles = useStyles(getStyles);
   const dataModelMsg = formatDataModel(dataModel);
@@ -23,13 +24,20 @@ export const ScheduledBackupDetails: FC<ScheduledBackupDetailsProps> = ({
       <span data-testid="scheduled-backup-details-name">
         <span className={styles.detailLabel}>{Messages.backupName}</span> <span>{name}</span>
       </span>
-      <DescriptionBlock description={description} dataTestId="scheduled-backup-details-description" />
+      {!!description && (
+        <DescriptionBlock description={description} dataTestId="scheduled-backup-details-description" />
+      )}
       <span data-testid="scheduled-backup-details-data-model">
         <span className={styles.detailLabel}>{Messages.dataModel}</span> <span>{dataModelMsg}</span>
       </span>
       <span data-testid="scheduled-backup-details-cron">
         <span className={styles.detailLabel}>{Messages.cronExpression}</span> <span>{cronExpression}</span>
       </span>
+      {folder && (
+        <span data-testid="scheduled-backup-details-folder">
+          <span className={styles.detailLabel}>{Messages.folder}</span> <span>{folder}</span>
+        </span>
+      )}
     </div>
   );
 };

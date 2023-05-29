@@ -88,8 +88,9 @@ export const ScheduledBackups: FC = () => {
         retryTimes,
         mode,
         dataModel,
+        folder,
       } = backup;
-      const newName = `${Messages.scheduledBackups.copyOf} ${name}`;
+      const newName = `${Messages.scheduledBackups.copyOf}${name}`;
       setActionPending(true);
       try {
         await BackupService.scheduleBackup(
@@ -103,7 +104,8 @@ export const ScheduledBackups: FC = () => {
           retention,
           false,
           mode,
-          dataModel
+          dataModel,
+          folder
         );
         getData();
       } catch (e) {
@@ -199,6 +201,7 @@ export const ScheduledBackups: FC = () => {
         dataModel={row.original.dataModel}
         description={row.original.description}
         cronExpression={row.original.cronExpression}
+        folder={row.original.folder}
       />
     ),
     []

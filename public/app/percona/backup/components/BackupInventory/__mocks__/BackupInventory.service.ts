@@ -17,6 +17,7 @@ export const stubs: Backup[] = [
     status: BackupStatus.BACKUP_STATUS_SUCCESS,
     vendor: Databases.mysql,
     mode: BackupMode.SNAPSHOT,
+    folder: 'folder1',
   },
   {
     id: 'backup_2',
@@ -30,6 +31,7 @@ export const stubs: Backup[] = [
     status: BackupStatus.BACKUP_STATUS_IN_PROGRESS,
     vendor: Databases.mysql,
     mode: BackupMode.SNAPSHOT,
+    folder: 'folder1',
   },
 ];
 

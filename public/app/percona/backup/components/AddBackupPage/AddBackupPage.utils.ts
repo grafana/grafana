@@ -78,10 +78,11 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null, scheduleMo
       vendor: null,
       mode: BackupMode.SNAPSHOT,
       type: scheduleMode ? BackupType.SCHEDULED : getBackupType(backup),
+      folder: '',
     };
   }
 
-  const { name, serviceName, serviceId, vendor, dataModel, locationName, locationId, id, mode } = backup;
+  const { name, serviceName, serviceId, vendor, dataModel, locationName, locationId, id, mode, folder } = backup;
 
   let month: Array<SelectableValue<number>> = [];
   let day: Array<SelectableValue<number>> = [];
@@ -128,6 +129,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null, scheduleMo
       vendor,
       mode,
       type: BackupType.SCHEDULED,
+      folder,
     };
   } else {
     return {
@@ -143,6 +145,7 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null, scheduleMo
       retryTimes: 2,
       retryInterval: 30,
       type: BackupType.DEMAND,
+      folder,
     };
   }
 };

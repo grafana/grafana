@@ -11,17 +11,18 @@ export const AddBackupPageService = {
     const services = await InventoryService.getDbServices();
     const result: Array<SelectableValue<SelectableService>> = [];
 
-    Object.keys(services).forEach((serviceName) => {
-      const newServices = services[serviceName as Databases] ?? [];
+    // @ts-ignore
+    Object.keys(services).forEach((serviceName: Databases) => {
+      const newServices = services[serviceName] ?? [];
 
-      if (supportedServices.includes(serviceName as Databases)) {
+      if (supportedServices.includes(serviceName)) {
         result.push(
           ...newServices
             .filter((service) => service.name.toLowerCase().includes(query))
             .map(
-              ({ id, name }): SelectableValue<SelectableService> => ({
+              ({ id, name, cluster }): SelectableValue<SelectableService> => ({
                 label: name,
-                value: { id, vendor: serviceName as Databases },
+                value: { id, vendor: serviceName, cluster },
               })
             )
         );

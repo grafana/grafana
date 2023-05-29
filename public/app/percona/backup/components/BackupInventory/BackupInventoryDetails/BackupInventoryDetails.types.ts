@@ -4,4 +4,5 @@ export interface BackupInventoryDetailsProps {
   name: string;
   status: BackupStatus | RestoreStatus;
   dataModel: DataModel;
+  folder: string;
 }

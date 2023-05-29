@@ -23,6 +23,7 @@ export const stubs: ScheduledBackup[] = [
     enabled: true,
     retryInterval: '10s',
     retryTimes: 1,
+    folder: 'folder1',
   },
   {
     id: 'backup_2',
@@ -42,6 +43,7 @@ export const stubs: ScheduledBackup[] = [
     enabled: true,
     retryInterval: '0s',
     retryTimes: 1,
+    folder: 'folder1',
   },
 ];
 

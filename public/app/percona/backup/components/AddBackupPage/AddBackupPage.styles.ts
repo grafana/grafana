@@ -44,7 +44,8 @@ export const getStyles = ({ breakpoints, colors, shape, spacing, v1: { spacing: 
     }
   `,
   backupTypeField: css`
-    grid-row-start: 4;
+    grid-row-start: 3;
+    grid-column: span 2;
   `,
   textAreaField: css`
     & > textarea {
@@ -74,5 +75,8 @@ export const getStyles = ({ breakpoints, colors, shape, spacing, v1: { spacing: 
   `,
   pageSwitcher: css`
     margin-bottom: ${spacingV1.lg};
+  `,
+  descriptionField: css`
+    grid-column: span 4;
   `,
 });

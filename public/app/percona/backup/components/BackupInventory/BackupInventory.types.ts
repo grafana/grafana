@@ -13,6 +13,7 @@ export interface Backup {
   status: BackupStatus;
   vendor: Databases;
   mode: BackupMode;
+  folder: string;
 }
 
 export interface RawBackup {
@@ -27,6 +28,7 @@ export interface RawBackup {
   status: BackupStatus;
   vendor: Databases;
   mode: BackupMode;
+  folder: string;
 }
 
 export interface BackupResponse {

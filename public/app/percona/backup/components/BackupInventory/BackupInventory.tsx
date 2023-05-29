@@ -220,6 +220,7 @@ export const BackupInventory: FC = () => {
         name={row.original.name}
         status={row.original.status}
         dataModel={row.original.dataModel}
+        folder={row.original.folder}
       />
     ),
     []
