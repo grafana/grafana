@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
+import { tracking } from './state/helpers';
 import { MetricsModalState } from './state/state';
 import { MetricData, MetricsData } from './types';
 
@@ -19,10 +19,11 @@ type ResultsTableProps = {
   state: MetricsModalState;
   selectedIdx: number;
   disableTextWrap: boolean;
+  onFocusRow: (idx: number) => void;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, selectedIdx, disableTextWrap } = props;
+  const { metrics, onChange, onClose, query, state, selectedIdx, disableTextWrap, onFocusRow } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
@@ -36,15 +37,7 @@ export function ResultsTable(props: ResultsTableProps) {
   function selectMetric(metric: MetricData) {
     if (metric.value) {
       onChange({ ...query, metric: metric.value });
-      reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-        metric: metric.value,
-        hasMetadata: state.hasMetadata,
-        totalMetricCount: state.totalMetricCount,
-        fuzzySearchQuery: state.fuzzySearchQuery,
-        fullMetaSearch: state.fullMetaSearch,
-        selectedTypes: state.selectedTypes,
-        letterSearch: state.letterSearch,
-      });
+      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
       onClose();
     }
   }
@@ -63,8 +56,9 @@ export function ResultsTable(props: ResultsTableProps) {
               textToHighlight={metric.type ?? ''}
               searchWords={state.metaHaystackMatches}
               autoEscape
-              highlightClassName={styles.matchHighLight}
-            />
+              highlightClassName={`${styles.matchHighLight} ${metric.inferred ? styles.italicized : ''}`}
+            />{' '}
+            {inferredType(metric.inferred ?? false)}
           </td>
           <td>
             <Highlighter
@@ -79,37 +73,80 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td>{metric.type ?? ''}</td>
+          <td className={metric.inferred ? styles.italicized : ''}>
+            {metric.type ?? ''} {inferredType(metric.inferred ?? false)}
+          </td>
           <td>{metric.description ?? ''}</td>
         </>
       );
     }
   }
 
+  function inferredType(inferred: boolean): JSX.Element | undefined {
+    if (inferred) {
+      return (
+        <Tooltip content={'This metric type has been inferred'} placement="bottom-end">
+          <Icon name="info-circle" size="xs" />
+        </Tooltip>
+      );
+    } else {
+      return undefined;
+    }
+  }
+
+  function noMetricsMessages(): ReactElement {
+    let message;
+
+    if (!state.fuzzySearchQuery) {
+      message = 'There are no metrics found in the data source.';
+    }
+
+    if (query.labels.length > 0) {
+      message = 'There are no metrics found. Try to expand your label filters.';
+    }
+
+    if (state.fuzzySearchQuery) {
+      message = 'There are no metrics found. Try to expand your search and filters.';
+    }
+
+    return (
+      <tr className={styles.noResults}>
+        <td colSpan={3}>{message}</td>
+      </tr>
+    );
+  }
+
   return (
     <table className={styles.table} ref={tableRef}>
-      <thead>
-        <tr className={styles.header}>
-          <th>Name</th>
+      <thead className={styles.stickyHeader}>
+        <tr>
+          <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>Name</th>
           {state.hasMetadata && (
             <>
-              <th>Type</th>
-              <th>Description</th>
+              <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>Type</th>
+              <th className={styles.tableHeaderPadding}>Description</th>
             </>
           )}
         </tr>
       </thead>
       <tbody>
         <>
-          {metrics &&
+          {metrics.length > 0 &&
             metrics.map((metric: MetricData, idx: number) => {
               return (
                 <tr
                   key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
                   onClick={() => selectMetric(metric)}
+                  tabIndex={0}
+                  onFocus={() => onFocusRow(idx)}
+                  onKeyDown={(e) => {
+                    if (e.code === 'Enter' && e.currentTarget.classList.contains('selected-row')) {
+                      selectMetric(metric);
+                    }
+                  }}
                 >
-                  <td>
+                  <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
                       searchWords={state.fullMetaSearch ? state.metaHaystackMatches : state.nameHaystackMatches}
@@ -121,6 +158,7 @@ export function ResultsTable(props: ResultsTableProps) {
                 </tr>
               );
             })}
+          {metrics.length === 0 && !state.isLoading && noMetricsMessages()}
         </>
       </tbody>
     </table>
@@ -132,6 +170,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
 
   return {
     table: css`
+      ${disableTextWrap ? '' : 'table-layout: fixed;'}
       border-radius: ${theme.shape.borderRadius()};
       width: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
@@ -142,10 +181,8 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       td,
       th {
         min-width: ${theme.spacing(3)};
+        border-bottom: 1px solid ${theme.colors.border.weak};
       }
-    `,
-    header: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     row: css`
       label: row;
@@ -158,6 +195,9 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         background-color: ${rowHoverBg};
       }
     `,
+    tableHeaderPadding: css`
+      padding: 8px;
+    `,
     selectedRow: css`
       background-color: ${rowHoverBg};
     `,
@@ -165,6 +205,27 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       background: inherit;
       color: ${theme.components.textHighlight.text};
       background-color: ${theme.components.textHighlight.background};
+    `,
+    nameWidth: css`
+      ${disableTextWrap ? '' : 'width: 40%;'}
+    `,
+    nameOverflow: css`
+      ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
+    `,
+    typeWidth: css`
+      ${disableTextWrap ? '' : 'width: 16%;'}
+    `,
+    stickyHeader: css`
+      position: sticky;
+      top: 0;
+      background-color: ${theme.colors.background.primary};
+    `,
+    noResults: css`
+      text-align: center;
+      color: ${theme.colors.text.secondary};
+    `,
+    italicized: css`
+      font-style: italic;
     `,
   };
 };

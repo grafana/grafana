@@ -54,6 +54,7 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
     cellHeight = TableCellHeight.Sm,
+    timeRange,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -258,12 +259,13 @@ export const Table = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
+              timeRange={timeRange}
             />
           ))}
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable, timeRange]
   );
 
   const onNavigate = useCallback(

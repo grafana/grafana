@@ -358,7 +358,7 @@ def lint_backend_step():
             "wire-install",
         ],
         "commands": [
-            "Hello, Kat!"
+            "echo Hello, Kat!"
         ],
     }
 

@@ -419,7 +419,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - Hello, Kat!
+  - echo Hello, Kat!
   depends_on:
   - wire-install
   environment:
@@ -1420,7 +1420,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - Hello, Kat!
+  - echo Hello, Kat!
   depends_on:
   - wire-install
   environment:
@@ -4465,7 +4465,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -4612,7 +4612,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -7198,6 +7198,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 47d43549b63c230b491b1ef47242baa36a6973d354f1b10cdf41c56012bd6c6d
+hmac: 1f2151754e4eb6c96087d283a54a9923d891a5f3a1fe5b2a9e9d7f5b9287d7c2
 
 ...
