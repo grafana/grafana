@@ -284,19 +284,19 @@ To use bind mounts, complete the following steps:
 1. Add the following code into it:
 
    ```yaml
-   services:
    version: '3.8'
-   grafana:
-     image: grafana/grafana-enterprise
-     container_name: grafana
-     restart: unless-stopped
-     # if you are running as root then set it to 0
-     # else find the right id with the id -u command
-     user: '0'
-     ports:
-       - '3000:3000'
-     volumes:
-       - '$PWD/data:/var/lib/grafana'
+   services:
+     grafana:
+      image: grafana/grafana-enterprise
+      container_name: grafana
+      restart: unless-stopped
+      # if you are running as root then set it to 0
+      # else find the right id with the id -u command
+      user: '0'
+      ports:
+         - '3000:3000'
+      volumes:
+         - '$PWD/data:/var/lib/grafana'
    ```
 
 1. Save the file and run the following command:
