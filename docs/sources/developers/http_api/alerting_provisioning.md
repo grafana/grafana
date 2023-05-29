@@ -96,10 +96,12 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description    |
+{{% responsive-table %}}
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
 | -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID |
-| X-Disable-Provenance | `header` | string | `string` |           |          |         |                |
+| UID | `path` | string | `string` | | ✓ | | Alert rule UID |
+| X-Disable-Provenance | `header` | string | `string` | | | | |
+{{% /responsive-table %}}
 
 #### All responses
 
