@@ -281,7 +281,12 @@ To use bind mounts, complete the following steps:
 
 1. Create a new `docker-compose.yaml` file
 
-1. Add the following code into it:
+2. Create the folder where you will be mounting, in this case is `/data` e.g. in your current working directory:
+   ```bash
+   mkdir $PWD/data
+   ```
+
+3. Add the following code into it:
 
    ```yaml
    version: '3.8'
@@ -299,7 +304,7 @@ To use bind mounts, complete the following steps:
          - '$PWD/data:/var/lib/grafana'
    ```
 
-1. Save the file and run the following command:
+4. Save the file and run the following command:
 
    ```bash
    docker compose up -d docker-compose.yaml
