@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 
 		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
-		err := inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
 		t.Run("Won't add if already exists", func(t *testing.T) {
@@ -72,7 +73,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			err = inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+			err = inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 			require.Equal(t, plugins.DuplicateError{
 				PluginID: pluginV1.ID,
 			}, err)
@@ -115,7 +116,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				}, nil
 			}
 
-			err = inst.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})
+			err = inst.Add(context.Background(), pluginID, v2, testCompatOpts())
 			require.NoError(t, err)
 		})
 
@@ -168,10 +169,10 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			}
 
 			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
-			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
+			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
-			err = pm.Add(context.Background(), testPluginID, "", plugins.CompatOpts{})
+			err = pm.Add(context.Background(), testPluginID, "", testCompatOpts())
 			require.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 			t.Run(fmt.Sprintf("Can't uninstall %s plugin", tc.class), func(t *testing.T) {
@@ -205,4 +206,8 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 	}
 
 	return p
+}
+
+func testCompatOpts() plugins.CompatOpts {
+	return plugins.NewCompatOpts("10.0.0", runtime.GOOS, runtime.GOARCH)
 }

@@ -36,7 +36,7 @@ func (co CompatOpts) GrafanaVersion() (string, bool) {
 func (co CompatOpts) System() (SystemCompatOpts, bool) {
 	os, osSet := co.system.OS()
 	arch, archSet := co.system.Arch()
-	if !osSet && !archSet {
+	if !osSet || !archSet {
 		return SystemCompatOpts{}, false
 	}
 	return SystemCompatOpts{os: os, arch: arch}, true
