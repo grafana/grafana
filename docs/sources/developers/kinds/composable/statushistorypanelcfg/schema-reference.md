@@ -13,12 +13,12 @@ title: StatusHistoryPanelCfg kind
 
 
 
-| Property           | Type                        | Required | Default | Description |
-|--------------------|-----------------------------|----------|---------|-------------|
-| `PanelFieldConfig` | [object](#panelfieldconfig) | **Yes**  |         |             |
-| `PanelOptions`     | [object](#paneloptions)     | **Yes**  |         |             |
+| Property      | Type                   | Required | Default | Description |
+|---------------|------------------------|----------|---------|-------------|
+| `FieldConfig` | [object](#fieldconfig) | **Yes**  |         |             |
+| `Options`     | [object](#options)     | **Yes**  |         |             |
 
-### PanelFieldConfig
+### FieldConfig
 
 It extends [HideableFieldConfig](#hideablefieldconfig).
 
@@ -46,7 +46,7 @@ TODO docs
 |------------|---------------------------------------|----------|---------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
-### PanelOptions
+### Options
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
 
