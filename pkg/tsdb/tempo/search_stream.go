@@ -19,7 +19,6 @@ type ExtendedResponse struct {
 }
 
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
-	s.logger.Debug("Running stream", "path", req.Path, "data", string(req.Data))
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery
@@ -43,7 +42,6 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
-	s.logger.Info("Calling Search", "search request", sr)
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
 		s.logger.Error("Error Search()", "err", err)
@@ -74,8 +72,6 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 			s.logger.Error("Error receiving message", "err", err)
 			return sendError(err, sender)
 		}
-
-		s.logger.Info("Received message", "message", msg)
 
 		metrics = msg.Metrics
 		traceList = append(traceList, msg.Traces...)

@@ -29,7 +29,7 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 }
 
 func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	s.logger.Debug("New stream call", "path", request.Path, "json", string(request.Data))
+	s.logger.Debug("New stream call", "path", request.Path)
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		tempoDatasource, err := s.getDSInfo(ctx, request.PluginContext)
