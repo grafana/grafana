@@ -27,35 +27,24 @@ func ProvideService(cfg *config.Cfg) (*Manager, error) {
 		return nil, err
 	}
 
-	return NewManager(ManagerOpts{
+	return NewManager(ManagerCfg{
 		SkipTLSVerify: false,
 		BaseURL:       baseURL,
 		Logger:        log.NewPrettyLogger("plugin.repository"),
 	}), nil
 }
 
-type ManagerOpts struct {
+type ManagerCfg struct {
 	SkipTLSVerify bool
 	BaseURL       string
 	Logger        log.PrettyLogger
 }
 
-func NewManager(opts ...ManagerOpts) *Manager {
-	if len(opts) == 0 {
-		logger := log.NewPrettyLogger("plugin.repository")
-		opts = []ManagerOpts{
-			{
-				SkipTLSVerify: false,
-				BaseURL:       defaultBaseURL,
-				Logger:        logger,
-			},
-		}
-	}
-
+func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		baseURL: opts[0].BaseURL,
-		client:  NewClient(opts[0].SkipTLSVerify, opts[0].Logger),
-		log:     opts[0].Logger,
+		baseURL: cfg.BaseURL,
+		client:  NewClient(cfg.SkipTLSVerify, cfg.Logger),
+		log:     cfg.Logger,
 	}
 }
 

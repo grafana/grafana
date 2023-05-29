@@ -70,7 +70,7 @@ func TestGetPluginArchive(t *testing.T) {
 			)
 			t.Cleanup(srv.Close)
 
-			m := NewManager(ManagerOpts{
+			m := NewManager(ManagerCfg{
 				SkipTLSVerify: false,
 				BaseURL:       srv.URL,
 				Logger:        log.NewTestPrettyLogger(),

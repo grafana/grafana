@@ -168,7 +168,7 @@ func repoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
 
 	grafanaVersion := opts.GrafanaVersion()
 	if len(grafanaVersion) == 0 {
-		return repo.CompatOpts{}, errors.New("invalid grafana version compatibility option provided")
+		return repo.NewSystemCompatOpts(os, arch), nil
 	}
 
 	return repo.NewCompatOpts(grafanaVersion, os, arch), nil
