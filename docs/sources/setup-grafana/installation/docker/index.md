@@ -208,11 +208,11 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
     version: "3.8"
     services:
       grafana:
-      image: grafana/grafana-enterprise
-      container_name: grafana
-      restart: unless-stopped
-      ports:
-        - '3000:3000'
+         image: grafana/grafana-enterprise
+         container_name: grafana
+         restart: unless-stopped
+         ports:
+         - '3000:3000'
    ```
 
 1. To run `docker-compose.yaml`, run the following command:
