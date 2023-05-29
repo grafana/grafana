@@ -285,6 +285,7 @@ To use bind mounts, complete the following steps:
 
    ```yaml
    services:
+   version: '3.8'
    grafana:
      image: grafana/grafana-enterprise
      container_name: grafana
