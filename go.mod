@@ -264,9 +264,9 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
+	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b
 	github.com/grafana/thema v0.0.0-20230524160113-4e9d6e28a640
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
-	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
@@ -302,7 +302,7 @@ require (
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ecordell/optgen v0.0.6 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
@@ -318,7 +318,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/invopop/yaml v0.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
@@ -347,7 +347,7 @@ require (
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/cobra v1.4.0 // indirect
+	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect

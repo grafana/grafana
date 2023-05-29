@@ -17,13 +17,6 @@ const (
 	SearchStreamingStateStreaming SearchStreamingState = "streaming"
 )
 
-// Defines values for TempoQueryFiltersScope.
-const (
-	TempoQueryFiltersScopeResource TempoQueryFiltersScope = "resource"
-	TempoQueryFiltersScopeSpan     TempoQueryFiltersScope = "span"
-	TempoQueryFiltersScopeUnscoped TempoQueryFiltersScope = "unscoped"
-)
-
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"

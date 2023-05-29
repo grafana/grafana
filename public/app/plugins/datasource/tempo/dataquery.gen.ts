@@ -62,15 +62,6 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
 
 /**
- * static fields are pre-set in the UI, dynamic fields are added by the user
- */
-export enum TraceqlSearchScope {
-  Resource = 'resource',
-  Span = 'span',
-  Unscoped = 'unscoped',
-}
-
-/**
  * The state of the TraceQL streaming search query
  */
 export enum SearchStreamingState {
@@ -78,6 +69,15 @@ export enum SearchStreamingState {
   Error = 'error',
   Pending = 'pending',
   Streaming = 'streaming',
+}
+
+/**
+ * static fields are pre-set in the UI, dynamic fields are added by the user
+ */
+export enum TraceqlSearchScope {
+  Resource = 'resource',
+  Span = 'span',
+  Unscoped = 'unscoped',
 }
 
 export interface TraceqlFilter {
