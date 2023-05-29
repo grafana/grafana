@@ -40,7 +40,7 @@ Learn more about the inbuilt `-- Grafana --` and `-- Dashboard --` data sources 
 
 ## Context menu
 
-To provide a more streamlined experience, the Datagrid panel has a context menu that can be accessed by right clicking on a cell, column header, or row selector. Depending on the state of your datagrid, the context menu offers different options including:
+To provide a more streamlined experience, the Datagrid panel has a context menu that can be accessed by right-clicking on a cell, column header, or row selector. Depending on the state of your datagrid, the context menu offers different options including:
 
 - Delete or clear rows and columns.
 - Remove all existing data (rendering your datagrid blank).
@@ -48,13 +48,13 @@ To provide a more streamlined experience, the Datagrid panel has a context menu 
 
 Deleting a row or column will remove the data from the datagrid, while clearing a row or column will only remove the data from the cells, leaving the row or column intact.
 
-![Datagrid context menu](/media/docs/datagrid/screenshot-grafana-datagrid-context-menu.png)
+![Datagrid context menu](/media/docs/datagrid/screenshot-grafana-datagrid-context-menu-2.png)
 
 ### Header menu
 
 You can also access a header menu by clicking the dropdown icon next to the header title. From here, you can not only delete or clear a column, but also rename it, freeze it, or convert the field type of the column.
 
-![Datagrid header menu](/media/docs/datagrid/screenshot-grafana-datagrid-header-menu.png)
+![Datagrid header menu](/media/docs/datagrid/screenshot-grafana-datagrid-header-menu-2.png)
 
 ## Selecting series
 
