@@ -424,11 +424,11 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 			// if we would share the same transaction, we could just rollback
 			// this ensures that a retry of the migration will not create duplicate service accounts
 			// and therefore fail due to "already created service account"
-			err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID})
-			if err != nil {
-				s.log.Warn("failed to revert service account creation", "error", err)
-				return fmt.Errorf("failed to revert service account creation: %w", err)
-			}
+			// err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID})
+			// if err != nil {
+			// 	s.log.Warn("failed to revert service account creation", "error", err)
+			// 	return fmt.Errorf("failed to revert service account creation: %w", err)
+			// }
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
 		}
 
