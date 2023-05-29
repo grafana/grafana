@@ -427,6 +427,15 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.3
   name: lint-backend
+- commands:
+  - echo Yer a programmer, Kat!
+  - go run dummy/modowners.go check dummy/go.txd
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.20.3
+  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -1360,6 +1369,15 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.3
   name: lint-backend
+- commands:
+  - echo Yer a programmer, Kat!
+  - go run dummy/modowners.go check dummy/go.txd
+  depends_on:
+  - wire-install
+  environment:
+    CGO_ENABLED: "1"
+  image: golang:1.20.3
+  name: validate-modfile
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -6941,6 +6959,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: e819db5b752a99280213ed98baa12c0c27c87521c826580a8067c957579db98f
+hmac: f543e80de001c6a23777bafe73bca8765bd5a354951938cde0d8e8902c7d129f
 
 ...
