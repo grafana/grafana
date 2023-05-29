@@ -162,7 +162,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.DashboardUid)
 	}
 
-	publicDashboard, err := pd.getCreatePublicDashboard(ctx, dto)
+	publicDashboard, err := pd.newCreatePublicDashboard(ctx, dto)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +215,7 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
 	}
 
-	publicDashboard := getUpdatePublicDashboard(dto, existingPubdash)
+	publicDashboard := newUpdatePublicDashboard(dto, existingPubdash)
 
 	// set values to update
 	cmd := SavePublicDashboardCommand{
@@ -408,7 +408,7 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-func (pd *PublicDashboardServiceImpl) getCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	uid, err := pd.NewPublicDashboardUid(ctx)
 	if err != nil {
 		return nil, err
@@ -448,7 +448,7 @@ func (pd *PublicDashboardServiceImpl) getCreatePublicDashboard(ctx context.Conte
 	}, nil
 }
 
-func getUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) *PublicDashboard {
+func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) *PublicDashboard {
 	pubdashDTO := dto.PublicDashboard
 	timeSelectionEnabled := returnValueOrDefault(pubdashDTO.TimeSelectionEnabled, pd.TimeSelectionEnabled)
 	isEnabled := returnValueOrDefault(pubdashDTO.IsEnabled, pd.IsEnabled)
