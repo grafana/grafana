@@ -27,7 +27,7 @@ export const AddPanelButton = ({ dashboard }: Props) => {
       <Button
         icon="panel-add"
         size="lg"
-        fill="outline"
+        fill="text"
         className={cx(styles.button, styles.buttonIcon, styles.buttonText)}
         data-testid={selectors.components.PageToolbar.itemButton('Add panel button')}
       >

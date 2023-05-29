@@ -1,0 +1,177 @@
+name: New Bug Report
+description: File a bug report
+title: "Product-Area-Here: short description of bug here"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        Please try to give your issue a good title. Try using the product-area where you are having an issue and a brief description of the problem. Like this: 
+        - `Dashboards: Template Variables break when I do X` or 
+        - `Alerting: message templating plus Slack channel breaks when I do X`
+  - type: markdown
+    attributes:
+      value: |
+        **HINT:** Have you tried [searching](https://github.com/grafana/grafana/issues) for similar issues? Duplicate issues are common.
+
+        **Are you reporting a security vulnerability?** [Submit it here instead](https://github.com/grafana/grafana/security/policy).
+  - type: markdown
+    attributes:
+      value: |
+       #
+  - type: textarea
+    id: bug-describe
+    attributes:
+      label: |
+        
+        # What went wrong?
+        
+      description: |
+        #
+        Describe your bug. What happened? What did you expect to happen?
+
+        **Hot Tip:** Record your screen and add it here as a gif. 
+      placeholder: Tell us what you see!
+      value: |
+        **What happened**:
+
+          - 
+
+        **What did you expect to happen**:
+
+          - 
+
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+       #
+  - type: textarea
+    id: bug-repro
+    attributes:
+      label: |
+        
+        # How do we reproduce it?
+        
+      description: |
+        #
+
+        Whenever possible, please provide **detailed** steps for reproducing your bug.
+
+        **This is very helpful info** 
+      placeholder: "Step 1:..."
+      value: |
+        **Step 1**:
+        
+        - Open Grafana and do X 
+
+        **Step 2**:
+
+        - Now click button Y
+
+        **Step 3**:
+
+        - Wait for the browser to crash. Error message says: "Error..."
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+       #
+  - type: input
+    id: gf-version
+    attributes:
+      label: |
+        
+        # What Grafana version are you using?
+        
+      description: |
+        #
+        - [How do I find my Grafana version info?](https://community.grafana.com/t/how-to-find-your-grafana-version-info-3-different-ways/86857)
+      placeholder: "ex: v9.5.0, or v9.5.0-cloud.5.a016665c (b2a5d45589)"
+    validations:
+      required: true  
+  - type: markdown
+    attributes:
+      value: |
+        #
+        #
+        # Optional Questions:
+        #
+  - type: textarea
+    id: get-help
+    attributes:
+      label: |
+        
+        ## Optional Questions:
+        
+        ### Is the bug inside a Dashboard Panel?
+
+      description: |
+        If the bug appears inside a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations), please use the ["Get-Help" feature](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/). Select **copy to clipboard** and paste the data below.
+        No need for backticks--this text will get formatted as a code-block.
+
+        What's a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations)?
+      placeholder: Copy "get-help" data here
+      value: Copy the panel's ["get-help" data](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) here  
+  - type: dropdown
+    id: gf-deployment
+    attributes:
+      label: Grafana Platform?
+      description: |
+        **How** are you running/deploying Grafana?
+      options:
+        - I use Grafana Cloud
+        - Docker
+        - Kubernetes
+        - A package manager (APT, YUM, BREW, etc.)
+        - A downloaded binary
+        - Other
+        - I don't know
+    validations:
+      required: false
+  - type: input
+    id: user-os
+    attributes:
+      label: User's OS?
+      description: What operating system are you running locally?
+      placeholder: "ex. MacOS Big Sur 11.7, or Ubuntu 20.04..."
+  - type: input
+    id: user-browser
+    attributes:
+      label: User's Browser?
+      description: Is the bug occuring in Grafana's user-interface? If so, what browsers are you seeing the problem on? You may choose more than one.
+      placeholder: "ex. Google Chrome Version 112.0.5615.137 (Official Build) (arm64)..."
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Is this a Regression?
+      description: |
+        A regression means that the feature was working, then you upgraded, and now it's broken.
+      options:
+        - 'No'
+        - 'Yes'
+    validations:
+      required: false
+  - type: input
+    id: gf-datasource
+    attributes:
+      label: Are Datasources involved?
+      description: |
+        Is this issue specific to a datasource plugin / plugins? Please list all that apply:
+      placeholder: "ex. Elasticsearch 5.0.0 or Infinity 1.4.1 ..."
+  - type: markdown
+    attributes:
+      value: |
+        #
+        #
+        ## Anything else to add?
+        #
+  - type: textarea
+    id: extra
+    attributes:
+      label: |
+              Anything else to add?
+      description: Add any extra information here

@@ -141,7 +141,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
-		s.log.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
+		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -341,7 +341,7 @@ func (s *Signature) Verify(ctx context.Context, keyID string, block *clearsign.B
 	if _, err = openpgp.CheckDetachedSignature(keyring,
 		bytes.NewBuffer(block.Bytes),
 		block.ArmoredSignature.Body, &packet.Config{}); err != nil {
-		return fmt.Errorf("%v: %w", "failed to check signature", err)
+		return fmt.Errorf("failed to check signature: %w", err)
 	}
 
 	return nil

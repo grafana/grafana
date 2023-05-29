@@ -342,6 +342,20 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 	return response.JSON(statusForTestReceivers(result.Receivers), newTestReceiversResult(result))
 }
 
+func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
+	if errResp != nil {
+		return errResp
+	}
+
+	res, err := am.TestTemplate(c.Req.Context(), body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "", err)
+	}
+
+	return response.JSON(http.StatusOK, newTestTemplateResult(res))
+}
+
 // contextWithTimeoutFromRequest returns a context with a deadline set from the
 // Request-Timeout header in the HTTP request. If the header is absent then the
 // context will use the default timeout. The timeout in the Request-Timeout
@@ -431,6 +445,24 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 		// all receivers were sent a notification without error
 		return http.StatusOK
 	}
+}
+
+func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {
+	apiRes := apimodels.TestTemplatesResults{}
+	for _, r := range res.Results {
+		apiRes.Results = append(apiRes.Results, apimodels.TestTemplatesResult{
+			Name: r.Name,
+			Text: r.Text,
+		})
+	}
+	for _, e := range res.Errors {
+		apiRes.Errors = append(apiRes.Errors, apimodels.TestTemplatesErrorResult{
+			Name:    e.Name,
+			Kind:    apimodels.TemplateErrorKind(e.Kind),
+			Message: e.Error.Error(),
+		})
+	}
+	return apiRes
 }
 
 func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {

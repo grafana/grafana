@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useCallback } from 'react';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
@@ -82,7 +82,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   let urlTooltip;
 
   const onSettingsChange = useCallback(
-    (change: Partial<DataSourceSettings<any, any>>) => {
+    (change: Partial<typeof dataSourceConfig>) => {
       onChange({
         ...dataSourceConfig,
         ...change,

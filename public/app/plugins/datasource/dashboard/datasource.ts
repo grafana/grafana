@@ -1,4 +1,10 @@
-import { DataSourceApi, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  TestDataSourceResponse,
+} from '@grafana/data';
 
 import { DashboardQuery } from './types';
 
@@ -18,7 +24,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     return Promise.reject('This should not be called directly');
   }
 
-  testDatasource() {
-    return Promise.resolve({});
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }

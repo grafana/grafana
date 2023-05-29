@@ -77,7 +77,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./public/app/plugins/gen.go
 	go generate ./pkg/kindsys/report.go
 
-gen-go: $(WIRE) gen-cue
+gen-go: $(WIRE)
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
 
@@ -207,7 +207,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.20.3 \
+	--build-arg GO_IMAGE=golang:1.20.4 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 

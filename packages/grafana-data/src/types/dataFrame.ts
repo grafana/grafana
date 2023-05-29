@@ -29,12 +29,14 @@ export enum FieldType {
  */
 export interface FieldConfig<TOptions = any> {
   /**
-   * The display value for this field.  This supports template variables blank is auto
+   * The display value for this field.  This supports template variables blank is auto.
+   * If you are a datasource plugin, do not set this. Use `field.value` and if that
+   * is not enough, use `field.config.displayNameFromDS`.
    */
   displayName?: string;
 
   /**
-   * This can be used by data sources that return and explicit naming structure for values and labels
+   * This can be used by data sources that need to customize how values are named.
    * When this property is configured, this value is used rather than the default naming strategy.
    */
   displayNameFromDS?: string;

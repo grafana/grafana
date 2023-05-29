@@ -13,8 +13,7 @@ import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-
-import { DataHoverView } from '../geomap/components/DataHoverView';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';
@@ -39,7 +38,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
 
-  const xDisp = (v: any) => {
+  const xDisp = (v: number) => {
     if (xField?.display) {
       return formattedValueToString(xField.display(v));
     }
@@ -57,7 +56,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
-  const yDisp = yField?.display ? (v: any) => formattedValueToString(yField.display!(v)) : (v: any) => `${v}`;
+  const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
   const yValueIdx = index % data.yBucketCount! ?? 0;
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { DropzoneOptions } from 'react-dropzone';
+import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceJsonData, DataSourceRef } from '@grafana/schema';
@@ -14,6 +15,7 @@ export interface DataSourceDropdownProps {
 }
 
 export interface PickerContentProps extends DataSourceDropdownProps {
+  keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
   onClose: () => void;

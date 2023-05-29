@@ -172,7 +172,7 @@ export interface RowsHeatmapOptions {
   value?: string;
 }
 
-export interface PanelOptions {
+export interface Options {
   /**
    * Controls if the heatmap should be calculated from data
    */
@@ -233,7 +233,7 @@ export interface PanelOptions {
   yAxis: YAxisConfig;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   calculate: false,
   cellGap: 1,
   cellValues: {},
@@ -266,6 +266,6 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   },
 };
 
-export interface PanelFieldConfig extends ui.HideableFieldConfig {
+export interface FieldConfig extends ui.HideableFieldConfig {
   scaleDistribution?: ui.ScaleDistributionConfig;
 }

@@ -25,7 +25,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
+import {
+  QueryOperationAction,
+  QueryOperationToggleAction,
+} from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -430,15 +433,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
-    const isDisabled = query.hide;
+    const isDisabled = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
       <HorizontalGroup width="auto">
         {hasEditorHelp && (
-          <QueryOperationAction
-            title="Toggle data source help"
+          <QueryOperationToggleAction
+            title="Show data source help"
             icon="question-circle"
             onClick={this.onToggleHelp}
             active={showingHelp}
@@ -456,8 +459,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         {this.renderExtraActions()}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery ? (
-          <QueryOperationAction
-            title="Disable/enable query"
+          <QueryOperationToggleAction
+            title="Disable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}

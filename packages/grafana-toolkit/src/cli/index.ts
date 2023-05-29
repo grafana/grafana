@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { program } from 'commander';
 
-import { pluginBuildTask } from './tasks/plugin.build';
 import { getToolkitVersion } from './tasks/plugin.utils';
 import { templateTask } from './tasks/template';
 import { execTask } from './utils/execTask';
@@ -13,7 +12,7 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('debug:template')
       .description('Just testing')
-      .action(async (cmd) => {
+      .action(async () => {
         await execTask(templateTask)({});
       });
   }
@@ -40,21 +39,12 @@ export const run = (includeInternalScripts = false) => {
     .option('--skipTest', 'Skip running tests (for pipelines that run it separate)', false)
     .option('--skipLint', 'Skip running lint (for pipelines that run it separate)', false)
     .option('--preserveConsole', 'Preserves console calls', false)
-    .description('[Deprecated] Prepares plugin dist package')
-    .action(async (cmd) => {
-      console.log(chalk.yellow('\n⚠️  DEPRECATED. This command is deprecated and will be removed in v10. ⚠️'));
+    .description('[removed] Use grafana create-plugin instead')
+    .action(async () => {
       console.log(
-        'Please migrate to grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
+        'No longer supported. Use grafana create-plugin https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin\n'
       );
-
-      await execTask(pluginBuildTask)({
-        coverage: cmd.coverage,
-        silent: true,
-        maxJestWorkers: cmd.maxJestWorkers,
-        preserveConsole: cmd.preserveConsole,
-        skipLint: cmd.skipLint,
-        skipTest: cmd.skipTest,
-      });
+      process.exit(1);
     });
 
   program

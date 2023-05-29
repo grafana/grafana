@@ -25,7 +25,6 @@ export function buildNavModel(team: Team): NavModelItem {
     subTitle: 'Manage members and settings',
     url: '',
     text: team.name,
-    breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],
     children: [
       // With RBAC this tab will always be available (but not always editable)
       // With Legacy it will be hidden by hideTabsFromNonTeamAdmin should the user not be allowed to see it

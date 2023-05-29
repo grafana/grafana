@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -12,13 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func LogGroupsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func LogGroupsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	request, err := resources.ParseLogGroupsRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("cannot set both log group name prefix and pattern", http.StatusBadRequest, err)
 	}
 
-	service, err := newLogGroupsService(pluginCtx, reqCtxFactory, request.Region)
+	service, err := newLogGroupsService(ctx, pluginCtx, reqCtxFactory, request.Region)
 	if err != nil {
 		return nil, models.NewHttpError("newLogGroupsService error", http.StatusInternalServerError, err)
 	}
@@ -39,8 +40,8 @@ func LogGroupsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.Requ
 // newLogGroupsService is a describe log groups service factory.
 //
 // Stubbable by tests.
-var newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-	reqCtx, err := reqCtxFactory(pluginCtx, region)
+var newLogGroupsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+	reqCtx, err := reqCtxFactory(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}

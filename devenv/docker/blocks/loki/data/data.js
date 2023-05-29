@@ -176,8 +176,8 @@ async function sendOldLogs() {
     const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
     globalCounter += 1;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', ...sharedLabels});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'old', place:'moon', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'old', place:'luna', ...sharedLabels});
   };
 }
 
@@ -187,18 +187,16 @@ async function sendNewLogs() {
     const nowMs = new Date().getTime();
     const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {place:'moon', ...sharedLabels});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {place:'luna', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels});
     const sleepDuration  = 200 + Math.random() * 800; // between 0.2 and 1 seconds
     await sleep(sleepDuration);
   }
 }
 
 async function main() {
-  // first we send logs to build a last-7-days log-data
-  await sendOldLogs();
-  // then keep sending new data forever
-  await sendNewLogs();
+  // we generate both old-logs and new-logs at the same time
+  await Promise.all([sendOldLogs(), sendNewLogs()])
 }
 
 // when running in docker, we catch the needed stop-signal, to shutdown fast
