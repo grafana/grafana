@@ -1,7 +1,7 @@
-import { check } from "k6";
-import http from "k6/http";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "./env.js";
+import { url } from './env.js';
 
 /**
  * Login creates a new session.
@@ -14,23 +14,19 @@ import { url } from "./env.js";
 export function login(username, password, forceNewSession = false) {
   if (!forceNewSession) {
     const jar = http.cookieJar();
-    if (jar.cookiesForURL(url)["grafana_session"]) {
+    if (jar.cookiesForURL(url)['grafana_session']) {
       return;
     }
   }
 
   // Create a new session.
-  const res = http.post(
-    url + "/login",
-    JSON.stringify({ user: username, password: password }),
-    {
-      headers: { "Content-Type": "application/json" },
-      tags: { type: "auth", op: "login" },
-    }
-  );
+  const res = http.post(url + '/login', JSON.stringify({ user: username, password: password }), {
+    headers: { 'Content-Type': 'application/json' },
+    tags: { type: 'auth', op: 'login' },
+  });
 
   check(res, {
-    "successfully logged in": (r) => r.status === 200,
+    'successfully logged in': (r) => r.status === 200,
   });
 }
 
@@ -43,8 +39,8 @@ export function login(username, password, forceNewSession = false) {
  * @param forceNewSession
  */
 export function loginAdmin(forceNewSession = false) {
-  const uname = __ENV.GT_USERNAME ? __ENV.GT_USERNAME : "admin";
-  const password = __ENV.GT_PASSWORD ? __ENV.GT_PASSWORD : "admin";
+  const uname = __ENV.GT_USERNAME ? __ENV.GT_USERNAME : 'admin';
+  const password = __ENV.GT_PASSWORD ? __ENV.GT_PASSWORD : 'admin';
 
   return login(uname, password, forceNewSession);
 }

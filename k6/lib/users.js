@@ -1,7 +1,7 @@
-import { check } from "k6";
-import http from "k6/http";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "./env.js";
+import { url } from './env.js';
 
 /**
  * Functions for interacting with Grafana's users.
@@ -21,8 +21,8 @@ export class userAPI {
    */
   static skel(name, orgs = {}) {
     return {
-      name: "k6 " + name,
-      email: name + "@example.org",
+      name: 'k6 ' + name,
+      email: name + '@example.org',
       login: name,
       orgs: orgs,
       password: __ENV.GT_NEW_USER_PASSWORD || 'correct horse battery staple',
@@ -39,7 +39,7 @@ export class userAPI {
     const org = u.orgs && u.orgs.length > 0 ? Object.keys(u.orgs)[0] : 0;
 
     const res = http.post(
-      url + "/api/admin/users",
+      url + '/api/admin/users',
       JSON.stringify({
         name: u.name,
         email: u.email,
@@ -48,20 +48,20 @@ export class userAPI {
         org: org,
       }),
       {
-        tags: "create",
-        headers: { "Content-Type": "application/json" },
+        tags: 'create',
+        headers: { 'Content-Type': 'application/json' },
       }
     );
     check(res, {
-      "successfully created user": (r) => r.status === 200,
+      'successfully created user': (r) => r.status === 200,
     });
 
     if (res.status !== 200) {
-      console.error("failed to create user:", res.body);
+      console.error('failed to create user:', res.body);
       return u;
     }
 
-    u.id = res.json("id");
+    u.id = res.json('id');
 
     for (let org in u.orgs) {
       setOrgRole(u, org, u.orgs[org]);
@@ -86,40 +86,33 @@ export class userAPI {
    */
   static del(user) {
     const res = http.del(http.url`${url}/api/admin/users/${user.id}`, null, {
-      tags: "delete",
+      tags: 'delete',
     });
     check(res, {
-      "delete user status is 200": (r) => r.status === 200,
+      'delete user status is 200': (r) => r.status === 200,
     });
   }
-};
+}
 
 /**
  * @typedef userRole
  * @enum {string}
  */
 const userRole = {
-  Viewer: "Viewer",
-  Editor: "Editor",
-  Admin: "Admin",
-}
+  Viewer: 'Viewer',
+  Editor: 'Editor',
+  Admin: 'Admin',
+};
 
 function getOrgs(u) {
   const res = http.get(`${url}/api/users/${u.id}/orgs`, null, {
-    tags: "getOrgs",
+    tags: 'getOrgs',
   });
   check(res, {
-    "successfully able to get current organization for user": (r) =>
-      r.status === 200,
+    'successfully able to get current organization for user': (r) => r.status === 200,
   });
   if (res.status !== 200) {
-    console.warn(
-      "tried to get current organization for user, but failed",
-      "login=",
-      u.login,
-      "response=",
-      res
-    );
+    console.warn('tried to get current organization for user, but failed', 'login=', u.login, 'response=', res);
     return [];
   }
 
@@ -135,7 +128,7 @@ function getOrgs(u) {
 
 function setOrgRole(u, org, role) {
   const orgs = getOrgs(u);
-  let verb = "POST";
+  let verb = 'POST';
   let path = http.url`${url}/api/orgs/${org}/users`;
   let payload = JSON.stringify({
     loginOrEmail: u.login,
@@ -143,7 +136,7 @@ function setOrgRole(u, org, role) {
   });
 
   if (org in orgs) {
-    verb = "PATCH";
+    verb = 'PATCH';
     path = http.url`${url}/api/orgs/${org}/users/${u.id}`;
     payload = JSON.stringify({
       role: role,
@@ -151,14 +144,14 @@ function setOrgRole(u, org, role) {
   }
 
   const res = http.request(verb, path, payload, {
-    tags: "setRole",
-    headers: { "Content-Type": "application/json" },
+    tags: 'setRole',
+    headers: { 'Content-Type': 'application/json' },
   });
 
   check(res, {
-    "successfully set user role in org": (r) => r.status === 200,
+    'successfully set user role in org': (r) => r.status === 200,
   });
   if (res.status !== 200) {
-    console.warn("tried to set user role, but failed:", res);
+    console.warn('tried to set user role, but failed:', res);
   }
 }

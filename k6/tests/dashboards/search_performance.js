@@ -1,18 +1,18 @@
-import { check, randomSeed } from "k6";
-import http from "k6/http";
+import { check, randomSeed } from 'k6';
+import http from 'k6/http';
 
-import { loginAdmin, login } from "../../lib/api.js";
-import { url } from "../../lib/env.js";
-import { cleanup, provision } from "../../lib/grafana.js";
-import { rand } from "../../lib/util.js";
+import { loginAdmin, login } from '../../lib/api.js';
+import { url } from '../../lib/env.js';
+import { cleanup, provision } from '../../lib/grafana.js';
+import { rand } from '../../lib/util.js';
 
 export let options = {
   vus: 7,
-  duration: "30s",
-  setupTimeout: "3m",
+  duration: '30s',
+  setupTimeout: '3m',
   thresholds: {
-    http_req_duration: ["p(95)<1000"],
-    http_req_failed: ["rate<0.01"],
+    http_req_duration: ['p(95)<1000'],
+    http_req_failed: ['rate<0.01'],
   },
 };
 
@@ -37,13 +37,13 @@ export default function (data) {
   login(u.login, u.password, true);
 
   // Search is a heavy query. That's why it's fun.
-  const res = http.get(url + "/api/search?q=k6", {
-    tags: { type: "search", op: "search" },
+  const res = http.get(url + '/api/search?q=k6', {
+    tags: { type: 'search', op: 'search' },
   });
   check(res, {
-    "search has status 200": (r) => r.status === 200,
-    "search takes less than 1s": (r) => r.timings.duration < 1000,
-    "dashboards found": (r) => r.json().length !== 0,
+    'search has status 200': (r) => r.status === 200,
+    'search takes less than 1s': (r) => r.timings.duration < 1000,
+    'dashboards found': (r) => r.json().length !== 0,
   });
 }
 

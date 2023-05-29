@@ -1,18 +1,18 @@
-import http from "k6/http";
-import { check } from "k6";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "../../lib/env.js";
-import { createFolders, deleteFolders } from "../../lib/folders.js";
-import { loginAdmin } from "../../lib/api.js";
-import { createDashboards } from "../../lib/dashboards.js";
+import { loginAdmin } from '../../lib/api.js';
+import { createDashboards } from '../../lib/dashboards.js';
+import { url } from '../../lib/env.js';
+import { createFolders, deleteFolders } from '../../lib/folders.js';
 
 export let options = {
   vus: 1,
-  setupTimeout: "5m",
-  duration: "1m",
+  setupTimeout: '5m',
+  duration: '1m',
   thresholds: {
-    http_req_duration: ["p(95)<1000"],
-    http_req_failed: ["rate<0.01"],
+    http_req_duration: ['p(95)<1000'],
+    http_req_failed: ['rate<0.01'],
   },
   noCookiesReset: true,
 };
@@ -29,10 +29,10 @@ export function setup() {
 export default function (data) {
   loginAdmin();
 
-  res = http.get(url + "/api/search?q=k6");
+  res = http.get(url + '/api/search?q=k6');
   check(res, {
-    "search status is 200": (r) => r.status === 200,
-    "response takes less than 1s": (r) => r.timings.duration < 1000,
+    'search status is 200': (r) => r.status === 200,
+    'response takes less than 1s': (r) => r.timings.duration < 1000,
   });
 }
 

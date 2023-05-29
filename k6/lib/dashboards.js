@@ -1,9 +1,9 @@
-import http from "k6/http";
-import { check } from "k6";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "./env.js";
-import { devDashboards } from "./dashboards_gen.js";
-import { rand } from "./util.js";
+import { devDashboards } from './dashboards_gen.js';
+import { url } from './env.js';
+import { rand } from './util.js';
 
 /**
  * Creates a set number of dashboards and distributes them randomly across folders.
@@ -32,31 +32,24 @@ export function createDashboards(num, folderUids = []) {
  * @returns {*} The raw k6 HTTP response for the API call.
  */
 export function getDashboard(uid, expectedStatusCode = 200) {
-  const res = http.get(
-    http.url`${url}/api/dashboards/uid/${uid}`,
-    {
-      tags: { type: "dashboards", op:"read" },
-    }
-  );
+  const res = http.get(http.url`${url}/api/dashboards/uid/${uid}`, {
+    tags: { type: 'dashboards', op: 'read' },
+  });
 
   check(res, {
     [`get dashboard status is ${expectedStatusCode}`]: (r) => r.status === expectedStatusCode,
   });
 
   if (res.status !== expectedStatusCode) {
-    console.warn(
-      `failed to get dashboard '${uid}', got HTTP status ${
-        res.status
-      } with error: ${res.json("message")}`
-    );
+    console.warn(`failed to get dashboard '${uid}', got HTTP status ${res.status} with error: ${res.json('message')}`);
   }
 
   // verify we got the correct object back if successfull response
-  if(res.status === 200) {
-    check(res, {[`get correct dashboard ${uid}`]: (r) => r.json().dashboard.uid === uid});
+  if (res.status === 200) {
+    check(res, { [`get correct dashboard ${uid}`]: (r) => r.json().dashboard.uid === uid });
   }
 
-  return res
+  return res;
 }
 
 /**
@@ -77,25 +70,23 @@ export function createDashboard(uid, folderUid) {
     http.url`${url}/api/dashboards/db`,
     JSON.stringify({ dashboard: db.content, folderUid: folderUid }),
     {
-      tags: { type: "dashboards", op: "create" },
-      headers: { "Content-Type": "application/json" },
+      tags: { type: 'dashboards', op: 'create' },
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 
   check(res, {
-    "create dashboard status is 200": (r) => r.status === 200,
+    'create dashboard status is 200': (r) => r.status === 200,
   });
 
   if (res.status !== 200) {
     console.warn(
-      `failed to create dashboard '${uid}', got HTTP status ${
-        res.status
-      } with error: ${res.json("message")}`
+      `failed to create dashboard '${uid}', got HTTP status ${res.status} with error: ${res.json('message')}`
     );
   }
 
   // verify we got the correct object back
-  check(res, {[`get correct dashboard ${uid}`]: (r) => r.json().uid === uid});
+  check(res, { [`get correct dashboard ${uid}`]: (r) => r.json().uid === uid });
 
   // TODO maybe this should return the response, not the dashboard and this
   // method should take a dashboard
@@ -111,30 +102,27 @@ export function createDashboard(uid, folderUid) {
 export function updateDashboard(uid, db) {
   let res = http.post(
     http.url`${url}/api/dashboards/db`,
-    JSON.stringify({ dashboard: db.content, folderUid: "", overwrite: true}),
+    JSON.stringify({ dashboard: db.content, folderUid: '', overwrite: true }),
     {
-      tags: { type: "dashboards", op: "update" },
-      headers: { "Content-Type": "application/json" },
+      tags: { type: 'dashboards', op: 'update' },
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 
   check(res, {
-    "update dashboard status is 200": (r) => r.status === 200,
+    'update dashboard status is 200': (r) => r.status === 200,
   });
 
   if (res.status !== 200) {
     console.warn(
-      `failed to update dashboard '${uid}', got HTTP status ${
-        res.status
-      } with error: ${res.json("message")}`
+      `failed to update dashboard '${uid}', got HTTP status ${res.status} with error: ${res.json('message')}`
     );
   }
 
   // verify we got the correct object back
-  check(res, {[`get correct dashboard ${uid}`]: (r) => r.json().uid === uid});
+  check(res, { [`get correct dashboard ${uid}`]: (r) => r.json().uid === uid });
 
   return db;
-
 }
 
 /**
@@ -144,12 +132,12 @@ export function updateDashboard(uid, db) {
  */
 export function deleteDashboard(uid) {
   const res = http.del(http.url`${url}/api/dashboards/uid/${uid}`, null, {
-      tags: { type: "dashboards", op: "delete" },
-    });
+    tags: { type: 'dashboards', op: 'delete' },
+  });
 
-    check(res, {
-      "delete dashboard status is 200": (r) => r.status === 200,
-    });
+  check(res, {
+    'delete dashboard status is 200': (r) => r.status === 200,
+  });
 }
 
 /**
@@ -159,15 +147,17 @@ export function deleteDashboard(uid) {
  */
 export function deleteDashboards(dashboards) {
   console.info(`deleting ${dashboards.length} dashboards...`);
-  dashboards.forEach((d) => { deleteDashboard(d) });
+  dashboards.forEach((d) => {
+    deleteDashboard(d);
+  });
 }
 
 // Create a dashboard JSON from a set of sample dashboards.
 function randomDashboardJSON(uid) {
   const i = Math.floor(Math.random() * devDashboards.length);
   let db = devDashboards[i];
-  db.content["uid"] = uid; // Setting our UID.
-  db.content["title"] = "k6 dashboard " + uid; // Title needs to be unique.
-  delete db.content["id"]; // if ID is set, Grafana thinks this is an update.
+  db.content['uid'] = uid; // Setting our UID.
+  db.content['title'] = 'k6 dashboard ' + uid; // Title needs to be unique.
+  delete db.content['id']; // if ID is set, Grafana thinks this is an update.
   return db;
 }

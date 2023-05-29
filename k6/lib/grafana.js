@@ -1,7 +1,8 @@
-import { userAPI } from "./users.js";
-import { createDashboards, deleteDashboards } from "./dashboards.js";
-import { scale } from "./env.js";
-import { randomString } from "https://jslib.k6.io/k6-utils/1.4.0/index.js";
+import { randomString } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
+
+import { createDashboards, deleteDashboards } from './dashboards.js';
+import { scale } from './env.js';
+import { userAPI } from './users.js';
 
 /**
  * @typedef {{users: User[], viewers: User[], editors: User[], admins: User[], dashboards: string[]}} ProvisionResult
@@ -21,23 +22,17 @@ export function provision(conf) {
     let viewers = conf.users.viewers * scale;
     let editors = conf.users.editors * scale;
     let admins = conf.users.admins * scale;
-    console.info(
-      `creating ${viewers} viewers, ${editors} editors, and ${admins} admins…`
-    );
-    created.viewers = randomIdentifiers(viewers)
-      .map(userAPI.skel)
-      .map(userAPI.create);
+    console.info(`creating ${viewers} viewers, ${editors} editors, and ${admins} admins…`);
+    created.viewers = randomIdentifiers(viewers).map(userAPI.skel).map(userAPI.create);
     created.editors = randomIdentifiers(editors)
       .map(userAPI.skel)
-      .map(addOrgRoleToUserSkel(org, "Editor"))
+      .map(addOrgRoleToUserSkel(org, 'Editor'))
       .map(userAPI.create);
     created.admins = randomIdentifiers(admins)
       .map(userAPI.skel)
-      .map(addOrgRoleToUserSkel(org, "Admin"))
+      .map(addOrgRoleToUserSkel(org, 'Admin'))
       .map(userAPI.create);
-    created.users = created.viewers
-      .concat(created.editors)
-      .concat(created.admins);
+    created.users = created.viewers.concat(created.editors).concat(created.admins);
   }
   if (conf.dashboards) {
     created.dashboards = createDashboards(conf.dashboards.count * scale);
@@ -71,7 +66,7 @@ function addOrgRoleToUserSkel(org, role) {
 function randomIdentifiers(length) {
   let res = [];
   for (let i = 0; i < length; i++) {
-    res.push(randomString(15, "abcdefghijklmnopqrstuvxyz0123456789"));
+    res.push(randomString(15, 'abcdefghijklmnopqrstuvxyz0123456789'));
   }
   return res;
 }

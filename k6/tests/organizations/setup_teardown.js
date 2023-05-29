@@ -1,17 +1,17 @@
-import http from "k6/http";
-import { check } from "k6";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "../../lib/env.js";
-import { loginAdmin } from "../../lib/api.js";
-import { Orgs } from "../../lib/orgs.js";
+import { loginAdmin } from '../../lib/api.js';
+import { url } from '../../lib/env.js';
+import { Orgs } from '../../lib/orgs.js';
 
 export let options = {
   vus: 1,
-  setupTimeout: "3m",
-  duration: "1m",
+  setupTimeout: '3m',
+  duration: '1m',
   thresholds: {
-    http_req_duration: ["p(95)<1000"],
-    http_req_failed: ["rate<0.01"],
+    http_req_duration: ['p(95)<1000'],
+    http_req_failed: ['rate<0.01'],
   },
   noCookiesReset: true,
 };
@@ -28,10 +28,10 @@ export function setup() {
 export default function (data) {
   loginAdmin();
 
-  let res = http.get(url + "/api/user");
+  let res = http.get(url + '/api/user');
   check(res, {
-    "is status 200": (r) => r.status === 200,
-    "username is admin": (r) => r.json("login") === "admin",
+    'is status 200': (r) => r.status === 200,
+    'username is admin': (r) => r.json('login') === 'admin',
   });
 }
 

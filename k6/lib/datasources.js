@@ -1,8 +1,8 @@
-import http from "k6/http";
-import { check } from "k6";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "./env.js";
-import { rand } from "./util.js";
+import { url } from './env.js';
+import { rand } from './util.js';
 
 /**
  * Creates a data source in Grafana with the given type.
@@ -13,27 +13,21 @@ import { rand } from "./util.js";
  */
 export function createSpecificDatasource(tpe) {
   console.info(`creating ${tpe} datasource...`);
-  let res = http.post(
-    url + "/api/datasources",
-    JSON.stringify(datasourceJSON(tpe)),
-    {
-      tags: "create",
-      headers: { "Content-Type": "application/json" },
-    }
-  );
+  let res = http.post(url + '/api/datasources', JSON.stringify(datasourceJSON(tpe)), {
+    tags: 'create',
+    headers: { 'Content-Type': 'application/json' },
+  });
   check(res, {
-    "create datasource status is 200": (r) => r.status === 200,
+    'create datasource status is 200': (r) => r.status === 200,
   });
 
   if (res.status !== 200) {
     console.warn(
-      `failed to create ${tpe} datasource, got HTTP status ${
-        res.status
-      } with error: ${res.json("message")}`
+      `failed to create ${tpe} datasource, got HTTP status ${res.status} with error: ${res.json('message')}`
     );
   }
 
-  return res.json("datasource.uid");
+  return res.json('datasource.uid');
 }
 
 /**
@@ -44,22 +38,22 @@ export function createSpecificDatasource(tpe) {
 export function deleteDatasource(uid) {
   console.info(`deleting datasource...`);
 
-  const res = http.del(url + "/api/datasources/uid/" + uid, null, {
-    tags: { op: "delete" },
+  const res = http.del(url + '/api/datasources/uid/' + uid, null, {
+    tags: { op: 'delete' },
   });
 
   check(res, {
-    "delete datasource status is status 200": (r) => r.status === 200,
+    'delete datasource status is status 200': (r) => r.status === 200,
   });
 }
 
 // Helper function to create a simple datasource.
 function datasourceJSON(name) {
   return {
-    name: "k6 test_" + name + "_" + rand.uid(),
+    name: 'k6 test_' + name + '_' + rand.uid(),
     type: name,
-    url: "http://localhost:25519/",
-    access: "proxy",
+    url: 'http://localhost:25519/',
+    access: 'proxy',
     basicAuth: false,
   };
 }

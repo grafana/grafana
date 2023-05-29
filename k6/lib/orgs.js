@@ -1,8 +1,8 @@
-import http from "k6/http";
-import { check } from "k6";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "./env.js";
-import { rand } from "./util.js";
+import { url } from './env.js';
+import { rand } from './util.js';
 
 export class Orgs {
   /**
@@ -20,14 +20,14 @@ export class Orgs {
 
     // Create orgs in Grafana.
     const orgIds = orgs.map((o) => {
-      let res = http.post(url + "/api/orgs", JSON.stringify({ name: o }), {
-        tags: "create",
-        headers: { "Content-Type": "application/json" },
+      let res = http.post(url + '/api/orgs', JSON.stringify({ name: o }), {
+        tags: 'create',
+        headers: { 'Content-Type': 'application/json' },
       });
       check(res, {
-        "create org status is 200": (r) => r.status === 200,
+        'create org status is 200': (r) => r.status === 200,
       });
-      return res.json("orgId");
+      return res.json('orgId');
     });
 
     return { orgIds };
@@ -42,16 +42,15 @@ export class Orgs {
     console.info(`deleting ${orgIds.length} orgs...`);
     // Pick up our list of ids from the 'data' structure and create a list DELETE HTTP requests.
     const responses = orgIds.map((i) => {
-      return http.del(url + "/api/orgs/" + i, null, {
-        tags: { op: "delete" },
+      return http.del(url + '/api/orgs/' + i, null, {
+        tags: { op: 'delete' },
       });
     });
 
     responses.forEach((res) => {
       check(res, {
-        "delete org status is status 200": (r) => r.status === 200,
+        'delete org status is status 200': (r) => r.status === 200,
       });
     });
   }
-
 }

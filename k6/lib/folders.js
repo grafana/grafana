@@ -1,8 +1,10 @@
-import http from "k6/http";
-import { check } from "k6";
+/* eslint no-console: "off" */
 
-import { url } from "./env.js";
-import { rand } from "./util.js";
+import { check } from 'k6';
+import http from 'k6/http';
+
+import { url } from './env.js';
+import { rand } from './util.js';
 
 export function createFolders(numOfParents) {
   // Create a folder class.
@@ -42,7 +44,9 @@ export function createFolders(numOfParents) {
       let childDepth = parentFolder.depth + 1;
 
       // If parent folder already has 7 children, break.
-      if (childDepth > 7) break;
+      if (childDepth > 7) {
+        break;
+      }
 
       // Else, add child folder to list.
       let childUID = rand.uid();
@@ -59,16 +63,16 @@ export function createFolders(numOfParents) {
 
   folderStructure();
 
-  console.debug("Nested folders: ", folders);
+  console.debug('Nested folders: ', folders);
   console.info(`creating folders...`);
   // Create folders.
   const requests = folders.forEach((f) => {
-    let res = http.post(url + "/api/folders/", JSON.stringify(f), {
-      tags: "create",
-      headers: { "Content-Type": "application/json" },
+    let res = http.post(url + '/api/folders/', JSON.stringify(f), {
+      tags: 'create',
+      headers: { 'Content-Type': 'application/json' },
     });
     check(res, {
-      "create parent folder status is 200": (r) => r.status === 200,
+      'create parent folder status is 200': (r) => r.status === 200,
     });
   });
 
@@ -79,13 +83,13 @@ export function deleteFolders(parentUIDs) {
   console.info(`deleting folders...`);
   // Pick up our list of UIDs from the 'data' structure and create a list of batched DELETE HTTP requests.
   const requests = parentUIDs.map((f) => {
-    return ["DELETE", url + "/api/folders/" + f, null, { tags: "delete" }];
+    return ['DELETE', url + '/api/folders/' + f, null, { tags: 'delete' }];
   });
 
   const responses = http.batch(requests);
   responses.forEach((res) => {
     check(res, {
-      "delete folder status is 200": (r) => r.status === 200,
+      'delete folder status is 200': (r) => r.status === 200,
     });
   });
 }

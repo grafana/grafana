@@ -28,7 +28,7 @@ The Grafana k6 library respects a number of environment variables to allow tweak
 The defaults are expected to work for a local development installation with a fresh SQLite database.
 
 | Environment variable | Default                      | Description                                                 |
-|----------------------|------------------------------|-------------------------------------------------------------|
+| -------------------- | ---------------------------- | ----------------------------------------------------------- |
 | GT_NEW_USER_PASSWORD | correct horse battery staple | Password for users created during the test                  |
 | GT_PASSWORD          | admin                        | Password for a privileged user to use during the test       |
 | GT_SCALE             | 1.0                          | Factor to use when provisioning initial resources for tests |
@@ -45,17 +45,17 @@ Much of the Grafana k6 library in _lib/_ has been documented with [JSDoc](https:
 ### Example test
 
 ```javascript
-import { loginAdmin } from "../../lib/api.js";
-import { userAPI } from "../../lib/users.js";
+import { loginAdmin } from '../../lib/api.js';
+import { userAPI } from '../../lib/users.js';
 
 export let options = {
-    duration: "1m",
-    noCookiesReset: true,
+  duration: '1m',
+  noCookiesReset: true,
 };
 
 export default function (data) {
-    loginAdmin();
-    const user = userAPI.create(userAPI.skel('k6'));
-    userAPI.del(user);
+  loginAdmin();
+  const user = userAPI.create(userAPI.skel('k6'));
+  userAPI.del(user);
 }
 ```

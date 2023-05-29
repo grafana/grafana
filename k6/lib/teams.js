@@ -1,8 +1,8 @@
-import http from "k6/http";
-import { check } from "k6";
+import { check } from 'k6';
+import http from 'k6/http';
 
-import { url } from "./env.js";
-import { rand } from "./util.js";
+import { url } from './env.js';
+import { rand } from './util.js';
 
 /**
  * Create multiple teams.
@@ -19,14 +19,14 @@ export function createTeams(num) {
 
   // Create teams in Grafana.
   const teamIds = teams.map((t) => {
-    let res = http.post(url + "/api/teams", JSON.stringify(teamJSON(t)), {
-      tags: "create",
-      headers: { "Content-Type": "application/json" },
+    let res = http.post(url + '/api/teams', JSON.stringify(teamJSON(t)), {
+      tags: 'create',
+      headers: { 'Content-Type': 'application/json' },
     });
     check(res, {
-      "create team status is 200": (r) => r.status === 200,
+      'create team status is 200': (r) => r.status === 200,
     });
-    return res.json("teamId");
+    return res.json('teamId');
   });
 
   return { teamIds };
@@ -41,14 +41,14 @@ export function deleteTeams(teamIds) {
   console.info(`deleting ${teamIds.length} teams...`);
   // Pick up our list of ids from the 'data' structure and create a list of batched DELETE HTTP requests.
   const responses = teamIds.map((i) => {
-    return http.del(url + "/api/teams/" + i, null, {
-      tags: { op: "delete" },
+    return http.del(url + '/api/teams/' + i, null, {
+      tags: { op: 'delete' },
     });
   });
 
   responses.forEach((res) => {
     check(res, {
-      "delete team status is status 200": (r) => r.status === 200,
+      'delete team status is status 200': (r) => r.status === 200,
     });
   });
 }
@@ -58,6 +58,6 @@ export function deleteTeams(teamIds) {
 function teamJSON(name) {
   return {
     name: name,
-    email: name + "@example.org",
+    email: name + '@example.org',
   };
 }

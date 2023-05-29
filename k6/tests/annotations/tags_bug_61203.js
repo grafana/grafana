@@ -1,19 +1,19 @@
 // Reproduces https://github.com/grafana/grafana/issues/61203
 
-import http from "k6/http";
-import { check, randomSeed } from "k6";
+import { check, randomSeed } from 'k6';
+import http from 'k6/http';
 
-import { url } from "../../lib/env.js";
-import { loginAdmin } from "../../lib/api.js";
-import { cleanup, provision } from "../../lib/grafana.js";
+import { loginAdmin } from '../../lib/api.js';
+import { url } from '../../lib/env.js';
+import { cleanup, provision } from '../../lib/grafana.js';
 
 export let options = {
   vus: 10,
-  duration: "20s",
-  setupTimeout: "15s",
+  duration: '20s',
+  setupTimeout: '15s',
   thresholds: {
-    http_req_duration: ["p(95)<1000"],
-    http_req_failed: ["rate<0.01"],
+    http_req_duration: ['p(95)<1000'],
+    http_req_failed: ['rate<0.01'],
   },
   noCookiesReset: true,
 };
@@ -40,19 +40,18 @@ export default function (data) {
       dashboardUID: data.dashboards[0],
       time: Date.now(),
       timeEnd: Date.now() + 30000,
-      tags: ["project=foo", `identifier=${ts}`],
-      text: "Wrote an annotation",
+      tags: ['project=foo', `identifier=${ts}`],
+      text: 'Wrote an annotation',
     }),
     {
-      tags: { type: "annotations", op: "create" },
-      headers: { "Content-Type": "application/json" },
+      tags: { type: 'annotations', op: 'create' },
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 
   check(res, {
-    "annotation successfully created": (r) => r.status === 200,
-    "creating annotation takes less than 150ms": (r) =>
-      r.timings.duration < 150,
+    'annotation successfully created': (r) => r.status === 200,
+    'creating annotation takes less than 150ms': (r) => r.timings.duration < 150,
   });
 
   if (res.status >= 500) {

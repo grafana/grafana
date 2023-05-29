@@ -1,7 +1,9 @@
-import http from "k6/http";
-import { check } from "k6";
+/* eslint no-console: "off" */
 
-import { url } from "./env.js";
+import { check } from 'k6';
+import http from 'k6/http';
+
+import { url } from './env.js';
 
 export function getDashboardPermissions(dashboardUID) {
   return http.get(dashboardURL(dashboardUID)).json().map(reducePermissionsDTO);
@@ -23,19 +25,17 @@ function setPermission(url, uid, permissions) {
   console.debug(`updating permissions for '${uid}'`);
 
   const res = http.post(url, JSON.stringify({ items: permissions }), {
-    tags: { type: "permissions", op: "update" },
-    headers: { "Content-Type": "application/json" },
+    tags: { type: 'permissions', op: 'update' },
+    headers: { 'Content-Type': 'application/json' },
   });
 
   check(res, {
-    "set permissions status is 200": (r) => r.status === 200,
+    'set permissions status is 200': (r) => r.status === 200,
   });
 
   if (res.status !== 200) {
     console.warn(
-      `failed to update permissions for '${uid}', got HTTP status ${
-        res.status
-      } with error: ${res.json("message")}`
+      `failed to update permissions for '${uid}', got HTTP status ${res.status} with error: ${res.json('message')}`
     );
   }
 }
