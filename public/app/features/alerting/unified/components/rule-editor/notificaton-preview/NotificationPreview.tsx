@@ -248,6 +248,10 @@ export function NotificationPreviewByAlertManager({
   ) : null;
 }
 
+function thereAreNoMatchers(route: RouteWithID) {
+  return route.object_matchers?.length === 0;
+}
+
 function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithID }) {
   const styles = useStyles2(getStyles);
   const routePathIds = routesByIdMap.get(route.id)?.path.slice(1) ?? [];
@@ -260,7 +264,11 @@ function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, Route
         return (
           <div key={route_.id}>
             <div className={styles.policyInPath(index)}>
-              <Matchers matchers={route_.object_matchers ?? []} />
+              {thereAreNoMatchers(route) ? (
+                <div className={styles.textMuted}>No matchers</div>
+              ) : (
+                <Matchers matchers={route.object_matchers ?? []} />
+              )}
             </div>
           </div>
         );
@@ -277,13 +285,14 @@ function NotificationRouteDetailsModal({
   alertManagerSourceName,
 }: {
   onClose: () => void;
-  route: RouteWithID;
+  route: RouteWithPath;
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
 }) {
   const styles = useStyles2(getStyles);
   const stringMatchers = objectMatchersToString(route.object_matchers ?? []);
+  const isDefault = isDefaultPolicy(route);
 
   return (
     <Modal
@@ -296,15 +305,27 @@ function NotificationRouteDetailsModal({
       <Stack gap={1} direction="column">
         <div className={styles.textMuted}>Preview how this alert will be routed while firing.</div>
         <div>Policy Routing</div>
-        <div className={styles.textMuted}>Matching labels for this policy</div>
-        <TagList tags={stringMatchers} className={styles.tagsInDetails} />
+        {!isDefault ? (
+          <>
+            <div className={styles.textMuted}>Matching labels for this policy</div>
+            <TagList tags={stringMatchers} className={styles.tagsInDetails} />
+          </>
+        ) : (
+          <div className={styles.textMuted}>Default policy</div>
+        )}
         <div className={styles.separator} />
-        <div className={styles.textMuted}>Notification policy path</div>
-        <PolicyPath route={route} routesByIdMap={routesByIdMap} />
-        <div className={styles.separator} />
+        {!isDefault && (
+          <>
+            <div className={styles.textMuted}>Notification policy path</div>
+            <PolicyPath route={route} routesByIdMap={routesByIdMap} />
+            <div className={styles.separator} />
+          </>
+        )}
         <div className={styles.contactPoint}>
-          Contact point:
-          <span className={styles.textMuted}>{receiver.name}</span>
+          <Stack gap={1} direction="row" alignItems="center">
+            Contact point:
+            <span className={styles.textMuted}>{receiver.name}</span>
+          </Stack>
           <Stack gap={1} direction="row" alignItems="center">
             <a
               href={makeAMLink(
@@ -329,6 +350,21 @@ function NotificationRouteDetailsModal({
   );
 }
 
+function isDefaultPolicy(route: RouteWithPath) {
+  return route.path?.length === 0;
+}
+
+function NotificationPolicyMatchers({ route }: { route: RouteWithPath }) {
+  const styles = useStyles2(getStyles);
+  if (isDefaultPolicy(route)) {
+    return <div className={styles.defaultPolicy}>Default policy</div>;
+  } else if (thereAreNoMatchers(route)) {
+    return <div className={styles.textMuted}>No matchers</div>;
+  } else {
+    return <Matchers matchers={route.object_matchers ?? []} />;
+  }
+}
+
 function NotificationRouteHeader({
   route,
   receiver,
@@ -336,7 +372,7 @@ function NotificationRouteHeader({
   instancesCount,
   alertManagerSourceName,
 }: {
-  route: RouteWithID;
+  route: RouteWithPath;
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
@@ -348,11 +384,12 @@ function NotificationRouteHeader({
   const onClickDetails = () => {
     setShowDetails(true);
   };
+
   return (
     <div className={styles.routeHeader}>
       <Stack gap={1} direction="row" alignItems="center">
         Notification policy
-        <Matchers matchers={route.object_matchers ?? []} />
+        <NotificationPolicyMatchers route={route} />
       </Stack>
       <Spacer />
       <Stack gap={2} direction="row" alignItems="center">
@@ -386,7 +423,7 @@ function NotificationRouteHeader({
 }
 
 interface NotificationRouteProps {
-  route: RouteWithID;
+  route: RouteWithPath;
   receiver: Receiver;
   instances: Labels[];
   routesByIdMap: Map<string, RouteWithPath>;
@@ -422,11 +459,18 @@ function NotificationRoute({
     >
       <Stack gap={1} direction="column">
         <div className={styles.routeInstances}>
-          {instances.map((instance) => (
-            <div className={styles.tagListCard} key={JSON.stringify(instance)}>
-              <TagList tags={labelsToTags(instance)} className={styles.labelList} />
-            </div>
-          ))}
+          {instances.map((instance) => {
+            const tags = labelsToTags(instance);
+            return (
+              <div className={styles.tagListCard} key={JSON.stringify(instance)}>
+                {tags.length > 0 ? (
+                  <TagList tags={tags} className={styles.labelList} />
+                ) : (
+                  <div className={styles.textMuted}>No labels</div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </Stack>
     </Collapse>
