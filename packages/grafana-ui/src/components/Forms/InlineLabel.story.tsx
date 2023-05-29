@@ -1,10 +1,10 @@
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { InlineLabel, Props } from './InlineLabel';
 import mdx from './InlineLabel.mdx';
 
-const meta: ComponentMeta<typeof InlineLabel> = {
+const meta: Meta<typeof InlineLabel> = {
   title: 'Forms/InlineLabel',
   component: InlineLabel,
   parameters: {

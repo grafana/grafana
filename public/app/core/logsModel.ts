@@ -459,7 +459,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         entry,
         raw: message,
         labels: labels || {},
-        uid: idField ? idField.values[j] : j.toString(),
+        // prepend refId to uid to make it unique across all series in a case when series contain duplicates
+        uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
       });
     }
@@ -474,10 +475,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       kind: LogsMetaKind.LabelsMap,
     });
   }
-
-  const limits = logSeries.filter((series) => series.meta && series.meta.limit);
+  // Data sources that set up searchWords on backend use meta.custom.limit.
+  // Data sources that set up searchWords through frontend can use meta.limit.
+  const limits = logSeries.filter((series) => series?.meta?.custom?.limit ?? series?.meta?.limit);
   const lastLimitPerRef = limits.reduce<Record<string, number>>((acc, elem) => {
-    acc[elem.refId ?? ''] = elem.meta?.limit ?? 0;
+    acc[elem.refId ?? ''] = elem.meta?.custom?.limit ?? elem.meta?.limit ?? 0;
 
     return acc;
   }, {});

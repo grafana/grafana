@@ -46,6 +46,7 @@ type FrontendSettingsLicenseInfoDTO struct {
 type FrontendSettingsAzureDTO struct {
 	Cloud                  string `json:"cloud"`
 	ManagedIdentityEnabled bool   `json:"managedIdentityEnabled"`
+	UserIdentityEnabled    bool   `json:"userIdentityEnabled"`
 }
 
 type FrontendSettingsCachingDTO struct {
@@ -63,6 +64,7 @@ type FrontendSettingsReportingDTO struct {
 type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval              string `json:"minInterval"`
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only

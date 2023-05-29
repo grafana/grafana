@@ -1,7 +1,6 @@
 import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
 
-import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { TimeRangeConfig } from './setTimeRange';
 
@@ -113,10 +112,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
-      selectOption({
-        container: e2e.components.DataSourcePicker.container(),
-        optionText: dataSourceName,
-      });
+      e2e.components.DataSourcePicker.container().click().type(`${dataSourceName}{downArrow}{enter}`);
     }
 
     // @todo instead wait for '@pluginModule' if not already loaded

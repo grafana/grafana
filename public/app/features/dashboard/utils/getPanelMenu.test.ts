@@ -1,4 +1,13 @@
-import { PanelMenuItem, PluginExtensionPanelContext, PluginExtensionTypes } from '@grafana/data';
+import {
+  dateTime,
+  FieldType,
+  LoadingState,
+  PanelData,
+  PanelMenuItem,
+  PluginExtensionPanelContext,
+  PluginExtensionTypes,
+  toDataFrame,
+} from '@grafana/data';
 import { getPluginExtensions } from '@grafana/runtime';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
@@ -189,6 +198,26 @@ describe('getPanelMenu()', () => {
     });
 
     it('should pass context with correct values when configuring extension', () => {
+      const data: PanelData = {
+        series: [
+          toDataFrame({
+            fields: [
+              { name: 'time', type: FieldType.time },
+              { name: 'score', type: FieldType.number },
+            ],
+          }),
+        ],
+        timeRange: {
+          from: dateTime(),
+          to: dateTime(),
+          raw: {
+            from: 'now',
+            to: 'now-1h',
+          },
+        },
+        state: LoadingState.Done,
+      };
+
       const panel = new PanelModel({
         type: 'timeseries',
         id: 1,
@@ -201,6 +230,15 @@ describe('getPanelMenu()', () => {
             },
           },
         ],
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
+        queryRunner: {
+          getLastResult: jest.fn(() => data),
+        },
       });
 
       const dashboard = createDashboardModelFixture({
@@ -238,6 +276,13 @@ describe('getPanelMenu()', () => {
           uid: '123',
           title: 'My dashboard',
         },
+        scopedVars: {
+          a: {
+            text: 'a',
+            value: 'a',
+          },
+        },
+        data,
       };
 
       expect(getPluginExtensions).toBeCalledWith(expect.objectContaining({ context }));
