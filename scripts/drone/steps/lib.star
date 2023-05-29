@@ -358,7 +358,9 @@ def lint_backend_step():
             "wire-install",
         ],
         "commands": [
-            "echo Hello, Kat!"
+            "apt-get update && apt-get install make",
+            # Don't use Make since it will re-download the linters
+            "make lint-go",
         ],
     }
 
