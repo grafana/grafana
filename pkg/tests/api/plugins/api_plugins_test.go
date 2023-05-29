@@ -41,10 +41,10 @@ func TestIntegrationPlugins(t *testing.T) {
 		PluginAdminEnabled: true,
 	})
 
-	b4 := setting.BuildVersion
+	origBuildVersion := setting.BuildVersion
 	setting.BuildVersion = "0.0.0-test"
 	t.Cleanup(func() {
-		setting.BuildVersion = b4
+		setting.BuildVersion = origBuildVersion
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, cfgPath)
