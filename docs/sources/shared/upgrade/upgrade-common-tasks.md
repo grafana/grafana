@@ -9,7 +9,7 @@ In addition to common tasks you should complete for all versions of Grafana, the
 
 {{% admonition type="note" %}}
 
-> **Note:** There might be minor breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or the [Breaking changes]({{< relref "../../breaking-changes/" >}}), in some cases.
+> **Note:** There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes/" >}}) document for releases with many breaking changes.
 
 {{% /admonition %}}
 
