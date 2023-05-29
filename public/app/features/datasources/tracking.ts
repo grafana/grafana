@@ -78,3 +78,11 @@ export const trackCreateDashboardClicked = (props: DataSourceGeneralTrackingProp
 export const trackDataSourcesListViewed = (props: { grafana_version?: string; path?: string }) => {
   reportInteraction('grafana_ds_datasources_list_viewed', props);
 };
+
+export const trackDsConfigClicked = (item: string) => {
+  reportInteraction('connections_datasources_settings_clicked', { item });
+};
+
+export const trackDsConfigUpdated = (item: string) => {
+  reportInteraction('connections_datasources_ds_configured', { item });
+};
