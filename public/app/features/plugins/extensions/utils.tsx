@@ -159,3 +159,22 @@ function isRecord(value: unknown): value is Record<string | number | symbol, unk
 export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
 }
+
+export function createExtensionLinkConfig<T extends object>(
+  config: Omit<PluginExtensionLinkConfig<T>, 'type'>
+): PluginExtensionLinkConfig {
+  const linkConfig = {
+    type: PluginExtensionTypes.link,
+    ...config,
+  };
+  assertIsLinkConfig(linkConfig);
+  return linkConfig;
+}
+
+function assertIsLinkConfig<T extends object>(
+  config: PluginExtensionLinkConfig<T>
+): asserts config is PluginExtensionLinkConfig {
+  if (config.type !== PluginExtensionTypes.link) {
+    throw Error('value is not a string');
+  }
+}

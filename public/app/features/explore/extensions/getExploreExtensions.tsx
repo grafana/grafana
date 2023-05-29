@@ -4,7 +4,7 @@ import { PluginExtensionExploreContext, PluginExtensionPoints, type PluginExtens
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, ExploreId } from 'app/types';
 
-import { createExtensionLinkConfig } from '../../plugins/extensions/configureCoreExtensions';
+import { createExtensionLinkConfig } from '../../plugins/extensions/utils';
 
 import { AddToDashboardBody } from './AddToDashboard/AddToDashboardBody';
 
