@@ -10,7 +10,7 @@ import {
 
 import { SampleUnit } from '../types';
 
-export type LevelItem = { start: number; itemIndex: number };
+export type LevelItem = { start: number; itemIndex: number; children: LevelItem[]; parent?: LevelItem };
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
@@ -20,21 +20,32 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): LevelItem
   const levels: LevelItem[][] = [];
   let offset = 0;
 
+  let parent: LevelItem | undefined = undefined;
+
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
     const prevLevel = i > 0 ? container.getLevel(i - 1) : undefined;
 
     levels[currentLevel] = levels[currentLevel] || [];
+
     if (prevLevel && prevLevel >= currentLevel) {
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
       const lastItem = levels[currentLevel][levels[currentLevel].length - 1];
       offset = lastItem.start + container.getValue(lastItem.itemIndex);
+      parent = lastItem;
     }
+
     const newItem: LevelItem = {
       itemIndex: i,
       start: offset,
+      parent,
+      children: [],
     };
+    if (parent) {
+      parent.children.push(newItem);
+    }
+    parent = newItem;
 
     levels[currentLevel].push(newItem);
   }
@@ -51,6 +62,8 @@ export class FlameGraphDataContainer {
   labelDisplayProcessor: DisplayProcessor;
   valueDisplayProcessor: DisplayProcessor;
   uniqueLabels: string[];
+
+  private levels: LevelItem[][] | undefined;
 
   constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
@@ -121,5 +134,19 @@ export class FlameGraphDataContainer {
     }
 
     return 'Count';
+  }
+
+  getLevels() {
+    if (!this.levels) {
+      this.levels = nestedSetToLevels(this);
+    }
+    return this.levels;
+  }
+
+  getTree() {
+    if (!this.levels) {
+      this.levels = nestedSetToLevels(this);
+    }
+    return this.levels[0][0];
   }
 }

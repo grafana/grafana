@@ -20,7 +20,6 @@ const ufuzzy = new uFuzzy();
 export function useFlameRender(
   canvasRef: RefObject<HTMLCanvasElement>,
   data: FlameGraphDataContainer,
-  levels: LevelItem[][],
   wrapperWidth: number,
   rangeMin: number,
   rangeMax: number,
@@ -45,7 +44,7 @@ export function useFlameRender(
     return undefined;
   }, [search, data]);
 
-  const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
+  const ctx = useSetupCanvas(canvasRef, wrapperWidth, data.getLevels().length);
 
   useEffect(() => {
     if (!ctx) {
@@ -56,8 +55,8 @@ export function useFlameRender(
     const totalTicks = data.getValue(0);
     const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
 
-    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-      const level = levels[levelIndex];
+    for (let levelIndex = 0; levelIndex < data.getLevels().length; levelIndex++) {
+      const level = data.getLevels()[levelIndex];
       // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
       // sometimes we collapse multiple bars into single rect.
       const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
@@ -67,7 +66,7 @@ export function useFlameRender(
         renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, levelIndex, focusedLevel, foundLabels, textAlign);
       }
     }
-  }, [ctx, data, levels, wrapperWidth, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
+  }, [ctx, data, wrapperWidth, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
@@ -81,9 +80,9 @@ function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: n
 
     const height = PIXELS_PER_LEVEL * numberOfLevels;
     canvasRef.current.width = Math.round(wrapperWidth * window.devicePixelRatio);
-    canvasRef.current.height = Math.round(height * window.devicePixelRatio);
+    canvasRef.current.height = Math.round(height);
     canvasRef.current.style.width = `${wrapperWidth}px`;
-    canvasRef.current.style.height = `${height}px`;
+    canvasRef.current.style.height = `${height / window.devicePixelRatio}px`;
 
     ctx.textBaseline = 'middle';
     ctx.font = 12 * window.devicePixelRatio + 'px monospace';

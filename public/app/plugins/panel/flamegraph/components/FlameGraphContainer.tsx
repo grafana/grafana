@@ -9,7 +9,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
-import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { SelectedView, TextAlign } from './types';
@@ -31,16 +31,11 @@ const FlameGraphContainer = (props: Props) => {
 
   const theme = useTheme2();
 
-  const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
+  const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!props.data) {
-      return [undefined, undefined];
+      return;
     }
-    const container = new FlameGraphDataContainer(props.data, theme);
-
-    // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
-    // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
-    // over the dataFrame rows.
-    return [container, nestedSetToLevels(container)];
+    return new FlameGraphDataContainer(props.data, theme);
   }, [props.data, theme]);
 
   const styles = useStyles2(getStyles);
@@ -87,7 +82,6 @@ const FlameGraphContainer = (props: Props) => {
               <FlameGraphTopTableContainer
                 data={dataContainer}
                 app={props.app}
-                totalLevels={levels.length}
                 onSymbolClick={(symbol) => {
                   if (search === symbol) {
                     setSearch('');
@@ -108,13 +102,11 @@ const FlameGraphContainer = (props: Props) => {
             {selectedView !== SelectedView.TopTable && (
               <FlameGraph
                 data={dataContainer}
-                levels={levels}
                 rangeMin={rangeMin}
                 rangeMax={rangeMax}
                 search={search}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
-                selectedView={selectedView}
                 onItemFocused={(itemIndex) => setFocusedItemIndex(itemIndex)}
                 focusedItemIndex={focusedItemIndex}
                 textAlign={textAlign}

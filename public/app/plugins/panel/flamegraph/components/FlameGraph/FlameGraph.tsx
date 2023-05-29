@@ -23,7 +23,7 @@ import { useMeasure } from 'react-use';
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { SelectedView, ClickedItemData, TextAlign } from '../types';
+import { ClickedItemData, TextAlign } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -33,13 +33,11 @@ import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
   data: FlameGraphDataContainer;
-  levels: LevelItem[][];
   rangeMin: number;
   rangeMax: number;
   search: string;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  selectedView: SelectedView;
   style?: React.CSSProperties;
   onItemFocused: (itemIndex: number) => void;
   focusedItemIndex?: number;
@@ -48,13 +46,11 @@ type Props = {
 
 const FlameGraph = ({
   data,
-  levels,
   rangeMin,
   rangeMax,
   search,
   setRangeMin,
   setRangeMax,
-  selectedView,
   onItemFocused,
   focusedItemIndex,
   textAlign,
@@ -69,7 +65,8 @@ const FlameGraph = ({
 
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
-  useFlameRender(graphRef, data, levels, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
+  useFlameRender(graphRef, data, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
+
   const onGraphClick = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
       setTooltipItem(undefined);
@@ -78,14 +75,13 @@ const FlameGraph = ({
         { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
         data,
         pixelsPerTick,
-        levels,
         totalTicks,
         rangeMin
       );
 
       // if clicking on a block in the canvas
       if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-        const item = levels[levelIndex][barIndex];
+        const item = data.getLevels()[levelIndex][barIndex];
         setClickedItemData({
           posY: e.clientY,
           posX: e.clientX,
@@ -98,7 +94,7 @@ const FlameGraph = ({
         setClickedItemData(undefined);
       }
     },
-    [data, levels, rangeMin, rangeMax, totalTicks]
+    [data, rangeMin, rangeMax, totalTicks]
   );
 
   const onGraphMouseMove = useCallback(
@@ -110,7 +106,6 @@ const FlameGraph = ({
           { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
           data,
           pixelsPerTick,
-          levels,
           totalTicks,
           rangeMin
         );
@@ -125,11 +120,11 @@ const FlameGraph = ({
             tooltipRef.current.style.right = 'auto';
           }
 
-          setTooltipItem(levels[levelIndex][barIndex]);
+          setTooltipItem(data.getLevels()[levelIndex][barIndex]);
         }
       }
     },
-    [data, levels, rangeMin, rangeMax, totalTicks, clickedItemData]
+    [data, rangeMin, rangeMax, totalTicks, clickedItemData]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -197,12 +192,11 @@ const convertPixelCoordinatesToBarCoordinates = (
   pos: { x: number; y: number },
   data: FlameGraphDataContainer,
   pixelsPerTick: number,
-  levels: LevelItem[][],
   totalTicks: number,
   rangeMin: number
 ) => {
   const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-  const barIndex = getBarIndex(pos.x, data, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  const barIndex = getBarIndex(pos.x, data, data.getLevels()[levelIndex], pixelsPerTick, totalTicks, rangeMin);
   return { levelIndex, barIndex };
 };
 
