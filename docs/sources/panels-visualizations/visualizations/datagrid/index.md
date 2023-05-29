@@ -50,7 +50,7 @@ Deleting a row or column will remove the data from the datagrid, while clearing 
 
 {{< figure src="/media/docs/datagrid/screenshot-grafana-datagrid-context-menu-2.png" alt="Datagrid context menu" max-width="400px" >}}
 
-## Header menu
+### Header menu
 
 You can also access a header menu by clicking the dropdown icon next to the header title. From here, you can not only delete or clear a column, but also rename it, freeze it, or convert the field type of the column.
 
@@ -113,6 +113,6 @@ To delete or clear multiple rows, take the following steps:
 1. Right-click to access the context menu.
 1. Select **Delete rows** or **Clear rows**.
 
-The same rules apply to columns by clicking on the column headers.
+The same rules apply to columns by clicking the column headers.
 
 To delete all rows, use the "select all" checkbox at the top left corner of the datagrid. This selects all rows and allows you to delete them using the context menu.
