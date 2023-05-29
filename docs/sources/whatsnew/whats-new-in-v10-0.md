@@ -19,7 +19,7 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- Template below
 ## Feature
 <!-- Name of contributor -->
-<!-- [Generally available | Available in preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
+<!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 > **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
 
@@ -27,7 +27,7 @@ Description. Include an overview of the feature and problem it solves, and where
 
 <!-- Jay Goodson -->
 
-_Available in preview in all editions of Grafana._
+_Available in public preview in all editions of Grafana._
 
 You can now bring context from multiple data sources into the Explore experience. Correlations is an extension of our existing data links functionality and now enables you to link from any data source to any other data source.
 
@@ -47,13 +47,15 @@ _Experimental in all editions of Grafana._
 
 Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
-To learn more and try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
+To try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
+
+To learn more, refer to the [Scenes documentation](https://grafana.github.io/scenes/).
 
 ## Subfolders
 
 <!-- Zsofia K. -->
 
-_Available in preview in all editions of Grafana._
+_Available in public preview in all editions of Grafana._
 
 You can now create subfolders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
 
@@ -65,7 +67,7 @@ To get started creating subfolders, enable the `nestedFolders` feature toggle. I
 
 In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders.png" max-width="750px" caption="Subfolders in Grafana" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders-2.png" max-width="750px" caption="Subfolders in Grafana" >}}
 
 ## Dashboards and visualizations
 
@@ -202,7 +204,7 @@ The "Mixed" data source in Explore is gradually rolling out to all users on Graf
 
 <!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
 
-_Available in preview in all editions of Grafana._
+_Available in public preview in all editions of Grafana._
 
 Public dashboards allow you to share your Grafana dashboard with anyone without requiring them to log in to Grafana. This is useful when you want to make your dashboard available to the world.
 
@@ -221,7 +223,7 @@ To learn more, refer to our [public dashboards documentation]({{< relref "../../
 
 <!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
 
-_Available in preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
+_Available in public preview in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 Public dashboards insights provide valuable information about your public dashboard usage. You can easily access and view important metrics such as the daily query count, the number of views in the last 30 days, and the number of errors in the last 30 days.
 
@@ -231,7 +233,7 @@ To try it out, enable the `publicDashboards` feature toggle. If you’re using G
 
 <!-- Juani Cabanas & Ezequiel Victorero & Natalia Bernarte -->
 
-_Available in preview in Cloud Pro and Cloud Advanced._
+_Available in public preview in Cloud Pro and Cloud Advanced._
 
 Our email sharing feature allows you to easily share your public dashboards and make them visible only with specific individuals. When you add their email addresses, they receive a one-time link to access the dashboard. This provides you with greater control over who can view your public dashboards.
 
@@ -286,7 +288,7 @@ If you're running Grafana with MySQL as a database, this change doesn't have any
 
 <!-- Timur Olzhabayev -->
 
-_Available in preview in Grafana Cloud Free, Cloud Pro, and Cloud Advanced._
+_Available in public preview in Grafana Cloud Free, Cloud Pro, and Cloud Advanced._
 
 You can now work much more efficiently with traces that consist of a large number of spans with span filtering.
 
@@ -332,6 +334,8 @@ This update will reduce network load, and speed up now-relative dashboards, espe
 ### Phlare renamed to Grafana Pyroscope
 
 <!-- Andrej Ocenus -->
+
+_Generally available in all editions of Grafana._
 
 We've renamed the Phlare data source _Grafana Pyroscope_ data source as part of the ongoing unification of the Phlare and Pyroscope projects. This data source supports both Phlare and Pyroscope backends. Existing instances of the data source should not be affected. When you create a new instance of the data source, the backend type will be autodetected on the configuration page, or you can select it manually.
 
