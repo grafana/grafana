@@ -283,29 +283,6 @@ AWS_default_REGION=us-east-1
 
     NAME = the we defined for each secret
 
-
-   Similarly, you can also find more information about the above created secrets using the `docker inspect` command.
-
-   For example, to inspect the `aws_access_key_id` secret, run the following command:
-
-   ```bash
-   $ docker inspect aws_access_key_id
-   [
-       {
-           "ID": "i4g62kyuy80lnti5d05oqzgwh",
-           "Version": {
-               "Index": 16
-           },
-           "CreatedAt": "2023-05-29T21:43:37.247825144Z",
-           "UpdatedAt": "2023-05-29T21:43:37.247825144Z",
-           "Spec": {
-               "Name": "aws_access_key_id",
-               "Labels": {}
-           }
-       }
-   ]
-   ```
-
 1. Add the secrets to the command line when you run Docker.
 
    ```bash
