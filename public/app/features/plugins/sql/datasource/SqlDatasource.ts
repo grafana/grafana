@@ -160,7 +160,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
         for (const target of request.targets) {
           // Test for database configuration change only if query was made in `builder` mode.
           if (target.editorMode === EditorMode.Builder && target.dataset !== this.preconfiguredDatabase) {
-            return `The configuration for this Panel's data source has been modified. The previous database used in this Panel's
+            return `The configuration for this panel's data source has been modified. The previous database used in this panel's
                    saved query is no longer available. Please update the query to use the new database option.
                    Previous query parameters will be preserved until the query is updated.`;
           }
