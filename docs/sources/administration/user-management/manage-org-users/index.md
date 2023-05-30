@@ -79,6 +79,7 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
    > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
 
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu and click **Users**.
+1. Click **Organization users**
 1. Click **Invite**.
 1. Enter the following information:
 
