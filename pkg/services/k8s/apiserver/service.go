@@ -144,13 +144,14 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
 	o.RecommendedOptions.CoreAPI = nil
 
+	// this currently only will work for standalone mode. we are removing all default enabled plugins
+	// and replacing them with our internal admission plugins. this avoids issues with the default admission
+	// plugins that depend on the Core V1 APIs and informers.
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
 	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
 	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName}
-
-	//o.RecommendedOptions.Admission.Plugins
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
