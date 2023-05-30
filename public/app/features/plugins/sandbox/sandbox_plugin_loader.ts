@@ -39,7 +39,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       switch (originalValue.nodeName.toLowerCase()) {
         case 'body':
           return getSandboxMockBody();
-          return document.body;
+        // return document.body;
         default:
           return originalValue;
       }
