@@ -22,7 +22,7 @@ describe('should get metadata correctly', () => {
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'bytes')
     );
-    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
+    const metadata = getMetadata(container, 0, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'RAM',
@@ -35,7 +35,7 @@ describe('should get metadata correctly', () => {
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'none')
     );
-    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
+    const metadata = getMetadata(container, 0, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Count',
@@ -48,7 +48,7 @@ describe('should get metadata correctly', () => {
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] })
     );
-    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
+    const metadata = getMetadata(container, 0, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Count',
@@ -61,7 +61,7 @@ describe('should get metadata correctly', () => {
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'short')
     );
-    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
+    const metadata = getMetadata(container, 0, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Count',
@@ -74,7 +74,7 @@ describe('should get metadata correctly', () => {
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'ns')
     );
-    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
+    const metadata = getMetadata(container, 0, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Time',

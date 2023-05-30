@@ -68,7 +68,3 @@ func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int6
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMembers(ctx, query)
 }
-
-func (s *Service) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
-	return s.store.IsAdmin(ctx, query)
-}
