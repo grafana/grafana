@@ -106,7 +106,7 @@ function setup(queryOverrides: Partial<PromQuery> = {}, app: CoreApp = CoreApp.P
   const props = {
     app,
     query: {
-      ...getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.PanelEditor),
+      ...getQueryWithDefaults({ refId: 'A', expr: '' } as PromQuery, CoreApp.PanelEditor),
       ...queryOverrides,
     },
     onRunQuery: jest.fn(),
