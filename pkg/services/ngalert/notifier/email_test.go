@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	alertingImages "github.com/grafana/alerting/images"
+	"github.com/grafana/alerting/images"
 	alertingLogging "github.com/grafana/alerting/logging"
 	"github.com/grafana/alerting/receivers"
 	alertingEmail "github.com/grafana/alerting/receivers/email"
@@ -200,7 +200,7 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 		},
 		Message: messageTmpl,
 		Subject: subjectTmpl,
-	}, receivers.Metadata{}, emailTmpl, ns, &alertingImages.UnavailableProvider{}, &alertingLogging.FakeLogger{})
+	}, receivers.Metadata{}, emailTmpl, ns, &images.UnavailableImageStore{}, &alertingLogging.FakeLogger{})
 }
 
 func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {
