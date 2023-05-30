@@ -1147,7 +1147,7 @@ Enable this to allow Grafana to send email. Default is `false`.
 
 ### host
 
-Default is `localhost:25`.
+Default is `localhost:25`. Use port 465 for implicit TLS.
 
 ### user
 
