@@ -85,8 +85,8 @@ const FlameGraph = ({
         setClickedItemData({
           posY: e.clientY,
           posX: e.clientX,
-          itemIndex: item.itemIndex,
-          label: data.getLabel(item.itemIndex),
+          itemIndex: item.itemIndexes[0],
+          label: data.getLabel(item.itemIndexes[0]),
           start: item.start,
         });
       } else {
@@ -220,7 +220,7 @@ const getBarIndex = (
       const midIndex = (start + end) >> 1;
       const startOfBar = getBarX(level[midIndex].start, totalTicks, rangeMin, pixelsPerTick);
       const startOfNextBar = getBarX(
-        level[midIndex].start + data.getValue(level[midIndex].itemIndex),
+        level[midIndex].start + data.getValue(level[midIndex].itemIndexes[0]),
         totalTicks,
         rangeMin,
         pixelsPerTick

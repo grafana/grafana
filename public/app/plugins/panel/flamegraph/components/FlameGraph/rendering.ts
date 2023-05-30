@@ -120,7 +120,7 @@ export function getRectDimensionsForLevel(
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
     const item = level[barIndex];
     const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = data.getValue(item.itemIndex);
+    let curBarTicks = data.getValue(item.itemIndexes[0]);
 
     // merge very small blocks into big "collapsed" ones for performance
     const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
@@ -128,14 +128,14 @@ export function getRectDimensionsForLevel(
       while (
         barIndex < level.length - 1 &&
         item.start + curBarTicks === level[barIndex + 1].start &&
-        data.getValue(level[barIndex + 1].itemIndex) * pixelsPerTick <= COLLAPSE_THRESHOLD
+        data.getValue(level[barIndex + 1].itemIndexes[0]) * pixelsPerTick <= COLLAPSE_THRESHOLD
       ) {
         barIndex += 1;
-        curBarTicks += data.getValue(level[barIndex].itemIndex);
+        curBarTicks += data.getValue(level[barIndex].itemIndexes[0]);
       }
     }
 
-    const displayValue = data.getValueDisplay(item.itemIndex);
+    const displayValue = data.getValueDisplay(item.itemIndexes[0]);
     let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
@@ -146,9 +146,9 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: data.getLabel(item.itemIndex),
+      label: data.getLabel(item.itemIndexes[0]),
       unitLabel: unit,
-      itemIndex: item.itemIndex,
+      itemIndex: item.itemIndexes[0],
     });
   }
   return coordinatesLevel;

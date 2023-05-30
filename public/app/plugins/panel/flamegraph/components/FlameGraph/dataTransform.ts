@@ -1,3 +1,5 @@
+import { groupBy } from 'lodash';
+
 import {
   createTheme,
   DataFrame,
@@ -10,17 +12,18 @@ import {
 
 import { SampleUnit } from '../types';
 
-export type LevelItem = { start: number; itemIndex: number; children: LevelItem[]; parent?: LevelItem };
+export type LevelItem = { start: number; itemIndexes: number[]; children: LevelItem[]; parents?: LevelItem[] };
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
  */
-export function nestedSetToLevels(container: FlameGraphDataContainer): LevelItem[][] {
+export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelItem[][], Record<string, LevelItem[]>] {
   const levels: LevelItem[][] = [];
   let offset = 0;
 
   let parent: LevelItem | undefined = undefined;
+  const uniqueLabels: Record<string, LevelItem[]> = {};
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
@@ -31,17 +34,26 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): LevelItem
     if (prevLevel && prevLevel >= currentLevel) {
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
-      const lastItem = levels[currentLevel][levels[currentLevel].length - 1];
-      offset = lastItem.start + container.getValue(lastItem.itemIndex);
-      parent = lastItem;
+      const lastSibling = levels[currentLevel][levels[currentLevel].length - 1];
+      offset = lastSibling.start + container.getValue(lastSibling.itemIndexes[0]);
+      // we assume there is always a single root node so lastSibling should always have a parent.
+      // Also it has to have the same parent because of how the items are ordered.
+      parent = lastSibling.parents![0];
     }
 
     const newItem: LevelItem = {
-      itemIndex: i,
+      itemIndexes: [i],
       start: offset,
-      parent,
+      parents: parent && [parent],
       children: [],
     };
+
+    if (uniqueLabels[container.getLabel(i)]) {
+      uniqueLabels[container.getLabel(i)].push(newItem);
+    } else {
+      uniqueLabels[container.getLabel(i)] = [newItem];
+    }
+
     if (parent) {
       parent.children.push(newItem);
     }
@@ -49,7 +61,8 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): LevelItem
 
     levels[currentLevel].push(newItem);
   }
-  return levels;
+
+  return [levels, uniqueLabels];
 }
 
 export class FlameGraphDataContainer {
@@ -64,6 +77,7 @@ export class FlameGraphDataContainer {
   uniqueLabels: string[];
 
   private levels: LevelItem[][] | undefined;
+  private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
 
   constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
@@ -137,16 +151,71 @@ export class FlameGraphDataContainer {
   }
 
   getLevels() {
-    if (!this.levels) {
-      this.levels = nestedSetToLevels(this);
-    }
-    return this.levels;
+    this.initLevels();
+    return this.levels!;
   }
 
   getTree() {
-    if (!this.levels) {
-      this.levels = nestedSetToLevels(this);
-    }
-    return this.levels[0][0];
+    this.initLevels();
+    return this.levels![0][0];
   }
+
+  getCallersTree(label: string) {
+    this.initLevels();
+
+    const nodes = this.uniqueLabelsMap![label];
+    if (nodes?.length <= 1) {
+      return nodes && nodes[0];
+    }
+
+    let superNode: LevelItem = {
+      start: 0,
+      itemIndexes: [],
+      children: [],
+      parents: nodes,
+    };
+
+    collapseParentNodes(this, superNode);
+    return superNode.parents![0];
+  }
+
+  getCalleesTree(label: string) {
+    this.initLevels();
+    return undefined;
+  }
+
+  private initLevels() {
+    if (!this.levels) {
+      const [levels, uniqueLabelsMap] = nestedSetToLevels(this);
+      this.levels = levels;
+      this.uniqueLabelsMap = uniqueLabelsMap;
+    }
+  }
+}
+
+function collapseParentNodes(data: FlameGraphDataContainer, node: LevelItem) {
+  if (!node.parents?.length || node.parents?.length === 1) {
+    return;
+  }
+
+  const groups = groupBy(node.parents, (i) => data.getLabel(i.itemIndexes[0]));
+
+  const newParents = [];
+
+  for (const k of Object.keys(groups)) {
+    if (groups[k].length > 1) {
+      const items = groups[k];
+      const superNode: LevelItem = {
+        start: 0,
+        itemIndexes: items.flatMap((i) => i.itemIndexes),
+        parents: items.flatMap((i) => i.parents || []),
+        children: items[0].children,
+      };
+      collapseParentNodes(data, superNode);
+      newParents.push(superNode);
+    } else {
+      newParents.push(groups[k][0]);
+    }
+  }
+  node.parents = newParents;
 }
