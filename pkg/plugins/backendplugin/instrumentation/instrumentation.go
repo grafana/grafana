@@ -61,11 +61,10 @@ const (
 type errorSource string
 
 const (
-	grafanaSource          errorSource = "grafana"
-	userSource             errorSource = "user"
-	downstreamClientSource errorSource = "downstreamClient"
-	downstreamServerSource errorSource = "downstreamServer"
-	noneSource             errorSource = "none"
+	pluginSource   errorSource = "plugin"
+	externalSource errorSource = "external"
+	databaseSource errorSource = "database"
+	noneSource     errorSource = "none"
 )
 
 var logger = plog.New("plugin.instrumentation")
@@ -82,7 +81,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 
 	logger.Info("Plugin Request Completed")
 
-	updateMetrics(pluginCtx.PluginID, endpoint, string(cfg.Target), elapsed, status, noneSource)
+	updateMetrics(pluginCtx.PluginID, endpoint, string(cfg.Target), elapsed, status, string(noneSource))
 	logDatasourceRequests(ctx, cfg, pluginCtx, endpoint, status, elapsed, timeBeforePluginRequest, err)
 
 	return err
@@ -107,35 +106,58 @@ func InstrumentQueryDataRequest(ctx context.Context, cfg Cfg, pluginCtx *backend
 	return resp, err
 }
 
-func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource {
-	if status == statusError {
-		return grafanaSource
+func getErrorSourceForResponse(res backend.DataResponse) errorSource {
+	if res.Error != nil {
+		return pluginSource
 	}
 
-	if status == statusCancelled {
-		return userSource
+	if res.Status >= 500 {
+		return databaseSource
 	}
 
-	var highestStatusCode backend.Status = 0
-	for _, res := range resp.Responses {
-		if res.Error != nil {
-			return grafanaSource
+	if res.Status >= 400 {
+		// Those error codes are related to authentication and authorization.
+		if res.Status == 401 || res.Status == 402 || res.Status == 403 || res.Status == 407 {
+			return externalSource
 		}
 
-		if res.Status > highestStatusCode {
-			highestStatusCode = res.Status
-		}
-	}
-
-	if highestStatusCode >= 500 {
-		return downstreamServerSource
-	}
-
-	if highestStatusCode >= 400 {
-		return downstreamClientSource
+		return pluginSource
 	}
 
 	return noneSource
+}
+
+// Default implementation.
+// TODO: Provide a way to override this on a per-plugin basis. (need to modify plugin-sdk-go)
+func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource {
+	if status == statusError {
+		return pluginSource
+	}
+
+	if status == statusCancelled {
+		return externalSource
+	}
+
+	// If there is different errorSource from the list of responses, we want to return the most severe one.
+	// The priority order is: pluginSource > databaseSource > externalSource > noneSource
+	var errorSource errorSource = noneSource
+	for _, res := range resp.Responses {
+		responseErrorSource := getErrorSourceForResponse(res)
+
+		if responseErrorSource == pluginSource {
+			return pluginSource
+		}
+
+		if responseErrorSource == databaseSource {
+			errorSource = databaseSource
+		}
+
+		if responseErrorSource == externalSource && errorSource == noneSource {
+			errorSource = externalSource
+		}
+	}
+
+	return errorSource
 }
 
 func getStatus(err error) string {
