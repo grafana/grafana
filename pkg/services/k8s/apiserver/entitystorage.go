@@ -1,12 +1,16 @@
 package apiserver
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"strings"
 
+	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
@@ -267,7 +271,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	info, ok := request.RequestInfoFrom(ctx)
 	if ok {
 		switch info.Subresource {
-		case "status": // aka history!!!
+		case "history":
 			rsp, err := s.store.History(ctx, &entity.EntityHistoryRequest{
 				GRN: grn,
 			})
@@ -275,16 +279,20 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 				return err
 			}
 
-			res := historyAsResource(grn, rsp)
-			res.Metadata.Namespace = info.Namespace
-			res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
-			res.Kind = s.gr.Resource
-			jjj, _ := json.Marshal(res)
-			_, _, err = s.codec.Decode(jjj, nil, objPtr)
-			fmt.Printf("HISTORY:%s\n", grn.UID)
+			i := func(ctx context.Context, apiVersion, acceptHeader string) (stream io.ReadCloser, flush bool, mimeType string, err error) {
+				raw, err := json.Marshal(rsp)
+				if err != nil {
+					return nil, false, "", err
+				}
+				return ioutil.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
+
+			}
+
+			streamer := objPtr.(*apihelpers.SubresourceStreamer)
+			streamer.SetInputStream(i)
+
 			return err
 		default:
-			return fmt.Errorf("unsupported sub-resouce: " + info.Subresource)
 		}
 	}
 

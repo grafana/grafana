@@ -29,8 +29,6 @@ replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.open
 
 replace go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.35.0
 
-// replace github.com/grafana/grafana-apiserver => /home/todd/go/src/github.com/grafana/grafana-apiserver
-
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
 // import that instead of v0.X even though v0.X is newer.
@@ -269,7 +267,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
-	github.com/grafana/grafana-apiserver v0.0.0-20230523194731-0f2091017e2b
+	github.com/grafana/grafana-apiserver v0.0.0-20230530162431-ca55b2a8380e
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
 	github.com/grafana/thema v0.0.0-20230524160113-4e9d6e28a640
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
