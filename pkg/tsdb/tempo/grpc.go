@@ -16,6 +16,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// This function creates a new gRPC client to connect to a streaming query service.
+// It starts by parsing the URL from the data source settings and extracting the host, since that's what the gRPC connection expects.
+// If the URL does not contain a port number, it adds a default port based on the scheme (80 for HTTP and 443 for HTTPS).
+// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
+// Otherwise, it uses insecure credentials.
 func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {

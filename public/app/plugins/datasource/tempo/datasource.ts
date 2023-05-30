@@ -424,12 +424,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return request;
   }
 
-  /**
-   * Handles the simplest of the queries where we have just a trace id and return trace data for it.
-   * @param options
-   * @param targets
-   * @private
-   */
   handleStreamingSearch(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
     const validTargets = targets.filter((t) => t.query).map((t): TempoQuery => ({ ...t, query: t.query.trim() }));
     if (!validTargets.length) {
