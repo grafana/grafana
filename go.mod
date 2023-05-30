@@ -2,6 +2,12 @@ module github.com/grafana/grafana
 
 go 1.20
 
+// Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
+// We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
+// Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
+// This has been replaced by the Microsoft fork of the same driver for the MsSQL data source.
+replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
+
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
