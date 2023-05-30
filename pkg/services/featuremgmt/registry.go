@@ -59,6 +59,7 @@ var (
 			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
