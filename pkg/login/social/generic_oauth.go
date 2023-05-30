@@ -31,6 +31,23 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
+	allowedGroups        []string
+}
+
+func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
+	if len(s.allowedGroups) == 0 {
+		return true
+	}
+
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
@@ -180,6 +197,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	if !s.IsOrganizationMember(client) {
 		return nil, errors.New("user not a member of one of the required organizations")
+	}
+
+	if !s.IsGroupMember(userInfo.Groups) {
+		return nil, errMissingGroupMembership
 	}
 
 	s.log.Debug("User info result", "result", userInfo)
