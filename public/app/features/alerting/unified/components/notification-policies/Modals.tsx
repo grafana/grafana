@@ -190,7 +190,7 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
         title="Delete notification policy"
       >
         <p>Deleting this notification policy will permanently remove it.</p>
-        <p>Are you sure you want to delete policy with the following matchers?</p>
+        <p>Are you sure you want to delete this policy with the following matchers?</p>
         <hr />
         <p>
           {normalizedMatchers.length ? (
@@ -203,11 +203,11 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
         </p>
 
         <Modal.ButtonRow>
+          <Button type="button" variant="secondary" fill="outline" onClick={handleDismiss}>
+            Cancel
+          </Button>
           <Button type="button" variant="destructive" onClick={handleSubmit}>
             Yes, delete policy
-          </Button>
-          <Button type="button" variant="secondary" onClick={handleDismiss}>
-            Cancel
           </Button>
         </Modal.ButtonRow>
       </Modal>
