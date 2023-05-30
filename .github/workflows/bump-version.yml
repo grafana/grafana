@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-preview<number> format. example: 7.4.3 or 7.4.3-preview'
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
         required: true
 env:
     YARN_ENABLE_IMMUTABLE_INSTALLS: false
@@ -28,15 +28,15 @@ jobs:
         if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
         run: |
           echo "The input version format is not correct, please respect:\
-          major.minor.patch or major.minor.patch-preview.number format. \
-          example: 7.4.3 or 7.4.3-preview1"
+          major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. \
+          example: 7.4.3, 7.4.3-preview or 7.4.3-preview1"
           exit 1
       - name: Validate input version call
         if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}
         run: |
           echo "The input version format is not correct, please respect:\
-          major.minor.patch or major.minor.patch-preview<number> format. \
-          example: 7.4.3 or 7.4.3-preview1"
+          major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. \
+          example: 7.4.3, 7.4.3-preview or 7.4.3-preview1"
           exit 1
 
       - uses: actions/checkout@v3
