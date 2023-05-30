@@ -60,15 +60,13 @@ To learn more, refer to the [Scenes documentation](https://grafana.github.io/sce
 
 _Available in public preview in all editions of Grafana._
 
-You can now create subfolders in Grafana to help you better organize your dashboards and alerts. This new feature allows you to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
+You can now try out creating subfolders in Grafana for organizing your dashboards and alerts. You can enable this new feature in your development environment to create, read, update, and delete subfolders, making it easier to sort resources by business units, departments, and teams.
 
 You can also set up permissions using Role-Based Access Control (RBAC). Folder permissions cascade, being inherited from the parent folder, which simplifies access management.
 
-The ability to add subfolders is currently in preview. As such, it's recommended to enable it only on test or development instances, rather than in production environments.
+The ability to add subfolders is currently in preview, with more functionality coming in subsequent releases. This includes creating subfolders using Terraform, and displaying the full folder tree when creating and moving resources through Grafana’s UI. We recommend that you enable this feature only on test or development instances, rather than in production environments.
 
 To get started creating subfolders, enable the `nestedFolders` feature toggle. If you’re using Grafana Cloud, and would like to enable this feature, please contact customer support.
-
-In subsequent releases, we’ll be refining and enhancing the user interface for managing dashboards and folders, to provide a more streamlined user experience.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.0-nested-folders-2.png" max-width="750px" caption="Subfolders in Grafana" >}}
 
