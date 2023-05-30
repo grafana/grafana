@@ -24,9 +24,9 @@ Each alert is evaluated by the default policy and subsequently by each nested po
 
 If the **Continue matching subsequent sibling nodes** option is enabled for a nested policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
 
-You can configure Grafana managed notification policies as well as notification policies for an external Alertmanager data source.
+You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
-See also our guide on the [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies/index.md" >}}).
+For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies/index.md" >}}).
 
 ## Edit default notification policy
 
