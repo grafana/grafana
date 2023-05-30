@@ -28,6 +28,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index in alert_image on url", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_image"}, &migrator.Index{
 		Cols: []string{"url"}, Type: migrator.IndexType,
 	}))
+	// End of migration log, add new migrations above this line.
 }
 
 // historicalTableMigrations contains those migrations that existed prior to creating the improved messaging around migration immutability.
