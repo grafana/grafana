@@ -300,8 +300,8 @@ AWS_default_REGION=us-east-1
   -e "GF_DEFAULT_INSTANCE_NAME=my-grafana" \
   -e "GF_AWS_PROFILES=default" \
   -e "GF_AWS_default_ACCESS_KEY_ID=/run/secrets/aws_access_key_id" \
-  -e "GF_AWS_default_SECRET_ACCESS_KEY=aws_secret_access_key"
-  -e "GF_AWS_default_REGION=aws_region"
+  -e "GF_AWS_default_SECRET_ACCESS_KEY=/run/secrets/aws_secret_access_key"
+  -e "GF_AWS_default_REGION=/run/secrets/aws_region"
   -v grafana-data:/var/lib/grafana \
   grafana/grafana-enterprise
   ```
