@@ -24,10 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -138,10 +140,18 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
-	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
 	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
 	o.RecommendedOptions.CoreAPI = nil
+
+	// this currently only will work for standalone mode. we are removing all default enabled plugins
+	// and replacing them with our internal admission plugins. this avoids issues with the default admission
+	// plugins that depend on the Core V1 APIs and informers.
+	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
+	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName}
+	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
