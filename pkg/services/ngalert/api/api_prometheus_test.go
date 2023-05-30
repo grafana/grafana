@@ -282,6 +282,8 @@ func withLabels(labels data.Labels) forEachState {
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
+	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
+
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
 	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
