@@ -3,6 +3,7 @@ set -e
 
 VERSION="${1:-v9.5.2}"
 ERSION="${VERSION#*v}"
+ERSION_DEB=`echo ${ERSION} | sed 's/-/~/g'`
 
 ASSETS=$(cat << EOF
 gs://${BUCKET}/artifacts/static-assets/grafana-oss/${ERSION}/public/robots.txt
@@ -42,6 +43,14 @@ gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana_${ERSION}_arm6
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana_${ERSION}_arm64.deb.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana_${ERSION}_armhf.deb
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana_${ERSION}_armhf.deb.sha256
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION}.linux-amd64.tar.gz
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION}.linux-amd64.tar.gz.sha256
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION}.linux-amd64-musl.tar.gz
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION}.linux-amd64-musl.tar.gz.sha256
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2_${ERSION_DEB}.amd64.deb
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2_${ERSION_DEB}.amd64.deb.sha256
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION_DEB}-1.x86_64.rpm
+gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION_DEB}-1.x86_64.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/enterprise/release/grafana-enterprise-${ERSION}-1.aarch64.rpm
 gs://${BUCKET}/artifacts/downloads/${VERSION}/enterprise/release/grafana-enterprise-${ERSION}-1.aarch64.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/enterprise/release/grafana-enterprise-${ERSION}-1.armhfp.rpm
