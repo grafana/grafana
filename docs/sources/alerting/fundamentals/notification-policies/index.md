@@ -12,7 +12,7 @@ keywords:
 
 Notification policies provide you with a flexible way of routing alerts to various different receivers. Using label matchers, you can modify alert notification delivery without having to update every individual alert rule.
 
-Learn more about how notification policies work and are structured, so that you can make the most out of setting up your notification policies. 
+Learn more about how notification policies work and are structured, so that you can make the most out of setting up your notification policies.
 
 ## Policy tree
 
@@ -34,7 +34,7 @@ If no policies other than the default policy are configured, the default policy 
 
 If policies other than the default policy are defined, it will inspect those notification policies in descending order.
 
-If a notification policy has label matchers that match the labels of the alert instance, it will descend in to its child policies  and, if there are any, will continue to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies have been found.
+If a notification policy has label matchers that match the labels of the alert instance, it will descend in to its child policies and, if there are any, will continue to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies have been found.
 
 If no child policies are defined in a notification policy or if none of the child policies have any label matchers that match the alert instance's labels, the default notification policy is used.
 
@@ -136,7 +136,7 @@ The waiting time to send a batch of alert instances for **existing groups**.
 -->
 
 {{% admonition type="note" %}}
-This means that notifications will **not** be sent any sooner than 5 minutes (default) since the last batch of updates were delivered, regardless of wether the alert rule interval for those alert instances was lower.
+This means that notifications will **not** be sent any sooner than 5 minutes (default) since the last batch of updates were delivered, regardless of whether the alert rule interval for those alert instances was lower.
 {{% /admonition %}}
 
 **Default** 5 minutes
