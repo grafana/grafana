@@ -116,20 +116,29 @@ export const placeHolderScopedVars = {
 
 export function highlightErrorsInQuery(query: string): string {
   const errorBoundaries = validateQuery(query, query, query.split('\n'));
+
   if (!errorBoundaries) {
     return query;
   }
 
   const queryLines = query.split('\n');
   const queryWithErrors = queryLines.map((line, index) => {
-    const errorBoundary = errorBoundaries.find((error) => error.startLineNumber === index + 1);
-    if (!errorBoundary) {
-      return line;
-    }
+    let updatedLine = line;
+    errorBoundaries.forEach((errorBoundary) => {
+      if (errorBoundary.startLineNumber !== index + 1) {
+        return;
+      }
+      const { startColumn, endColumn, error } = errorBoundary;
+      const delta = updatedLine.length - line.length;
 
-    const { startColumn, endColumn, error } = errorBoundary;
-    return `${line.substring(0, startColumn - 1)}%err${error}err%${line.substring(endColumn - 1)}`;
+      updatedLine = `${updatedLine.substring(0, startColumn - 1 + delta)}%err${error}err%${updatedLine.substring(
+        endColumn - 1 + delta
+      )}`;
+    });
+    return updatedLine;
   });
+
+  console.log(queryWithErrors.join('\n'));
 
   return queryWithErrors.join('\n');
 }
