@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
 import pluralize from 'pluralize';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -21,7 +21,7 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchAlertManagerConfig } from '../../../api/alertmanager';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
-import { addUniqueIdentifierToRoute, normalizeMatchers, objectMatchersToString } from '../../../utils/amroutes';
+import { addUniqueIdentifierToRoute, normalizeMatchers } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
 import { makeAMLink } from '../../../utils/misc';
@@ -147,7 +147,7 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
   return (
     <Stack direction="column" gap={2}>
       <div className={styles.routePreviewHeaderRow}>
-        <h4 className={styles.routePreviewTitle}>{NOTIFICATION_PREVIEW_TITLE}</h4>
+        <h4 className={styles.marginBottom(0)}>{NOTIFICATION_PREVIEW_TITLE}</h4>
         <div className={styles.button}>
           <Button icon="sync" variant="secondary" type="button" onClick={onPreview}>
             Preview routing
@@ -263,7 +263,7 @@ function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, Route
       {routePathObjects.map((pathRoute, index) => {
         return (
           <div key={pathRoute.id}>
-            <div className={styles.policyInPath(index)}>
+            <div className={styles.policyInPath(index, index === routePathObjects.length - 1)}>
               {thereAreNoMatchers(pathRoute) ? (
                 <div className={styles.textMuted}>No matchers</div>
               ) : (
@@ -291,36 +291,37 @@ function NotificationRouteDetailsModal({
   alertManagerSourceName: string;
 }) {
   const styles = useStyles2(getStyles);
-  const stringMatchers = objectMatchersToString(route.object_matchers ?? []);
   const isDefault = isDefaultPolicy(route);
 
   return (
     <Modal
       className={styles.detailsModal}
       isOpen={true}
-      title={<h3>Alert routing details</h3>}
+      title="Alert routing details"
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >
-      <Stack gap={1} direction="column">
-        <div className={styles.textMuted}>Preview how this alert will be routed while firing.</div>
-        <div>Policy Routing</div>
+      <Stack gap={0} direction="column">
+        <div className={cx(styles.textMuted, styles.marginBottom(2))}>
+          Preview how this alert will be routed while firing.
+        </div>
+        <div className={cx(styles.marginBottom(2))}>Policy routing</div>
         {!isDefault ? (
           <>
-            <div className={styles.textMuted}>Matching labels for this policy</div>
-            <TagList tags={stringMatchers} className={styles.tagsInDetails} />
+            <div className={cx(styles.textMuted, styles.marginBottom(1))}>Matching labels</div>
+            <NotificationPolicyMatchers route={route} />
           </>
         ) : (
           <div className={styles.textMuted}>Default policy</div>
         )}
-        <div className={styles.separator} />
+        <div className={styles.separator(4)} />
         {!isDefault && (
           <>
-            <div className={styles.textMuted}>Notification policy path</div>
+            <div className={cx(styles.textMuted, styles.marginBottom(1))}>Notification policy path</div>
             <PolicyPath route={route} routesByIdMap={routesByIdMap} />
-            <div className={styles.separator} />
           </>
         )}
+        <div className={styles.separator(4)} />
         <div className={styles.contactPoint}>
           <Stack gap={1} direction="row" alignItems="center">
             Contact point:
@@ -549,9 +550,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     font-size: ${theme.typography.size.sm};
   `,
-  routePreviewTitle: css`
-    margin-bottom: 0;
-  `,
   routePreviewHeaderRow: css`
     display: flex;
     flex-direction: row;
@@ -606,12 +604,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: flex-end;
     display: flex;
   `,
-  separator: css`
-    width: 100%;
-    height: 1px;
-    background-color: ${theme.colors.secondary.main};
-    margin-top: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(1)};
+  separator: (units: number) => css`
+    margin-top: ${theme.spacing(units)};
   `,
   verticalBar: css`
     width: 1px;
@@ -657,16 +651,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
   `,
   defaultPolicy: css`
-    border: solid 1px ${theme.colors.border.weak};
     padding: ${theme.spacing(1)};
+    margin-top: ${theme.spacing(1)};
+    border: solid 1px ${theme.colors.border.weak};
+    background: ${theme.colors.background.secondary};
     width: fit-content;
   `,
-  policyInPath: (index = 0) => css`
+  policyInPath: (index = 0, higlight = false) => css`
     margin-left: ${30 + index * 30}px;
     padding: ${theme.spacing(1)};
     margin-top: ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.weak};
+    background: ${theme.colors.background.secondary};
     width: fit-content;
+    position: relative;
+    ${
+      higlight &&
+      css`
+        border: solid 1px ${theme.colors.info.border};
+      `
+    },
+    &:before {
+      content: '';
+      position: absolute;
+      height: calc(100% - 10px);
+      width: ${theme.spacing(1)};
+      border-left: solid 1px ${theme.colors.border.weak};
+      border-bottom: solid 1px ${theme.colors.border.weak};
+      margin-top: ${theme.spacing(-2)};
+      margin-left: -17px;
+    }
   }
   `,
   contactPoint: css`
@@ -675,7 +689,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
     align-items: center;
     justify-content: space-between;
-    padding: ${theme.spacing(1)};
     margin-bottom: ${theme.spacing(1)};
   `,
   link: css`
@@ -687,5 +700,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.spacing(3)};
     height: ${theme.spacing(3)};
     margin-right: ${theme.spacing(1)};
+  `,
+  marginBottom: (units: number) => css`
+    margin-bottom: ${theme.spacing(theme.spacing(units))};
   `,
 });
