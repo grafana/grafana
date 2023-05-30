@@ -3,6 +3,7 @@ import React, { FC, useCallback, useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Button, Icon, Modal, ModalProps, Spinner } from '@grafana/ui';
+import { Span } from '@grafana/ui/src/unstable';
 import {
   AlertmanagerGroup,
   AlertState,
@@ -12,6 +13,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
+import { normalizeMatchers } from '../../utils/amroutes';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from '../receivers/grafanaAppReceivers/grafanaApp';
 
@@ -172,33 +174,45 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
     }
   }, [handleDelete, route]);
 
-  const modalElement = useMemo(
-    () =>
-      loading ? (
-        <UpdatingModal isOpen={showModal} />
-      ) : (
-        <Modal
-          isOpen={showModal}
-          onDismiss={handleDismiss}
-          closeOnBackdropClick={true}
-          closeOnEscape={true}
-          title="Delete notification policy"
-        >
-          <p>Deleting this notification policy will permanently remove it.</p>
-          <p>Are you sure you want to delete this policy?</p>
+  const modalElement = useMemo(() => {
+    if (loading) {
+      return <UpdatingModal isOpen={showModal} />;
+    }
 
-          <Modal.ButtonRow>
-            <Button type="button" variant="destructive" onClick={handleSubmit}>
-              Yes, delete policy
-            </Button>
-            <Button type="button" variant="secondary" onClick={handleDismiss}>
-              Cancel
-            </Button>
-          </Modal.ButtonRow>
-        </Modal>
-      ),
-    [handleDismiss, handleSubmit, loading, showModal]
-  );
+    const normalizedMatchers = route ? normalizeMatchers(route) : [];
+
+    return (
+      <Modal
+        isOpen={showModal}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Delete notification policy"
+      >
+        <p>Deleting this notification policy will permanently remove it.</p>
+        <p>Are you sure you want to delete policy with the following matchers?</p>
+        <hr />
+        <p>
+          {normalizedMatchers.length ? (
+            <Matchers matchers={normalizedMatchers} />
+          ) : (
+            <Span variant="bodySmall" color="secondary">
+              No matchers
+            </Span>
+          )}
+        </p>
+
+        <Modal.ButtonRow>
+          <Button type="button" variant="destructive" onClick={handleSubmit}>
+            Yes, delete policy
+          </Button>
+          <Button type="button" variant="secondary" onClick={handleDismiss}>
+            Cancel
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
+    );
+  }, [handleDismiss, handleSubmit, loading, showModal, route]);
 
   return [modalElement, handleShow, handleDismiss];
 };
