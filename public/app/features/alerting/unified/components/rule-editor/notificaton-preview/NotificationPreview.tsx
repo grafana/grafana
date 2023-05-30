@@ -590,13 +590,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
       content: '';
       position: absolute;
       height: calc(100% - 10px);
-
+      width: ${theme.spacing(4)};
       border-left: solid 1px ${theme.colors.border.weak};
-
-      margin-top: 0;
-      margin-left: -20px;
+      border-bottom: solid 1px ${theme.colors.border.weak};
+      margin-top: ${theme.spacing(-2)};
+      margin-left: -17px;
     }
   `,
+
   detailsModal: css`
     max-width: 560px;
   `,
@@ -651,9 +652,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
   `,
   defaultPolicy: css`
-    padding: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.weak};
+    padding: ${theme.spacing(0.5)};
     background: ${theme.colors.background.secondary};
     width: fit-content;
   `,
