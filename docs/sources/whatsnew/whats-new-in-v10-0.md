@@ -358,6 +358,8 @@ Learn more:
 
 ## Alerting
 
+_All Alerting features are generally available in all editions of Grafana._
+
 ### State history view
 
 <!-- Brenda Muir -->
