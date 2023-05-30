@@ -68,7 +68,7 @@ For more information about provisioning, and for available configuration options
 apiVersion: 1
 
 datasources:
-  - name: OpenTsdb
+  - name: OpenTSDB
     type: opentsdb
     access: proxy
     url: http://localhost:4242
@@ -81,7 +81,7 @@ datasources:
 
 Open a graph in edit mode by click the title. Query editor will differ if the data source has version <=2.1 or = 2.2.
 In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
-can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
+can be used to query OpenTSDB. Fill Policy is also introduced in OpenTSDB 2.2.
 
 ![](/static/img/docs/v43/opentsdb_query_editor.png)
 
