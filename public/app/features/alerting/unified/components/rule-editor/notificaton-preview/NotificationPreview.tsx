@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Collapse, Icon, Modal, TagList, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Collapse, Icon, LoadingPlaceholder, Modal, TagList, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
@@ -35,7 +35,11 @@ export const useGetPotentialInstancesByAlertManager = (
   potentialInstances: Labels[]
 ) => {
   // get the AM configuration to get the routes
-  const { value: AMConfig } = useAsync(async () => {
+  const {
+    value: AMConfig,
+    loading,
+    error,
+  } = useAsync(async () => {
     const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(alertManagerSourceName);
     return AMConfig;
   }, []);
@@ -72,7 +76,7 @@ export const useGetPotentialInstancesByAlertManager = (
   //   return new Map([...map, ...matchingMap]);
   // }, new Map<string, Labels[]>());
 
-  return { routesByIdMap, receiversByName, matchingMap: matchingMapArray };
+  return { routesByIdMap, receiversByName, matchingMap: matchingMapArray, loading, error };
 };
 
 interface AlertManagerNameWithImage {
@@ -187,10 +191,22 @@ export function NotificationPreviewByAlertManager({
 }) {
   const styles = useStyles2(getStyles);
 
-  const { routesByIdMap, receiversByName, matchingMap } = useGetPotentialInstancesByAlertManager(
+  const { routesByIdMap, receiversByName, matchingMap, loading, error } = useGetPotentialInstancesByAlertManager(
     alertManagerSource.name,
     potentialInstances
   );
+
+  if (error) {
+    return (
+      <Alert title="Cannot load Alertmanager configuration" severity="error">
+        {error.message}
+      </Alert>
+    );
+  }
+
+  if (loading) {
+    return <LoadingPlaceholder text="Loading routing preview..." />;
+  }
 
   const matchingPoliciesFound = matchingMap.size > 0;
 
