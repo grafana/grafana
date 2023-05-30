@@ -28,36 +28,37 @@ lineage: schemas: [{
 			// to see if the version has changed since the last time.  Unclear why using the version property
 			// is insufficient.
 			revision?: int64 @grafanamaturity(NeedsExpertReview)
-			// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+			// ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
 			gnetId?: string @grafanamaturity(NeedsExpertReview)
 			// Tags associated with dashboard.
 			tags?: [...string] @grafanamaturity(NeedsExpertReview)
 			// Theme of dashboard.
 			style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-			// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+			// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 			timezone?: string | *"browser"
 			// Whether a dashboard is editable or not.
 			editable: bool | *true
 			// Configuration of dashboard cursor sync behavior.
+			// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
 			graphTooltip: #DashboardCursorSync
-			// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
+			// Time range for dashboard.
+			// Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.
 			time?: {
 				from: string | *"now-6h"
 				to:   string | *"now"
 			} @grafanamaturity(NeedsExpertReview)
 
-			// TODO docs
-			// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
+			// Configuration of the time picker shown at the top of a dashboard.
 			timepicker?: {
-				// Whether timepicker is collapsed or not.
-				collapse: bool | *false
-				// Whether timepicker is enabled or not.
-				enable: bool | *true
 				// Whether timepicker is visible or not.
 				hidden: bool | *false
-				// Selectable intervals for auto-refresh.
+				// Interval options available in the refresh picker dropdown.
 				refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
-				// TODO docs
+				// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
+				collapse: bool | *false
+				// Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
+				enable: bool | *true
+				// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 				time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 			} @grafanamaturity(NeedsExpertReview)
 			// The month that the fiscal year starts on.  0 = January, 11 = December
@@ -66,8 +67,8 @@ lineage: schemas: [{
 			// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
 			// avoid dashboards presenting stale live data
 			liveNow?: bool @grafanamaturity(NeedsExpertReview)
-			// TODO docs
-			weekStart?: string @grafanamaturity(NeedsExpertReview)
+			// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
+			weekStart?: string
 
 			// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 			refresh?: string | false
@@ -78,7 +79,7 @@ lineage: schemas: [{
 			// Version of the dashboard, incremented each time the dashboard is updated.
 			version?: uint32 @grafanamaturity(NeedsExpertReview)
 			panels?: [...(#Panel | #RowPanel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// Contains the list of configured template variables with their saved values along with some other metadata
 			templating?: {
 				list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 			}
@@ -86,7 +87,7 @@ lineage: schemas: [{
 			// TODO docs
 			annotations?: #AnnotationContainer
 
-			// TODO docs
+			// Links with references to other dashboards or external websites.
 			links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
 
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
@@ -137,11 +138,8 @@ lineage: schemas: [{
 			// Name of annotation.
 			name: string
 
-			// TODO: Should be DataSourceRef
-			datasource: {
-				type?: string
-				uid?:  string
-			} @grafanamaturity(NeedsExpertReview)
+			// Datasource where the annotations data is
+			datasource: #DataSourceRef
 
 			// When enabled the annotation query is issued with every dashboard refresh
 			enable: bool | *true
@@ -153,7 +151,7 @@ lineage: schemas: [{
 			// Color to use for the annotation event markers
 			iconColor: string
 
-			// Optionally
+			// Filters to apply when fetching annotations
 			filter?: #AnnotationPanelFilter
 
 			// TODO.. this should just be a normal query target
@@ -203,22 +201,31 @@ lineage: schemas: [{
 			uid?: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-		// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
-		// TODO docs
+		// Links with references to other dashboards or external resources
 		#DashboardLink: {
-			title:   string             @grafanamaturity(NeedsExpertReview)
-			type:    #DashboardLinkType @grafanamaturity(NeedsExpertReview)
-			icon:    string             @grafanamaturity(NeedsExpertReview)
-			tooltip: string             @grafanamaturity(NeedsExpertReview)
-			url:     string             @grafanamaturity(NeedsExpertReview)
+			// Title to display with the link
+			title: string @grafanamaturity(NeedsExpertReview)
+			// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+			type: #DashboardLinkType @grafanamaturity(NeedsExpertReview)
+			// Icon name to be displayed with the link
+			icon: string @grafanamaturity(NeedsExpertReview)
+			// Tooltip to display when the user hovers their mouse over it
+			tooltip: string @grafanamaturity(NeedsExpertReview)
+			// Link URL. Only required/valid if the type is link
+			url: string @grafanamaturity(NeedsExpertReview)
+			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 			tags: [...string] @grafanamaturity(NeedsExpertReview)
-			asDropdown:  bool | *false @grafanamaturity(NeedsExpertReview)
+			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+			asDropdown: bool | *false @grafanamaturity(NeedsExpertReview)
+			// If true, the link will be opened in a new tab
 			targetBlank: bool | *false @grafanamaturity(NeedsExpertReview)
+			// If true, includes current template variables values in the link as query params
 			includeVars: bool | *false @grafanamaturity(NeedsExpertReview)
-			keepTime:    bool | *false @grafanamaturity(NeedsExpertReview)
+			// If true, includes current time range in the link as query params
+			keepTime: bool | *false @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface")
 
-		// TODO docs
+		// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 		#DashboardLinkType: "link" | "dashboards" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// FROM: packages/grafana-data/src/types/templateVars.ts
@@ -251,16 +258,17 @@ lineage: schemas: [{
 			x: uint32 & >=0 & <24 | *0 @grafanamaturity(NeedsExpertReview)
 			// Panel y
 			y: uint32 & >=0 | *0 @grafanamaturity(NeedsExpertReview)
-			// true if fixed
+			// Whether the panel is fixed within the grid
 			static?: bool @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface")
 
-		// TODO docs
+		// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+		// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 		#Threshold: {
-			// TODO docs
+			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 			// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
 			value?: number @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
 			// Threshold index, an old property that is not needed an should only appear in older dashboards
 			index?: int32 @grafanamaturity(NeedsExpertReview)
@@ -270,6 +278,7 @@ lineage: schemas: [{
 			state?: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
+		// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
 		#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 		#ThresholdsConfig: {
@@ -279,19 +288,19 @@ lineage: schemas: [{
 			steps: [...#Threshold] @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
 		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// Supported value mapping types
 		#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// Maps text values to a color or different display text
 		#ValueMap: {
 			type: #MappingType & "value"
 			options: [string]: #ValueMappingResult
 		} @cuetsy(kind="interface")
 
-		// TODO docs
+		// Maps numeric ranges to a color or different display text
 		#RangeMap: {
 			type: #MappingType & "range"
 			options: {
@@ -302,7 +311,7 @@ lineage: schemas: [{
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// Maps regular expressions to replacement text and a color
 		#RegexMap: {
 			type: #MappingType & "regex"
 			options: {
@@ -311,7 +320,8 @@ lineage: schemas: [{
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
+		// and color
 		#SpecialValueMap: {
 			type: #MappingType & "special"
 			options: {
@@ -321,10 +331,10 @@ lineage: schemas: [{
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// Special value types supported by the SpecialValueMap
 		#SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNan|Empty")
 
-		// TODO docs
+		// Result used as replacement text and color for RegexMap and SpecialValueMap
 		#ValueMappingResult: {
 			text?:  string
 			color?: string
@@ -361,29 +371,33 @@ lineage: schemas: [{
 		// type directly to achieve the same effect.
 		#Target: {...} @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
+		// A dashboard snapshot shares an interactive dashboard publicly.
+		// It is a read-only version of a dashboard, and is not editable.
+		// It is possible to create a snapshot of a snapshot.
+		// Grafana strips away all sensitive information from the dashboard.
+		// Sensitive information stripped: queries (metric, template,annotation) and panel links.
 		#Snapshot: {
-			// TODO docs
+			// Time when the snapshot was created
 			created: string & t.Time
-			// TODO docs
+			// Time when the snapshot expires, default is never to expire
 			expires: string @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// Is the snapshot saved in an external grafana instance
 			external: bool @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// external url, if snapshot was shared in external grafana instance
 			externalUrl: string @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// Unique identifier of the snapshot
 			id: uint32 @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// Optional, defined the unique key of the snapshot, required if external is true
 			key: string @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// Optional, name of the snapshot
 			name: string @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// org id of the snapshot
 			orgId: uint32 @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// last time when the snapshot was updated
 			updated: string & t.Time
-			// TODO docs
+			// url of the snapshot, if snapshot was shared internally
 			url?: string @grafanamaturity(NeedsExpertReview)
-			// TODO docs
+			// user id of the snapshot creator
 			userId: uint32 @grafanamaturity(NeedsExpertReview)
 		} @grafanamaturity(NeedsExpertReview)
 
@@ -432,8 +446,8 @@ lineage: schemas: [{
 			// Id of the repeating panel.
 			repeatPanelId?: int64 @grafanamaturity(NeedsExpertReview)
 
-			// TODO docs
-			maxDataPoints?: number @grafanamaturity(NeedsExpertReview)
+			// The maximum number of data points that the panel queries are retrieving.
+			maxDataPoints?: number
 
 			// TODO docs - seems to be an old field from old dashboard alerts?
 			thresholds?: [...] @grafanamaturity(NeedsExpertReview)
@@ -443,17 +457,27 @@ lineage: schemas: [{
 
 			transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
-			// TODO docs
-			// TODO tighter constraint
-			interval?: string @grafanamaturity(NeedsExpertReview)
+			// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
+			// This value must be formatted as a number followed by a valid time 
+			// identifier like: "40s", "3d", etc.
+			// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
+			interval?: string
 
-			// TODO docs
-			// TODO tighter constraint
-			timeFrom?: string @grafanamaturity(NeedsExpertReview)
+			// Overrides the relative time range for individual panels, 
+			// which causes them to be different than what is selected in 
+			// the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different 
+			// time periods or days on the same dashboard.
+			// The value is formatted as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far), 
+			// `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
+			// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+			// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
+			timeFrom?: string
 
-			// TODO docs
-			// TODO tighter constraint
-			timeShift?: string @grafanamaturity(NeedsExpertReview)
+			// Overrides the time range for individual panels by shifting its start and end relative to the time picker. 
+			// For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+			// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+			// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
+			timeShift?: string
 
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
@@ -580,6 +604,5 @@ lineage: schemas: [{
 			...
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 	}
-
 },
 ]

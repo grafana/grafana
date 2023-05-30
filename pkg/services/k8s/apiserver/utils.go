@@ -18,17 +18,17 @@ import (
 // Convert an etcd key to GRN style
 func keyToGRN(key string, gr *schema.GroupResource) (*entity.GRN, error) {
 	parts := strings.Split(key, "/")
-	if len(parts) != 2 {
+	if len(parts) != 5 {
 		return nil, fmt.Errorf("invalid key (expecting three parts) " + key)
 	}
 
 	grn := &entity.GRN{
 		TenantId: 1,
 		Kind:     strings.TrimSuffix(gr.Resource, "s"), // dashboards to dashboard :shrug:
-		UID:      parts[1],
+		UID:      parts[4],
 	}
 
-	namespace := parts[0]
+	namespace := parts[3]
 	if namespace == "default" {
 		return grn, nil
 	}

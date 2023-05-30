@@ -129,7 +129,7 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	logger := logr.New(newLogAdapter())
-	logger.V(8)
+	logger.V(9)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := grafanaapiserveroptions.NewGrafanaAPIServerOptions(os.Stdout, os.Stderr)
