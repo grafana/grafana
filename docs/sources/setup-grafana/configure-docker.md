@@ -247,72 +247,75 @@ AWS_default_SECRET_ACCESS_KEY=topsecret9b78c6
 AWS_default_REGION=us-east-1
 ```
 
-1. Create docker secret for each above values:
+1. Create docker secret for each of the above values:
 
-  ```bash
-  echo "aws01us02" | docker secret create aws_access_key_id -
-  i4g62kyuy80lnti5d05oqzgwh
-  ```
+   ```bash
+   echo "aws01us02" | docker secret create aws_access_key_id -
+   i4g62kyuy80lnti5d05oqzgwh
+   ```
 
-  ```bash
-  echo "topsecret9b78c6" | docker secret create aws_secret_access_key -
-  uegit5plcwodp57fxbqbnke7h
-  ```
+   ```bash
+   echo "topsecret9b78c6" | docker secret create aws_secret_access_key -
+   uegit5plcwodp57fxbqbnke7h
+   ```
 
-  ```bash
-  echo "us-east-1" | docker secret create aws_region -
-  fxbqbnke7hplcwodp57fuegit
-  ```
+   ```bash
+   echo "us-east-1" | docker secret create aws_region -
+   fxbqbnke7hplcwodp57fuegit
+   ```
 
 1. Check and verify if all of the above secrets created successfully:
 
-  ```bash
-  $ docker secret ls
-  ID                          NAME           DRIVER    CREATED              UPDATED
-  i4g62kyuy80lnti5d05oqzgwh   aws_access_key_id             5 minutes ago        5 minutes ago
-  uegit5plcwodp57fxbqbnke7h   aws_secret_access_key         3 minutes ago        3 minutes ago
-  fxbqbnke7hplcwodp57fuegit   aws_region                    About a minute ago   About a minute ago
-  ```
+   ```bash
+   $ docker secret ls
+   ID                          NAME           DRIVER    CREATED              UPDATED
+   i4g62kyuy80lnti5d05oqzgwh   aws_access_key_id             5 minutes ago        5 minutes ago
+   uegit5plcwodp57fxbqbnke7h   aws_secret_access_key         3 minutes ago        3 minutes ago
+   fxbqbnke7hplcwodp57fuegit   aws_region                    About a minute ago   About a minute ago
+   ```
 
-  Similarly, you can also find more information about the above created secrets via docker inspect command i.e.
-  ```bash
-  $ docker inspect aws_access_key_id
-  [
-      {
-          "ID": "i4g62kyuy80lnti5d05oqzgwh",
-          "Version": {
-              "Index": 16
-          },
-          "CreatedAt": "2023-05-29T21:43:37.247825144Z",
-          "UpdatedAt": "2023-05-29T21:43:37.247825144Z",
-          "Spec": {
-              "Name": "aws_access_key_id",
-              "Labels": {}
-          }
-      }
-  ]
-  ```
+   Similarly, you can also find more information about the above created secrets using the `docker inspect` command.
+
+   For example to inspect the `aws_access_key_id` secret, then run the command:
+
+   ```bash
+   $ docker inspect aws_access_key_id
+   [
+       {
+           "ID": "i4g62kyuy80lnti5d05oqzgwh",
+           "Version": {
+               "Index": 16
+           },
+           "CreatedAt": "2023-05-29T21:43:37.247825144Z",
+           "UpdatedAt": "2023-05-29T21:43:37.247825144Z",
+           "Spec": {
+               "Name": "aws_access_key_id",
+               "Labels": {}
+           }
+       }
+   ]
+   ```
 
 1. Now we can use the secrets in our command line without exposing the original values in plain text:
 
-  ```bash
-  docker run -d --name grafana -p 9000:3000 \
-  -e "GF_DEFAULT_INSTANCE_NAME=my-grafana" \
-  -e "GF_AWS_PROFILES=default" \
-  -e "GF_AWS_default_ACCESS_KEY_ID=/run/secrets/aws_access_key_id" \
-  -e "GF_AWS_default_SECRET_ACCESS_KEY=/run/secrets/aws_secret_access_key"
-  -e "GF_AWS_default_REGION=/run/secrets/aws_region"
-  -v grafana-data:/var/lib/grafana \
-  grafana/grafana-enterprise
-  ```
+   ```bash
+   docker run -d --name grafana -p 9000:3000 \
+   -e "GF_DEFAULT_INSTANCE_NAME=my-grafana" \
+   -e "GF_AWS_PROFILES=default" \
+   -e "GF_AWS_default_ACCESS_KEY_ID__FILE=/run/secrets/aws_access_key_id" \
+   -e "GF_AWS_default_SECRET_ACCESS_KEY__FILE=/run/secrets/aws_secret_access_key"
+   -e "GF_AWS_default_REGION__FILE=/run/secrets/aws_region"
+   -v grafana-data:/var/lib/grafana \
+   grafana/grafana-enterprise
+   ```
 
-You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
+ You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
 
-The following list includes the supported environment variables:
+ The following list includes the supported environment variables:
 
-- `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
-- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
-- `GF_AWS_${profile}_REGION`: AWS region (optional).
+ - `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
+ - `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
+ - `GF_AWS_${profile}_REGION`: AWS region (optional).
 
 ## Troubleshoot a Docker deployment
 
