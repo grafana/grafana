@@ -140,7 +140,7 @@ func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource 
 
 	// If there is different errorSource from the list of responses, we want to return the most severe one.
 	// The priority order is: pluginSource > databaseSource > externalSource > noneSource
-	var errorSource errorSource = noneSource
+	var errorSource = noneSource
 	for _, res := range resp.Responses {
 		responseErrorSource := getErrorSourceForResponse(res)
 
