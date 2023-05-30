@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -435,8 +436,17 @@ func (s *entityStorage) GuaranteedUpdate(
 			return err
 		}
 
+		// MaxAttempts may be useful in case of server timeout but all the rest of errors such as forbidden
+		// and unauthorized need not be reattempted, below we are checking against forbidden
+		// but I wonder if we should switch it to != metav1.StatusReasonServerTimeout or just do a single attempt really
 		updatedObj, _, err := tryUpdate(destination, res)
 		if err != nil {
+			if statusErr, ok := err.(*apierrors.StatusError); ok {
+				// For now, forbidden may come from a mutation handler
+				if statusErr.ErrStatus.Reason == metav1.StatusReasonForbidden {
+					return statusErr
+				}
+			}
 			if attempt == MaxUpdateAttempts {
 				return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
 			} else {
