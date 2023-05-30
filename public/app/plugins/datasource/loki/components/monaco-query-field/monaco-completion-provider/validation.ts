@@ -113,3 +113,23 @@ export const placeHolderScopedVars = {
   __range_s: { text: '1', value: 1 },
   __range: { text: '1s', value: '1s' },
 };
+
+export function highlightErrorsInQuery(query: string): string {
+  const errorBoundaries = validateQuery(query, query, query.split('\n'));
+  if (!errorBoundaries) {
+    return query;
+  }
+
+  const queryLines = query.split('\n');
+  const queryWithErrors = queryLines.map((line, index) => {
+    const errorBoundary = errorBoundaries.find((error) => error.startLineNumber === index + 1);
+    if (!errorBoundary) {
+      return line;
+    }
+
+    const { startColumn, endColumn, error } = errorBoundary;
+    return `${line.substring(0, startColumn - 1)}%err${error}err%${line.substring(endColumn - 1)}`;
+  });
+
+  return queryWithErrors.join('\n');
+}
