@@ -3,7 +3,8 @@ import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 import { PluginExtensionLink, PluginExtensionPoints, type PluginExtensionExploreContext } from '@grafana/data';
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { ExploreId, useSelector } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, ExploreId, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
@@ -17,7 +18,7 @@ type Props = {
   exploreId: ExploreId;
 };
 
-export function ToolbarExtensionPoint(props: Props): ReactElement {
+export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId } = props;
   const [extension, setExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -29,6 +30,14 @@ export function ToolbarExtensionPoint(props: Props): ReactElement {
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.
   if (extensions.length === 1) {
+    const canAddPanelToDashboard =
+      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
+      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+
+    if (!canAddPanelToDashboard) {
+      return null;
+    }
+
     return (
       <Suspense fallback={null}>
         <AddToDashboard exploreId={exploreId} />
