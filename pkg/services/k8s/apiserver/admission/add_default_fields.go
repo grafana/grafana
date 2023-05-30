@@ -56,6 +56,9 @@ func (addDefaultFields) Admit(ctx context.Context, a admission.Attributes, o adm
 		}
 		break
 	case admission.Update:
+		// Quick and dirty code with some type assertions that skip error checking
+		// in order to demonstrate how to protect a managed field when it already exists in
+		// an old object and is being attempted to be removed
 		oldObject := a.GetOldObject()
 
 		from, _ := oldObject.(*unstructured.Unstructured)
