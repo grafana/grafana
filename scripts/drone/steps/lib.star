@@ -371,7 +371,6 @@ def validate_modifle_step():
         "image": go_image,
         "failure": "ignore",
         "commands": [
-            "echo Yer a programmer, Kat!",
             "go run scripts/modowners/modowners.go check scripts/modowners/go.txd",
         ],
     }

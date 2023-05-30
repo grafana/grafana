@@ -428,7 +428,6 @@ steps:
   image: golang:1.20.4
   name: lint-backend
 - commands:
-  - echo Yer a programmer, Kat!
   - go run scripts/modowners/modowners.go check scripts/modowners/go.txd
   failure: ignore
   image: golang:1.20.4
@@ -1436,7 +1435,6 @@ steps:
   image: golang:1.20.4
   name: lint-backend
 - commands:
-  - echo Yer a programmer, Kat!
   - go run scripts/modowners/modowners.go check scripts/modowners/go.txd
   failure: ignore
   image: golang:1.20.4
@@ -7218,6 +7216,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 4eab352b2d1178348ba9388c3de1d6d4db75ca92a0a8e6ce8cd203ca9e91bea3
+hmac: 2ea10ef277a59f51b1af028c7e7ca4f40c8adfd823913e02e15ee56ba18c2459
 
 ...
