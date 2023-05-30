@@ -109,7 +109,13 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 	}
 
 	if cmd.IsFolder {
-		return s.saveFolder(ctx, &res, cmd, provisioning)
+		res.APIVersion = "folders.kinds.grafana.com/v0.0-alpha"
+		res.Kind = "Folder"
+		res.Spec = cmd.Dashboard
+	} else {
+		res.APIVersion = "dashboard.kinds.grafana.com/v0.0-alpha"
+		res.Kind = "Dashbaord"
+		res.Spec = cmd.Dashboard
 	}
 
 	// Now handled by entity api
@@ -187,38 +193,17 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 	// 	return nil, err
 	// }
 
-	res.APIVersion = "dashboard.kinds.grafana.com/v0.0-alpha"
-	res.Kind = "dashboard"
-	res.Spec = cmd.Dashboard
-
 	jj, _ := json.MarshalIndent(res, "", "  ")
-	fmt.Printf("TODO, SAVE k8s dashboard: %s\n", jj)
+	fmt.Printf("TODO, SAVE k8s: %s\n", jj)
 
 	if false {
 		uid := "xxx"
 		return s.waitForRevision(ctx,
-			&dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID},
+			&dashboards.GetDashboardQuery{UID: uid, OrgID: 1},
 			"1") // uObj.GetResourceVersion())
 	}
 
-	if provisioning == nil {
-		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
-	}
-	return s.DashboardSQLStore.SaveProvisionedDashboard(ctx, cmd, provisioning)
-}
-
-// SaveDashboard will write the dashboard to k8s then wait for it to exist in the SQL store
-func (s *DashboardStoreWrapper) saveFolder(ctx context.Context, res *genericDashboardResource, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
-	if !cmd.IsFolder {
-		return nil, fmt.Errorf("expected folder")
-	}
-	res.APIVersion = "folder.kinds.grafana.com/v0.0-alpha"
-	res.Kind = "folder"
-	res.Spec = cmd.Dashboard
-
-	jj, _ := json.MarshalIndent(res, "", "  ")
-	fmt.Printf("TODO, SAVE k8s folder: %s\n", jj)
-
+	// For now lets do this synchronously
 	if provisioning == nil {
 		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
 	}
