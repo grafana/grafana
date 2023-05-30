@@ -37,10 +37,18 @@ export const DatasetSelector = ({
     if (isSqlDatasourceDatabaseSelectionFeatureFlagEnabled()) {
       // If a default database is already configured for a MSSQL or MySQL data source, OR the data source is Postgres, no need to fetch other databases.
       if (hasPreconfigCondition) {
+        // Set the current database to the preconfigured database.
+        onChange(toOption(preconfiguredDataset));
         return [toOption(preconfiguredDataset)];
       }
     }
 
+    // If there is no preconfigured database, but there is a selected dataset, set the current database to the selected dataset.
+    if (dataset) {
+      onChange(toOption(dataset));
+    }
+
+    // Otherwise, fetch all databases available to the datasource.
     const datasets = await db.datasets();
     return datasets.map(toOption);
   }, []);
