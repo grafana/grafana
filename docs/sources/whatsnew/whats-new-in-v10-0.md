@@ -80,7 +80,7 @@ _Generally available in all editions of Grafana._
 
 <!-- Nathan Marrs -->
 
-We're promoting the canvas panel out of beta and into general availability. Over the past several months we've introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We're excited to include Canvas as a first class citizen in Grafana’s core panel library. To learn more about the panel, refer to our [Canvas documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}). Also, check out our [latest blog post about canvas](https://grafana.com/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
+We're promoting the canvas panel out of public preview and into general availability. Over the past several months we've introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We're excited to include Canvas as a first class citizen in Grafana’s core panel library. To learn more about the panel, refer to our [Canvas documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}). Also, check out our [latest blog post about canvas](https://grafana.com/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
@@ -347,6 +347,8 @@ We've renamed the Phlare data source _Grafana Pyroscope_ data source as part of 
 ### Data plane
 
 <!-- Kyle Brandt -->
+
+_Generally available in all editions of Grafana._
 
 Data types are now being defined to create a data plane layer between producers and consumers of data. By defining data types as part of Grafana's platform, plugin and application developers can use these data types to achieve more reliable interoperability across the platform.
 
