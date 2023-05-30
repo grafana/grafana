@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // defaultDetectors contains all the detectors to detect Angular plugins.
