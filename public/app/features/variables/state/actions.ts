@@ -532,9 +532,7 @@ export const validateVariableSelectionState = (
 
     // 2. find the default value
     if (defaultValue) {
-      option = variableInState.options?.find(
-        (v: VariableOption) => v.text === defaultValue || v.value === defaultValue
-      );
+      option = variableInState.options?.find((v) => v.text === defaultValue);
       if (option) {
         return setValue(variableInState, option);
       }
