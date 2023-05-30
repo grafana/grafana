@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Collapse, Icon, LoadingPlaceholder, Modal, TagList, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, Modal, TagList, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
@@ -372,12 +372,14 @@ function NotificationRouteHeader({
   routesByIdMap,
   instancesCount,
   alertManagerSourceName,
+  expandRoute,
 }: {
   route: RouteWithPath;
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
   alertManagerSourceName: string;
+  expandRoute: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showDetails, setShowDetails] = useState(false);
@@ -389,6 +391,13 @@ function NotificationRouteHeader({
   return (
     <div className={styles.routeHeader}>
       <Stack gap={1} direction="row" alignItems="center">
+        <IconButton
+          aria-label={`${expandRoute ? 'Collapse' : 'Expand'} row`}
+          size="md"
+          data-testid="collapse-toggle"
+          name={expandRoute ? 'angle-down' : 'angle-right'}
+          type="button"
+        />
         Notification policy
         <NotificationPolicyMatchers route={route} />
       </Stack>
@@ -450,11 +459,12 @@ function NotificationRoute({
           routesByIdMap={routesByIdMap}
           instancesCount={instances.length}
           alertManagerSourceName={alertManagerSourceName}
+          expandRoute={expandRoute}
         />
       }
       className={styles.collapsableSection}
       onToggle={setExpandRoute}
-      collapsible={true}
+      collapsible={false}
       isOpen={expandRoute}
       labelClassName={styles.collapseLabel}
     >
