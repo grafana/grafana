@@ -69,7 +69,7 @@ export const DatasetSelector = ({
         }
       }
     }
-  }, [onChange, dataset, state.value]);
+  }, [state.value, onChange, dataset]);
 
   return (
     <Select
