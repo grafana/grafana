@@ -73,7 +73,9 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:9.4.7
 ## Run the Grafana main branch
 
 After every successful build of the main branch, two tags, `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-oss-dev:-pre` and `grafana/grafana-oss-dev:-pre-ubuntu`, where version is the next version of Grafana and build ID is the ID of the corresponding CI build. These tags provide access to the most recent Grafana main builds.
-To ensure stability and consistency, we strongly recommend using the `grafana/grafana-oss-dev:-pre` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce new bugs or issues. It also avoids polluting the tag namespace for the main grafana images with thousands of pre-release tags.
+
+To ensure stability and consistency, we strongly recommend using the `grafana/grafana-oss-dev:-pre` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
+
 For a list of available tags, refer to [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
 
 ## Default paths
@@ -95,7 +97,7 @@ The following configurations are set by default when you start the Grafana Docke
 
 You can install publicly available plugins and plugins that are private or used internally in an organization. For plugin installation instructions, refer to [Install plugins in the Docker container]({{< relref "./installation/docker#install-plugins-in-the-docker-container" >}}).
 
-### Install plugins from other sources
+## Install plugins from other sources
 
 To install plugins from other sources, you must define the custom URL and specify it immediately before the plugin name in the `GF_INSTALL_PLUGINS` environment variable: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
 
@@ -109,6 +111,30 @@ docker run -d
   --name=grafana
   -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel"
   grafana/grafana-enterprise
+```
+
+## Build Grafana with the Image Renderer plugin pre-installed
+
+> **Note:** This feature is experimental.
+
+Currently, the Grafana Image Renderer plugin requires dependencies which are not available in the Grafana Docker image (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301) for more details). However, you can create a customized Docker image utilizing the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument as a solution. This will install the necessary dependencies for the Grafana Image Renderer plugin to run.
+
+Example:
+
+The following example shows how to build a customized Grafana Docker image that includes the Image Renderer plugin.
+
+```bash
+#go to the folder
+cd packaging/docker/custom
+
+#running the build command
+docker build
+--build-arg "GRAFANA_VERSION=latest"
+--build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true"
+-t grafana-custom .
+
+# running the docker run command
+docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
 ## Build and run a Docker image with pre-installed plugins
@@ -181,30 +207,6 @@ docker build
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
-## Build Grafana with the Image Renderer plugin pre-installed
-
-> **Note:** This feature is experimental.
-
-Currently, the Grafana Image Renderer plugin requires dependencies which are not available in the Grafana Docker image (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301) for more details). However, you can create a customized Docker image utilizing the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument as a solution. This will install the necessary dependencies for the Grafana Image Renderer plugin to run.
-
-Example:
-
-The following example shows how to build a customized Grafana Docker image that includes the Image Renderer plugin.
-
-```bash
-#go to the folder
-cd packaging/docker/custom
-
-#running the build command
-docker build
---build-arg "GRAFANA_VERSION=latest"
---build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true"
--t grafana-custom .
-
-# running the docker run command
-docker run -d -p 3000:3000 --name=grafana grafana-custom
-```
-
 ## Logging
 
 By default, Docker container logs are directed to `STDOUT`, a common practice in the Docker community. You can change this by setting a different [log mode]({{< relref "./configure-grafana#mode" >}}) such as `console`, `file`, or `syslog`. You can use one or more modes by separating them with spaces, for example, `console file`. By default, both `console` and `file` modes are enabled.
@@ -237,9 +239,9 @@ Grafana ships with built-in support for the [Amazon CloudWatch datasource]({{< r
 
 Example:
 
-The following example defines how to use Grafana environment variables via Docker Secrets for the AWS ID-Key, secret access key, region, and profile.
+The example below shows how to use Grafana environment variables via Docker Secrets for the AWS ID-Key, secret access key, region, and profile.
 
-Lets assume the following example values which are required for the AWS Cloudwatch Data source:
+The example uses the following values for the AWS Cloudwatch data source:
 
 ```bash
 AWS_default_ACCESS_KEY_ID=aws01us02
@@ -247,7 +249,7 @@ AWS_default_SECRET_ACCESS_KEY=topsecret9b78c6
 AWS_default_REGION=us-east-1
 ```
 
-1. Create docker secret for each of the above values:
+1. Create a Docker secret for each of the values noted above.
 
    ```bash
    echo "aws01us02" | docker secret create aws_access_key_id -
@@ -261,10 +263,15 @@ AWS_default_REGION=us-east-1
    echo "us-east-1" | docker secret create aws_region -
    ```
 
-1. Check and verify if all of the above secrets created successfully:
+1. Run the following command to determine that the secrets were created.
 
    ```bash
    $ docker secret ls
+   ```
+
+   The output from the command should look similar to the following:
+
+   ```
    ID                          NAME           DRIVER    CREATED              UPDATED
    i4g62kyuy80lnti5d05oqzgwh   aws_access_key_id             5 minutes ago        5 minutes ago
    uegit5plcwodp57fxbqbnke7h   aws_secret_access_key         3 minutes ago        3 minutes ago
@@ -279,7 +286,7 @@ AWS_default_REGION=us-east-1
 
    Similarly, you can also find more information about the above created secrets using the `docker inspect` command.
 
-   For example to inspect the `aws_access_key_id` secret, then run the command:
+   For example, to inspect the `aws_access_key_id` secret, run the following command:
 
    ```bash
    $ docker inspect aws_access_key_id
@@ -299,7 +306,7 @@ AWS_default_REGION=us-east-1
    ]
    ```
 
-1. Now we can use the secrets in our command line without exposing the original values in plain text:
+1. Add the secrets to the command line when you run Docker.
 
    ```bash
    docker run -d --name grafana -p 9000:3000 \
@@ -312,13 +319,13 @@ AWS_default_REGION=us-east-1
    grafana/grafana-enterprise
    ```
 
- You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
+You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
 
- The following list includes the supported environment variables:
+The following list includes the supported environment variables:
 
- - `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
- - `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
- - `GF_AWS_${profile}_REGION`: AWS region (optional).
+- `GF_AWS_${profile}_ACCESS_KEY_ID`: AWS access key ID (required).
+- `GF_AWS_${profile}_SECRET_ACCESS_KEY`: AWS secret access key (required).
+- `GF_AWS_${profile}_REGION`: AWS region (optional).
 
 ## Troubleshoot a Docker deployment
 
