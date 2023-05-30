@@ -10,6 +10,9 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/grafana/kindsys"
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -19,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
@@ -33,6 +35,7 @@ const MaxUpdateAttempts = 30
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
 	store        entity.EntityStoreServer
+	kind         kindsys.Core
 	gr           schema.GroupResource
 	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
@@ -53,6 +56,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
 	store entity.EntityStoreServer,
+	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
 	keyFunc func(obj runtime.Object) (string, error),
@@ -65,6 +69,7 @@ func NewEntityStorage(
 	ws := NewWatchSet()
 	return &entityStorage{
 			store:        store,
+			kind:         kind,
 			gr:           config.GroupResource,
 			codec:        config.Codec,
 			keyFunc:      keyFunc,
@@ -292,6 +297,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 			streamer.SetInputStream(i)
 
 			return err
+		case "":
+			// this is fine
 		default:
 		}
 	}
@@ -314,8 +321,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
-	res.Kind = s.gr.Resource
+	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
 	//	fmt.Printf("GET: %s", string(jjj))
@@ -374,8 +381,8 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = s.gr.WithVersion("v0.0-alpha").String()
-		res.Kind = s.gr.Resource
+		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.Kind = s.kind.Name()
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
 		if err != nil {

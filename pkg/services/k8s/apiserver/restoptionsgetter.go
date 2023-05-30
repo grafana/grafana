@@ -1,6 +1,8 @@
 package apiserver
 
 import (
+	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/kindsys"
 	"path"
 	"time"
 
@@ -19,13 +21,14 @@ import (
 )
 
 type RESTOptionsGetter struct {
-	store entity.EntityStoreServer
-	codec runtime.Codec
+	store    entity.EntityStoreServer
+	codec    runtime.Codec
+	registry *corekind.Base
 
 	fallback generic.RESTOptionsGetter
 }
 
-func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureToggles, store entity.EntityStoreServer) func(runtime.Codec) generic.RESTOptionsGetter {
+func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureToggles, store entity.EntityStoreServer, registry *corekind.Base) func(runtime.Codec) generic.RESTOptionsGetter {
 	return func(codec runtime.Codec) generic.RESTOptionsGetter {
 		// Default to a file based solution
 		fallback := filepath.NewRESTOptionsGetter(path.Join(cfg.DataPath, "k8s"), codec)
@@ -35,6 +38,7 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 		}
 		return &RESTOptionsGetter{
 			store:    store,
+			registry: registry,
 			codec:    codec,
 			fallback: fallback,
 		}
@@ -77,17 +81,30 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
+
+			var found kindsys.Core
+			kinds := f.registry.All()
+			for _, k := range kinds {
+				if k.Props().Common().PluralMachineName == config.GroupResource.Resource {
+					found = k
+					break
+				}
+			}
+
 			// implement this function with something like https://github.com/grafana/grafana-apiserver/blob/7a585ef1a6b082e4d164188f03e666f6df1d2ba1/pkg/storage/filepath/storage.go#L43
 			return NewEntityStorage(f.store,
+				found,
 				config, resourcePrefix,
 				keyFunc, newFunc, newListFunc,
 				getAttrsFunc, trigger, indexers,
 			)
 		},
-		DeleteCollectionWorkers:   0,
-		EnableGarbageCollection:   false,
-		ResourcePrefix:            path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
-		CountMetricPollPeriod:     1 * time.Second,
+		DeleteCollectionWorkers: 0,
+		EnableGarbageCollection: false,
+		ResourcePrefix:          path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
+		// NOTE: CountMetricPollPeriod > 0 starts a metric collector at KeyRootFunc for this group resource
+		// https://github.com/kubernetes/apiserver/blob/v0.27.2/pkg/registry/generic/registry/store.go#L1490
+		CountMetricPollPeriod:     0 * time.Second,
 		StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
 	}
 
