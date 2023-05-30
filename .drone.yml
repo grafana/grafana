@@ -4536,6 +4536,12 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -7200,6 +7206,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d518288df51a41148e1fb302b80d598add4104f35588fd05e0fc6a135b45dda1
+hmac: 358fac7d0ab0a53dffe606efc35b060132ca2270407d6b58e06bc9f3415c9e65
 
 ...

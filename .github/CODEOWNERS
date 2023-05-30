@@ -38,7 +38,7 @@
 /docs/sources/administration/             @Eve832 @GrafanaWriter
 /docs/sources/alerting/                   @brendamuir
 /docs/sources/dashboards/                 @imatwawana
-/docs/sources/datasources/                @Eve832 @GrafanaWriter
+/docs/sources/datasources/                @lwandz13
 /docs/sources/explore/                    @Eve832 @GrafanaWriter
 /docs/sources/fundamentals                @chri2547
 /docs/sources/getting-started/            @chri2547
@@ -61,6 +61,7 @@
 /.bra.toml @grafana/backend-platform
 /.golangci.toml @grafana/backend-platform
 /build.go @grafana/backend-platform
+/scripts/modowners/ @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
