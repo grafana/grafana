@@ -5,18 +5,27 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { useTheme2 } from '@grafana/ui/src';
 
-import { highlightErrorsInQuery } from '../../components/monaco-query-field/monaco-completion-provider/validation';
+import {
+  highlightErrorsInQuery,
+  placeHolderScopedVars,
+} from '../../components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from '../../datasource';
 import { lokiGrammar } from '../../syntax';
 
 export interface Props {
   query: string;
   className?: string;
+  datasource: LokiDatasource;
 }
 
-export function RawQuery({ query, className }: Props) {
+export function RawQuery({ query, className, datasource }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const highlighted = Prism.highlight(highlightErrorsInQuery(query), lokiGrammar, 'lokiql');
+  const highlighted = Prism.highlight(
+    highlightErrorsInQuery(datasource.interpolateString(query, placeHolderScopedVars)),
+    lokiGrammar,
+    'lokiql'
+  );
 
   Prism.hooks.add('after-tokenize', function (env) {
     if (env.language !== 'lokiql') {
