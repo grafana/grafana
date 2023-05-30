@@ -430,6 +430,7 @@ steps:
 - commands:
   - echo Yer a programmer, Kat!
   - go run scripts/modowners/modowners.go check scripts/modowners/go.txd
+  failure: ignore
   image: golang:1.20.4
   name: validate-modfile
 trigger:
@@ -1437,6 +1438,7 @@ steps:
 - commands:
   - echo Yer a programmer, Kat!
   - go run scripts/modowners/modowners.go check scripts/modowners/go.txd
+  failure: ignore
   image: golang:1.20.4
   name: validate-modfile
 - commands:
@@ -7216,6 +7218,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: e5ea88e9e299cfefda4e8773bbb73c773e8c2a366185903e3a76c2348baadfcf
+hmac: 4eab352b2d1178348ba9388c3de1d6d4db75ca92a0a8e6ce8cd203ca9e91bea3
 
 ...

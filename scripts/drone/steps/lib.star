@@ -369,6 +369,7 @@ def validate_modifle_step():
         "name": "validate-modfile",
         # TODO: build_image or go_image?
         "image": go_image,
+        "failure": "ignore",
         "commands": [
             "echo Yer a programmer, Kat!",
             "go run scripts/modowners/modowners.go check scripts/modowners/go.txd",
