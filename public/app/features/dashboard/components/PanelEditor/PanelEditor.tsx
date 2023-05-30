@@ -538,6 +538,11 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
       justify-content: space-between;
       flex-wrap: wrap;
     `,
+    angularWarning: css`
+      display: flex;
+      height: theme.spacing(4);
+      align-items: center;
+    `,
     toolbarLeft: css`
       padding-left: ${theme.spacing(1)};
     `,

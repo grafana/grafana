@@ -41,6 +41,7 @@ jest.mock('./api/ruler');
 jest.mock('../../../core/hooks/useMediaQueryChange');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
@@ -125,7 +126,7 @@ const ui = {
     intervalInput: byRole('textbox', {
       name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
     }),
-    saveButton: byRole('button', { name: /Save changes/ }),
+    saveButton: byRole('button', { name: /Save evaluation interval/ }),
   },
 };
 

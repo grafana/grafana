@@ -4,16 +4,17 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { useMoveFolderMutation } from '../../api/browseDashboardsAPI';
 import {
   childrenByParentUIDSelector,
   deleteDashboard,
   deleteFolder,
   fetchChildren,
   moveDashboard,
-  moveFolder,
   rootItemsSelector,
   setAllSelection,
   useActionSelectionState,
@@ -32,7 +33,10 @@ export function BrowseActions() {
   const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
   const rootItems = useSelector(rootItemsSelector);
+  const [moveFolder] = useMoveFolderMutation();
   const childrenByParentUID = useSelector(childrenByParentUIDSelector);
+  const [, stateManager] = useSearchStateManager();
+  const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = (parentsToRefresh: Set<string | undefined>) => {
     dispatch(
@@ -40,8 +44,14 @@ export function BrowseActions() {
         isSelected: false,
       })
     );
-    for (const parentUID of parentsToRefresh) {
-      dispatch(fetchChildren(parentUID));
+    if (isSearching) {
+      // Redo search query
+      stateManager.doSearchWithDebounce();
+    } else {
+      // Refetch parents
+      for (const parentUID of parentsToRefresh) {
+        dispatch(fetchChildren(parentUID));
+      }
     }
   };
 
@@ -75,7 +85,7 @@ export function BrowseActions() {
     // Move all the folders sequentially
     // TODO error handling here
     for (const folderUID of selectedFolders) {
-      await dispatch(moveFolder({ folderUID, destinationUID }));
+      await moveFolder({ folderUID, destinationUID });
       // find the parent folder uid and add it to parentsToRefresh
       const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
       parentsToRefresh.add(folder?.parentUID);

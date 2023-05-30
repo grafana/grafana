@@ -40,7 +40,7 @@ describe('<NewTracePageSearchBar>', () => {
       setShowSpanFilterMatchesOnly: jest.fn(),
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: '',
-      reset: jest.fn(),
+      clear: jest.fn(),
       totalSpans: 100,
     };
 
@@ -55,13 +55,13 @@ describe('<NewTracePageSearchBar>', () => {
     render(<NewTracePageSearchBarWithProps matches={[]} />);
     const nextResButton = screen.queryByRole('button', { name: 'Next result button' });
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
-    const resetFiltersButton = screen.getByRole('button', { name: 'Reset filters button' });
+    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
     expect(nextResButton).toBeInTheDocument();
     expect(prevResButton).toBeInTheDocument();
-    expect(resetFiltersButton).toBeInTheDocument();
+    expect(clearFiltersButton).toBeInTheDocument();
     expect((nextResButton as HTMLButtonElement)['disabled']).toBe(true);
     expect((prevResButton as HTMLButtonElement)['disabled']).toBe(true);
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
   });
 
   it('renders total spans', async () => {

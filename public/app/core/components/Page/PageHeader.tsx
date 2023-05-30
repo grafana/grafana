@@ -46,7 +46,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: theme.spacing(1, 2),
+      gap: theme.spacing(1, 3),
     }),
     title: css({
       display: 'flex',

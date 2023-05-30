@@ -9,9 +9,9 @@ import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { defaultMapViewConfig, PanelOptions, TooltipMode, GeomapInstanceState } from './types';
+import { defaultMapViewConfig, Options, TooltipMode, GeomapInstanceState } from './types';
 
-export const plugin = new PanelPlugin<PanelOptions>(GeomapPanel)
+export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .setMigrationHandler(mapMigrationHandler)
