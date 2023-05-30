@@ -1134,6 +1134,7 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 			Storage:    sch.Version() == latest,
 			Deprecated: false,
 			Subresources: &kindsv1.GrafanaResourceSubresources{
+				Status:  &kindsv1.GrafanaResourceSubresourceStatus{},
 				History: &kindsv1.GrafanaResourceSubresourceHistory{},
 				Ref:     &kindsv1.GrafanaResourceSubresourceRef{},
 			},
