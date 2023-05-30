@@ -429,7 +429,7 @@ steps:
   name: lint-backend
 - commands:
   - echo Yer a programmer, Kat!
-  - go run dummy/modowners.go check dummy/go.txd
+  - go run scripts/modowners.go check scripts/go.txd
   image: golang:1.20.4
   name: validate-modfile
 trigger:
@@ -1436,7 +1436,7 @@ steps:
   name: lint-backend
 - commands:
   - echo Yer a programmer, Kat!
-  - go run dummy/modowners.go check dummy/go.txd
+  - go run scripts/modowners.go check scripts/go.txd
   image: golang:1.20.4
   name: validate-modfile
 - commands:
@@ -7210,6 +7210,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 72fd0ecd98f4ec2bdf490208c5518818c4d217fcc1f8a16cdccad5877ca20452
+hmac: 913a08967dbbd62dfc56c25cc7f1b56783a69ae7f028d1d5b5e8746a46d49403
 
 ...
