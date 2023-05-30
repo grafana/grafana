@@ -546,9 +546,6 @@ github.com/dchest/uniuri v1.2.0/go.mod h1:fSzm4SLHzNZvWLvWJew423PhAzkpNQYq+uNLq4
 github.com/deepmap/oapi-codegen v1.8.2/go.mod h1:YLgSKSDv/bZQB7N4ws6luhozi3cEdRktEqrX88CvjIw=
 github.com/deepmap/oapi-codegen v1.12.4 h1:pPmn6qI9MuOtCz82WY2Xaw46EQjgvxednXXrP7g5Q2s=
 github.com/deepmap/oapi-codegen v1.12.4/go.mod h1:3lgHGMu6myQ2vqbbTXH2H1o4eXFTGnFiDaOaKKl5yas=
-github.com/denisenkom/go-mssqldb v0.0.0-20190515213511-eb9f6a1743f3/go.mod h1:zAg7JM8CkOJ43xKXIj7eRO9kmWm/TW578qo+oDO6tuM=
-github.com/denisenkom/go-mssqldb v0.0.0-20190707035753-2be1aa521ff4/go.mod h1:zAg7JM8CkOJ43xKXIj7eRO9kmWm/TW578qo+oDO6tuM=
-github.com/denisenkom/go-mssqldb v0.12.0/go.mod h1:iiK0YP1ZeepvmBQk/QpLEhhTNJgfzrpArPY/aFvc9yU=
 github.com/dennwc/varint v1.0.0 h1:kGNFFSSw8ToIy3obO/kKr8U9GZYUAxQEVuix4zfDWzE=
 github.com/dennwc/varint v1.0.0/go.mod h1:hnItb35rvZvJrbTALZtY/iQfDs48JKRG1RPpgziApxA=
 github.com/devigned/tab v0.1.1/go.mod h1:XG9mPq0dFghrYvoBF3xdRrJzSTX1b7IQrvaL9mzjeJY=
@@ -1386,6 +1383,8 @@ github.com/grafana/dataplane/sdata v0.0.6 h1:Ejlj8d1Hvy/uDLeI4sOvL34Y8WLlVDd9iN2
 github.com/grafana/dataplane/sdata v0.0.6/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc h1:lQFgXpsZNDdi0whUROW15r/akzLIdXAn6xr5vqlZucI=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc/go.mod h1:ulYLLoSd71AWIjxgifLO86Lndx82Yj+IcV+fFnh8tkI=
+github.com/grafana/go-mssqldb v0.9.1 h1:3CqteWF0CadwXV9f3FxoI+i3uSW3azjTlQipyOJtWtQ=
+github.com/grafana/go-mssqldb v0.9.1/go.mod h1:HTCsUqZdb7oIO7jc37YauiSB5C3P/13AnpctVWBhlus=
 github.com/grafana/go-mssqldb v0.9.2 h1:FkyRJR4ywsT07iMtpFMHStrl8uuNkGIwp253Fee06z8=
 github.com/grafana/go-mssqldb v0.9.2/go.mod h1:HTCsUqZdb7oIO7jc37YauiSB5C3P/13AnpctVWBhlus=
 github.com/grafana/grafana-aws-sdk v0.15.0 h1:ZOPHQcC5NUFi1bLTwnju91G0KmGh1z+qXOKj9nDfxNs=
