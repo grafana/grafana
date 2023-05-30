@@ -251,17 +251,14 @@ AWS_default_REGION=us-east-1
 
    ```bash
    echo "aws01us02" | docker secret create aws_access_key_id -
-   i4g62kyuy80lnti5d05oqzgwh
    ```
 
    ```bash
    echo "topsecret9b78c6" | docker secret create aws_secret_access_key -
-   uegit5plcwodp57fxbqbnke7h
    ```
 
    ```bash
    echo "us-east-1" | docker secret create aws_region -
-   fxbqbnke7hplcwodp57fuegit
    ```
 
 1. Check and verify if all of the above secrets created successfully:
@@ -273,6 +270,12 @@ AWS_default_REGION=us-east-1
    uegit5plcwodp57fxbqbnke7h   aws_secret_access_key         3 minutes ago        3 minutes ago
    fxbqbnke7hplcwodp57fuegit   aws_region                    About a minute ago   About a minute ago
    ```
+    Where:
+    
+    ID = the secret unique ID which we will use in the docker run command
+
+    NAME = the we defined for each secret
+
 
    Similarly, you can also find more information about the above created secrets using the `docker inspect` command.
 
