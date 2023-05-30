@@ -8,7 +8,7 @@ keywords:
   - notification policies
 ---
 
-# How Notification Policies work
+# Notification Policies
 
 Notification policies provide you with a flexible way of routing alerts to various different receivers. Using label matchers, you can modify alert notification delivery without having to update every individual alert rule.
 
