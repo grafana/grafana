@@ -41,11 +41,11 @@ export const DatasetSelector = ({
         onChange(toOption(preconfiguredDataset));
         return [toOption(preconfiguredDataset)];
       }
+    }
 
-      // If there is no preconfigured database, but there is a selected dataset, set the current database to the selected dataset.
-      if (dataset) {
-        onChange(toOption(dataset));
-      }
+    // If there is no preconfigured database, but there is a selected dataset, set the current database to the selected dataset.
+    if (dataset) {
+      onChange(toOption(dataset));
     }
 
     // Otherwise, fetch all databases available to the datasource.
