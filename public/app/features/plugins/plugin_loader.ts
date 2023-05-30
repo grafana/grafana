@@ -227,7 +227,13 @@ export async function importPluginModule({
 }
 
 function isFrontendSandboxSupported(isAngular?: boolean): boolean {
-  return !isAngular && Boolean(config.featureToggles.pluginsFrontendSandbox) && process.env.NODE_ENV !== 'test';
+  const sandboxQueryParam = location.search.includes('nosandbox');
+  return (
+    !isAngular &&
+    Boolean(config.featureToggles.pluginsFrontendSandbox) &&
+    process.env.NODE_ENV !== 'test' &&
+    !sandboxQueryParam
+  );
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {

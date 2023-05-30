@@ -16,6 +16,7 @@ import {
 } from '../types';
 import { deprecationWarning } from '../utils';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { withSandboxWrapper } from '../utils/sandbox';
 
 import { createFieldConfigRegistry } from './registryFactories';
 
@@ -109,7 +110,9 @@ export class PanelPlugin<
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
 
-  panel: ComponentType<PanelProps<TOptions>> | null;
+  // component as exposed by the plugin without sandboxing wrappers
+  _rawPanelComponent: ComponentType<PanelProps<TOptions>> | null;
+
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -126,7 +129,10 @@ export class PanelPlugin<
 
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
-    this.panel = panel;
+    this._rawPanelComponent = panel;
+  }
+  get panel(): typeof this._rawPanelComponent {
+    return withSandboxWrapper(this._rawPanelComponent);
   }
 
   get defaults() {

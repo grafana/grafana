@@ -1,3 +1,5 @@
+import { cloneDeep } from 'lodash';
+
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
  *
@@ -48,6 +50,7 @@
  *
  * The code in this file defines that generalDistortionMap.
  */
+const forbiddenElements = ['script', 'iframe'];
 
 type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown) => unknown>;
 const generalDistortionMap: DistortionMap = new Map();
@@ -59,6 +62,9 @@ export function getGeneralSandboxDistortionMap() {
     distortConsole(generalDistortionMap);
     distortAlert(generalDistortionMap);
     distortAppend(generalDistortionMap);
+    distortInnerHTML(generalDistortionMap);
+    distortCreateElement(generalDistortionMap);
+    distortWorkers(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -123,12 +129,14 @@ function distortConsole(distortions: DistortionMap) {
 
 // set distortions to alert to always output to the console
 function distortAlert(distortions: DistortionMap) {
+  function getAlertDistortion() {
+    return function (...args: unknown[]) {
+      console.log(`[plugin]`, ...args);
+    };
+  }
   const descriptor = Object.getOwnPropertyDescriptor(window, 'alert');
   if (descriptor?.value) {
-    function sandboxAlert(...args: unknown[]) {
-      console.log(`[plugin]`, ...args);
-    }
-    distortions.set(descriptor.value, sandboxAlert);
+    distortions.set(descriptor.value, getAlertDistortion);
   }
   if (descriptor?.set) {
     distortions.set(descriptor.set, failToSet);
@@ -139,28 +147,82 @@ function isFunction(value: unknown): value is Function {
   return typeof value === 'function';
 }
 
+function distortInnerHTML(distortions: DistortionMap) {
+  function getInnerHTMLDistortion(originalMethod: unknown) {
+    return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
+      for (const arg of args) {
+        const lowerCase = arg?.toLowerCase() || '';
+        for (const forbiddenElement of forbiddenElements) {
+          if (lowerCase.includes('<' + forbiddenElement)) {
+            throw new Error('<' + forbiddenElement + '> is not allowed in sandboxed plugins');
+          }
+        }
+      }
+
+      if (isFunction(originalMethod)) {
+        originalMethod.apply(this, args);
+      }
+    };
+  }
+  const descriptors = [
+    Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'),
+    Object.getOwnPropertyDescriptor(Element.prototype, 'outerHTML'),
+    Object.getOwnPropertyDescriptor(Element.prototype, 'insertAdjacentHTML'),
+    Object.getOwnPropertyDescriptor(DOMParser.prototype, 'parseFromString'),
+  ];
+
+  for (const descriptor of descriptors) {
+    if (descriptor?.set) {
+      distortions.set(descriptor.set, getInnerHTMLDistortion);
+    }
+    if (descriptor?.value) {
+      distortions.set(descriptor.value, getInnerHTMLDistortion);
+    }
+  }
+}
+
+function distortCreateElement(distortions: DistortionMap) {
+  function getCreateElementDistortion(originalMethod: unknown) {
+    return function createElementDistortion(this: HTMLElement, arg?: string, options?: unknown) {
+      if (arg && forbiddenElements.includes(arg)) {
+        return document.createDocumentFragment();
+      }
+      if (isFunction(originalMethod)) {
+        return originalMethod.apply(this, [arg, options]);
+      }
+    };
+  }
+  const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'createElement');
+  if (descriptor?.value) {
+    distortions.set(descriptor.value, getCreateElementDistortion);
+  }
+}
+
 // set distortions to append elements to the document
-// we allow style tags to appended
 function distortAppend(distortions: DistortionMap) {
   const appendDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'append');
   const appendChildDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'appendChild');
 
+  // append accepts an array of nodes to append https://developer.mozilla.org/en-US/docs/Web/API/Node/append
   function getAppendDistortion(originalMethod: unknown) {
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
-      for (const arg of args) {
-        // allow style tags to append to the original document
-        if (arg.nodeName.toLowerCase() === 'style') {
-          document.head.appendChild(arg);
-          continue;
-        }
-        // always true. append is a method. This is to please typescript
-        if (isFunction(originalMethod)) {
-          console.log(this);
-          console.log(originalMethod);
-          console.log(args);
-          originalMethod.apply(this, args);
-          continue;
-        }
+      const acceptedNodes = args?.filter((node) => !forbiddenElements.includes(node.nodeName.toLowerCase()));
+      if (isFunction(originalMethod)) {
+        originalMethod.apply(this, acceptedNodes);
+      }
+      // https://developer.mozilla.org/en-US/docs/Web/API/Element/append#return_value
+      return undefined;
+    };
+  }
+
+  // appendChild accepts a single node to add https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
+  function getAppendChildDistortion(originalMethod: unknown) {
+    return function appendChildDistortion(this: HTMLElement, arg?: Node) {
+      if (arg && forbiddenElements.includes(arg.nodeName.toLowerCase())) {
+        return document.createDocumentFragment();
+      }
+      if (isFunction(originalMethod)) {
+        return originalMethod.call(this, arg);
       }
     };
   }
@@ -169,6 +231,22 @@ function distortAppend(distortions: DistortionMap) {
     distortions.set(appendDescriptor.value, getAppendDistortion);
   }
   if (appendChildDescriptor?.value) {
-    distortions.set(appendChildDescriptor.value, getAppendDistortion);
+    distortions.set(appendChildDescriptor.value, getAppendChildDistortion);
+  }
+}
+
+function distortWorkers(distortions: DistortionMap) {
+  const descriptor = Object.getOwnPropertyDescriptor(Worker.prototype, 'postMessage');
+  function getPostMessageDistortion(originalMethod: unknown) {
+    return function postMessageDistortion(this: Worker, ...args: unknown[]) {
+      // clonse deep to remove proxy objects that can't be serialized
+      const newArgs: unknown[] = cloneDeep(args);
+      if (isFunction(originalMethod)) {
+        originalMethod.apply(this, newArgs);
+      }
+    };
+  }
+  if (descriptor?.value) {
+    distortions.set(descriptor.value, getPostMessageDistortion);
   }
 }
