@@ -35,6 +35,17 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
+| Name                | Description                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| **Name**            | The data source name. This is how you refer to the data source in panels and queries.    |
+| **Default**         | Default data source means that it will be pre-selected for new panels.                   |
+| **URL**             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242).  |
+| **Allowed cookies** | Listing of cookies to forward to the data source.                                        |
+| **Version**         | The OpenTSDB version.                                                                    |
+| **Resolution**      | Metrics from OpenTSDB may have data points with either second or millisecond resolution. |
+| **Lookup limit**    | Default is 1000.                                                                         |
+
+<!--
         | Name                | Description                                                                             |
 
     | ------------------- | --------------------------------------------------------------------------------------- |
@@ -43,8 +54,8 @@ To configure basic settings for the data source, complete the following steps:
     | **URL** | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242) |
     | **Allowed cookies** | List the names of cookies to forward to the data source. |
     | **Version** | Version = opentsdb version, either <=2.1 or 2.2 |
-    | **Resolution** | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
-    | **Lookup limit** | Default is 1000. |
+    | **Resolution** | Metrics from opentsdb may have data points with either second or millisecond resolution. |
+    | **Lookup limit** | Default is 1000. | -->
 
 ### Provision the data source
 
