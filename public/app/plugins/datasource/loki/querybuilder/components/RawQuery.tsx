@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import Prism, { Token } from 'prismjs';
+import Prism from 'prismjs';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -8,6 +8,7 @@ import { useTheme2 } from '@grafana/ui/src';
 import {
   highlightErrorsInQuery,
   placeHolderScopedVars,
+  processErrorTokens,
 } from '../../components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource } from '../../datasource';
 import { lokiGrammar } from '../../syntax';
@@ -32,23 +33,8 @@ export function RawQuery({ query, className, datasource }: Props) {
       return;
     }
 
-    let errorZone = false;
-    env.tokens = env.tokens.map((token: string | Token) => {
-      if (typeof token !== 'string') {
-        return errorZone ? new Prism.Token('error', token.content) : token;
-      }
-      if (token.includes('%err')) {
-        errorZone = true;
-        return new Prism.Token('error', token.replace('%err', ''));
-      }
-
-      if (token.includes('err%')) {
-        errorZone = false;
-        return new Prism.Token('error', token.replace('err%', ''));
-      }
-
-      return token;
-    });
+    env.tokens = processErrorTokens(env.tokens);
+    console.log(env.tokens);
   });
   Prism.hooks.add('wrap', (env) => {
     if (env.language !== 'lokiql') {
@@ -75,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.bodySmall.fontSize};
     `,
     queryError: css`
-      color: ${theme.colors.error.main};
+      color: ${theme.colors.error.main} !important;
       text-decoration: underline wavy;
     `,
   };

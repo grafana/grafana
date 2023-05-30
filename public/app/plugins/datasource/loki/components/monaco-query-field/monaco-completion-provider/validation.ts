@@ -1,4 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
+import Prism, { Token } from 'prismjs';
 
 import { parser } from '@grafana/lezer-logql';
 import { ErrorId } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
@@ -138,7 +139,52 @@ export function highlightErrorsInQuery(query: string): string {
     return updatedLine;
   });
 
-  console.log(queryWithErrors.join('\n'));
-
   return queryWithErrors.join('\n');
+}
+
+function tokenContainsString(token: Token | string, string: string): boolean {
+  if (typeof token === 'string') {
+    return token.includes(string);
+  } else if (Array.isArray(token.content)) {
+    return token.content.some(isErrorStartToken);
+  } else if (typeof token.content === 'string') {
+    return tokenContainsString(token.content, string);
+  }
+  return false;
+}
+
+function isErrorStartToken(token: Token | string) {
+  return tokenContainsString(token, '%err');
+}
+
+function isErrorEndToken(token: Token | string) {
+  return tokenContainsString(token, 'err%');
+}
+
+function clearErrorToken(token: Token | string) {
+  if (typeof token === 'string') {
+    return token.replace(/%err|err%/g, '');
+  } else if (Array.isArray(token.content)) {
+    token.content = token.content.map((content) => clearErrorToken(content));
+  } else if (typeof token.content === 'string') {
+    token.content = clearErrorToken(token.content);
+  }
+  return token;
+}
+
+export function processErrorTokens(tokens: Array<Token | string>) {
+  let errorZone = false;
+  return tokens.map((token: string | Token) => {
+    if (errorZone) {
+      token = typeof token === 'string' ? new Token('error', token) : token;
+      token.type = 'error';
+    } else if (isErrorStartToken(token)) {
+      errorZone = true;
+      token = typeof token === 'string' ? new Token('error', token) : token;
+    } else if (isErrorEndToken(token)) {
+      errorZone = false;
+    }
+
+    return clearErrorToken(token);
+  });
 }
