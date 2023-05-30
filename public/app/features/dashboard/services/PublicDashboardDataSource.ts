@@ -5,6 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceJsonData,
   DataSourcePluginMeta,
@@ -151,7 +152,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     return { data: [toDataFrame(annotations)] };
   }
 
-  testDatasource(): Promise<null> {
-    return Promise.resolve(null);
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }

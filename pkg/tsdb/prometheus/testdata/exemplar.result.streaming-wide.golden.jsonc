@@ -1,6 +1,10 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "exemplar"
 //      },
@@ -34,6 +38,10 @@
       "schema": {
         "name": "exemplar",
         "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "exemplar"
           },

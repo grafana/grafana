@@ -13,8 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
+	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -33,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
-	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,6 +45,8 @@ var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
+	anonimpl.ProvideAnonymousSessionService,
+	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonSessionService)),
 	licensing.ProvideService,
 	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
@@ -51,8 +55,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(plugins.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
-	thumbs.ProvideCrawlerAuthSetupService,
-	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),
 	validations.ProvideValidator,
 	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
@@ -84,10 +86,17 @@ var wireExtsBasicSet = wire.NewSet(
 	pluginsintegration.WireExtensionSet,
 	publicdashboardsService.ProvideServiceWrapper,
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
+	caching.ProvideCachingService,
+	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
 )
 
 var wireExtsSet = wire.NewSet(
 	wireSet,
+	wireExtsBasicSet,
+)
+
+var wireExtsCLISet = wire.NewSet(
+	wireCLISet,
 	wireExtsBasicSet,
 )
 

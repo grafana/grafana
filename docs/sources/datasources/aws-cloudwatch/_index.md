@@ -6,19 +6,19 @@ aliases:
   - cloudwatch/
   - preconfig-cloudwatch-dashboards/
   - provision-cloudwatch/
-description: Guide for using AWS CloudWatch in Grafana
+description: Guide for using Amazon CloudWatch in Grafana
 keywords:
   - grafana
   - cloudwatch
   - guide
-menuTitle: AWS CloudWatch
-title: AWS CloudWatch data source
+menuTitle: Amazon CloudWatch
+title: Amazon CloudWatch data source
 weight: 200
 ---
 
-# AWS CloudWatch data source
+# Amazon CloudWatch data source
 
-Grafana ships with built-in support for AWS CloudWatch.
+Grafana ships with built-in support for Amazon CloudWatch.
 This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
@@ -27,15 +27,18 @@ Administrators can also [provision the data source]({{< relref "#provision-the-d
 
 Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
-> **Note:** To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
+{{% admonition type="note" %}}
+To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
+{{% /admonition %}}
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `CloudWatch` in the search bar.
+1. Click **CloudWatch**.
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the CloudWatch data source.
+   The **Settings** tab of the data source is displayed.
 
 ### Configure AWS authentication
 
@@ -49,7 +52,7 @@ For authentication options and configuration details, refer to [AWS authenticati
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
 You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication/" >}}).
 
-**Metrics-only:**
+##### Metrics-only permissions
 
 ```json
 {
@@ -84,7 +87,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Logs-only:**
+##### Logs-only permissions
 
 ```json
 {
@@ -119,7 +122,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Metrics and Logs:**
+##### Metrics and logs permissions
 
 ```json
 {
@@ -167,7 +170,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Cross-account observability: (see below) **
+##### Cross-account observability permissions
 
 ```json
 {
@@ -234,7 +237,7 @@ For more information about provisioning, and for available configuration options
 
 #### Provisioning examples
 
-**Using AWS SDK (default):**
+##### Using AWS SDK (default)
 
 ```yaml
 apiVersion: 1
@@ -246,7 +249,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-**Using credentials' profile name (non-default):**
+##### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1
@@ -261,7 +264,7 @@ datasources:
       profile: secondary
 ```
 
-**Using accessKey and secretKey:**
+##### Using accessKey and secretKey
 
 ```yaml
 apiVersion: 1
@@ -277,7 +280,7 @@ datasources:
       secretKey: '<your secret key>'
 ```
 
-**Using AWS SDK Default and ARN of IAM Role to Assume:**
+##### Using AWS SDK Default and ARN of IAM Role to Assume
 
 ```yaml
 apiVersion: 1
@@ -343,7 +346,9 @@ filter @message like /Exception/
     | sort exceptionCount desc
 ```
 
-> **Note:** If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{% admonition type="note" %}}
+If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{% /admonition %}}
 
 For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting" >}}).
 
@@ -354,8 +359,10 @@ Pricing for CloudWatch Logs is based on the amount of data ingested, archived, a
 Each time you select a dimension in the query editor, Grafana issues a `ListMetrics` API request.
 Each time you change queries in the query editor, Grafana issues a new request to the `GetMetricData` API.
 
-> **Note:** Grafana v6.5 and higher replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
-> The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
+{{% admonition type="note" %}}
+Grafana v6.5 and higher replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
+The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
+{{% /admonition %}}
 
 For more information, refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
 
@@ -375,3 +382,7 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
 To use this feature, configure in the [AWS console under Cloudwatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.
+
+## CloudWatch Logs data protection
+
+CloudWatch Logs can safeguard data by using log group data protection policies. If you have data protection enabled for a log group, then any sensitive data that matches the data identifiers you've selected will be masked. In order to view masked data you will need to have the `logs:Unmask` IAM permission enabled. See the AWS documentation on how to [help protect sensitive log data with masking](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) to learn more about this.

@@ -12,14 +12,17 @@
 import angular, { auto } from 'angular';
 import { kebabCase } from 'lodash';
 import React, { ComponentType } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot, Root } from 'react-dom/client';
 
 // get a react component from name (components can be an angular injectable e.g. value, factory or
 // available on window
-function getReactComponent(name: string | Function, $injector: auto.IInjectorService): ComponentType {
+function getReactComponent(
+  name: string | Function,
+  $injector: auto.IInjectorService
+): ComponentType<React.PropsWithChildren<{}>> {
   // if name is a function assume it is component and return it
   if (angular.isFunction(name)) {
-    return name as unknown as ComponentType;
+    return name as unknown as ComponentType<React.PropsWithChildren<{}>>;
   }
 
   // a React component name must be specified
@@ -46,7 +49,7 @@ function getReactComponent(name: string | Function, $injector: auto.IInjectorSer
     throw Error('Cannot find react component ' + name);
   }
 
-  return reactComponent as unknown as ComponentType;
+  return reactComponent as unknown as ComponentType<React.PropsWithChildren<{}>>;
 }
 
 // wraps a function with scope.$apply, if already applied just return
@@ -140,9 +143,9 @@ function watchProps(watchDepth: string, scope: any, watchExpressions: any[], lis
 }
 
 // render React component, with scope[attrs.props] being passed in as the component props
-function renderComponent(component: any, props: object, scope: any, elem: Element[]) {
+function renderComponent(component: any, props: object, scope: any, root: Root) {
   scope.$evalAsync(() => {
-    ReactDOM.render(React.createElement(component, props), elem[0]);
+    root.render(React.createElement(component, props));
   });
 }
 
@@ -207,11 +210,12 @@ const reactComponent = ($injector: any): any => {
     link: function (scope: any, elem: Element[], attrs: any) {
       const reactComponent = getReactComponent(attrs.name, $injector);
 
+      const root = createRoot(elem[0]);
       const renderMyComponent = () => {
         const scopeProps = scope.$eval(attrs.props);
         const props = applyFunctions(scopeProps, scope);
 
-        renderComponent(reactComponent, props, scope, elem);
+        renderComponent(reactComponent, props, scope, root);
       };
 
       // If there are props, re-render when they change
@@ -220,10 +224,10 @@ const reactComponent = ($injector: any): any => {
       // cleanup when scope is destroyed
       scope.$on('$destroy', () => {
         if (!attrs.onScopeDestroy) {
-          ReactDOM.unmountComponentAtNode(elem[0]);
+          root.unmount();
         } else {
           scope.$eval(attrs.onScopeDestroy, {
-            unmountComponent: ReactDOM.unmountComponentAtNode.bind(this, elem[0]),
+            unmountComponent: root.unmount.bind(this),
           });
         }
       });
@@ -264,6 +268,7 @@ const reactDirective = ($injector: auto.IInjectorService) => {
       replace: true,
       link: function (scope: any, elem: Element[], attrs: any) {
         const reactComponent = getReactComponent(reactComponentName, $injector);
+        const root = createRoot(elem[0]);
 
         // if props is not defined, fall back to use the React component's propTypes if present
         props = props || Object.keys(reactComponent.propTypes || {});
@@ -281,7 +286,7 @@ const reactDirective = ($injector: auto.IInjectorService) => {
 
           scopeProps = applyFunctions(scopeProps, scope, config);
           scopeProps = angular.extend({}, scopeProps, injectableProps);
-          renderComponent(reactComponent, scopeProps, scope, elem);
+          renderComponent(reactComponent, scopeProps, scope, root);
         };
 
         // watch each property name and trigger an update whenever something changes,
@@ -298,10 +303,10 @@ const reactDirective = ($injector: auto.IInjectorService) => {
         // cleanup when scope is destroyed
         scope.$on('$destroy', () => {
           if (!attrs.onScopeDestroy) {
-            ReactDOM.unmountComponentAtNode(elem[0]);
+            root.unmount();
           } else {
             scope.$eval(attrs.onScopeDestroy, {
-              unmountComponent: ReactDOM.unmountComponentAtNode.bind(this, elem[0]),
+              unmountComponent: root.unmount.bind(this),
             });
           }
         });

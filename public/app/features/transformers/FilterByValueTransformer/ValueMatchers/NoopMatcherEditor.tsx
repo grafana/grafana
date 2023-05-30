@@ -1,10 +1,8 @@
-import React from 'react';
-
 import { ValueMatcherID } from '@grafana/data';
 
-import { ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { ValueMatcherUIRegistryItem } from './types';
 
-export const NoopMatcherEditor: React.FC<ValueMatcherUIProps<any>> = () => {
+export const NoopMatcherEditor = () => {
   return null;
 };
 

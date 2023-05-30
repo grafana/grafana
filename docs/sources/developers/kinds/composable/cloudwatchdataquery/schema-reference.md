@@ -8,12 +8,12 @@ title: CloudWatchDataQuery kind
 
 ## CloudWatchDataQuery
 
-#### Maturity: [merged](../../../maturity/#merged)
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
 
 

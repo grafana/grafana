@@ -17,7 +17,7 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
     return (
       <Menu>
         {interpolatedLinks?.map((link, idx) => {
-          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} />;
+          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} onClick={link.onClick} />;
         })}
       </Menu>
     );

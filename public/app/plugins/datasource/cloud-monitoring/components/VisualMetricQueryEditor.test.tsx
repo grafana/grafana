@@ -1,4 +1,5 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
@@ -8,7 +9,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { MetricKind, PreprocessorType } from '../types';
+import { PreprocessorType, MetricKind } from '../types/query';
 
 import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
@@ -45,13 +46,13 @@ describe('VisualMetricQueryEditor', () => {
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
-      expect(onChange).toBeCalledWith(
-        expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
-      );
     });
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
+    );
   });
 
   it('can select a metric name', async () => {
@@ -60,85 +61,27 @@ describe('VisualMetricQueryEditor', () => {
     const mockMetricDescriptor = createMockMetricDescriptor({ displayName: 'metricName_test', type: 'test_type' });
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
+      filterMetricsByType: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
       getLabels: jest.fn().mockResolvedValue([]),
     });
 
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
     });
     const metricName = await screen.findByLabelText('Metric name');
-    await openMenu(metricName);
+    openMenu(metricName);
+    await userEvent.type(metricName, 'test');
     await waitFor(() => expect(document.body).toHaveTextContent('metricName_test'));
     await act(async () => {
       await select(metricName, 'metricName_test', { container: document.body });
-      expect(onChange).toBeCalledWith(
-        expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
-      );
     });
-  });
-
-  it('should render available metric options according to the selected service', async () => {
-    const onChange = jest.fn();
-    const query = createMockTimeSeriesList();
-    const datasource = createMockDatasource({
-      getMetricTypes: jest.fn().mockResolvedValue([
-        createMockMetricDescriptor({
-          service: 'service_a',
-          serviceShortName: 'srv_a',
-          type: 'metric1',
-          description: 'description_metric1',
-          displayName: 'displayName_metric1',
-        }),
-        createMockMetricDescriptor({
-          service: 'service_b',
-          serviceShortName: 'srv_b',
-          type: 'metric2',
-          description: 'description_metric2',
-          displayName: 'displayName_metric2',
-        }),
-        createMockMetricDescriptor({
-          service: 'service_b',
-          serviceShortName: 'srv_b',
-          type: 'metric3',
-          description: 'description_metric3',
-          displayName: 'displayName_metric3',
-        }),
-      ]),
-      getLabels: jest.fn().mockResolvedValue([]),
-    });
-
-    render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
-
-    const service = await screen.findByLabelText('Service');
-    await openMenu(service);
-    await act(async () => {
-      await select(service, 'Srv A', { container: document.body });
-    });
-    const metricName = await screen.findByLabelText('Metric name');
-    await openMenu(metricName);
-
-    const metricNameOptions = screen.getByLabelText('Select options menu');
-    expect(within(metricNameOptions).getByText('description_metric1')).toBeInTheDocument();
-    expect(within(metricNameOptions).getByText('displayName_metric1')).toBeInTheDocument();
-    expect(within(metricNameOptions).queryByText('displayName_metric2')).not.toBeInTheDocument();
-    expect(within(metricNameOptions).queryByText('description_metric2')).not.toBeInTheDocument();
-    expect(within(metricNameOptions).queryByText('displayName_metric3')).not.toBeInTheDocument();
-    expect(within(metricNameOptions).queryByText('description_metric3')).not.toBeInTheDocument();
-
-    await openMenu(service);
-    await act(async () => {
-      await select(service, 'Srv B', { container: document.body });
-    });
-    expect(within(metricNameOptions).queryByText('displayName_metric1')).not.toBeInTheDocument();
-    expect(within(metricNameOptions).queryByText('description_metric1')).not.toBeInTheDocument();
-    expect(within(metricNameOptions).getByText('displayName_metric2')).toBeInTheDocument();
-    expect(within(metricNameOptions).getByText('description_metric2')).toBeInTheDocument();
-    expect(within(metricNameOptions).getByText('displayName_metric3')).toBeInTheDocument();
-    expect(within(metricNameOptions).getByText('description_metric3')).toBeInTheDocument();
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
+    );
   });
 
   it('should have a distinct list of services', async () => {
@@ -172,7 +115,7 @@ describe('VisualMetricQueryEditor', () => {
 
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     expect(screen.getAllByLabelText('Select option').length).toEqual(2);
   });
 
@@ -210,6 +153,12 @@ describe('VisualMetricQueryEditor', () => {
     });
     const onChange = jest.fn();
     const datasource = createMockDatasource({
+      filterMetricsByType: jest
+        .fn()
+        .mockResolvedValue([
+          createMockMetricDescriptor(),
+          createMockMetricDescriptor({ type: 'type2', displayName: 'metricName2', metricKind: MetricKind.GAUGE }),
+        ]),
       getMetricTypes: jest
         .fn()
         .mockResolvedValue([
@@ -227,14 +176,18 @@ describe('VisualMetricQueryEditor', () => {
     expect(await screen.findByText('metric.test_groupby')).toBeInTheDocument();
     const metric = await screen.findByLabelText('Metric name');
     openMenu(metric);
-    await select(metric, 'metricName2', { container: document.body });
+    await userEvent.type(metric, 'type2');
+    await waitFor(() => expect(document.body).toHaveTextContent('metricName2'));
+    await act(async () => {
+      await select(metric, 'metricName2', { container: document.body });
+    });
     expect(onChange).toBeCalledWith(
       expect.objectContaining({ filters: ['metric.test_label', '=', 'test', 'AND', 'metric.type', '=', 'type2'] })
     );
     expect(query).toEqual(defaultQuery);
     expect(document.body).toHaveTextContent('metric.test_label');
-    expect(await screen.queryByText('Delta')).not.toBeInTheDocument();
-    expect(await screen.queryByText('metric.test_groupby')).not.toBeInTheDocument();
+    expect(screen.queryByText('Delta')).not.toBeInTheDocument();
+    expect(screen.queryByText('metric.test_groupby')).not.toBeInTheDocument();
   });
 
   it('updates labels on time range change', async () => {
@@ -257,30 +210,28 @@ describe('VisualMetricQueryEditor', () => {
     );
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
     });
     const metricName = await screen.findByLabelText('Metric name');
-    await openMenu(metricName);
+    openMenu(metricName);
     await waitFor(() => expect(document.body).toHaveTextContent('metricName'));
     await act(async () => {
       await select(metricName, 'metricName', { container: document.body });
     });
     const groupBy = await screen.findByLabelText('Group by');
-    await openMenu(groupBy);
+    openMenu(groupBy);
     await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby'));
-    await act(async () => {
-      timeSrv.setTime({ from: 'now-12h', to: 'now' });
-      const datasourceUpdated = createMockDatasource({
-        timeSrv,
-        getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
-      });
-      rerender(
-        <VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasourceUpdated} query={query} />
-      );
-      await openMenu(groupBy);
-      await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby_1'));
+    timeSrv.setTime({ from: 'now-12h', to: 'now' });
+    const datasourceUpdated = createMockDatasource({
+      timeSrv,
+      getLabels: jest.fn().mockResolvedValue({ 'metric.test_groupby_1': '' }),
     });
+    rerender(
+      <VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasourceUpdated} query={query} />
+    );
+    openMenu(groupBy);
+    await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby_1'));
   });
 });

@@ -3,10 +3,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, PageToolbar, ToolbarButtonRow } from '@grafana/ui';
+import { Button, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -48,21 +49,25 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
     dashboard.meta.hasUnsavedFolderChange = false;
   };
 
-  const folderTitle = dashboard.meta.folderTitle;
   const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
   const editIndex = getEditIndex(location);
   const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location);
-  const size = config.featureToggles.topnav ? 'sm' : 'md';
+  const size = 'sm';
 
   const actions = [
-    config.featureToggles.topnav && (
-      <Button variant="secondary" key="close" fill="outline" size={size} onClick={onClose}>
-        Close
-      </Button>
-    ),
+    <Button
+      data-testid={selectors.pages.Dashboard.Settings.Actions.close}
+      variant="secondary"
+      key="close"
+      fill="outline"
+      size={size}
+      onClick={onClose}
+    >
+      Close
+    </Button>,
     canSaveAs && (
       <SaveDashboardAsButton
         dashboard={dashboard}
@@ -77,13 +82,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
 
   return (
     <>
-      {!config.featureToggles.topnav ? (
-        <PageToolbar title={`${dashboard.title} / Settings`} parent={folderTitle} onGoBack={onClose}>
-          {actions}
-        </PageToolbar>
-      ) : (
-        <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>} />
-      )}
+      <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actions}</ToolbarButtonRow>} />
       <currentPage.component sectionNav={subSectionNav} dashboard={dashboard} editIndex={editIndex} />
     </>
   );
@@ -171,6 +170,13 @@ function getSettingsPages(dashboard: DashboardModel) {
   return pages;
 }
 
+function applySectionAsParent(node: NavModelItem, parent: NavModelItem): NavModelItem {
+  return {
+    ...node,
+    parentItem: node.parentItem ? applySectionAsParent(node.parentItem, parent) : parent,
+  };
+}
+
 function getSectionNav(
   pageNav: NavModelItem,
   sectionNav: NavModel,
@@ -195,22 +201,9 @@ function getSectionNav(
     subTitle: page.subTitle,
   }));
 
-  if (pageNav.parentItem) {
-    pageNav = {
-      ...pageNav,
-      parentItem: {
-        ...pageNav.parentItem,
-        parentItem: sectionNav.node,
-      },
-    };
-  } else {
-    pageNav = {
-      ...pageNav,
-      parentItem: sectionNav.node,
-    };
-  }
+  const pageNavWithSectionParent = applySectionAsParent(pageNav, sectionNav.node);
 
-  main.parentItem = pageNav;
+  main.parentItem = pageNavWithSectionParent;
 
   return {
     main,

@@ -11,7 +11,7 @@ import { TooltipPlacement } from '../Tooltip/types';
 export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
-  children: React.ReactElement | ((isOpen: boolean) => React.ReactElement);
+  children: React.ReactElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
@@ -51,7 +51,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
 
   return (
     <>
-      {React.cloneElement(typeof children === 'function' ? children(visible) : children, {
+      {React.cloneElement(children, {
         ref: setTriggerRef,
       })}
       {visible && (
@@ -71,7 +71,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
                 timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
                 classNames={animationStyles}
               >
-                <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay)}</div>
+                <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay, {})}</div>
               </CSSTransition>
             </div>
           </FocusScope>

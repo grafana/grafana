@@ -121,11 +121,11 @@ export function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
   // Older browser does not the internationalization API
-  if (!(window as any).Intl) {
+  if (!window.Intl) {
     return utcOffset;
   }
 
-  const dateFormat = (window as any).Intl.DateTimeFormat();
+  const dateFormat = window.Intl.DateTimeFormat();
   if (!dateFormat.resolvedOptions) {
     return utcOffset;
   }

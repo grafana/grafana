@@ -1,7 +1,7 @@
 import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { Field, FieldType } from '../types/dataFrame';
 
-export function makeFieldParser(value: any, field: Field): (value: string) => any {
+export function makeFieldParser(value: unknown, field: Field): (value: string) => any {
   if (!field.type) {
     if (field.name === 'time' || field.name === 'Time') {
       field.type = FieldType.time;

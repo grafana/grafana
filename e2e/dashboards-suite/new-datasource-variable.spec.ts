@@ -1,5 +1,4 @@
 import { e2e } from '@grafana/e2e';
-import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
@@ -8,6 +7,7 @@ describe('Variables - Datasource', () => {
   it('can add a new datasource variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Datasource" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
@@ -31,15 +31,7 @@ describe('Variables - Datasource', () => {
 
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
-    e2e()
-      .window()
-      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
-        if (win.grafanaBootData.settings.featureToggles.topnav) {
-          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
-        } else {
-          e2e.components.BackButton.backArrow().click({ force: true });
-        }
-      });
+    e2e.pages.Dashboard.Settings.Actions.close().click();
     e2e.components.RefreshPicker.runButtonV2().click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('gdev-prometheus').click();

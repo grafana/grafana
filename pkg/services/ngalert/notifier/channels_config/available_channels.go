@@ -255,7 +255,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Addresses",
-					Description:  "You can enter multiple email addresses using a \";\" separator",
+					Description:  "You can enter multiple email addresses using a \";\", \"\\n\" or  \",\" separator",
 					Element:      ElementTypeTextArea,
 					PropertyName: "addresses",
 					Required:     true,
@@ -295,8 +295,8 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Severity",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "error",
-					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is error. You can use templates",
+					Placeholder:  "critical",
+					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is critical. You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
@@ -352,6 +352,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Placeholder:  "{{ .ExternalURL }}",
 					PropertyName: "client_url",
+				},
+				{ // New in 9.5.
+					Label:        "Details",
+					Description:  "A set of arbitrary key/value pairs that provide further detail about the incident.",
+					Element:      ElementTypeKeyValueMap,
+					InputType:    InputTypeText,
+					PropertyName: "details",
 				},
 			},
 		},

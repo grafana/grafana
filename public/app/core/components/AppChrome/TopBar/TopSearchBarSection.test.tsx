@@ -17,7 +17,7 @@ describe('TopSearchBarSection', () => {
     (window.matchMedia as jest.Mock).mockImplementation(() => ({
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
-      matches: () => false,
+      matches: true,
     }));
 
     const { container } = renderComponent();
@@ -30,7 +30,7 @@ describe('TopSearchBarSection', () => {
     (window.matchMedia as jest.Mock).mockImplementation(() => ({
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
-      matches: () => true,
+      matches: false,
     }));
 
     const { container } = renderComponent();

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
@@ -36,7 +37,7 @@ describe('DefaultSubscription', () => {
     expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).toBeDisabled();
   });
 
-  it('should enable load subscriptions if credentials are complete and set default subscription', () => {
+  it('should enable load subscriptions if credentials are complete and set default subscription', async () => {
     const props = {
       ...defaultProps,
       credentials: { ...defaultProps.credentials, clientSecret: 'client_secret' },
@@ -45,7 +46,7 @@ describe('DefaultSubscription', () => {
     const { rerender } = render(<DefaultSubscription {...props} />);
 
     expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).not.toBeDisabled();
-    screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button).click();
+    await userEvent.click(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button));
     rerender(
       <DefaultSubscription
         {...props}

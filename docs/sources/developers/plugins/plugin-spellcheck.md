@@ -1,3 +1,9 @@
+---
+title: Configuring plugin spellcheck
+description: Internal docs on how to setup the plugin spellcheck
+draft: true
+---
+
 # Configuring plugin spellcheck
 
 > ℹ️ This process is applicable only for grafana maintained plugins and only if the plugins are activated in drone.grafana.net for CI process.

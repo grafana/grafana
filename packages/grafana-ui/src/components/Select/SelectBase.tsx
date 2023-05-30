@@ -4,7 +4,7 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -93,6 +93,7 @@ export function SelectBase<T>({
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
+  blurInputOnSelect,
   cacheOptions,
   className,
   closeMenuOnSelect = true,
@@ -144,6 +145,7 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
+  hideSelectedOptions,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -181,7 +183,7 @@ export function SelectBase<T>({
 
   let ReactSelectComponent = ReactSelect;
 
-  const creatableProps: ComponentProps<typeof Creatable> = {};
+  const creatableProps: ComponentProps<typeof Creatable<SelectableValue<T>>> = {};
   let asyncSelectProps: any = {};
   let selectedValue;
   if (isMulti && loadOptions) {
@@ -190,8 +192,16 @@ export function SelectBase<T>({
     // If option is passed as a plain value (value property from SelectableValue property)
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
-      // @ts-ignore
-      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => {
+        // @ts-ignore
+        const selectableValue = findSelectedValue(v.value ?? v, options);
+        // If the select allows custom values there likely won't be a selectableValue in options
+        // so we must return a new selectableValue
+        if (!allowCustomValue || selectableValue) {
+          return selectableValue;
+        }
+        return typeof v === 'string' ? toOption(v) : v;
+      });
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -204,6 +214,7 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
+    blurInputOnSelect,
     captureMenuScroll: false,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
@@ -214,6 +225,7 @@ export function SelectBase<T>({
     filterOption,
     getOptionLabel,
     getOptionValue,
+    hideSelectedOptions,
     inputValue,
     invalid,
     isClearable,
@@ -345,7 +357,7 @@ export function SelectBase<T>({
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: MultiValueRemove,
+          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           ...components,
         }}
         styles={selectStyles}

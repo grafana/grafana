@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getNavSubTitle, getNavTitle } from '../components/NavBar/navBarItem-translations';
+import { getNavSubTitle, getNavTitle } from '../components/AppChrome/MegaMenu/navBarItem-translations';
 
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 
@@ -63,8 +63,15 @@ const navTreeSlice = createSlice({
         }
       }
     },
+    removePluginFromNavTree: (state, action: PayloadAction<{ pluginID: string }>) => {
+      const navID = 'plugin-page-' + action.payload.pluginID;
+      const pluginItemIndex = state.findIndex((navItem) => navItem.id === navID);
+      if (pluginItemIndex > -1) {
+        state.splice(pluginItemIndex, 1);
+      }
+    },
   },
 });
 
-export const { setStarred, updateDashboardName } = navTreeSlice.actions;
+export const { setStarred, removePluginFromNavTree, updateDashboardName } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

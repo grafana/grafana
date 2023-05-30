@@ -215,16 +215,17 @@ Dashboards consist of _panels_, each representing a part of the story you want y
 
 Every panel consists of a _query_ and a _visualization_. The query defines _what_ data you want to display, whereas the visualization defines _how_ the data is displayed.
 
-1. In the sidebar, hover your cursor over the **Create** (plus sign) icon and then click **Dashboard**.
-1. Click **Add a new panel**.
-1. In the **Query editor** below the graph, enter the query from earlier and then press Shift + Enter:
+1. Click **Dashboard** in the left-side menu.
+1. On the Dashboards page, click **New** and select **New Dashboard** in the dropdown.
+1. Click **+ Add visualization**.
+1. In the **Query** tab below the graph, enter the query from earlier and then press Shift + Enter:
 
    ```
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
 1. In the **Legend** field, enter **{{route}}** to rename the time series in the legend. The graph legend updates when you click outside the field.
-1. In the Panel editor on the right, under **Settings**, change the panel title to "Traffic".
+1. In the panel editor on the right, under **Panel options**, change the panel title to "Traffic".
 1. Click **Apply** in the top-right corner to save the panel and go back to the dashboard view.
 1. Click the **Save dashboard** (disk) icon at the top of the dashboard to save your dashboard.
 1. Enter a name in the **Dashboard name** field and then click **Save**.
@@ -323,7 +324,9 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save and exit** at the top of the page.
 1. In Grafana's sidebar, hover the cursor over the **Alerting** (bell) icon and then click **Notification policies**.
-1. Under **Root policy**, press **Edit** and change the **Default contact point** to **RequestBin**. As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to specific contact points.
+1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** to **RequestBin**.
+   As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
+   specific contact points.
 
 ### Trigger a Grafana Managed Alert
 

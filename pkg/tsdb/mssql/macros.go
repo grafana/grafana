@@ -13,7 +13,6 @@ import (
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
-const argFuncExpr = `[\(|,|\s]([_a-zA-Z0-9]+\([^\(]*?\))`
 
 type msSQLMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
@@ -23,45 +22,16 @@ func newMssqlMacroEngine() sqleng.SQLMacroEngine {
 	return &msSQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase()}
 }
 
-func replaceFunctionCallArgsWithPlaceholders(sql string) (string, map[string]string) {
-	rExp, _ := regexp.Compile(argFuncExpr)
-	functionCalls := rExp.FindAllString(sql, -1)
-	replacedArgs := make(map[string]string)
-
-	if len(functionCalls) > 0 {
-		sql = strings.Replace(sql, "\n", "", -1)
-
-		for i, functionCall := range functionCalls {
-			key := fmt.Sprintf("$%d", i)
-			formattedVal := functionCall[1:]
-			sql = strings.Replace(sql, formattedVal, key, 1)
-			replacedArgs[key] = formattedVal
-		}
-
-		return sql, replacedArgs
-	}
-
-	return sql, nil
-}
-
 func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
 	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
-	var fctCallArgsMap map[string]string
-
-	if rExp.FindAllSubmatchIndex([]byte(sql), -1) != nil {
-		sql, fctCallArgsMap = replaceFunctionCallArgsWithPlaceholders(sql)
-	}
 
 	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
-			if fctCallArgsMap != nil && fctCallArgsMap[args[i]] != "" {
-				args[i] = strings.Replace(args[i], args[i], fctCallArgsMap[args[i]], 1)
-			}
 		}
 		res, err := m.evaluateMacro(timeRange, query, groups[1], args)
 		if err != nil && macroError == nil {

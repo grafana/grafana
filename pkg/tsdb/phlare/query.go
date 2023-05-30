@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strings"
+	"sync"
 	"time"
 
-	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
-	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/xlab/treeprint"
+	"golang.org/x/sync/errgroup"
 )
 
 type queryModel struct {
 	WithStreaming bool
-	dataquery.PhlareDataQuery
+	dataquery.GrafanaPyroscopeDataQuery
 }
 
 type dsJsonModel struct {
@@ -43,87 +43,87 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 		return response
 	}
 
+	responseMutex := sync.Mutex{}
+	g, gCtx := errgroup.WithContext(ctx)
 	if query.QueryType == queryTypeMetrics || query.QueryType == queryTypeBoth {
-		var dsJson dsJsonModel
-		err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
-		if err != nil {
-			response.Error = fmt.Errorf("error unmarshaling datasource json model: %v", err)
-			return response
-		}
-
-		parsedInterval := time.Second * 15
-		if dsJson.MinStep != "" {
-			parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
+		g.Go(func() error {
+			var dsJson dsJsonModel
+			err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
 			if err != nil {
-				parsedInterval = time.Second * 15
-				logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+				return fmt.Errorf("error unmarshaling datasource json model: %v", err)
 			}
-		}
-		req := connect.NewRequest(&querierv1.SelectSeriesRequest{
-			ProfileTypeID: qm.ProfileTypeId,
-			LabelSelector: qm.LabelSelector,
-			Start:         query.TimeRange.From.UnixMilli(),
-			End:           query.TimeRange.To.UnixMilli(),
-			Step:          math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
-			GroupBy:       qm.GroupBy,
-		})
 
-		logger.Debug("Sending SelectSeriesRequest", "request", req, "queryModel", qm)
-		seriesResp, err := d.client.SelectSeries(ctx, req)
-		if err != nil {
-			logger.Error("Querying SelectSeries()", "err", err)
-			response.Error = err
-			return response
-		}
-		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeId)...)
+			parsedInterval := time.Second * 15
+			if dsJson.MinStep != "" {
+				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
+				if err != nil {
+					parsedInterval = time.Second * 15
+					logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+				}
+			}
+			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
+			seriesResp, err := d.client.GetSeries(
+				gCtx,
+				qm.ProfileTypeId,
+				qm.LabelSelector,
+				query.TimeRange.From.UnixMilli(),
+				query.TimeRange.To.UnixMilli(),
+				qm.GroupBy,
+				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
+			)
+			if err != nil {
+				logger.Error("Querying SelectSeries()", "err", err)
+				return err
+			}
+			// add the frames to the response.
+			responseMutex.Lock()
+			response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
+			responseMutex.Unlock()
+			return nil
+		})
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		req := makeRequest(qm, query)
-		logger.Debug("Sending SelectMergeStacktracesRequest", "request", req, "queryModel", qm)
-		resp, err := d.client.SelectMergeStacktraces(ctx, makeRequest(qm, query))
-		if err != nil {
-			logger.Error("Querying SelectMergeStacktraces()", "err", err)
-			response.Error = err
-			return response
-		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeId)
-		response.Frames = append(response.Frames, frame)
-
-		// If query called with streaming on then return a channel
-		// to subscribe on a client-side and consume updates from a plugin.
-		// Feel free to remove this if you don't need streaming for your datasource.
-		if qm.WithStreaming {
-			channel := live.Channel{
-				Scope:     live.ScopeDatasource,
-				Namespace: pCtx.DataSourceInstanceSettings.UID,
-				Path:      "stream",
+		g.Go(func() error {
+			logger.Debug("Calling GetProfile", "queryModel", qm)
+			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+			if err != nil {
+				logger.Error("Error GetProfile()", "err", err)
+				return err
 			}
-			frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-		}
+			frame := responseToDataFrames(prof)
+			responseMutex.Lock()
+			response.Frames = append(response.Frames, frame)
+			responseMutex.Unlock()
+
+			// If query called with streaming on then return a channel
+			// to subscribe on a client-side and consume updates from a plugin.
+			// Feel free to remove this if you don't need streaming for your datasource.
+			if qm.WithStreaming {
+				channel := live.Channel{
+					Scope:     live.ScopeDatasource,
+					Namespace: pCtx.DataSourceInstanceSettings.UID,
+					Path:      "stream",
+				}
+				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+			}
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		response.Error = g.Wait()
 	}
 
 	return response
 }
 
-func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeStacktracesRequest] {
-	return &connect.Request[querierv1.SelectMergeStacktracesRequest]{
-		Msg: &querierv1.SelectMergeStacktracesRequest{
-			ProfileTypeID: qm.ProfileTypeId,
-			LabelSelector: qm.LabelSelector,
-			Start:         query.TimeRange.From.UnixMilli(),
-			End:           query.TimeRange.To.UnixMilli(),
-		},
-	}
-}
-
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
-	tree := levelsToTree(resp.Msg.Flamegraph.Levels, resp.Msg.Flamegraph.Names)
-	return treeToNestedSetDataFrame(tree, profileTypeID)
+func responseToDataFrames(resp *ProfileResponse) *data.Frame {
+	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
+	return treeToNestedSetDataFrame(tree, resp.Units)
 }
 
 // START_OFFSET is offset of the bar relative to previous sibling
@@ -152,7 +152,11 @@ type ProfileTree struct {
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
 // dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
-func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
+func levelsToTree(levels []*Level, names []string) *ProfileTree {
+	if len(levels) == 0 {
+		return nil
+	}
+
 	tree := &ProfileTree{
 		Start: 0,
 		Value: levels[0].Values[VALUE_OFFSET],
@@ -231,15 +235,53 @@ func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
 	return tree
 }
 
+type Function struct {
+	FunctionName string
+	FileName     string // optional
+	Line         int64  // optional
+}
+
+func (f Function) String() string {
+	return fmt.Sprintf("%s:%s:%d", f.FileName, f.FunctionName, f.Line)
+}
+
+func (pt *ProfileTree) String() string {
+	type branch struct {
+		nodes []*ProfileTree
+		treeprint.Tree
+	}
+	tree := treeprint.New()
+	for _, n := range []*ProfileTree{pt} {
+		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
+		remaining := append([]*branch{}, &branch{nodes: n.Nodes, Tree: b})
+		for len(remaining) > 0 {
+			current := remaining[0]
+			remaining = remaining[1:]
+			for _, n := range current.nodes {
+				if len(n.Nodes) > 0 {
+					remaining = append(remaining,
+						&branch{
+							nodes: n.Nodes, Tree: current.Tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value)),
+						},
+					)
+				} else {
+					current.Tree.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Name, n.Level, n.Self, n.Value))
+				}
+			}
+		}
+	}
+	return tree.String()
+}
+
 type CustomMeta struct {
 	ProfileTypeID string
 }
 
 // treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
+// where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
+// parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
-func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
+func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 	frame := data.NewFrame("response")
 	frame.Meta = &data.FrameMeta{PreferredVisualization: "flamegraph"}
 
@@ -248,19 +290,64 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	selfField := data.NewField("self", nil, []int64{})
 
 	// profileTypeID should encode the type of the profile with unit being the 3rd part
-	parts := strings.Split(profileTypeID, ":")
-	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField}
+	valueField.Config = &data.FieldConfig{Unit: unit}
+	selfField.Config = &data.FieldConfig{Unit: unit}
+	frame.Fields = data.Fields{levelField, valueField, selfField}
 
-	walkTree(tree, func(tree *ProfileTree) {
-		levelField.Append(int64(tree.Level))
-		valueField.Append(tree.Value)
-		selfField.Append(tree.Self)
-		labelField.Append(tree.Name)
-	})
+	labelField := NewEnumField("label", nil)
+
+	// Tree can be nil if profile was empty, we can still send empty frame in that case
+	if tree != nil {
+		walkTree(tree, func(tree *ProfileTree) {
+			levelField.Append(int64(tree.Level))
+			valueField.Append(tree.Value)
+			selfField.Append(tree.Self)
+			labelField.Append(tree.Name)
+		})
+	}
+
+	frame.Fields = append(frame.Fields, labelField.GetField())
 	return frame
+}
+
+type EnumField struct {
+	field     *data.Field
+	valuesMap map[string]int64
+	counter   int64
+}
+
+func NewEnumField(name string, labels data.Labels) *EnumField {
+	return &EnumField{
+		field:     data.NewField(name, labels, []int64{}),
+		valuesMap: make(map[string]int64),
+	}
+}
+
+func (e *EnumField) Append(value string) {
+	if valueIndex, ok := e.valuesMap[value]; ok {
+		e.field.Append(valueIndex)
+	} else {
+		e.valuesMap[value] = e.counter
+		e.field.Append(e.counter)
+		e.counter++
+	}
+}
+
+func (e *EnumField) GetField() *data.Field {
+	s := make([]string, len(e.valuesMap))
+	for k, v := range e.valuesMap {
+		s[v] = k
+	}
+
+	e.field.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: s,
+			},
+		},
+	})
+
+	return e.field
 }
 
 func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
@@ -281,10 +368,10 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
-func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
-	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
+func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
+	frames := make([]*data.Frame, 0, len(resp.Series))
 
-	for _, series := range seriesResp.Msg.Series {
+	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
@@ -293,21 +380,13 @@ func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesRespo
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 
-		label := ""
-		unit := ""
-		parts := strings.Split(profileTypeID, ":")
-		if len(parts) == 5 {
-			label = parts[1] // sample type e.g. cpu, goroutine, alloc_objects
-			unit = normalizeUnit(parts[2])
-		}
-
 		labels := make(map[string]string)
 		for _, label := range series.Labels {
 			labels[label.Name] = label.Value
 		}
 
-		valueField := data.NewField(label, labels, []float64{})
-		valueField.Config = &data.FieldConfig{Unit: unit}
+		valueField := data.NewField(resp.Label, labels, []float64{})
+		valueField.Config = &data.FieldConfig{Unit: resp.Units}
 
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
@@ -319,14 +398,4 @@ func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesRespo
 		frames = append(frames, frame)
 	}
 	return frames
-}
-
-func normalizeUnit(unit string) string {
-	if unit == "nanoseconds" {
-		return "ns"
-	}
-	if unit == "count" {
-		return "short"
-	}
-	return unit
 }

@@ -83,7 +83,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
+			service.On("FindEnabledPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
@@ -310,11 +310,12 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// Create public dashboard
+	isEnabled := true
 	savePubDashboardCmd := &SavePublicDashboardDTO{
 		DashboardUid: dashboard.UID,
-		OrgId:        dashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled: true,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled: &isEnabled,
+			OrgId:     dashboard.OrgID,
 		},
 	}
 
@@ -324,7 +325,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
 	ac := acmock.New()
-	ws := &publicdashboards.FakePublicDashboardServiceWrapper{}
+	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
 	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)

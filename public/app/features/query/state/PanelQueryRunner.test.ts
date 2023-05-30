@@ -168,9 +168,9 @@ describe('PanelQueryRunner', () => {
     });
 
     it('should pass scopedVars to datasource with interval props', async () => {
-      expect(ctx.queryCalledWith?.scopedVars.server.text).toBe('Server1');
-      expect(ctx.queryCalledWith?.scopedVars.__interval.text).toBe('5m');
-      expect(ctx.queryCalledWith?.scopedVars.__interval_ms.text).toBe('300000');
+      expect(ctx.queryCalledWith?.scopedVars.server!.text).toBe('Server1');
+      expect(ctx.queryCalledWith?.scopedVars.__interval!.text).toBe('5m');
+      expect(ctx.queryCalledWith?.scopedVars.__interval_ms!.text).toBe('300000');
     });
   });
 

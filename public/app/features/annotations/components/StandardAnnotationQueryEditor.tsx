@@ -132,7 +132,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         icon = 'exclamation-triangle';
         text = 'No events found';
       } else {
-        const frame = panelData?.series[0];
+        const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
 
         text = `${events.length} events (from ${frame?.fields.length} fields)`;
       }

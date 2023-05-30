@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 106,
 //          "locationInfo": {
@@ -48,6 +52,10 @@
         "refId": "Search",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 106,
             "locationInfo": {

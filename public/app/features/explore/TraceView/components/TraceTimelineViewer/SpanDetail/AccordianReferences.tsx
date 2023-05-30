@@ -183,7 +183,7 @@ export function References(props: ReferenceItemProps) {
   );
 }
 
-const AccordianReferences: React.FC<AccordianReferencesProps> = ({
+const AccordianReferences = ({
   data,
   interactive = true,
   isOpen,
@@ -191,7 +191,7 @@ const AccordianReferences: React.FC<AccordianReferencesProps> = ({
   onItemToggle,
   openedItems,
   createFocusSpanLink,
-}) => {
+}: AccordianReferencesProps) => {
   const isEmpty = !Array.isArray(data) || !data.length;
   let arrow: React.ReactNode | null = null;
   let HeaderComponent: 'span' | 'a' = 'span';

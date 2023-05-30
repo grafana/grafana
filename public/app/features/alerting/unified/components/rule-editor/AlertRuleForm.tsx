@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { logInfo, config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
+import { config, logInfo } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -13,7 +13,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
+import { LogMessages, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -73,7 +73,7 @@ type Props = {
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
+export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -183,13 +183,6 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
-    if (!existing) {
-      trackNewAlerRuleFormCancelled({
-        grafana_version: config.buildInfo.version,
-        org_id: contextSrv.user.orgId,
-        user_id: contextSrv.user.id,
-      });
-    }
   };
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
@@ -198,14 +191,26 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <HorizontalGroup height="auto" justify="flex-end">
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+            Save rule
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+            Save rule and exit
+          </Button>
           <Link to={returnTo}>
-            <Button
-              variant="secondary"
-              disabled={submitState.loading}
-              type="button"
-              fill="outline"
-              onClick={cancelRuleCreation}
-            >
+            <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation}>
               Cancel
             </Button>
           </Link>
@@ -221,27 +226,9 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
               onClick={() => setShowEditYaml(true)}
               disabled={submitState.loading}
             >
-              Edit yaml
+              Edit YAML
             </Button>
           )}
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save
-          </Button>
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save and exit
-          </Button>
         </HorizontalGroup>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>

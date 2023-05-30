@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="info", location="moon", protocol="http"}
@@ -31,6 +35,10 @@
         "name": "{level=\"info\", location=\"moon\", protocol=\"http\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

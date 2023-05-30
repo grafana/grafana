@@ -17,11 +17,10 @@ import { constructDataSourceExploreUrl } from '../utils';
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 export function DataSourcesList() {
-  useLoadDataSources();
+  const { isLoading } = useLoadDataSources();
 
   const dataSources = useSelector((state) => getDataSources(state.dataSources));
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
-  const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
@@ -30,7 +29,7 @@ export function DataSourcesList() {
     <DataSourcesListView
       dataSources={dataSources}
       dataSourcesCount={dataSourcesCount}
-      isLoading={!hasFetched}
+      isLoading={isLoading}
       hasCreateRights={hasCreateRights}
       hasWriteRights={hasWriteRights}
       hasExploreRights={hasExploreRights}
@@ -79,7 +78,7 @@ export function DataSourcesListView({
         buttonLink={dataSourcesRoutes.New}
         buttonTitle="Add data source"
         proTip="You can also define data sources through configuration files."
-        proTipLink="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list"
+        proTipLink="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
         proTipLinkTitle="Learn more"
         proTipTarget="_blank"
       />

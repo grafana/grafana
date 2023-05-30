@@ -1,4 +1,3 @@
-import { DisplayProcessor } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 import {
@@ -9,8 +8,9 @@ import {
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
 } from '../../constants';
+import { TextAlign } from '../types';
 
-import { ItemWithStart } from './dataTransform';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type RectData = {
   width: number;
@@ -21,30 +21,26 @@ type RectData = {
   ticks: number;
   label: string;
   unitLabel: string;
+  itemIndex: number;
 };
 
 /**
  * Compute the pixel coordinates for each bar in a level. We need full level of bars so that we can collapse small bars
  * into bigger rects.
- * @param level
- * @param levelIndex
- * @param totalTicks
- * @param rangeMin
- * @param pixelsPerTick
  */
 export function getRectDimensionsForLevel(
-  level: ItemWithStart[],
+  data: FlameGraphDataContainer,
+  level: LevelItem[],
   levelIndex: number,
   totalTicks: number,
   rangeMin: number,
-  pixelsPerTick: number,
-  processor: DisplayProcessor
+  pixelsPerTick: number
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
     const item = level[barIndex];
     const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = item.value;
+    let curBarTicks = data.getValue(item.itemIndex);
 
     // merge very small blocks into big "collapsed" ones for performance
     const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
@@ -52,14 +48,14 @@ export function getRectDimensionsForLevel(
       while (
         barIndex < level.length - 1 &&
         item.start + curBarTicks === level[barIndex + 1].start &&
-        level[barIndex + 1].value * pixelsPerTick <= COLLAPSE_THRESHOLD
+        data.getValue(level[barIndex + 1].itemIndex) * pixelsPerTick <= COLLAPSE_THRESHOLD
       ) {
         barIndex += 1;
-        curBarTicks += level[barIndex].value;
+        curBarTicks += data.getValue(level[barIndex].itemIndex);
       }
     }
 
-    const displayValue = processor(item.value);
+    const displayValue = data.getValueDisplay(item.itemIndex);
     let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
@@ -70,8 +66,9 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: item.label,
+      label: data.getLabel(item.itemIndex),
       unitLabel: unit,
+      itemIndex: item.itemIndex,
     });
   }
   return coordinatesLevel;
@@ -86,7 +83,8 @@ export function renderRect(
   query: string,
   levelIndex: number,
   topLevelIndex: number,
-  foundNames: Set<string>
+  foundNames: Set<string>,
+  textAlign: TextAlign
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -116,16 +114,38 @@ export function renderRect(
   ctx.fill();
 
   if (!rect.collapsed && rect.width >= LABEL_THRESHOLD) {
-    ctx.save();
-    ctx.clip(); // so text does not overflow
-    ctx.fillStyle = '#222';
-    ctx.fillText(
-      `${name} (${rect.unitLabel})`,
-      Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT,
-      rect.y + PIXELS_PER_LEVEL / 2
-    );
-    ctx.restore();
+    renderLabel(ctx, name, rect, textAlign);
   }
+}
+
+// Renders a text inside the node rectangle. It allows setting alignment of the text left or right which takes effect
+// when text is too long to fit in the rectangle.
+function renderLabel(ctx: CanvasRenderingContext2D, name: string, rect: RectData, textAlign: TextAlign) {
+  ctx.save();
+  ctx.clip(); // so text does not overflow
+  ctx.fillStyle = '#222';
+
+  // We only measure name here instead of full label because of how we deal with the units and aligning later.
+  const measure = ctx.measureText(name);
+  const spaceForTextInRect = rect.width - BAR_TEXT_PADDING_LEFT;
+
+  let label = `${name} (${rect.unitLabel})`;
+  let labelX = Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT;
+
+  // We use the desired alignment only if there is not enough space for the text, otherwise we keep left alignment as
+  // that will already show full text.
+  if (measure.width > spaceForTextInRect) {
+    ctx.textAlign = textAlign;
+    // If aligned to the right we don't want to take the space with the unit label as the assumption is user wants to
+    // mainly see the name. This also reflects how pyro/flamegraph works.
+    if (textAlign === 'right') {
+      label = name;
+      labelX = rect.x + rect.width - BAR_TEXT_PADDING_LEFT;
+    }
+  }
+
+  ctx.fillText(label, labelX, rect.y + PIXELS_PER_LEVEL / 2);
+  ctx.restore();
 }
 
 /**

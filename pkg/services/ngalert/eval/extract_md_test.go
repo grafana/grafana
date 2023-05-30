@@ -5,9 +5,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestExtractEvalString(t *testing.T) {
@@ -19,25 +19,25 @@ func TestExtractEvalString(t *testing.T) {
 		{
 			desc: "1 EvalMatch",
 			inFrame: newMetaFrame([]classic.EvalMatch{
-				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(32.3)},
-			}, ptr.Float64(1)),
+				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(32.3)},
+			}, util.Pointer(1.0)),
 			outString: `[ var='0' metric='Test' labels={host=foo} value=32.3 ]`,
 		},
 		{
 			desc: "2 EvalMatches",
 			inFrame: newMetaFrame([]classic.EvalMatch{
-				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(32.3)},
-				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: ptr.Float64(10)},
-			}, ptr.Float64(1), withRefID("A")),
+				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(32.3)},
+				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: util.Pointer(10.0)},
+			}, util.Pointer(1.0), withRefID("A")),
 			outString: `[ var='A0' metric='Test' labels={host=foo} value=32.3 ], [ var='A1' metric='Test' labels={host=baz} value=10 ]`,
 		},
 		{
 			desc: "3 EvalMatches",
 			inFrame: newMetaFrame([]classic.EvalMatch{
-				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(32.3)},
-				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: ptr.Float64(10)},
-				{Metric: "TestA", Labels: data.Labels{"host": "zip"}, Value: ptr.Float64(11)},
-			}, ptr.Float64(1), withRefID("A")),
+				{Metric: "Test", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(32.3)},
+				{Metric: "Test", Labels: data.Labels{"host": "baz"}, Value: util.Pointer(10.0)},
+				{Metric: "TestA", Labels: data.Labels{"host": "zip"}, Value: util.Pointer(11.0)},
+			}, util.Pointer(1.0), withRefID("A")),
 			outString: `[ var='A0' metric='Test' labels={host=foo} value=32.3 ], [ var='A1' metric='Test' labels={host=baz} value=10 ], [ var='A2' metric='TestA' labels={host=zip} value=11 ]`,
 		},
 	}
@@ -55,51 +55,51 @@ func TestExtractValues(t *testing.T) {
 		values  map[string]NumberValueCapture
 	}{{
 		desc:    "No values in frame returns nil",
-		inFrame: newMetaFrame(nil, ptr.Float64(1)),
+		inFrame: newMetaFrame(nil, util.Pointer(1.0)),
 		values:  nil,
 	}, {
 		desc: "Classic condition frame with one match",
 		inFrame: newMetaFrame([]classic.EvalMatch{
-			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
-		}, ptr.Float64(1), withRefID("A")),
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+		}, util.Pointer(1.0), withRefID("A")),
 		values: map[string]NumberValueCapture{
-			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
+			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
 		},
 	}, {
 		desc: "Classic condition frame with multiple matches",
 		inFrame: newMetaFrame([]classic.EvalMatch{
-			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
-			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(3)},
-		}, ptr.Float64(1), withRefID("A")),
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+			{Metric: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0)},
+		}, util.Pointer(1.0), withRefID("A")),
 		values: map[string]NumberValueCapture{
-			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
-			"A1": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(3)},
+			"A0": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+			"A1": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(3.0)},
 		},
 	}, {
 		desc: "Nil value",
 		inFrame: newMetaFrame([]NumberValueCapture{
 			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: nil},
-		}, ptr.Float64(1)),
+		}, util.Pointer(1.0)),
 		values: map[string]NumberValueCapture{
 			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: nil},
 		},
 	}, {
 		desc: "1 value",
 		inFrame: newMetaFrame([]NumberValueCapture{
-			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
-		}, ptr.Float64(1)),
+			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+		}, util.Pointer(1.0)),
 		values: map[string]NumberValueCapture{
-			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
 		},
 	}, {
 		desc: "2 values",
 		inFrame: newMetaFrame([]NumberValueCapture{
-			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
-			{Var: "B", Labels: nil, Value: ptr.Float64(2)},
-		}, ptr.Float64(1)),
+			{Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+			{Var: "B", Labels: nil, Value: util.Pointer(2.0)},
+		}, util.Pointer(1.0)),
 		values: map[string]NumberValueCapture{
-			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: ptr.Float64(1)},
-			"B": {Var: "B", Value: ptr.Float64(2)},
+			"A": {Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+			"B": {Var: "B", Value: util.Pointer(2.0)},
 		},
 	}}
 	for _, tc := range cases {

@@ -7,13 +7,15 @@ import {
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -39,6 +41,8 @@ import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
 
+export type PromOrLokiQuery = PromQuery | LokiQuery;
+
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
 
@@ -57,6 +61,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     // grafana
     folder: null,
     queries: [],
+    recordingRulesQueries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
@@ -219,6 +224,25 @@ export const getDefaultQueries = (): AlertQuery[] => {
       },
     },
     ...getDefaultExpressions('B', 'C'),
+  ];
+};
+
+export const getDefaultRecordingRulesQueries = (
+  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
+): AlertQuery[] => {
+  const relativeTimeRange = getDefaultRelativeTimeRange();
+
+  return [
+    {
+      refId: 'A',
+      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
+      queryType: '',
+      relativeTimeRange,
+      model: {
+        refId: 'A',
+        hide: false,
+      },
+    },
   ];
 };
 
@@ -454,4 +478,8 @@ export function fixBothInstantAndRangeQuery(query: AlertQuery) {
 
 function isPromQuery(model: AlertDataQuery): model is PromQuery {
   return 'expr' in model && 'instant' in model && 'range' in model;
+}
+
+export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
+  return 'expr' in model;
 }

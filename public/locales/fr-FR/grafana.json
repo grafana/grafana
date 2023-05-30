@@ -7,20 +7,20 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "",
-      "dark-theme": "",
-      "light-theme": "",
-      "search": ""
+      "change-theme": "Modifier le thème...",
+      "dark-theme": "Sombre",
+      "light-theme": "Clair"
     },
     "search-box": {
-      "placeholder": ""
+      "placeholder": "Rechercher ou aller à..."
     },
     "section": {
-      "actions": "",
-      "dashboard-search-results": "",
-      "pages": "",
-      "preferences": "",
-      "recent-dashboards": ""
+      "actions": "Actions",
+      "dashboard-search-results": "Tableaux de bord",
+      "folder-search-results": "Dossiers",
+      "pages": "Pages",
+      "preferences": "Préférences",
+      "recent-dashboards": "Tableaux de bord récents"
     }
   },
   "common": {
@@ -30,8 +30,24 @@
     "save": "Enregistrer"
   },
   "dashboard": {
+    "add-menu": {
+      "import": "Importer depuis la bibliothèque",
+      "paste-panel": "Coller le panneau",
+      "row": "Ligne",
+      "visualization": "Visualisation"
+    },
+    "empty": {
+      "add-import-body": "Importer des visualisations partagées avec d'autres tableaux de bord.",
+      "add-import-button": "Importer un panneau de la bibliothèque",
+      "add-import-header": "Importer un panneau",
+      "add-row-body": "Regroupez vos visualisations en sections extensibles.",
+      "add-row-button": "Ajouter une ligne",
+      "add-row-header": "Ajouter une ligne",
+      "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
+      "add-visualization-button": "Ajouter une visualisation",
+      "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation"
+    },
     "inspect": {
-      "actions-tab": "Actions",
       "data-tab": "Données",
       "error-tab": "Erreur",
       "json-tab": "JSON",
@@ -76,6 +92,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiques de source de données",
+      "data-traceids": "ID de suivi",
       "processing-time": "Durée de traitement des données",
       "queries": "Nombre de requêtes",
       "request-time": "Durée totale de la requête",
@@ -83,8 +100,8 @@
       "table-title": "Statistiques"
     },
     "toolbar": {
+      "add": "Ajouter",
       "add-panel": "Ajouter un panneau",
-      "comments-show": "Afficher les commentaires du tableau de bord",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -94,7 +111,6 @@
       "save": "Enregistrer le tableau de bord",
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
-      "tv-button": "Mode de vue par cycle",
       "unmark-favorite": "Supprimer des favoris"
     }
   },
@@ -110,6 +126,13 @@
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "Échec du chargement des options",
+      "loading": "Chargement des options...",
+      "no-options": "Aucune option trouvée"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Annuler",
@@ -118,6 +141,9 @@
       "folder": "Enregistrer dans le dossier",
       "folder-description": "Les autorisations du panneau de bibliothèque sont dérivées des autorisations du dossier",
       "name": "Nom du panneau de bibliothèque"
+    },
+    "add-widget": {
+      "title": "Ajouter un panneau depuis la bibliothèque de panneau"
     }
   },
   "library-panels": {
@@ -160,7 +186,7 @@
       "title": "Règles d'alerte"
     },
     "alerting-receivers": {
-      "subtitle": "Décider la manière dont vos contacts sont informés lorsqu'une alerte se déclenche",
+      "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
     },
     "alerting-silences": {
@@ -169,7 +195,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Applications de gestion des incidents et des alertes",
-      "title": "Alertes et incidents"
+      "title": "Alertes et IRM"
     },
     "api-keys": {
       "subtitle": "Gérer et créer des clés API utilisées pour interagir avec les API HTTP de Grafana",
@@ -180,8 +206,7 @@
       "title": "Applications"
     },
     "config": {
-      "title": "Administration",
-      "titleBeforeTopnav": "Configuration"
+      "title": "Administration"
     },
     "correlations": {
       "subtitle": "Ajouter et configurer des corrélations",
@@ -191,7 +216,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Nouvelle règle d'alerte"
+      "title": "Créer une règle d’alerte"
     },
     "create-dashboard": {
       "title": "Tableau de bord"
@@ -200,7 +225,7 @@
       "title": "Dossier"
     },
     "create-import": {
-      "title": "Importer"
+      "title": "Importer un tableau de bord"
     },
     "dashboards": {
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
@@ -219,8 +244,7 @@
     },
     "global-users": {
       "subtitle": "Gérer les utilisateurs dans Grafana",
-      "title": "Utilisateurs",
-      "titleBeforeTopnav": "Utilisateurs"
+      "title": "Utilisateurs"
     },
     "help": {
       "title": "Aide"
@@ -236,27 +260,15 @@
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
     },
-    "live": {
-      "title": "Diffusion d'événements"
-    },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "Pipeline"
-    },
-    "live-status": {
-      "title": "Statut"
-    },
-    "manage-dashboards": {
-      "title": "Parcourir"
+    "manage-folder": {
+      "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
     },
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
-      "title": "Suivi"
+      "title": "Observabilité"
     },
     "new": {
-      "title": ""
+      "title": "Nouveau"
     },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
@@ -266,8 +278,7 @@
     },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
-      "title": "Préférences par défaut",
-      "titleBeforeTopnav": "Préférences"
+      "title": "Préférences par défaut"
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -284,18 +295,16 @@
       "title": "Modifier le mot de passe"
     },
     "profile/settings": {
-      "title": "Préférences"
+      "title": "Profil"
     },
-    "profile/switch-org": "Passer à une autre organisation",
     "public": {
-      "title": ""
+      "title": "Tableaux de bord publics"
     },
     "scenes": {
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana",
-      "placeholderCommandPalette": ""
+      "placeholderCommandPalette": "Rechercher ou aller à..."
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
@@ -308,7 +317,6 @@
       "subtitle": "Utiliser des comptes de service pour exécuter des charges de travail automatisées dans Grafana",
       "title": "Comptes de service"
     },
-    "sign-in": "Se connecter",
     "sign-out": {
       "title": "Se déconnecter"
     },
@@ -345,6 +353,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
+    },
+    "toolbar": {
+      "enable-kiosk": "Activer le mode kiosque",
+      "toggle-menu": "Afficher/Masquer le menu",
+      "toggle-search-bar": "Afficher/Masquer la barre de recherche"
     }
   },
   "news": {
@@ -356,22 +369,22 @@
   },
   "panel": {
     "header-menu": {
-      "copy": "",
-      "create-library-panel": "",
-      "duplicate": "",
-      "edit": "",
-      "explore": "",
-      "get-help": "",
+      "copy": "Copier",
+      "create-library-panel": "Créer un panneau Bibliothèque",
+      "duplicate": "Dupliquer",
+      "edit": "Modifier",
+      "explore": "Explorer",
+      "get-help": "Obtenir de l’aide",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
-      "query": "",
-      "remove": "",
+      "query": "Requête",
+      "remove": "Supprimer",
       "share": "Partager",
       "show-legend": "Afficher la légende",
-      "unlink-library-panel": "",
+      "unlink-library-panel": "Dissocier le panneau Bibliothèque",
       "view": "Afficher"
     }
   },
@@ -393,11 +406,41 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "Inclure des panneaux",
+      "remove-datasource-filter": "Source de données : {{datasource}}",
+      "sort-placeholder": "Trier",
+      "starred": "Favoris",
+      "view-as-folders": "Voir par dossier",
+      "view-as-list": "Voir en tant que liste"
+    },
     "dashboard-actions": {
-      "import": "",
-      "new": "",
-      "new-dashboard": "",
-      "new-folder": ""
+      "import": "Importer",
+      "new": "Nouveau",
+      "new-dashboard": "Nouveau tableau de bord",
+      "new-folder": "Nouveau dossier"
+    },
+    "folder-view": {
+      "go-to-folder": "Aller dans le dossier",
+      "select-folder": "Sélectionner un dossier"
+    },
+    "result-kind": {
+      "dashboard": "Tableau de bord",
+      "folder": "Dossier",
+      "panel": "Panneau"
+    },
+    "results-table": {
+      "datasource-header": "Source de données",
+      "location-header": "Emplacement",
+      "name-header": "Nom",
+      "tags-header": "Étiquettes",
+      "type-dashboard": "Tableau de bord",
+      "type-folder": "Dossier",
+      "type-header": "Type"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
+      "placeholder": "Rechercher des tableaux de bord"
     }
   },
   "share-modal": {
@@ -493,9 +536,14 @@
       "dark-label": "Sombre",
       "default-label": "Par défaut",
       "light-label": "Clair",
-      "system-label": ""
+      "system-label": "Système"
     },
     "title": "Préférences"
+  },
+  "tag-filter": {
+    "loading": "Chargement en cours...",
+    "no-tags": "Aucune étiquette trouvée",
+    "placeholder": "Filtrer par étiquette"
   },
   "time-picker": {
     "absolute": {
@@ -572,12 +620,20 @@
     "loading": "Chargement des sessions..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": "Sélectionner une valeur"
+    },
+    "dropdown": {
+      "placeholder": "Entrer la valeur de la variable"
+    },
     "picker": {
-      "input": "Entrer la valeur de la variable",
       "link-all": "Tout",
       "option-all": "Tout",
       "option-selected-values": "Sélection",
       "option-tooltip": "Effacer les sélections"
+    },
+    "textbox": {
+      "placeholder": "Entrer la valeur de la variable"
     }
   }
 }

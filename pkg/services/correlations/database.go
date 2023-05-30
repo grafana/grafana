@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -129,6 +130,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			if cmd.Config.Target != nil {
 				correlation.Config.Target = *cmd.Config.Target
 			}
+			if cmd.Config.Transformations != nil {
+				correlation.Config.Transformations = cmd.Config.Transformations
+			}
 		}
 
 		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
@@ -172,6 +176,31 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 	}
 
 	return correlation, nil
+}
+
+func (s CorrelationsService) CountCorrelations(ctx context.Context) (*quota.Map, error) {
+	u := &quota.Map{}
+	var err error
+	count := int64(0)
+	err = s.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		q := sess.Table("correlation")
+		count, err = q.Count()
+
+		if err != nil {
+			return err
+		}
+
+		tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return err
+		}
+		u.Set(tag, count)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return u, err
 }
 
 func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd GetCorrelationsBySourceUIDQuery) ([]Correlation, error) {

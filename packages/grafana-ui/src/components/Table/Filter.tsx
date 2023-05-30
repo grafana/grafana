@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
 
@@ -16,7 +16,7 @@ interface Props {
   field?: Field;
 }
 
-export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
+export const Filter = ({ column, field, tableStyles }: Props) => {
   const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const styles = useStyles2(getStyles);

@@ -1,11 +1,11 @@
 ---
-aliases:
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - write templates
+description: Use Go's templating language in notifications
 title: Using Go's templating language
 weight: 100
 ---
@@ -68,6 +68,16 @@ The name of the label is {{ .Name }}, and the value is {{ .Value }}
 {{ range .Annotations.SortedPairs }}
 The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
 {{ end }}
+{{ end }}
+```
+
+## The index function
+
+To print a specific annotation or label use the `index` function.
+
+```
+{{ range .Alerts }}
+The name of the alert is {{ index .Labels "alertname" }}
 {{ end }}
 ```
 

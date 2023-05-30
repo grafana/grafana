@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
   return alertManager.name === GRAFANA_RULES_SOURCE_NAME ? 'Grafana' : alertManager.name.slice(0, 37);
 }
 
-export const AlertManagerPicker: FC<Props> = ({ onChange, current, dataSources, disabled = false }) => {
+export const AlertManagerPicker = ({ onChange, current, dataSources, disabled = false }: Props) => {
   const styles = useStyles2(getStyles);
 
   const options: Array<SelectableValue<string>> = useMemo(() => {

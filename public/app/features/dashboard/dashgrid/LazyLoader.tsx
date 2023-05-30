@@ -50,12 +50,15 @@ export function LazyLoader({ children, width, height, onLoad, onChange }: Props)
   );
 }
 
-LazyLoader.callbacks = {} as Record<string, (e: IntersectionObserverEntry) => void>;
+const callbacks: Record<string, (e: IntersectionObserverEntry) => void> = {};
+LazyLoader.callbacks = callbacks;
 LazyLoader.addCallback = (id: string, c: (e: IntersectionObserverEntry) => void) => (LazyLoader.callbacks[id] = c);
 LazyLoader.observer = new IntersectionObserver(
   (entries) => {
     for (const entry of entries) {
-      LazyLoader.callbacks[entry.target.id](entry);
+      if (LazyLoader.callbacks[entry.target.id]) {
+        LazyLoader.callbacks[entry.target.id](entry);
+      }
     }
   },
   { rootMargin: '100px' }

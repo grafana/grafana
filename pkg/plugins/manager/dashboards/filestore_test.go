@@ -3,7 +3,6 @@ package dashboards
 import (
 	"context"
 	"io"
-	"io/fs"
 	"testing"
 	"testing/fstest"
 
@@ -131,10 +130,13 @@ func TestDashboardFileStore(t *testing.T) {
 					Data: []byte("dash2"),
 				},
 			}
-			openDashboardFile = func(p plugins.PluginDTO, name string) (fs.File, error) {
+			openDashboardFile = func(ctx context.Context, pluginFiles plugins.FileStore, pluginID, name string) (*plugins.File, error) {
 				f, err := mapFs.Open(name)
 				require.NoError(t, err)
-				return f, nil
+
+				b, err := io.ReadAll(f)
+				require.NoError(t, err)
+				return &plugins.File{Content: b}, nil
 			}
 			t.Cleanup(func() {
 				openDashboardFile = origOpenDashboardFile
@@ -157,10 +159,7 @@ func TestDashboardFileStore(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				require.NotNil(t, res.Content)
-				b, err := io.ReadAll(res.Content)
-				require.NoError(t, err)
-				require.Equal(t, "dash1", string(b))
+				require.Equal(t, "dash1", string(res.Content))
 			})
 
 			t.Run("Should return file content for dashboards/dash2.json", func(t *testing.T) {
@@ -170,10 +169,7 @@ func TestDashboardFileStore(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				require.NotNil(t, res.Content)
-				b, err := io.ReadAll(res.Content)
-				require.NoError(t, err)
-				require.Equal(t, "dash2", string(b))
+				require.Equal(t, "dash2", string(res.Content))
 			})
 
 			t.Run("Should return error when trying to read relative file", func(t *testing.T) {

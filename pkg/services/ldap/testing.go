@@ -3,7 +3,7 @@ package ldap
 import (
 	"crypto/tls"
 
-	"gopkg.in/ldap.v3"
+	"github.com/go-ldap/ldap/v3"
 
 	//TODO(sh0rez): remove once import cycle resolved
 	_ "github.com/grafana/grafana/pkg/api/response"

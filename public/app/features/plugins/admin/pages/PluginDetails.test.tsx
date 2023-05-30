@@ -465,17 +465,17 @@ describe('Plugin details page', () => {
 
       // Does not show an Install button
       rendered = renderPluginDetails({ id }, { pluginsStateOverride });
-      expect(await rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
       rendered.unmount();
 
       // Does not show a Uninstall button
       rendered = renderPluginDetails({ id, isInstalled: true }, { pluginsStateOverride });
-      expect(await rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /(un)?install/i })).not.toBeInTheDocument();
       rendered.unmount();
 
       // Does not show an Update button
       rendered = renderPluginDetails({ id, isInstalled: true, hasUpdate: true }, { pluginsStateOverride });
-      expect(await rendered.queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
 
       // Shows a message to the user
       // TODO<Import these texts from a single source of truth instead of having them defined in multiple places>
@@ -491,15 +491,17 @@ describe('Plugin details page', () => {
 
       // Should not show an "Install" button
       rendered = renderPluginDetails({ id, isInstalled: false });
-      expect(await rendered.queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+      rendered.unmount();
 
       // Should not show an "Uninstall" button
       rendered = renderPluginDetails({ id, isInstalled: true });
-      expect(await rendered.queryByRole('button', { name: /^uninstall/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /^uninstall/i })).not.toBeInTheDocument();
+      rendered.unmount();
 
       // Should not show an "Update" button
       rendered = renderPluginDetails({ id, isInstalled: true, hasUpdate: true });
-      expect(await rendered.queryByRole('button', { name: /^update/i })).not.toBeInTheDocument();
+      expect(rendered.queryByRole('button', { name: /^update/i })).not.toBeInTheDocument();
     });
 
     it('should display a "Create" button as a post installation step for installed data source plugins', async () => {
@@ -511,7 +513,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeInTheDocument();
+      expect(queryByText('Add new data source')).toBeInTheDocument();
     });
 
     it('should not display a "Create" button as a post installation step for disabled data source plugins', async () => {
@@ -524,7 +526,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+      expect(queryByText('Add new data source')).toBeNull();
     });
 
     it('should not display post installation step for panel plugins', async () => {
@@ -536,7 +538,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+      expect(queryByText('Add new data source')).toBeNull();
     });
 
     it('should display an enable button for app plugins that are not enabled as a post installation step', async () => {
@@ -785,7 +787,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+      expect(queryByText('Add new data source')).toBeNull();
     });
   });
 });

@@ -1,6 +1,6 @@
 import {
-  ArrayVector,
   DataFrame,
+  DataFrameType,
   DataSourceInstanceSettings,
   DataSourceSettings,
   FieldType,
@@ -108,134 +108,203 @@ export function createMetadataRequest(
   };
 }
 
-export const logFrameA: DataFrame = {
-  refId: 'A',
-  fields: [
-    {
-      name: 'Time',
-      type: FieldType.time,
-      config: {},
-      values: new ArrayVector([3, 4]),
+export function getMockFrames() {
+  const logFrameA: DataFrame = {
+    refId: 'A',
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [3, 4],
+      },
+      {
+        name: 'Line',
+        type: FieldType.string,
+        config: {},
+        values: ['line1', 'line2'],
+      },
+      {
+        name: 'labels',
+        type: FieldType.other,
+        config: {},
+        values: [
+          {
+            label: 'value',
+          },
+          {
+            otherLabel: 'other value',
+          },
+        ],
+      },
+      {
+        name: 'tsNs',
+        type: FieldType.string,
+        config: {},
+        values: ['3000000', '4000000'],
+      },
+      {
+        name: 'id',
+        type: FieldType.string,
+        config: {},
+        values: ['id1', 'id2'],
+      },
+    ],
+    meta: {
+      custom: {
+        frameType: 'LabeledTimeValues',
+      },
+      stats: [
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
+        { displayName: 'Ingester: total reached', value: 1 },
+      ],
     },
-    {
-      name: 'Line',
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(['line1', 'line2']),
-    },
-    {
-      name: 'labels',
-      type: FieldType.other,
-      config: {},
-      values: new ArrayVector([
-        {
-          label: 'value',
-        },
-        {
-          otherLabel: 'other value',
-        },
-      ]),
-    },
-    {
-      name: 'tsNs',
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(['3000000', '4000000']),
-    },
-    {
-      name: 'id',
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(['id1', 'id2']),
-    },
-  ],
-  length: 2,
-};
+    length: 2,
+  };
 
-export const logFrameB: DataFrame = {
-  refId: 'A',
-  fields: [
-    {
-      name: 'Time',
-      type: FieldType.time,
-      config: {},
-      values: new ArrayVector([1, 2]),
+  const logFrameB: DataFrame = {
+    refId: 'A',
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1, 2],
+      },
+      {
+        name: 'Line',
+        type: FieldType.string,
+        config: {},
+        values: ['line3', 'line4'],
+      },
+      {
+        name: 'labels',
+        type: FieldType.other,
+        config: {},
+        values: [
+          {
+            otherLabel: 'other value',
+          },
+        ],
+      },
+      {
+        name: 'tsNs',
+        type: FieldType.string,
+        config: {},
+        values: ['1000000', '2000000'],
+      },
+      {
+        name: 'id',
+        type: FieldType.string,
+        config: {},
+        values: ['id3', 'id4'],
+      },
+    ],
+    meta: {
+      custom: {
+        frameType: 'LabeledTimeValues',
+      },
+      stats: [
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
+        { displayName: 'Ingester: total reached', value: 2 },
+      ],
     },
-    {
-      name: 'Line',
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(['line3', 'line4']),
-    },
-    {
-      name: 'labels',
-      type: FieldType.other,
-      config: {},
-      values: new ArrayVector([
-        {
-          otherLabel: 'other value',
+    length: 2,
+  };
+
+  const metricFrameA: DataFrame = {
+    refId: 'A',
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [3000000, 4000000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        config: {},
+        values: [5, 4],
+        labels: {
+          level: 'debug',
         },
-      ]),
+      },
+    ],
+    meta: {
+      type: DataFrameType.TimeSeriesMulti,
+      stats: [
+        { displayName: 'Ingester: total reached', value: 1 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
+      ],
     },
-    {
-      name: 'tsNs',
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(['1000000', '2000000']),
-    },
-    {
-      name: 'id',
-      type: FieldType.string,
-      config: {},
-      values: new ArrayVector(['id3', 'id4']),
-    },
-  ],
-  meta: {
-    stats: [{ displayName: 'Ingester: total reached', value: 1 }],
-  },
-  length: 2,
-};
+    length: 2,
+  };
 
-export const metricFrameA: DataFrame = {
-  refId: 'A',
-  fields: [
-    {
-      name: 'Time',
-      type: FieldType.time,
-      config: {},
-      values: new ArrayVector([3000000, 4000000]),
+  const metricFrameB: DataFrame = {
+    refId: 'A',
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1000000, 2000000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        config: {},
+        values: [6, 7],
+        labels: {
+          level: 'debug',
+        },
+      },
+    ],
+    meta: {
+      type: DataFrameType.TimeSeriesMulti,
+      stats: [
+        { displayName: 'Ingester: total reached', value: 2 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
+      ],
     },
-    {
-      name: 'Value',
-      type: FieldType.number,
-      config: {},
-      values: new ArrayVector([5, 4]),
-    },
-  ],
-  meta: {
-    stats: [{ displayName: 'Ingester: total reached', value: 1 }],
-  },
-  length: 2,
-};
+    length: 2,
+  };
 
-export const metricFrameB: DataFrame = {
-  refId: 'A',
-  fields: [
-    {
-      name: 'Time',
-      type: FieldType.time,
-      config: {},
-      values: new ArrayVector([1000000, 2000000]),
+  const metricFrameC: DataFrame = {
+    refId: 'A',
+    name: 'some-time-series',
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [3000000, 4000000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        config: {},
+        values: [6, 7],
+        labels: {
+          level: 'error',
+        },
+      },
+    ],
+    meta: {
+      type: DataFrameType.TimeSeriesMulti,
+      stats: [
+        { displayName: 'Ingester: total reached', value: 2 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 33 },
+      ],
     },
-    {
-      name: 'Value',
-      type: FieldType.number,
-      config: {},
-      values: new ArrayVector([6, 7]),
-    },
-  ],
-  meta: {
-    stats: [{ displayName: 'Ingester: total reached', value: 2 }],
-  },
-  length: 2,
-};
+    length: 2,
+  };
+
+  return {
+    logFrameA,
+    logFrameB,
+    metricFrameA,
+    metricFrameB,
+    metricFrameC,
+  };
+}

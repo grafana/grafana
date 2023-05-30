@@ -65,8 +65,6 @@ export interface ServiceAccountsState {
   serviceAccounts: ServiceAccountDTO[];
   isLoading: boolean;
   roleOptions: Role[];
-  apiKeysMigrated: boolean;
-  showApiKeysMigrationInfo: boolean;
 
   // search / filtering
   query: string;

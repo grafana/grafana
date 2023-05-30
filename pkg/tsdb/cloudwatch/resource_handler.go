@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,7 +29,7 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	return mux
 }
 
-type handleFn func(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
+type handleFn func(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
 
 func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
@@ -37,19 +38,23 @@ func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *ht
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
-		data, err := handleFunc(pluginContext, req.URL.Query())
+		data, err := handleFunc(ctx, pluginContext, req.URL.Query())
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		body, err := json.Marshal(data)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
 			logger.Error("Unable to write HTTP response", "error", err)
+			return
 		}
 	}
 }

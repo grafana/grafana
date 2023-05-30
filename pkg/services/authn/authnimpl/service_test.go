@@ -316,6 +316,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 		clients:        map[string]authn.Client{},
 		clientQueue:    newQueue[authn.ContextAwareClient](),
 		tracer:         tracing.InitializeTracerForTest(),
+		metrics:        newMetrics(nil),
 		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}

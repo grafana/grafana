@@ -1,10 +1,9 @@
 import { uniq } from 'lodash';
 import React from 'react';
-import { Redirect } from 'react-router-dom';
 
 import { OrgRole } from '@grafana/data';
-import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
@@ -17,8 +16,7 @@ const legacyRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
     path: '/alerting',
-    component: () =>
-      config.featureToggles.topnav ? <NavLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
+    component: () => <NavLandingPage navId="alerting-legacy" />,
   },
   {
     path: '/alerting/list',
@@ -90,19 +88,12 @@ const legacyRoutes: RouteDescriptor[] = [
 
 const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
-  config.featureToggles.topnav
-    ? {
-        path: '/alerting',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
-        ),
-      }
-    : {
-        path: '/alerting/home',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
-        ),
-      },
+  {
+    path: '/alerting',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+    ),
+  },
   {
     path: '/alerting/list',
     roles: evaluateAccess(
@@ -120,7 +111,7 @@ const unifiedRoutes: RouteDescriptor[] = [
       [OrgRole.Editor, OrgRole.Admin]
     ),
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
+      () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/NotificationPolicies')
     ),
   },
   {

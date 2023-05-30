@@ -88,19 +88,21 @@ describe('LokiQueryEditorSelector', () => {
     await expectBuilder();
   });
 
-  it('shows Run Queries button in Dashboards', () => {
+  it('shows Run Queries button in Dashboards', async () => {
     renderWithProps({}, { app: CoreApp.Dashboard });
-    expectRunQueriesButton();
+    await expectRunQueriesButton();
   });
 
   it('hides Run Queries button in Explore', async () => {
     renderWithProps({}, { app: CoreApp.Explore });
+    await expectCodeEditor();
     expectNoRunQueriesButton();
   });
 
   it('hides Run Queries button in Correlations Page', async () => {
     renderWithProps({}, { app: CoreApp.Correlations });
-    await expectNoRunQueriesButton();
+    await expectCodeEditor();
+    expectNoRunQueriesButton();
   });
 
   it('changes to builder mode', async () => {
@@ -128,7 +130,7 @@ describe('LokiQueryEditorSelector', () => {
   it('Can enable explain', async () => {
     renderWithMode(QueryEditorMode.Builder);
     expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
-    screen.getByLabelText('Explain query').click();
+    await userEvent.click(screen.getByLabelText('Explain query'));
     expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
@@ -198,8 +200,8 @@ async function expectBuilder() {
   expect(await screen.findByText('Label filters')).toBeInTheDocument();
 }
 
-function expectRunQueriesButton() {
-  expect(screen.getByRole('button', { name: /run queries/i })).toBeInTheDocument();
+async function expectRunQueriesButton() {
+  expect(await screen.findByRole('button', { name: /run queries/i })).toBeInTheDocument();
 }
 
 function expectNoRunQueriesButton() {

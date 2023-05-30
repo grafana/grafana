@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
@@ -8,7 +8,7 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps } from './types';
 
-export const ImageCell: FC<TableCellProps> = (props) => {
+export const ImageCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
   const displayValue = field.display!(cell.value);

@@ -22,6 +22,7 @@ import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
 import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
+import { isDuplicating } from './components/receivers/TemplateForm';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -37,13 +38,11 @@ function NotificationError({ errorCount }: NotificationErrorProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.warning} data-testid="receivers-notification-error">
-      <Stack alignItems="flex-end" direction="column">
-        <Stack alignItems="center">
-          <Icon name="exclamation-triangle" />
-          <div className={styles.countMessage}>
-            {`${errorCount} ${pluralize('error', errorCount)} with contact points`}
-          </div>
+    <div className={styles.error} data-testid="receivers-notification-error">
+      <Stack alignItems="flex-end" direction="column" gap={0}>
+        <Stack alignItems="center" gap={1}>
+          <Icon name="exclamation-circle" />
+          <div>{`${errorCount} ${pluralize('error', errorCount)} with contact points`}</div>
         </Stack>
         <div>{'Some alert notifications might not be delivered'}</div>
       </Stack>
@@ -62,7 +61,7 @@ const Receivers = () => {
   const { id, type } = useParams<{ id?: string; type?: PageType }>();
   const location = useLocation();
   const isRoot = location.pathname.endsWith('/alerting/notifications');
-
+  const isduplicatingTemplate = isDuplicating(location);
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const {
@@ -95,8 +94,7 @@ const Receivers = () => {
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
   const disableAmSelect = !isRoot;
-
-  let pageNav = getPageNavigationModel(type, id);
+  let pageNav = getPageNavigationModel(type, id ? decodeURIComponent(id) : undefined, isduplicatingTemplate);
 
   if (!alertManagerSourceName) {
     return isRoot ? (
@@ -181,8 +179,14 @@ const Receivers = () => {
   );
 };
 
-function getPageNavigationModel(type: PageType | undefined, id: string | undefined) {
+function getPageNavigationModel(type: PageType | undefined, id: string | undefined, isDuplicatingTemplates: boolean) {
   let pageNav: NavModelItem | undefined;
+  if (isDuplicatingTemplates) {
+    return {
+      text: `New template`,
+      subTitle: `Create a new template for your notifications`,
+    };
+  }
   if (type === 'receivers' || type === 'templates') {
     const objectText = type === 'receivers' ? 'contact point' : 'notification template';
     if (id) {
@@ -208,11 +212,8 @@ function getPageNavigationModel(type: PageType | undefined, id: string | undefin
 export default withErrorBoundary(Receivers, { style: 'page' });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  warning: css`
-    color: ${theme.colors.warning.text};
-  `,
-  countMessage: css`
-    padding-left: 10px;
+  error: css`
+    color: ${theme.colors.error.text};
   `,
   headingContainer: css`
     display: flex;

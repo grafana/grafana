@@ -2,9 +2,12 @@ package user
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 type Service interface {
+	registry.ProvidesUsageStats
 	Create(context.Context, *CreateUserCommand) (*User, error)
 	CreateServiceAccount(context.Context, *CreateUserCommand) (*User, error)
 	Delete(context.Context, *DeleteUserCommand) error
@@ -24,7 +27,4 @@ type Service interface {
 	UpdatePermissions(context.Context, int64, bool) error
 	SetUserHelpFlag(context.Context, *SetUserHelpFlagCommand) error
 	GetProfile(context.Context, *GetUserProfileQuery) (*UserProfileDTO, error)
-
-	// TEST ONLY METHOD
-	CreateUserForTests(context.Context, *CreateUserCommand) (*User, error)
 }

@@ -1,4 +1,4 @@
-import React, { FC, Fragment, useMemo, useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,7 +23,7 @@ interface Props {
   alertManagerName: string;
 }
 
-export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
+export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);

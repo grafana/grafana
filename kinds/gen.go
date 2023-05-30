@@ -18,9 +18,10 @@ import (
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/kindsys"
+
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 func main() {
@@ -37,14 +38,15 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
+		&codegen.ResourceGoTypesJenny{},
+		&codegen.SubresourceGoTypesJenny{},
+		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
+		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
+		codegen.LatestMajorsOrXJenny(
+			cuectx.TSCoreKindParentPath,
+			true, // forcing group so that we ignore the top level resource (for now)
+			codegen.TSResourceJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.CRDTypesJenny(kindsys.GoCoreKindParentPath),
-		codegen.YamlCRDJenny(kindsys.GoCoreKindParentPath),
-		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
@@ -61,14 +63,14 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []kindsys.Kind
 
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreDefParentPath))
+	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, kinddir := range kinddirs {
 		if !kinddir.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreDefParentPath, kinddir.Name())
-		def, err := kindsys.LoadCoreKindDef(rel, rt.Context(), nil)
+		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
+		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}

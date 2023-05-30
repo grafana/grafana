@@ -120,37 +120,36 @@ func (f *RuleStore) DeleteAlertRulesByUID(_ context.Context, orgID int64, UIDs .
 	return nil
 }
 
-func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) error {
+func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
 	if err := f.Hook(*q); err != nil {
-		return err
+		return nil, err
 	}
 	rules, ok := f.Rules[q.OrgID]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	for _, rule := range rules {
 		if rule.UID == q.UID {
-			q.Result = rule
-			break
+			return rule, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
-func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) error {
+func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
 	if err := f.Hook(*q); err != nil {
-		return err
+		return nil, err
 	}
 	rules, ok := f.Rules[q.OrgID]
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	var selected *models.AlertRule
@@ -161,24 +160,25 @@ func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.Get
 		}
 	}
 	if selected == nil {
-		return nil
+		return nil, nil
 	}
 
+	ruleList := []*models.AlertRule{}
 	for _, rule := range rules {
 		if rule.GetGroupKey() == selected.GetGroupKey() {
-			q.Result = append(q.Result, rule)
+			ruleList = append(ruleList, rule)
 		}
 	}
-	return nil
+	return ruleList, nil
 }
 
-func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) error {
+func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, *q)
 
 	if err := f.Hook(*q); err != nil {
-		return err
+		return nil, err
 	}
 
 	hasDashboard := func(r *models.AlertRule, dashboardUID string, panelID int64) bool {
@@ -211,6 +211,7 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		return true
 	}
 
+	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
 		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
 			continue
@@ -221,10 +222,10 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if q.RuleGroup != "" && r.RuleGroup != q.RuleGroup {
 			continue
 		}
-		q.Result = append(q.Result, r)
+		ruleList = append(ruleList, r)
 	}
 
-	return nil
+	return ruleList, nil
 }
 
 func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*folder.Folder, error) {

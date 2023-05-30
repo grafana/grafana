@@ -28,7 +28,7 @@ The permission levels for the permission field:
 - 2 = Edit
 - 4 = Admin
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Get permissions for a dashboard
 
@@ -176,7 +176,9 @@ Status Codes:
 
 ## Get permissions for a dashboard by id
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#get-permissions-for-a-dashboard).
+{{% admonition type="warning" %}}
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#get-permissions-for-a-dashboard).
+{{% /admonition %}}
 
 `GET /api/dashboards/id/:dashboardId/permissions`
 
@@ -257,7 +259,9 @@ Status Codes:
 
 ## Update permissions for a dashboard by id
 
-> **Warning:** This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#update-permissions-for-a-dashboard).
+{{% admonition type="warning" %}}
+This API is deprecated since Grafana v9.0.0 and will be removed in a future release. Refer to the [new dashboard permissions API](#update-permissions-for-a-dashboard).
+{{% /admonition %}}
 
 `POST /api/dashboards/id/:dashboardId/permissions`
 

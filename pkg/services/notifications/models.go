@@ -49,6 +49,5 @@ type SendResetPasswordEmailCommand struct {
 }
 
 type ValidateResetPasswordCodeQuery struct {
-	Code   string
-	Result *user.User
+	Code string
 }

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
 import {
@@ -44,7 +44,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   type: 'email',
 });
 
-export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceName, config }) => {
+export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
 

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const defaultTimeout = 10
@@ -21,18 +22,24 @@ type Config struct {
 
 // ServerConfig holds connection data to LDAP
 type ServerConfig struct {
-	Host          string       `toml:"host"`
-	Port          int          `toml:"port"`
-	UseSSL        bool         `toml:"use_ssl"`
-	StartTLS      bool         `toml:"start_tls"`
-	SkipVerifySSL bool         `toml:"ssl_skip_verify"`
-	RootCACert    string       `toml:"root_ca_cert"`
-	ClientCert    string       `toml:"client_cert"`
-	ClientKey     string       `toml:"client_key"`
-	BindDN        string       `toml:"bind_dn"`
-	BindPassword  string       `toml:"bind_password"`
-	Timeout       int          `toml:"timeout"`
-	Attr          AttributeMap `toml:"attributes"`
+	Host string `toml:"host"`
+	Port int    `toml:"port"`
+
+	UseSSL        bool     `toml:"use_ssl"`
+	StartTLS      bool     `toml:"start_tls"`
+	SkipVerifySSL bool     `toml:"ssl_skip_verify"`
+	MinTLSVersion string   `toml:"min_tls_version"`
+	minTLSVersion uint16   `toml:"-"`
+	TLSCiphers    []string `toml:"tls_ciphers"`
+	tlsCiphers    []uint16 `toml:"-"`
+
+	RootCACert   string       `toml:"root_ca_cert"`
+	ClientCert   string       `toml:"client_cert"`
+	ClientKey    string       `toml:"client_key"`
+	BindDN       string       `toml:"bind_dn"`
+	BindPassword string       `toml:"bind_password"`
+	Timeout      int          `toml:"timeout"`
+	Attr         AttributeMap `toml:"attributes"`
 
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
@@ -79,10 +86,10 @@ var config *Config
 // the config or it reads it and caches it first.
 func GetConfig(cfg *setting.Cfg) (*Config, error) {
 	if cfg != nil {
-		if !cfg.LDAPEnabled {
+		if !cfg.LDAPAuthEnabled {
 			return nil, nil
 		}
-	} else if !cfg.LDAPEnabled {
+	} else if !cfg.LDAPAuthEnabled {
 		return nil, nil
 	}
 
@@ -133,6 +140,20 @@ func readConfig(configFile string) (*Config, error) {
 		err = assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "Failed to validate SearchBaseDNs section", err)
+		}
+
+		if server.MinTLSVersion != "" {
+			server.minTLSVersion, err = util.TlsNameToVersion(server.MinTLSVersion)
+			if err != nil {
+				logger.Error("Failed to set min TLS version. Ignoring", "err", err)
+			}
+		}
+
+		if len(server.TLSCiphers) > 0 {
+			server.tlsCiphers, err = util.TlsCiphersToIDs(server.TLSCiphers)
+			if err != nil {
+				logger.Error("Unrecognized TLS Cipher(s). Ignoring", "err", err)
+			}
 		}
 
 		for _, groupMap := range server.Groups {

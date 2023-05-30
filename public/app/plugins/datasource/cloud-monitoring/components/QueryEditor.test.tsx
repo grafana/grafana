@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { QueryType } from '../types';
+import { QueryType } from '../types/query';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -27,10 +27,13 @@ const defaultProps = {
 describe('QueryEditor', () => {
   it('should migrate the given query', async () => {
     const datasource = createMockDatasource();
+    const onChange = jest.fn();
     datasource.migrateQuery = jest.fn().mockReturnValue(defaultProps.query);
 
-    render(<QueryEditor {...defaultProps} datasource={datasource} />);
+    render(<QueryEditor {...defaultProps} datasource={datasource} onChange={onChange} />);
     await waitFor(() => expect(datasource.migrateQuery).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(defaultProps.query));
   });
 
   it('should set a known query type', async () => {
