@@ -34,7 +34,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
       confirmText="Delete"
       onDismiss={onDismiss}
       onConfirm={onDelete}
-      title="Delete Compute Resources"
+      title="Delete"
       {...props}
     />
   );

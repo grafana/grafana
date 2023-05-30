@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { useState } from 'react';
 
-import { CoreApp, createDataFrame } from '@grafana/data';
+import { createDataFrame } from '@grafana/data';
 
 import { SelectedView } from '../types';
 
@@ -11,17 +11,20 @@ import { data } from './testData/dataNestedSet';
 
 import 'jest-canvas-mock';
 
-jest.mock('react-use', () => ({
-  useMeasure: () => {
-    const ref = React.useRef();
-    return [ref, { width: 1600 }];
-  },
-}));
+jest.mock('react-use', () => {
+  const reactUse = jest.requireActual('react-use');
+  return {
+    ...reactUse,
+    useMeasure: () => {
+      const ref = React.useRef();
+      return [ref, { width: 1600 }];
+    },
+  };
+});
 
 describe('FlameGraph', () => {
   const FlameGraphWithProps = () => {
-    const [topLevelIndex, setTopLevelIndex] = useState(0);
-    const [selectedBarIndex, setSelectedBarIndex] = useState(0);
+    const [focusedItemIndex, setFocusedItemIndex] = useState<number>();
     const [rangeMin, setRangeMin] = useState(0);
     const [rangeMax, setRangeMax] = useState(1);
     const [search] = useState('');
@@ -34,18 +37,18 @@ describe('FlameGraph', () => {
     return (
       <FlameGraph
         data={container}
-        app={CoreApp.Explore}
         levels={levels}
-        topLevelIndex={topLevelIndex}
-        selectedBarIndex={selectedBarIndex}
         rangeMin={rangeMin}
         rangeMax={rangeMax}
         search={search}
-        setTopLevelIndex={setTopLevelIndex}
-        setSelectedBarIndex={setSelectedBarIndex}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         selectedView={selectedView}
+        onItemFocused={(itemIndex) => {
+          setFocusedItemIndex(itemIndex);
+        }}
+        focusedItemIndex={focusedItemIndex}
+        textAlign={'left'}
       />
     );
   };
