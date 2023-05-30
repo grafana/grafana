@@ -217,4 +217,3 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
 };
 
 Checkbox.displayName = 'Checkbox';
- 
