@@ -3,6 +3,7 @@ package tempo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -16,6 +17,12 @@ const SearchPathPrefix = "search/"
 type ExtendedResponse struct {
 	*tempopb.SearchResponse
 	State dataquery.SearchStreamingState
+}
+
+type StreamSender interface {
+	SendFrame(frame *data.Frame, include data.FrameInclude) error
+	SendJSON(data []byte) error
+	SendBytes(data []byte) error
 }
 
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
@@ -51,12 +58,12 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	return s.processStream(stream, sender)
 }
 
-func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender *backend.StreamSender) error {
+func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
 	for {
 		msg, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			if err := sendResponse(&ExtendedResponse{
 				State: dataquery.SearchStreamingStateDone,
 				SearchResponse: &tempopb.SearchResponse{
@@ -91,7 +98,7 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 	return nil
 }
 
-func sendResponse(response *ExtendedResponse, sender *backend.StreamSender) error {
+func sendResponse(response *ExtendedResponse, sender StreamSender) error {
 	frame := createResponseDataFrame()
 
 	if response != nil {
@@ -115,7 +122,7 @@ func sendResponse(response *ExtendedResponse, sender *backend.StreamSender) erro
 	return sender.SendFrame(frame, data.IncludeAll)
 }
 
-func sendError(searchErr error, sender *backend.StreamSender) error {
+func sendError(searchErr error, sender StreamSender) error {
 	frame := createResponseDataFrame()
 
 	if searchErr != nil {
