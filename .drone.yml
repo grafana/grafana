@@ -430,10 +430,6 @@ steps:
 - commands:
   - echo Yer a programmer, Kat!
   - go run dummy/modowners.go check dummy/go.txd
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
   image: golang:1.20.4
   name: validate-modfile
 trigger:
@@ -1441,10 +1437,6 @@ steps:
 - commands:
   - echo Yer a programmer, Kat!
   - go run dummy/modowners.go check dummy/go.txd
-  depends_on:
-  - wire-install
-  environment:
-    CGO_ENABLED: "1"
   image: golang:1.20.4
   name: validate-modfile
 - commands:
@@ -7218,6 +7210,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d2f4c5c8d3436c013eb96b637f9f40a3648c738080403c947b34676078f517c8
+hmac: 72fd0ecd98f4ec2bdf490208c5518818c4d217fcc1f8a16cdccad5877ca20452
 
 ...

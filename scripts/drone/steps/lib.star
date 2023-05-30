@@ -369,13 +369,6 @@ def validate_modifle_step():
         "name": "validate-modfile",
         # TODO: build_image or go_image?
         "image": go_image,
-        "environment": {
-            # We need CGO because of go-sqlite3
-            "CGO_ENABLED": "1",
-        },
-        "depends_on": [
-            "wire-install",
-        ],
         "commands": [
             "echo Yer a programmer, Kat!",
             "go run dummy/modowners.go check dummy/go.txd",
