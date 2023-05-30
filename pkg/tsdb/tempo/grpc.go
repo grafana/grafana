@@ -5,14 +5,15 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"net/url"
-	"strings"
 )
 
 func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {

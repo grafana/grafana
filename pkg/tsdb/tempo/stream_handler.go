@@ -3,8 +3,9 @@ package tempo
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {

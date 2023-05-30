@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc/metadata"
-	"io"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {

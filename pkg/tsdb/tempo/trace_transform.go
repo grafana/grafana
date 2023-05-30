@@ -3,8 +3,9 @@ package tempo
 import (
 	"encoding/json"
 	"fmt"
-	semconv "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 	"strings"
+
+	semconv "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/collector/model/pdata"
