@@ -82,6 +82,7 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
+  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
