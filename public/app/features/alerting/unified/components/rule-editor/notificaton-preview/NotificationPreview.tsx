@@ -252,22 +252,22 @@ function thereAreNoMatchers(route: RouteWithID) {
   return route.object_matchers?.length === 0;
 }
 
-function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithID }) {
+function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithPath }) {
   const styles = useStyles2(getStyles);
-  const routePathIds = routesByIdMap.get(route.id)?.path.slice(1) ?? [];
+  const routePathIds = route.path?.slice(1) ?? [];
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
 
   return (
     <div className={styles.policyPathWrapper}>
       <div className={styles.defaultPolicy}>Default policy</div>
-      {routePathObjects.map((route_, index) => {
+      {routePathObjects.map((pathRoute, index) => {
         return (
-          <div key={route_.id}>
+          <div key={pathRoute.id}>
             <div className={styles.policyInPath(index)}>
-              {thereAreNoMatchers(route) ? (
+              {thereAreNoMatchers(pathRoute) ? (
                 <div className={styles.textMuted}>No matchers</div>
               ) : (
-                <Matchers matchers={route.object_matchers ?? []} />
+                <Matchers matchers={pathRoute.object_matchers ?? []} />
               )}
             </div>
           </div>
@@ -538,6 +538,7 @@ function matchInstancesToPolicyTree(
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css`
     width: auto;
+    border: 0;
   `,
   textMuted: css`
     color: ${theme.colors.text.secondary};
@@ -563,6 +564,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
     width: 100%;
     align-items: center;
+    border-bottom: solid 1px ${theme.colors.border.weak};
+    padding: ${theme.spacing(1)};
+    background: ${theme.colors.background.secondary};
   `,
   collapseLabel: css`
     flex: 1;
@@ -581,7 +585,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: solid 1px ${theme.colors.border.weak};
   `,
   routeInstances: css`
-    margin-left: ${theme.spacing(4)};
+    margin-left: ${theme.spacing(7)};
     position: relative;
 
     &:before {
