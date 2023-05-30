@@ -197,9 +197,7 @@ func (m *mockStreamer) Recv() (*tempopb.SearchResponse, error) {
 	}
 	if m.copyOfTracingMetadata == nil {
 		m.copyOfTracingMetadata = make([]*tempopb.TraceSearchMetadata, len(m.tracingMetadata))
-		for i, traceMetadata := range m.tracingMetadata {
-			m.copyOfTracingMetadata[i] = traceMetadata
-		}
+		copy(m.copyOfTracingMetadata, m.tracingMetadata)
 	}
 	if len(m.copyOfTracingMetadata) == 0 {
 		return &tempopb.SearchResponse{
