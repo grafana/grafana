@@ -6,27 +6,20 @@ import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, Modal, TagList, useStyles2 } from '@grafana/ui';
-import {
-  AlertmanagerChoice,
-  AlertManagerCortexConfig,
-  Receiver,
-  Route,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery, Labels } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { fetchAlertManagerConfig } from '../../../api/alertmanager';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
+import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
 import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
-import { normalizeMatchers } from '../../../utils/matchers';
 import { makeAMLink } from '../../../utils/misc';
-import { RouteInstanceMatch } from '../../../utils/notification-policies';
+import { normalizeRoute, RouteInstanceMatch } from '../../../utils/notification-policies';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
@@ -35,30 +28,23 @@ export const useGetPotentialInstancesByAlertManager = (
   alertManagerSourceName: string,
   potentialInstances: Labels[]
 ) => {
-  // get the AM configuration to get the routes
   const {
-    value: AMConfig,
+    config: AMConfig,
     loading: configLoading,
     error: configError,
-  } = useAsync(async () => {
-    const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(alertManagerSourceName);
-    return AMConfig;
-  }, []);
+  } = useAlertmanagerConfig(alertManagerSourceName);
 
   const { matchInstancesToRoute } = useRouteGroupsMatcher();
 
   // to create the list of matching contact points we need to first get the rootRoute
-  const { rootRoute, receivers } = useMemo(() => {
+  const { rootRoute, receivers } = useMemo((): { rootRoute?: RouteWithID; receivers: Receiver[] } => {
     if (!AMConfig) {
-      return {};
+      return { receivers: [] };
     }
-    // we also get receivers from the AMConfig
-    const receivers = AMConfig.alertmanager_config.receivers;
-    const rootRoute = AMConfig.alertmanager_config.route;
-    rootRoute && normalizeTree(rootRoute);
+
     return {
-      rootRoute: rootRoute ? addUniqueIdentifierToRoute(rootRoute) : undefined,
-      receivers,
+      rootRoute: AMConfig.route ? normalizeRoute(addUniqueIdentifierToRoute(AMConfig.route)) : undefined,
+      receivers: AMConfig.receivers ?? [],
     };
   }, [AMConfig]);
 
@@ -66,7 +52,7 @@ export const useGetPotentialInstancesByAlertManager = (
   const routesByIdMap: Map<string, RouteWithPath> = rootRoute ? getRoutesByIdMap(rootRoute) : new Map();
   // create map for receivers to be get by name
   const receiversByName =
-    receivers?.reduce((map, receiver) => {
+    receivers.reduce((map, receiver) => {
       return map.set(receiver.name, receiver);
     }, new Map<string, Receiver>()) ?? new Map<string, Receiver>();
 
@@ -515,14 +501,6 @@ function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithPath> {
 
   addRoutesToMap(rootRoute, []);
   return map;
-}
-
-// normalize all the nodes in the tree
-function normalizeTree(routeTree: Route) {
-  const routeMatchers = normalizeMatchers(routeTree);
-  routeTree.object_matchers = routeMatchers;
-  routeTree.matchers = undefined;
-  routeTree.routes?.forEach((route) => normalizeTree(route));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -34,7 +34,7 @@ import {
 import { Policy } from './components/notification-policies/Policy';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
@@ -68,7 +68,6 @@ const AmRoutes = () => {
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
   const contactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
 
   useEffect(() => {
@@ -77,18 +76,13 @@ const AmRoutes = () => {
     }
   }, [alertManagerSourceName, dispatch]);
 
+  const { result, config, loading: resultLoading, error: resultError } = useAlertmanagerConfig(alertManagerSourceName);
+
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: alertManagerSourceName ?? '' },
     { skip: !alertManagerSourceName }
   );
 
-  const {
-    result,
-    loading: resultLoading,
-    error: resultError,
-  } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
-
-  const config = result?.alertmanager_config;
   const receivers = config?.receivers ?? [];
 
   const rootRoute = useMemo(() => {
