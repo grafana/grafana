@@ -225,7 +225,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
-    path: '/alerting/new',
+    path: '/alerting/new/:type?',
     pageClass: 'page-alerting',
     roles: evaluateAccess(
       [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite],

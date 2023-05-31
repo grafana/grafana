@@ -15,13 +15,23 @@ weight: 200
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
 
-- [Generic OAuth authentication](#configure-generic-oauth-authentication)
+- [Configure generic OAuth authentication](#configure-generic-oauth-authentication)
+  - [Email address](#email-address)
+  - [Groups / Teams](#groups--teams)
+  - [Login](#login)
+  - [PKCE](#pkce)
+  - [Configure refresh token](#configure-refresh-token)
+  - [Configure automatic login](#configure-automatic-login)
   - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
   - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
-  - [Role mapping](#role-mapping)
+  - [Role Mapping](#role-mapping)
+    - [JMESPath examples](#jmespath-examples)
+      - [Map user organization role](#map-user-organization-role)
+      - [Map server administrator privileges](#map-server-administrator-privileges)
   - [Team synchronization](#team-synchronization)
+  - [Skip organization role sync](#skip-organization-role-sync)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
@@ -45,6 +55,7 @@ auth_url =
 token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
+allowed_groups = ["Admins", "Software Engineers"]
 tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
@@ -85,6 +96,8 @@ Similarly, group mappings are made using [JMESPath](http://jmespath.org/examples
 
 Furthermore, Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
 
+You can limit access to only members of a given group or list of groups by setting the `allowed_groups` option.
+
 ### Login
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
@@ -103,7 +116,7 @@ You can set the user's display name with JMESPath using the `name_attribute_path
 > Available in Grafana v8.3 and later versions.
 
 IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
-introduces "proof key for code exchange" (PKCE) which introduces
+introduces "proof key for code exchange" (PKCE) which provides
 additional protection against some forms of authorization code
 interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
 

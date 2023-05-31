@@ -22,15 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TODO this will be removed when we remove legacy AC fallback from HasAccess method
-func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
-	return false
-}
-
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
-
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
@@ -76,7 +68,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		settings.AppSubUrl = ""
 	}
 
-	navTree, err := hs.navTreeService.GetNavTree(c, hasEditPerm, prefs)
+	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +79,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
@@ -140,14 +135,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 
-	if !hs.AccessControl.IsDisabled() {
-		userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
-		if err != nil {
-			return nil, err
-		}
-
-		data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
+	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
+	if err != nil {
+		return nil, err
 	}
+
+	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
 	if setting.DisableGravatar {
 		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
