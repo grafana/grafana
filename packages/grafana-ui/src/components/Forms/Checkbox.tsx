@@ -43,28 +43,22 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     return (
       <label className={cx(styles.wrapper, className)}>
-        <div className={styles.checkboxWrapper}>
-          <div>
-            <input
-              type="checkbox"
-              className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
-              checked={value}
-              disabled={disabled}
-              onChange={handleOnChange}
-              value={htmlValue}
-              aria-checked={ariaChecked}
-              {...inputProps}
-              ref={ref}
-            />
-            <span className={styles.checkmark} />
-          </div>
+        <input
+          type="checkbox"
+          className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
+          checked={value}
+          disabled={disabled}
+          onChange={handleOnChange}
+          value={htmlValue}
+          aria-checked={ariaChecked}
+          {...inputProps}
+          ref={ref}
+        />
+        <span className={styles.checkmark} />
+        <div className={styles.textWrapper}>
           {label && <span className={styles.label}>{label}</span>}
+          {description && <span className={styles.description}>{description}</span>}
         </div>
-        {description && (
-          <div>
-            <span className={styles.description}>{description}</span>
-          </div>
-        )}
       </label>
     );
   }
@@ -73,7 +67,6 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false, description = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
-  const labelPadding = 1;
 
   const getBorderColor = (color: string) => {
     return invalid ? theme.colors.error.border : color;
@@ -81,15 +74,8 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false, descrip
 
   return {
     wrapper: css`
-      display: inline-flex;
+      display: flex;
       align-items: flex-start;
-      flex-direction: column;
-      & div:nth-child(1) {
-        column-gap: ${theme.spacing(labelPadding)};
-        display: inline-flex;
-        align-items: ${!description ? `center` : undefined};
-        position: relative;
-      }
     `,
     input: css`
       position: absolute;
@@ -183,11 +169,6 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false, descrip
         }
       }
     `,
-
-    checkboxWrapper: css`
-      display: flex;
-      align-items: center;
-    `,
     checkmark: css`
       position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
       z-index: 2;
@@ -203,10 +184,15 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false, descrip
         border-color: ${getBorderColor(theme.components.input.borderHover)};
       }
     `,
+    textWrapper: css`
+      margin-left: ${theme.spacing(1)};
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    `,
     label: cx(
       labelStyles.label,
       css`
-        position: relative;
         z-index: 2;
         cursor: pointer;
         max-width: fit-content;
@@ -218,7 +204,6 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false, descrip
       labelStyles.description,
       css`
         line-height: ${theme.typography.bodySmall.lineHeight};
-        margin-left: ${theme.spacing(checkboxSize + labelPadding)};
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),
