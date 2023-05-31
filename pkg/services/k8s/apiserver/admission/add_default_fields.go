@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"k8s.io/apiserver/pkg/admission"
@@ -54,26 +55,37 @@ func (addDefaultFields) Admit(ctx context.Context, a admission.Attributes, o adm
 				}
 			}
 		}
-		break
 	case admission.Update:
 		// Quick and dirty code with some type assertions that skip error checking
 		// in order to demonstrate how to protect a managed field when it already exists in
 		// an old object and is being attempted to be removed
 		oldObject := a.GetOldObject()
 
-		from, _ := oldObject.(*unstructured.Unstructured)
-		fromSpec, _ := from.Object["spec"].(map[string]interface{})
-		_, ok := fromSpec[AddDefaultFieldsKey].(string)
-
-		to, _ := obj.(*unstructured.Unstructured)
-		toSpec, _ := to.Object["spec"].(map[string]interface{})
-		_, set := toSpec[AddDefaultFieldsKey]
+		from, ok := oldObject.(*unstructured.Unstructured)
 		if !ok {
-			toSpec[AddDefaultFieldsKey] = AddDefaultFieldsValue
-		} else if !set { // if it was set and user is trying to remove it
+			return nil
+		}
+		fromSpec, ok := from.Object["spec"].(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		_, ok = fromSpec[AddDefaultFieldsKey].(string)
+		if !ok {
+			return nil
+		}
+
+		to, ok := obj.(*unstructured.Unstructured)
+		if !ok {
+			return nil
+		}
+		toSpec, ok := to.Object["spec"].(map[string]interface{})
+		if !ok {
 			return admission.NewForbidden(a, fmt.Errorf("error removing managed field from %s", a.GetResource().Resource))
 		}
-		break
+		_, ok = toSpec[AddDefaultFieldsKey]
+		if !ok {
+			toSpec[AddDefaultFieldsKey] = AddDefaultFieldsValue
+		}
 	case admission.Delete:
 		return nil
 	}
