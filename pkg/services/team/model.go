@@ -4,8 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Typed errors
@@ -30,6 +32,18 @@ type Team struct {
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+func (t *Team) ToResource() team.K8sResource {
+	r := team.NewK8sResource(t.UID, &team.Spec{
+		Name: t.Name,
+	})
+	r.Metadata.CreationTimestamp = v1.NewTime(t.Created)
+	r.Metadata.SetUpdatedTimestamp(&t.Updated)
+	if t.Email != "" {
+		r.Spec.Email = &t.Email
+	}
+	return r
 }
 
 // ---------------------
@@ -96,10 +110,6 @@ type SearchTeamQueryResult struct {
 	Teams      []*TeamDTO `json:"teams"`
 	Page       int        `json:"page"`
 	PerPage    int        `json:"perPage"`
-}
-
-type IsAdminOfTeamsQuery struct {
-	SignedInUser *user.SignedInUser
 }
 
 // TeamMember model

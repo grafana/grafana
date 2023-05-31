@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
 const (
@@ -227,7 +226,7 @@ type TracesJSONQuery struct {
 		Resources []string `json:"resources"`
 
 		// Specifies the format results should be returned as.
-		ResultFormat *dataquery.AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat"`
+		ResultFormat *string `json:"resultFormat"`
 
 		// Types of events to filter by.
 		TraceTypes []string `json:"traceTypes"`
