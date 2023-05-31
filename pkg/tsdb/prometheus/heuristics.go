@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"net/http"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 const (
