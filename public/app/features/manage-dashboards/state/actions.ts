@@ -1,8 +1,9 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getDataSourceSrv, locationService, getBackendSrv, isFetchError, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { dashboardKindService } from 'app/features/dashboard/services/k8service';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
@@ -285,8 +286,22 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export function saveDashboard(options: SaveDashboardCommand) {
+export async function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
+
+  console.log('SAVE', options);
+  if (config.featureToggles.entityStore) {
+    const v = await dashboardKindService.save(options);
+
+    // Set UID from k8s
+    if (!options.dashboard.uid) {
+      const uid = v.metadata.name!;
+      options.dashboard.uid = uid;
+      console.log('CREATE', { uid }, v);
+    } else {
+      console.log('UPDATE', v);
+    }
+  }
 
   return getBackendSrv().post('/api/dashboards/db/', {
     dashboard: options.dashboard,

@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest, config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -80,17 +80,47 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return lastValueFrom(
+    console.log( 'SAVE', requestOptions);
+    const spec = data.dashboard.getSaveModelClone();
+    if(config.featureToggles.entityStore) {
+      const namespace = 'org-1';
+      const k8sobj: any = {
+        apiVersion: "dashboard.kinds.grafana.com/v0.0-alpha",
+        kind: "Dashboard",
+        metadata: {
+          namespace,
+        },
+        spec,
+      }
+      let url = `/k8s/apis/dashboard.kinds.grafana.com/v0.0-alpha/namespaces/${namespace}/dashboards`;
+      let method = 'POST';
+      if (spec.uid) {
+        url += '/' + spec.uid;
+        method = 'PATCH';
+        k8sobj.metadata.name = spec.uid;
+      } else {
+        k8sobj.metadata.generateName = 'uid'
+      }
+
+      console.log( 'TODO, write k8s', url, method, k8sobj);
+      const v = lastValueFrom(
+        getBackendSrv().fetch<SaveDashboardResponse>({
+          url, method,
+          data: k8sobj,
+        }));
+      console.log("GOT", v);
+    }
+    {return lastValueFrom(
       getBackendSrv().fetch<SaveDashboardResponse>({
         url: '/api/dashboards/db/',
         method: 'POST',
         data: {
           ...data,
-          dashboard: data.dashboard.getSaveModelClone(),
+          dashboard: spec,
         },
         ...requestOptions,
       })
-    );
+    );}
   }
 
   starDashboard(dashboardUid: string, isStarred: boolean) {
