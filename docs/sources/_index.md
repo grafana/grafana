@@ -70,6 +70,7 @@ cascade:
     labels:
       products:
         - cloud
+        - enterprise
         - oss
 
   - _target: { path: /docs/grafana/*/dashboards/** }
@@ -193,6 +194,7 @@ cascade:
     labels:
       products:
         - cloud
+        - enterprise
         - oss
 description: Guides, installation, and feature documentation
 keywords:
