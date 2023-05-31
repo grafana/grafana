@@ -22,18 +22,16 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
     ...orig,
     listFolders(parentUID?: string) {
       const childrenForUID = mockTree
-        .filter((v) => v.item.kind !== 'ui' && v.item.parentUID === parentUID)
-        .map((v) => v.item)
-        .filter((v) => v.kind === 'folder');
+        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
+        .map((v) => v.item);
 
       return Promise.resolve(childrenForUID);
     },
 
     listDashboards(parentUID?: string) {
       const childrenForUID = mockTree
-        .filter((v) => v.item.kind !== 'ui' && v.item.parentUID === parentUID)
-        .map((v) => v.item)
-        .filter((v) => v.kind === 'dashboard');
+        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
+        .map((v) => v.item);
 
       return Promise.resolve(childrenForUID);
     },
