@@ -71,10 +71,6 @@ The following properties are inherited by child policies:
 
 Each of these properties can be overwritten by an individual policy should you wish to override the inherited properties.
 
-<!--
-@TODO fact check inheritance of timings, from parent or from default policy?
--->
-
 To inherit a contact point from the parent policy, leave it blank. To override the inherited grouping options, enable **Override grouping**. To override the inherited timing options, enable **Override general timings**.
 
 ### Example
@@ -96,10 +92,6 @@ Grouping options determine _which_ alert instances are bundled together.
 When an alert instance is matched to a specific notification policy, it no longer has any association with its alert rule.
 
 To group alert instances by the original alert rule, set the grouping using `alertname` and `grafana_folder` (since alert names are not unique across multiple folders).
-
-<!--
-@TODO validate this
--->
 
 This is also the default setting for the built-in Grafana Alertmanager.
 
@@ -127,10 +119,6 @@ The waiting time until the initial notification is sent for a **new group** crea
 
 The waiting time to send a batch of alert instances for **existing groups**.
 
-<!--
-@TODO make this a note
--->
-
 {{% admonition type="note" %}}
 This means that notifications will **not** be sent any sooner than 5 minutes (default) since the last batch of updates were delivered, regardless of whether the alert rule interval for those alert instances was lower.
 {{% /admonition %}}
@@ -138,10 +126,6 @@ This means that notifications will **not** be sent any sooner than 5 minutes (de
 **Default** 5 minutes
 
 #### Repeat interval
-
-<!--
-@TODO check if only for firing
--->
 
 The waiting time to resend an alert after they have successfully been sent. This means notifications for **firing** alerts will be re-delivered every 4 hours (default).
 
