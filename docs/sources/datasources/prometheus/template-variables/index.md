@@ -22,7 +22,7 @@ For an introduction to templating and template variables, see [Templating]({{< r
 
 ## Use query variables
 
-You have the option to use several different variable types, but variables of the type `Query` will query Prometheus for a list of metrics, labels, or label values.
+You have the option to use several different variable types, but variables of the type `Query` will query Prometheus for a list of metrics, labels, label values, a query result or a series.
 
 Select a Prometheus data source query type and enter the required inputs:
 
