@@ -68,9 +68,15 @@ description: Learn about new and changed features in Grafana.
 
 For release highlights, deprecations, and breaking changes in Grafana releases, refer to these "What's new" pages for each version.
 
-> **Note:** For Grafana versions prior to v9.2, additional information might also be available in the archive of [release notes]({{< relref "../release-notes" >}}).
+{{% admonition type="note" %}}
+For Grafana versions prior to v9.2, additional information might also be available in the archive of [release notes]({{< relref "../release-notes/" >}}).
+{{% /admonition %}}
 
 For a complete list of every change, with links to pull requests and related issues when available, see the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+
+## Grafana 10
+
+- [What's new in 10.0]({{< relref "whats-new-in-v10-0/" >}})
 
 ## Grafana 9
 
