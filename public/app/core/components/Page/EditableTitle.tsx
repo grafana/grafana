@@ -15,7 +15,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
   const [localValue, setLocalValue] = useState<string>();
   const [isEditing, setIsEditing] = useState(false);
-  const [isEditInProgress, setIsEditInProgress] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
 
   const onCommitChange = useCallback(
@@ -30,7 +30,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
         setErrorMessage(undefined);
         setIsEditing(false);
       } else {
-        setIsEditInProgress(true);
+        setIsLoading(true);
         try {
           await onEdit(newValue);
           setErrorMessage(undefined);
@@ -42,7 +42,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
             setErrorMessage(error.message);
           }
         }
-        setIsEditInProgress(false);
+        setIsLoading(false);
       }
     },
     [onEdit, value]
@@ -62,7 +62,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     </div>
   ) : (
     <div className={styles.inputContainer}>
-      <Field className={styles.field} loading={isEditInProgress} invalid={!!errorMessage} error={errorMessage}>
+      <Field className={styles.field} loading={isLoading} invalid={!!errorMessage} error={errorMessage}>
         <Input
           className={styles.input}
           defaultValue={value}
