@@ -42,7 +42,7 @@ As soon as a matching policy is found, the system does not continue to look for 
 
 Lastly, if none of the notification policies are selected the default notification policy is used.
 
-### Example
+### Routing example
 
 Here is an example of a relatively simple notification policy tree and some alert instances.
 
@@ -73,7 +73,7 @@ Each of these properties can be overwritten by an individual policy should you w
 
 To inherit a contact point from the parent policy, leave it blank. To override the inherited grouping options, enable **Override grouping**. To override the inherited timing options, enable **Override general timings**.
 
-### Example
+### Inheritance example
 
 The example below shows how the notification policy tree from our previous example allows the child policies of the `team=operations` to inherit its contact point.
 
