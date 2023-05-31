@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Field, Icon, IconButton, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { Field, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { H1 } from '@grafana/ui/src/unstable';
 
 export interface Props {
@@ -13,18 +13,10 @@ export interface Props {
 
 export const EditableTitle = ({ value, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
+  const [localValue, setLocalValue] = useState<string>();
   const [isEditing, setIsEditing] = useState(false);
   const [isEditInProgress, setIsEditInProgress] = useState(false);
-  // we use this to track whether the edit was successful so we can show a checkmark icon
-  // this should get reset to false whenever we exit edit mode
-  const [isEditSuccessful, setIsEditSuccessful] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
-  const timeoutID = useRef<number>();
-
-  const exitEditMode = () => {
-    setIsEditing(false);
-    setIsEditSuccessful(false);
-  };
 
   const onCommitChange = useCallback(
     async (event: React.FormEvent<HTMLInputElement>) => {
@@ -36,19 +28,13 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
         // no need to bother saving if the value hasn't changed
         // just clear any previous error messages and exit edit mode
         setErrorMessage(undefined);
-        exitEditMode();
+        setIsEditing(false);
       } else {
         setIsEditInProgress(true);
-        if (timeoutID.current) {
-          window.clearTimeout(timeoutID.current);
-        }
         try {
           await onEdit(newValue);
           setErrorMessage(undefined);
-          setIsEditSuccessful(true);
-          timeoutID.current = window.setTimeout(() => {
-            exitEditMode();
-          }, 1500);
+          setIsEditing(false);
         } catch (error) {
           if (isFetchError(error)) {
             setErrorMessage(error.data.message);
@@ -62,26 +48,21 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     [onEdit, value]
   );
 
-  const getIcon = useCallback(() => {
-    if (isEditInProgress) {
-      return <Spinner />;
-    } else if (isEditSuccessful) {
-      return <Icon name="check" />;
-    } else {
-      return null;
-    }
-  }, [isEditInProgress, isEditSuccessful]);
-
   return !isEditing ? (
     <div className={styles.textContainer}>
       <div className={styles.textWrapper}>
-        <H1 truncate>{value}</H1>
+        {/*
+          use localValue if it exists
+          this is to prevent the title from flickering back to the old value after the user has edited
+          caused by the delay between the save completing and the new value being refetched
+        */}
+        <H1 truncate>{localValue ?? value}</H1>
         <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
       </div>
     </div>
   ) : (
     <div className={styles.inputContainer}>
-      <Field className={styles.field} invalid={!!errorMessage} error={errorMessage}>
+      <Field className={styles.field} loading={isEditInProgress} invalid={!!errorMessage} error={errorMessage}>
         <Input
           className={styles.input}
           defaultValue={value}
@@ -93,8 +74,8 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           // perfectly reasonable to autofocus here since we've made a conscious choice by clicking the edit button
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
-          suffix={getIcon()}
           onBlur={onCommitChange}
+          onChange={(event) => setLocalValue(event.currentTarget.value)}
           onFocus={() => setIsEditing(true)}
         />
       </Field>
