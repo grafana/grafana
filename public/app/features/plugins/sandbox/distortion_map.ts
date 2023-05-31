@@ -6,7 +6,7 @@ function failToSet() {
 }
 
 // sets distortion to protect iframe elements
-function distordIframeAttributes(distortions: DistortionMap) {
+function distortIframeAttributes(distortions: DistortionMap) {
   const iframeHtmlForbiddenProperties = ['contentDocument', 'contentWindow', 'src', 'srcdoc', 'srcObject', 'srcset'];
 
   for (const property of iframeHtmlForbiddenProperties) {
@@ -28,7 +28,7 @@ function distordIframeAttributes(distortions: DistortionMap) {
   }
 }
 
-function distordConsole(distortions: DistortionMap) {
+function distortConsole(distortions: DistortionMap) {
   // distorts window.console to prefix it
   const descriptor = Object.getOwnPropertyDescriptor(window, 'console');
   if (descriptor?.value) {
@@ -50,7 +50,7 @@ function distordConsole(distortions: DistortionMap) {
   }
 }
 
-function distordAlert(distortions: DistortionMap) {
+function distortAlert(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(window, 'alert');
   if (descriptor?.value) {
     function sandboxAlert(...args: unknown[]) {
@@ -65,9 +65,9 @@ function distordAlert(distortions: DistortionMap) {
 
 export function getGeneralSandboxDistortionMap() {
   if (generalDistortionMap.size === 0) {
-    distordIframeAttributes(generalDistortionMap);
-    distordConsole(generalDistortionMap);
-    distordAlert(generalDistortionMap);
+    distortIframeAttributes(generalDistortionMap);
+    distortConsole(generalDistortionMap);
+    distortAlert(generalDistortionMap);
   }
   return generalDistortionMap;
 }
