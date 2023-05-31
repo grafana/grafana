@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -17,6 +17,11 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+
+  // sync local value with prop value
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
 
   const onCommitChange = useCallback(
     async (event: React.FormEvent<HTMLInputElement>) => {
@@ -52,11 +57,11 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
     <div className={styles.textContainer}>
       <div className={styles.textWrapper}>
         {/*
-          use localValue if it exists
+          use localValue instead of value
           this is to prevent the title from flickering back to the old value after the user has edited
           caused by the delay between the save completing and the new value being refetched
         */}
-        <H1 truncate>{localValue ?? value}</H1>
+        <H1 truncate>{localValue}</H1>
         <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
       </div>
     </div>
@@ -65,7 +70,7 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
       <Field className={styles.field} loading={isLoading} invalid={!!errorMessage} error={errorMessage}>
         <Input
           className={styles.input}
-          defaultValue={value}
+          defaultValue={localValue}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               onCommitChange(event);
