@@ -61,22 +61,25 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
     return (
       <>
         <Stack direction="column" gap={3}>
-          <BreadCrumb folder={rule.namespace.name} evaluationGroup={rule.group.name} />
+          {/* breadcrumb and actions */}
+          <Stack>
+            <BreadCrumb folder={rule.namespace.name} evaluationGroup={rule.group.name} />
+            <Spacer />
+            <Stack gap={1}>
+              <Button variant="secondary" icon="pen">
+                Edit
+              </Button>
+              <Button variant="secondary">
+                <Stack alignItems="center" gap={1}>
+                  More <Icon name="angle-down" />
+                </Stack>
+              </Button>
+            </Stack>
+          </Stack>
           {/* header */}
           <Stack direction="column" gap={1}>
             <Stack alignItems="center">
               <Title name={rule.name} state={GrafanaAlertState.Alerting} />
-              <Spacer />
-              <Stack gap={1}>
-                <Button variant="secondary" icon="pen">
-                  Edit
-                </Button>
-                <Button variant="secondary">
-                  <Stack alignItems="center" gap={1}>
-                    More <Icon name="angle-down" />
-                  </Stack>
-                </Button>
-              </Stack>
             </Stack>
             {summary && <Summary text={summary} />}
           </Stack>
@@ -127,9 +130,8 @@ const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
     <Stack alignItems="center" gap={0.5}>
       <Icon name="folder" /> {folder}
     </Stack>
-    <div>
-      <Icon name="angle-right" /> {evaluationGroup}
-    </div>
+    <Icon name="angle-right" />
+    <div>{evaluationGroup}</div>
   </Stack>
 );
 
@@ -142,7 +144,7 @@ const Title = ({ name, state }: TitleProps) => (
   <header>
     <Stack alignItems={'center'} gap={1}>
       {/* <Button variant="secondary" fill="outline" icon="angle-left" /> */}
-      <H1 variant="h2" color="maxContrast">
+      <H1 variant="h2" color="maxContrast" weight="bold">
         {name}
       </H1>
       <Badge color="red" text={state} icon="exclamation-circle" />
