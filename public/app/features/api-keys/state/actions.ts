@@ -32,10 +32,19 @@ export function migrateApiKey(id: number): ThunkResult<void> {
   };
 }
 
-export function migrateAll(): ThunkResult<void> {
+interface MigrationResult {
+  Total: number;
+  Migrated: number;
+  Failed: number;
+  FailedApikeyIDs: number[];
+  FailedDetails: string[];
+}
+
+export function migrateAll(): ThunkResult<Promise<MigrationResult>> {
   return async (dispatch) => {
     try {
-      await getBackendSrv().post('/api/serviceaccounts/migrate');
+      const request = await getBackendSrv().post('/api/serviceaccounts/migrate');
+      return request;
     } finally {
       dispatch(loadApiKeys());
     }

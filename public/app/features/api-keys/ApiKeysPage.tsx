@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
-import { locationService } from '@grafana/runtime';
-import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
+// import { locationService } from '@grafana/runtime';
+import { InlineField, InlineSwitch, VerticalGroup, Modal } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -51,12 +51,14 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 interface State {
-  isAdding: boolean;
+  operationSummaryVisible: boolean;
+  operationSummaryData: object;
 }
 
 export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = { operationSummaryVisible: false, operationSummaryData: {} };
   }
 
   componentDidMount() {
@@ -89,13 +91,26 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onMigrateApiKeys = async () => {
     try {
-      this.onMigrateAll();
-      let serviceAccountsUrl = '/org/serviceaccounts';
-      locationService.push(serviceAccountsUrl);
-      window.location.reload();
+      const response = await this.props.migrateAll();
+      this.setState((prevState: State) => {
+        return {
+          ...prevState,
+          operationSummaryVisible: true,
+          operationSummaryData: response,
+        };
+      });
     } catch (err) {
       console.error(err);
     }
+  };
+
+  dismissModal = async () => {
+    this.setState((prevState: State) => {
+      return {
+        ...prevState,
+        operationSummaryVisible: false,
+      };
+    });
   };
 
   render() {
@@ -146,10 +161,78 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
             ) : null}
           </>
         </Page.Contents>
+        <MigrationSummary
+          visible={this.state.operationSummaryVisible}
+          data={this.state.operationSummaryData}
+          dismissModal={this.dismissModal}
+        />
       </Page>
     );
   }
 }
+interface MigrationResult {
+  Total: number;
+  Migrated: number;
+  Failed: number;
+  FailedApikeyIDs: number[];
+  FailedDetails: string[];
+}
+
+export type MigrationSummaryProps = {
+  visible: boolean;
+  data: MigrationResult;
+  dismissModal: () => void;
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+  migrationSummary: {
+    padding: '20px',
+  },
+  infoText: {
+    color: '#007bff',
+  },
+  summaryDetails: {
+    marginTop: '20px',
+  },
+  summaryParagraph: {
+    margin: '10px 0',
+  },
+};
+
+export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, dismissModal }) => {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <Modal title="Migration summary" isOpen={true} closeOnBackdropClick={true} onDismiss={dismissModal}>
+      <div style={styles.migrationSummary}>
+        {data.FailedApikeyIDs.length !== 0 && (
+          <p>Do not worry if you see failed API key migrations. All your API keys are functional and operational.</p>
+        )}
+        <hr />
+        <p>
+          <strong>Total: </strong>
+          {data.Total}
+        </p>
+        <p>
+          <strong>Migrated:</strong>
+          {data.Migrated}
+        </p>
+        <p>
+          <strong>Failed:</strong> {data.Failed}
+        </p>
+        <p>
+          <strong>Failed Api Key IDs:</strong> {data.FailedApikeyIDs.join(', ')}
+        </p>
+        <p>
+          <strong>Failed Details:</strong>
+          {data.FailedDetails.join(', ')}
+        </p>
+      </div>
+    </Modal>
+  );
+};
 
 const ApiKeysPage = connector(ApiKeysPageUnconnected);
 export default ApiKeysPage;

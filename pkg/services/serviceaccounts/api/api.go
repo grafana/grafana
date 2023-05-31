@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -354,10 +355,10 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	// context gets cancelled from db being locked, this tries to mitigate that change
 	results, err := api.retryAPICall(ctx.Req.Context(), ctx.OrgID, 3)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+		fmt.Printf("format string for results %+v", results)
+		return response.JSON(http.StatusInternalServerError, results)
 	}
 
 	return response.JSON(http.StatusOK, results)
