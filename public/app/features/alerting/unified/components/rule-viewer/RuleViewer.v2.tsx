@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Alert, Badge, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { H1, Span } from '@grafana/ui/src/unstable';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
@@ -48,7 +49,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   }
 
   if (rule) {
-    const description = rule.annotations['description'];
+    const summary = rule.annotations['summary'];
     const promRule = rule.promRule;
 
     const isAlertType = isAlertingRule(promRule);
@@ -77,7 +78,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
                 </Button>
               </Stack>
             </Stack>
-            {description && <Summary description={description} />}
+            {summary && <Summary text={summary} />}
           </Stack>
           {/* alerts and notifications and stuff */}
           {isFederatedRule && (
@@ -140,16 +141,23 @@ interface TitleProps {
 const Title = ({ name, state }: TitleProps) => (
   <header>
     <Stack alignItems={'center'} gap={1}>
-      <Button variant="secondary" fill="outline" icon="angle-left" /> {name}
+      {/* <Button variant="secondary" fill="outline" icon="angle-left" /> */}
+      <H1 variant="h2" color="maxContrast">
+        {name}
+      </H1>
       <Badge color="red" text={state} icon="exclamation-circle" />
     </Stack>
   </header>
 );
 
 interface SummaryProps {
-  description: string;
+  text: string;
 }
 
-const Summary = ({ description }: SummaryProps) => <div>{description}</div>;
+const Summary = ({ text }: SummaryProps) => (
+  <Span variant="body" color="secondary">
+    {text}
+  </Span>
+);
 
 export default RuleViewer;

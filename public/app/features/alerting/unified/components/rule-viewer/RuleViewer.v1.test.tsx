@@ -10,10 +10,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { RuleViewer } from './RuleViewer';
-import { useCombinedRule } from './hooks/useCombinedRule';
-import { useIsRuleEditable } from './hooks/useIsRuleEditable';
-import { getCloudRule, getGrafanaRule, grantUserPermissions } from './mocks';
+import { useCombinedRule } from '../../hooks/useCombinedRule';
+import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
+import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../mocks';
+
+import { RuleViewer } from './RuleViewer.v1';
 
 const mockGrafanaRule = getGrafanaRule({ name: 'Test alert' });
 const mockCloudRule = getCloudRule({ name: 'cloud test alert' });

@@ -5,21 +5,20 @@ import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Collapse,
-  Icon,
-  IconButton,
-  LoadingPlaceholder,
-  useStyles2,
-  VerticalGroup
-} from '@grafana/ui';
+import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertQuery, GrafanaRuleDefinition } from '../../../../../types/unified-alerting-dto';
-
+import { GrafanaRuleQueryViewer, QueryPreview } from '../../GrafanaRuleQueryViewer';
+import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
+import { useCombinedRule } from '../../hooks/useCombinedRule';
+import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
+import { useCleanAnnotations } from '../../utils/annotations';
+import { getRulesSourceByName } from '../../utils/datasource';
+import { alertRuleToQueries } from '../../utils/query';
+import * as ruleId from '../../utils/rule-id';
+import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -32,15 +31,6 @@ import { RuleDetailsFederatedSources } from '../rules/RuleDetailsFederatedSource
 import { RuleDetailsMatchingInstances } from '../rules/RuleDetailsMatchingInstances';
 import { RuleHealth } from '../rules/RuleHealth';
 import { RuleState } from '../rules/RuleState';
-import { GrafanaRuleQueryViewer, QueryPreview } from '../../GrafanaRuleQueryViewer';
-import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
-import { useCombinedRule } from '../../hooks/useCombinedRule';
-import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
-import { useCleanAnnotations } from '../../utils/annotations';
-import { getRulesSourceByName } from '../../utils/datasource';
-import { alertRuleToQueries } from '../../utils/query';
-import * as ruleId from '../../utils/rule-id';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
