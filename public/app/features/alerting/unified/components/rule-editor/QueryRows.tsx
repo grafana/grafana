@@ -181,7 +181,7 @@ export class QueryRows extends PureComponent<Props> {
                       query={query}
                       onChangeQuery={this.onChangeQuery}
                       onRemoveQuery={this.onRemoveQuery}
-                      queries={queries}
+                      queries={[...queries, ...expressions]}
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}

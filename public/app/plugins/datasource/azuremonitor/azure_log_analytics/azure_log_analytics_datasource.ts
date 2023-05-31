@@ -1,28 +1,24 @@
 import { map } from 'lodash';
 
-import { DataSourceInstanceSettings, DataSourceRef, ScopedVars } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { isGUIDish } from '../components/ResourcePicker/utils';
+import ResponseParser from '../azure_monitor/response_parser';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
-import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import {
+  AzureAPIResponse,
   AzureDataSourceJsonData,
   AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
   DatasourceValidationResult,
+  Subscription,
+  Workspace,
 } from '../types';
 import { interpolateVariable, routeNames } from '../utils/common';
 
-import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
-
-interface AdhocQuery {
-  datasource: DataSourceRef;
-  path: string;
-  resultFormat: string;
-}
+import { transformMetadataToKustoSchema } from './utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -70,7 +66,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const path = `${this.azureMonitorPath}?api-version=2019-03-01`;
-    return await this.getResource(path).then((result: any) => {
+    return await this.getResource<AzureAPIResponse<Subscription>>(path).then((result) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -79,7 +75,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const response = await this.getWorkspaceList(subscription);
 
     return (
-      map(response.value, (val: any) => {
+      map(response.value, (val: Workspace) => {
         return {
           text: val.name,
           value: val.id,
@@ -88,13 +84,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     );
   }
 
-  private getWorkspaceList(subscription: string): Promise<any> {
+  private getWorkspaceList(subscription: string): Promise<AzureAPIResponse<Workspace>> {
     const subscriptionId = getTemplateSrv().replace(subscription || this.defaultSubscriptionId);
 
     const workspaceListUrl =
       this.azureMonitorPath +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.getResource(workspaceListUrl);
+    return this.getResource<AzureAPIResponse<Workspace>>(workspaceListUrl);
   }
 
   async getMetadata(resourceUri: string) {
@@ -201,29 +197,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace;
   }
 
-  private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
-    const querystringBuilder = new LogAnalyticsQuerystringBuilder(
-      getTemplateSrv().replace(query, {}, interpolateVariable),
-      options,
-      'TimeGenerated'
-    );
-
-    const querystring = querystringBuilder.generate().uriString;
-    const path = isGUIDish(workspace)
-      ? `${this.resourcePath}/v1/workspaces/${workspace}/query?${querystring}`
-      : `${this.resourcePath}/v1${workspace}/query?${querystring}`;
-
-    const queries = [
-      {
-        datasource: this.getRef(),
-        path: path,
-        resultFormat: 'table',
-      },
-    ];
-
-    return queries;
-  }
-
   async getDefaultOrFirstSubscription(): Promise<string | undefined> {
     if (this.defaultSubscriptionId) {
       return this.defaultSubscriptionId;
@@ -250,40 +223,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return workspace;
-  }
-
-  annotationQuery(options: any) {
-    if (!options.annotation.rawQuery) {
-      return Promise.reject({
-        message: 'Query missing in annotation definition',
-      });
-    }
-
-    const queries = this.buildQuery(options.annotation.rawQuery, options, options.annotation.workspace);
-    const promises = this.doQueries(queries);
-
-    return Promise.all(promises).then((results) => {
-      const annotations = new ResponseParser(results).transformToAnnotations(options);
-      return annotations;
-    });
-  }
-
-  doQueries(queries: AdhocQuery[]) {
-    return map(queries, (query) => {
-      return this.getResource(query.path)
-        .then((result: any) => {
-          return {
-            result: result,
-            query: query,
-          };
-        })
-        .catch((err: any) => {
-          throw {
-            error: err,
-            query: query,
-          };
-        });
-    });
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {

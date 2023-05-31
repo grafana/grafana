@@ -46,3 +46,22 @@ type Logs struct {
 	Message string
 	Ctx     []interface{}
 }
+
+var _ PrettyLogger = (*TestPrettyLogger)(nil)
+
+type TestPrettyLogger struct{}
+
+func NewTestPrettyLogger() *TestPrettyLogger {
+	return &TestPrettyLogger{}
+}
+
+func (f *TestPrettyLogger) Successf(_ string, _ ...interface{}) {}
+func (f *TestPrettyLogger) Failuref(_ string, _ ...interface{}) {}
+func (f *TestPrettyLogger) Info(_ ...interface{})               {}
+func (f *TestPrettyLogger) Infof(_ string, _ ...interface{})    {}
+func (f *TestPrettyLogger) Debug(_ ...interface{})              {}
+func (f *TestPrettyLogger) Debugf(_ string, _ ...interface{})   {}
+func (f *TestPrettyLogger) Warn(_ ...interface{})               {}
+func (f *TestPrettyLogger) Warnf(_ string, _ ...interface{})    {}
+func (f *TestPrettyLogger) Error(_ ...interface{})              {}
+func (f *TestPrettyLogger) Errorf(_ string, _ ...interface{})   {}

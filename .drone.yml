@@ -4467,7 +4467,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -4536,6 +4536,12 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -4614,7 +4620,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -7200,6 +7206,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: f6613d5eb9f3d8e308d4c4b55bd980027b1756d3834f0db99f77e6180cc042c6
+hmac: 358fac7d0ab0a53dffe606efc35b060132ca2270407d6b58e06bc9f3415c9e65
 
 ...
