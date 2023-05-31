@@ -23,7 +23,7 @@ Each policy consists of a set of label matchers (0 or more) that specify which l
 For more information on label matching, see [how label matching works]({{< relref "../annotation-label/labels-and-label-matchers.md" >}}).
 
 {{% admonition type="note" %}}
-If you haven't configured any label matchers for your notification policy, your notification policy will match _all_ alert instances. This may prevent child policies from being evaluated unless you have enabled **`continue matching siblings`** on the notification policy.
+If you haven't configured any label matchers for your notification policy, your notification policy will match _all_ alert instances. This may prevent child policies from being evaluated unless you have enabled **Continue matching siblings** on the notification policy.
 {{% /admonition %}}
 
 ## Routing
@@ -44,9 +44,11 @@ Lastly, if none of the notification policies are selected the default notificati
 
 ### Example
 
-Illustrated below is an example with a relatively simple notification policy tree and some alert instances.
+Here is an example of a relatively simple notification policy tree and some alert instances.
 
-Here's a breakdown of how these policies are selected;
+{{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Notification policy routing" >}}
+
+Here's a breakdown of how these policies are selected:
 
 **Pod stuck in CrashLoop** does not have a `severity` label, so none of its child policies are matched. It does have a `team=operations` label, so the first policy is matched.
 
@@ -55,10 +57,6 @@ The `team=security` policy is not evaluated since we already found a match and *
 **Disk Usage – 80%** has both a `team` and `severity` label, and matches a child policy of the operations team.
 
 **Unauthorized log entry** has a `team` label but does not match the first policy (`team=operations`) since the values are not the same, so it will continue searching and match the `team=security` policy. It does not have any child policies, so the additional `severity=high` label is ignored.
-
-<!--
-@TODO insert diagram
--->
 
 ## Inheritance
 
@@ -85,15 +83,13 @@ The example below shows how the notification policy tree from our previous examp
 
 In this way, we can avoid having to specify the same contact point multiple times for each child policy.
 
-<!--
-@TODO insert diagram
--->
+{{< figure src="/media/docs/alerting/notification-inheritance.png" max-width="750px" caption="Notification policy inheritance" >}}
 
 ## Additional configuration options
 
 ### Grouping
 
-Grouping is a key concept of Grafana Alerting that categorizes alert instances of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire simultaneously.
+Grouping is a key concept in Grafana Alerting that categorizes alert instances of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire simultaneously.
 
 Grouping options determine _which_ alert instances are bundled together.
 
