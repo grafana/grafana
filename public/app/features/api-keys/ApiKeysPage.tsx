@@ -52,13 +52,22 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 interface State {
   operationSummaryVisible: boolean;
-  operationSummaryData: object;
+  operationSummaryData: MigrationResult;
 }
 
 export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { operationSummaryVisible: false, operationSummaryData: {} };
+    this.state = {
+      operationSummaryVisible: false,
+      operationSummaryData: {
+        Total: 0,
+        Migrated: 0,
+        Failed: 0,
+        FailedApikeyIDs: [0],
+        FailedDetails: [],
+      },
+    };
   }
 
   componentDidMount() {
