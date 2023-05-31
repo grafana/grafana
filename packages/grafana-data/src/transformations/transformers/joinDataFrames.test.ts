@@ -275,10 +275,16 @@ describe('align frames', () => {
         { name: 'Value', type: FieldType.number, values: [1, 100] },
       ],
     });
-    expect(getFieldNames([series1])).toMatchInlineSnapshot(`
+    expect(getFieldDisplayNames([series1])).toMatchInlineSnapshot(`
       [
         "Time",
         "Muta",
+      ]
+    `);
+    expect(getFieldNames([series1])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Value",
       ]
     `);
 
@@ -289,19 +295,32 @@ describe('align frames', () => {
         { name: 'Value', type: FieldType.number, values: [150] },
       ],
     });
-    expect(getFieldNames([series2])).toMatchInlineSnapshot(`
+    expect(getFieldDisplayNames([series2])).toMatchInlineSnapshot(`
       [
         "Time",
         "Muta",
       ]
     `);
+    expect(getFieldNames([series2])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Value",
+      ]
+    `);
 
     const out = joinDataFrames({ frames: [series1, series2] })!;
-    expect(getFieldNames([out])).toMatchInlineSnapshot(`
+    expect(getFieldDisplayNames([out])).toMatchInlineSnapshot(`
       [
         "Time",
         "Muta 1",
         "Muta 2",
+      ]
+    `);
+    expect(getFieldNames([out])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta",
+        "Muta",
       ]
     `);
   });
@@ -398,6 +417,10 @@ describe('align frames', () => {
   });
 });
 
-function getFieldNames(data: DataFrame[]): string[] {
+function getFieldDisplayNames(data: DataFrame[]): string[] {
   return data.flatMap((frame) => frame.fields.map((f) => getFieldDisplayName(f, frame, data)));
+}
+
+function getFieldNames(data: DataFrame[]): string[] {
+  return data.flatMap((frame) => frame.fields.map((f) => f.name));
 }
