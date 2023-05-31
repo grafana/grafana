@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.bodySmall.fontSize};
     `,
     queryError: css`
-      color: ${theme.colors.error.main} !important;
+      color: ${theme.colors.error.text} !important;
       text-decoration: underline wavy;
     `,
   };
