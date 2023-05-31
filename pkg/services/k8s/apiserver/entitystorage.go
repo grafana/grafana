@@ -447,6 +447,12 @@ func (s *entityStorage) GuaranteedUpdate(
 					return statusErr
 				}
 			}
+
+			// Hard to debug when we keep trying errors!
+			if true {
+				return err // return the real error
+			}
+
 			if attempt == MaxUpdateAttempts {
 				return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
 			} else {
@@ -461,7 +467,7 @@ func (s *entityStorage) GuaranteedUpdate(
 
 		rsp, err := s.write(ctx, grn, uObj)
 		if err != nil {
-			return err
+			return err // continue???
 		}
 
 		if rsp.Status == entity.WriteEntityResponse_UNCHANGED {
@@ -478,6 +484,7 @@ func (s *entityStorage) GuaranteedUpdate(
 			Object: destination.DeepCopyObject(),
 			Type:   watch.Modified,
 		})
+		return nil
 	}
 	return nil
 }

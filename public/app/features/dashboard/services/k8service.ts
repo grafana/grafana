@@ -1,5 +1,3 @@
-import { lastValueFrom } from 'rxjs';
-
 import { getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,7 +17,12 @@ export interface Resource<T = any> {
   spec: T;
 }
 
-export class KindService<T = any> {
+
+// Annotation keys
+const annoKeyCommitMessage = "grafana.com/commitMessage"
+const annoKeyFolder = "grafana.com/folder"
+
+export class DashboardKindService {
   private url: string;
   namespace: string;
 
@@ -32,26 +35,26 @@ export class KindService<T = any> {
     this.url = `/k8s/apis/${this.groupVersion}/namespaces/${this.namespace}/${this.name}`;
   }
 
-  async get(name: string): Promise<Resource<T>> {
-    return getBackendSrv().get<Resource<T>>(this.url + '/' + name);
+  async get(name: string): Promise<Resource<Dashboard>> {
+    return getBackendSrv().get<Resource<Dashboard>>(this.url + '/' + name);
   }
 
-  async save(cmd: SaveDashboardCommand): Promise<Resource<T>> {
+  async save(cmd: SaveDashboardCommand): Promise<Resource<Dashboard>> {
     if (!cmd.dashboard.uid) {
       const res: Resource = {
         apiVersion: this.groupVersion,
         kind: this.kind,
         metadata: {
-          generateName: 'uid',
+          generateName: 'uid', // will create a uid on the server side
           namespace: this.namespace,
           annotations: {
-            'grafana.com/folder': cmd.folderUid ?? '',
-            'grafana.com/commitMessage': cmd.message ?? '',
+            [annoKeyFolder]: cmd.folderUid ?? '',
+            [annoKeyCommitMessage]: cmd.message ?? '',
           },
         },
         spec: cmd.dashboard,
       };
-      return getBackendSrv().post<Resource<T>>(this.url, res);
+      return getBackendSrv().post<Resource<Dashboard>>(this.url, res);
     }
 
     const old = await this.get(cmd.dashboard.uid);
@@ -59,28 +62,20 @@ export class KindService<T = any> {
       throw new Error('unable to find dashboard');
     }
 
-    // old.metadata.annotations['grafana.com/folder'] = cmd.folderUid ?? '';
-    // old.metadata.annotations['grafana.com/commitMessage'] = cmd.message ?? '';
+    if (cmd.folderUid) {
+        old.metadata.annotations[annoKeyFolder] = cmd.folderUid;
+    }
+    if (cmd.message) {
+        old.metadata.annotations[annoKeyCommitMessage] = cmd.message;
+    }
     old.spec = cmd.dashboard as any;
 
-    if (false) {
-      return lastValueFrom(
-        getBackendSrv().fetch<Resource<T>>({
-          url: this.url + '/' + cmd.dashboard.uid + '?fieldManager=grafana&fieldValidation=Ignore',
-          method: 'PATCH',
-          data: old,
-          headers: {
-            'content-type': 'application/merge-patch+json',
-          },
-        })
-      ).then((v) => {
-        console.log('k8s? patch?', v);
-        return v.data;
-      });
+    let url = this.url + '/' + cmd.dashboard.uid;
+    if (cmd.overwrite) {
+        url += '?force=true'; // ???
     }
-
-    return getBackendSrv().put<Resource<T>>(this.url + '/' + cmd.dashboard.uid, old);
+    return getBackendSrv().put<Resource<Dashboard>>(url, old);
   }
 }
 
-export const dashboardKindService = new KindService<Dashboard>();
+export const dashboardKindService = new DashboardKindService();
