@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncVirtualizedSelect } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -70,13 +71,15 @@ export function FolderPicker(props: Props) {
     initialFolderUid,
     initialTitle = '',
     permissionLevel = PermissionLevelString.Edit,
-    rootName = 'General',
+    rootName: rootNameProp,
     showRoot = true,
     skipInitialLoad,
     searchQueryType,
     customAdd,
     folderWarning,
   } = props;
+
+  const rootName = rootNameProp ?? config.featureToggles.nestedFolders ? 'Dashboards' : 'General';
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);

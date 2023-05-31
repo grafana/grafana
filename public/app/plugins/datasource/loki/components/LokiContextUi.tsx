@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse, Icon, Label, MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { LogContextProvider } from '../LogContextProvider';
+import { LogContextProvider, LOKI_LOG_CONTEXT_PRESERVED_LABELS, PreservedLabels } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
@@ -33,6 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex-direction: column;
       flex: 1;
       gap: ${theme.spacing(0.5)};
+      position: relative;
     `,
     textWrapper: css`
       display: flex;
@@ -41,17 +42,20 @@ function getStyles(theme: GrafanaTheme2) {
     hidden: css`
       visibility: hidden;
     `,
-    tag: css`
-      padding: ${theme.spacing(0.25)} ${theme.spacing(0.75)};
-    `,
     label: css`
       max-width: 100%;
-      margin: ${theme.spacing(2)} 0;
+      &:first-of-type {
+        margin-bottom: ${theme.spacing(2)};
+      }
+      &:not(:first-of-type) {
+        margin: ${theme.spacing(2)} 0;
+      }
     `,
-    query: css`
+    rawQueryContainer: css`
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
+      margin-right: ${theme.spacing(4)};
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -62,6 +66,12 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     queryDescription: css`
       margin-left: ${theme.spacing(0.5)};
+    `,
+    iconButton: css`
+      position: absolute;
+      top: ${theme.spacing(1)};
+      right: ${theme.spacing(1)};
+      z-index: ${theme.zIndex.navbarFixed};
     `,
   };
 }
@@ -81,6 +91,16 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
+
+  const isInitialQuery = useMemo(() => {
+    // Initial query has all regular labels enabled and all parsed labels disabled
+    if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
+      return false;
+    }
+
+    return true;
+  }, [contextFilters, initialized]);
+
   useEffect(() => {
     if (!initialized) {
       return;
@@ -105,6 +125,25 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setLoading(true);
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters.filter(({ enabled }) => enabled));
+      // We are storing the removed labels and selected extracted labels in local storage so we can
+      // preselect the labels in the UI in the next log context view.
+      const preservedLabels: PreservedLabels = {
+        removedLabels: [],
+        selectedExtractedLabels: [],
+      };
+
+      contextFilters.forEach(({ enabled, fromParser, label }) => {
+        // We only want to store real labels that were removed from the initial query
+        if (!enabled && !fromParser) {
+          preservedLabels.removedLabels.push(label);
+        }
+        // Or extracted labels that were added to the initial query
+        if (enabled && fromParser) {
+          preservedLabels.selectedExtractedLabels.push(label);
+        }
+      });
+
+      store.set(LOKI_LOG_CONTEXT_PRESERVED_LABELS, JSON.stringify(preservedLabels));
       setLoading(false);
     }, 1500);
 
@@ -123,8 +162,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const contextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels);
-    setContextFilters(contextFilters);
+    const initContextFilters = await logContextProvider.getInitContextFilters(row.labels, origQuery);
+    setContextFilters(initContextFilters);
+
     setInitialized(true);
     setLoading(false);
   });
@@ -161,6 +201,31 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
+      <Tooltip content={'Revert to initial log context query.'}>
+        <div className={styles.iconButton}>
+          <Button
+            data-testid="revert-button"
+            icon="history-alt"
+            variant="secondary"
+            disabled={isInitialQuery}
+            onClick={(e) => {
+              reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
+                logRowUid: row.uid,
+              });
+              setContextFilters((contextFilters) => {
+                return contextFilters.map((contextFilter) => ({
+                  ...contextFilter,
+                  // For revert to initial query we need to enable all labels and disable all parsed labels
+                  enabled: !contextFilter.fromParser,
+                }));
+              });
+              // We are removing the preserved labels from local storage so we can preselect the labels in the UI
+              store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+            }}
+          />
+        </div>
+      </Tooltip>
+
       <Collapse
         collapsible={true}
         isOpen={isOpen}
@@ -173,31 +238,29 @@ export function LokiContextUi(props: LokiContextUiProps) {
           });
         }}
         label={
-          <div className={styles.query}>
-            <RawQuery
-              lang={{ grammar: lokiGrammar, name: 'loki' }}
-              query={logContextProvider.processContextFiltersToExpr(
-                row,
-                contextFilters.filter(({ enabled }) => enabled),
-                origQuery
-              )}
-              className={styles.rawQuery}
-            />
-            <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
-              <Icon name="info-circle" size="sm" className={styles.queryDescription} />
-            </Tooltip>
+          <div className={styles.rawQueryContainer}>
+            {initialized ? (
+              <>
+                <RawQuery
+                  lang={{ grammar: lokiGrammar, name: 'loki' }}
+                  query={logContextProvider.processContextFiltersToExpr(
+                    row,
+                    contextFilters.filter(({ enabled }) => enabled),
+                    origQuery
+                  )}
+                  className={styles.rawQuery}
+                />
+                <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
+                  <Icon name="info-circle" size="sm" className={styles.queryDescription} />
+                </Tooltip>
+              </>
+            ) : (
+              <Spinner />
+            )}
           </div>
         }
       >
         <div className={styles.ui}>
-          <Tooltip
-            content={
-              'This feature is experimental and may change in the future. Currently it supports using a parser and extracted labels for queries with no more than 1 parser (for example, logfmt, json). Please report any issues in the grafana GitHub repository.'
-            }
-            placement="top"
-          >
-            <Tag className={styles.tag} name={'Experimental feature'} colorIndex={1} />
-          </Tooltip>{' '}
           <Label
             className={styles.label}
             description="The initial log context query is created from all labels defining the stream for the selected log line. You can broaden your search by removing one or more of the label filters."

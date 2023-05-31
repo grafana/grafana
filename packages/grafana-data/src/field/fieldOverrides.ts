@@ -378,6 +378,9 @@ export const getLinksSupplier =
         __dataContext: dataContext,
       };
 
+      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) =>
+        replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
         dataContext.value.rowIndex = config.valueRowIndex;
@@ -394,7 +397,7 @@ export const getLinksSupplier =
             link.onClick!({
               origin: origin ?? field,
               e: evt,
-              replaceVariables: (v) => replaceVariables(v, dataLinkScopedVars),
+              replaceVariables: boundReplaceVariables,
             });
           },
           origin: field,
@@ -415,13 +418,13 @@ export const getLinksSupplier =
       let href = link.onBuildUrl
         ? link.onBuildUrl({
             origin: field,
-            replaceVariables,
+            replaceVariables: boundReplaceVariables,
           })
         : link.url;
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.PercentEncode);
+        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
         href = locationUtil.processUrl(href);
       }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -49,14 +48,14 @@ type MultiOrgAlertmanager struct {
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
-	decryptFn receivers.GetDecryptedValueFn
+	decryptFn alertingNotify.GetDecryptedValueFn
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
 }
 
 func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn receivers.GetDecryptedValueFn,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn alertingNotify.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -121,6 +120,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			cluster.DefaultProbeInterval,
 			nil,
 			true,
+			cfg.UnifiedAlerting.HALabel,
 		)
 
 		if err != nil {
@@ -129,7 +129,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 
 		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
 		if err != nil {
-			moa.logger.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
+			moa.logger.Error("msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
 		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
 		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
@@ -143,7 +143,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 }
 
 func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
-	moa.logger.Info("starting MultiOrg Alertmanager")
+	moa.logger.Info("Starting MultiOrg Alertmanager")
 
 	for {
 		select {

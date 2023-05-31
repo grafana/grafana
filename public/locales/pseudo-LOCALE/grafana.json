@@ -439,8 +439,8 @@
       "type-header": "Ŧypę"
     },
     "search-input": {
-      "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ päŉęľş",
-      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
+      "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş, ƒőľđęřş, äŉđ päŉęľş",
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
     }
   },
   "share-modal": {

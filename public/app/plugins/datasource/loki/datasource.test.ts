@@ -932,8 +932,7 @@ describe('LokiDatasource', () => {
           )
         ).toEqual({
           expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
-          instant: false,
-          queryType: 'range',
+          queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
         });
@@ -997,7 +996,7 @@ describe('LokiDatasource', () => {
           )
         ).toEqual({
           expr: '{label=value}',
-          queryType: 'instant',
+          queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
           maxLines: 20,
         });
@@ -1015,7 +1014,7 @@ describe('LokiDatasource', () => {
           )
         ).toEqual({
           expr: '{label=value}',
-          queryType: 'instant',
+          queryType: LokiQueryType.Range,
           refId: 'log-sample-A',
           maxLines: 5,
         });

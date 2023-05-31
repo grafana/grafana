@@ -46,6 +46,7 @@ type FrontendSettingsLicenseInfoDTO struct {
 type FrontendSettingsAzureDTO struct {
 	Cloud                  string `json:"cloud"`
 	ManagedIdentityEnabled bool   `json:"managedIdentityEnabled"`
+	UserIdentityEnabled    bool   `json:"userIdentityEnabled"`
 }
 
 type FrontendSettingsCachingDTO struct {
@@ -63,6 +64,7 @@ type FrontendSettingsReportingDTO struct {
 type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval              string `json:"minInterval"`
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only
@@ -110,6 +112,12 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
+}
+
+type FrontendSettingsSqlConnectionLimitsDTO struct {
+	MaxOpenConns    int `json:"maxOpenConns"`
+	MaxIdleConns    int `json:"maxIdleConns"`
+	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
 type FrontendSettingsDTO struct {
@@ -164,6 +172,8 @@ type FrontendSettingsDTO struct {
 	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool   `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool   `json:"cspReportOnlyEnabled"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
@@ -177,7 +187,6 @@ type FrontendSettingsDTO struct {
 	RendererVersion                  string                         `json:"rendererVersion"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
-	Sentry                           setting.Sentry                 `json:"sentry"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
 	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
@@ -212,6 +221,8 @@ type FrontendSettingsDTO struct {
 	LoginError string `json:"loginError,omitempty"`
 
 	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitempty"`
+
+	SqlConnectionLimits FrontendSettingsSqlConnectionLimitsDTO `json:"sqlConnectionLimits"`
 
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`

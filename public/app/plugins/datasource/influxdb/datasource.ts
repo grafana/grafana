@@ -169,7 +169,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async getRetentionPolicies(): Promise<string[]> {
-    if (this.retentionPolicies.length) {
+    // Only For InfluxQL Mode
+    if (this.isFlux || this.retentionPolicies.length) {
       return Promise.resolve(this.retentionPolicies);
     } else {
       return getAllPolicies(this).catch((err) => {
@@ -198,10 +199,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         this.retentionPolicies = allPolicies;
         const policyFixedRequests = {
           ...request,
-          targets: request.targets.map((t) => ({
-            ...t,
-            policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
-          })),
+          targets: request.targets.map((t) => {
+            t.policy = t.policy ? this.templateSrv.replace(t.policy, {}, 'regex') : '';
+            return {
+              ...t,
+              policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
+            };
+          }),
         };
         return this._query(policyFixedRequests);
       })

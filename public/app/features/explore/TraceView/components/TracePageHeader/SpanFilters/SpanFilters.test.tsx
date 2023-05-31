@@ -43,10 +43,11 @@ describe('SpanFilters', () => {
       trace: trace,
       showSpanFilters: true,
       setShowSpanFilters: jest.fn(),
-      search: search,
-      setSearch: setSearch,
+      showSpanFilterMatchesOnly: false,
+      setShowSpanFilterMatchesOnly: jest.fn(),
+      search,
+      setSearch,
       spanFilterMatches: undefined,
-      focusedSpanIdForSearch: '',
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: 'tempo',
     };
@@ -151,6 +152,23 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagValue, 'TagValue0');
   });
 
+  it('should order tag filters', async () => {
+    render(<SpanFiltersWithProps />);
+    const tagKey = screen.getByLabelText('Select tag key');
+
+    await user.click(tagKey);
+    jest.advanceTimersByTime(1000);
+    await waitFor(() => {
+      const container = screen.getByText('TagKey0').parentElement?.parentElement?.parentElement;
+      expect(container?.childNodes[0].textContent).toBe('ProcessKey0');
+      expect(container?.childNodes[1].textContent).toBe('ProcessKey1');
+      expect(container?.childNodes[2].textContent).toBe('TagKey0');
+      expect(container?.childNodes[3].textContent).toBe('TagKey1');
+      expect(container?.childNodes[4].textContent).toBe('LogKey0');
+      expect(container?.childNodes[5].textContent).toBe('LogKey1');
+    });
+  });
+
   it('should allow adding/removing tags', async () => {
     render(<SpanFiltersWithProps />);
     expect(screen.getAllByLabelText('Select tag key').length).toBe(1);
@@ -165,9 +183,9 @@ describe('SpanFilters', () => {
 
   it('should allow resetting filters', async () => {
     render(<SpanFiltersWithProps />);
-    const resetFiltersButton = screen.getByRole('button', { name: 'Reset filters button' });
-    expect(resetFiltersButton).toBeInTheDocument();
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
+    expect(clearFiltersButton).toBeInTheDocument();
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
 
     const serviceValue = screen.getByLabelText('Select service name');
     const spanValue = screen.getByLabelText('Select span name');
@@ -178,8 +196,8 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
 
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
-    await user.click(resetFiltersButton);
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
+    await user.click(clearFiltersButton);
     expect(screen.queryByText('Service0')).not.toBeInTheDocument();
     expect(screen.queryByText('Span0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();

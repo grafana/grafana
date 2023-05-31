@@ -1,33 +1,29 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
-import { SearchLayout } from 'app/features/search/types';
+import { getGrafanaSearcher } from 'app/features/search/service';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
 export function BrowseFilters() {
-  const fakeState = useMemo(() => {
-    return {
-      query: '',
-      tag: [],
-      starred: false,
-      layout: SearchLayout.Folders,
-      eventTrackingNamespace: 'manage_dashboards' as const,
-    };
-  }, []);
+  const [searchState, stateManager] = useSearchStateManager();
 
   return (
     <div>
       <ActionRow
-        includePanels={false}
-        state={fakeState}
-        getTagOptions={() => Promise.resolve([])}
-        getSortOptions={() => Promise.resolve([])}
-        onLayoutChange={() => {}}
-        onSortChange={() => {}}
-        onStarredFilterChange={() => {}}
-        onTagFilterChange={() => {}}
-        onDatasourceChange={() => {}}
-        onPanelTypeChange={() => {}}
-        onSetIncludePanels={() => {}}
+        hideLayout
+        showStarredFilter
+        state={searchState}
+        getTagOptions={stateManager.getTagOptions}
+        getSortOptions={getGrafanaSearcher().getSortOptions}
+        sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
+        includePanels={searchState.includePanels ?? false}
+        onLayoutChange={stateManager.onLayoutChange}
+        onStarredFilterChange={stateManager.onStarredFilterChange}
+        onSortChange={stateManager.onSortChange}
+        onTagFilterChange={stateManager.onTagFilterChange}
+        onDatasourceChange={stateManager.onDatasourceChange}
+        onPanelTypeChange={stateManager.onPanelTypeChange}
+        onSetIncludePanels={stateManager.onSetIncludePanels}
       />
     </div>
   );

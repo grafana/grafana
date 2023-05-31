@@ -8,7 +8,7 @@ import { PreferencesService } from '../services/PreferencesService';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
-import { fromDTO, toDTO } from './remoteStorageConverter';
+import { fromDTO } from './remoteStorageConverter';
 
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
@@ -17,18 +17,6 @@ export type RichHistoryRemoteStorageDTO = {
   starred: boolean;
   comment: string;
   queries: DataQuery[];
-};
-
-type RichHistoryRemoteStorageMigrationDTO = {
-  datasourceUid: string;
-  queries: DataQuery[];
-  createdAt: number;
-  starred: boolean;
-  comment: string;
-};
-
-type RichHistoryRemoteStorageMigrationPayloadDTO = {
-  queries: RichHistoryRemoteStorageMigrationDTO[];
 };
 
 type RichHistoryRemoteStorageResultsPayloadDTO = {
@@ -121,21 +109,6 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
       dto = await getBackendSrv().delete(`/api/query-history/star/${id}`);
     }
     return fromDTO(dto.result);
-  }
-
-  /**
-   * @internal Used only for migration purposes. Will be removed in future.
-   */
-  async migrate(richHistory: RichHistoryQuery[]) {
-    const data: RichHistoryRemoteStorageMigrationPayloadDTO = { queries: richHistory.map(toDTO) };
-    await lastValueFrom(
-      getBackendSrv().fetch({
-        url: '/api/query-history/migrate',
-        method: 'POST',
-        data,
-        showSuccessAlert: false,
-      })
-    );
   }
 }
 

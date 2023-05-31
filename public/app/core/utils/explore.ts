@@ -195,7 +195,7 @@ export const safeParseJson = (text?: string): any | undefined => {
   }
 };
 
-export const safeStringifyValue = (value: any, space?: number) => {
+export const safeStringifyValue = (value: unknown, space?: number) => {
   if (value === undefined || value === null) {
     return '';
   }
@@ -275,7 +275,7 @@ export async function generateEmptyQuery(
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
   }
 
-  return { refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef, ...defaultQuery };
+  return { ...defaultQuery, refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
@@ -469,8 +469,8 @@ export const getTimeRangeFromUrl = (
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone as any)!,
-    to: dateMath.parse(raw.to, true, timeZone as any)!,
+    from: dateMath.parse(raw.from, false, timeZone)!,
+    to: dateMath.parse(raw.to, true, timeZone)!,
     raw,
   };
 };
