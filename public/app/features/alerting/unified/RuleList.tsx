@@ -24,6 +24,7 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
+import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
 
@@ -87,6 +88,8 @@ const RuleList = withErrorBoundary(
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
 
+    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
+
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
@@ -110,9 +113,11 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
-              <Stack direction="row" gap={0.5}>
-                <MoreActionsRuleButtons />
-              </Stack>
+              {(canCreateGrafanaRules || canCreateCloudRules || canReadProvisioning) && (
+                <Stack direction="row" gap={0.5}>
+                  <MoreActionsRuleButtons />
+                </Stack>
+              )}
             </div>
           </>
         )}
