@@ -44,29 +44,33 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     return (
       <label className={cx(styles.wrapper, className)}>
         <div className={styles.checkboxWrapper}>
-          <input
-            type="checkbox"
-            className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
-            checked={value}
-            disabled={disabled}
-            onChange={handleOnChange}
-            value={htmlValue}
-            aria-checked={ariaChecked}
-            {...inputProps}
-            ref={ref}
-          />
-          <span className={styles.checkmark} />
-        </div>
-        <div>
+          <div>
+            <input
+              type="checkbox"
+              className={cx(styles.input, indeterminate && styles.inputIndeterminate)}
+              checked={value}
+              disabled={disabled}
+              onChange={handleOnChange}
+              value={htmlValue}
+              aria-checked={ariaChecked}
+              {...inputProps}
+              ref={ref}
+            />
+            <span className={styles.checkmark} />
+          </div>
           {label && <span className={styles.label}>{label}</span>}
-          {description && <span className={styles.description}>{description}</span>}
         </div>
+        {description && (
+          <div>
+            <span className={styles.description}>{description}</span>
+          </div>
+        )}
       </label>
     );
   }
 );
 
-export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
+export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false, description = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
@@ -78,10 +82,14 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   return {
     wrapper: css`
       display: inline-flex;
-      align-items: center;
-      column-gap: ${theme.spacing(labelPadding)};
-      position: relative;
-      vertical-align: middle;
+      align-items: flex-start;
+      flex-direction: column;
+      & div:nth-child(1) {
+        column-gap: ${theme.spacing(labelPadding)};
+        display: inline-flex;
+        align-items: ${!description ? `center` : undefined};
+        position: relative;
+      }
     `,
     input: css`
       position: absolute;
@@ -210,6 +218,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       labelStyles.description,
       css`
         line-height: ${theme.typography.bodySmall.lineHeight};
+        margin-left: ${theme.spacing(checkboxSize + labelPadding)};
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),
