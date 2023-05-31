@@ -309,7 +309,7 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	data := [][]string{}
 
 	for _, flag := range standardFeatureFlags {
-		if include(flag) {
+		if include(flag) && !flag.HideFromDocs {
 			row := []string{"`" + flag.Name + "`", flag.Description}
 			if showEnableByDefault {
 				on := ""
