@@ -107,7 +107,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flex: 1,
       minWidth: '200px',
-      maxWidth: '75%',
     }),
     textWrapper: css({
       alignItems: 'center',
