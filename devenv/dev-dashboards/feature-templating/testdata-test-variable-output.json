@@ -82,7 +82,7 @@
       "id": 2,
       "options": {
         "mode": "markdown",
-        "content": "VariableUnderTestValue: ${VariableUnderTest:value}"
+        "content": "VariableUnderTestRaw: ${VariableUnderTest:raw}"
       },
       "pluginVersion": "8.4.0-pre",
       "title": "Panel Title",
