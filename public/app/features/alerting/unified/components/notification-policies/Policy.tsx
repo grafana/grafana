@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy } from 'lodash';
+import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy, isArray } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode, useMemo } from 'react';
 import { useEnabled } from 'react-enable';
@@ -79,7 +79,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;
-  const groupBy = currentRoute.group_by ?? [];
+  const groupBy = currentRoute.group_by;
   const muteTimings = currentRoute.mute_time_intervals ?? [];
   const timingOptions: TimingOptions = {
     group_wait: currentRoute.group_wait,
@@ -108,7 +108,12 @@ const Policy: FC<PolicyComponentProps> = ({
   });
 
   const childPolicies = currentRoute.routes ?? [];
-  const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
+  const inheritedGrouping = inheritedProperties?.group_by !== undefined;
+  const noGrouping = isArray(groupBy) && groupBy[0] === '...';
+
+  const singleGroup = !noGrouping && isArray(groupBy) && groupBy.length === 0;
+  const customGrouping = !noGrouping && isArray(groupBy) && groupBy.length > 0;
+
   const hasInheritedProperties = inheritedProperties && Object.keys(inheritedProperties).length > 0;
 
   const isEditable = canEditRoutes;
@@ -218,17 +223,27 @@ const Policy: FC<PolicyComponentProps> = ({
                   />
                 </MetaText>
               )}
-              {isGrouping && (
-                <MetaText icon="layer-group" data-testid="grouping">
-                  <span>Grouped by</span>
-                  <Strong>{groupBy.join(', ')}</Strong>
-                </MetaText>
-              )}
-              {/* we only want to show "no grouping" on the root policy, children with empty groupBy will inherit from the parent policy */}
-              {!isGrouping && isDefaultPolicy && (
-                <MetaText icon="layer-group">
-                  <span>Not grouping</span>
-                </MetaText>
+              {!inheritedGrouping && (
+                <>
+                  {customGrouping && (
+                    <MetaText icon="layer-group" data-testid="grouping">
+                      <span>Grouped by</span>
+                      <Strong>{groupBy.join(', ')}</Strong>
+                    </MetaText>
+                  )}
+                  {singleGroup && (
+                    <MetaText icon="layer-group" data-testid="grouping">
+                      <span>Grouped by</span>
+                      <Strong>Single group</Strong>
+                    </MetaText>
+                  )}
+                  {/* we only want to show "no grouping" on the root policy, children with empty groupBy will inherit from the parent policy */}
+                  {noGrouping && (
+                    <MetaText icon="layer-group">
+                      <span>Not grouping</span>
+                    </MetaText>
+                  )}
+                </>
               )}
               {hasMuteTimings && (
                 <MetaText icon="calendar-slash" data-testid="mute-timings">
@@ -273,6 +288,10 @@ const Policy: FC<PolicyComponentProps> = ({
                 if (value !== undefined && route[key] === undefined) {
                   // @ts-ignore
                   acc[key] = value;
+                  // @ts-ignore
+                } else if (value !== undefined && isArray(acc[key]) && isArray(value)) {
+                  // @ts-ignore
+                  acc[key] = acc[key].concat(value);
                 }
 
                 return acc;

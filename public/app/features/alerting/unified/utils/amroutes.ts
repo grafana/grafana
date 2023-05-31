@@ -183,7 +183,7 @@ export const formAmRouteToAmRoute = (
     receiver,
   } = formAmRoute;
 
-  const group_by = overrideGrouping && groupBy ? groupBy : [];
+  const group_by = overrideGrouping ? (groupBy ? groupBy : []) : undefined;
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
   const group_wait = overrideGroupWait ? groupWaitValue : undefined;
