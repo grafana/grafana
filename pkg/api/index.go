@@ -135,14 +135,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 
-	if !hs.AccessControl.IsDisabled() {
-		userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
-		if err != nil {
-			return nil, err
-		}
-
-		data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
+	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
+	if err != nil {
+		return nil, err
 	}
+
+	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
 	if setting.DisableGravatar {
 		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
