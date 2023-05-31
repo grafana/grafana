@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { getPluginSettings } from '../pluginSettings';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
-import { getSandboxMockBody, isDomElement } from './document_sandbox';
+import { getSandboxMockBody, isDomElement, markDomElementAsALiveTarget, SANDBOX_LIVE_VALUE } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 
 type CompartmentDependencyModule = unknown;
@@ -36,6 +36,10 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
 
   function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
     if (isDomElement(originalValue)) {
+      // if (originalValue instanceof HTMLElement) {
+      //   Reflect.defineProperty(originalValue.style, SANDBOX_LIVE_VALUE, {});
+      // }
+      markDomElementAsALiveTarget(originalValue, SANDBOX_LIVE_VALUE);
       switch (originalValue.nodeName.toLowerCase()) {
         case 'body':
           return getSandboxMockBody();
@@ -59,6 +63,10 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
+      liveTargetCallback(target) {
+        // @ts-ignore - our types are wrong
+        return Object.hasOwn(target, SANDBOX_LIVE_VALUE);
+      },
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
         // Plugins builds use the AMD module system. Their code consists

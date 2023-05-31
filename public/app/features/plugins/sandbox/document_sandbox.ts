@@ -10,6 +10,8 @@ export function getSandboxDocument(pluginId: string): Document {
   return newDoc;
 }
 
+export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
+
 export function fabricateMockElement(nodeName: string, sandboxDocument: Document): Element {
   switch (nodeName.toLowerCase()) {
     case 'body':
@@ -35,8 +37,32 @@ export function isDomElement(obj: unknown): obj is Element {
   return false;
 }
 
+/**
+ * Mark an element as a live target inside the sandbox
+ * A "live target" is an object which attributes can be observed
+ * and modified directly inside the sandbox
+ *
+ * This is necessary for some specific cases such as modifying the style atribute of an element
+ */
+export function markDomElementAsALiveTarget(el: Element, mark: symbol) {
+  if (
+    el instanceof HTMLElement &&
+    // isDomElementInsideSandbox(el) &&
+    //@ts-ignore
+    !Object.hasOwn(el.style, mark)
+  ) {
+    Reflect.defineProperty(el.style, mark, {});
+  }
+}
+
+/*
+ * An element is considered to be inside the sandbox if:
+ * - is not part of the document
+ * - is inside a div[data-plugin-sandbox]
+ *
+ */
 export function isDomElementInsideSandbox(el: Element): boolean {
-  return el.closest(`[data-plugin-sandbox]`) !== null;
+  return document.contains(el) && el.closest(`[data-plugin-sandbox]`) !== null;
 }
 
 let sandboxBody: HTMLDivElement;
@@ -45,16 +71,13 @@ export function getSandboxMockBody(): Element {
   if (!sandboxBody) {
     sandboxBody = document.createElement('div');
     sandboxBody.setAttribute('id', 'grafana-plugin-sandbox-body');
-    sandboxBody.dataset.sandbox = 'sandboxed-plugin';
+    sandboxBody.dataset.pluginSandbox = 'sandboxed-plugin';
 
     sandboxBody.style.width = '100%';
     sandboxBody.style.height = '0%';
     sandboxBody.style.overflow = 'hidden';
-    // sandboxBody.style.position = 'absolute';
     sandboxBody.style.top = '0';
     sandboxBody.style.left = '0';
-    // todo re-evalute this
-    // sandboxBody.style.zIndex = '9999';
     document.body.appendChild(sandboxBody);
   }
   return sandboxBody;

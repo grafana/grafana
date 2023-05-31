@@ -65,6 +65,7 @@ export function getGeneralSandboxDistortionMap() {
     distortInnerHTML(generalDistortionMap);
     distortCreateElement(generalDistortionMap);
     distortWorkers(generalDistortionMap);
+    distortOwnerDocument(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -248,5 +249,16 @@ function distortWorkers(distortions: DistortionMap) {
   }
   if (descriptor?.value) {
     distortions.set(descriptor.value, getPostMessageDistortion);
+  }
+}
+
+function distortOwnerDocument(distortions: DistortionMap) {
+  const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'defaultView');
+  if (descriptor?.get) {
+    distortions.set(descriptor.get, () => {
+      return () => {
+        return window;
+      };
+    });
   }
 }
