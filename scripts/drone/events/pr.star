@@ -137,11 +137,13 @@ def pr_pipelines():
         ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
-        integration_benchmarks(get_pr_trigger(
+        integration_benchmarks(
+            get_pr_trigger(
                 include_paths = [
                     "pkg/**",
                 ],
-            ), prefix = ver_mode,
+            ),
+            prefix = ver_mode,
         ),
     ]
 
