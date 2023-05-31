@@ -91,7 +91,7 @@ export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOpt
         />
       }
     >
-      <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+      <SpanBarSettings options={options} onOptionsChange={onOptionsChange} />
     </ConfigSubSection>
   );
 };
