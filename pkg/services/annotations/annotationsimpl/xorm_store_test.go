@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -679,7 +680,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		dashStore, err := dashboardstore.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
 		require.NoError(t, err)
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db, localcache.ProvideService()), db, features)
 
 		var maximumTagsLength int64 = 60
 		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: features}

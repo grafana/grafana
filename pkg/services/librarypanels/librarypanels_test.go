@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
@@ -700,7 +701,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashPermissionService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -725,7 +726,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore, localcache.ProvideService())
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 
 	t.Logf("Creating folder with title and UID %q", title)
@@ -793,7 +794,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		dashStore := &dashboards.FakeDashboardStore{}
 		dashStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil)
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
 		dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 		dashPermissionService := acmock.NewMockedPermissionsService()
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(

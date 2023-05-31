@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -327,7 +328,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	}
 	db := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
-	folderStore := ProvideDashboardFolderStore(db)
+	folderStore := ProvideDashboardFolderStore(db, localcache.ProvideService())
 
 	cfg := setting.NewCfg()
 

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -291,7 +292,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
@@ -315,7 +316,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 
-	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore, localcache.ProvideService())
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &sc.user)
@@ -375,7 +376,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	features := featuremgmt.WithFeatures()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		sqlStore.Cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
@@ -433,7 +434,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			sqlStore.Cfg, dashboardStore, folderStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,

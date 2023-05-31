@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -274,7 +275,7 @@ func createFolder(t *testing.T, store *DBstore, namespace, title string, orgID i
 func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
 	_, dashboardStore := SetupDashboardService(t, sqlStore, folderStore, cfg)
 
 	return SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)

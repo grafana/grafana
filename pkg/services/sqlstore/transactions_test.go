@@ -9,6 +9,153 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIntegrationWithTransactionalDbSessionCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	store := InitTestDB(t)
+
+	err := store.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		_, err := sess.Exec("CREATE TABLE IF NOT EXISTS test_with_tx_commit (id INTEGER PRIMARY KEY, name TEXT)")
+		require.NoError(t, err)
+
+		_, err = sess.Exec("INSERT INTO test_with_tx_commit (name) VALUES (?)", "test")
+		require.NoError(t, err)
+
+		var name string
+		_, err = sess.SQL("SELECT name FROM test_with_tx_commit WHERE id = ?", 1).Get(&name)
+		require.NoError(t, err)
+		assert.Equal(t, "test", name)
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	store.WithDbSession(context.Background(), func(sess *DBSession) error {
+		var name string
+		_, err = sess.SQL("SELECT name FROM test_with_tx_commit WHERE id = ?", 1).Get(&name)
+		require.NoError(t, err)
+		assert.Equal(t, "test", name)
+
+		return nil
+	})
+}
+
+func TestIntegrationWithTransactionalDbSessionRollback(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	store := InitTestDB(t)
+
+	err := store.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		_, err := sess.Exec("CREATE TABLE IF NOT EXISTS test_with_tx_rollback (id INTEGER PRIMARY KEY, name TEXT)")
+		require.NoError(t, err)
+
+		_, err = sess.Exec("INSERT INTO test_with_tx_rollback (name) VALUES (?)", "test")
+		require.NoError(t, err)
+
+		var name string
+		_, err = sess.SQL("SELECT name FROM test_with_tx_rollback WHERE id = ?", 1).Get(&name)
+		require.NoError(t, err)
+		assert.Equal(t, "test", name)
+
+		return errors.New("rollback")
+	})
+	require.Error(t, err)
+
+	store.WithDbSession(context.Background(), func(sess *DBSession) error {
+		var name string
+		_, err = sess.SQL("SELECT name FROM test_with_tx_rollback WHERE id = ?", 1).Get(&name)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "test_with_tx_rollback")
+		return nil
+	})
+}
+
+func TestIntegrationInTransactionCommit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	store := InitTestDB(t)
+
+	err := store.InTransaction(context.Background(), func(ctx context.Context) error {
+		store.WithDbSession(ctx, func(sess *DBSession) error {
+			_, err := sess.Exec("CREATE TABLE IF NOT EXISTS test_in_tx_commit (id INTEGER PRIMARY KEY, name TEXT)")
+			require.NoError(t, err)
+			return nil
+		})
+
+		store.WithDbSession(ctx, func(sess *DBSession) error {
+			_, err := sess.Exec("INSERT INTO test_in_tx_commit (name) VALUES (?)", "test")
+			require.NoError(t, err)
+			return nil
+		})
+
+		store.WithDbSession(ctx, func(sess *DBSession) error {
+			var name string
+			_, err := sess.SQL("SELECT name FROM test_in_tx_commit WHERE id = ?", 1).Get(&name)
+			require.NoError(t, err)
+			assert.Equal(t, "test", name)
+			return nil
+		})
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	store.WithDbSession(context.Background(), func(sess *DBSession) error {
+		var name string
+		_, err = sess.SQL("SELECT name FROM test_in_tx_commit WHERE id = ?", 1).Get(&name)
+		require.NoError(t, err)
+		assert.Equal(t, "test", name)
+		return nil
+	})
+}
+
+func TestIntegrationInTransactionRollback(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	store := InitTestDB(t)
+
+	err := store.InTransaction(context.Background(), func(ctx context.Context) error {
+		store.WithDbSession(ctx, func(sess *DBSession) error {
+			_, err := sess.Exec("CREATE TABLE IF NOT EXISTS test_in_tx_rollback (id INTEGER PRIMARY KEY, name TEXT)")
+			require.NoError(t, err)
+			return nil
+		})
+
+		store.WithDbSession(ctx, func(sess *DBSession) error {
+			_, err := sess.Exec("INSERT INTO test_in_tx_rollback (name) VALUES (?)", "test")
+			require.NoError(t, err)
+			return nil
+		})
+
+		store.WithDbSession(ctx, func(sess *DBSession) error {
+			var name string
+			_, err := sess.SQL("SELECT name FROM test_in_tx_rollback WHERE id = ?", 1).Get(&name)
+			require.NoError(t, err)
+			assert.Equal(t, "test", name)
+			return nil
+		})
+
+		return errors.New("rollback")
+	})
+	require.Error(t, err)
+
+	store.WithDbSession(context.Background(), func(sess *DBSession) error {
+		var name string
+		_, err = sess.SQL("SELECT name FROM test_in_tx_rollback WHERE id = ?", 1).Get(&name)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "test_in_tx_rollback")
+		return nil
+	})
+}
+
 func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
