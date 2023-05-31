@@ -1,5 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
+import { getFieldDisplayName } from '../../field';
+import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 import { calculateFieldTransformer } from './calculateField';
@@ -266,6 +267,45 @@ describe('align frames', () => {
     `);
   });
 
+  it('maintains naming convention after join', () => {
+    const series1 = toDataFrame({
+      name: 'Muta',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'Value', type: FieldType.number, values: [1, 100] },
+      ],
+    });
+    expect(getFieldNames([series1])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta",
+      ]
+    `);
+
+    const series2 = toDataFrame({
+      name: 'Muta',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Value', type: FieldType.number, values: [150] },
+      ],
+    });
+    expect(getFieldNames([series2])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta",
+      ]
+    `);
+
+    const out = joinDataFrames({ frames: [series1, series2] })!;
+    expect(getFieldNames([out])).toMatchInlineSnapshot(`
+      [
+        "Time",
+        "Muta 1",
+        "Muta 2",
+      ]
+    `);
+  });
+
   it('supports duplicate times', () => {
     //----------
     // NOTE!!!
@@ -357,3 +397,7 @@ describe('align frames', () => {
     });
   });
 });
+
+function getFieldNames(data: DataFrame[]): string[] {
+  return data.flatMap((frame) => frame.fields.map((f) => getFieldDisplayName(f, frame, data)));
+}

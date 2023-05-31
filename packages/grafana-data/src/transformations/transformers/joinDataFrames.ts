@@ -203,6 +203,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         };
       }
     }
+
     if (!join) {
       continue; // skip the frame
     }
