@@ -2,12 +2,6 @@
 aliases:
   - ../../auth/
   - ../../auth/overview/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 labels:

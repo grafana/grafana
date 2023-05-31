@@ -63,16 +63,16 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         url: `${folder.url}/permissions`,
       });
     }
-  }
 
-  if (folder.canSave) {
-    model.children!.push({
-      active: false,
-      icon: 'cog',
-      id: getSettingsTabID(folder.uid),
-      text: 'Settings',
-      url: `${folder.url}/settings`,
-    });
+    if (folder.canSave) {
+      model.children!.push({
+        active: false,
+        icon: 'cog',
+        id: getSettingsTabID(folder.uid),
+        text: 'Settings',
+        url: `${folder.url}/settings`,
+      });
+    }
   }
 
   return model;

@@ -364,6 +364,16 @@ def lint_backend_step():
         ],
     }
 
+def validate_modfile_step():
+    return {
+        "name": "validate-modfile",
+        "image": go_image,
+        "failure": "ignore",
+        "commands": [
+            "go run scripts/modowners/modowners.go check go.mod",
+        ],
+    }
+
 def benchmark_ldap_step():
     return {
         "name": "benchmark-ldap",
