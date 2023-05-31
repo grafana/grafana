@@ -36,13 +36,7 @@ func RegisterDenyByName(plugins *admission.Plugins) {
 // example of admission plugin that will deny any resource with name "deny"
 type denyByName struct{}
 
-var _ admission.MutationInterface = denyByName{}
 var _ admission.ValidationInterface = denyByName{}
-
-// Admit makes an admission decision based on the request attributes.
-func (denyByName) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	return nil
-}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
 func (denyByName) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {

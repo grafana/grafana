@@ -149,9 +149,10 @@ func (s *service) start(ctx context.Context) error {
 	// plugins that depend on the Core V1 APIs and informers.
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName}
+	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
