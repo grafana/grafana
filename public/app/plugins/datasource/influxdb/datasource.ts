@@ -200,10 +200,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         this.retentionPolicies = allPolicies;
         const policyFixedRequests = {
           ...request,
-          targets: request.targets.map((t) => ({
-            ...t,
-            policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
-          })),
+          targets: request.targets.map((t) => {
+            t.policy = t.policy ? this.templateSrv.replace(t.policy, {}, 'regex') : '';
+            return {
+              ...t,
+              policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
+            };
+          }),
         };
         return this._query(policyFixedRequests);
       })
