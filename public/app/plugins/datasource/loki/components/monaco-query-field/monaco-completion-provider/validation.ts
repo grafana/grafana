@@ -1,5 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
-import Prism, { Token } from 'prismjs';
+import { Token } from 'prismjs';
 
 import { parser } from '@grafana/lezer-logql';
 import { ErrorId } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
@@ -115,8 +115,8 @@ export const placeHolderScopedVars = {
   __range: { text: '1s', value: '1s' },
 };
 
-export function highlightErrorsInQuery(query: string): string {
-  const errorBoundaries = validateQuery(query, query, query.split('\n'));
+export function highlightErrorsInQuery(query: string, interpolatedQuery: string): string {
+  const errorBoundaries = mergeErrors(validateQuery(query, interpolatedQuery, query.split('\n')));
 
   if (!errorBoundaries) {
     return query;
@@ -140,6 +140,25 @@ export function highlightErrorsInQuery(query: string): string {
   });
 
   return queryWithErrors.join('\n');
+}
+
+function mergeErrors(errorBoundaries: ParserErrorBoundary[] | false): ParserErrorBoundary[] | false {
+  if (!errorBoundaries) {
+    return false;
+  }
+
+  errorBoundaries.sort((a, b) => a.startColumn - b.startColumn);
+
+  const mergedErrors = [];
+  for (const error of errorBoundaries) {
+    if (mergedErrors.length === 0 || error.startColumn > mergedErrors[mergedErrors.length - 1].endColumn) {
+      mergedErrors.push(error);
+    } else if (error.endColumn > mergedErrors[mergedErrors.length - 1].endColumn) {
+      mergedErrors[mergedErrors.length - 1] = error;
+    }
+  }
+
+  return mergedErrors;
 }
 
 function tokenContainsString(token: Token | string, string: string): boolean {
