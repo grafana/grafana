@@ -144,21 +144,23 @@ function createFlatTree(
   let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
 
   if (level === 0 && !collection?.isFullyLoaded) {
-    children = children.concat(
-      new Array(ROOT_PAGE_SIZE).fill(null).map((_, index) => {
-        return {
-          parentUID: folderUID,
-          level,
-          isOpen: false,
-          item: {
-            kind: 'ui',
-            uiKind: 'loading-placeholder',
-            uid: index.toString(),
-          },
-        };
-      })
-    );
+    children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
   }
 
   return children;
+}
+
+function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
+  return new Array(amount).fill(null).map((_, index) => {
+    return {
+      parentUID,
+      level,
+      isOpen: false,
+      item: {
+        kind: 'ui' as const,
+        uiKind: 'pagination-placeholder' as const,
+        uid: `${parentUID}-pagination-${index}`,
+      },
+    };
+  });
 }

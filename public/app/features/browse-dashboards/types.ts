@@ -6,6 +6,10 @@ export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string
   $all: boolean;
 };
 
+/**
+ * Stores children at a particular location in the tree, and information
+ * required for pagination.
+ */
 export type DashboardViewItemCollection = {
   items: DashboardViewItem[];
   lastFetchedKind: 'folder' | 'dashboard';
@@ -25,7 +29,7 @@ export interface BrowseDashboardsState {
 
 export interface UIDashboardViewItem {
   kind: 'ui';
-  uiKind: 'empty-folder' | 'loading-placeholder';
+  uiKind: 'empty-folder' | 'pagination-placeholder';
   uid: string;
 }
 

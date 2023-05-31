@@ -33,10 +33,6 @@ interface RefetchChildrenResult {
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
-    if (process.env.NODE_ENV !== 'production' && parentUID === GENERAL_FOLDER_UID) {
-      console.error(new Error("fetchNextChildrenPage called with a parentUID of 'general' instead of undefined"));
-    }
-
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     // At the moment this will just clear out all loaded children and refetch the first page.
@@ -75,10 +71,6 @@ export const fetchNextChildrenPage = createAsyncThunk(
     { parentUID, pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
-    if (process.env.NODE_ENV !== 'production' && parentUID === GENERAL_FOLDER_UID) {
-      console.error(new Error("fetchNextChildrenPage called with a parentUID of 'general' instead of undefined"));
-    }
-
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     const state = thunkAPI.getState().browseDashboards;

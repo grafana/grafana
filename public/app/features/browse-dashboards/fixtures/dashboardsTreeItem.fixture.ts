@@ -13,6 +13,7 @@ export function wellFormedEmptyFolder(
   return {
     item: {
       kind: 'ui',
+      uiKind: 'empty-folder',
       uid: random.guid(),
     },
     level: 0,
