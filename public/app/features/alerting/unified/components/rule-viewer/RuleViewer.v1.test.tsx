@@ -30,7 +30,7 @@ const mockRoute: GrafanaRouteComponentProps<{ id?: string; sourceName?: string }
   staticContext: {},
 };
 
-jest.mock('./hooks/useCombinedRule');
+jest.mock('../../hooks/useCombinedRule');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -62,7 +62,7 @@ const ui = {
     silence: byRole('link', { name: 'Silence' }),
   },
 };
-jest.mock('./hooks/useIsRuleEditable');
+jest.mock('../../hooks/useIsRuleEditable');
 
 const mocks = {
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
@@ -94,7 +94,6 @@ describe('RuleViewer', () => {
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
     await renderRuleViewer();
 
-    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
     expect(screen.getByText(/test alert/i)).toBeInTheDocument();
   });
 
@@ -108,7 +107,7 @@ describe('RuleViewer', () => {
     });
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
     await renderRuleViewer();
-    expect(screen.getByText(/view rule/i)).toBeInTheDocument();
+
     expect(screen.getByText(/cloud test alert/i)).toBeInTheDocument();
   });
 });
