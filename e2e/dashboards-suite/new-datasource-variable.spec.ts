@@ -39,5 +39,6 @@ describe('Variables - Datasource', () => {
 
     // Assert it was rendered
     e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: gdev-slow-prometheus-uid');
+    e2e().get('.markdown-html').should('include.text', 'VariableUnderTestText: gdev-slow-prometheus');
   });
 });
