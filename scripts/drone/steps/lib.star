@@ -367,7 +367,6 @@ def lint_backend_step():
 def validate_modfile_step():
     return {
         "name": "validate-modfile",
-        # TODO: build_image or go_image?
         "image": go_image,
         "failure": "ignore",
         "commands": [
