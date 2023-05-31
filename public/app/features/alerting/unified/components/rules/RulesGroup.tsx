@@ -261,11 +261,11 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         title="Delete group"
         body={
           <div>
-            Deleting this group will permanently remove the group
-            <br />
-            and {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
-            <br />
-            Are you sure you want to delete this group?
+            <p>
+              Deleting &quot;<strong>{group.name}</strong>&quot; will permanently remove the group and{' '}
+              {group.rules.length} alert {pluralize('rule', group.rules.length)} belonging to it.
+            </p>
+            <p>Are you sure you want to delete this group?</p>
           </div>
         }
         onConfirm={deleteGroup}
