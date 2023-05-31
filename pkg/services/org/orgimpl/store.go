@@ -74,26 +74,32 @@ func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	return &orga, nil
 }
 
-func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
+func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if _, err = sess.Insert(org); err != nil {
+		if isNameTaken, err := isOrgNameTaken(orga.Name, orga.ID, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return org.ErrOrgNameTaken
+		}
+
+		if _, err = sess.Insert(orga); err != nil {
 			return err
 		}
 
-		orgID = org.ID
+		orgID = orga.ID
 
-		if org.ID != 0 {
+		if orga.ID != 0 {
 			// it sets the setval in the sequence
 			if err := ss.dialect.PostInsertId("org", sess.Session); err != nil {
 				return err
 			}
 		}
 		sess.PublishAfterCommit(&events.OrgCreated{
-			Timestamp: org.Created,
-			Id:        org.ID,
-			Name:      org.Name,
+			Timestamp: orga.Created,
+			Id:        orga.ID,
+			Name:      orga.Name,
 		})
 		return nil
 	})
