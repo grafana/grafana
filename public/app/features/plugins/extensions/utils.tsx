@@ -170,7 +170,7 @@ export function isReadOnlyProxy(value: unknown): boolean {
 export function createExtensionLinkConfig<T extends object>(
   config: Omit<PluginExtensionLinkConfig<T>, 'type'>
 ): PluginExtensionLinkConfig {
-  const linkConfig = {
+  const linkConfig: PluginExtensionLinkConfig<T> = {
     type: PluginExtensionTypes.link,
     ...config,
   };
