@@ -15,8 +15,6 @@ var frontendLogger = log.New("frontend")
 
 type frontendLogMessageHandler func(hs *HTTPServer, c *web.Context)
 
-const grafanaJavascriptAgentEndpointPath = "/log-grafana-javascript-agent"
-
 func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
 	return func(hs *HTTPServer, c *web.Context) {
 		event := frontendlogging.FrontendGrafanaJavascriptAgentEvent{}
@@ -98,15 +96,13 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 // handlers are setup even if frontend logging is disabled, but in this case do nothing
 // this is to avoid reporting errors in case config was changes but there are browser
 // sessions still open with older config
-func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
+func (hs *HTTPServer) frontendLogEndpoint() web.Handler {
 	if !(hs.Cfg.GrafanaJavascriptAgent.Enabled) {
 		return func(ctx *web.Context) {
-			if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == grafanaJavascriptAgentEndpointPath {
-				ctx.Resp.WriteHeader(http.StatusAccepted)
-				_, err := ctx.Resp.Write([]byte("OK"))
-				if err != nil {
-					hs.log.Error("could not write to response", "err", err)
-				}
+			ctx.Resp.WriteHeader(http.StatusAccepted)
+			_, err := ctx.Resp.Write([]byte("OK"))
+			if err != nil {
+				hs.log.Error("could not write to response", "err", err)
 			}
 		}
 	}
@@ -116,12 +112,10 @@ func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
 	handler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
 	return func(ctx *web.Context) {
-		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == grafanaJavascriptAgentEndpointPath {
-			if !rateLimiter.AllowN(time.Now(), 1) {
-				ctx.Resp.WriteHeader(http.StatusTooManyRequests)
-				return
-			}
-			handler(hs, ctx)
+		if !rateLimiter.AllowN(time.Now(), 1) {
+			ctx.Resp.WriteHeader(http.StatusTooManyRequests)
+			return
 		}
+		handler(hs, ctx)
 	}
 }
