@@ -703,6 +703,8 @@ describe('RuleList', () => {
       it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
         enableRBAC();
 
+        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
+
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));
         mocks.api.fetchRules.mockResolvedValue([]);
