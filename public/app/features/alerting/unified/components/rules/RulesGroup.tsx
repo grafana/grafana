@@ -286,13 +286,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: row;
       align-items: center;
       padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       border-bottom: 1px solid ${theme.colors.border.weak};
       &:hover {
         background-color: ${theme.components.table.rowHoverBackground};
       }
     `,
     headerStats: css`
+      flex-shrink: 0;
+
       span {
         vertical-align: middle;
       }
@@ -307,6 +309,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(1)};
       margin-bottom: 0;
       cursor: pointer;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     `,
     spacer: css`
       flex: 1;
@@ -336,6 +342,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     actionIcons: css`
       width: 80px;
       align-items: center;
+
+      flex-shrink: 0;
     `,
     rulesTable: css`
       margin: ${theme.spacing(2, 0)};
