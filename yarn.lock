@@ -18291,6 +18291,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-i18next: ^12.0.0
     react-inlinesvg: 3.0.2
+    react-loading-skeleton: 3.3.1
     react-moveable: 0.46.1
     react-popper: 2.3.0
     react-popper-tooltip: 4.4.2
@@ -26444,6 +26445,15 @@ __metadata:
   version: 3.0.4
   resolution: "react-lifecycles-compat@npm:3.0.4"
   checksum: a904b0fc0a8eeb15a148c9feb7bc17cec7ef96e71188280061fc340043fd6d8ee3ff233381f0e8f95c1cf926210b2c4a31f38182c8f35ac55057e453d6df204f
+  languageName: node
+  linkType: hard
+
+"react-loading-skeleton@npm:3.3.1":
+  version: 3.3.1
+  resolution: "react-loading-skeleton@npm:3.3.1"
+  peerDependencies:
+    react: ">=16.8.0"
+  checksum: 0de3437a5da8b7133bf86043e4e002e5422b50cd71b9a650f2947a89ace39be8b7c61a098f1d7dd0be559dc3ac293d60697fdae23cb09c3905b2952e1a68693d
   languageName: node
   linkType: hard
 
