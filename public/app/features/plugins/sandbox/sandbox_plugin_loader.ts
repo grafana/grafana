@@ -157,7 +157,7 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
     }
     // modify the source map url to point to the correct location
     const sourceCodeMapUrl = `/public/${meta.module}.js.map`;
-    replaceWith += `//# sourceURL=module.js\n//# sourceMappingURL=${sourceCodeMapUrl}`;
+    replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
 
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
   }
