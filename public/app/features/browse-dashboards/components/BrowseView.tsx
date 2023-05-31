@@ -107,8 +107,9 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
         return false;
       }
       const item = treeItem.item;
+      const result = !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
 
-      return !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
+      return result;
     },
     [flatTree]
   );

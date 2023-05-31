@@ -15,12 +15,25 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
 
-jest.mock('app/features/search/service/folders', () => {
+jest.mock('app/features/browse-dashboards/api/services', () => {
+  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
+
   return {
-    getFolderChildren(parentUID?: string) {
+    ...orig,
+    listFolders(parentUID?: string) {
       const childrenForUID = mockTree
         .filter((v) => v.item.kind !== 'ui' && v.item.parentUID === parentUID)
-        .map((v) => v.item);
+        .map((v) => v.item)
+        .filter((v) => v.kind === 'folder');
+
+      return Promise.resolve(childrenForUID);
+    },
+
+    listDashboards(parentUID?: string) {
+      const childrenForUID = mockTree
+        .filter((v) => v.item.kind !== 'ui' && v.item.parentUID === parentUID)
+        .map((v) => v.item)
+        .filter((v) => v.kind === 'dashboard');
 
       return Promise.resolve(childrenForUID);
     },
