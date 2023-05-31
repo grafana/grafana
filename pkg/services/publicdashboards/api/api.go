@@ -77,7 +77,7 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
-	api.RouteRegister.Put("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+	api.RouteRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
 		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
@@ -127,22 +127,21 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
 	}
 
-	pd := &PublicDashboard{}
-	if err := web.Bind(c.Req, pd); err != nil {
+	pdDTO := &PublicDashboardDTO{}
+	if err := web.Bind(c.Req, pdDTO); err != nil {
 		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
-	pd.OrgId = c.OrgID
-	dto := SavePublicDashboardDTO{
+	pdDTO.OrgId = c.OrgID
+	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
-		PublicDashboard: pd,
+		PublicDashboard: pdDTO,
 	}
 
 	//Create the public dashboard
-	pd, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, &dto)
+	pd, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, dto)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -164,19 +163,18 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	pd := &PublicDashboard{}
-	if err := web.Bind(c.Req, pd); err != nil {
+	pdDTO := &PublicDashboardDTO{}
+	if err := web.Bind(c.Req, pdDTO); err != nil {
 		return response.Err(ErrBadRequest.Errorf("UpdatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
-	pd.OrgId = c.OrgID
-	pd.Uid = uid
+	pdDTO.OrgId = c.OrgID
+	pdDTO.Uid = uid
 	dto := SavePublicDashboardDTO{
 		UserId:          c.UserID,
-		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
-		PublicDashboard: pd,
+		PublicDashboard: pdDTO,
 	}
 
 	// Update the public dashboard
