@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
