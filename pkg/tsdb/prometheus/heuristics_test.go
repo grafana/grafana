@@ -27,25 +27,11 @@ type heuristicsSuccessRoundTripper struct {
 	res    io.ReadCloser
 	status int
 }
-type heuristicsFailRoundTripper struct {
-	res io.ReadCloser
-}
 
 func (rt *heuristicsSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{
 		Status:        strconv.Itoa(rt.status),
 		StatusCode:    rt.status,
-		Header:        nil,
-		Body:          rt.res,
-		ContentLength: 0,
-		Request:       req,
-	}, nil
-}
-
-func (rt *heuristicsFailRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	return &http.Response{
-		Status:        "400",
-		StatusCode:    400,
 		Header:        nil,
 		Body:          rt.res,
 		ContentLength: 0,
