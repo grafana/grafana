@@ -270,7 +270,7 @@ describe('logRowsToReadableJson', () => {
   it('should format a df field row', () => {
     const result = logRowsToReadableJson([testRow2]);
 
-    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: '"bar2"' } }]);
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
   });
 });
 

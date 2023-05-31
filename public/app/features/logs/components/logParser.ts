@@ -70,10 +70,14 @@ export const getDataframeFields = memoizeOne(
       .filter((field, index) => !shouldRemoveField(field, index, row))
       .map((field) => {
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
-
+        const fieldVal = field.values[row.rowIndex];
+        const outputVal =
+          typeof fieldVal === 'string' || typeof fieldVal === 'number'
+            ? fieldVal.toString()
+            : safeStringifyValue(fieldVal);
         return {
           keys: [field.name],
-          values: [safeStringifyValue(field.values[row.rowIndex])],
+          values: [outputVal],
           links: links,
           fieldIndex: field.index,
         };
