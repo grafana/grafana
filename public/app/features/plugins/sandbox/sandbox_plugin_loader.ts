@@ -36,9 +36,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
 
   function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
     if (isDomElement(originalValue)) {
-      // if (originalValue instanceof HTMLElement) {
-      //   Reflect.defineProperty(originalValue.style, SANDBOX_LIVE_VALUE, {});
-      // }
       markDomElementAsALiveTarget(originalValue, SANDBOX_LIVE_VALUE);
       switch (originalValue.nodeName.toLowerCase()) {
         case 'body':
