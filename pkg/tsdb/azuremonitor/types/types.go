@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
 const (
@@ -83,8 +84,8 @@ type AzureMonitorQuery struct {
 	Alias        string
 	TimeRange    backend.TimeRange
 	BodyFilter   string
-	Dimensions   []AzureMonitorDimensionFilter
-	Resources    map[string]AzureMonitorResource
+	Dimensions   []dataquery.AzureMetricDimension
+	Resources    map[string]dataquery.AzureMonitorResource
 	Subscription string
 }
 
@@ -138,6 +139,7 @@ type AzureMonitorResource struct {
 	ResourceName  string `json:"resourceName"`
 }
 
+// remove to ...
 // AzureMonitorJSONQuery is the frontend JSON query model for an Azure Monitor query.
 type AzureMonitorJSONQuery struct {
 	AzureMonitor struct {
@@ -178,22 +180,22 @@ type AzureMonitorDimensionFilter struct {
 	Filter *string `json:"filter,omitempty"`
 }
 
+// here
 type AzureMonitorDimensionFilterBackend struct {
 	Key      string   `json:"key"`
 	Operator int      `json:"operator"`
 	Values   []string `json:"values"`
 }
 
-func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
+func ConstructFiltersString(a dataquery.AzureMetricDimension) string {
 	var filterStrings []string
 	for _, filter := range a.Filters {
 		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
 	}
-	if a.Operator == "eq" {
+	if a.Operator != nil && *a.Operator == "eq" {
 		return strings.Join(filterStrings, " or ")
-	} else {
-		return strings.Join(filterStrings, " and ")
 	}
+	return strings.Join(filterStrings, " and ")
 }
 
 // LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
