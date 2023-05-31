@@ -111,7 +111,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     inputContainer: css({
       display: 'flex',
       flex: 1,
-      minWidth: '200px',
     }),
     textWrapper: css({
       alignItems: 'center',
