@@ -154,7 +154,7 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     ],
     continue: route.continue ?? false,
     receiver: route.receiver ?? '',
-    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
+    overrideGrouping: Array.isArray(route.group_by),
     groupBy: route.group_by ?? [],
     overrideTimings: [route.group_wait, route.group_interval, route.repeat_interval].some(Boolean),
     groupWaitValue: route.group_wait ?? '',
