@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import classNames from 'classnames';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
@@ -9,7 +8,7 @@ import { InlineToast } from '../InlineToast/InlineToast';
 
 import { EllipsisAnimated } from './EllipsisAnimated';
 
-export const SHOW_SUCCESS_DURATION = 2 * 1000;
+const SHOW_SUCCESS_DURATION = 2 * 1000;
 
 export interface Props<T = string> extends Omit<FieldProps, 'children'> {
   /** Saving request that will be triggered 600ms after changing the value */
@@ -96,7 +95,7 @@ export function AutoSaveField<T = string>(props: Props<T>) {
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
         ref={fieldRef}
-        className={classNames(styles.widthFitContent, restProps.className)}
+        className={styles.widthFitContent}
       >
         {React.cloneElement(
           children((newValue) => {
