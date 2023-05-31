@@ -1,7 +1,10 @@
 import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+<<<<<<< HEAD
 import { Label, normalizeMatchers } from './matchers';
 
+=======
+>>>>>>> 0c19d34ee5 (Normalize tree nodes should happen before findMatchingRoutes call)
 export type Label = [string, string];
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 
@@ -66,9 +69,7 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<Ro
   let matches: Array<RouteMatchResult<T>> = [];
 
   // If the current node is not a match, return nothing
-  const normalizedMatchers = normalizeMatchers(root);
-
-  const matchResult = matchLabels(normalizedMatchers, labels);
+  const matchResult = matchLabels(root.object_matchers ?? [], labels);
   if (!matchResult.matches) {
     return [];
   }
