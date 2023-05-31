@@ -6,12 +6,11 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Input, InputControl, Label, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, TextArea, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
-import { Annotation } from '../../utils/constants';
+import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
-import { AnnotationKeyInput } from './AnnotationKeyInput';
 import { DashboardPicker } from './DashboardPicker';
 
 const AnnotationsField = () => {
@@ -26,11 +25,6 @@ const AnnotationsField = () => {
     setValue,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
-
-  const existingKeys = useCallback(
-    (index: number): string[] => annotations.filter((_, idx: number) => idx !== index).map(({ key }) => key),
-    [annotations]
-  );
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
@@ -61,74 +55,65 @@ const AnnotationsField = () => {
 
   return (
     <>
-      <Label>Summary and annotations</Label>
       <div className={styles.flexColumn}>
-        {fields.map((annotationField, index) => {
+        {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
+          // eslint-disable-next-line
+          const annotation = annotationField.key as Annotation;
 
           return (
             <div key={annotationField.id} className={styles.flexRow}>
-              <Field
-                className={styles.field}
-                invalid={!!errors.annotations?.[index]?.key?.message}
-                error={errors.annotations?.[index]?.key?.message}
-                data-testid={`annotation-key-${index}`}
-              >
-                <InputControl
-                  name={`annotations.${index}.key`}
-                  defaultValue={annotationField.key}
-                  render={({ field: { ref, ...field } }) => (
-                    <AnnotationKeyInput
-                      {...field}
-                      aria-label={`Annotation detail ${index + 1}`}
-                      existingKeys={existingKeys(index)}
-                      width={18}
-                    />
-                  )}
-                  control={control}
-                  rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
-                />
-              </Field>
-              <Field
-                className={cx(styles.flexRowItemMargin, styles.field)}
-                invalid={!!errors.annotations?.[index]?.value?.message}
-                error={errors.annotations?.[index]?.value?.message}
-              >
-                <ValueInputComponent
-                  data-testid={`annotation-value-${index}`}
-                  className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                  {...register(`annotations.${index}.value`)}
-                  placeholder={isUrl ? 'https://' : `Text`}
-                  defaultValue={annotationField.value}
-                />
-              </Field>
-              <Button
-                type="button"
-                className={styles.flexRowItemMargin}
-                aria-label="delete annotation"
-                icon="trash-alt"
-                variant="secondary"
-                onClick={() => remove(index)}
-              />
+              <div>
+                <div>
+                  <label>
+                    {annotationLabels[annotation]} {annotationLabels[annotation] ? '(optional)' : ''}
+                  </label>
+                  <div>{annotationDescriptions[annotation]}</div>
+                </div>
+                <Field
+                  className={cx(styles.flexRowItemMargin, styles.field)}
+                  invalid={!!errors.annotations?.[index]?.value?.message}
+                  error={errors.annotations?.[index]?.value?.message}
+                >
+                  <ValueInputComponent
+                    data-testid={`annotation-value-${index}`}
+                    className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                    {...register(`annotations.${index}.value`)}
+                    placeholder={isUrl ? 'https://' : `Text`}
+                    defaultValue={annotationField.value}
+                  />
+                </Field>
+                {!annotationLabels[annotation] && (
+                  <Button
+                    type="button"
+                    className={styles.deleteAnnotationButton}
+                    aria-label="delete annotation"
+                    icon="trash-alt"
+                    variant="secondary"
+                    onClick={() => remove(index)}
+                  />
+                )}
+              </div>
             </div>
           );
         })}
         <Stack direction="row" gap={1}>
-          <Button
-            className={styles.addAnnotationsButton}
-            icon="plus-circle"
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              append({ key: '', value: '' });
-            }}
-          >
-            Add annotation
-          </Button>
-          <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-            Set dashboard and panel
-          </Button>
+          <div className={styles.addAnnotationsButtonContainer}>
+            <Button
+              icon="plus-circle"
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                append({ key: '', value: '' });
+              }}
+            >
+              Add annotation
+            </Button>
+            <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
+              Set dashboard and panel
+            </Button>
+          </div>
         </Stack>
         {showPanelSelector && (
           <DashboardPicker
@@ -151,10 +136,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   textarea: css`
     height: 76px;
   `,
-  addAnnotationsButton: css`
-    flex-grow: 0;
-    align-self: flex-start;
-    margin-left: 148px;
+  addAnnotationsButtonContainer: css`
+    margin-top: ${theme.spacing(1)};
+    gap: ${theme.spacing(1)};
+    display: flex;
   `,
   flexColumn: css`
     display: flex;
@@ -169,7 +154,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: flex-start;
   `,
   flexRowItemMargin: css`
-    margin-left: ${theme.spacing(0.5)};
+    margin-top: ${theme.spacing(1)};
+  `,
+  deleteAnnotationButton: css`
+    display: inline-block;
   `,
 });
 
