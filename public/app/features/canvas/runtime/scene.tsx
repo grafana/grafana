@@ -643,8 +643,8 @@ export class Scene {
 
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
-    const canShowElementTooltip =
-      !this.isEditingEnabled && this.tooltip?.element && this.tooltip.element.data.links?.length > 0;
+    const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
