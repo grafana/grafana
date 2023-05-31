@@ -15,7 +15,7 @@ export type ThemeSpacingArgument = number | string;
  * The different signatures imply different meaning for their arguments that can't be expressed structurally.
  * We express the difference with variable names.
  * tslint:disable:unified-signatures */
-export interface ThemeSpacing {
+export interface ThemeSpacing extends ThemeSpacingTokens {
   (): string;
   (value: ThemeSpacingArgument): string;
   (topBottom: ThemeSpacingArgument, rightLeft: ThemeSpacingArgument): string;
@@ -27,7 +27,17 @@ export interface ThemeSpacing {
     left: ThemeSpacingArgument
   ): string;
   gridSize: number;
+  // Function to get the numeric value of a spacing token
+  num: (key: SpacingTokenValues) => number;
 }
+
+// Possible spacing token options
+type SpacingTokenValues = 0 | 25 | 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500 | 600 | 800 | 1000;
+
+// Spacing tokens as represented in the theme
+type ThemeSpacingTokens = {
+  [key in `x${SpacingTokenValues}`]: string;
+};
 
 /** @internal */
 export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {
@@ -66,6 +76,27 @@ export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {
   };
 
   spacing.gridSize = gridSize;
+
+  // Function to get the numeric value of a spacing token
+  spacing.num = (key: SpacingTokenValues): number => {
+    const pxVal = spacing[`x${key}`];
+    return parseInt(pxVal, 10);
+  };
+
+  // Design system spacing tokens
+  spacing.x0 = '0px';
+  spacing.x25 = '2px';
+  spacing.x50 = '4px';
+  spacing.x100 = '8px';
+  spacing.x150 = '12px';
+  spacing.x200 = '16px';
+  spacing.x250 = '20px';
+  spacing.x300 = '24px';
+  spacing.x400 = '32px';
+  spacing.x500 = '40px';
+  spacing.x600 = '48px';
+  spacing.x800 = '64px';
+  spacing.x1000 = '80px';
 
   return spacing;
 }

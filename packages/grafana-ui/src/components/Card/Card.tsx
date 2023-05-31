@@ -174,7 +174,7 @@ const getDescriptionStyles = (theme: GrafanaTheme2) => ({
   description: css({
     width: '100%',
     gridArea: 'Description',
-    margin: theme.spacing(1, 0, 0),
+    margin: `${theme.spacing.x100} 0 0`,
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.body.lineHeight,
   }),
@@ -203,7 +203,7 @@ const getFigureStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     gridArea: 'Figure',
 
-    marginRight: theme.spacing(2),
+    marginRight: theme.spacing.x200,
     width: '40px',
 
     '> img': {
@@ -251,7 +251,7 @@ const getMetaStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     fontSize: theme.typography.size.sm,
     color: theme.colors.text.secondary,
-    margin: theme.spacing(0.5, 0, 0),
+    margin: `${theme.spacing.x50} 0 0`,
     lineHeight: theme.typography.bodySmall.lineHeight,
     overflowWrap: 'anywhere',
   }),
@@ -260,7 +260,7 @@ const getMetaStyles = (theme: GrafanaTheme2) => ({
     zIndex: 0,
   }),
   separator: css({
-    margin: `0 ${theme.spacing(1)}`,
+    margin: `0 ${theme.spacing.x100}`,
   }),
 });
 
@@ -287,9 +287,9 @@ const BaseActions = ({ children, disabled, variant, className }: ActionsProps) =
 const getActionStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     gridArea: 'Actions',
-    marginTop: theme.spacing(2),
+    marginTop: theme.spacing.x200,
     '& > *': {
-      marginRight: theme.spacing(1),
+      marginRight: theme.spacing.x100,
     },
   }),
   secondaryActions: css({
@@ -297,10 +297,10 @@ const getActionStyles = (theme: GrafanaTheme2) => ({
     gridArea: 'Secondary',
     alignSelf: 'center',
     color: theme.colors.text.secondary,
-    marginTtop: theme.spacing(2),
+    marginTtop: theme.spacing.x200,
 
     '& > *': {
-      marginRight: `${theme.spacing(1)} !important`,
+      marginRight: `${theme.spacing.x100} !important`,
     },
   }),
 });
