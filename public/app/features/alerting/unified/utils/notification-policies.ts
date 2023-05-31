@@ -1,11 +1,13 @@
-import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerGroup,
+  MatcherOperator,
+  ObjectMatcher,
+  Route,
+  RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
-<<<<<<< HEAD
-import { Label, normalizeMatchers } from './matchers';
+import { Label, labelsMatchObjectMatchers, normalizeMatchers } from './matchers';
 
-=======
->>>>>>> 0c19d34ee5 (Normalize tree nodes should happen before findMatchingRoutes call)
-export type Label = [string, string];
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 
 const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
@@ -61,14 +63,17 @@ interface RouteMatchResult<T extends Route> {
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
 
-  // If the current node is not a match, return nothing
-  // const normalizedMatchers = normalizeMatchers(root);
-  // Normalization should have happened earlier in the code
- // if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
+// If the current node is not a match, return nothing
+// const normalizedMatchers = normalizeMatchers(root);
+// Normalization should have happened earlier in the code
+// if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
 function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<RouteMatchResult<T>> {
   let matches: Array<RouteMatchResult<T>> = [];
 
   // If the current node is not a match, return nothing
+  if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
+    return [];
+  }
   const matchResult = matchLabels(root.object_matchers ?? [], labels);
   if (!matchResult.matches) {
     return [];
@@ -76,11 +81,12 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<Ro
 
   // If the current node matches, recurse through child nodes
   if (root.routes) {
-    for (const child of root.routes) {
-      const matchingChildren = findMatchingRoutes(child, labels);
-
-      matches.push(...matchingChildren);
-
+    for (let index = 0; index < root.routes.length; index++) {
+      let child = root.routes[index];
+      let matchingChildren = findMatchingRoutes(child, labels);
+      // TODO how do I solve this typescript thingy? It looks correct to me /shrug
+      // @ts-ignore
+      matches = matches.concat(matchingChildren);
       // we have matching children and we don't want to continue, so break here
       if (matchingChildren.length && !child.continue) {
         break;
@@ -127,7 +133,7 @@ function findMatchingAlertGroups(
     // find matching alerts in the current group
     const matchingAlerts = group.alerts.filter((alert) => {
       const labels = Object.entries(alert.labels);
-      return findMatchingRoutes(routeTree, labels).some((matchingRoute) => matchingRoute === route);
+      return findMatchingRoutes(routeTree, labels).some((matchingRoute) => matchingRoute.route === route);
     });
 
     // if the groups has any alerts left after matching, add it to the results
