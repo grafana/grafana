@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
 import {
@@ -7,6 +9,7 @@ import {
   assertPluginExtensionLink,
   assertStringProps,
   isPluginExtensionConfigValid,
+  isReactComponent,
 } from './validators';
 
 describe('Plugin Extension Validators', () => {
@@ -84,7 +87,6 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          path: '...',
           extensionPointId: 'wrong-extension-point-id',
         });
       }).toThrowError();
@@ -96,7 +98,6 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          path: '...',
           extensionPointId: 'grafana/some-page/extension-point-a',
         });
 
@@ -104,7 +105,6 @@ describe('Plugin Extension Validators', () => {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
-          path: '...',
           extensionPointId: 'plugins/my-super-plugin/some-page/extension-point-a',
         });
       }).not.toThrowError();
@@ -264,6 +264,20 @@ describe('Plugin Extension Validators', () => {
           path: `/a/${pluginId}/page`,
         } as PluginExtensionLinkConfig)
       ).toBe(false);
+    });
+  });
+
+  describe('isReactComponent()', () => {
+    it('should return TRUE if we pass in a valid React component', () => {
+      expect(isReactComponent(() => <div>Some text</div>)).toBe(true);
+    });
+
+    it('should return FALSE if we pass in a valid React component', () => {
+      expect(isReactComponent('Foo bar')).toBe(false);
+      expect(isReactComponent(123)).toBe(false);
+      expect(isReactComponent(false)).toBe(false);
+      expect(isReactComponent(undefined)).toBe(false);
+      expect(isReactComponent(null)).toBe(false);
     });
   });
 });
