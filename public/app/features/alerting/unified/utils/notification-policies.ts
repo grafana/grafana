@@ -6,6 +6,8 @@ import {
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { Labels } from '../../../../types/unified-alerting-dto';
+
 import { Label, labelsMatchObjectMatchers, normalizeMatchers } from './matchers';
 
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
@@ -56,7 +58,13 @@ function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult
   return { matches, details };
 }
 
-interface RouteMatchResult<T extends Route> {
+export interface RouteInstanceMatch {
+  route: RouteWithID;
+  labels: Labels;
+  matchDetails: Map<ObjectMatcher, Labels>;
+}
+
+export interface RouteMatchResult<T extends Route> {
   route: T;
   details: Map<ObjectMatcher, Label[]>;
 }

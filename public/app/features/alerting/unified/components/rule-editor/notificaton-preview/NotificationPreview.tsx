@@ -9,7 +9,6 @@ import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, Modal, T
 import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
-  ObjectMatcher,
   Receiver,
   Route,
   RouteWithID,
@@ -21,12 +20,13 @@ import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchAlertManagerConfig } from '../../../api/alertmanager';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
+import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { labelsToTags } from '../../../utils/labels';
 import { normalizeMatchers } from '../../../utils/matchers';
 import { makeAMLink } from '../../../utils/misc';
-import { findMatchingRoutes } from '../../../utils/notification-policies';
+import { RouteInstanceMatch } from '../../../utils/notification-policies';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
@@ -38,12 +38,14 @@ export const useGetPotentialInstancesByAlertManager = (
   // get the AM configuration to get the routes
   const {
     value: AMConfig,
-    loading,
-    error,
+    loading: configLoading,
+    error: configError,
   } = useAsync(async () => {
     const AMConfig: AlertManagerCortexConfig = await fetchAlertManagerConfig(alertManagerSourceName);
     return AMConfig;
   }, []);
+
+  const { matchInstancesToRoute } = useRouteGroupsMatcher();
 
   // to create the list of matching contact points we need to first get the rootRoute
   const { rootRoute, receivers } = useMemo(() => {
@@ -69,15 +71,24 @@ export const useGetPotentialInstancesByAlertManager = (
     }, new Map<string, Receiver>()) ?? new Map<string, Receiver>();
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
-  const matchingMapArray = rootRoute
-    ? matchInstancesToPolicyTree(rootRoute, potentialInstances)
-    : new Map<string, RouteInstanceMatch[]>();
+  const {
+    value: matchingMap = new Map<string, RouteInstanceMatch[]>(),
+    loading: matchingLoading,
+    error: matchingError,
+  } = useAsync(async () => {
+    if (!rootRoute) {
+      return;
+    }
+    return await matchInstancesToRoute(rootRoute, potentialInstances);
+  }, [rootRoute, potentialInstances]);
 
-  // const matchingMap: Map<string, Labels[]> = matchingMapArray.reduce((map, matchingMap) => {
-  //   return new Map([...map, ...matchingMap]);
-  // }, new Map<string, Labels[]>());
-
-  return { routesByIdMap, receiversByName, matchingMap: matchingMapArray, loading, error };
+  return {
+    routesByIdMap,
+    receiversByName,
+    matchingMap: matchingMap,
+    loading: configLoading || matchingLoading,
+    error: configError ?? matchingError,
+  };
 };
 
 interface AlertManagerNameWithImage {
@@ -235,7 +246,7 @@ export function NotificationPreviewByAlertManager({
           return (
             <NotificationRoute
               // TODO Use the whole instance object to display matching labels
-              instances={instances.map((i) => i.instanceLabels)}
+              instances={instances.map((i) => i.labels)}
               route={route}
               receiver={receiver}
               key={routeId}
@@ -514,39 +525,6 @@ function normalizeTree(routeTree: Route) {
   routeTree.routes?.forEach((route) => normalizeTree(route));
 }
 
-interface RouteInstanceMatch {
-  route: RouteWithID;
-  instanceLabels: Labels;
-  matchDetails: Map<ObjectMatcher, Labels>;
-}
-
-function matchInstancesToPolicyTree(
-  routeTree: RouteWithID,
-  instancesToMatch: Labels[]
-): Map<string, RouteInstanceMatch[]> {
-  const result = new Map<string, RouteInstanceMatch[]>();
-
-  normalizeTree(routeTree);
-  instancesToMatch.forEach((instance) => {
-    const matchingRoutes = findMatchingRoutes(routeTree, Object.entries(instance));
-    matchingRoutes.forEach(({ route, details }) => {
-      // Only to convert Label[] to Labels[] - needs better approach
-      const matchDetails = new Map(
-        Array.from(details.entries()).map(([matcher, labels]) => [matcher, Object.fromEntries(labels)])
-      );
-
-      const currentRoute = result.get(route.id);
-      if (currentRoute) {
-        currentRoute.push({ route, instanceLabels: instance, matchDetails });
-      } else {
-        result.set(route.id, [{ route, instanceLabels: instance, matchDetails }]);
-      }
-    });
-  });
-
-  return result;
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css`
     width: auto;
@@ -675,6 +653,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.secondary};
     width: fit-content;
     position: relative;
+
     ${
       higlight &&
       css`
