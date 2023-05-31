@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -155,9 +156,9 @@ export function RuleViewer({ match }: RuleViewerProps) {
       {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
-          <h4>
-            <Icon name="bell" size="lg" /> {rule.name}
-          </h4>
+          <Stack direction="row" alignItems="center" wrap={false} gap={1}>
+            <Icon name="bell" size="lg" /> <span className={styles.title}>{rule.name}</span>
+          </Stack>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
           <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={true} />
         </div>
@@ -282,6 +283,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     queryWarning: css`
       margin: ${theme.spacing(4, 0)};
     `,
+    title: css`
+      font-size: ${theme.typography.h4.fontSize};
+      font-weight: ${theme.typography.fontWeightBold};
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    `,
     details: css`
       display: flex;
       flex-direction: row;
@@ -292,6 +300,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};
+
+      max-width: 360px;
+      word-break: break-all;
+      overflow: hidden;
     `,
     rightSideDetails: css`
       & > div:first-child {
