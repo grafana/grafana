@@ -27,7 +27,6 @@ describe('useSilenceNavData', () => {
 
     expect(result).toEqual({
       icon: 'bell-slash',
-      breadcrumbs: [{ title: 'Silences', url: 'alerting/silences' }],
       id: 'silence-new',
       text: 'Add silence',
     });
@@ -39,7 +38,6 @@ describe('useSilenceNavData', () => {
 
     expect(result).toEqual({
       icon: 'bell-slash',
-      breadcrumbs: [{ title: 'Silences', url: 'alerting/silences' }],
       id: 'silence-edit',
       text: 'Edit silence',
     });

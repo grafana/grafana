@@ -18,7 +18,7 @@ type IndexViewData struct {
 	NavTree                             *navtree.NavTreeRoot
 	BuildVersion                        string
 	BuildCommit                         string
-	Theme                               string
+	ThemeType                           string
 	NewGrafanaVersionExists             bool
 	NewGrafanaVersion                   string
 	AppName                             string

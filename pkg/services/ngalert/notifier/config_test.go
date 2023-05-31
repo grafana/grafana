@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -77,7 +78,8 @@ func TestPersistTemplates(t *testing.T) {
 			}
 			c := &api.PostableUserConfig{TemplateFiles: tt.templates}
 
-			paths, changed, persistErr := PersistTemplates(c, dir)
+			testLogger := logtest.Fake{}
+			paths, changed, persistErr := PersistTemplates(&testLogger, c, dir)
 
 			files := map[string]string{}
 			readFiles, err := os.ReadDir(dir)

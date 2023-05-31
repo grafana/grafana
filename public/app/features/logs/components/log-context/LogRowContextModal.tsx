@@ -20,8 +20,8 @@ import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { useDispatch } from 'app/types';
 
 import { sortLogRows } from '../../utils';
@@ -180,7 +180,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
-    setLimit(option.value!);
+    if (option.value) {
+      setLimit(option.value);
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+        new_limit: option.value,
+      });
+    }
   };
 
   const [{ loading }, fetchResults] = useAsyncFn(async () => {

@@ -213,5 +213,13 @@ describe('InfluxQueryBuilder', () => {
       const query = builder.buildExploreQuery('TAG_KEYS');
       expect(query).toBe(`SHOW TAG KEYS WHERE "app" == ''`);
     });
+
+    it('should not add FROM statement if the measurement empty', () => {
+      const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
+      let query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe('SHOW TAG KEYS');
+      query = builder.buildExploreQuery('FIELDS');
+      expect(query).toBe('SHOW FIELD KEYS');
+    });
   });
 });
