@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var concurrencyFactor = 8
 
 type Service struct {
 	store                store
@@ -171,27 +174,34 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	filtered := make([]*folder.Folder, 0, len(children))
-	for _, f := range children {
+	m := sync.Mutex{}
+	if err := concurrency.ForEachJob(ctx, len(children), concurrencyFactor, func(ctx context.Context, i int) error {
+		f := children[i]
 		// fetch folder from dashboard store
 		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
 		if err != nil {
 			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
-			continue
+			return nil
 		}
 
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		canView, err := g.CanView()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if canView {
 			// always expose the dashboard store sequential ID
 			f.ID = dashFolder.ID
+			m.Lock()
 			filtered = append(filtered, f)
+			m.Unlock()
 		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return filtered, nil

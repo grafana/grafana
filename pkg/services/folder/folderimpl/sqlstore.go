@@ -217,7 +217,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 			return nil, err
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), concurrencyFactor, func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {
@@ -263,7 +263,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), concurrencyFactor, func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {
