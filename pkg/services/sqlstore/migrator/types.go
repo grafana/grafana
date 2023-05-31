@@ -23,6 +23,8 @@ type Migration interface {
 	// for skipping recording it in the migration_log so that it can run several times.
 	// For all the other migrations it should be false.
 	SkipMigrationLog() bool
+	// Validate determines if a migration is well-formed before executing.
+	Validate() error
 }
 
 type CodeMigration interface {

@@ -128,6 +128,17 @@ func (b *BaseDialect) EqStr() string {
 }
 
 func (b *BaseDialect) Default(col *Column) string {
+	if col.Type == DB_Bool {
+		bl, err := ParseBoolStr(col.Default)
+		if err != nil {
+			// This should not be possible since we validate the default value before migration.
+			return col.Default
+		}
+		if bl == nil {
+			return "NULL"
+		}
+		return b.dialect.BooleanStr(*bl)
+	}
 	return col.Default
 }
 

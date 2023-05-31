@@ -243,6 +243,10 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 			}
 		}
 	}
+	if err := m.Validate(); err != nil {
+		mg.Logger.Error("Executing migration validation failed", "id", m.Id(), "error", err)
+		return err
+	}
 
 	var err error
 	if codeMigration, ok := m.(CodeMigration); ok {
