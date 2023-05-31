@@ -66,6 +66,12 @@ cascade:
         - enterprise
         - oss
 
+  - _target: { path: /docs/grafana/*/breaking-changes/** }
+    labels:
+      products:
+        - cloud
+        - oss
+
   - _target: { path: /docs/grafana/*/dashboards/** }
     labels:
       products:
