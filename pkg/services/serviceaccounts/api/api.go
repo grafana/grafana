@@ -2,9 +2,9 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -354,16 +354,28 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	fmt.Println("MigrateApiKeysToServiceAccounts")
-	fmt.Printf("api: %+v\n", api)
-	fmt.Printf("api.service: %+v\n", api.service)
-	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID)
-	fmt.Printf("results: %+v\n", results)
+	// context gets cancelled from db being locked, this tries to mitigate that change
+	results, err := api.retryAPICall(ctx.Req.Context(), ctx.OrgID, 3)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 
 	return response.JSON(http.StatusOK, results)
+}
+
+func (api *ServiceAccountsAPI) retryAPICall(ctx context.Context, orgID int64, retries int) (*serviceaccounts.MigrationResult, error) {
+	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx, orgID)
+	if err == nil {
+		return results, nil
+	}
+
+	if retries > 0 {
+		// Optional: Add delay before retrying
+		time.Sleep(10 * time.Millisecond)
+		return api.retryAPICall(ctx, orgID, retries-1)
+	}
+
+	return nil, err
 }
 
 // POST /api/serviceaccounts/migrate/:keyId

@@ -365,17 +365,17 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) (*serviceaccounts.MigrationResult, error) {
-	fmt.Printf("Migrating API keys to service accounts for orgId: %d\n", orgId)
 	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
 
 	migrationResult := &serviceaccounts.MigrationResult{
-		Total:         len(basicKeys),
-		Migrated:      0,
-		Failed:        0,
-		FailedDetails: []string{},
+		Total:           len(basicKeys),
+		Migrated:        0,
+		Failed:          0,
+		FailedApikeyIDs: []int64{},
+		FailedDetails:   []string{},
 	}
 
 	if len(basicKeys) > 0 {
@@ -385,6 +385,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 				s.log.Error("migating to service accounts failed with error", err.Error())
 				migrationResult.Failed++
 				migrationResult.FailedDetails = append(migrationResult.FailedDetails, fmt.Sprintf("API key name: %s - Error: %s", key.Name, err.Error()))
+				migrationResult.FailedApikeyIDs = append(migrationResult.FailedApikeyIDs, key.ID)
 			} else {
 				migrationResult.Migrated++
 				s.log.Debug("API key converted to service account token", "keyId", key.ID)
