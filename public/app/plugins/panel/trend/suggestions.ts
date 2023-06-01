@@ -1,8 +1,7 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, VizLegendOptions } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/trend/panelcfg/x/TrendPanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { Options } from './panelcfg.gen';
 
 export class TrendSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

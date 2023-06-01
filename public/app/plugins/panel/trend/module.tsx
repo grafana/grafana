@@ -1,10 +1,10 @@
 import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { Options, FieldConfig } from '@grafana/schema/src/raw/composable/trend/panelcfg/x/TrendPanelCfg_types.gen';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
-import { FieldConfig, Options } from './panelcfg.gen';
 import { TrendSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)

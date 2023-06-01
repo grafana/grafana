@@ -3,13 +3,12 @@ import React, { useMemo } from 'react';
 import { FieldType, PanelProps } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/trend/panelcfg/x/TrendPanelCfg_types.gen';
 import { KeyboardPlugin, TimeSeries, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
-
-import { Options } from './panelcfg.gen';
 
 export const TrendPanel = ({
   data,
