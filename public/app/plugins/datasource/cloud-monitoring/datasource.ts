@@ -112,7 +112,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     const queries = options.targets;
 
     if (!queries.length) {
-      return lastValueFrom(of({ results: [] }));
+      return lastValueFrom(of<{ [key: string]: any }>({}));
     }
 
     return lastValueFrom(
