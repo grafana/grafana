@@ -420,7 +420,7 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data ?? [];
+    return res.data || [];
   }
 
   // We need a specific metadata method for stats endpoint as it does not return res.data,
