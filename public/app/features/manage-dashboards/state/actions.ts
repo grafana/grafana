@@ -1,5 +1,7 @@
+import { lastValueFrom } from 'rxjs';
+
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getDataSourceSrv, locationService, getBackendSrv, isFetchError, BackendSrvRequest } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -285,15 +287,34 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export function saveDashboard(options: SaveDashboardCommand) {
+interface SaveDashboardResponse {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
+}
+
+export async function saveDashboard(
+  cmd: SaveDashboardCommand,
+  requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
+) {
   dashboardWatcher.ignoreNextSave();
 
-  return getBackendSrv().post('/api/dashboards/db/', {
-    dashboard: options.dashboard,
-    message: options.message ?? '',
-    overwrite: options.overwrite ?? false,
-    folderUid: options.folderUid,
-  });
+  return lastValueFrom(
+    getBackendSrv().fetch<SaveDashboardResponse>({
+      url: '/api/dashboards/db/',
+      method: 'POST',
+      data: {
+        dashboard: cmd.dashboard,
+        message: cmd.message ?? '',
+        overwrite: cmd.overwrite ?? false,
+        folderUid: cmd.folderUid,
+      },
+      ...requestOptions,
+    })
+  );
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
