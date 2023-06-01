@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -38,6 +39,7 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
+	cacheService         *localcache.CacheService
 
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
@@ -54,6 +56,7 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
+	cacheService *localcache.CacheService,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
 	srv := &Service{
@@ -67,6 +70,7 @@ func ProvideService(
 		bus:                  bus,
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
+		cacheService:         cacheService,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -524,6 +528,10 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return toFolderError(err)
 	}
+
+	s.cacheService.Delete(fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_UID_PREFIX, dashFolder.OrgID, dashFolder.UID))
+	s.cacheService.Delete(fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_TITLE_PREFIX, dashFolder.OrgID, dashFolder.Title))
+	s.cacheService.Delete(fmt.Sprintf("%s-%d-%d", CACHING_FOLDER_BY_ID_PREFIX, dashFolder.OrgID, dashFolder.ID))
 	return nil
 }
 

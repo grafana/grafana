@@ -1095,7 +1095,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	features := featuremgmt.WithFeatures()
 
 	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
+		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures(), localcache.ProvideService())
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(

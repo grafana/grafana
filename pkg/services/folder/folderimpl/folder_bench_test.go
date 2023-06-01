@@ -73,13 +73,13 @@ func benchmarkFolderService_GetChildren(b *testing.B, folderNum int, parentUID s
 	origConcurrencyFactor := concurrencyFactor
 	concurrencyFactor = overrideConcurrencyFactor
 
-	origCaching := caching
-	caching = overrideCaching
+	origCaching := CACHING
+	CACHING = overrideCaching
 
 	b.Cleanup(func() {
 		guardian.New = origNewGuardian
 		concurrencyFactor = origConcurrencyFactor
-		caching = origCaching
+		CACHING = origCaching
 	})
 
 	serviceWithFlagOn := &Service{

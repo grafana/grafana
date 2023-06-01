@@ -361,7 +361,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
 
-	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db, localcache.ProvideService()), db, features)
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db, localcache.ProvideService()), db, features, localcache.ProvideService())
 
 	// create parent folder
 	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
