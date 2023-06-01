@@ -787,6 +787,15 @@ def verify_i18n_step():
             "yarn-install",
         ],
         "commands": [
+            "yarn run i18n:extract",
+            # Verify that translation extraction has been committed
+            '''
+            file_diff=$(git diff --stat)
+            if [ -n "$file_diff" ]; then
+                echo "Translation extraction has not been committed. Please commit the changes and push again."
+                exit 1
+            fi
+            ''',
             "yarn run i18n:compile",
         ],
     }

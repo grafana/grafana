@@ -239,6 +239,11 @@ steps:
   image: grafana/build-container:1.7.4
   name: lint-frontend
 - commands:
+  - yarn run i18n:extract
+  - "\n            file_diff=$(git diff --stat)\n            if [ -n \"$file_diff\"
+    ]; then\n                echo \"Translation extraction has not been committed.
+    Please commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -1304,6 +1309,11 @@ steps:
   image: grafana/build-container:1.7.4
   name: lint-frontend
 - commands:
+  - yarn run i18n:extract
+  - "\n            file_diff=$(git diff --stat)\n            if [ -n \"$file_diff\"
+    ]; then\n                echo \"Translation extraction has not been committed.
+    Please commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -7226,6 +7236,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 5e3dec801c6d9ca5a7816589132ed52bce960a8a90e23233b7773ceef25601fa
+hmac: fbde9ae014cbfd67f733345075e6fe83ecd0d98604b7e048ae852787e4b134bf
 
 ...
