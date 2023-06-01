@@ -1,12 +1,6 @@
 ---
 aliases:
   - basics/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 title: Fundamentals
 weight: 8
 ---
