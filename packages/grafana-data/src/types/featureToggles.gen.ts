@@ -98,4 +98,5 @@ export interface FeatureToggles {
   enableDatagridEditing?: boolean;
   dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
+  lokiPredefinedOperations?: boolean;
 }

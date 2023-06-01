@@ -326,4 +326,8 @@ const (
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
+
+	// FlagLokiPredefinedOperations
+	// Adds predefined query operations to Loki query editor
+	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
 )
