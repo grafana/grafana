@@ -7,6 +7,10 @@ keywords:
   - export
   - usage-insights
   - enterprise
+labels:
+  products:
+    - cloud
+    - oss
 title: Export logs of usage insights
 weight: 900
 ---
