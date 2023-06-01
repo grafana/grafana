@@ -16,6 +16,10 @@ import {
   NOTIFICATION_PREVIEW_TITLE,
 } from './NotificationPreview';
 
+import 'core-js/stable/structured-clone';
+
+jest.mock('../../../createRouteGroupsMatcherWorker');
+
 jest
   .spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage')
   .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }]);
