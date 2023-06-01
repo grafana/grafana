@@ -1,8 +1,9 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen';
 
 import { prepareHeatmapData } from './fields';
-import { Options, defaultOptions } from './types';
+import { defaultOptions } from './types';
 
 export class HeatmapSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

@@ -3,8 +3,13 @@ import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import {
+  HeatmapColorMode,
+  HeatmapColorOptions,
+  HeatmapColorScale,
+} from '@grafana/schema/src/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen';
 
-import { HeatmapColorOptions, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
+import { defaultOptions } from './types';
 
 // https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
 

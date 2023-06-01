@@ -9,6 +9,11 @@ import {
   ScaleDistributionConfig,
   HeatmapCellLayout,
 } from '@grafana/schema';
+import {
+  Options,
+  HeatmapColorMode,
+  HeatmapColorScale,
+} from '@grafana/schema/src/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen';
 import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
@@ -19,7 +24,7 @@ import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
 import { HeatmapSuggestionsSupplier } from './suggestions';
-import { Options, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
+import { defaultOptions } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({

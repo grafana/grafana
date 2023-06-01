@@ -12,6 +12,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
+import { Options, CellValues } from '@grafana/schema/src/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen';
 import {
   calculateHeatmapFromData,
   isHeatmapCellsDense,
@@ -20,7 +21,6 @@ import {
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
-import { CellValues, Options } from './types';
 import { boundedMinMax } from './utils';
 
 export interface HeatmapData {

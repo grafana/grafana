@@ -1,6 +1,5 @@
 import { createTheme } from '@grafana/data';
-
-import { Options } from './types';
+import { Options } from '@grafana/schema/src/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen';
 
 const theme = createTheme();
 

@@ -7,9 +7,13 @@ import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
 } from '@grafana/schema';
+import {
+  Options,
+  HeatmapColorMode,
+} from '@grafana/schema/src/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen';
 
 import { colorSchemes } from './palettes';
-import { Options, defaultOptions, HeatmapColorMode } from './types';
+import { defaultOptions } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {
