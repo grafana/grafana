@@ -216,8 +216,8 @@ export function EditDataSourceView({
           <div key={extension.id}>
             <Component
               context={{
-                pluginId: dataSource.type,
-                jsonData: dataSource.jsonData,
+                dataSource: omit(dataSource, ['secureJsonData']),
+                dataSourceMeta: dataSourceMeta,
                 setJsonData: (jsonData: Partial<DataSourceJsonData>) =>
                   onOptionsChange({
                     ...dataSource,

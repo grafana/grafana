@@ -3,6 +3,7 @@ import React from 'react';
 import { DataQuery } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
+import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
 
@@ -114,8 +115,14 @@ export type PluginExtensionPanelContext = {
 };
 
 export type PluginExtensionDataSourceConfigContext<JsonData> = {
-  pluginId: string;
-  jsonData: JsonData;
+  // The current datasource settings
+  dataSource: DataSourceSettings;
+
+  // Meta information about the datasource plugin
+  dataSourceMeta: DataSourcePluginMeta;
+
+  // Can be used to update the `jsonData` field on the datasource
+  // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;
 };
 
