@@ -1,8 +1,7 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/stat/panelcfg/x/StatPanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { Options } from './panelcfg.gen';
 
 export class StatSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

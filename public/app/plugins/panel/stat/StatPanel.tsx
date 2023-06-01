@@ -12,11 +12,10 @@ import {
 } from '@grafana/data';
 import { findNumericFieldMinMax } from '@grafana/data/src/field/fieldOverrides';
 import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/stat/panelcfg/x/StatPanelCfg_types.gen';
 import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
-
-import { Options } from './panelcfg.gen';
 
 export class StatPanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (

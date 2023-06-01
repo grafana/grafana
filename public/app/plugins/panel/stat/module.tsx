@@ -1,11 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
 import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
+import { Options, defaultOptions } from '@grafana/schema/src/raw/composable/stat/panelcfg/x/StatPanelCfg_types.gen';
 import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultOptions, Options } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options>(StatPanel)
