@@ -336,7 +336,7 @@ export async function saveDashboard(
       },
       ...requestOptions,
     })
-  );
+  ).then((v) => v.data);
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
