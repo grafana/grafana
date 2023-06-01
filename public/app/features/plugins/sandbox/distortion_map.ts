@@ -1,4 +1,7 @@
+import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
+
+import { isFunction } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
@@ -65,7 +68,7 @@ export function getGeneralSandboxDistortionMap() {
     distortInnerHTML(generalDistortionMap);
     distortCreateElement(generalDistortionMap);
     distortWorkers(generalDistortionMap);
-    distortOwnerDocument(generalDistortionMap);
+    distortDocument(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -142,10 +145,6 @@ function distortAlert(distortions: DistortionMap) {
   if (descriptor?.set) {
     distortions.set(descriptor.set, failToSet);
   }
-}
-
-function isFunction(value: unknown): value is Function {
-  return typeof value === 'function';
 }
 
 function distortInnerHTML(distortions: DistortionMap) {
@@ -240,10 +239,16 @@ function distortWorkers(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(Worker.prototype, 'postMessage');
   function getPostMessageDistortion(originalMethod: unknown) {
     return function postMessageDistortion(this: Worker, ...args: unknown[]) {
-      // clonse deep to remove proxy objects that can't be serialized
-      const newArgs: unknown[] = cloneDeep(args);
-      if (isFunction(originalMethod)) {
-        originalMethod.apply(this, newArgs);
+      // proxies can't be serialized by postMessage algorithm
+      // the only way to pass it through is to send a cloned version
+      // objects passed to postMessage should be clonable
+      try {
+        const newArgs: unknown[] = cloneDeep(args);
+        if (isFunction(originalMethod)) {
+          originalMethod.apply(this, newArgs);
+        }
+      } catch (e) {
+        throw new Error('postMessage arguments are invalid objects');
       }
     };
   }
@@ -252,7 +257,7 @@ function distortWorkers(distortions: DistortionMap) {
   }
 }
 
-function distortOwnerDocument(distortions: DistortionMap) {
+function distortDocument(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'defaultView');
   if (descriptor?.get) {
     distortions.set(descriptor.get, () => {
@@ -260,5 +265,16 @@ function distortOwnerDocument(distortions: DistortionMap) {
         return window;
       };
     });
+  }
+
+  const documentForbiddenMethods = ['write'];
+  for (const method of documentForbiddenMethods) {
+    const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, method);
+    if (descriptor?.set) {
+      distortions.set(descriptor.set, failToSet);
+    }
+    if (descriptor?.value) {
+      distortions.set(descriptor.value, failToSet);
+    }
   }
 }

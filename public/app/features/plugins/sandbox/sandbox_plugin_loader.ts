@@ -15,6 +15,11 @@ type PluginFactoryFunction = (...args: CompartmentDependencyModule[]) => {
   plugin: GrafanaPlugin;
 };
 
+// Loads near membrane custom formatter for near membrane proxy objects.
+if (config.buildInfo.env === 'development') {
+  require('./custom_formatter');
+}
+
 const pluginImportCache = new Map<string, Promise<unknown>>();
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<unknown> {
