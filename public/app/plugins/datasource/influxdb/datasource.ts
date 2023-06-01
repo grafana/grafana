@@ -118,11 +118,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   username: string;
   password: string;
   name: string;
-  database: any;
-  basicAuth: any;
-  withCredentials: any;
+  database?: string;
+  basicAuth?: string;
+  withCredentials?: boolean;
   access: 'direct' | 'proxy';
-  interval: any;
   responseParser: ResponseParser;
   httpMode: string;
   isFlux: boolean;
@@ -146,7 +145,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.access = instanceSettings.access;
-    const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
+    const settingsData: InfluxOptions = instanceSettings.jsonData ?? {};
     this.database = settingsData.dbName ?? instanceSettings.database;
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
@@ -266,7 +265,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // Fallback to classic query support
-    return this.classicQuery(request);
+    const resp = this.classicQuery(request);
+    resp.subscribe((r) => console.log(r));
+    return resp;
   }
 
   getQueryDisplayText(query: InfluxQuery) {
@@ -297,7 +298,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       query = this.applyVariables(query, scopedVars, rest);
     }
 
@@ -437,7 +438,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       // We want to send our query to the backend as a raw query
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
