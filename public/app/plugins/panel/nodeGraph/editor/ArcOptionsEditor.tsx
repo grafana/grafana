@@ -2,13 +2,15 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { Field, StandardEditorProps } from '@grafana/data';
+import {
+  Options,
+  ArcOption,
+} from '@grafana/schema/src/raw/composable/nodegraph/panelcfg/x/NodeGraphPanelCfg_types.gen';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { ArcOption, NodeGraphOptions } from '../types';
-
 type Settings = { filter: (field: Field) => boolean };
-type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;
+type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, Options, undefined>;
 
 export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorProps) => {
   const styles = useStyles2(getStyles);

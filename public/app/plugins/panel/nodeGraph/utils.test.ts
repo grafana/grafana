@@ -1,6 +1,7 @@
 import { DataFrame, FieldType, createDataFrame } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/nodegraph/panelcfg/x/NodeGraphPanelCfg_types.gen';
 
-import { NodeDatum, NodeGraphOptions } from './types';
+import { NodeDatum } from './types';
 import {
   findConnectedNodesForEdge,
   findConnectedNodesForNode,
@@ -185,7 +186,7 @@ describe('processNodes', () => {
       }),
     ];
 
-    const panelOptions: NodeGraphOptions = {
+    const panelOptions: Options = {
       nodes: {
         mainStatUnit: 'r/min',
         secondaryStatUnit: 'ms/r',

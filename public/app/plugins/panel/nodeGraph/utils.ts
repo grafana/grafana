@@ -8,8 +8,9 @@ import {
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/nodegraph/panelcfg/x/NodeGraphPanelCfg_types.gen';
 
-import { EdgeDatum, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
+import { EdgeDatum, NodeDatum, NodeDatumFromEdge } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -490,7 +491,7 @@ export function graphBounds(nodes: NodeDatum[]): Bounds {
   };
 }
 
-export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphOptions) {
+export function getNodeGraphDataFrames(frames: DataFrame[], options?: Options) {
   // TODO: this not in sync with how other types of responses are handled. Other types have a query response
   //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
   //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
@@ -519,7 +520,7 @@ export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphO
   return nodeGraphFrames;
 }
 
-export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {
+export const applyOptionsToFrames = (frames: DataFrame[], options: Options): DataFrame[] => {
   return frames.map((frame) => {
     const fieldsCache = new FieldCache(frame);
 
