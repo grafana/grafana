@@ -95,9 +95,9 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 TODO -- should not be a public interface on its own, but required for Veneer
 
-| Property | Type                                  | Required | Default | Description |
-|----------|---------------------------------------|----------|---------|-------------|
-| `list`   | [AnnotationQuery](#annotationquery)[] | No       |         |             |
+| Property | Type                                  | Required | Default | Description         |
+|----------|---------------------------------------|----------|---------|---------------------|
+| `list`   | [AnnotationQuery](#annotationquery)[] | No       |         | List of annotations |
 
 ### AnnotationQuery
 
@@ -616,8 +616,8 @@ Generic variable model to be used for all variable types
 | `type`        | string                              | **Yes**  |                                        | Dashboard variable type<br/>Possible values are: `query`, `adhoc`, `constant`, `datasource`, `interval`, `textbox`, `custom`, `system`.                                                                                                                     |
 | `allFormat`   | string                              | No       |                                        | Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.                                                                                                                                                             |
 | `current`     | [VariableOption](#variableoption)   | No       |                                        | Option to be selected in a variable.                                                                                                                                                                                                                        |
-| `datasource`  | [object](#datasource) or null       | No       |                                        | Data source used to fetch values for a variable                                                                                                                                                                                                             |
-| `description` | string or null                      | No       |                                        | Description of variable                                                                                                                                                                                                                                     |
+| `datasource`  | [DataSourceRef](#datasourceref)     | No       |                                        | Ref to a DataSource instance                                                                                                                                                                                                                                |
+| `description` | string                              | No       |                                        | Description of variable. It can be defined but `null`.                                                                                                                                                                                                      |
 | `label`       | string                              | No       |                                        | Optional display name                                                                                                                                                                                                                                       |
 | `multi`       | boolean                             | No       | `false`                                | Whether multiple values can be selected or not from variable value list                                                                                                                                                                                     |
 | `options`     | [VariableOption](#variableoption)[] | No       |                                        | Options that can be selected for a variable.                                                                                                                                                                                                                |
@@ -633,17 +633,6 @@ Option to be selected in a variable.
 | `text`     |         | **Yes**  |         | Text to be displayed for the option   |
 | `value`    |         | **Yes**  |         | Value of the option                   |
 | `selected` | boolean | No       |         | Whether the option is selected or not |
-
-### Datasource
-
-Data source used to fetch values for a variable
-
-It extends [DataSourceRef](#datasourceref).
-
-| Property | Type   | Required | Default | Description                                                                         |
-|----------|--------|----------|---------|-------------------------------------------------------------------------------------|
-| `type`   | string | No       |         | *(Inherited from [DataSourceRef](#datasourceref))*<br/>The plugin type-id           |
-| `uid`    | string | No       |         | *(Inherited from [DataSourceRef](#datasourceref))*<br/>Specific datasource instance |
 
 ### Time
 

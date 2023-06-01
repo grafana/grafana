@@ -16,8 +16,10 @@ export enum VariableHide {
   hideVariable,
 }
 
-export interface VariableModel extends Omit<raw.VariableModel, 'hide'> {
+export interface VariableModel extends Omit<raw.VariableModel, 'hide' | 'description' | 'datasource'> {
   hide: VariableHide;
+  description?: string | null;
+  datasource: DataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations'> {

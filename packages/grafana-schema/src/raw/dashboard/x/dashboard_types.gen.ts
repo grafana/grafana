@@ -59,6 +59,9 @@ export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
  * TODO -- should not be a public interface on its own, but required for Veneer
  */
 export interface AnnotationContainer {
+  /**
+   * List of annotations
+   */
   list?: Array<AnnotationQuery>;
 }
 
@@ -124,13 +127,13 @@ export interface VariableModel {
    */
   current?: VariableOption;
   /**
-   * Data source used to fetch values for a variable
+   * Data source used to fetch values for a variable. It can be defined but `null`.
    */
-  datasource?: (DataSourceRef | null);
+  datasource?: DataSourceRef;
   /**
-   * Description of variable
+   * Description of variable. It can be defined but `null`.
    */
-  description?: (string | null);
+  description?: string;
   /**
    * Visibility configuration for the variable
    */
@@ -865,7 +868,10 @@ export interface HeatmapPanel {
 
 export interface Dashboard {
   /**
-   * TODO docs
+   * Contains the list of annotations that are associated with the dashboard.
+   * Annotations are used to overlay event markers and overlay event tags on graphs.
+   * Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+   * See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
    */
   annotations?: AnnotationContainer;
   /**

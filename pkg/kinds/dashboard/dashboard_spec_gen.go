@@ -159,6 +159,7 @@ const (
 
 // TODO -- should not be a public interface on its own, but required for Veneer
 type AnnotationContainer struct {
+	// List of annotations
 	List []AnnotationQuery `json:"list,omitempty"`
 }
 
@@ -844,14 +845,11 @@ type VariableModel struct {
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
-	// Data source used to fetch values for a variable
-	Datasource *struct {
-		// DataSourceRef Ref to a DataSource instance
-		DataSourceRef
-	} `json:"datasource"`
+	// Ref to a DataSource instance
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
-	// Description of variable
-	Description *string `json:"description"`
+	// Description of variable. It can be defined but `null`.
+	Description *string `json:"description,omitempty"`
 
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).

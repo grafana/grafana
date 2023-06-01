@@ -102,7 +102,10 @@ lineage: schemas: [{
 				list?: [...#VariableModel] @grafanamaturity(NeedsExpertReview)
 			}
 
-			// TODO docs
+			// Contains the list of annotations that are associated with the dashboard.
+			// Annotations are used to overlay event markers and overlay event tags on graphs.
+			// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+			// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
 			annotations?: #AnnotationContainer
 
 			// Links with references to other dashboards or external websites.
@@ -146,6 +149,7 @@ lineage: schemas: [{
 			// annoying... but required so that the list is defined using the nested Veneer
 			@grafana(TSVeneer="type")
 
+			// List of annotations
 			list?: [...#AnnotationQuery] @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface")
 
@@ -198,12 +202,12 @@ lineage: schemas: [{
 			hide: #VariableHide
 			// Whether the variable value should be managed by URL query params or not
 			skipUrlSync: bool | *false
-			// Description of variable
-			description?: string | null
+			// Description of variable. It can be defined but `null`.
+			description?: string
 			// Query used to fetch values for a variable
 			query?: string | {...}
-			// Data source used to fetch values for a variable
-			datasource?: #DataSourceRef | null
+			// Data source used to fetch values for a variable. It can be defined but `null`.
+			datasource?: #DataSourceRef
 			// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
 			allFormat?: string
 			// Shows current selected variable text/value on the dashboard
