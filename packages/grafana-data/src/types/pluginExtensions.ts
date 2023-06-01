@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
@@ -114,9 +114,9 @@ export type PluginExtensionPanelContext = {
   data?: PanelData;
 };
 
-export type PluginExtensionDataSourceConfigContext<JsonData> = {
+export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJsonData = DataSourceJsonData> = {
   // The current datasource settings
-  dataSource: DataSourceSettings;
+  dataSource: DataSourceSettings<JsonData>;
 
   // Meta information about the datasource plugin
   dataSourceMeta: DataSourcePluginMeta;

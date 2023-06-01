@@ -123,7 +123,6 @@ export function EditDataSourceView({
   const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
-  const protectedJsonDataFields = ['authType', 'defaultRegion', 'profile', 'manageAlerts', 'alertmanagerUid'];
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -218,10 +217,10 @@ export function EditDataSourceView({
               context={{
                 dataSource: omit(dataSource, ['secureJsonData']),
                 dataSourceMeta: dataSourceMeta,
-                setJsonData: (jsonData: Partial<DataSourceJsonData>) =>
+                setJsonData: (jsonData) =>
                   onOptionsChange({
                     ...dataSource,
-                    jsonData: { ...dataSource.jsonData, ...omit(jsonData, protectedJsonDataFields) },
+                    jsonData: { ...dataSource.jsonData, ...jsonData },
                   }),
               }}
             />
