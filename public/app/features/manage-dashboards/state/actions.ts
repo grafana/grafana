@@ -66,7 +66,7 @@ const isDataSourceBeingConsumed = (
 };
 
 function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
-  const filteredUsedInputs = dashboardJson.__inputs.filter((input: any) => {
+  const filteredUsedInputs = dashboardJson.__inputs?.filter((input: any) => {
     if (input.type !== InputType.DataSource) {
       return true;
     }

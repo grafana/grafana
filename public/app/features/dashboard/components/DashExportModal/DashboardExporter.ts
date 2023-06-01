@@ -31,9 +31,9 @@ interface Requires {
 }
 
 export interface ExternalDashboard {
-  __inputs: Input[];
-  __elements: Record<string, LibraryElementExport>;
-  __requires: Array<Requires[string]>;
+  __inputs?: Input[];
+  __elements?: Record<string, LibraryElementExport>;
+  __requires?: Array<Requires[string]>;
   panels: Array<PanelModel | PanelWithExportableLibraryPanel>;
 }
 
