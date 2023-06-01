@@ -48,7 +48,7 @@ export const QuerySettings = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form">
               <FormField
-                label="Presaved operations"
+                label="Predefined operations"
                 labelWidth={11}
                 inputEl={
                   <input
@@ -61,11 +61,11 @@ export const QuerySettings = (props: Props) => {
                   />
                 }
                 tooltip={
-                  <>
-                    Loki queries must contain a limit of the maximum number of lines returned (default: 1000). Increase
-                    this limit to have a bigger result set for ad-hoc analysis. Decrease this limit if your browser
-                    becomes sluggish when displaying the log results.
-                  </>
+                  <div>
+                    {
+                      'Predefined operations are used as initial state for your queries. They are useful, if you want to unpack, parse or format all log lines. Currently we support only log operations starting with |. For example: | unpack | line_format {{.message}}.'
+                    }
+                  </div>
                 }
               />
             </div>
