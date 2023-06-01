@@ -58,8 +58,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
   }
 
   return new Promise(async (resolve, reject) => {
-    const isDevMode = config.buildInfo.env === 'development';
-
     // each plugin has its own sandbox
     const sandboxEnvironment = createVirtualEnvironment(window, {
       // distortions are interceptors to modify the behavior of objects when

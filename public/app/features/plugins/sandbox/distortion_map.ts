@@ -1,4 +1,3 @@
-import { isNearMembraneProxy } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 
 import { isFunction } from './utils';
