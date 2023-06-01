@@ -607,25 +607,22 @@ Contains the list of configured template variables with their saved values along
 
 ### VariableModel
 
-FROM: packages/grafana-data/src/types/templateVars.ts
-TODO docs
-TODO what about what's in public/app/features/types.ts?
-TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+Generic variable model to be used for all variable types
 
 | Property      | Type                                | Required | Default                                | Description                                                                                                                                                                                                                                                 |
 |---------------|-------------------------------------|----------|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `current`     | [VariableOption](#variableoption)   | **Yes**  |                                        | Option to be selected in a variable.                                                                                                                                                                                                                        |
 | `hide`        | integer                             | **Yes**  |                                        | Determine if the variable shows on dashboard<br/>Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).<br/>Possible values are: `0`, `1`, `2`.                                                                               |
 | `id`          | string                              | **Yes**  | `00000000-0000-0000-0000-000000000000` | Unique numeric identifier for the dashboard.                                                                                                                                                                                                                |
 | `name`        | string                              | **Yes**  |                                        | Name of variable                                                                                                                                                                                                                                            |
 | `skipUrlSync` | boolean                             | **Yes**  | `false`                                | Whether the variable value should be managed by URL query params or not                                                                                                                                                                                     |
-| `type`        | string                              | **Yes**  |                                        | FROM: packages/grafana-data/src/types/templateVars.ts<br/>TODO docs<br/>TODO this implies some wider pattern/discriminated union, probably?<br/>Possible values are: `query`, `adhoc`, `constant`, `datasource`, `interval`, `textbox`, `custom`, `system`. |
+| `type`        | string                              | **Yes**  |                                        | Dashboard variable type<br/>Possible values are: `query`, `adhoc`, `constant`, `datasource`, `interval`, `textbox`, `custom`, `system`.                                                                                                                     |
 | `allFormat`   | string                              | No       |                                        | Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.                                                                                                                                                             |
-| `datasource`  | [DataSourceRef](#datasourceref)     | No       |                                        | Ref to a DataSource instance                                                                                                                                                                                                                                |
-| `description` | string                              | No       |                                        | Description of variable                                                                                                                                                                                                                                     |
+| `current`     | [VariableOption](#variableoption)   | No       |                                        | Option to be selected in a variable.                                                                                                                                                                                                                        |
+| `datasource`  | [object](#datasource) or null       | No       |                                        | Data source used to fetch values for a variable                                                                                                                                                                                                             |
+| `description` | string or null                      | No       |                                        | Description of variable                                                                                                                                                                                                                                     |
 | `label`       | string                              | No       |                                        | Optional display name                                                                                                                                                                                                                                       |
 | `multi`       | boolean                             | No       | `false`                                | Whether multiple values can be selected or not from variable value list                                                                                                                                                                                     |
-| `options`     | [VariableOption](#variableoption)[] | No       |                                        | Whether multiple values can be selected or not from variable value list                                                                                                                                                                                     |
+| `options`     | [VariableOption](#variableoption)[] | No       |                                        | Options that can be selected for a variable.                                                                                                                                                                                                                |
 | `query`       |                                     | No       |                                        | Query used to fetch values for a variable                                                                                                                                                                                                                   |
 | `refresh`     | integer                             | No       |                                        | Options to config when to refresh a variable<br/>0: Never refresh the variable<br/>1: Queries the data source every time the dashboard loads.<br/>2: Queries the data source when the dashboard time range changes.<br/>Possible values are: `0`, `1`, `2`. |
 
@@ -633,12 +630,22 @@ TODO there appear to be a lot of different kinds of [template] vars here? if so 
 
 Option to be selected in a variable.
 
-| Property   | Type    | Required | Default | Description |
-|------------|---------|----------|---------|-------------|
-| `selected` | boolean | **Yes**  |         |             |
-| `text`     |         | **Yes**  |         |             |
-| `value`    |         | **Yes**  |         |             |
-| `isNone`   | boolean | No       |         |             |
+| Property   | Type    | Required | Default | Description                           |
+|------------|---------|----------|---------|---------------------------------------|
+| `text`     |         | **Yes**  |         | Text to be displayed for the option   |
+| `value`    |         | **Yes**  |         | Value of the option                   |
+| `selected` | boolean | No       |         | Whether the option is selected or not |
+
+### Datasource
+
+Data source used to fetch values for a variable
+
+It extends [DataSourceRef](#datasourceref).
+
+| Property | Type   | Required | Default | Description                                                                         |
+|----------|--------|----------|---------|-------------------------------------------------------------------------------------|
+| `type`   | string | No       |         | *(Inherited from [DataSourceRef](#datasourceref))*<br/>The plugin type-id           |
+| `uid`    | string | No       |         | *(Inherited from [DataSourceRef](#datasourceref))*<br/>Specific datasource instance |
 
 ### Time
 

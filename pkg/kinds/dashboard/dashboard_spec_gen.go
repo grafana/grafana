@@ -777,22 +777,22 @@ type ValueMappingResult struct {
 // Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 type VariableHide int
 
-// FROM: packages/grafana-data/src/types/templateVars.ts
-// TODO docs
-// TODO what about what's in public/app/features/types.ts?
-// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+// Generic variable model to be used for all variable types
 type VariableModel struct {
 	// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
 	AllFormat *string `json:"allFormat,omitempty"`
 
 	// Option to be selected in a variable.
-	Current VariableOption `json:"current"`
+	Current *VariableOption `json:"current,omitempty"`
 
-	// Ref to a DataSource instance
-	Datasource *DataSourceRef `json:"datasource,omitempty"`
+	// Data source used to fetch values for a variable
+	Datasource *struct {
+		// DataSourceRef Ref to a DataSource instance
+		DataSourceRef
+	} `json:"datasource"`
 
 	// Description of variable
-	Description *string `json:"description,omitempty"`
+	Description *string `json:"description"`
 
 	// Determine if the variable shows on dashboard
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
@@ -810,7 +810,7 @@ type VariableModel struct {
 	// Name of variable
 	Name string `json:"name"`
 
-	// Whether multiple values can be selected or not from variable value list
+	// Options that can be selected for a variable.
 	Options []VariableOption `json:"options,omitempty"`
 
 	// Query used to fetch values for a variable
@@ -825,18 +825,20 @@ type VariableModel struct {
 	// Whether the variable value should be managed by URL query params or not
 	SkipUrlSync bool `json:"skipUrlSync"`
 
-	// FROM: packages/grafana-data/src/types/templateVars.ts
-	// TODO docs
-	// TODO this implies some wider pattern/discriminated union, probably?
+	// Dashboard variable type
 	Type VariableType `json:"type"`
 }
 
 // Option to be selected in a variable.
 type VariableOption struct {
-	IsNone   *bool       `json:"isNone,omitempty"`
-	Selected bool        `json:"selected"`
-	Text     interface{} `json:"text"`
-	Value    interface{} `json:"value"`
+	// Whether the option is selected or not
+	Selected *bool `json:"selected,omitempty"`
+
+	// Text to be displayed for the option
+	Text interface{} `json:"text"`
+
+	// Value of the option
+	Value interface{} `json:"value"`
 }
 
 // Options to config when to refresh a variable
@@ -845,7 +847,5 @@ type VariableOption struct {
 // 2: Queries the data source when the dashboard time range changes.
 type VariableRefresh int
 
-// FROM: packages/grafana-data/src/types/templateVars.ts
-// TODO docs
-// TODO this implies some wider pattern/discriminated union, probably?
+// Dashboard variable type
 type VariableType string

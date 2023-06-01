@@ -16,18 +16,8 @@ export enum VariableHide {
   hideVariable,
 }
 
-export interface VariableModel
-  extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'datasource'> {
-  // Overrides nullable properties because CUE doesn't support null values
-  // TODO remove explicit nulls
-  rootStateKey: string | null;
-  // TODO remove explicit nulls
-  error: any | null;
-  // TODO remove explicit nulls
-  description: string | null;
+export interface VariableModel extends Omit<raw.VariableModel, 'hide'> {
   hide: VariableHide;
-  // TODO remove explicit nulls
-  datasource: CommonDataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations'> {
@@ -67,15 +57,8 @@ export interface DataTransformerConfig<TOptions = any> extends raw.DataTransform
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
-  // TODO remove explicit nulls
-  rootStateKey: null,
-  // TODO remove explicit nulls
-  error: null,
-  // TODO remove explicit nulls
   description: null,
   hide: VariableHide.dontHide,
-  state: raw.LoadingState.NotStarted,
-  // TODO remove explicit nulls
   datasource: null,
 } as VariableModel;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;

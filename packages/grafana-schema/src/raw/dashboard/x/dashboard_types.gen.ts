@@ -112,10 +112,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 };
 
 /**
- * FROM: packages/grafana-data/src/types/templateVars.ts
- * TODO docs
- * TODO what about what's in public/app/features/types.ts?
- * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+ * Generic variable model to be used for all variable types
  */
 export interface VariableModel {
   /**
@@ -125,15 +122,15 @@ export interface VariableModel {
   /**
    * Shows current selected variable text/value on the dashboard
    */
-  current: VariableOption;
+  current?: VariableOption;
   /**
    * Data source used to fetch values for a variable
    */
-  datasource?: DataSourceRef;
+  datasource?: (DataSourceRef | null);
   /**
    * Description of variable
    */
-  description?: string;
+  description?: (string | null);
   /**
    * Visibility configuration for the variable
    */
@@ -155,7 +152,7 @@ export interface VariableModel {
    */
   name: string;
   /**
-   * Whether multiple values can be selected or not from variable value list
+   * Options that can be selected for a variable.
    */
   options?: Array<VariableOption>;
   /**
@@ -184,9 +181,17 @@ export const defaultVariableModel: Partial<VariableModel> = {
  * Option to be selected in a variable.
  */
 export interface VariableOption {
-  isNone?: boolean;
-  selected: boolean;
+  /**
+   * Whether the option is selected or not
+   */
+  selected?: boolean;
+  /**
+   * Text to be displayed for the option
+   */
   text: (string | Array<string>);
+  /**
+   * Value of the option
+   */
   value: (string | Array<string>);
 }
 
@@ -319,9 +324,7 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
 export type DashboardLinkType = ('link' | 'dashboards');
 
 /**
- * FROM: packages/grafana-data/src/types/templateVars.ts
- * TODO docs
- * TODO this implies some wider pattern/discriminated union, probably?
+ * Dashboard variable type
  */
 export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
