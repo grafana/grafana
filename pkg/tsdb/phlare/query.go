@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
 	"github.com/xlab/treeprint"
+	"golang.org/x/sync/errgroup"
 )
 
 type queryModel struct {
@@ -41,63 +43,76 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 		return response
 	}
 
+	responseMutex := sync.Mutex{}
+	g, gCtx := errgroup.WithContext(ctx)
 	if query.QueryType == queryTypeMetrics || query.QueryType == queryTypeBoth {
-		var dsJson dsJsonModel
-		err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
-		if err != nil {
-			response.Error = fmt.Errorf("error unmarshaling datasource json model: %v", err)
-			return response
-		}
-
-		parsedInterval := time.Second * 15
-		if dsJson.MinStep != "" {
-			parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
+		g.Go(func() error {
+			var dsJson dsJsonModel
+			err = json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &dsJson)
 			if err != nil {
-				parsedInterval = time.Second * 15
-				logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+				return fmt.Errorf("error unmarshaling datasource json model: %v", err)
 			}
-		}
-		logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
-		seriesResp, err := d.client.GetSeries(
-			ctx,
-			qm.ProfileTypeId,
-			qm.LabelSelector,
-			query.TimeRange.From.UnixMilli(),
-			query.TimeRange.To.UnixMilli(),
-			qm.GroupBy,
-			math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
-		)
-		if err != nil {
-			logger.Error("Querying SelectSeries()", "err", err)
-			response.Error = err
-			return response
-		}
-		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
+
+			parsedInterval := time.Second * 15
+			if dsJson.MinStep != "" {
+				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
+				if err != nil {
+					parsedInterval = time.Second * 15
+					logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+				}
+			}
+			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
+			seriesResp, err := d.client.GetSeries(
+				gCtx,
+				qm.ProfileTypeId,
+				qm.LabelSelector,
+				query.TimeRange.From.UnixMilli(),
+				query.TimeRange.To.UnixMilli(),
+				qm.GroupBy,
+				math.Max(query.Interval.Seconds(), parsedInterval.Seconds()),
+			)
+			if err != nil {
+				logger.Error("Querying SelectSeries()", "err", err)
+				return err
+			}
+			// add the frames to the response.
+			responseMutex.Lock()
+			response.Frames = append(response.Frames, seriesToDataFrames(seriesResp)...)
+			responseMutex.Unlock()
+			return nil
+		})
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		logger.Debug("Calling GetProfile", "queryModel", qm)
-		prof, err := d.client.GetProfile(ctx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli())
-		if err != nil {
-			logger.Error("Error GetProfile()", "err", err)
-			response.Error = err
-			return response
-		}
-		frame := responseToDataFrames(prof)
-		response.Frames = append(response.Frames, frame)
-
-		// If query called with streaming on then return a channel
-		// to subscribe on a client-side and consume updates from a plugin.
-		// Feel free to remove this if you don't need streaming for your datasource.
-		if qm.WithStreaming {
-			channel := live.Channel{
-				Scope:     live.ScopeDatasource,
-				Namespace: pCtx.DataSourceInstanceSettings.UID,
-				Path:      "stream",
+		g.Go(func() error {
+			logger.Debug("Calling GetProfile", "queryModel", qm)
+			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+			if err != nil {
+				logger.Error("Error GetProfile()", "err", err)
+				return err
 			}
-			frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
-		}
+			frame := responseToDataFrames(prof)
+			responseMutex.Lock()
+			response.Frames = append(response.Frames, frame)
+			responseMutex.Unlock()
+
+			// If query called with streaming on then return a channel
+			// to subscribe on a client-side and consume updates from a plugin.
+			// Feel free to remove this if you don't need streaming for your datasource.
+			if qm.WithStreaming {
+				channel := live.Channel{
+					Scope:     live.ScopeDatasource,
+					Namespace: pCtx.DataSourceInstanceSettings.UID,
+					Path:      "stream",
+				}
+				frame.SetMeta(&data.FrameMeta{Channel: channel.String()})
+			}
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		response.Error = g.Wait()
 	}
 
 	return response

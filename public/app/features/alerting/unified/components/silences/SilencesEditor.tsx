@@ -1,17 +1,17 @@
 import { css, cx } from '@emotion/css';
 import { isEqual, pickBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
 import {
-  DefaultTimeZone,
-  parseDuration,
-  intervalToAbbreviatedDurationString,
   addDurationToDate,
   dateTime,
-  isValidDate,
+  DefaultTimeZone,
   GrafanaTheme2,
+  intervalToAbbreviatedDurationString,
+  isValidDate,
+  parseDuration,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
@@ -23,7 +23,7 @@ import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { createOrUpdateSilenceAction } from '../../state/actions';
 import { SilenceFormFields } from '../../types/silence-form';
-import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
+import { matcherFieldToMatcher, matcherToMatcherField } from '../../utils/alertmanager';
 import { parseQueryParamMatchers } from '../../utils/matchers';
 import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
@@ -246,12 +246,8 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
               Saving...
             </Button>
           )}
-          {!loading && <Button type="submit">Submit</Button>}
-          <LinkButton
-            href={makeAMLink('alerting/silences', alertManagerSourceName)}
-            variant={'secondary'}
-            fill="outline"
-          >
+          {!loading && <Button type="submit">Save silence</Button>}
+          <LinkButton href={makeAMLink('alerting/silences', alertManagerSourceName)} variant={'secondary'}>
             Cancel
           </LinkButton>
         </div>

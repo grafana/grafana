@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { RadioButtonGroup, LinkButton, FilterInput } from '@grafana/ui';
+import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, StoreState } from 'app/types';
@@ -49,18 +49,18 @@ export const UsersActionBarUnconnected = ({
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
   const canAddToOrg: boolean = contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
-  // backend rejects invitations if the login form is disabled
-  const showInviteButton: boolean = canAddToOrg && !config.disableLoginForm;
+  // Hide Invite button in case users are managed externally
+  const showInviteButton: boolean = canAddToOrg && !config.externalUserMngInfo;
 
   return (
     <div className="page-action-bar" data-testid="users-action-bar">
-      <div className="gf-form gf-form--grow">
+      <InlineField grow>
         <FilterInput
           value={searchQuery}
           onChange={changeSearchQuery}
           placeholder="Search user by login, email or name"
         />
-      </div>
+      </InlineField>
       {pendingInvitesCount > 0 && (
         <div style={{ marginLeft: '1rem' }}>
           <RadioButtonGroup value={showInvites ? 'invites' : 'users'} options={options} onChange={onShowInvites} />

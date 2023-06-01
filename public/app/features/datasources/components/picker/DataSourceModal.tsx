@@ -10,23 +10,23 @@ import {
   FileDropzone,
   FileDropzoneDefaultChildren,
   CustomScrollbar,
-  LinkButton,
   useStyles2,
   Input,
   Icon,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import * as DFImport from 'app/features/dataframe-import';
-import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
+import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
+import { matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
   UPLOAD_FILE: 'upload_file',
   CONFIG_NEW_DS: 'config_new_ds',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
   SEARCH: 'search',
   DISMISS: 'dismiss',
 };
@@ -52,9 +52,6 @@ export function DataSourceModal({
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
-  const newDataSourceURL = config.featureToggles.dataConnectionsConsole
-    ? CONNECTIONS_ROUTES.DataSourcesNew
-    : DATASOURCES_ROUTES.New;
 
   const onDismissModal = () => {
     onDismiss();
@@ -90,6 +87,7 @@ export function DataSourceModal({
     >
       <div className={styles.leftColumn}>
         <Input
+          autoFocus
           className={styles.searchInput}
           value={search}
           prefix={<Icon name="search" />}
@@ -104,7 +102,18 @@ export function DataSourceModal({
             dashboard={false}
             mixed={false}
             variables
-            filter={(ds) => ds.name.includes(search) && !ds.meta.builtIn}
+            filter={(ds) => matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
+            onChange={onChangeDataSource}
+            current={current}
+            onClickEmptyStateCTA={() =>
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+                src: analyticsInteractionSrc,
+              })
+            }
+          />
+          <BuiltInDataSourceList
+            className={styles.appendBuiltInDataSourcesList}
             onChange={onChangeDataSource}
             current={current}
           />
@@ -112,14 +121,9 @@ export function DataSourceModal({
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <DataSourceList
-            className={styles.builtInDataSourceList}
-            filter={(ds) => !!ds.meta.builtIn}
-            dashboard
-            mixed
-            onChange={onChangeDataSource}
-            current={current}
-          />
+          <CustomScrollbar className={styles.builtInDataSourcesList}>
+            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+          </CustomScrollbar>
           {enableFileUpload && (
             <FileDropzone
               readAs="readAsArrayBuffer"
@@ -143,19 +147,18 @@ export function DataSourceModal({
             </FileDropzone>
           )}
         </div>
-        <div className={styles.dsCTAs}>
-          <LinkButton
+        <div className={styles.newDSSection}>
+          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
+          <AddNewDataSourceButton
             variant="secondary"
-            href={newDataSourceURL}
             onClick={() => {
               reportInteraction(INTERACTION_EVENT_NAME, {
                 item: INTERACTION_ITEM.CONFIG_NEW_DS,
                 src: analyticsInteractionSrc,
               });
+              onDismiss();
             }}
-          >
-            Configure a new data source
-          </LinkButton>
+          />
         </div>
       </div>
     </Modal>
@@ -169,11 +172,19 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 80%;
       max-width: 1200px;
       max-height: 900px;
+
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+      }
     `,
     modalContent: css`
       display: flex;
       flex-direction: row;
       height: 100%;
+
+      ${theme.breakpoints.down('md')} {
+        flex-direction: column;
+      }
     `,
     leftColumn: css`
       display: flex;
@@ -182,6 +193,14 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       height: 100%;
       padding-right: ${theme.spacing(4)};
       border-right: 1px solid ${theme.colors.border.weak};
+
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+        border-right: 0;
+        padding-right: 0;
+        flex: 1;
+        overflow-y: auto;
+      }
     `,
     rightColumn: css`
       display: flex;
@@ -191,19 +210,47 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
       justify-items: space-evenly;
       align-items: stretch;
       padding-left: ${theme.spacing(4)};
+
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+        padding-left: 0;
+        flex: 0;
+      }
     `,
     builtInDataSources: css`
-      flex: 1;
+      flex: 1 1;
+      margin-bottom: ${theme.spacing(4)};
+
+      ${theme.breakpoints.down('md')} {
+        flex: 0;
+      }
+    `,
+    builtInDataSourcesList: css`
+      ${theme.breakpoints.down('md')} {
+        display: none;
+        margin-bottom: 0;
+      }
+
       margin-bottom: ${theme.spacing(4)};
     `,
-    builtInDataSourceList: css`
-      margin-bottom: ${theme.spacing(4)};
+    appendBuiltInDataSourcesList: css`
+      ${theme.breakpoints.up('md')} {
+        display: none;
+      }
     `,
-    dsCTAs: css`
+    newDSSection: css`
       display: flex;
       flex-direction: row;
       width: 100%;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
+    `,
+    newDSDescription: css`
+      flex: 1 0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      color: ${theme.colors.text.secondary};
     `,
     searchInput: css`
       width: 100%;

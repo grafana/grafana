@@ -1,10 +1,10 @@
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FieldSet, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { SQLConnectionDefaults } from '../../constants';
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 
 interface Props<T> {
@@ -47,7 +47,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         maxOpenConns: number,
         maxIdleConns: number,
       });
-    } else if (number !== undefined) {
+    } else {
       updateJsonData({
         maxOpenConns: number,
       });
@@ -68,10 +68,10 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
       if (jsonData.maxOpenConns !== undefined) {
         maxConns = jsonData.maxOpenConns;
         idleConns = jsonData.maxOpenConns;
-      } else {
-        maxConns = SQLConnectionDefaults.MAX_CONNS;
-        idleConns = SQLConnectionDefaults.MAX_CONNS;
       }
+    } else {
+      maxConns = jsonData.maxOpenConns;
+      idleConns = jsonData.maxIdleConns;
     }
 
     updateJsonData({
@@ -124,7 +124,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
             <span>
               If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
               <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to the
-              default ({SQLConnectionDefaults.MAX_CONNS}).
+              default ({config.sqlConnectionLimits.maxIdleConns}).
             </span>
           }
         >

@@ -3,7 +3,6 @@ import { css, cx } from '@emotion/css';
 import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -19,13 +18,13 @@ export const Page: PageType = ({
   navModel: oldNavProp,
   pageNav,
   renderTitle,
+  onEditTitle,
   actions,
   subTitle,
   children,
   className,
   info,
   layout = PageLayoutType.Standard,
-  toolbar,
   scrollTop,
   scrollRef,
   ...otherProps
@@ -39,7 +38,7 @@ export const Page: PageType = ({
   const pageHeaderNav = pageNav ?? navModel?.node;
 
   // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
-  // This prevents flickering sectionNav when going from dashbaord to settings for example
+  // This prevents flickering sectionNav when going from dashboard to settings for example
   useLayoutEffect(() => {
     if (navModel) {
       chrome.update({
@@ -51,13 +50,14 @@ export const Page: PageType = ({
   }, [navModel, pageNav, chrome, layout]);
 
   return (
-    <div className={cx(styles.wrapper, className)} {...otherProps} data-testid={selectors.pages.Dashboard.wrapper}>
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.pageInner}>
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
+                onEditTitle={onEditTitle}
                 navItem={pageHeaderNav}
                 renderTitle={renderTitle}
                 info={info}
@@ -71,18 +71,10 @@ export const Page: PageType = ({
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.canvasContent}>
-            {toolbar}
-            {children}
-          </div>
+          <div className={styles.canvasContent}>{children}</div>
         </CustomScrollbar>
       )}
-      {layout === PageLayoutType.Custom && (
-        <>
-          {toolbar}
-          {children}
-        </>
-      )}
+      {layout === PageLayoutType.Custom && children}
     </div>
   );
 };

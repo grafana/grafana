@@ -7,7 +7,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureDataSourceJsonData, AzureMonitorLocationsResponse, AzureQueryType } from '../types';
+import { AzureAPIResponse, AzureDataSourceJsonData, AzureQueryType, Location } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -180,6 +180,47 @@ describe('AzureMonitorDatasource', () => {
       expect(templatedQuery).toMatchObject({
         azureMonitor: {
           region: 'eastus',
+        },
+      });
+    });
+
+    it('should migrate legacy properties before interpolation', () => {
+      templateSrv.init([
+        {
+          id: 'resourcegroup',
+          name: 'resourcegroup',
+          current: {
+            value: `test-rg`,
+          },
+        },
+        {
+          id: 'resourcename',
+          name: 'resourcename',
+          current: {
+            value: `test-resource`,
+          },
+        },
+        {
+          id: 'metric',
+          name: 'metric',
+          current: {
+            value: `test-ns`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          metricDefinition: '$metric',
+          resourceGroup: '$resourcegroup',
+          resourceName: '$resourcename',
+          metricNamespace: undefined,
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          metricNamespace: 'test-ns',
+          resources: [{ resourceGroup: 'test-rg', resourceName: 'test-resource' }],
         },
       });
     });
@@ -436,7 +477,7 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing getLocations', () => {
-    const sub1Response: AzureMonitorLocationsResponse = {
+    const sub1Response: AzureAPIResponse<Location> = {
       value: [
         {
           id: '/subscriptions/mock-subscription-id-1/locations/northeurope',
@@ -456,7 +497,7 @@ describe('AzureMonitorDatasource', () => {
       ],
     };
 
-    const sub2Response: AzureMonitorLocationsResponse = {
+    const sub2Response: AzureAPIResponse<Location> = {
       value: [
         {
           id: '/subscriptions/mock-subscription-id-2/locations/eastus2',

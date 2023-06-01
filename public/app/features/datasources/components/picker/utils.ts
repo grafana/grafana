@@ -87,3 +87,14 @@ export function getDataSourceCompareFn(
 
   return cmpDataSources;
 }
+
+/**
+ * Given a data source and a search term, returns true if the data source matches the search term.
+ * Useful to filter data sources by name containing an string.
+ * @param ds
+ * @param searchTerm
+ * @returns
+ */
+export function matchDataSourceWithSearch(ds: DataSourceInstanceSettings, searchTerm = '') {
+  return ds.name.toLowerCase().includes(searchTerm.toLowerCase());
+}

@@ -92,6 +92,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         labelSelector: '',
         profileTypeId: 'process_cpu:cpu',
         refId: 'A',
+        maxNodes: 1000,
         groupBy: [],
       }}
       datasource={ds}

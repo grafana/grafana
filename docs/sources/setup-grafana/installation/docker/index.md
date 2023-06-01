@@ -16,7 +16,7 @@ You can install and run Grafana using the official Docker images. Our docker ima
 
 Each edition is available in two variants: Alpine and Ubuntu. See below.
 
-For documentation regarding the configuration of a docker image, refer to [configure a Grafana Docker image](https://grafana.com/docs/grafana/latest/administration/configure-docker/).
+For documentation regarding the configuration of a docker image, refer to [configure a Grafana Docker image](/docs/grafana/latest/administration/configure-docker/).
 
 This topic also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 
@@ -30,7 +30,9 @@ The default images are based on the popular [Alpine Linux project](http://alpine
 
 The Alpine variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
 
-> **Note:** Grafana docker images were based on [Ubuntu](https://ubuntu.com/) prior to version 6.4.0.
+{{% admonition type="note" %}}
+Grafana docker images were based on [Ubuntu](https://ubuntu.com/) prior to version 6.4.0.
+{{% /admonition %}}
 
 ## Ubuntu image
 
@@ -46,7 +48,9 @@ You can run the latest Grafana version, run a specific version, or run an unstab
 
 ### Run the latest stable version of Grafana
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% admonition type="note" %}}
+If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% /admonition %}}
 
 ```bash
 docker run -d -p 3000:3000 grafana/grafana-enterprise
@@ -54,7 +58,9 @@ docker run -d -p 3000:3000 grafana/grafana-enterprise
 
 ### Run a specific version of Grafana
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% admonition type="note" %}}
+If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+{{% /admonition %}}
 
 ```bash
 docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:<version number>
@@ -76,7 +82,7 @@ For a list of available tags, check out [grafana/grafana-oss](https://hub.docker
 
 ## Install plugins in the Docker container
 
-You can install official and community plugins listed on the Grafana [plugins page](https://grafana.com/grafana/plugins) or from a custom URL.
+You can install official and community plugins listed on the Grafana [plugins page](/grafana/plugins) or from a custom URL.
 
 ### Install official and community Grafana plugins
 
@@ -90,7 +96,9 @@ docker run -d \
   grafana/grafana-enterprise
 ```
 
-> **Note:** If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
+{{% admonition type="note" %}}
+If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
+{{% /admonition %}}
 
 ### Install plugins from other sources
 
@@ -159,7 +167,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 > Only available in Grafana v6.5 and later. This is experimental.
 
-The [Grafana Image Renderer plugin]({{< relref "../../image-rendering/#grafana-image-renderer-plugin" >}}) does not currently work if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
+The [Grafana Image Renderer plugin]({{< relref "../../image-rendering" >}}) does not currently work if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
 
 Example of how to build and run:
 
@@ -183,7 +191,7 @@ The Grafana Docker image runs with the `root` group (id 0) instead of the `grafa
 
 ### Migrate to v6.5 or later
 
-Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based, see [Image Variants](#image-variants) for details.
+Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based.
 
 ### Migrate to v6.4 or later
 
@@ -257,12 +265,12 @@ chown -R grafana:grafana /usr/share/grafana
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../../../getting-started/build-first-dashboard" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "../../configure-grafana/" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../../configure-grafana" >}}) page for details on options for customizing your environment, logging, database, and so on.
