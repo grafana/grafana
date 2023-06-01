@@ -2,7 +2,6 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { GrafanaPlugin, PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -36,8 +35,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
   }
 
   return new Promise(async (resolve, reject) => {
-    const isDevMode = config.buildInfo.env === 'development';
-
     // each plugin has its own sandbox
     const sandboxEnvironment = createVirtualEnvironment(window, {
       // distortions are interceptors to modify the behavior of objects when
