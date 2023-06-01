@@ -33,7 +33,7 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
       try {
         console.log('useDashboardSave', options);
         const result = await saveDashboard(clone, options, dashboard);
-        dashboard.version = result.version;
+        dashboard.version = result.data.version;
         dashboard.clearUnsavedChanges();
 
         // important that these happen before location redirect below

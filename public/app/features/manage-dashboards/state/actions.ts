@@ -310,8 +310,8 @@ export async function saveDashboard(
 ) {
   dashboardWatcher.ignoreNextSave();
 
-  console.log('SAVE', cmd);
   if (config.featureToggles.entityStore) {
+    // K8s frontend hack -- dual write from frontend
     const v = await dashboardKindService.save(cmd);
 
     // Set UID from k8s
@@ -336,7 +336,7 @@ export async function saveDashboard(
       },
       ...requestOptions,
     })
-  ).then((v) => v.data);
+  ); // .then((v) => v.data);
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {
