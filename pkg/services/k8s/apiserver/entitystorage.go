@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	"io"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
+	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
@@ -141,6 +143,23 @@ func (s *entityStorage) write(ctx context.Context, grn *entity.GRN, uObj *unstru
 	return s.store.Write(ctx, req)
 }
 
+func getItems(listObj runtime.Object) ([]runtime.Object, error) {
+	out := make([]runtime.Object, 0)
+
+	switch list := listObj.(type) {
+	case *kindsv1.GrafanaResourceDefinitionList:
+	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
+	case *unstructured.UnstructuredList:
+		for _, item := range list.Items {
+			out = append(out, item.DeepCopyObject())
+		}
+	default:
+		return nil, fmt.Errorf("unsupported type %T", listObj)
+	}
+
+	return out, nil
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
@@ -240,8 +259,15 @@ func (s *entityStorage) Delete(
 	rsp, err := s.store.Delete(ctx, &entity.DeleteEntityRequest{
 		GRN: grn,
 	})
-	if err == nil && !rsp.OK {
-		return fmt.Errorf("did not delte")
+	if err == nil {
+		if !rsp.OK {
+			return fmt.Errorf("did not delete")
+		}
+
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: out.DeepCopyObject(),
+			Type:   watch.Deleted,
+		})
 	}
 	return err
 }
@@ -254,7 +280,46 @@ func (s *entityStorage) Delete(
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	return nil, fmt.Errorf("not implemented")
+	p := opts.Predicate
+	jw := s.watchSet.newWatch()
+
+	var listObj runtime.Object
+
+	switch s.gr.Group {
+	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
+	case grafanaApiServerKinds.GroupName:
+		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
+		break
+	default:
+		listObj = &unstructured.UnstructuredList{}
+	}
+
+	err := s.GetList(ctx, key, opts, listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := getItems(listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	initEvents := make([]watch.Event, 0)
+	for _, obj := range items {
+		ok, err := p.Matches(obj)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+		initEvents = append(initEvents, watch.Event{
+			Type:   watch.Added,
+			Object: obj.DeepCopyObject(),
+		})
+	}
+	jw.Start(p, initEvents)
+	return jw, nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
