@@ -93,7 +93,7 @@ export function exposeToPlugin(name: string, component: any) {
 
   // exposes this dependency to sandboxed plugins too.
   // the following sandboxPluginDependencies don't depend or interact
-  // with SystemJS in anyway.
+  // with SystemJS in any way.
   sandboxPluginDependencies.set(name, component);
 }
 

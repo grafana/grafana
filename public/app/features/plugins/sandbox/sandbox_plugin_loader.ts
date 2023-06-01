@@ -120,9 +120,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
     // fetch and evalute the plugin code inside the sandbox
     try {
       let pluginCode = await getPluginCode(meta.module);
-      if (isDevMode) {
-        pluginCode = patchPluginSourceMap(meta, pluginCode);
-      }
+      pluginCode = patchPluginSourceMap(meta, pluginCode);
 
       // runs the code inside the sandbox environment
       // this evaluate will eventually run the `define` function inside
@@ -180,7 +178,7 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
     }
     // modify the source map url to point to the correct location
     const sourceCodeMapUrl = `/public/${meta.module}.js.map`;
-    replaceWith += `//# sourceURL=module.js\n//# sourceMappingURL=${sourceCodeMapUrl}`;
+    replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
 
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
   }
