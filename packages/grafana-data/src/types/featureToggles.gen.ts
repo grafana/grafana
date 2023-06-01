@@ -82,6 +82,7 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
+  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -95,5 +96,6 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
 }
