@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { FeatureState, SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
+import { SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -15,7 +15,6 @@ import {
   stylesFactory,
   TimeZonePicker,
   WeekStartPicker,
-  FeatureBadge,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
@@ -199,7 +198,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     <span className={styles.labelText}>
                       <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
                     </span>
-                    <FeatureBadge featureState={FeatureState.beta} />
                   </Label>
                 }
                 data-testid="User preferences language drop down"
