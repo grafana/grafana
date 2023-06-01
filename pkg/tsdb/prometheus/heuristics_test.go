@@ -73,7 +73,7 @@ func Test_GetHeuristics(t *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, res)
 		assert.Equal(t, KindPrometheus, res.Application)
-		assert.Equal(t, map[string]interface{}{"rulerEnabled": false}, res.Features)
+		assert.Equal(t, Features{RulerApiEnabled: false}, res.Features)
 	})
 
 	t.Run("should return Mimir", func(t *testing.T) {
@@ -93,6 +93,6 @@ func Test_GetHeuristics(t *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, res)
 		assert.Equal(t, KindMimir, res.Application)
-		assert.Equal(t, map[string]interface{}{"rulerEnabled": true}, res.Features)
+		assert.Equal(t, Features{RulerApiEnabled: true}, res.Features)
 	})
 }
