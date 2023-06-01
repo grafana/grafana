@@ -4,10 +4,13 @@ import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
+import {
+  Options,
+  TextMode,
+  defaultCodeOptions,
+} from '@grafana/schema/src/raw/composable/text/panelcfg/x/TextPanelCfg_types.gen';
 import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-
-import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
 
 export interface Props extends PanelProps<Options> {}
 

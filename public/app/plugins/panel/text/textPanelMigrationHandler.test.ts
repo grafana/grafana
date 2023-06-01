@@ -1,6 +1,6 @@
 import { FieldConfigSource, PanelModel } from '@grafana/data';
+import { Options, TextMode } from '@grafana/schema/src/raw/composable/text/panelcfg/x/TextPanelCfg_types.gen';
 
-import { TextMode, Options } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 describe('textPanelMigrationHandler', () => {

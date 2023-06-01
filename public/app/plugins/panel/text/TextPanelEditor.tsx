@@ -3,14 +3,13 @@ import React, { useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { Options, TextMode } from '@grafana/schema/src/raw/composable/text/panelcfg/x/TextPanelCfg_types.gen';
 import {
   CodeEditor,
   useStyles2,
   CodeEditorSuggestionItem,
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
-
-import { Options, TextMode } from './panelcfg.gen';
 
 export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
