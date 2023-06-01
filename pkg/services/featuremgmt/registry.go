@@ -59,6 +59,7 @@ var (
 			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
@@ -434,6 +435,14 @@ var (
 			Description: "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAlertingSquad,
+		},
+		{
+			Name:         "alertingNotificationsPoliciesMatchingInstances",
+			Description:  "Enables the preview of matching instances for notification policies",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:        "alertStateHistoryLokiPrimary",
