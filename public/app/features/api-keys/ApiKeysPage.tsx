@@ -82,10 +82,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     this.props.deleteApiKey(key.id!);
   };
 
-  onMigrateAll = () => {
-    this.props.migrateAll();
-  };
-
   onMigrateApiKey = (key: ApiKey) => {
     this.props.migrateApiKey(key.id!);
   };

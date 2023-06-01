@@ -415,7 +415,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(outerCtx context.Context, key *apikey.APIKey) error {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgID, key.Name),
@@ -425,12 +425,12 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(outerCtx conte
 		IsServiceAccount: true,
 	}
 
-	return s.sqlStore.InTransaction(outerCtx, func(ctx context.Context) error {
-		newSA, errCreateSA := s.userService.CreateServiceAccount(ctx, &cmd)
+	return s.sqlStore.InTransaction(ctx, func(tctx context.Context) error {
+		newSA, errCreateSA := s.userService.CreateServiceAccount(tctx, &cmd)
 		if errCreateSA != nil {
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}
-		return s.assignApiKeyToServiceAccount(ctx, key.ID, newSA.ID)
+		return s.assignApiKeyToServiceAccount(tctx, key.ID, newSA.ID)
 	})
 }
 
