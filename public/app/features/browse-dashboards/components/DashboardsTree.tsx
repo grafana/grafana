@@ -58,7 +58,7 @@ export function DashboardsTree({
 
   useEffect(() => {
     if (infiniteLoaderRef.current) {
-      infiniteLoaderRef.current.resetloadMoreItemsCache();
+      infiniteLoaderRef.current.resetloadMoreItemsCache(true);
     }
   }, [items]);
 
