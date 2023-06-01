@@ -6,13 +6,18 @@ import {
   PanelPlugin,
 } from '@grafana/data';
 import { VisibilityMode } from '@grafana/schema';
+import {
+  Options,
+  FieldConfig,
+  defaultFieldConfig,
+  defaultOptions,
+} from '@grafana/schema/src/raw/composable/statetimeline/panelcfg/x/StateTimelinePanelCfg_types.gen';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { Options, FieldConfig, defaultOptions, defaultFieldConfig } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)

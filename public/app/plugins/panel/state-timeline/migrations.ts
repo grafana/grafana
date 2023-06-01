@@ -1,8 +1,10 @@
 import { isArray } from 'lodash';
 
 import { FieldConfigSource, MappingType, PanelModel, ValueMap } from '@grafana/data';
-
-import { FieldConfig, Options } from './panelcfg.gen';
+import {
+  Options,
+  FieldConfig,
+} from '@grafana/schema/src/raw/composable/statetimeline/panelcfg/x/StateTimelinePanelCfg_types.gen';
 
 // This is called when the panel changes from another panel
 export const timelinePanelChangedHandler = (

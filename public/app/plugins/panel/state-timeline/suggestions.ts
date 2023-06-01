@@ -1,7 +1,9 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
+import {
+  Options,
+  FieldConfig,
+} from '@grafana/schema/src/raw/composable/statetimeline/panelcfg/x/StateTimelinePanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { FieldConfig, Options } from './panelcfg.gen';
 
 export class StatTimelineSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
