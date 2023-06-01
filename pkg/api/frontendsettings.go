@@ -124,6 +124,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExploreEnabled:                      setting.ExploreEnabled,
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,
+		NewsFeedEnabled:                     setting.NewsFeedEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
 		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
