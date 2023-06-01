@@ -1,7 +1,9 @@
 import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
+import {
+  FieldConfig,
+  Options,
+} from '@grafana/schema/src/raw/composable/statushistory/panelcfg/x/StatusHistoryPanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { Options, FieldConfig } from './panelcfg.gen';
 
 export class StatusHistorySuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
