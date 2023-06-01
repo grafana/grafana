@@ -30,7 +30,7 @@ interface Requires {
   };
 }
 
-interface ExternalDashboard {
+export interface ExternalDashboard {
   __inputs: Input[];
   __elements: Record<string, LibraryElementExport>;
   __requires: Array<Requires[string]>;

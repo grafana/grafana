@@ -10,13 +10,14 @@ import { LibraryElementExport } from '../../dashboard/components/DashExportModal
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
-import { DeleteDashboardResponse } from '../types';
+import { DashboardJson, DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
   fetchDashboard,
   fetchFailed,
   ImportDashboardDTO,
+  ImportDashboardState,
   InputType,
   LibraryPanelInput,
   LibraryPanelInputState,
@@ -31,9 +32,9 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
     try {
       dispatch(fetchDashboard());
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
-      dispatch(setGcomDashboard(dashboard));
-      dispatch(processInputs(dashboard.json));
-      dispatch(processElements(dashboard.json));
+      await dispatch(processElements(dashboard.json));
+      await dispatch(processGcomDashboard(dashboard));
+      dispatch(processInputs());
     } catch (error) {
       dispatch(fetchFailed());
       if (isFetchError(error)) {
@@ -45,17 +46,74 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
 
 export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(setJsonDashboard(dashboard));
-    dispatch(processInputs(dashboard));
-    dispatch(processElements(dashboard));
+    await dispatch(processElements(dashboard));
+    await dispatch(processJsonDashboard(dashboard));
+    dispatch(processInputs());
   };
 }
 
-function processInputs(dashboardJson: any): ThunkResult<void> {
-  return (dispatch) => {
-    if (dashboardJson && dashboardJson.__inputs) {
+const isDataSourceBeingConsumed = (
+  datasource: string | { uid?: string } | undefined | null,
+  datasourceName: string
+): boolean => {
+  if (!datasource) {
+    return false;
+  }
+
+  return typeof datasource === 'string'
+    ? getDataSourceRefNameFromPlaceholder(datasource) === datasourceName
+    : getDataSourceRefNameFromPlaceholder(datasource?.uid) === datasourceName;
+};
+
+function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
+  const filteredUsedInputs = dashboardJson.__inputs.filter((input: any) => {
+    if (input.type !== InputType.DataSource) {
+      return true;
+    }
+
+    const isDataSourceInputUsedInAnyLibPanel = state.inputs.libraryPanels?.some((libPanel) =>
+      isDataSourceBeingConsumed(libPanel.model.model.datasource, input.name)
+    );
+    const isDataSourceInputUsedInAnyPanel = dashboardJson.panels?.some((el) => {
+      if (!('datasource' in el)) {
+        return false;
+      }
+      return isDataSourceBeingConsumed(el.datasource, input.name);
+    });
+    const isDataSourceInputUsedInAnyTemplating = dashboardJson.templating?.list?.some((temp) =>
+      isDataSourceBeingConsumed(temp.datasource, input.name)
+    );
+
+    return (
+      isDataSourceInputUsedInAnyLibPanel || isDataSourceInputUsedInAnyPanel || isDataSourceInputUsedInAnyTemplating
+    );
+  });
+
+  return { ...dashboardJson, __inputs: filteredUsedInputs };
+}
+
+function processGcomDashboard(dashboard: { json: DashboardJson }): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const state = getState().importDashboard;
+    const dashboardJson = processDashboard(dashboard.json, state);
+    dispatch(setGcomDashboard({ ...dashboard, json: dashboardJson }));
+  };
+}
+
+function processJsonDashboard(dashboardJson: DashboardJson): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const state = getState().importDashboard;
+    const dashboard = processDashboard(dashboardJson, state);
+    dispatch(setJsonDashboard(dashboard));
+  };
+}
+
+function processInputs(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const dashboard = getState().importDashboard.dashboard;
+    if (dashboard && dashboard.__inputs) {
       const inputs: any[] = [];
-      dashboardJson.__inputs.forEach((input: any) => {
+      dashboard.__inputs.forEach((input: any) => {
         const inputModel: any = {
           name: input.name,
           label: input.label,
@@ -341,4 +399,13 @@ function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
   }, []);
+}
+
+function getDataSourceRefNameFromPlaceholder(datasourceUid?: string): string {
+  const regex = /\$\{([^}]+)\}/;
+  const match = datasourceUid?.match(regex);
+  if (match && match.length >= 2) {
+    return match[1];
+  }
+  return '';
 }
