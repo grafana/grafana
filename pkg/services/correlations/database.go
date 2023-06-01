@@ -229,7 +229,7 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	result := GetCorrelationsResponseBody{
 		Correlations: make([]Correlation, 0),
 		Page:         cmd.Page,
-		PerPage:      cmd.Limit,
+		Limit:        cmd.Limit,
 	}
 
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {

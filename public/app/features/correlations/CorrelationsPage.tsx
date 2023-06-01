@@ -198,7 +198,7 @@ export default function CorrelationsPage() {
               />
               <Pagination
                 currentPage={1}
-                numberOfPages={Math.ceil(data.totalCount! / data.perPage!)}
+                numberOfPages={Math.ceil(data.totalCount! / data.limit!)}
                 onNavigate={(toPage: number) => {
                   setPage(toPage);
                 }}

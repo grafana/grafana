@@ -126,7 +126,7 @@ type GetCorrelationsResponseBody struct {
 	Correlations []Correlation `json:"correlations"`
 	TotalCount   int64         `json:"totalCount"`
 	Page         int64         `json:"page"`
-	PerPage      int64         `json:"perPage"`
+	Limit        int64         `json:"limit"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
@@ -271,7 +271,7 @@ type GetCorrelationsQuery struct {
 	// in:query
 	// required:false
 	// default:100
-	Limit int64 `json:"perpage"`
+	Limit int64 `json:"limit"`
 	// Page index for starting fetching correlations
 	// in:query
 	// required:false

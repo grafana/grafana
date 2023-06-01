@@ -20,7 +20,7 @@ import {
 interface CorrelationsResponse {
   correlations: Correlation[];
   page: number;
-  perPage: number;
+  limit: number;
   totalCount: number;
 }
 
@@ -32,7 +32,7 @@ export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'target
 export interface CorrelationsData {
   correlations: CorrelationData[];
   page?: number;
-  perPage?: number;
+  limit?: number;
   totalCount?: number;
 }
 

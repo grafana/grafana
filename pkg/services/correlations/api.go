@@ -298,9 +298,9 @@ type GetCorrelationsBySourceUIDResponse struct {
 // 404: notFoundError
 // 500: internalServerError
 func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext) response.Response {
-	perPage := c.QueryInt64("perpage")
-	if perPage <= 0 {
-		perPage = 100
+	limit := c.QueryInt64("limit")
+	if limit <= 0 {
+		limit = 100
 	}
 
 	page := c.QueryInt64("page")
@@ -310,7 +310,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 
 	query := GetCorrelationsQuery{
 		OrgId: c.OrgID,
-		Limit: perPage,
+		Limit: limit,
 		Page:  page,
 	}
 
