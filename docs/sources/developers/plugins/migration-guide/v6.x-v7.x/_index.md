@@ -14,6 +14,7 @@ weight: 2500
 # Migrate plugins from Grafana version 6.x to 7.0
 
 Follow the instructions in this section to upgrade Grafana from version 6.x to 7.0.
+
 ## What's new in Grafana 7.0?
 
 Grafana 7.0 introduced a whole new plugin platform based on React. This new platform supersedes the previous Angular-based plugin platform.
@@ -110,6 +111,7 @@ const themeColor = getColorForTheme(color, theme);
 ## From 6.2.x to v7.4.x
 
 Follow the instructions in this section to upgrade Grafana from version 6.2.x to v7.4.x.
+
 ### Legend components
 
 The Legend components have been refactored and introduced the following changes within the `@grafana/ui` package.

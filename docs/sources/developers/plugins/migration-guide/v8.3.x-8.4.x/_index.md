@@ -31,7 +31,7 @@ The following features have been deprecated in version 8.4.
 
 In a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.
 
-**Example:** 
+**Example:**
 
 Import the service:
 
@@ -43,7 +43,7 @@ import { getLocationSrv } from '@grafana/runtime';
 import { locationService } from '@grafana/runtime';
 ```
 
-**Example:** 
+**Example:**
 
 Navigate to a path and add a new record in the navigation history so that you can navigate back to the previous one:
 
@@ -58,7 +58,7 @@ getLocationSrv.update({
 locationService.push('/route-to-navigate-to');
 ```
 
-**Example:** 
+**Example:**
 
 Navigate to a path and replace the current record in the navigation history:
 
@@ -73,7 +73,7 @@ getLocationSrv.update({
 locationService.replace('/route-to-navigate-to');
 ```
 
-**Example:** 
+**Example:**
 
 Update the search or query parameter for the current route and add a new record in the navigation history so that you can navigate back to the previous one:
 

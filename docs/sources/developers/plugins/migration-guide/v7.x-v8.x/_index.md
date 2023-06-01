@@ -13,7 +13,7 @@ weight: 2400
 
 # Migrate plugins from Grafana version 7.x.x to 8.x.x
 
-This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps. 
+This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps.
 
 In this section, we've documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
 
@@ -340,11 +340,12 @@ class Component extends React.Component<Props> {
 
 export default withTheme2(Component);
 ```
+
 ## Gradual migration of components
 
 If you need to use both the v1 and v2 themes because you've used both migrated and non-migrated components in the same context, then use the `v1` property on the `v2` theme.
 
-**Example:** 
+**Example:**
 
 ```ts
 function Component(): ReactElement | null {

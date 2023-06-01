@@ -14,6 +14,7 @@ weight: 2100
 # Migrate plugins from Grafana version 9.1.x to 9.2.x
 
 Follow the instructions in this section to migrate plugins from Grafana version 9.1.x to 9.2.x.
+
 ## React and React-dom as peer dependencies
 
 In earlier versions of Grafana packages, `react` and `react-dom` were installed during a `yarn install` command regardless of a plugin's dependencies. In version 9.2.0, the `@grafana` packages declare these React packages as `peerDependencies` and must be added to a plugin's `package.json` file for test commands.

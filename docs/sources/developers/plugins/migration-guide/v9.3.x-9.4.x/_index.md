@@ -14,6 +14,7 @@ weight: 2000
 # Migrate plugins from Grafana 9.3.x to 9.4.x
 
 Follow the instructions in this section to migrate from Grafana 9.3.x to 9.4.x.
+
 ## New navigation layout is supported
 
 First, enable the `topnav` feature flag in `custom.ini` to check how your plugin renders in the new navigation layout:
@@ -31,7 +32,7 @@ If `topnav` is enabled, then we need to update the plugin to take advantage of t
 
 ### Switch to `PluginPage` component
 
-Grafana now exposes a new `PluginPage` component from `@grafana/runtime` that hooks into the new navigation and page layouts. This new component also supports the old page layouts when the `topnav` feature is disabled. 
+Grafana now exposes a new `PluginPage` component from `@grafana/runtime` that hooks into the new navigation and page layouts. This new component also supports the old page layouts when the `topnav` feature is disabled.
 
 The new `PluginPage` component will also handle rendering the section navigation. The section navigation can include other core sections and other plugins. To control what pages are displayed in the section navigation for a specific plugin, Grafana uses the pages that have been added in `plugin.json` in which `addToNav` was set to `true`.
 
@@ -70,7 +71,7 @@ return (
 );
 ```
 
-The way the active page is matched in the breadcrumbs and section nav relies on the page routes being hierarchical. If you have a list page and an item page, then you need to make the item page into a subroute of the list page. Furthermore, you also need to specify the list page URL in your `plugin.json`. 
+The way the active page is matched in the breadcrumbs and section nav relies on the page routes being hierarchical. If you have a list page and an item page, then you need to make the item page into a subroute of the list page. Furthermore, you also need to specify the list page URL in your `plugin.json`.
 
 For example, you might have a list of users at `/users`. This means that the item page for a specific user needs to be at `/users/:id`. This may require some refactoring of your routes.
 
@@ -150,6 +151,6 @@ We recommended to use the `<request>.GetHTTPHeader` or `<request>.GetHTTPHeaders
 
 The Grafana SDK for Go [v0.147.0](https://github.com/grafana/grafana-plugin-sdk-go/releases/tag/v0.147.0) introduces a new interface [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) that `QueryDataRequest`, `CheckHealthRequest` and `CallResourceRequest` implements.
 
-Newly introduced forwarded HTTP headers in Grafana v9.4.0 are `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`. Internally, we prefix these with `http_` and they are sent as `http_<HTTP header name>` in [CheckHealthRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#CheckHealthRequest) and [QueryDataRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#QueryDataRequest). 
+Newly introduced forwarded HTTP headers in Grafana v9.4.0 are `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`. Internally, we prefix these with `http_` and they are sent as `http_<HTTP header name>` in [CheckHealthRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#CheckHealthRequest) and [QueryDataRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#QueryDataRequest).
 
 We recommend using the [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) methods so that you're guaranteed to be able to operate on HTTP headers without using the prefix. That is, you can operate on `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`.
