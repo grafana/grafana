@@ -117,10 +117,7 @@ func benchmarkFolderService_GetChildren(b *testing.B, folderNum int, parentUID s
 			UID:          parentUID,
 			SignedInUser: &signedInUser,
 		})
-		if err != nil {
-			b.Log(err)
-		}
-		require.NoError(b, err)
+		assert.NoError(b, err)
 		assert.Len(b, res, folderNum)
 	}
 }
