@@ -131,7 +131,7 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
-1. In the sidebar, click the **Explore** (compass) icon.
+1. In the sidebar, click the **Explore** (compass) icon. The Prometheus data source that you added will already be selected.
 1. In the **Query editor**, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
    A graph appears.
 1. In the top right corner, click the dropdown arrow on the **Run Query** button, and then select **5s**. Grafana runs your query and updates the graph every 5 seconds.
@@ -215,10 +215,8 @@ Dashboards consist of _panels_, each representing a part of the story you want y
 
 Every panel consists of a _query_ and a _visualization_. The query defines _what_ data you want to display, whereas the visualization defines _how_ the data is displayed.
 
-1. Click **Dashboard** in the left-side menu.
-1. On the Dashboards page, click **New** and select **New Dashboard** in the dropdown.
-1. Click **+ Add visualization**.
-1. In the modal that opens, select the Prometheus data source that you've set up.
+1. In the sidebar, hover your cursor over the **Create** (plus sign) icon and then click **Dashboard**.
+1. Click **Add new panel**. The Prometheus data source that you added will already be selected.
 1. In the **Query** tab below the graph, enter the query from earlier and then press Shift + Enter:
 
    ```
