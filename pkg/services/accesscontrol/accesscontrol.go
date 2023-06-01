@@ -104,12 +104,8 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-		if ac.IsDisabled() {
-			return fallback(c)
-		}
-
+func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+	return func(evaluator Evaluator) bool {
 		userCopy := *c.SignedInUser
 		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
@@ -135,12 +131,8 @@ func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqConte
 	}
 }
 
-func HasAccess(ac AccessControl, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-		if ac.IsDisabled() {
-			return fallback(c)
-		}
-
+func HasAccess(ac AccessControl, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+	return func(evaluator Evaluator) bool {
 		hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
@@ -159,21 +151,8 @@ var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
-// ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
-var ReqViewer = func(c *contextmodel.ReqContext) bool {
-	return c.OrgRole.Includes(org.RoleViewer)
-}
-
-var ReqOrgAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.OrgRole == org.RoleAdmin
-}
-
-var ReqOrgAdminOrEditor = func(c *contextmodel.ReqContext) bool {
-	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
-}
-
 // ReqHasRole generates a fallback to check whether the user has a role
-// Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
+// ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
 	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
 }
