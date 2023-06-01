@@ -106,14 +106,12 @@ server {
   index index.html index.htm;
 
   location /grafana/ {
-    rewrite  ^/grafana/(.*)  /$1 break;
     proxy_set_header Host $http_host;
     proxy_pass http://grafana;
   }
 
   # Proxy Grafana Live WebSocket connections.
   location /grafana/api/live/ {
-    rewrite  ^/grafana/(.*)  /$1 break;
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection $connection_upgrade;
@@ -121,6 +119,12 @@ server {
     proxy_pass http://grafana;
   }
 }
+```
+
+If your Grafana configuration does not set `serve_from_sub_path` to true then you need to add a rewrite rule to each location block:
+
+```
+ rewrite  ^/grafana/(.*)  /$1 break;
 ```
 
 ## Configure HAProxy

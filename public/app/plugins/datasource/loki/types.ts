@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, QueryResultMeta, ScopedVars, TimeRange } from '@grafana/data';
 
 import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
 
@@ -160,3 +160,5 @@ export interface ContextFilter {
   fromParser: boolean;
   description?: string;
 }
+
+export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"sort"
@@ -47,6 +48,7 @@ func TestQuery_Regions(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetRegions(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{
@@ -105,10 +107,12 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 		cli.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		_, err := executor.handleGetRegions(
+			context.Background(),
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
 		require.NoError(t, err)
 
 		_, err = executor.handleGetRegions(
+			context.Background(),
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
 		require.NoError(t, err)
 
@@ -160,6 +164,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetEc2InstanceAttribute(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{
@@ -237,6 +242,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetEbsVolumeIds(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{
@@ -303,6 +309,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetResourceArns(
+			context.Background(),
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			}, url.Values{

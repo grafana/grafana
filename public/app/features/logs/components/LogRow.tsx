@@ -43,7 +43,6 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
-  getLogRowContextUi?: (row: LogRowModel) => React.ReactNode;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;

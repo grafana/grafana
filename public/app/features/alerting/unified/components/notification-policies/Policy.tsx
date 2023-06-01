@@ -41,7 +41,9 @@ interface PolicyComponentProps {
   readOnly?: boolean;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: RouteWithID[];
-  routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
+  // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
+
+  matchingInstancesPreview?: { groupsMap?: Map<string, AlertmanagerGroup[]>; enabled: boolean };
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -62,7 +64,7 @@ const Policy: FC<PolicyComponentProps> = ({
   routeTree,
   inheritedProperties,
   routesMatchingFilters = [],
-  routeAlertGroupsMap,
+  matchingInstancesPreview = { enabled: false },
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -112,7 +114,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  const matchingAlertGroups = routeAlertGroupsMap?.get(currentRoute.id);
+  const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
   const numberOfAlertInstances = matchingAlertGroups
@@ -194,16 +196,18 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              <MetaText
-                icon="layers-alt"
-                onClick={() => {
-                  matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
-                }}
-                data-testid="matching-instances"
-              >
-                <Strong>{numberOfAlertInstances ?? '-'}</Strong>
-                <span>{pluralize('instance', numberOfAlertInstances)}</span>
-              </MetaText>
+              {matchingInstancesPreview.enabled && (
+                <MetaText
+                  icon="layers-alt"
+                  onClick={() => {
+                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
+                  }}
+                  data-testid="matching-instances"
+                >
+                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
+                  <span>{pluralize('instance', numberOfAlertInstances)}</span>
+                </MetaText>
+              )}
               {contactPoint && (
                 <MetaText icon="at" data-testid="contact-point">
                   <span>Delivered to</span>
@@ -294,7 +298,7 @@ const Policy: FC<PolicyComponentProps> = ({
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
               routesMatchingFilters={routesMatchingFilters}
-              routeAlertGroupsMap={routeAlertGroupsMap}
+              matchingInstancesPreview={matchingInstancesPreview}
             />
           );
         })}
@@ -461,6 +465,7 @@ const INTEGRATION_ICONS: Record<string, IconName> = {
   telegram: 'telegram-alt',
 };
 
+// @TODO make this work for cloud AMs too
 const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   alertManagerSourceName,
   contactPoint,

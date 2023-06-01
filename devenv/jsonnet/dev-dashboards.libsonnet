@@ -800,5 +800,12 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('trend_example', import '../dev-dashboards/panel-trend/trend_example.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
   ],
 } 

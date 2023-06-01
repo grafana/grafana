@@ -60,6 +60,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           shouldApply: (f) => f.type !== FieldType.time,
           process: identityOverrideProcessor,
         });
+
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {

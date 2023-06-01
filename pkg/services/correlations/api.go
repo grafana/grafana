@@ -17,16 +17,16 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 	authorize := ac.Middleware(s.AccessControl)
 
-	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
+	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
-		entities.Post("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+		entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
+		entities.Post("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 
 		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
-			entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
-			entities.Delete("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
-			entities.Patch("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
+			entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
+			entities.Delete("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+			entities.Patch("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
 		})
 	}, middleware.ReqSignedIn)
 }

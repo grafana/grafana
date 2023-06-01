@@ -3,6 +3,7 @@ package migrations
 import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/oauthserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -23,7 +24,7 @@ func ProvideOSSMigrations() *OSSMigrations {
 }
 
 func (*OSSMigrations) AddMigration(mg *Migrator) {
-	addMigrationLogMigrations(mg)
+	mg.AddCreateMigration()
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
 	addStarMigrations(mg)
@@ -70,12 +71,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
-	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagEntityStore) {
-			addEntityStoreMigrations(mg)
-		}
-	}
-
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)
@@ -96,22 +91,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
 	addFolderMigrations(mg)
-}
-
-func addMigrationLogMigrations(mg *Migrator) {
-	migrationLogV1 := Table{
-		Name: "migration_log",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "migration_id", Type: DB_NVarchar, Length: 255},
-			{Name: "sql", Type: DB_Text},
-			{Name: "success", Type: DB_Bool},
-			{Name: "error", Type: DB_Text},
-			{Name: "timestamp", Type: DB_DateTime},
-		},
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagExternalServiceAuth) {
+			oauthserver.AddMigration(mg)
+		}
 	}
-
-	mg.AddMigration("create migration_log table", NewAddTableMigration(migrationLogV1))
 }
 
 func addStarMigrations(mg *Migrator) {

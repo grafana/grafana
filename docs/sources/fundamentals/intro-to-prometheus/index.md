@@ -105,6 +105,6 @@ The combination of Prometheus and Grafana Agent gives you control over the metri
 
 Now that you understand how Prometheus metrics work, what will you build?
 
-- One great next step is to [build a dashboard]({{< relref "../../dashboards/build-dashboards/" >}}) in Grafana and start turning that raw Prometheus telemetry data into insights about what’s going with your services and infrastructure.
+- One great next step is to [build a dashboard]({{< relref "../../dashboards/build-dashboards" >}}) in Grafana and start turning that raw Prometheus telemetry data into insights about what’s going with your services and infrastructure.
 - Another great step is to learn about [Grafana Mimir](/oss/mimir/), which is essentially a database for Prometheus data. If you’re wondering how to make this work for a large volumes of metrics with a lot of data and fast querying, check out Grafana Mimir.
-- If you’re interested in working with Prometheus data in Grafana directly, check out the [Prometheus data source]({{< relref "../../datasources/prometheus/" >}}) documentation, or check out [PromQL basics](https://prometheus.io/docs/prometheus/latest/querying/basics/).
+- If you’re interested in working with Prometheus data in Grafana directly, check out the [Prometheus data source]({{< relref "../../datasources/prometheus" >}}) documentation, or check out [PromQL basics](https://prometheus.io/docs/prometheus/latest/querying/basics/).

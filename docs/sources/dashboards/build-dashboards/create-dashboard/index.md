@@ -88,7 +88,9 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
 1. Click **Update**.
 
-> **Note:** To provide context to dashboard users, add the variable to the row title.
+{{% admonition type="note" %}}
+To provide context to dashboard users, add the variable to the row title.
+{{% /admonition %}}
 
 ## Move a panel
 
