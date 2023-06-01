@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 
 import { FieldDisplay, getDisplayProcessor, getFieldDisplayValues, PanelProps } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/gauge/panelcfg/x/GaugePanelCfg_types.gen';
 import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
-
-import { Options } from './panelcfg.gen';
 
 export class GaugePanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (
