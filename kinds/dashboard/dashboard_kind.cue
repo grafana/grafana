@@ -38,7 +38,7 @@ lineage: schemas: [{
 			tags?: [...string]
 
 			// Theme of dashboard.
-			// Accepted values are "light" (light theme), "dark" (dark theme, default).
+			// Accepted values are "light" (light theme) or "dark" (dark theme).
 			style: "light" | *"dark"
 
 			// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
@@ -188,24 +188,32 @@ lineage: schemas: [{
 		// TODO what about what's in public/app/features/types.ts?
 		// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 		#VariableModel: {
-			id:            string | *"00000000-0000-0000-0000-000000000000"
-			type:          #VariableType
-			name:          string
-			label?:        string
-			rootStateKey?: string
-			global:        bool | *false
-			hide:          #VariableHide
-			skipUrlSync:   bool | *false
-			index:         int32 | *-1
-			state:         #LoadingState
-			error?: {...}
+			// Unique numeric identifier for the dashboard.
+			id: string | *"00000000-0000-0000-0000-000000000000"
+			// Type of variable
+			type: #VariableType
+			// Name of variable
+			name: string
+			// Optional display name
+			label?: string
+			// Visibility configuration for the variable 
+			hide: #VariableHide
+			// Whether the variable value should be managed by URL query params or not
+			skipUrlSync: bool | *false
+			// Description of variable
 			description?: string
 			// TODO: Move this into a separated QueryVariableModel type
 			query?:      string | {...}
 			datasource?: #DataSourceRef
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-		#VariableHide: 0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+		// Determine if the variable shows on dashboard
+		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+		#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type")
+
+		// Loading status
+		// Accepted values are "NotStarted" (the request is not started), "Loading" (waiting for response), "Streaming" (pulling continuous data), "Done" (response received successfully) or "Error" (failed request).
 		#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 		// Ref to a DataSource instance

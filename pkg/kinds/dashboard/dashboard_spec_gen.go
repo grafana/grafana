@@ -43,15 +43,6 @@ const (
 	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
 )
 
-// Defines values for LoadingState.
-const (
-	LoadingStateDone       LoadingState = "Done"
-	LoadingStateError      LoadingState = "Error"
-	LoadingStateLoading    LoadingState = "Loading"
-	LoadingStateNotStarted LoadingState = "NotStarted"
-	LoadingStateStreaming  LoadingState = "Streaming"
-)
-
 // Defines values for MappingType.
 const (
 	MappingTypeRange   MappingType = "range"
@@ -393,9 +384,6 @@ type LibraryPanelRef struct {
 	Uid  string `json:"uid"`
 }
 
-// LoadingState defines model for LoadingState.
-type LoadingState string
-
 // Supported value mapping types
 type MappingType string
 
@@ -646,7 +634,7 @@ type Spec struct {
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 
 	// Theme of dashboard.
-	// Accepted values are "light" (light theme), "dark" (dark theme, default).
+	// Accepted values are "light" (light theme) or "dark" (dark theme).
 	Style SpecStyle `json:"style"`
 
 	// Tags associated with dashboard.
@@ -699,7 +687,7 @@ type Spec struct {
 }
 
 // Theme of dashboard.
-// Accepted values are "light" (light theme), "dark" (dark theme, default).
+// Accepted values are "light" (light theme) or "dark" (dark theme).
 type SpecStyle string
 
 // Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
@@ -778,7 +766,8 @@ type ValueMappingResult struct {
 	Text  *string `json:"text,omitempty"`
 }
 
-// VariableHide defines model for VariableHide.
+// Determine if the variable shows on dashboard
+// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 type VariableHide int
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
@@ -787,21 +776,29 @@ type VariableHide int
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
 	// Ref to a DataSource instance
-	Datasource  *DataSourceRef         `json:"datasource,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	Error       map[string]interface{} `json:"error,omitempty"`
-	Global      bool                   `json:"global"`
-	Hide        VariableHide           `json:"hide"`
-	Id          string                 `json:"id"`
-	Index       int                    `json:"index"`
-	Label       *string                `json:"label,omitempty"`
-	Name        string                 `json:"name"`
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
+
+	// Description of variable
+	Description *string `json:"description,omitempty"`
+
+	// Determine if the variable shows on dashboard
+	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+	Hide VariableHide `json:"hide"`
+
+	// Unique numeric identifier for the dashboard.
+	Id string `json:"id"`
+
+	// Optional display name
+	Label *string `json:"label,omitempty"`
+
+	// Name of variable
+	Name string `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
-	Query        *interface{} `json:"query,omitempty"`
-	RootStateKey *string      `json:"rootStateKey,omitempty"`
-	SkipUrlSync  bool         `json:"skipUrlSync"`
-	State        LoadingState `json:"state"`
+	Query *interface{} `json:"query,omitempty"`
+
+	// Whether the variable value should be managed by URL query params or not
+	SkipUrlSync bool `json:"skipUrlSync"`
 
 	// FROM: packages/grafana-data/src/types/templateVars.ts
 	// TODO docs

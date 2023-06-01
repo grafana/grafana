@@ -119,37 +119,59 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  */
 export interface VariableModel {
   datasource?: DataSourceRef;
+  /**
+   * Description of variable
+   */
   description?: string;
-  error?: Record<string, unknown>;
-  global: boolean;
+  /**
+   * Visibility configuration for the variable
+   */
   hide: VariableHide;
+  /**
+   * Unique numeric identifier for the dashboard.
+   */
   id: string;
-  index: number;
+  /**
+   * Optional display name
+   */
   label?: string;
+  /**
+   * Name of variable
+   */
   name: string;
   /**
    * TODO: Move this into a separated QueryVariableModel type
    */
   query?: (string | Record<string, unknown>);
-  rootStateKey?: string;
+  /**
+   * Whether the variable value should be managed by URL query params or not
+   */
   skipUrlSync: boolean;
-  state: LoadingState;
+  /**
+   * Type of variable
+   */
   type: VariableType;
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
-  global: false,
   id: '00000000-0000-0000-0000-000000000000',
-  index: -1,
   skipUrlSync: false,
 };
 
+/**
+ * Determine if the variable shows on dashboard
+ * Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+ */
 export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
 }
 
+/**
+ * Loading status
+ * Accepted values are "NotStarted" (the request is not started), "Loading" (waiting for response), "Streaming" (pulling continuous data), "Done" (response received successfully) or "Error" (failed request).
+ */
 export enum LoadingState {
   Done = 'Done',
   Error = 'Error',
@@ -854,7 +876,7 @@ export interface Dashboard {
   };
   /**
    * Theme of dashboard.
-   * Accepted values are "light" (light theme), "dark" (dark theme, default).
+   * Accepted values are "light" (light theme) or "dark" (dark theme).
    */
   style: ('light' | 'dark');
   /**
