@@ -1238,13 +1238,13 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - go test -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
   name: sqlite-integration-benchmarks
 - commands:
-  - go test -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
   depends_on:
   - wire-install
   environment:
@@ -1254,7 +1254,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: postgres-integration-benchmarks
 - commands:
-  - go test -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
   depends_on:
   - wire-install
   environment:
@@ -1263,7 +1263,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: mysql-integration-benchmarks-5.7
 - commands:
-  - go test -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
   depends_on:
   - wire-install
   environment:
@@ -7370,6 +7370,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 03301a19a86b27f15c9d3181852dfb058b44473f7a52c4fc71daecbf9b5c6887
+hmac: d7b029f4aa5a345ef63906af452bececc8776cd82f9f17034a5e0d3ad26f0af4
 
 ...
