@@ -15773,16 +15773,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-plugin-browserslist@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "esbuild-plugin-browserslist@npm:0.6.0"
+"esbuild-plugin-browserslist@npm:^0.7.0":
+  version: 0.7.2
+  resolution: "esbuild-plugin-browserslist@npm:0.7.2"
   dependencies:
     debug: ^4.3.4
-    zod: ^3.19.1
+    zod: ^3.21.4
   peerDependencies:
-    browserslist: ^4.21.4
-    esbuild: ~0.16.1
-  checksum: 8642d107e9f9f6f7216e819794084f6d512dbbbeec77fcafa9fdbd185a2831dcd6524e796c8e770a66974fc7210534ed6857e1705bf600e1dea14e8ca5941f50
+    browserslist: ^4.21.7
+    esbuild: ~0.17.5
+  checksum: c26432575897bf5acc08195e25aa610814a9415e1dc01833184258683739d7307934ecb0423a5e3e23c3ae07df8d1144b18695e5e6168fc43c8ea798085adf88
   languageName: node
   linkType: hard
 
@@ -18205,7 +18205,7 @@ __metadata:
     emotion: 11.0.0
     esbuild: 0.17.19
     esbuild-loader: 3.0.1
-    esbuild-plugin-browserslist: ^0.6.0
+    esbuild-plugin-browserslist: ^0.7.0
     eslint: 8.34.0
     eslint-config-prettier: 8.6.0
     eslint-plugin-import: ^2.26.0
@@ -32306,9 +32306,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.19.1":
-  version: 3.20.2
-  resolution: "zod@npm:3.20.2"
-  checksum: 04172f7e9350372684ccd298d4716908edc9113751295b6c4e1b3ea84e2af8997e504b33ba36f4741417bb2a5dc90bfd40501f6b0e7389df10e42a63d6d8366c
+"zod@npm:^3.21.4":
+  version: 3.21.4
+  resolution: "zod@npm:3.21.4"
+  checksum: f185ba87342ff16f7a06686767c2b2a7af41110c7edf7c1974095d8db7a73792696bcb4a00853de0d2edeb34a5b2ea6a55871bc864227dace682a0a28de33e1f
   languageName: node
   linkType: hard
