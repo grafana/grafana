@@ -1,7 +1,5 @@
-import { lastValueFrom } from 'rxjs';
-
 import { AppEvents } from '@grafana/data';
-import { BackendSrvRequest, config } from '@grafana/runtime';
+import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -28,15 +26,6 @@ export interface SaveDashboardOptions {
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
   refresh?: string;
-}
-
-interface SaveDashboardResponse {
-  id: number;
-  slug: string;
-  status: string;
-  uid: string;
-  url: string;
-  version: number;
 }
 
 export class DashboardSrv {
@@ -80,47 +69,15 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    console.log( 'SAVE', requestOptions);
-    const spec = data.dashboard.getSaveModelClone();
-    if(config.featureToggles.entityStore) {
-      const namespace = 'org-1';
-      const k8sobj: any = {
-        apiVersion: "dashboard.kinds.grafana.com/v0.0-alpha",
-        kind: "Dashboard",
-        metadata: {
-          namespace,
-        },
-        spec,
-      }
-      let url = `/k8s/apis/dashboard.kinds.grafana.com/v0.0-alpha/namespaces/${namespace}/dashboards`;
-      let method = 'POST';
-      if (spec.uid) {
-        url += '/' + spec.uid;
-        method = 'PATCH';
-        k8sobj.metadata.name = spec.uid;
-      } else {
-        k8sobj.metadata.generateName = 'uid'
-      }
-
-      console.log( 'TODO, write k8s', url, method, k8sobj);
-      const v = lastValueFrom(
-        getBackendSrv().fetch<SaveDashboardResponse>({
-          url, method,
-          data: k8sobj,
-        }));
-      console.log("GOT", v);
-    }
-    {return lastValueFrom(
-      getBackendSrv().fetch<SaveDashboardResponse>({
-        url: '/api/dashboards/db/',
-        method: 'POST',
-        data: {
-          ...data,
-          dashboard: spec,
-        },
-        ...requestOptions,
-      })
-    );}
+    return saveDashboard(
+      {
+        dashboard: data.dashboard.getSaveModelClone(),
+        folderUid: data.folderUid,
+        message: data.message,
+        overwrite: data.overwrite,
+      },
+      requestOptions
+    );
   }
 
   starDashboard(dashboardUid: string, isStarred: boolean) {

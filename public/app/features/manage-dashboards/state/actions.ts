@@ -1,5 +1,14 @@
+import { lastValueFrom } from 'rxjs';
+
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv, isFetchError, config } from '@grafana/runtime';
+import {
+  getDataSourceSrv,
+  locationService,
+  getBackendSrv,
+  isFetchError,
+  config,
+  BackendSrvRequest,
+} from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -286,29 +295,48 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export async function saveDashboard(options: SaveDashboardCommand) {
+interface SaveDashboardResponse {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
+}
+
+export async function saveDashboard(
+  cmd: SaveDashboardCommand,
+  requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
+) {
   dashboardWatcher.ignoreNextSave();
 
-  console.log('SAVE', options);
+  console.log('SAVE', cmd);
   if (config.featureToggles.entityStore) {
-    const v = await dashboardKindService.save(options);
+    const v = await dashboardKindService.save(cmd);
 
     // Set UID from k8s
-    if (!options.dashboard.uid) {
+    if (!cmd.dashboard.uid) {
       const uid = v.metadata.name!;
-      options.dashboard.uid = uid;
+      cmd.dashboard.uid = uid;
       console.log('CREATE', { uid }, v);
     } else {
       console.log('UPDATE', v);
     }
   }
 
-  return getBackendSrv().post('/api/dashboards/db/', {
-    dashboard: options.dashboard,
-    message: options.message ?? '',
-    overwrite: options.overwrite ?? false,
-    folderUid: options.folderUid,
-  });
+  return lastValueFrom(
+    getBackendSrv().fetch<SaveDashboardResponse>({
+      url: '/api/dashboards/db/',
+      method: 'POST',
+      data: {
+        dashboard: cmd.dashboard,
+        message: cmd.message ?? '',
+        overwrite: cmd.overwrite ?? false,
+        folderUid: cmd.folderUid,
+      },
+      ...requestOptions,
+    })
+  ).then((v) => v.data);
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {

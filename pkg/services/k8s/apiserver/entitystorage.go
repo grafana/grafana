@@ -326,10 +326,9 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
-	//	fmt.Printf("GET: %s", string(jjj))
 	_, _, err = s.codec.Decode(jjj, nil, objPtr)
 
-	fmt.Printf("GET:%s\n", res.Metadata.Name)
+	fmt.Printf("k8s GET/GOT:%s (rv:%s)\n", res.Metadata.Name, res.Metadata.ResourceVersion)
 	return err
 }
 
