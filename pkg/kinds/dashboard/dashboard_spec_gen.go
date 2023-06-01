@@ -614,29 +614,28 @@ type Spec struct {
 	GraphTooltip CursorSync `json:"graphTooltip"`
 
 	// Unique numeric identifier for the dashboard.
-	// TODO must isolate or remove identifiers local to a Grafana instance...?
 	Id *int64 `json:"id,omitempty"`
 
 	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
-	// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data
-	LiveNow *bool         `json:"liveNow,omitempty"`
-	Panels  []interface{} `json:"panels,omitempty"`
+	LiveNow *bool `json:"liveNow,omitempty"`
+
+	// List of dashboard panels
+	Panels []interface{} `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *interface{} `json:"refresh,omitempty"`
 
 	// This property should only be used in dashboards defined by plugins.  It is a quick check
-	// to see if the version has changed since the last time.  Unclear why using the version property
-	// is insufficient.
+	// to see if the version has changed since the last time.
 	Revision *int64 `json:"revision,omitempty"`
 
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
-	// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
 	SchemaVersion int `json:"schemaVersion"`
 
 	// A dashboard snapshot shares an interactive dashboard publicly.
@@ -647,6 +646,7 @@ type Spec struct {
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 
 	// Theme of dashboard.
+	// Accepted values are "light" (light theme), "dark" (dark theme, default).
 	Style SpecStyle `json:"style"`
 
 	// Tags associated with dashboard.
@@ -699,6 +699,7 @@ type Spec struct {
 }
 
 // Theme of dashboard.
+// Accepted values are "light" (light theme), "dark" (dark theme, default).
 type SpecStyle string
 
 // Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text

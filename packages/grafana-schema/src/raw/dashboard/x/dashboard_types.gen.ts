@@ -111,14 +111,6 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
   hide: false,
 };
 
-export enum LoadingState {
-  Done = 'Done',
-  Error = 'Error',
-  Loading = 'Loading',
-  NotStarted = 'NotStarted',
-  Streaming = 'Streaming',
-}
-
 /**
  * FROM: packages/grafana-data/src/types/templateVars.ts
  * TODO docs
@@ -156,6 +148,14 @@ export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
+}
+
+export enum LoadingState {
+  Done = 'Done',
+  Error = 'Error',
+  Loading = 'Loading',
+  NotStarted = 'NotStarted',
+  Streaming = 'Streaming',
 }
 
 /**
@@ -773,7 +773,6 @@ export interface Dashboard {
   graphTooltip: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
-   * TODO must isolate or remove identifiers local to a Grafana instance...?
    */
   id?: number;
   /**
@@ -782,10 +781,13 @@ export interface Dashboard {
   links?: Array<DashboardLink>;
   /**
    * When set to true, the dashboard will redraw panels at an interval matching the pixel width.
-   * This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+   * This will keep data "moving left" regardless of the query refresh rate. This setting helps
    * avoid dashboards presenting stale live data
    */
   liveNow?: boolean;
+  /**
+   * List of dashboard panels
+   */
   panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
   /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
@@ -793,16 +795,17 @@ export interface Dashboard {
   refresh?: (string | false);
   /**
    * This property should only be used in dashboards defined by plugins.  It is a quick check
-   * to see if the version has changed since the last time.  Unclear why using the version property
-   * is insufficient.
+   * to see if the version has changed since the last time.
    */
   revision?: number;
   /**
    * Version of the JSON schema, incremented each time a Grafana update brings
    * changes to said schema.
-   * TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
    */
   schemaVersion: number;
+  /**
+   * TODO docs
+   */
   snapshot?: {
     /**
      * Time when the snapshot was created
@@ -851,6 +854,7 @@ export interface Dashboard {
   };
   /**
    * Theme of dashboard.
+   * Accepted values are "light" (light theme), "dark" (dark theme, default).
    */
   style: ('light' | 'dark');
   /**
