@@ -48,6 +48,22 @@ describe('getPluginExtensions()', () => {
     );
   });
 
+  test('should be able to limit the number of extensions per plugin for the given placement', () => {
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1, link2] }]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1, limitPerPlugin: 1 });
+
+    expect(extensions).toHaveLength(1);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.link,
+        title: link1.title,
+        description: link1.description,
+        path: link1.path,
+      })
+    );
+  });
+
   test('should return with an empty list if there are no extensions registered for a placement yet', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: 'placement-with-no-extensions' });
