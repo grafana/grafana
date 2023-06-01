@@ -9,9 +9,8 @@ import {
   PanelProps,
   ReducerID,
 } from '@grafana/data';
+import { Options, UpdateConfig } from '@grafana/schema/src/raw/composable/debug/panelcfg/x/DebugPanelCfg_types.gen';
 import { IconButton } from '@grafana/ui';
-
-import { Options, UpdateConfig } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 

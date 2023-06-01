@@ -1,9 +1,8 @@
 import React, { FormEvent } from 'react';
 
 import { PanelOptionsEditorProps, PanelProps } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/debug/panelcfg/x/DebugPanelCfg_types.gen';
 import { Field, Input, usePanelContext } from '@grafana/ui';
-
-import { Options } from './panelcfg.gen';
 
 export function StateView(props: PanelProps<Options>) {
   const context = usePanelContext();
