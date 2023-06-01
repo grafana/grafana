@@ -5,6 +5,10 @@ description: Describes provisioning settings for Grafana using configuration fil
 keywords:
   - grafana
   - provisioning
+labels:
+  products:
+    - enterprise
+    - oss
 title: Provision Grafana
 weight: 600
 ---

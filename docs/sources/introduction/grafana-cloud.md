@@ -1,4 +1,7 @@
 ---
+labels:
+  products:
+    - cloud
 title: Grafana Cloud
 weight: 300
 ---
