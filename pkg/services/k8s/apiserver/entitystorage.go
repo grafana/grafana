@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	"io"
 	"strings"
+
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 
 	"github.com/grafana/kindsys"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -195,26 +196,14 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
 	}
 
-	fmt.Printf("CREATE:%s\n", uObj.GetName())
-
-	// TODO... would be better
-	return s.Get(ctx, key, storage.GetOptions{}, out)
-
-	// // if s.exists(ctx, grn) {
-	// // 	return apierrors.NewAlreadyExists(s.gr, key)
-	// // }
-
-	// res := dashboard.NewK8sResource(grn.UID, &dashboard.Spec{
-	// 	Title: utils.Pointer("the title"),
-	// })
-	// res.APIVersion = "dashboard.kinds.grafana.com/v1"
-	// res.Metadata.CreationTimestamp = v1.NewTime(time.Now())
-	// res.Metadata.SetUpdatedTimestamp(util.Pointer(time.Now()))
-	// res.Metadata.SetUpdatedBy("ryan")
-
-	// jjj, _ := json.MarshalIndent(res, "", "  ")
-	// fmt.Printf("WRITE: %s", string(jjj))
-	// _, _, err = s.codec.Decode(jjj, nil, out)
+	err = s.Get(ctx, key, storage.GetOptions{}, out)
+	if err == nil {
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: out.DeepCopyObject(),
+			Type:   watch.Added,
+		})
+	}
+	return err
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -442,7 +431,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	})
 	u.SetResourceVersion(opts.ResourceVersion) // ???
 
-	for i, r := range rsp.Results {
+	for _, r := range rsp.Results {
 		// convert r to object pointer???
 		//fmt.Printf("FOUND:" + r.Slug)
 
@@ -466,9 +455,6 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-
-		jjj, _ := json.MarshalIndent(out, "", "  ")
-		fmt.Printf("LIST: [%d] %s\n", i, string(jjj))
 
 		u.Items = append(u.Items, unstructured.Unstructured{Object: out})
 	}
