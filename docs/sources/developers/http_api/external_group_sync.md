@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../http_api/team_sync/
-canonical: /docs/grafana/latest/developers/http_api/team_sync/
-description: Grafana Team Sync HTTP API
+  - ../../http_api/external_group_sync/
+canonical: /docs/grafana/latest/developers/http_api/external_group_sync/
+description: Grafana External Group Sync HTTP API
 keywords:
   - grafana
   - http
@@ -13,12 +13,12 @@ keywords:
   - group
   - member
   - enterprise
-title: Team Sync HTTP API
+title: External Group Sync HTTP API
 ---
 
-# Team Sync API
+# External Group Synchronization API
 
-> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+> External Group Synchronization is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
