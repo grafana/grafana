@@ -589,9 +589,7 @@ export enum DashboardCursorSync {
 export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
 
 /**
- * Dashboard panels. Panels are canonically defined inline
- * because they share a version timeline with the dashboard
- * schema; they do not evolve independently.
+ * Dashboard panels are the basic visualization building blocks.
  */
 export interface Panel {
   /**
@@ -925,7 +923,7 @@ export interface Dashboard {
    */
   schemaVersion: number;
   /**
-   * TODO docs
+   * Snapshot options. They are present only if the dashboard is a snapshot.
    */
   snapshot?: {
     /**

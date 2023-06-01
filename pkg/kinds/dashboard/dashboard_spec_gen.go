@@ -456,9 +456,7 @@ type MatcherConfig struct {
 	Options *interface{} `json:"options,omitempty"`
 }
 
-// Dashboard panels. Panels are canonically defined inline
-// because they share a version timeline with the dashboard
-// schema; they do not evolve independently.
+// Dashboard panels are the basic visualization building blocks.
 type Panel struct {
 	// The datasource used in all targets.
 	Datasource *struct {
