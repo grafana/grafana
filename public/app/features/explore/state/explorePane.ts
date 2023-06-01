@@ -327,6 +327,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryResponse: createEmptyQueryResponse(),
       cache: [],
       isFromCompactUrl: isFromCompactUrl || false,
+      correlations: [],
     };
   }
 

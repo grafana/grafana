@@ -7,20 +7,6 @@ import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-const fetch = jest.fn().mockResolvedValue([]);
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({ fetch }),
-}));
-
-jest.mock('rxjs', () => ({
-  ...jest.requireActual('rxjs'),
-  lastValueFrom: () =>
-    new Promise((resolve, reject) => {
-      resolve({ data: [] });
-    }),
-}));
-
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();

@@ -74,12 +74,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getAllFromSourceUIDInfo: jest.fn().mockReturnValue([]),
-  };
-});
-
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
