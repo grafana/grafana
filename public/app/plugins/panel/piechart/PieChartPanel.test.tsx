@@ -12,9 +12,13 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import {
+  Options,
+  PieChartLegendValues,
+  PieChartType,
+} from '@grafana/schema/src/raw/composable/piechart/panelcfg/x/PieChartPanelCfg_types.gen';
 
 import { PieChartPanel } from './PieChartPanel';
-import { Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),

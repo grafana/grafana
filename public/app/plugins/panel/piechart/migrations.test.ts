@@ -1,7 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
+import { PieChartLabels } from '@grafana/schema/src/raw/composable/piechart/panelcfg/x/PieChartPanelCfg_types.gen';
 
 import { PieChartPanelChangedHandler } from './migrations';
-import { PieChartLabels } from './panelcfg.gen';
 
 describe('PieChart -> PieChartV2 migrations', () => {
   it('only migrates old piechart', () => {

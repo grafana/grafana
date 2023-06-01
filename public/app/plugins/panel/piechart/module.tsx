@@ -1,11 +1,17 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import {
+  Options,
+  FieldConfig,
+  PieChartLabels,
+  PieChartType,
+  PieChartLegendValues,
+} from '@grafana/schema/src/raw/composable/piechart/panelcfg/x/PieChartPanelCfg_types.gen';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartPanelChangedHandler } from './migrations';
-import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
 import { PieChartSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)

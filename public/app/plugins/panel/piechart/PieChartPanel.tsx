@@ -13,6 +13,11 @@ import {
 import { PanelDataErrorView } from '@grafana/runtime';
 import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
 import {
+  Options,
+  PieChartLegendOptions,
+  PieChartLegendValues,
+} from '@grafana/schema/src/raw/composable/piechart/panelcfg/x/PieChartPanelCfg_types.gen';
+import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
   useTheme2,
@@ -22,7 +27,6 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
