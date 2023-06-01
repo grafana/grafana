@@ -2,12 +2,13 @@ import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { defaultFieldConfig } from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
 import { Button, Field, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
-import { Options, ScatterSeriesConfig, defaultScatterFieldConfig } from './types';
+import { Options, ScatterSeriesConfig } from './types';
 
 export const ManualEditor = ({
   value,
@@ -33,7 +34,7 @@ export const ManualEditor = ({
       ...value,
       {
         pointColor: {} as any,
-        pointSize: defaultScatterFieldConfig.pointSize,
+        pointSize: defaultFieldConfig.pointSize,
       },
     ]);
     setSelected(value.length);

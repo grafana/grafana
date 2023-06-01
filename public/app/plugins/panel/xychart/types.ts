@@ -1,14 +1,12 @@
 import { DataFrame, Field, FieldColorMode } from '@grafana/data';
 import { LineStyle, ScaleDimensionConfig, VisibilityMode } from '@grafana/schema';
+import {
+  FieldConfig as GeneratedScatterFieldConfig,
+  ScatterSeriesConfig as GeneratedScatterSeriesConfig,
+  Options as GeneratedOptions,
+} from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
 import { VizLegendItem } from '@grafana/ui';
 import { DimensionSupplier } from 'app/features/dimensions';
-
-import {
-  ScatterFieldConfig as GeneratedScatterFieldConfig,
-  ScatterSeriesConfig as GeneratedScatterSeriesConfig,
-  defaultScatterFieldConfig as generatedDefaultScatterFieldConfig,
-  Options as GeneratedOptions,
-} from './panelcfg.gen';
 
 /**
  * @internal
@@ -27,10 +25,6 @@ export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
 export interface ScatterFieldConfig extends GeneratedScatterFieldConfig {
   pointSymbol?: DimensionSupplier<string>;
 }
-
-export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
-  ...generatedDefaultScatterFieldConfig,
-};
 
 export interface ScatterSeriesConfig extends ScatterFieldConfig, GeneratedScatterSeriesConfig {}
 

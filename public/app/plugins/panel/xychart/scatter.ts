@@ -21,6 +21,7 @@ import {
   ScaleDimensionConfig,
   ScaleDimensionMode,
 } from '@grafana/schema';
+import { defaultFieldConfig } from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions';
@@ -31,7 +32,6 @@ import { isGraphable } from './dims';
 import {
   DimensionValues,
   ScatterFieldConfig,
-  defaultScatterFieldConfig,
   ScatterHoverCallback,
   ScatterSeries,
   Options,
@@ -109,7 +109,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: ScatterFieldConfig = { ...defaultScatterFieldConfig, ...y.config.custom };
+  const fieldConfig: ScatterFieldConfig = { ...defaultFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];

@@ -12,6 +12,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
 import {
   Portal,
   TooltipDisplayMode,
@@ -28,7 +29,7 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TooltipView } from './TooltipView';
 import { SeriesMapping } from './models.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
-import { Options, ScatterHoverEvent, ScatterSeries } from './types';
+import { ScatterHoverEvent, ScatterSeries } from './types';
 
 type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
