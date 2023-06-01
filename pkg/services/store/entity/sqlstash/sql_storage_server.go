@@ -452,6 +452,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				Key:       origin.Key,
 				Timestamp: ts,
 			})
+		} else {
+			meta.SetOriginInfo(nil)
 		}
 
 		if len(meta.Labels) > 0 {
