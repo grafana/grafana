@@ -56,17 +56,18 @@ def integration_benchmarks(trigger, prefix):
     ]
 
     cmd = [
-        "go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
-        "go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
+        #"go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
+        #"go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
+        "go test -v -run=^$ -timeout=20m -bench=BenchmarkFolderService_GetRootChildren_10000_128_Caching -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
     ]
 
     benchmark_steps = [
-        {
-            "name": "sqlite-integration-benchmarks",
-            "image": build_image,
-            "depends_on": ["wire-install"],
-            "commands": cmd,
-        },
+        #{
+        #    "name": "sqlite-integration-benchmarks",
+        #    "image": build_image,
+        #    "depends_on": ["wire-install"],
+        #    "commands": cmd,
+        #},
         {
             "name": "postgres-integration-benchmarks",
             "image": build_image,
@@ -78,26 +79,26 @@ def integration_benchmarks(trigger, prefix):
             },
             "commands": cmd,
         },
-        {
-            "name": "mysql-integration-benchmarks-5.7",
-            "image": build_image,
-            "depends_on": ["wire-install"],
-            "environment": {
-                "GRAFANA_TEST_DB": "mysql",
-                "MYSQL_HOST": "mysql57",
-            },
-            "commands": cmd,
-        },
-        {
-            "name": "mysql8-integration-benchmarks-8.0",
-            "image": build_image,
-            "depends_on": ["wire-install"],
-            "environment": {
-                "GRAFANA_TEST_DB": "mysql",
-                "MYSQL_HOST": "mysql80",
-            },
-            "commands": cmd,
-        },
+        #{
+        #    "name": "mysql-integration-benchmarks-5.7",
+        #    "image": build_image,
+        #    "depends_on": ["wire-install"],
+        #    "environment": {
+        #        "GRAFANA_TEST_DB": "mysql",
+        #        "MYSQL_HOST": "mysql57",
+        #    },
+        #    "commands": cmd,
+        #},
+        #{
+        #    "name": "mysql8-integration-benchmarks-8.0",
+        #    "image": build_image,
+        #    "depends_on": ["wire-install"],
+        #    "environment": {
+        #        "GRAFANA_TEST_DB": "mysql",
+        #        "MYSQL_HOST": "mysql80",
+        #    },
+        #    "commands": cmd,
+        #},
     ]
 
     return pipeline(
