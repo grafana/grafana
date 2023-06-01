@@ -103,7 +103,7 @@ export function mockApi(server: SetupServer) {
       configure(builder);
 
       server.use(
-        rest.get('api/alertmanager/grafana/config/api/v1/alerts', (req, res, ctx) =>
+        rest.get(`api/alertmanager/${amName}/config/api/v1/alerts`, (req, res, ctx) =>
           res(
             ctx.status(200),
             ctx.json<AlertManagerCortexConfig>({

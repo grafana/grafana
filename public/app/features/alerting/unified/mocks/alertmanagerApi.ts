@@ -8,8 +8,8 @@ import {
 import { AlertmanagersChoiceResponse } from '../api/alertmanagerApi';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
-export function mockAlertmanagerChoiceResponse(server: SetupServer, respose: AlertmanagersChoiceResponse) {
-  server.use(rest.get('/api/v1/ngalert', (req, res, ctx) => res(ctx.status(200), ctx.json(respose))));
+export function mockAlertmanagerChoiceResponse(server: SetupServer, response: AlertmanagersChoiceResponse) {
+  server.use(rest.get('/api/v1/ngalert', (req, res, ctx) => res(ctx.status(200), ctx.json(response))));
 }
 
 export function mockAlertmanagersResponse(server: SetupServer, response: ExternalAlertmanagersResponse) {

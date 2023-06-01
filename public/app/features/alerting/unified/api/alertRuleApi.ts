@@ -5,7 +5,7 @@ import { arrayKeyValuesToObject } from '../utils/labels';
 
 import { alertingApi } from './alertingApi';
 
-const previewlUrl = 'api/v1/rule/backtest'; //we need to enable the feature flag for this
+export const PREVIEW_URL = 'api/v1/rule/backtest'; //we need to enable the feature flag for this
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     preview: build.mutation<
@@ -20,7 +20,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }
     >({
       query: ({ alertQueries, condition, customLabels }) => ({
-        url: previewlUrl,
+        url: PREVIEW_URL,
         data: {
           data: alertQueries,
           condition: condition,
