@@ -497,7 +497,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				features:             featuresFlagOff,
 				bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 				db:                   db,
-				cacheService:         localcache.ProvideService(),
+				cacheService:         cache,
 			}
 
 			origNewGuardian := guardian.New
