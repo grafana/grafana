@@ -132,7 +132,7 @@ func getErrorSource(status string, resp *backend.QueryDataResponse) errorSource 
 	}
 
 	if status == statusCancelled {
-		return externalSource
+		return noneSource
 	}
 
 	// If there is different errorSource from the list of responses, we want to return the most severe one.
