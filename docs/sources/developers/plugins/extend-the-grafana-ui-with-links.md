@@ -10,7 +10,7 @@ Before we go into details we need to cover the two major concepts in the UI exte
 1. Extension point - the place in the UI where the extensions are displayed to the user. An example of this is the panel menu in Grafana dashboards.
 2. Extension - functionality that you want to provide to the user at an extension point. Ususally registered by an app plugin, that extends Grafana with some kind of new functionality. Registering an extension will provide a quick and esay way to use this functionality from the UI where the extension point is located.
 
-<Insert screen shot of how that UI looks and highlight the different parts in the UI>
+![panel menu](https://user-images.githubusercontent.com/172951/242723354-a10d6238-22f1-4458-b85e-ac3c7f014b22.png)
 
 In the example above, we have one extension point and two plugins adding extensions to that extension point. This highlights one of the benefits of using UI extensions. Once you have added an extension point to your UI it can be extended multiple times by multiple plugins.
 
