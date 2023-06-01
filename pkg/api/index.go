@@ -49,7 +49,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	locale := "en-US"
 	language := "" // frontend will set the default language
 
-	if hs.Features.IsEnabled(featuremgmt.FlagInternationalization) && prefs.JSONData.Language != "" {
+	if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
 	}
 
