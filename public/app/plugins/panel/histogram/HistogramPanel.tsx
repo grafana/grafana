@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 
 import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
+import { Options } from '@grafana/schema/src/raw/composable/histogram/panelcfg/x/HistogramPanelCfg_types.gen';
 import { useTheme2 } from '@grafana/ui';
 
 import { Histogram, getBucketSize } from './Histogram';
-import { Options } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 

@@ -14,6 +14,11 @@ import {
 } from '@grafana/data/src/transformations/transformers/histogram';
 import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
+  defaultFieldConfig,
+  FieldConfig,
+  Options,
+} from '@grafana/schema/src/raw/composable/histogram/panelcfg/x/HistogramPanelCfg_types.gen';
+import {
   Themeable2,
   UPlotConfigBuilder,
   UPlotChart,
@@ -22,8 +27,6 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
-
-import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
