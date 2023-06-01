@@ -1238,8 +1238,15 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - go test -v -run=^$ -timeout=20m -bench=BenchmarkFolderService_GetRootChildren_10000_128_Caching
-    -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.4
+  name: sqlite-integration-benchmarks
+- commands:
+  - go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
   depends_on:
   - wire-install
   environment:
@@ -1248,6 +1255,26 @@ steps:
     POSTGRES_HOST: postgres
   image: grafana/build-container:1.7.4
   name: postgres-integration-benchmarks
+- commands:
+  - go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql57
+  image: grafana/build-container:1.7.4
+  name: mysql-integration-benchmarks-5.7
+- commands:
+  - go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  - go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql8-integration-benchmarks-8.0
 trigger:
   event:
   - pull_request
@@ -7347,6 +7374,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 08c4f6b0f7b7fbbcaf73eb813e491c6a153010dc7f2c74dd3911b9e0ecc50f05
+hmac: c2934e24cc4b4cd9b5a24b3d2627704c68d24e63cd1e09a462b5b85b7beee566
 
 ...

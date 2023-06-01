@@ -36,10 +36,6 @@ func BenchmarkFolderService_GetRootChildren_10000_64_CachingOff(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 64, false)
 }
 
-func BenchmarkFolderService_GetRootChildren_10000_128_CachingOff(b *testing.B) {
-	benchmarkFolderService_GetChildren(b, 10000, "", 128, true)
-}
-
 func BenchmarkFolderService_GetRootChildren_10000_1_CachingOn(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 1, true)
 }
@@ -50,10 +46,6 @@ func BenchmarkFolderService_GetRootChildren_10000_8_CachingOn(b *testing.B) {
 
 func BenchmarkFolderService_GetRootChildren_10000_64_CachingOn(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 64, true)
-}
-
-func BenchmarkFolderService_GetRootChildren_10000_128_CachingOn(b *testing.B) {
-	benchmarkFolderService_GetChildren(b, 10000, "", 128, true)
 }
 
 func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) (*Service, user.SignedInUser) {
@@ -121,8 +113,7 @@ func benchmarkFolderService_GetChildren(b *testing.B, folderNum int, parentUID s
 			UID:          parentUID,
 			SignedInUser: &signedInUser,
 		})
-		b.Log("err", err)
-		assert.NoError(b, err)
+		require.NoError(b, err)
 		assert.Len(b, res, folderNum)
 	}
 }
