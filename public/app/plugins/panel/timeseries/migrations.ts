@@ -34,13 +34,13 @@ import {
   AnnotationQuery,
   ComparisonOperation,
 } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/timeseries/panelcfg/x/TimeSeriesPanelCfg_types.gen';
 import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
-import { Options } from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 

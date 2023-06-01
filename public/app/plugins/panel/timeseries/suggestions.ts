@@ -12,10 +12,9 @@ import {
   StackingMode,
   VizLegendOptions,
 } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/timeseries/panelcfg/x/TimeSeriesPanelCfg_types.gen';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { Options } from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

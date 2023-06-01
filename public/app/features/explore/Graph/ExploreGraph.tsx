@@ -27,6 +27,7 @@ import {
   SortOrder,
   GraphThresholdsStyleConfig,
 } from '@grafana/schema';
+import { Options as TimeSeriesOptions } from '@grafana/schema/src/raw/composable/timeseries/panelcfg/x/TimeSeriesPanelCfg_types.gen';
 import {
   Button,
   Icon,
@@ -38,7 +39,6 @@ import {
 } from '@grafana/ui';
 import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
