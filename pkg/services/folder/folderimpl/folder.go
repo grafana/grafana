@@ -188,11 +188,16 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			return nil
 		}
 
+		m.Lock()
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+		m.Unlock()
 		if err != nil {
 			return err
 		}
+
+		m.Lock()
 		canView, err := g.CanView()
+		m.Unlock()
 		if err != nil {
 			return err
 		}

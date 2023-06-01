@@ -1030,6 +1030,19 @@ func TestNestedFolderService(t *testing.T) {
 	})
 }
 
+func TestService_GetChildren(t *testing.T) {
+	t.Run("get children with no parentUID", func(t *testing.T) {
+		serviceWithFlagOn, signedInUser := setupGetChildren(t, 100, "", concurrencyFactor, CACHING)
+		res, err := serviceWithFlagOn.GetChildren(context.Background(), &folder.GetChildrenQuery{
+			OrgID:        orgID,
+			UID:          "",
+			SignedInUser: &signedInUser,
+		})
+		require.NoError(t, err)
+		assert.Len(t, res, 100)
+	})
+}
+
 func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
 	t.Helper()
 

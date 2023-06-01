@@ -56,7 +56,7 @@ func BenchmarkFolderService_GetRootChildren_10000_128_CachingOn(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 128, true)
 }
 
-func benchmarkFolderService_GetChildren(b *testing.B, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) {
+func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) (*Service, user.SignedInUser) {
 	db := sqlstore.InitTestDB(b)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db, localcache.ProvideService())
@@ -109,7 +109,11 @@ func benchmarkFolderService_GetChildren(b *testing.B, folderNum int, parentUID s
 		})
 		require.NoError(b, err)
 	}
+	return serviceWithFlagOn, signedInUser
+}
 
+func benchmarkFolderService_GetChildren(b *testing.B, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) {
+	serviceWithFlagOn, signedInUser := setupGetChildren(b, folderNum, parentUID, overrideConcurrencyFactor, overrideCaching)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		res, err := serviceWithFlagOn.GetChildren(context.Background(), &folder.GetChildrenQuery{
