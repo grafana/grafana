@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/news/panelcfg/x/NewsPanelCfg_types.gen';
 import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';
-import { Options } from './panelcfg.gen';
 import { useNewsFeed } from './useNewsFeed';
 
 interface NewsPanelProps extends PanelProps<Options> {}
