@@ -11,7 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-var caching = true
+// CACHING is a global variable that can be set to false to disable CACHING (used for benchmarks)
+var CACHING = true
+
+const (
+	CACHING_FOLDER_BY_UID_PREFIX   = "folderByUID"
+	CACHING_FOLDER_BY_TITLE_PREFIX = "folderByTitle"
+	CACHING_FOLDER_BY_ID_PREFIX    = "folderByID"
+)
 
 // DashboardStore implements the FolderStore interface
 // It fetches folders from the dashboard DB table
@@ -29,7 +36,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
 
-	cacheKey := fmt.Sprintf("folderByTitle-%d-%s", orgID, title)
+	cacheKey := fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_TITLE_PREFIX, orgID, title)
 	return d.withCaching(cacheKey, func() (*folder.Folder, error) {
 		// there is a unique constraint on org_id, folder_id, title
 		// there are no nested folders so the parent folder id is always 0
@@ -51,7 +58,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
-	cacheKey := fmt.Sprintf("folderByID-%d-%d", orgID, id)
+	cacheKey := fmt.Sprintf("%s-%d-%d", CACHING_FOLDER_BY_ID_PREFIX, orgID, id)
 	return d.withCaching(cacheKey, func() (*folder.Folder, error) {
 		dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
 		err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -78,7 +85,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	cacheKey := fmt.Sprintf("folderByUID-%d-%s", orgID, uid)
+	cacheKey := fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_UID_PREFIX, orgID, uid)
 	return d.withCaching(cacheKey, func() (*folder.Folder, error) {
 		dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
 		err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -103,7 +110,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 }
 
 func (d *DashboardFolderStoreImpl) withCaching(cacheKey string, f func() (*folder.Folder, error)) (*folder.Folder, error) {
-	if !caching {
+	if !CACHING {
 		return f()
 	}
 

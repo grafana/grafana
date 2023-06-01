@@ -46,7 +46,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, localcache.ProvideService())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -76,6 +76,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                   db,
 			accessControl:        acimpl.ProvideAccessControl(cfg),
+			cacheService:         localcache.ProvideService(),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -328,7 +329,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	}
 	db := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
-	folderStore := ProvideDashboardFolderStore(db, localcache.ProvideService())
+	cache := localcache.ProvideService()
+	folderStore := ProvideDashboardFolderStore(db, cache)
 
 	cfg := setting.NewCfg()
 
@@ -348,6 +350,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		db:                   db,
 		accessControl:        acimpl.ProvideAccessControl(cfg),
 		registry:             make(map[string]folder.RegistryService),
+		cacheService:         cache,
 	}
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -414,6 +417,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 				db:                   db,
 				registry:             make(map[string]folder.RegistryService),
+				cacheService:         localcache.ProvideService(),
 			}
 
 			origNewGuardian := guardian.New
@@ -493,6 +497,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				features:             featuresFlagOff,
 				bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 				db:                   db,
+				cacheService:         cache,
 			}
 
 			origNewGuardian := guardian.New
@@ -552,6 +557,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		log:                  log.New("test-folder-service"),
 		accessControl:        acimpl.ProvideAccessControl(cfg),
+		cacheService:         localcache.ProvideService(),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
@@ -1021,6 +1027,19 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.NoError(t, err)
 		})
+	})
+}
+
+func TestService_GetChildren(t *testing.T) {
+	t.Run("get children with no parentUID", func(t *testing.T) {
+		serviceWithFlagOn, signedInUser := setupGetChildren(t, 100, "", concurrencyFactor, CACHING)
+		res, err := serviceWithFlagOn.GetChildren(context.Background(), &folder.GetChildrenQuery{
+			OrgID:        orgID,
+			UID:          "",
+			SignedInUser: &signedInUser,
+		})
+		require.NoError(t, err)
+		assert.Len(t, res, 100)
 	})
 }
 

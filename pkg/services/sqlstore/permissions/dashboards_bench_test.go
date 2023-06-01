@@ -83,7 +83,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	dashboardWriteStore, err := database.ProvideDashboardStore(store, store.Cfg, features, tagimpl.ProvideService(store, store.Cfg), quotaService)
 	require.NoError(b, err)
 
-	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), store.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store, localcache.ProvideService()), store, features)
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), store.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store, localcache.ProvideService()), store, features, localcache.ProvideService())
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
