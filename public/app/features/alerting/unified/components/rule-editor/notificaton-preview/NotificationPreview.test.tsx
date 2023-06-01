@@ -8,9 +8,11 @@ import { FieldType } from '@grafana/data';
 import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { useRouteGroupsMatcher } from '../../../__mocks__/useRouteGroupsMatcher';
 import { mockApi, setupMswServer } from '../../../mockApi';
 import { mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
+import * as routeMatcher from '../../../useRouteGroupsMatcher';
 import * as dataSource from '../../../utils/datasource';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
@@ -24,10 +26,12 @@ import {
 import 'core-js/stable/structured-clone';
 
 jest.mock('../../../createRouteGroupsMatcherWorker');
+jest.spyOn(routeMatcher, 'useRouteGroupsMatcher').mockImplementation(useRouteGroupsMatcher);
 
 jest
   .spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage')
   .mockReturnValue([{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }]);
+
 jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage').mockReturnValue([
   { name: GRAFANA_RULES_SOURCE_NAME, img: '' },
   { name: GRAFANA_RULES_SOURCE_NAME, img: '' },
@@ -129,6 +133,9 @@ describe('NotificationPreview', () => {
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
     // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
     expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
     expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
@@ -160,12 +167,12 @@ describe('NotificationPreview', () => {
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
-
-    // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
-    expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
+
+    // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
+    expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
 
     expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
 
@@ -198,6 +205,9 @@ describe('NotificationPreview', () => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
     //open details modal
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
     await userEvent.click(ui.seeDetails.get());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy
