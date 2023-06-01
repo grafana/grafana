@@ -5,10 +5,13 @@ import useAsync from 'react-use/lib/useAsync';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
+  Button,
   FileDropzone,
+  HorizontalGroup,
   InlineField,
   InlineFieldRow,
   InlineLabel,
+  Modal,
   RadioButtonGroup,
   Themeable2,
   withTheme2,
@@ -28,12 +31,18 @@ import { ServiceGraphSection } from './ServiceGraphSection';
 import { getDS } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface State {
+  uploadModalOpen: boolean;
+}
 
 const DEFAULT_QUERY_TYPE: TempoQueryType = config.featureToggles.traceqlSearch ? 'traceqlSearch' : 'traceql';
 
-class TempoQueryFieldComponent extends React.PureComponent<Props> {
+class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = {
+      uploadModalOpen: false,
+    };
   }
 
   // Set the default query type when the component mounts.
@@ -80,7 +89,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceql', label: 'TraceQL' },
-      { value: 'upload', label: 'JSON File' },
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 
@@ -104,29 +112,60 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     return (
       <>
-        <InlineFieldRow>
-          <InlineField label="Query type">
-            <RadioButtonGroup<TempoQueryType>
-              options={queryTypeOptions}
-              value={query.queryType}
-              onChange={(v) => {
-                reportInteraction('grafana_traces_query_type_changed', {
-                  datasourceType: 'tempo',
-                  app: app ?? '',
-                  grafana_version: config.buildInfo.version,
-                  newQueryType: v,
-                  previousQueryType: query.queryType ?? '',
-                });
-
-                this.onClearResults();
-
+        <Modal
+          title={'Upload trace'}
+          isOpen={this.state.uploadModalOpen}
+          onDismiss={() => this.setState({ uploadModalOpen: false })}
+        >
+          <div className={css({ padding: this.props.theme.spacing(2) })}>
+            <FileDropzone
+              options={{ multiple: false }}
+              onLoad={(result) => {
+                this.props.datasource.uploadedJson = result;
                 onChange({
                   ...query,
-                  queryType: v,
+                  queryType: 'upload',
                 });
+                this.setState({ uploadModalOpen: false });
+                this.props.onRunQuery();
               }}
-              size="md"
             />
+          </div>
+        </Modal>
+        <InlineFieldRow>
+          <InlineField label="Query type" grow={true}>
+            <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
+              <RadioButtonGroup<TempoQueryType>
+                options={queryTypeOptions}
+                value={query.queryType}
+                onChange={(v) => {
+                  reportInteraction('grafana_traces_query_type_changed', {
+                    datasourceType: 'tempo',
+                    app: app ?? '',
+                    grafana_version: config.buildInfo.version,
+                    newQueryType: v,
+                    previousQueryType: query.queryType ?? '',
+                  });
+
+                  this.onClearResults();
+
+                  onChange({
+                    ...query,
+                    queryType: v,
+                  });
+                }}
+                size="md"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  this.setState({ uploadModalOpen: true });
+                }}
+              >
+                Import trace
+              </Button>
+            </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
         {query.queryType === 'search' && (
@@ -153,17 +192,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
             onChange={onChange}
             onBlur={this.props.onBlur}
           />
-        )}
-        {query.queryType === 'upload' && (
-          <div className={css({ padding: this.props.theme.spacing(2) })}>
-            <FileDropzone
-              options={{ multiple: false }}
-              onLoad={(result) => {
-                this.props.datasource.uploadedJson = result;
-                this.props.onRunQuery();
-              }}
-            />
-          </div>
         )}
         {query.queryType === 'serviceMap' && (
           <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} query={query} onChange={onChange} />
