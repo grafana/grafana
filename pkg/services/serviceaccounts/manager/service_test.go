@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,7 +62,6 @@ func (f *FakeServiceAccountStore) DeleteServiceAccount(ctx context.Context, orgI
 
 // MigrateApiKeysToServiceAccounts is a fake migrating api keys to service accounts.
 func (f *FakeServiceAccountStore) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
-	fmt.Printf("MigrateApiKeysToServiceAccounts: %v\n", f.expectedMigratedResults)
 	return f.expectedMigratedResults, f.ExpectedError
 }
 

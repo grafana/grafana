@@ -235,7 +235,6 @@ func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyI
 	return sa.store.MigrateApiKey(ctx, orgID, keyID)
 }
 func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
-	fmt.Printf("MigrateApiKeysToServiceAccounts: orgID=%d\n", orgID)
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
 	}

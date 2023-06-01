@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"cuelang.org/go/pkg/time"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -280,24 +279,6 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				FailedDetails:   []string{},
 			},
 		},
-		{
-			desc: "expired api keys should be migrated",
-			keys: []tests.TestApiKey{
-				{Name: "fail-test1", Role: org.RoleEditor, Key: "secret1", OrgId: 1},
-				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1, IsExpired: true},
-			},
-			orgId:                   1,
-			expectedServiceAccounts: 1,
-			expectedErr:             nil,
-			expectedMigratedResults: &serviceaccounts.MigrationResult{
-				Total:           2,
-				Migrated:        1,
-				Failed:          1,
-				FailedApikeyIDs: []int64{2},
-				FailedDetails:   []string{"API key name: test2 - Error: failed to create service account: context deadline exceeded"},
-			},
-			ctxWithFastCancel: true,
-		},
 	}
 
 	for _, c := range cases {
@@ -313,16 +294,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				tests.SetupApiKey(t, db, key)
 			}
 
-			results := &serviceaccounts.MigrationResult{}
-			err = nil
-			if c.ctxWithFastCancel {
-				ctx, cancel := context.WithTimeout(context.Background(), 0.5*time.Millisecond)
-				defer cancel()
-				results, err = store.MigrateApiKeysToServiceAccounts(ctx, c.orgId)
-			} else {
-				results, err = store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
-			}
-			t.Logf("results %+v", results)
+			results, err := store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {

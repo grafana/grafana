@@ -225,19 +225,26 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
           {data.Total}
         </p>
         <p>
-          <strong>Migrated:</strong>
+          <strong>Migrated: </strong>
           {data.Migrated}
         </p>
-        <p>
-          <strong>Failed:</strong> {data.Failed}
-        </p>
-        <p>
-          <strong>Failed Api Key IDs:</strong> {data.FailedApikeyIDs.join(', ')}
-        </p>
-        <p>
-          <strong>Failed Details:</strong>
-          {data.FailedDetails.join(', ')}
-        </p>
+
+        {data.FailedApikeyIDs.length !== 0 && (
+          <div>
+            <p>
+              <strong>Failed: </strong>
+              {data.Failed}
+            </p>
+            <p>
+              <strong>Failed Api Key IDs: </strong>
+              {data.FailedApikeyIDs.join(', ')}
+            </p>
+            <p>
+              <strong>Failed Details: </strong>
+              {data.FailedDetails.join(', ')}
+            </p>
+          </div>
+        )}
       </div>
     </Modal>
   );

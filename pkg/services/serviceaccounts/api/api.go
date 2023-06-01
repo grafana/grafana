@@ -2,10 +2,8 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -355,28 +353,12 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	results, err := api.retryAPICall(ctx.Req.Context(), ctx.OrgID, 3)
+	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID)
 	if err != nil {
-		fmt.Printf("format string for results %+v", results)
 		return response.JSON(http.StatusInternalServerError, results)
 	}
 
 	return response.JSON(http.StatusOK, results)
-}
-
-func (api *ServiceAccountsAPI) retryAPICall(ctx context.Context, orgID int64, retries int) (*serviceaccounts.MigrationResult, error) {
-	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx, orgID)
-	if err == nil {
-		return results, nil
-	}
-
-	if retries > 0 {
-		// Optional: Add delay before retrying
-		time.Sleep(10 * time.Millisecond)
-		return api.retryAPICall(ctx, orgID, retries-1)
-	}
-
-	return nil, err
 }
 
 // POST /api/serviceaccounts/migrate/:keyId
