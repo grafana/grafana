@@ -13,13 +13,13 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen';
 import { Button, CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AnnotationListItem } from './AnnotationListItem';
-import { Options } from './panelcfg.gen';
 
 interface UserInfo {
   id?: number;

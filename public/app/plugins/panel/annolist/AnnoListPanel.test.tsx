@@ -4,13 +4,13 @@ import React from 'react';
 
 import { AnnotationEvent, FieldConfigSource, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../core/services/backend_srv';
 import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, Props } from './AnnoListPanel';
-import { Options } from './panelcfg.gen';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

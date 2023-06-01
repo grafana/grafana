@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { MouseEvent } from 'react';
 
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen';
 import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
-
-import { Options } from './panelcfg.gen';
 
 interface Props extends Pick<PanelProps<Options>, 'options'> {
   annotation: AnnotationEvent;

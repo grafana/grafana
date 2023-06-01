@@ -1,10 +1,13 @@
 import React from 'react';
 
 import { PanelModel, PanelPlugin } from '@grafana/data';
+import {
+  Options,
+  defaultOptions,
+} from '@grafana/schema/src/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen';
 import { TagsInput } from '@grafana/ui';
 
 import { AnnoListPanel } from './AnnoListPanel';
-import { defaultOptions, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(AnnoListPanel)
   .setPanelOptions((builder) => {
