@@ -12,11 +12,10 @@ import {
   DisplayValue,
   VizOrientation,
 } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/bargauge/panelcfg/x/BarGaugePanelCfg_types.gen';
 import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
-
-import { Options } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
