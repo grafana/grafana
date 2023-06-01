@@ -7,15 +7,16 @@ import { useSelector } from 'app/types';
 
 import { AlertsFolderView } from '../alerting/unified/AlertsFolderView';
 
-import { useGetFolderQuery } from './api/browseDashboardsAPI';
+import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { FolderActionsButton } from './components/FolderActionsButton';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function BrowseFolderAlertingPage({ match }: OwnProps) {
   const { uid: folderUID } = match.params;
-  const { data: folderDTO, isLoading } = useGetFolderQuery(folderUID);
+  const { data: folderDTO } = useGetFolderQuery(folderUID);
   const folder = useSelector((state) => state.folder);
+  const [saveFolder] = useSaveFolderMutation();
 
   const navModel = useMemo(() => {
     if (!folderDTO) {
@@ -32,13 +33,28 @@ export function BrowseFolderAlertingPage({ match }: OwnProps) {
     return model;
   }, [folderDTO]);
 
+  const onEditTitle = folderUID
+    ? async (newValue: string) => {
+        if (folderDTO) {
+          const result = await saveFolder({
+            ...folderDTO,
+            title: newValue,
+          });
+          if ('error' in result) {
+            throw result.error;
+          }
+        }
+      }
+    : undefined;
+
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
+      onEditTitle={onEditTitle}
       actions={<>{folderDTO && <FolderActionsButton folder={folderDTO} />}</>}
     >
-      <Page.Contents isLoading={isLoading}>
+      <Page.Contents>
         <AlertsFolderView folder={folder} />
       </Page.Contents>
     </Page>
