@@ -17,6 +17,7 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
+  Distinct,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
@@ -285,6 +286,20 @@ export function isQueryWithLineFilter(query: string): boolean {
   });
 
   return queryWithLineFilter;
+}
+
+export function isQueryWithDistinct(query: string): boolean {
+  let hasDistinct = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === Distinct) {
+        hasDistinct = true;
+        return false;
+      }
+    },
+  });
+  return hasDistinct;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {
