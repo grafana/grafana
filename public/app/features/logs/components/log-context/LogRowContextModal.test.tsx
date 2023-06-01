@@ -129,18 +129,16 @@ describe('LogRowContextModal', () => {
   });
 
   it('should call getRowContextQuery when limit changes', async () => {
-    act(() => {
-      render(
-        <LogRowContextModal
-          row={row}
-          open={true}
-          onClose={() => {}}
-          getRowContext={getRowContext}
-          getRowContextQuery={getRowContextQuery}
-          timeZone={timeZone}
-        />
-      );
-    });
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        getRowContextQuery={getRowContextQuery}
+        timeZone={timeZone}
+      />
+    );
 
     // this will call it initially and in the first fetchResults
     await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(2));
