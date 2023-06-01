@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { DelayRender } from '../../utils/DelayRender';
+import { Collapse } from '../Collapse/Collapse';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Tooltip } from '../Tooltip';
@@ -32,6 +34,8 @@ export interface PanelChromeProps {
   dragClass?: string;
   dragClassCancel?: string;
   hoverHeader?: boolean;
+  /** Used for capturing events, reporting interactions etc. */
+  onToggle?: () => void;
   /**
    * Use only to indicate loading or streaming data in the panel.
    * Any other values of loadingState are ignored.
@@ -50,6 +54,8 @@ export interface PanelChromeProps {
    **/
   leftItems?: ReactNode[];
   actions?: ReactNode;
+  collapsible?: boolean;
+  collapsed?: boolean;
   displayMode?: 'default' | 'transparent';
   onCancelQuery?: () => void;
   /**
@@ -73,7 +79,10 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
-  displayMode = 'default',
+  collapsible = false,
+  collapsed = false,
+  displayMode = collapsible ? 'transparent' : 'default',
+  onToggle,
   titleItems,
   menu,
   dragClass,
@@ -117,9 +126,19 @@ export function PanelChrome({
 
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
+  const [open, toggleOpen] = useToggle(collapsed ? false : true);
+
+  const toggle = () => {
+    toggleOpen();
+    onToggle?.();
+  };
+
   const headerContent = (
+    // TODO: figure out how to render this inline with the Collapse header
+    // We need to figure out where we want to display actions
+    // Some components like Graph have actions in top right corner and it that case we want them to be in line with the title
     <>
-      {title && (
+      {title && !collapsible && (
         <h6 title={title} className={styles.title}>
           {title}
         </h6>
@@ -152,7 +171,7 @@ export function PanelChrome({
     </>
   );
 
-  return (
+  const chromeContent = (
     <div className={styles.container} style={containerStyles} data-testid={testid}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
@@ -204,6 +223,14 @@ export function PanelChrome({
         {children(innerWidth, innerHeight)}
       </div>
     </div>
+  );
+
+  return collapsible ? (
+    <Collapse label={title} collapsible isOpen={open} onToggle={() => toggle()} colapseBodyClassName={styles.collapse}>
+      {chromeContent}
+    </Collapse>
+  ) : (
+    chromeContent
   );
 }
 
@@ -279,6 +306,10 @@ const getStyles = (theme: GrafanaTheme2) => {
           opacity: '1',
         },
       },
+    }),
+    collapse: css({
+      label: 'panel-collapse',
+      padding: 0,
     }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',

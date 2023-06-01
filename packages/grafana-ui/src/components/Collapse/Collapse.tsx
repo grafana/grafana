@@ -103,6 +103,8 @@ export interface Props {
   onToggle?: (isOpen: boolean) => void;
   /** Additional class name for the root element */
   className?: string;
+  /** Additional class name for the colapse body */
+  colapseBodyClassName?: string;
 }
 
 export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
@@ -130,6 +132,7 @@ export const Collapse = ({
   onToggle,
   className,
   children,
+  colapseBodyClassName,
 }: React.PropsWithChildren<Props>) => {
   const buttonStyles = useStyles2(clearButtonStyles);
   const style = useStyles2(getStyles);
@@ -150,7 +153,7 @@ export const Collapse = ({
         <div className={cx([style.headerLabel])}>{label}</div>
       </button>
       {isOpen && (
-        <div className={cx([style.collapseBody])}>
+        <div className={cx([style.collapseBody, colapseBodyClassName])}>
           <div className={loaderClass} />
           <div className={style.bodyContentWrapper}>{children}</div>
         </div>
