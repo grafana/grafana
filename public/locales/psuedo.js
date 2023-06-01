@@ -14,7 +14,8 @@ function pseudoizeJsonReplacer(key, value) {
 
 fs.readFile('./public/locales/en-US/grafana.json').then((enJson) => {
   const enMessages = JSON.parse(enJson);
-  const pseudoJson = JSON.stringify(enMessages, pseudoizeJsonReplacer, 2);
+  // Add newline to make prettier happy
+  const pseudoJson = JSON.stringify(enMessages, pseudoizeJsonReplacer, 2) + '\n';
 
   return fs.writeFile('./public/locales/pseudo-LOCALE/grafana.json', pseudoJson);
 });
