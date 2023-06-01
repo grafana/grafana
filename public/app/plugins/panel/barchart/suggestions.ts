@@ -1,8 +1,10 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
 import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
+import {
+  Options,
+  FieldConfig,
+} from '@grafana/schema/src/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { FieldConfig, Options } from './panelcfg.gen';
 
 export class BarChartSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {

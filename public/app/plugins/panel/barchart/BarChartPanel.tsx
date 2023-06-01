@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { SortOrder } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen';
 import {
   GraphGradientMode,
   GraphNG,
@@ -37,7 +38,6 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { Options } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 const TOOLTIP_OFFSET = 10;

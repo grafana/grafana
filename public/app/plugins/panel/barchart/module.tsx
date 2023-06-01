@@ -10,13 +10,18 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
+import {
+  Options,
+  FieldConfig,
+  defaultFieldConfig,
+  defaultOptions,
+} from '@grafana/schema/src/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 

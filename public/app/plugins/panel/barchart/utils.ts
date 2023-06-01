@@ -26,12 +26,16 @@ import {
   StackingMode,
   VizLegendOptions,
 } from '@grafana/schema';
+import {
+  Options,
+  FieldConfig,
+  defaultFieldConfig,
+} from '@grafana/schema/src/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {

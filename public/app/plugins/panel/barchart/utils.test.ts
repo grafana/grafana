@@ -18,8 +18,11 @@ import {
   StackingMode,
   SortOrder,
 } from '@grafana/schema';
+import {
+  Options,
+  FieldConfig as PanelFieldConfig,
+} from '@grafana/schema/src/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen';
 
-import { FieldConfig as PanelFieldConfig, Options } from './panelcfg.gen';
 import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 function mockDataFrame() {
