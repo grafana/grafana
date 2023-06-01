@@ -55,7 +55,10 @@ def integration_benchmarks(trigger, prefix):
         wire_install_step(),
     ]
 
-    cmd = ["go test -v -run=^$ -timeout=20m -bench=. -benchtime=2s -benchmem ./pkg/services/folder/folderimpl"]
+    cmd = [
+        "go test -v -run=^$ -timeout=20m -bench=CachingOff -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
+        "go test -v -run=^$ -timeout=20m -bench=CachingOn -benchtime=2s -benchmem ./pkg/services/folder/folderimpl",
+    ]
 
     benchmark_steps = [
         {
