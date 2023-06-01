@@ -38,7 +38,7 @@ There are a few utilities that can be useful for debugging tests:
 
 ## Testing Select Components
 
-We'll use the [OrgRolePicker](https://github.com/grafana/grafana/blob/main/public/app/features/admin/OrgRolePicker.tsx) component as an example. This component is essentially a wrapper for the `Select` component.
+Here, the [OrgRolePicker](https://github.com/grafana/grafana/blob/main/public/app/features/admin/OrgRolePicker.tsx) component is used as an example. This component essentially serves as a wrapper for the `Select` component, complete with its own set of options.
 
 ```tsx
 import { OrgRole } from '@grafana/data';
@@ -112,7 +112,7 @@ At times, it might be necessary to verify that the `Select` component is display
 ```tsx
 it('should have an "Editor" option', async () => {
   const { user } = setup(<OrgRolePicker value={OrgRole.Admin} aria-label={'Role picker'} onChange={() => {}} />);
-  await user.click(screen.getByLabelText('Role picker'));
+  await user.click(screen.getByRole('combobox', { name: 'Role picker' }));
   expect(screen.getByText('Editor')).toBeInTheDocument();
 });
 ```
@@ -162,15 +162,19 @@ This approach leverages the built-in mocking capabilities of Jest.
 ```tsx
 let windowSpy: jest.SpyInstance;
 
-beforeEach(() => {
+beforeAll(() => {
   windowSpy = jest.spyOn(window, 'location', 'get');
+});
+
+afterAll(() => {
+  windowSpy.mockRestore();
+});
+
+it('should test with window', function () {
   windowSpy.mockImplementation(() => ({
     href: 'www.example.com',
   }));
-});
-
-afterEach(() => {
-  windowSpy.mockRestore();
+  expect(window.location.href).toBe('www.example.com');
 });
 ```
 
