@@ -19,6 +19,8 @@ When you encounter problems with your Grafana instance, you can send us a suppor
 - Grafana configuration
 - Deployed database information and migrations
 
+> **Note**: The Support Bundle is available on Grafana instances running 9.5 and above.
+
 ## Available support bundle components
 
 A support bundle can include any of the following components:
