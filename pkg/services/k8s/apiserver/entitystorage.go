@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/grafana/kindsys"
@@ -290,13 +289,27 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 				if err != nil {
 					return nil, false, "", err
 				}
-				return ioutil.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
-
+				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
 			}
 
 			streamer := objPtr.(*apihelpers.SubresourceStreamer)
 			streamer.SetInputStream(i)
+			return err
+		case "ref":
+			refs := make(map[string]interface{})
+			refs["TODO"] = "find references"
 
+			i := func(ctx context.Context, apiVersion, acceptHeader string) (stream io.ReadCloser, flush bool, mimeType string, err error) {
+				raw, err := json.Marshal(refs)
+				if err != nil {
+					return nil, false, "", err
+				}
+				fmt.Printf("REFS: %s\n", string(raw))
+				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
+			}
+
+			streamer := objPtr.(*apihelpers.SubresourceStreamer)
+			streamer.SetInputStream(i)
 			return err
 		case "":
 			// this is fine

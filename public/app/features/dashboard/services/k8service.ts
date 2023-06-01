@@ -39,6 +39,14 @@ export class DashboardKindService {
     return getBackendSrv().get<Resource<Dashboard>>(this.url + '/' + name);
   }
 
+  async getHistory(name: string): Promise<any> {
+    return getBackendSrv().get(this.url + '/' + name + '/history');
+  }
+
+  async getReferences(name: string): Promise<any> {
+    return getBackendSrv().get(this.url + '/' + name + '/ref');
+  }
+
   async save(cmd: SaveDashboardCommand): Promise<Resource<Dashboard>> {
     if (!cmd.dashboard.uid) {
       const res: Resource = {
