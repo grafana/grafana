@@ -11,7 +11,6 @@ import {
 import { ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
-import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 
 export interface SpanBarOptions {
   type?: string;
