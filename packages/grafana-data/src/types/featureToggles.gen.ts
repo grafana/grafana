@@ -45,7 +45,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
-  internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
