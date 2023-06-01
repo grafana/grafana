@@ -57,6 +57,9 @@ export function DashboardsTree({
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
+    // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
+    // especially after a refetch after a move/delete.
+    // Clear that cache, and check if we need to trigger another load
     if (infiniteLoaderRef.current) {
       infiniteLoaderRef.current.resetloadMoreItemsCache(true);
     }
