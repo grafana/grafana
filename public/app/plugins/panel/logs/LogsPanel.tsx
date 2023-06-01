@@ -12,6 +12,7 @@ import {
   DataHoverEvent,
   CoreApp,
 } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/logs/panelcfg/x/LogsPanelCfg_types.gen';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -19,8 +20,6 @@ import { PanelDataErrorView } from 'app/features/panel/components/PanelDataError
 
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
-
-import { Options } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 

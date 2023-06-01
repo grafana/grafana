@@ -1,7 +1,6 @@
 import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/logs/panelcfg/x/LogsPanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { Options } from './types';
 
 export class LogsPanelSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
