@@ -50,7 +50,7 @@ func ProvideDBStore(
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
 		SQLStore:         sqlstore,
-		Logger:           log.New("dbstore"),
+		Logger:           log.New("ngalert.dbstore"),
 		FolderService:    folderService,
 		AccessControl:    access,
 		DashboardService: dashboards,

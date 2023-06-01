@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -534,7 +535,7 @@ func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID str
 }
 
 // Kind returns the name of the alert rule type of entity.
-func (st DBstore) Kind() string { return folder.AlertRuleKind }
+func (st DBstore) Kind() string { return entity.StandardKindAlertRule }
 
 // GenerateNewAlertRuleUID generates a unique UID for a rule.
 // This is set as a variable so that the tests can override it.
