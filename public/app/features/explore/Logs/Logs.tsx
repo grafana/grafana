@@ -104,6 +104,7 @@ interface State {
 
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
 const styleOverridesForStickyNavigation = css`
+  margin-bottom: 0;
   & > div {
     overflow: visible;
     & > div {
@@ -632,6 +633,8 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
+      overflow-x: scroll;
+      height: calc(100vh - 150px);
     `,
     logRows: css`
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
