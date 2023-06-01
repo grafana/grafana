@@ -1656,6 +1656,12 @@ Configures the Profile section.
 
 Enable or disable the Profile section. Default is `enabled`.
 
+## [news]
+
+### news_feed_enabled
+
+Enables the news feed section. Default is `true`
+
 ## [query_history]
 
 Configures Query history in Explore.
