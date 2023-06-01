@@ -1,8 +1,7 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { TableFieldOptions } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { SuggestionName } from 'app/types/suggestions';
-
-import { Options } from './panelcfg.gen';
 
 export class TableSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
 import { RefreshEvent } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
-import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 
 import PanelHeaderCorner from '../../dashgrid/PanelHeader/PanelHeaderCorner';
 import { getTimeSrv } from '../../services/TimeSrv';

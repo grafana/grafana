@@ -3,10 +3,9 @@ import React from 'react';
 
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-
-import { Options } from './panelcfg.gen';
 
 interface Props extends PanelProps<Options> {}
 

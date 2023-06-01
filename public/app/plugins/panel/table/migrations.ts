@@ -9,8 +9,7 @@ import {
   FieldConfig,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
-
-import { Options } from './panelcfg.gen';
+import { Options } from '@grafana/schema/src/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
