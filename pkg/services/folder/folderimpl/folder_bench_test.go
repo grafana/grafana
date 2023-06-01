@@ -56,10 +56,13 @@ func BenchmarkFolderService_GetRootChildren_10000_128_CachingOn(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 128, true)
 }
 
-func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) (*Service, user.SignedInUser) {
+func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, cachingOn bool) (*Service, user.SignedInUser) {
 	db := sqlstore.InitTestDB(b)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db, localcache.ProvideService())
+	if !cachingOn {
+		folderStore.DisableCaching()
+	}
 	cfg := setting.NewCfg()
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
@@ -73,13 +76,9 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 	origConcurrencyFactor := concurrencyFactor
 	concurrencyFactor = overrideConcurrencyFactor
 
-	origCaching := CACHING
-	CACHING = overrideCaching
-
 	b.Cleanup(func() {
 		guardian.New = origNewGuardian
 		concurrencyFactor = origConcurrencyFactor
-		CACHING = origCaching
 	})
 
 	serviceWithFlagOn := &Service{

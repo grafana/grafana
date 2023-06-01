@@ -1032,7 +1032,7 @@ func TestNestedFolderService(t *testing.T) {
 
 func TestService_GetChildren(t *testing.T) {
 	t.Run("get children with no parentUID", func(t *testing.T) {
-		serviceWithFlagOn, signedInUser := setupGetChildren(t, 100, "", concurrencyFactor, CACHING)
+		serviceWithFlagOn, signedInUser := setupGetChildren(t, 100, "", concurrencyFactor, true)
 		res, err := serviceWithFlagOn.GetChildren(context.Background(), &folder.GetChildrenQuery{
 			OrgID:        orgID,
 			UID:          "",
