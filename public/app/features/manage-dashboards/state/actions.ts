@@ -66,28 +66,31 @@ const isDataSourceBeingConsumed = (
 };
 
 function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
-  const filteredUsedInputs = dashboardJson.__inputs?.filter((input: any) => {
-    if (input.type !== InputType.DataSource) {
-      return true;
-    }
-
-    const isDataSourceInputUsedInAnyLibPanel = state.inputs.libraryPanels?.some((libPanel) =>
-      isDataSourceBeingConsumed(libPanel.model.model.datasource, input.name)
-    );
-    const isDataSourceInputUsedInAnyPanel = dashboardJson.panels?.some((el) => {
-      if (!('datasource' in el)) {
-        return false;
+  let filteredUsedInputs = dashboardJson.__inputs;
+  if (!!state.inputs.libraryPanels.length) {
+    filteredUsedInputs = dashboardJson.__inputs?.filter((input: any) => {
+      if (input.type !== InputType.DataSource) {
+        return true;
       }
-      return isDataSourceBeingConsumed(el.datasource, input.name);
-    });
-    const isDataSourceInputUsedInAnyTemplating = dashboardJson.templating?.list?.some((temp) =>
-      isDataSourceBeingConsumed(temp.datasource, input.name)
-    );
 
-    return (
-      isDataSourceInputUsedInAnyLibPanel || isDataSourceInputUsedInAnyPanel || isDataSourceInputUsedInAnyTemplating
-    );
-  });
+      const isDataSourceInputUsedInAnyLibPanel = state.inputs.libraryPanels?.some((libPanel) =>
+        isDataSourceBeingConsumed(libPanel.model.model.datasource, input.name)
+      );
+      const isDataSourceInputUsedInAnyPanel = dashboardJson.panels?.some((el) => {
+        if (!('datasource' in el)) {
+          return false;
+        }
+        return isDataSourceBeingConsumed(el.datasource, input.name);
+      });
+      const isDataSourceInputUsedInAnyTemplating = dashboardJson.templating?.list?.some((temp) =>
+        isDataSourceBeingConsumed(temp.datasource, input.name)
+      );
+
+      return (
+        isDataSourceInputUsedInAnyLibPanel || isDataSourceInputUsedInAnyPanel || isDataSourceInputUsedInAnyTemplating
+      );
+    });
+  }
 
   return { ...dashboardJson, __inputs: filteredUsedInputs };
 }
