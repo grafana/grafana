@@ -12,6 +12,7 @@ import React, { useEffect, useReducer } from 'react';
 
 import { Field, PanelProps, FieldType, DataFrame } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/datagrid/panelcfg/x/DatagridPanelCfg_types.gen';
 import { usePanelContext, useTheme2 } from '@grafana/ui';
 
 import '@glideapps/glide-data-grid/dist/index.css';
@@ -20,7 +21,6 @@ import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { RenameColumnCell } from './components/RenameColumnCell';
 import { isDatagridEnabled } from './featureFlagUtils';
-import { Options } from './panelcfg.gen';
 import { DatagridActionType, datagridReducer, initialState } from './state';
 import {
   clearCellsFromRangeSelection,

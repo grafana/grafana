@@ -1,7 +1,10 @@
 import { PanelPlugin } from '@grafana/data';
+import {
+  Options,
+  defaultOptions,
+} from '@grafana/schema/src/raw/composable/datagrid/panelcfg/x/DatagridPanelCfg_types.gen';
 
 import { DataGridPanel } from './DataGridPanel';
-import { defaultOptions, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(DataGridPanel).setPanelOptions((builder, context) => {
   const seriesOptions = context.data.map((frame, idx) => ({ value: idx, label: frame.refId }));
