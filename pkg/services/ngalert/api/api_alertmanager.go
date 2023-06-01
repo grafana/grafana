@@ -68,7 +68,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 	if postableSilence.ID == "" {
 		action = accesscontrol.ActionAlertingInstanceCreate
 	}
-	if !accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, accesscontrol.EvalPermission(action)) {
+	if !accesscontrol.HasAccess(srv.ac, c)(accesscontrol.EvalPermission(action)) {
 		errAction := "update"
 		if postableSilence.ID == "" {
 			errAction = "create"
