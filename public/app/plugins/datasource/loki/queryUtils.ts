@@ -219,6 +219,7 @@ export function isQueryWithLabelFormat(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LabelFormatExpr) {
         queryWithLabelFormat = true;
+        return false;
       }
     },
   });
@@ -261,10 +262,10 @@ export function isQueryWithLabelFilter(query: string): boolean {
   let hasLabelFilter = false;
 
   tree.iterate({
-    enter: ({ type, node }): false | void => {
+    enter: ({ type }): false | void => {
       if (type.id === LabelFilter) {
         hasLabelFilter = true;
-        return;
+        return false;
       }
     },
   });
@@ -280,7 +281,7 @@ export function isQueryWithLineFilter(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LineFilter) {
         queryWithLineFilter = true;
-        return;
+        return false;
       }
     },
   });
