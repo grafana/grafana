@@ -1,13 +1,15 @@
-# Testing tips
+# Testing Guidelines
 
-## Testing user interactions
+The goal of this document is to address the most frequently asked "How to" questions related to unit testing.
 
-We are using [user-event](https://testing-library.com/docs/user-event/intro) to test for user interactions, and it should be used instead of the built-in `fireEvent` method as it more closely resembles the way users interact with elements.
+## Testing User Interactions
 
-There are two things to remember when using `userEvent`:
+We use the [user-event](https://testing-library.com/docs/user-event/intro) library for simulating user interactions during testing. This library is preferred over the built-in `fireEvent` method, as it more accurately mirrors real user interactions with elements.
 
-1. All its methods are async, so should be called with `await`.
-2. While it is possible to call the methods directly from `userEvent`, this will not work in the future versions and we need to call `userEvent.setup()` before the tests, which will return a `userEvent` instance with all its methods. This setting up can be simplified via a utility function:
+There are two important considerations when working with `userEvent`:
+
+1. All methods in `userEvent` are asynchronous, and thus require the use of `await` when called.
+2. Directly calling methods from `userEvent` may not be supported in future versions. As such, it's necessary to first call `userEvent.setup()` prior to the tests. This method returns a `userEvent` instance, complete with all its methods. This setup process can be simplified using a utility function:
 
 ```tsx
 import { render, screen } from '@testing-library/react';
@@ -26,17 +28,17 @@ it('should render', async () => {
 });
 ```
 
-## Debugging tests
+## Debugging Tests
 
-There a few helpful utilities for debugging tests.
+There are a few utilities that can be useful for debugging tests:
 
-- [screen.debug()](https://testing-library.com/docs/queries/about/#screendebug) - prints a readable representation of a document DOM tree (when called without arguments) or a DOM tree of a specific node or nodes. It is internally using `console.log`, so no need to wrap it in it.
-- [Testing Playground](https://testing-playground.com/) - an interactive sandbox for testing which queries work for specific HTML.
-- [logRoles](https://testing-library.com/docs/dom-testing-library/api-debugging/#prettydom) - a utility to print out all the implicit ARIA roles for a tree of DOM nodes.
+- [screen.debug()](https://testing-library.com/docs/queries/about/#screendebug) - This function prints a human-readable representation of the document's DOM tree when called without arguments, or the DOM tree of specific node(s) when provided with arguments. It is internally using `console.log` to log the output to terminal.
+- [Testing Playground](https://testing-playground.com/) - An interactive sandbox that allows testing which queries work with specific HTML elements.
+- [logRoles](https://testing-library.com/docs/dom-testing-library/api-debugging/#prettydom) - A utility function that prints out all the implicit ARIA roles for a given DOM tree.
 
-## Testing Select components
+## Testing Select Components
 
-As an example, we'll use this `OrgRolePicker` component, which is basically a wrapper for `Select`.
+We'll use the [OrgRolePicker](https://github.com/grafana/grafana/blob/main/public/app/features/admin/OrgRolePicker.tsx) component as an example. This component is essentially a wrapper for the `Select` component.
 
 ```tsx
 import { OrgRole } from '@grafana/data';
@@ -70,11 +72,11 @@ export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputI
 }
 ```
 
-### Matching the Select
+### Querying the Select Component
 
-There a few way to query the Select component.
+There are a few methods to query the `Select` component:
 
-1. Explicitly passing the aria-label prop and using `getByRole` method:
+1. One approach is to explicitly pass the `aria-label` prop and then use the `getByRole` method:
 
 ```tsx
 describe('OrgRolePicker', () => {
@@ -85,7 +87,7 @@ describe('OrgRolePicker', () => {
 });
 ```
 
-2. Adding a `label` element with the `htmlFor` prop. In this case matching `inputId` should be passed to the `Select`.
+2. Alternatively, add a `label` element and provide the `htmlFor` prop. In this scenario, a matching `inputId` should be passed to the `Select` component:
 
 ```tsx
 describe('OrgRolePicker', () => {
@@ -101,11 +103,11 @@ describe('OrgRolePicker', () => {
 });
 ```
 
-It's also possible to use `*ByLabelText` queries, however `*ByRole` queries are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name) and should be generally preferred.
+It's also possible to use `*ByLabelText` queries. However, the `*ByRole` queries are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name) and are generally recommended over the former.
 
-### Testing that correct options are displayed
+### Testing the Display of Correct Options
 
-Sometimes it's necessary to test that `Select` displays correct options. In this case, the best solution is to click the `Select` and match the required option using `*ByText` query.
+At times, it might be necessary to verify that the `Select` component is displaying the correct options. In such instances, the best solution is to click the `Select` component and match the desired option using the `*ByText` query.
 
 ```tsx
 it('should have an "Editor" option', async () => {
@@ -117,7 +119,7 @@ it('should have an "Editor" option', async () => {
 
 ### Selecting an option
 
-To make selecting an option from a Select component easier, there's a selectOptionInTest utility function, which is wrapper on top of [react-select-event](https://testing-library.com/docs/ecosystem-react-select-event/) package.
+To simplify the process of selecting an option from a `Select` component, there is a `selectOptionInTest` utility function. This function is a wrapper over the [react-select-event](https://testing-library.com/docs/ecosystem-react-select-event/) package.
 
 ```tsx
 it('should select an option', async () => {
@@ -127,3 +129,49 @@ it('should select an option', async () => {
   expect(mockOnChange).toHaveBeenCalledWith('Viewer');
 });
 ```
+
+## Mocking Objects and Functions
+
+### Mocking the `window` Object and Its Methods
+
+There are several approaches to mock the `window` object. The most common methods are using `Object.defineProperty` and Jest spies.
+
+#### Using `Object.defineProperty`
+
+This method allows for the creation of a new property directly on an object, or modification of an existing one.
+
+```tsx
+const originalLocation = window.location;
+beforeAll(() => {
+  Object.defineProperty(window, 'location', {
+    value: { href: 'www.example.com' },
+  });
+});
+
+afterAll(() => {
+  Object.defineProperty(window, 'location', { value: originalLocation });
+});
+```
+
+It's important to include `writable: true` in case the `window` object or its properties need to be redefined in another test.
+
+### Using Jest Spies
+
+This approach leverages the built-in mocking capabilities of Jest.
+
+```tsx
+let windowSpy: jest.SpyInstance;
+
+beforeEach(() => {
+  windowSpy = jest.spyOn(window, 'location', 'get');
+  windowSpy.mockImplementation(() => ({
+    href: 'www.example.com',
+  }));
+});
+
+afterEach(() => {
+  windowSpy.mockRestore();
+});
+```
+
+Jest's spy functions provide a built-in mechanism for restoring mocks. This feature eliminates the need to manually save a reference to the `window` object.
