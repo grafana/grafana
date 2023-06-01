@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	KindPrometheus = "prometheus"
-	KindMimir      = "mimir"
+	KindPrometheus = "Prometheus"
+	KindMimir      = "Mimir"
 )
 
 var (
@@ -72,8 +72,12 @@ type HeuristicsRequest struct {
 }
 
 type Heuristics struct {
-	Application string                 `json:"application"`
-	Features    map[string]interface{} `json:"features"`
+	Application string   `json:"application"`
+	Features    Features `json:"features"`
+}
+
+type Features struct {
+	RulerApiEnabled bool `json:"rulerApiEnabled"`
 }
 
 func (s *Service) GetHeuristics(ctx context.Context, req HeuristicsRequest) (*Heuristics, error) {
@@ -87,7 +91,9 @@ func (s *Service) GetHeuristics(ctx context.Context, req HeuristicsRequest) (*He
 func getHeuristics(ctx context.Context, i *instance) (*Heuristics, error) {
 	heuristics := Heuristics{
 		Application: "unknown",
-		Features:    make(map[string]interface{}),
+		Features: Features{
+			RulerApiEnabled: false,
+		},
 	}
 	buildInfo, err := getBuildInfo(ctx, i)
 	if err != nil {
@@ -97,10 +103,10 @@ func getHeuristics(ctx context.Context, i *instance) (*Heuristics, error) {
 	if len(buildInfo.Data.Features) == 0 {
 		// If there are no features then this is a Prometheus datasource
 		heuristics.Application = KindPrometheus
-		heuristics.Features["rulerEnabled"] = false
+		heuristics.Features.RulerApiEnabled = false
 	} else {
 		heuristics.Application = KindMimir
-		heuristics.Features["rulerEnabled"] = true
+		heuristics.Features.RulerApiEnabled = true
 	}
 	return &heuristics, nil
 }
