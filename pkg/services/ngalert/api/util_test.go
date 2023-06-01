@@ -139,26 +139,6 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			}
 		})
 	})
-	t.Run("if access control is disabled", func(t *testing.T) {
-		t.Run("should not alter user", func(t *testing.T) {
-			proxy := AlertingProxy{
-				DataProxy: nil,
-				ac:        accesscontrolmock.New().WithDisabled(),
-			}
-
-			req := &http.Request{}
-			resp := &response.NormalResponse{}
-
-			for _, roleType := range []org.RoleType{org.RoleViewer, org.RoleEditor, org.RoleAdmin} {
-				roleCtx := *ctx
-				roleCtx.SignedInUser = &user.SignedInUser{
-					OrgRole: roleType,
-				}
-				newCtx := proxy.createProxyContext(&roleCtx, req, resp)
-				require.Equalf(t, roleCtx.SignedInUser, newCtx.SignedInUser, "user should not be altered if access control is disabled and role is %s", roleType)
-			}
-		})
-	})
 }
 
 func Test_containsProvisionedAlerts(t *testing.T) {
