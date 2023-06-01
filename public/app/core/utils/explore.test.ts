@@ -2,9 +2,9 @@ import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
+import { ExploreId } from 'app/types';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
-import { ExploreId } from '../../types';
 
 import {
   buildQueryTransaction,

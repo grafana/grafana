@@ -85,7 +85,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
   ];
 
   return (
-    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add alert data'}>
+    <Modal onDismiss={onDismiss} isOpen={isOpen} title={'Add custom alerts'}>
       <FormProvider {...formMethods}>
         <form
           onSubmit={(e) => {

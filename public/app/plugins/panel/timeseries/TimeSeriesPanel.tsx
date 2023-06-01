@@ -7,7 +7,7 @@ import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin 
 import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
@@ -17,7 +17,7 @@ import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
-interface TimeSeriesPanelProps extends PanelProps<PanelOptions> {}
+interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
 export const TimeSeriesPanel = ({
   data,
@@ -38,10 +38,10 @@ export const TimeSeriesPanel = ({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
 
-  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
+  const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {
-    if (data.series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+    if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
       const s = getPrepareTimeseriesSuggestion(id);
       return {
         message: 'Long data must be converted to wide',
@@ -49,7 +49,7 @@ export const TimeSeriesPanel = ({
       };
     }
     return undefined;
-  }, [data.series, id]);
+  }, [frames, id]);
 
   if (!frames || suggestions) {
     return (

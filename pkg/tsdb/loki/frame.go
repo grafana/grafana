@@ -174,7 +174,7 @@ func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField
 		}
 		checksums[sum] = sumCount + 1
 
-		ids[i] = sum + idSuffix + "_" + refId
+		ids[i] = sum + idSuffix
 	}
 	return data.NewField("id", nil, ids), nil
 }

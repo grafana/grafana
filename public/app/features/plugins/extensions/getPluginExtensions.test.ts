@@ -2,6 +2,7 @@ import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
 import { createPluginExtensionRegistry } from './createPluginExtensionRegistry';
 import { getPluginExtensions } from './getPluginExtensions';
+import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
 describe('getPluginExtensions()', () => {
@@ -96,19 +97,19 @@ describe('getPluginExtensions()', () => {
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(extensions).toHaveLength(0);
   });
-  test('should pass a frozen copy of the context to the configure() function', () => {
+  test('should pass a read only context to the configure() function', () => {
     const context = { title: 'New title from the context!' };
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
-    const frozenContext = (link2.configure as jest.Mock).mock.calls[0][0];
+    const readOnlyContext = (link2.configure as jest.Mock).mock.calls[0][0];
 
     assertPluginExtensionLink(extension);
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(Object.isFrozen(frozenContext)).toBe(true);
+    expect(isReadOnlyProxy(readOnlyContext)).toBe(true);
     expect(() => {
-      frozenContext.title = 'New title';
+      readOnlyContext.title = 'New title';
     }).toThrow();
     expect(context.title).toBe('New title from the context!');
   });
@@ -247,7 +248,7 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
   });
 
-  test('should pass a frozen copy of the context to the onClick() function', () => {
+  test('should pass a read only context to the onClick() function', () => {
     const context = { title: 'New title from the context!' };
 
     link2.path = undefined;
@@ -263,13 +264,13 @@ describe('getPluginExtensions()', () => {
     const helpers = (link2.onClick as jest.Mock).mock.calls[0][1];
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(Object.isFrozen(helpers.context)).toBe(true);
+    expect(isReadOnlyProxy(helpers.context)).toBe(true);
     expect(() => {
       helpers.context.title = 'New title';
     }).toThrow();
   });
 
-  test('should should not freeze the original context', () => {
+  test('should should not make original context read only', () => {
     const context = {
       title: 'New title from the context!',
       nested: { title: 'title' },

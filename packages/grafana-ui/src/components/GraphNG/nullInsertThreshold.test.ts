@@ -1,4 +1,4 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, createDataFrame } from '@grafana/data';
 
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 
@@ -48,7 +48,7 @@ function genFrame() {
 
 describe('nullInsertThreshold Transformer', () => {
   test('should insert nulls at +threshold between adjacent > threshold: 1', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1, 3, 10] },
@@ -65,7 +65,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should insert nulls at +threshold between adjacent > threshold: 2', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [5, 7, 11] },
@@ -82,7 +82,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should insert nulls at +interval between adjacent > interval: 1', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 10] },
@@ -99,7 +99,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [4, 6, 13] },
@@ -154,7 +154,7 @@ describe('nullInsertThreshold Transformer', () => {
 
   // this tests that intervals at 24hr but starting not at 12am UTC are not always snapped to 12am UTC
   test('should insert leading null at beginning +interval when timeRange.from.valueOf() exceeds threshold 11PM UTC', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         {
@@ -181,7 +181,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should insert trailing null at end +interval when timeRange.to.valueOf() exceeds threshold', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 10] },
@@ -197,7 +197,7 @@ describe('nullInsertThreshold Transformer', () => {
     expect(result.fields[2].values).toEqual(['a', null, 'b', null, null, null, null, null, null, 'c', null, null]);
 
     // should work for frames with 1 datapoint
-    const df2 = new MutableDataFrame({
+    const df2 = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1] },
@@ -216,7 +216,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should not insert trailing null at end +interval when timeRange.to.valueOf() equals threshold', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1] },
@@ -234,7 +234,7 @@ describe('nullInsertThreshold Transformer', () => {
 
   // TODO: make this work
   test.skip('should insert nulls at +threshold (when defined) instead of +interval', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 2 }, values: [5, 7, 11] },
@@ -251,7 +251,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should noop on 0 datapoints', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [] },
@@ -265,7 +265,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should noop on invalid threshold', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1, 2, 4] },
@@ -279,7 +279,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should noop on invalid interval', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: -1 }, values: [1, 2, 4] },
@@ -293,7 +293,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should noop when no missing steps', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 2, 3] },
@@ -307,7 +307,7 @@ describe('nullInsertThreshold Transformer', () => {
   });
 
   test('should noop when refFieldName not found', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 2, 5] },

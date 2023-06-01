@@ -23,7 +23,7 @@ export type Alert = {
 };
 
 export function hasAlertState(alert: Alert, state: PromAlertingRuleState | GrafanaAlertState): boolean {
-  return mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) === state;
+  return mapStateWithReasonToBaseState(alert.state) === state;
 }
 
 interface RuleBase {
@@ -185,7 +185,7 @@ export interface SilenceFilterState {
 
 interface EvalMatch {
   metric: string;
-  tags?: any;
+  tags?: Record<string, string>;
   value: number;
 }
 
@@ -208,7 +208,7 @@ export interface StateHistoryItem {
   time: number;
   timeEnd: number;
   text: string;
-  tags: any[];
+  tags: string[];
   login: string;
   email: string;
   avatarUrl: string;

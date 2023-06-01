@@ -24,6 +24,7 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state';
+import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 
 import { BasicSettings } from './BasicSettings';
@@ -108,7 +109,7 @@ export function EditDataSourceView({
   onUpdate,
 }: ViewProps) {
   const { plugin, loadError, testingStatus, loading } = dataSourceSettings;
-  const { readOnly, hasWriteRights } = dataSourceRights;
+  const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
@@ -119,9 +120,13 @@ export function EditDataSourceView({
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    trackDsConfigClicked('save_and_test');
+
     try {
       await onUpdate({ ...dataSource });
+      trackDsConfigUpdated('success');
     } catch (err) {
+      trackDsConfigUpdated('fail');
       return;
     }
 
@@ -129,7 +134,15 @@ export function EditDataSourceView({
   };
 
   if (loadError) {
-    return <DataSourceLoadError dataSourceRights={dataSourceRights} onDelete={onDelete} />;
+    return (
+      <DataSourceLoadError
+        dataSourceRights={dataSourceRights}
+        onDelete={() => {
+          trackDsConfigClicked('delete');
+          onDelete();
+        }}
+      />
+    );
   }
 
   if (loading) {
@@ -179,7 +192,19 @@ export function EditDataSourceView({
 
       <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 
-      <ButtonRow onSubmit={onSubmit} onTest={onTest} canSave={!readOnly && hasWriteRights} />
+      <ButtonRow
+        onSubmit={onSubmit}
+        onDelete={() => {
+          trackDsConfigClicked('delete');
+          onDelete();
+        }}
+        onTest={() => {
+          trackDsConfigClicked('test');
+          onTest();
+        }}
+        canDelete={!readOnly && hasDeleteRights}
+        canSave={!readOnly && hasWriteRights}
+      />
     </form>
   );
 }

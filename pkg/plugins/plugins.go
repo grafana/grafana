@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"path"
 	"runtime"
@@ -24,6 +25,7 @@ var (
 	ErrFileNotExist              = errors.New("file does not exist")
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
+	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
 )
 
 type Plugin struct {
@@ -48,6 +50,8 @@ type Plugin struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
+
+	AngularDetected bool
 
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
@@ -78,6 +82,8 @@ type PluginDTO struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
+
+	AngularDetected bool
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -137,6 +143,44 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+}
+
+func ReadPluginJSON(reader io.Reader) (JSONData, error) {
+	plugin := JSONData{}
+	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+		return JSONData{}, err
+	}
+
+	if err := validatePluginJSON(plugin); err != nil {
+		return JSONData{}, err
+	}
+
+	if plugin.ID == "grafana-piechart-panel" {
+		plugin.Name = "Pie Chart (old)"
+	}
+
+	if len(plugin.Dependencies.Plugins) == 0 {
+		plugin.Dependencies.Plugins = []Dependency{}
+	}
+
+	if plugin.Dependencies.GrafanaVersion == "" {
+		plugin.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range plugin.Includes {
+		if include.Role == "" {
+			include.Role = org.RoleViewer
+		}
+	}
+
+	return plugin, nil
+}
+
+func validatePluginJSON(data JSONData) error {
+	if data.ID == "" || !data.Type.IsValid() {
+		return ErrInvalidPluginJSON
+	}
+	return nil
 }
 
 func (d JSONData) DashboardIncludes() []*Includes {
@@ -384,6 +428,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
+		AngularDetected:   p.AngularDetected,
 	}
 }
 

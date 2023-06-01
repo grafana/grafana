@@ -7,6 +7,7 @@ import { assertIsDefined } from 'test/helpers/asserts';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { wellFormedDashboard, wellFormedEmptyFolder, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
+import { SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
 
@@ -22,19 +23,14 @@ describe('browse-dashboards DashboardsTree', () => {
   const emptyFolderIndicator = wellFormedEmptyFolder();
   const dashboard = wellFormedDashboard(2);
   const noop = () => {};
-  const selectedItems = {
-    $all: false,
-    folder: {},
-    dashboard: {},
-    panel: {},
-  };
+  const isSelected = () => SelectionState.Unselected;
 
   it('renders a dashboard item', () => {
     render(
       <DashboardsTree
         canSelect
         items={[dashboard]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
@@ -53,7 +49,7 @@ describe('browse-dashboards DashboardsTree', () => {
       <DashboardsTree
         canSelect={false}
         items={[dashboard]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
@@ -71,7 +67,7 @@ describe('browse-dashboards DashboardsTree', () => {
       <DashboardsTree
         canSelect
         items={[folder]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
@@ -89,7 +85,7 @@ describe('browse-dashboards DashboardsTree', () => {
       <DashboardsTree
         canSelect
         items={[folder]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={handler}
@@ -108,7 +104,7 @@ describe('browse-dashboards DashboardsTree', () => {
       <DashboardsTree
         canSelect
         items={[emptyFolderIndicator]}
-        selectedItems={selectedItems}
+        isSelected={isSelected}
         width={WIDTH}
         height={HEIGHT}
         onFolderClick={noop}
@@ -116,7 +112,7 @@ describe('browse-dashboards DashboardsTree', () => {
         onAllSelectionChange={noop}
       />
     );
-    expect(screen.queryByText('Empty folder')).toBeInTheDocument();
+    expect(screen.queryByText('No items')).toBeInTheDocument();
     expect(screen.queryByText(emptyFolderIndicator.item.kind)).not.toBeInTheDocument();
   });
 });

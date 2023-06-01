@@ -42,19 +42,19 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
-import { FlameGraphExploreContainer } from './FlameGraphExploreContainer';
+import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
-import LogsContainer from './LogsContainer';
-import { LogsSamplePanel } from './LogsSamplePanel';
+import LogsContainer from './Logs/LogsContainer';
+import { LogsSamplePanel } from './Logs/LogsSamplePanel';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
-import { NodeGraphContainer } from './NodeGraphContainer';
+import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
 import { QueryRows } from './QueryRows';
-import RawPrometheusContainer from './RawPrometheusContainer';
+import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
-import TableContainer from './TableContainer';
+import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
@@ -253,7 +253,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onSplitOpen = (panelType: string) => {
-    return async (options?: SplitOpenOptions<DataQuery>) => {
+    return async (options?: SplitOpenOptions) => {
       this.props.splitOpen(options);
       if (options && this.props.datasourceInstance) {
         const target = (await getDataSourceSrv().get(options.datasourceUid)).type;
@@ -546,7 +546,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { syncedTimes } = explore;
-  const item: ExploreItemState = explore[exploreId]!;
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const timeZone = getTimeZone(state.user);
   const {
     datasourceInstance,
