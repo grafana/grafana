@@ -3,6 +3,26 @@ title: Use extensions to add links to app plugins
 description: Learn how to add links to the Grafana user interface from an app plugin
 ---
 
+# The when, why and how of UI extensions
+
+Before we go into details we need to cover the two major concepts in the UI extensions feature of Grafana.
+
+1. Extension point - the place in the UI where the extensions are displayed to the user. An example of this is the panel menu in Grafana dashboards.
+2. Extension - functionality that you want to provide to the user at an extension point. Ususally registered by an app plugin, that extends Grafana with some kind of new functionality. Registering an extension will provide a short cut to this functionality at the extension point UI.
+
+<Insert screen shot of how that UI looks and highlight the different parts in the UI>
+
+In the example above, we have one extension point and two plugins adding extensions to that extension point. This highlights one of the benefits of using UI extensions. Once you have added an extension point to your UI it can be extended multiple times by multiple plugins.
+
+## When should I add an extension point?
+
+If you have parts of your app plugin or core Grafana where it would improve the user experience to allow users to trigger functionality directly from the UI they currently view.
+
+Examples where it would be useful:
+
+- The user views a dashboard with historical data. By adding an extension point to this part of the UI the Machine Learning app plugin can give the user the ability to create a forcast for that data directly from the panel.
+- The user views a firing alert. By adding an extension point to this part of the UI the Incident app plugin can give the user the ability to create an incident directly from the firing alert view.
+
 # Use extensions to add links to app plugins
 
 You can use the Plugin extensions API with your Grafana app plugins to add links to the Grafana UI. This feature lets you send users to your plugin's pages from other spots in the Grafana application.
