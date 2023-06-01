@@ -52,6 +52,7 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 			data.NewField("logs", nil, []json.RawMessage{}),
 			data.NewField("references", nil, []json.RawMessage{}),
 			data.NewField("tags", nil, []json.RawMessage{}),
+			data.NewField("intrinsics", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
 			// TODO: use constant once available in the SDK
@@ -124,9 +125,14 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		return nil, fmt.Errorf("failed to marshal service tags: %w", err)
 	}
 
-	spanTags, err := json.Marshal(getSpanTags(span, libraryTags))
+	spanTags, err := json.Marshal(getSpanTags(span))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal span tags: %w", err)
+	}
+
+	intrinsics, err := json.Marshal(getIntrinsics(span, libraryTags))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal intrinsics: %w", err)
 	}
 
 	logs, err := json.Marshal(spanEventsToLogs(span.Events()))
@@ -153,6 +159,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		json.RawMessage(logs),
 		json.RawMessage(references),
 		json.RawMessage(spanTags),
+		json.RawMessage(intrinsics),
 	}, nil
 }
 
@@ -192,18 +199,22 @@ func getAttributeVal(attr pdata.AttributeValue) interface{} {
 	}
 }
 
-func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
+func getSpanTags(span pdata.Span) []*KeyValue {
+	var tags []*KeyValue
+	span.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
+		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+		return true
+	})
+	return tags
+}
+
+func getIntrinsics(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
 	var tags []*KeyValue
 
 	libraryTags := getTagsFromInstrumentationLibrary(instrumentationLibrary)
 	if libraryTags != nil {
 		tags = append(tags, libraryTags...)
 	}
-	span.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
-		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
-		return true
-	})
-
 	status := span.Status()
 	possibleNilTags := []*KeyValue{
 		getTagFromSpanKind(span.Kind()),

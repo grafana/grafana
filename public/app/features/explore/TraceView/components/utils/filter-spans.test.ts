@@ -47,6 +47,16 @@ describe('filterSpans', () => {
         value: 'tagValue1',
       },
     ],
+    intrinsics: [
+      {
+        key: 'intrinsicKey0',
+        value: 'intrinsicValue0',
+      },
+      {
+        key: 'intrinsicKey1',
+        value: 'intrinsicValue1',
+      },
+    ],
     logs: [
       {
         fields: [
@@ -90,6 +100,16 @@ describe('filterSpans', () => {
       {
         key: 'tagKey1',
         value: 'tagValue2',
+      },
+    ],
+    intrinsics: [
+      {
+        key: 'intrinsicKey2',
+        value: 'intrinsicValue1',
+      },
+      {
+        key: 'intrinsicKey1',
+        value: 'intrinsicValue2',
       },
     ],
     logs: [
@@ -173,6 +193,24 @@ describe('filterSpans', () => {
     expect(
       filterSpansNewTraceViewHeader(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2', operator: '!=' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+  });
+
+  it('should return spans whose intrinsics kv.key match a filter', () => {
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey1' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey0' }] }, spans)
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey2' }] }, spans)
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey2', operator: '!=' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
@@ -531,6 +569,23 @@ describe('filterSpans', () => {
   it("should exclude span whose tags' kv.value or kv.key match a filter if the key matches an excludeKey", () => {
     expect(filterSpans('tagValue1 -tagKey2', spans)).toEqual(new Set([spanID0]));
     expect(filterSpans('tagValue1 -tagKey1', spans)).toEqual(new Set([spanID2]));
+  });
+
+  it("should return spans whose intrinsics' kv.key match a filter", () => {
+    expect(filterSpans('intrinsicKey1', spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans('intrinsicKey0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('intrinsicKey2', spans)).toEqual(new Set([spanID2]));
+  });
+
+  it("should return spans whose intrinsics' kv.value match a filter", () => {
+    expect(filterSpans('intrinsicValue1', spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans('intrinsicValue0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('intrinsicValue2', spans)).toEqual(new Set([spanID2]));
+  });
+
+  it("should exclude span whose intrinsics' kv.value or kv.key match a filter if the key matches an excludeKey", () => {
+    expect(filterSpans('intrinsicValue1 -intrinsicKey2', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('intrinsicValue1 -intrinsicKey1', spans)).toEqual(new Set([spanID2]));
   });
 
   it('should return spans whose logs have a field whose kv.key match a filter', () => {

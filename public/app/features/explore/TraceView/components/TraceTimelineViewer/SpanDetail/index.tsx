@@ -113,6 +113,7 @@ export type SpanDetailProps = {
   span: TraceSpan;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
+  intrinsicsToggle: (spanID: string) => void;
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;
   stackTracesToggle: (spanID: string) => void;
@@ -134,6 +135,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     processToggle,
     span,
     tagsToggle,
+    intrinsicsToggle,
     traceStartTime,
     warningsToggle,
     stackTracesToggle,
@@ -146,6 +148,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   } = props;
   const {
     isTagsOpen,
+    isIntrinsicsOpen,
     isProcessOpen,
     logs: logsState,
     isWarningsOpen,
@@ -162,6 +165,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanID,
     logs,
     tags,
+    intrinsics,
     warnings,
     references,
     stackTraces,
@@ -265,6 +269,16 @@ export default function SpanDetail(props: SpanDetailProps) {
               linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
+            />
+          )}
+          {intrinsics && intrinsics.length > 0 && (
+            <AccordianKeyValues
+              className={ubMb1}
+              data={intrinsics}
+              label="Intrinsic Attributes"
+              linksGetter={linksGetter}
+              isOpen={isIntrinsicsOpen}
+              onToggle={() => intrinsicsToggle(spanID)}
             />
           )}
         </div>

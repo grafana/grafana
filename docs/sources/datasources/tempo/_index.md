@@ -379,7 +379,7 @@ You can add one or more of the following filters:
 - Service name
 - Span name
 - Duration
-- Tags (which include tags, process tags, and log fields)
+- Tags (which include tags, intrinsics, process tags, and log fields)
 
 ## Link to a trace ID from logs
 

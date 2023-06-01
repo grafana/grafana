@@ -57,6 +57,7 @@ export type TraceSpanData = {
   duration: number;
   logs: TraceLog[];
   tags?: TraceKeyValuePair[];
+  intrinsics?: TraceKeyValuePair[];
   references?: TraceSpanReference[];
   warnings?: string[] | null;
   stackTraces?: string[];

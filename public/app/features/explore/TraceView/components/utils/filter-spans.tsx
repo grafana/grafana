@@ -58,6 +58,8 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
         if (tag.key && tag.value) {
           if (span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
             return getReturnValue(tag.operator, true);
+          } else if (span.intrinsics && span.intrinsics.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
+            return getReturnValue(tag.operator, true);
           } else if (span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
             return getReturnValue(tag.operator, true);
           } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) {
@@ -65,6 +67,8 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
           }
         } else if (tag.key) {
           if (span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
+            return getReturnValue(tag.operator, true);
+          } else if (span.intrinsics && span.intrinsics.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
             return getReturnValue(tag.operator, true);
           } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
             return getReturnValue(tag.operator, true);
@@ -194,6 +198,7 @@ export function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
     isTextInFilters(includeFilters, span.operationName) ||
     isTextInFilters(includeFilters, span.process.serviceName) ||
     isTextInKeyValues(span.tags) ||
+    (span.intrinsics && isTextInKeyValues(span.intrinsics)) ||
     (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
     isTextInKeyValues(span.process.tags) ||
     includeFilters.some((filter) => filter === span.spanID);

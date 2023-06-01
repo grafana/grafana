@@ -22,7 +22,7 @@ import {
   isErrorSpan,
   isServerSpan,
   spanContainsErredSpan,
-  spanHasTag,
+  spanHasIntrinsic,
 } from './utils';
 
 describe('TraceTimelineViewer/utils', () => {
@@ -56,13 +56,12 @@ describe('TraceTimelineViewer/utils', () => {
     });
   });
 
-  describe('spanHasTag() and variants', () => {
-    it('returns true iff the key/value pair is found', () => {
+  describe('spanHasIntrinsic() and variants', () => {
+    it('returns true if the key/value pair is found', () => {
       const span = traceGenerator.span;
-      span.tags = [{ key: 'span.kind', value: 'server' }];
-      expect(spanHasTag('span.kind', 'client', span)).toBe(false);
-      expect(spanHasTag('span.kind', 'client', span)).toBe(false);
-      expect(spanHasTag('span.kind', 'server', span)).toBe(true);
+      span.intrinsics = [{ key: 'span.kind', value: 'server' }];
+      expect(spanHasIntrinsic('span.kind', 'client', span)).toBe(false);
+      expect(spanHasIntrinsic('span.kind', 'server', span)).toBe(true);
     });
 
     const spanTypeTestCases = [
@@ -75,9 +74,9 @@ describe('TraceTimelineViewer/utils', () => {
     spanTypeTestCases.forEach((testCase) => {
       const msg = `${testCase.name}() is true only when a ${testCase.key}=${testCase.value} tag is present`;
       it(msg, () => {
-        const span = { tags: traceGenerator.tags() } as TraceSpan;
+        const span = { intrinsics: traceGenerator.tags() } as TraceSpan;
         expect(testCase.fn(span)).toBe(false);
-        span.tags.push(testCase);
+        span.intrinsics!.push(testCase);
         expect(testCase.fn(span)).toBe(true);
       });
     });
@@ -114,7 +113,7 @@ describe('TraceTimelineViewer/utils', () => {
       const expectations = config.map((s) => Boolean(Number(s[0])));
       const spans = config.map((line) => ({
         depth: line.length,
-        tags: getTags(+line.slice(-1)),
+        intrinsics: getTags(+line.slice(-1)),
       })) as TraceSpan[];
 
       expectations.forEach((target, i) => {
@@ -131,11 +130,11 @@ describe('TraceTimelineViewer/utils', () => {
 
     beforeEach(() => {
       spans = [
-        { depth: 0, tags: [{ key: 'span.kind', value: 'client' }] },
-        { depth: 1, tags: [] },
-        { depth: 1, tags: [{ key: 'span.kind', value: 'server' }] },
-        { depth: 1, tags: [{ key: 'span.kind', value: 'third-kind' }] },
-        { depth: 1, tags: [{ key: 'span.kind', value: 'server' }] },
+        { depth: 0, intrinsics: [{ key: 'span.kind', value: 'client' }] },
+        { depth: 1, intrinsics: [] },
+        { depth: 1, intrinsics: [{ key: 'span.kind', value: 'server' }] },
+        { depth: 1, intrinsics: [{ key: 'span.kind', value: 'third-kind' }] },
+        { depth: 1, intrinsics: [{ key: 'span.kind', value: 'server' }] },
       ] as TraceSpan[];
     });
 

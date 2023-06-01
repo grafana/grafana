@@ -109,6 +109,11 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         span.tags.forEach((tag) => {
           keys.push(tag.key);
         });
+        if (span.intrinsics) {
+          span.intrinsics.forEach((tag) => {
+            keys.push(tag.key);
+          });
+        }
         span.process.tags.forEach((tag) => {
           keys.push(tag.key);
         });
@@ -134,6 +139,12 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       const tagValue = span.tags.find((t) => t.key === key)?.value;
       if (tagValue) {
         values.push(tagValue.toString());
+      }
+      if (span.intrinsics) {
+        const intrinsicValue = span.intrinsics.find((t) => t.key === key)?.value;
+        if (intrinsicValue) {
+          values.push(intrinsicValue.toString());
+        }
       }
       const processTagValue = span.process.tags.find((t) => t.key === key)?.value;
       if (processTagValue) {
@@ -291,7 +302,11 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log fields in your spans.">
+          <InlineField
+            label="Tags"
+            labelWidth={16}
+            tooltip="Filter by tags, intrinsics, process tags or log fields in your spans."
+          >
             <div>
               {search.tags.map((tag, i) => (
                 <div key={i}>

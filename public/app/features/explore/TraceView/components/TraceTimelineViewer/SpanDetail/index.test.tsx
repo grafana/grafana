@@ -42,11 +42,21 @@ describe('<SpanDetail>', () => {
     logsToggle: jest.fn(),
     processToggle: jest.fn(),
     tagsToggle: jest.fn(),
+    intrinsicsToggle: jest.fn(),
     warningsToggle: jest.fn(),
     referencesToggle: jest.fn(),
     createFocusSpanLink: jest.fn().mockReturnValue({}),
     topOfViewRefType: 'Explore',
   };
+
+  span.intrinsics = [
+    {
+      key: 'span.kind',
+      type: 'String',
+      value: 'producer',
+    },
+  ];
+
   span.logs = [
     {
       timestamp: 10,
@@ -111,6 +121,7 @@ describe('<SpanDetail>', () => {
   beforeEach(() => {
     jest.mocked(formatDuration).mockReset();
     props.tagsToggle.mockReset();
+    props.intrinsicsToggle.mockReset();
     props.processToggle.mockReset();
     props.logsToggle.mockReset();
     props.logItemToggle.mockReset();
@@ -152,6 +163,12 @@ describe('<SpanDetail>', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Resource Attributes/ }));
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
+  });
+
+  it('renders the span intrinsics', async () => {
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    await userEvent.click(screen.getByRole('switch', { name: /Intrinsic Attributes/ }));
+    expect(props.intrinsicsToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
   it('renders the logs', async () => {

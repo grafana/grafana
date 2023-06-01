@@ -13,6 +13,7 @@ describe('useSearch', () => {
         tags: [],
       },
       tags: [],
+      intrinsics: [],
       logs: [],
     } as unknown as TraceSpan,
     {
@@ -23,6 +24,7 @@ describe('useSearch', () => {
         tags: [],
       },
       tags: [],
+      intrinsics: [],
       logs: [],
     } as unknown as TraceSpan,
   ];

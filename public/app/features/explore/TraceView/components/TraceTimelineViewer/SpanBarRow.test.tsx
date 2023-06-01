@@ -228,11 +228,40 @@ describe('<SpanBarRow>', () => {
                 value: 'tag-value',
               },
             ],
+            intrinsics: [],
           },
         }
       );
       render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
       expect(screen.getByText('(tag-value)')).toBeInTheDocument();
+    });
+
+    it('with intrinsic value', () => {
+      let testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: TAG,
+            tag: 'tag',
+          },
+        },
+        {
+          ...props,
+          span: {
+            process: {
+              tags: [],
+            },
+            tags: [],
+            intrinsics: [
+              {
+                key: 'tag',
+                value: 'intrinsic-value',
+              },
+            ],
+          },
+        }
+      );
+      render(<SpanBarRow {...(testProps as unknown as SpanBarRowProps)} />);
+      expect(screen.getByText('(intrinsic-value)')).toBeInTheDocument();
     });
 
     it('with process value', () => {
@@ -255,6 +284,7 @@ describe('<SpanBarRow>', () => {
               ],
             },
             tags: [],
+            intrinsics: [],
           },
         }
       );

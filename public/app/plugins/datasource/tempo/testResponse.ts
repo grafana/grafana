@@ -1930,6 +1930,15 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
             key: 'component',
             value: 'net/http',
           },
+        ],
+      ],
+    },
+    {
+      name: 'intrinsics',
+      type: 'other',
+      config: {},
+      values: [
+        [
           {
             key: 'span.kind',
             value: 'client',
@@ -2079,6 +2088,18 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
             key: 'component',
             value: 'net/http',
           },
+        ],
+      ],
+      state: {
+        displayName: 'tags',
+      },
+    },
+    {
+      name: 'intrinsics',
+      type: 'other',
+      config: {},
+      values: [
+        [
           {
             key: 'span.kind',
             value: 'client',
@@ -2086,7 +2107,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
         ],
       ],
       state: {
-        displayName: 'tags',
+        displayName: 'intrinsics',
       },
     },
     {

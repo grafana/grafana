@@ -51,24 +51,23 @@ export function createViewedBoundsFunc(viewRange: { min: number; max: number; vi
 /**
  * Returns `true` if the `span` has a tag matching `key` = `value`.
  *
- * @param  {string} key   The tag key to match on.
- * @param  {any}    value The tag value to match.
- * @param  {{tags}} span  An object with a `tags` property of { key, value }
- *                        items.
- * @returns {boolean}      True if a match was found.
+ * @param  {string} key         The tag key to match on.
+ * @param  {any}    value       The tag value to match.
+ * @param  {{intrinsics}} span  An object with a `intrinsics` property of { key, value } items.
+ * @returns {boolean}           True if a match was found.
  */
-export function spanHasTag(key: string, value: unknown, span: TraceSpan) {
-  if (!Array.isArray(span.tags) || !span.tags.length) {
+export function spanHasIntrinsic(key: string, value: unknown, span: TraceSpan) {
+  if (!Array.isArray(span.intrinsics) || !span.intrinsics.length) {
     return false;
   }
-  return span.tags.some((tag) => tag.key === key && tag.value === value);
+  return span.intrinsics.some((tag) => tag.key === key && tag.value === value);
 }
 
-export const isClientSpan = spanHasTag.bind(null, 'span.kind', 'client');
-export const isServerSpan = spanHasTag.bind(null, 'span.kind', 'server');
+export const isClientSpan = spanHasIntrinsic.bind(null, 'span.kind', 'client');
+export const isServerSpan = spanHasIntrinsic.bind(null, 'span.kind', 'server');
 
-const isErrorBool = spanHasTag.bind(null, 'error', true);
-const isErrorStr = spanHasTag.bind(null, 'error', 'true');
+const isErrorBool = spanHasIntrinsic.bind(null, 'error', true);
+const isErrorStr = spanHasIntrinsic.bind(null, 'error', 'true');
 export const isErrorSpan = (span: TraceSpan) => isErrorBool(span) || isErrorStr(span);
 
 /**
@@ -112,7 +111,11 @@ export function findServerChildSpan(spans: TraceSpan[]) {
   return null;
 }
 
-export const isKindClient = (span: TraceSpan): Boolean =>
-  span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
+export const isKindClient = (span: TraceSpan): Boolean => {
+  if (span.intrinsics) {
+    return span.intrinsics.some(({ key, value }) => key === 'span.kind' && value === 'client');
+  }
+  return false;
+};
 
 export { formatDuration } from '../utils/date';

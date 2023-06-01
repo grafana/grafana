@@ -558,13 +558,20 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
         const tag = span.tags?.find((tag: TraceKeyValuePair) => {
           return tag.key === tagKey;
         });
-        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
-          return process.key === tagKey;
-        });
-
         if (tag) {
           return `(${tag.value})`;
         }
+
+        const intrinsic = span.intrinsics?.find((tag: TraceKeyValuePair) => {
+          return tag.key === tagKey;
+        });
+        if (intrinsic) {
+          return `(${intrinsic.value})`;
+        }
+
+        const process = span.process?.tags?.find((process: TraceKeyValuePair) => {
+          return process.key === tagKey;
+        });
         if (process) {
           return `(${process.value})`;
         }
