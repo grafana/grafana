@@ -11,6 +11,7 @@ import {
   UrlQueryValue,
   urlUtil,
 } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/dashboardlist/panelcfg/x/DashboardListPanelCfg_types.gen';
 import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
 import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
@@ -24,7 +25,6 @@ import { DashboardSearchItem } from 'app/features/search/types';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 import { useDispatch } from 'app/types';
 
-import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
 
 type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };

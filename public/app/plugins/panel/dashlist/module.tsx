@@ -1,6 +1,10 @@
 import React from 'react';
 
 import { PanelModel, PanelPlugin } from '@grafana/data';
+import {
+  Options,
+  defaultOptions,
+} from '@grafana/schema/src/raw/composable/dashboardlist/panelcfg/x/DashboardListPanelCfg_types.gen';
 import { TagsInput } from '@grafana/ui';
 
 import {
@@ -10,7 +14,6 @@ import {
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 
 import { DashList } from './DashList';
-import { defaultOptions, Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(DashList)
   .setPanelOptions((builder) => {
