@@ -24,28 +24,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func BenchmarkFolderService_GetRootChildren_10000_1_CachingOff(b *testing.B) {
-	benchmarkFolderService_GetChildren(b, 10000, "", 1, false)
+func BenchmarkFolderService_GetRootChildren_10000_64_CachingOff(b *testing.B) {
+	benchmarkFolderService_GetChildren(b, 10000, "", 64, false)
 }
 
 func BenchmarkFolderService_GetRootChildren_10000_8_CachingOff(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 8, false)
 }
 
-func BenchmarkFolderService_GetRootChildren_10000_64_CachingOff(b *testing.B) {
-	benchmarkFolderService_GetChildren(b, 10000, "", 64, false)
+func BenchmarkFolderService_GetRootChildren_10000_1_CachingOff(b *testing.B) {
+	benchmarkFolderService_GetChildren(b, 10000, "", 1, false)
 }
 
-func BenchmarkFolderService_GetRootChildren_10000_1_CachingOn(b *testing.B) {
-	benchmarkFolderService_GetChildren(b, 10000, "", 1, true)
+func BenchmarkFolderService_GetRootChildren_10000_64_CachingOn(b *testing.B) {
+	benchmarkFolderService_GetChildren(b, 10000, "", 64, true)
 }
 
 func BenchmarkFolderService_GetRootChildren_10000_8_CachingOn(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 8, true)
 }
 
-func BenchmarkFolderService_GetRootChildren_10000_64_CachingOn(b *testing.B) {
-	benchmarkFolderService_GetChildren(b, 10000, "", 64, true)
+func BenchmarkFolderService_GetRootChildren_10000_1_CachingOn(b *testing.B) {
+	benchmarkFolderService_GetChildren(b, 10000, "", 1, true)
 }
 
 func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) (*Service, user.SignedInUser) {
