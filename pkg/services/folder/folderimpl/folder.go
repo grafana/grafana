@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var concurrencyFactor = 8
+const DEFAULT_CONCURRENCY = 8
 
 type Service struct {
 	store                store
@@ -40,6 +40,7 @@ type Service struct {
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
 	cacheService         *localcache.CacheService
+	concurrencyFactor    int
 
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
@@ -71,6 +72,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 		cacheService:         cacheService,
+		concurrencyFactor:    DEFAULT_CONCURRENCY,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -179,7 +181,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 
 	filtered := make([]*folder.Folder, 0, len(children))
 	m := sync.Mutex{}
-	if err := concurrency.ForEachJob(ctx, len(children), concurrencyFactor, func(ctx context.Context, i int) error {
+	if err := concurrency.ForEachJob(ctx, len(children), s.concurrencyFactor, func(ctx context.Context, i int) error {
 		f := children[i]
 		// fetch folder from dashboard store
 		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
@@ -195,9 +197,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			return err
 		}
 
-		m.Lock()
 		canView, err := g.CanView()
-		m.Unlock()
 		if err != nil {
 			return err
 		}

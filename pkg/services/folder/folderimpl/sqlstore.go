@@ -15,17 +15,18 @@ import (
 )
 
 type sqlStore struct {
-	db  db.DB
-	log log.Logger
-	cfg *setting.Cfg
-	fm  featuremgmt.FeatureToggles
+	db                db.DB
+	log               log.Logger
+	cfg               *setting.Cfg
+	fm                featuremgmt.FeatureToggles
+	concurrencyFactor int
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
 func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features}
+	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features, concurrencyFactor: DEFAULT_CONCURRENCY}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -217,7 +218,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 			return nil, err
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), concurrencyFactor, func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), ss.concurrencyFactor, func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {
@@ -263,7 +264,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), concurrencyFactor, func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), ss.concurrencyFactor, func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {

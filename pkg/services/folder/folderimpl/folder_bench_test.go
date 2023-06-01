@@ -73,12 +73,8 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-	origConcurrencyFactor := concurrencyFactor
-	concurrencyFactor = overrideConcurrencyFactor
-
 	b.Cleanup(func() {
 		guardian.New = origNewGuardian
-		concurrencyFactor = origConcurrencyFactor
 	})
 
 	serviceWithFlagOn := &Service{
@@ -92,6 +88,7 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 		db:                   db,
 		accessControl:        acimpl.ProvideAccessControl(cfg),
 		registry:             make(map[string]folder.RegistryService),
+		concurrencyFactor:    overrideConcurrencyFactor,
 	}
 
 	var orgID = int64(1)
