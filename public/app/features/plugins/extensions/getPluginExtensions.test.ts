@@ -48,11 +48,22 @@ describe('getPluginExtensions()', () => {
     );
   });
 
-  test('should be able to limit the number of extensions per plugin for the given placement', () => {
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1, link2] }]);
+  test('should limit the number of extensions per plugin for a given placement', () => {
+    const registry = createPluginExtensionRegistry([
+      { pluginId, extensionConfigs: [link1, link1, link1, link2] },
+      {
+        pluginId: 'my-plugin',
+        extensionConfigs: [
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link2, path: '/a/my-plugin/declare-incident' },
+        ],
+      },
+    ]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1, limitPerPlugin: 1 });
 
-    expect(extensions).toHaveLength(1);
+    expect(extensions).toHaveLength(2);
     expect(extensions[0]).toEqual(
       expect.objectContaining({
         pluginId,
