@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { getMockDataSource } from '../__mocks__';
@@ -16,25 +16,32 @@ const getProps = (partialProps?: Partial<Props>): Props => ({
 });
 
 describe('<DataSourceTestingStatus />', () => {
-  it('should render', () => {
-    render(<DataSourceTestingStatus {...getProps()} />);
+  it('should render', async () => {
+    const props = getProps();
+
+    await act(async () => {
+      render(<DataSourceTestingStatus {...props} />);
+    });
   });
 
-  it('should render successful message when testing status is a success', () => {
+  it('should render successful message when testing status is a success', async () => {
     const props = getProps({
       testingStatus: {
         status: 'success',
         message: 'Data source is definitely working',
       },
     });
+
     render(<DataSourceTestingStatus {...props} />);
 
-    expect(screen.getByText('Data source is definitely working')).toBeInTheDocument();
-    expect(screen.getByTestId('data-testid Alert success')).toBeInTheDocument();
-    expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    await waitFor(() => {
+      expect(screen.getByText('Data source is definitely working')).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid Alert success')).toBeInTheDocument();
+      expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    });
   });
 
-  it('should render successful message when testing status is uppercase "OK"', () => {
+  it('should render successful message when testing status is uppercase "OK"', async () => {
     const props = getProps({
       testingStatus: {
         status: 'OK',
@@ -43,12 +50,14 @@ describe('<DataSourceTestingStatus />', () => {
     });
     render(<DataSourceTestingStatus {...props} />);
 
-    expect(screen.getByText('Data source is definitely working')).toBeInTheDocument();
-    expect(screen.getByTestId('data-testid Alert success')).toBeInTheDocument();
-    expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    await waitFor(() => {
+      expect(screen.getByText('Data source is definitely working')).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid Alert success')).toBeInTheDocument();
+      expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    });
   });
 
-  it('should render successful message when testing status is lowercase "ok"', () => {
+  it('should render successful message when testing status is lowercase "ok"', async () => {
     const props = getProps({
       testingStatus: {
         status: 'ok',
@@ -57,12 +66,14 @@ describe('<DataSourceTestingStatus />', () => {
     });
     render(<DataSourceTestingStatus {...props} />);
 
-    expect(screen.getByText('Data source is definitely working')).toBeInTheDocument();
-    expect(screen.getByTestId('data-testid Alert success')).toBeInTheDocument();
-    expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    await waitFor(() => {
+      expect(screen.getByText('Data source is definitely working')).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid Alert success')).toBeInTheDocument();
+      expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    });
   });
 
-  it('should render error message when testing status is "error"', () => {
+  it('should render error message when testing status is "error"', async () => {
     const props = getProps({
       testingStatus: {
         status: 'error',
@@ -71,12 +82,14 @@ describe('<DataSourceTestingStatus />', () => {
     });
     render(<DataSourceTestingStatus {...props} />);
 
-    expect(screen.getByText('Data source is definitely NOT working')).toBeInTheDocument();
-    expect(screen.getByTestId('data-testid Alert error')).toBeInTheDocument();
-    expect(() => screen.getByTestId('data-testid Alert success')).toThrow();
+    await waitFor(() => {
+      expect(screen.getByText('Data source is definitely NOT working')).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid Alert error')).toBeInTheDocument();
+      expect(() => screen.getByTestId('data-testid Alert success')).toThrow();
+    });
   });
 
-  it('should render info message when testing status is unknown', () => {
+  it('should render info message when testing status is unknown', async () => {
     const props = getProps({
       testingStatus: {
         status: 'something_weird',
@@ -85,9 +98,11 @@ describe('<DataSourceTestingStatus />', () => {
     });
     render(<DataSourceTestingStatus {...props} />);
 
-    expect(screen.getByText('Data source is working')).toBeInTheDocument();
-    expect(screen.getByTestId('data-testid Alert info')).toBeInTheDocument();
-    expect(() => screen.getByTestId('data-testid Alert success')).toThrow();
-    expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    await waitFor(() => {
+      expect(screen.getByText('Data source is working')).toBeInTheDocument();
+      expect(screen.getByTestId('data-testid Alert info')).toBeInTheDocument();
+      expect(() => screen.getByTestId('data-testid Alert success')).toThrow();
+      expect(() => screen.getByTestId('data-testid Alert error')).toThrow();
+    });
   });
 });
