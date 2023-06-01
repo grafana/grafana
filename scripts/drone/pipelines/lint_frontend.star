@@ -8,6 +8,7 @@ load(
     "identify_runner_step",
     "lint_frontend_step",
     "yarn_install_step",
+    "verify_i18n_step",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -28,6 +29,7 @@ def lint_frontend_pipeline(trigger, ver_mode):
 
     init_steps = []
     lint_step = lint_frontend_step()
+    i18n_step = verify_i18n_step()
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
@@ -42,6 +44,7 @@ def lint_frontend_pipeline(trigger, ver_mode):
     ]
     test_steps = [
         lint_step,
+        i18n_step,
     ]
 
     return pipeline(

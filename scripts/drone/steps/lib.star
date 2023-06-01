@@ -775,8 +775,19 @@ def lint_frontend_step():
         "commands": [
             "yarn run prettier:check",
             "yarn run lint",
-            "yarn run i18n:compile",  # TODO: right place for this?
             "yarn run typecheck",
+        ],
+    }
+
+def verify_i18n_step():
+    return {
+        "name": "verify-i18n",
+        "image": build_image,
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn run i18n:compile",
         ],
     }
 

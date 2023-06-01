@@ -230,7 +230,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -239,6 +238,12 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   event:
   - pull_request
@@ -1291,7 +1296,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -1299,6 +1303,12 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   branch: main
   event:
@@ -7216,6 +7226,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d1a589fd39357048aa2b6595181f98d17545e184121774b729553e9165464480
+hmac: 5e3dec801c6d9ca5a7816589132ed52bce960a8a90e23233b7773ceef25601fa
 
 ...
