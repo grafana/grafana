@@ -329,58 +329,88 @@ export type DashboardLinkType = ('link' | 'dashboards');
 export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
 /**
- * TODO docs
+ * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+ * Continuous color interpolates a color using the percentage of a value relative to min and max.
+ * Accepted values are:
+ * thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
+ * palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+ * palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+ * continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
+ * continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
+ * continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
+ * continuous-YlRd: Continuous Yellow-Red palette mode
+ * continuous-BlPu: Continuous Blue-Purple palette mode
+ * continuous-YlBl: Continuous Yellow-Blue palette mode
+ * continuous-blues: Continuous Blue palette mode
+ * continuous-reds: Continuous Red palette mode
+ * continuous-greens: Continuous Green palette mode
+ * continuous-purples: Continuous Purple palette mode
+ * shades: Shades of a single color. Specify a single color, useful in an override rule.
+ * fixed: Fixed color mode. Specify a single color, useful in an override rule.
  */
 export enum FieldColorModeId {
+  ContinuousBlPu = 'continuous-BlPu',
+  ContinuousBlYlRd = 'continuous-BlYlRd',
+  ContinuousBlues = 'continuous-blues',
   ContinuousGrYlRd = 'continuous-GrYlRd',
+  ContinuousGreens = 'continuous-greens',
+  ContinuousPurples = 'continuous-purples',
+  ContinuousRdYlGr = 'continuous-RdYlGr',
+  ContinuousReds = 'continuous-reds',
+  ContinuousYlBl = 'continuous-YlBl',
+  ContinuousYlRd = 'continuous-YlRd',
   Fixed = 'fixed',
   PaletteClassic = 'palette-classic',
-  PaletteSaturated = 'palette-saturated',
+  PaletteClassicByName = 'palette-classic-by-name',
+  Shades = 'shades',
   Thresholds = 'thresholds',
 }
 
 /**
- * TODO docs
+ * Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
  */
 export type FieldColorSeriesByMode = ('min' | 'max' | 'last');
 
 /**
- * TODO docs
+ * Map a field to a color.
  */
 export interface FieldColor {
   /**
-   * Stores the fixed color value if mode is fixed
+   * The fixed color value for fixed or shades color modes.
    */
   fixedColor?: string;
   /**
-   * The main color scheme mode
+   * The main color scheme mode.
    */
-  mode: (FieldColorModeId | string);
+  mode: FieldColorModeId;
   /**
-   * Some visualizations need to know how to assign a series color from by value color schemes
+   * Some visualizations need to know how to assign a series color from by value color schemes.
    */
   seriesBy?: FieldColorSeriesByMode;
 }
 
+/**
+ * Position and dimensions of a panel in the grid
+ */
 export interface GridPos {
   /**
-   * Panel
+   * Panel height. The height is the number of rows from the top edge of the grid
    */
   h: number;
   /**
-   * Whether the panel is fixed within the grid
+   * Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
    */
   static?: boolean;
   /**
-   * Panel
+   * Panel width. The width is the number of columns from the left edge of the grid
    */
   w: number;
   /**
-   * Panel x
+   * Panel x. The x coordinate is the number of columns from the left edge of the grid
    */
   x: number;
   /**
-   * Panel y
+   * Panel y. The y coordinate is the number of rows from the top edge of the grid
    */
   y: number;
 }
@@ -718,7 +748,7 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
 
 export interface FieldConfig {
   /**
-   * Map values to a display color
+   * Panel color configuration
    */
   color?: FieldColor;
   /**
@@ -863,6 +893,7 @@ export interface Dashboard {
   graphTooltip: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
+   * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
    */
   id?: number;
   /**
@@ -944,7 +975,7 @@ export interface Dashboard {
   };
   /**
    * Theme of dashboard.
-   * Accepted values are "light" (light theme) or "dark" (dark theme).
+   * Default value: dark.
    */
   style: ('light' | 'dark');
   /**

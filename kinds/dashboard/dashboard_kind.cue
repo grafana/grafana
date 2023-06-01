@@ -108,7 +108,7 @@ lineage: schemas: [{
 			// Links with references to other dashboards or external websites.
 			links?: [...#DashboardLink]
 
-			// TODO docs
+			// Snapshot options. They are present only if the dashboard is a snapshot.
 			snapshot?: #Snapshot @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
@@ -290,34 +290,51 @@ lineage: schemas: [{
 		// Dashboard variable type
 		#VariableType: "query" | "adhoc" | "constant" | "datasource" | "interval" | "textbox" | "custom" | "system" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
-		#FieldColorModeId: "thresholds" | "palette-classic" | "palette-saturated" | "continuous-GrYlRd" | "fixed" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteSaturated|ContinuousGrYlRd|Fixed") @grafanamaturity(NeedsExpertReview)
+		// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value. 
+		// Continuous color interpolates a color using the percentage of a value relative to min and max.
+		// Accepted values are:
+		// thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
+		// palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+		// palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+		// continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
+		// continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
+		// continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
+		// continuous-YlRd: Continuous Yellow-Red palette mode
+		// continuous-BlPu: Continuous Blue-Purple palette mode
+		// continuous-YlBl: Continuous Yellow-Blue palette mode
+		// continuous-blues: Continuous Blue palette mode
+		// continuous-reds: Continuous Red palette mode
+		// continuous-greens: Continuous Green palette mode
+		// continuous-purples: Continuous Purple palette mode
+		// shades: Shades of a single color. Specify a single color, useful in an override rule.
+		// fixed: Fixed color mode. Specify a single color, useful in an override rule.
+		#FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteClassicByName|ContinuousGrYlRd|ContinuousRdYlGr|ContinuousBlYlRd|ContinuousYlRd|ContinuousBlPu|ContinuousYlBl|ContinuousBlues|ContinuousReds|ContinuousGreens|ContinuousPurples|Fixed|Shades") @grafanamaturity(NeedsExpertReview)
 
-		// TODO docs
-		#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+		// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
+		#FieldColorSeriesByMode: "min" | "max" | "last" @cuetsy(kind="type")
 
-		// TODO docs
+		// Map a field to a color.
 		#FieldColor: {
-			// The main color scheme mode
-			mode: #FieldColorModeId | string
-			// Stores the fixed color value if mode is fixed
+			// The main color scheme mode.
+			mode: #FieldColorModeId
+			// The fixed color value for fixed or shades color modes.
 			fixedColor?: string
-			// Some visualizations need to know how to assign a series color from by value color schemes
+			// Some visualizations need to know how to assign a series color from by value color schemes.
 			seriesBy?: #FieldColorSeriesByMode
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface")
 
 		// Position and dimensions of a panel in the grid
 		#GridPos: {
 			// Panel height. The height is the number of rows from the top edge of the grid
-			h: uint32 & >0 | *9 @grafanamaturity(NeedsExpertReview)
+			h: uint32 & >0 | *9
 			// Panel width. The width is the number of columns from the left edge of the grid
-			w: uint32 & >0 & <=24 | *12 @grafanamaturity(NeedsExpertReview)
+			w: uint32 & >0 & <=24 | *12
 			// Panel x. The x coordinate is the number of columns from the left edge of the grid
-			x: uint32 & >=0 & <24 | *0 @grafanamaturity(NeedsExpertReview)
+			x: uint32 & >=0 & <24 | *0
 			// Panel y. The y coordinate is the number of rows from the top edge of the grid
-			y: uint32 & >=0 | *0 @grafanamaturity(NeedsExpertReview)
+			y: uint32 & >=0 | *0
 			// Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
-			static?: bool @grafanamaturity(NeedsExpertReview)
+			static?: bool
 		} @cuetsy(kind="interface")
 
 		// User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
@@ -459,9 +476,7 @@ lineage: schemas: [{
 			userId: uint32 @grafanamaturity(NeedsExpertReview)
 		} @grafanamaturity(NeedsExpertReview)
 
-		// Dashboard panels. Panels are canonically defined inline
-		// because they share a version timeline with the dashboard
-		// schema; they do not evolve independently.
+		// Dashboard panels are the basic visualization building blocks. 
 		#Panel: {
 			// The panel plugin type id. May not be empty.
 			type: string & strings.MinRunes(1) @grafanamaturity(NeedsExpertReview)
@@ -609,8 +624,8 @@ lineage: schemas: [{
 			// Map numeric values to states
 			thresholds?: #ThresholdsConfig @grafanamaturity(NeedsExpertReview)
 
-			// Map values to a display color
-			color?: #FieldColor @grafanamaturity(NeedsExpertReview)
+			// Panel color configuration
+			color?: #FieldColor
 
 			// Used when reducing field values
 			//   nullValueMode?: NullValueMode

@@ -26,6 +26,25 @@ const (
 	LinkTypeLink       LinkType = "link"
 )
 
+// Defines values for FieldColorModeId.
+const (
+	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
+	FieldColorModeIdContinuousBlYlRd     FieldColorModeId = "continuous-BlYlRd"
+	FieldColorModeIdContinuousBlues      FieldColorModeId = "continuous-blues"
+	FieldColorModeIdContinuousGrYlRd     FieldColorModeId = "continuous-GrYlRd"
+	FieldColorModeIdContinuousGreens     FieldColorModeId = "continuous-greens"
+	FieldColorModeIdContinuousPurples    FieldColorModeId = "continuous-purples"
+	FieldColorModeIdContinuousRdYlGr     FieldColorModeId = "continuous-RdYlGr"
+	FieldColorModeIdContinuousReds       FieldColorModeId = "continuous-reds"
+	FieldColorModeIdContinuousYlBl       FieldColorModeId = "continuous-YlBl"
+	FieldColorModeIdContinuousYlRd       FieldColorModeId = "continuous-YlRd"
+	FieldColorModeIdFixed                FieldColorModeId = "fixed"
+	FieldColorModeIdPaletteClassic       FieldColorModeId = "palette-classic"
+	FieldColorModeIdPaletteClassicByName FieldColorModeId = "palette-classic-by-name"
+	FieldColorModeIdShades               FieldColorModeId = "shades"
+	FieldColorModeIdThresholds           FieldColorModeId = "thresholds"
+)
+
 // Defines values for FieldColorSeriesByMode.
 const (
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
@@ -270,24 +289,61 @@ type DynamicConfigValue struct {
 	Value *interface{} `json:"value,omitempty"`
 }
 
-// TODO docs
+// Map a field to a color.
 type FieldColor struct {
-	// Stores the fixed color value if mode is fixed
+	// The fixed color value for fixed or shades color modes.
 	FixedColor *string `json:"fixedColor,omitempty"`
 
-	// The main color scheme mode
-	Mode string `json:"mode"`
+	// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+	// Continuous color interpolates a color using the percentage of a value relative to min and max.
+	// Accepted values are:
+	// thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
+	// palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+	// palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+	// continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
+	// continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
+	// continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
+	// continuous-YlRd: Continuous Yellow-Red palette mode
+	// continuous-BlPu: Continuous Blue-Purple palette mode
+	// continuous-YlBl: Continuous Yellow-Blue palette mode
+	// continuous-blues: Continuous Blue palette mode
+	// continuous-reds: Continuous Red palette mode
+	// continuous-greens: Continuous Green palette mode
+	// continuous-purples: Continuous Purple palette mode
+	// shades: Shades of a single color. Specify a single color, useful in an override rule.
+	// fixed: Fixed color mode. Specify a single color, useful in an override rule.
+	Mode FieldColorModeId `json:"mode"`
 
-	// TODO docs
+	// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
 
-// TODO docs
+// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+// Continuous color interpolates a color using the percentage of a value relative to min and max.
+// Accepted values are:
+// thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
+// palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+// palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
+// continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
+// continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
+// continuous-YlRd: Continuous Yellow-Red palette mode
+// continuous-BlPu: Continuous Blue-Purple palette mode
+// continuous-YlBl: Continuous Yellow-Blue palette mode
+// continuous-blues: Continuous Blue palette mode
+// continuous-reds: Continuous Red palette mode
+// continuous-greens: Continuous Green palette mode
+// continuous-purples: Continuous Purple palette mode
+// shades: Shades of a single color. Specify a single color, useful in an override rule.
+// fixed: Fixed color mode. Specify a single color, useful in an override rule.
+type FieldColorModeId string
+
+// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 type FieldColorSeriesByMode string
 
 // FieldConfig defines model for FieldConfig.
 type FieldConfig struct {
-	// TODO docs
+	// Map a field to a color.
 	Color *FieldColor `json:"color,omitempty"`
 
 	// custom is specified by the FieldConfig field
@@ -359,21 +415,21 @@ type GraphPanel struct {
 // GraphPanelType defines model for GraphPanel.Type.
 type GraphPanelType string
 
-// GridPos defines model for GridPos.
+// Position and dimensions of a panel in the grid
 type GridPos struct {
-	// H Panel
+	// Panel height. The height is the number of rows from the top edge of the grid
 	H int `json:"h"`
 
-	// Whether the panel is fixed within the grid
+	// Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
 	Static *bool `json:"static,omitempty"`
 
-	// W Panel
+	// Panel width. The width is the number of columns from the left edge of the grid
 	W int `json:"w"`
 
-	// Panel x
+	// Panel x. The x coordinate is the number of columns from the left edge of the grid
 	X int `json:"x"`
 
-	// Panel y
+	// Panel y. The y coordinate is the number of rows from the top edge of the grid
 	Y int `json:"y"`
 }
 
@@ -413,7 +469,9 @@ type Panel struct {
 	// Description Description.
 	Description *string           `json:"description,omitempty"`
 	FieldConfig FieldConfigSource `json:"fieldConfig"`
-	GridPos     *GridPos          `json:"gridPos,omitempty"`
+
+	// Position and dimensions of a panel in the grid
+	GridPos *GridPos `json:"gridPos,omitempty"`
 
 	// TODO docs
 	Id *int `json:"id,omitempty"`
@@ -533,6 +591,8 @@ type RowPanel struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
+
+	// Position and dimensions of a panel in the grid
 	GridPos *GridPos      `json:"gridPos,omitempty"`
 	Id      int           `json:"id"`
 	Panels  []interface{} `json:"panels"`
@@ -609,6 +669,7 @@ type Spec struct {
 	GraphTooltip CursorSync `json:"graphTooltip"`
 
 	// Unique numeric identifier for the dashboard.
+	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
 	Id *int64 `json:"id,omitempty"`
 
 	// Links with references to other dashboards or external websites.
@@ -641,7 +702,7 @@ type Spec struct {
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 
 	// Theme of dashboard.
-	// Accepted values are "light" (light theme) or "dark" (dark theme).
+	// Default value: dark.
 	Style SpecStyle `json:"style"`
 
 	// Tags associated with dashboard.
@@ -694,7 +755,7 @@ type Spec struct {
 }
 
 // Theme of dashboard.
-// Accepted values are "light" (light theme) or "dark" (dark theme).
+// Default value: dark.
 type SpecStyle string
 
 // Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
