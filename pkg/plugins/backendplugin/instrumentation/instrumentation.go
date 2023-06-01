@@ -79,8 +79,6 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	elapsed := time.Since(start)
 	status := getStatus(err)
 
-	logger.Info("Plugin Request Completed")
-
 	updateMetrics(pluginCtx.PluginID, endpoint, string(cfg.Target), elapsed, status, string(noneSource))
 	logDatasourceRequests(ctx, cfg, pluginCtx, endpoint, status, elapsed, timeBeforePluginRequest, err)
 
@@ -94,7 +92,6 @@ func InstrumentQueryDataRequest(ctx context.Context, cfg Cfg, pluginCtx *backend
 	resp, err := fn()
 
 	elapsed := time.Since(start)
-	logger.Info("Plugin Request Completed")
 
 	status := getStatus(err)
 	errorSource := getErrorSource(status, resp)
