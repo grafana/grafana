@@ -213,7 +213,11 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
     <Modal title="Migration summary" isOpen={true} closeOnBackdropClick={true} onDismiss={dismissModal}>
       <div style={styles.migrationSummary}>
         {data.FailedApikeyIDs.length !== 0 && (
-          <p>Do not worry if you see failed API key migrations. All your API keys are functional and operational.</p>
+          <p>
+            Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
+            assured, all of your API keys are fully functional and operational. It might have been that the database was
+            saturated. Please try again or contact support.
+          </p>
         )}
         <hr />
         <p>
