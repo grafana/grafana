@@ -110,6 +110,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		ThemeType:                           theme.Type,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
+		NewsFeedEnabled:                     setting.NewsFeedEnabled,
+		NewsFeedUrl:                         setting.NewsFeedUrl,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
 		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
 		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
