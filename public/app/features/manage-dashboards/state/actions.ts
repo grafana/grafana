@@ -85,8 +85,8 @@ function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardSt
       const isDataSourceInputUsedInAnyTemplating = dashboardJson.templating?.list?.some((temp) =>
         isDataSourceBeingConsumed(temp.datasource, input.name)
       );
-      const isDataSourceInputUsedInAnyAnnotation = dashboardJson.annotations?.list?.some((temp) =>
-        isDataSourceBeingConsumed(temp.datasource, input.name)
+      const isDataSourceInputUsedInAnyAnnotation = dashboardJson.annotations?.list?.some((anno) =>
+        isDataSourceBeingConsumed(anno.datasource, input.name)
       );
 
       return (
