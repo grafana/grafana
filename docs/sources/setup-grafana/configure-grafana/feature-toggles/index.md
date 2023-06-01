@@ -1,7 +1,7 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
-description: Learn about toggles for experimental and beta features, which you can enable or disable.
+description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
 ---
@@ -11,13 +11,13 @@ weight: 150
 
 # Configure feature toggles
 
-You use feature toggles, also known as feature flags, to turn experimental or beta features on and off in Grafana. Although we do not recommend using these features in production, you can turn on feature toggles to try out new functionality in development or test environments.
+You use feature toggles, also known as feature flags, to enable or disable features in Grafana. You can turn on feature toggles to try out new functionality in development or test environments.
 
 This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
-## Stable feature toggles
+## Feature toggles
 
-Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
+Some features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
 
 | Feature toggle name                              | Description                                                                                                                                                                                         | Enabled by default |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
@@ -41,7 +41,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
 
-## Beta feature toggles
+## Preview feature toggles
 
 | Feature toggle name                  | Description                                                                                                                                                                                  |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -65,10 +65,10 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 
-## Alpha feature toggles
+## Experimental feature toggles
 
 These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
-Alpha features might be changed or removed without prior notice.
+Experimental features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                  |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
