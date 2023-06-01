@@ -66,5 +66,3 @@ export interface ScatterSeries {
     };
   };
 }
-
-export { ScatterShow, SeriesMapping, XYDimensionConfig } from './panelcfg.gen';

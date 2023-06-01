@@ -6,11 +6,12 @@ import {
   SetFieldConfigOptionsArgs,
 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
+import { ScatterShow } from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { ScatterFieldConfig, ScatterShow } from './types';
+import { ScatterFieldConfig } from './types';
 
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {

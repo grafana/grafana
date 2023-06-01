@@ -21,7 +21,10 @@ import {
   ScaleDimensionConfig,
   ScaleDimensionMode,
 } from '@grafana/schema';
-import { defaultFieldConfig } from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
+import {
+  defaultFieldConfig,
+  ScatterShow,
+} from '@grafana/schema/src/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
 import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions';
@@ -29,14 +32,7 @@ import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensi
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { isGraphable } from './dims';
-import {
-  DimensionValues,
-  ScatterFieldConfig,
-  ScatterHoverCallback,
-  ScatterSeries,
-  Options,
-  ScatterShow,
-} from './types';
+import { DimensionValues, ScatterFieldConfig, ScatterHoverCallback, ScatterSeries, Options } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
