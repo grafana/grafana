@@ -1,7 +1,3 @@
-import { assertIsDefined } from 'test/helpers/asserts';
-
-import { DashboardViewItem } from 'app/features/search/types';
-
 import { wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { BrowseDashboardsState } from '../types';
