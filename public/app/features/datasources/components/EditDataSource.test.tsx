@@ -356,8 +356,8 @@ describe('<EditDataSource>', () => {
       const props = component.mock.calls[0][0];
 
       expect(props.context).toBeDefined();
-      expect(props.context.pluginId).toBeDefined();
-      expect(props.context.jsonData).toBeDefined();
+      expect(props.context.dataSource).toBeDefined();
+      expect(props.context.dataSourceMeta).toBeDefined();
       expect(props.context.setJsonData).toBeDefined();
     });
   });
