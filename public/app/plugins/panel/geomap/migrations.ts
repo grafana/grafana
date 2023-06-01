@@ -12,11 +12,11 @@ import {
   DataTransformerID,
 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
+import { Options, TooltipMode } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 
 import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';
-import { Options, TooltipMode } from './types';
 import { MapCenterID } from './view';
 
 /**

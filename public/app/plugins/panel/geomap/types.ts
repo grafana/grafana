@@ -6,9 +6,9 @@ import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
+import { ControlsOptions as ControlsOptionsBase } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { LayerElement } from 'app/core/components/Layers/types';
 
-import { ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';
 import { StyleConfig } from './style/types';
 
 export interface ControlsOptions extends ControlsOptionsBase {
@@ -52,5 +52,3 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   isBasemap?: boolean;
   mouseEvents: Subject<FeatureLike | undefined>;
 }
-
-export { Options, MapViewConfig, TooltipOptions, TooltipMode, defaultMapViewConfig } from './panelcfg.gen';

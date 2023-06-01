@@ -13,6 +13,11 @@ import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import {
+  MapViewConfig,
+  Options,
+  TooltipMode,
+} from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
 
@@ -25,7 +30,7 @@ import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
-import { ControlsOptions, Options, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { ControlsOptions, MapLayerState } from './types';
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';

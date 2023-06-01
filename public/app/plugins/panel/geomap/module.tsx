@@ -2,6 +2,11 @@ import React from 'react';
 
 import { PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import {
+  Options,
+  TooltipMode,
+  defaultMapViewConfig,
+} from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { GeomapPanel } from './GeomapPanel';
@@ -9,7 +14,7 @@ import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { defaultMapViewConfig, Options, TooltipMode, GeomapInstanceState } from './types';
+import { GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .setNoPadding()

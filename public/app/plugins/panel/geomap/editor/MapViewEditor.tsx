@@ -2,10 +2,11 @@ import { toLonLat } from 'ol/proj';
 import React, { useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
+import { Options, MapViewConfig } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { Options, MapViewConfig, GeomapInstanceState } from '../types';
+import { GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
 import { CoordinatesMapViewEditor } from './CoordinatesMapViewEditor';

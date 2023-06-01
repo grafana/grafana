@@ -1,9 +1,8 @@
 import React from 'react';
 
+import { MapViewConfig } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { InlineFieldRow, InlineField } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-
-import { MapViewConfig } from '../types';
 
 type Props = {
   labelWidth: number;

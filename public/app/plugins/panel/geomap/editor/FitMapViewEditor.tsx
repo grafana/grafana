@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { SelectableValue, StandardEditorContext } from '@grafana/data';
+import { Options, MapViewConfig } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { GeomapInstanceState, Options, MapViewConfig } from '../types';
+import { GeomapInstanceState } from '../types';
 
 type Props = {
   labelWidth: number;

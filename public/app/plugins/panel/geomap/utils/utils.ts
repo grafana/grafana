@@ -3,12 +3,13 @@ import { defaults as interactionDefaults } from 'ol/interaction';
 
 import { SelectableValue } from '@grafana/data';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
+import { Options } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
-import { Options, MapLayerState } from '../types';
+import { MapLayerState } from '../types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,

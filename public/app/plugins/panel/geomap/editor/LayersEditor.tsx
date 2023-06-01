@@ -2,12 +2,13 @@ import React from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 
 import { StandardEditorProps } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen';
 import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { getLayersOptions } from '../layers/registry';
-import { Options, MapLayerState, GeomapInstanceState } from '../types';
+import { MapLayerState, GeomapInstanceState } from '../types';
 
 type LayersEditorProps = StandardEditorProps<unknown, unknown, Options, GeomapInstanceState>;
 
