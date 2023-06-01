@@ -287,9 +287,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
     background-color: ${theme.colors.background.secondary};
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   `,
   headerStats: css`
+    flex-shrink: 0;
+
     span {
       vertical-align: middle;
     }
@@ -303,6 +305,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   heading: css`
     margin-left: ${theme.spacing(1)};
     margin-bottom: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
   `,
   spacer: css`
     flex: 1;
@@ -332,6 +337,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   actionIcons: css`
     width: 80px;
     align-items: center;
+    flex-shrink: 0;
   `,
   rulesTable: css`
     margin-top: ${theme.spacing(3)};
