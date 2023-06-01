@@ -40,6 +40,18 @@ export const browseDashboardsAPI = createApi({
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
       providesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg }],
     }),
+    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+      invalidatesTags: (_result, _error, args) => [{ type: 'getFolder', id: args.uid }],
+      query: (folder) => ({
+        method: 'PUT',
+        showErrorAlert: false,
+        url: `/folders/${folder.uid}`,
+        data: {
+          title: folder.title,
+          version: folder.version,
+        },
+      }),
+    }),
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
         const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
@@ -80,5 +92,6 @@ export const browseDashboardsAPI = createApi({
   }),
 });
 
-export const { endpoints, useGetAffectedItemsQuery, useGetFolderQuery, useMoveFolderMutation } = browseDashboardsAPI;
+export const { endpoints, useGetAffectedItemsQuery, useGetFolderQuery, useMoveFolderMutation, useSaveFolderMutation } =
+  browseDashboardsAPI;
 export { skipToken } from '@reduxjs/toolkit/query/react';

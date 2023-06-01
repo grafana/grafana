@@ -38,7 +38,7 @@
 /docs/sources/administration/             @Eve832 @GrafanaWriter
 /docs/sources/alerting/                   @brendamuir
 /docs/sources/dashboards/                 @imatwawana
-/docs/sources/datasources/                @Eve832 @GrafanaWriter
+/docs/sources/datasources/                @lwandz13
 /docs/sources/explore/                    @Eve832 @GrafanaWriter
 /docs/sources/fundamentals                @chri2547
 /docs/sources/getting-started/            @chri2547
@@ -61,6 +61,7 @@
 /.bra.toml @grafana/backend-platform
 /.golangci.toml @grafana/backend-platform
 /build.go @grafana/backend-platform
+/scripts/modowners/ @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
@@ -94,7 +95,7 @@
 /pkg/models/ @grafana/backend-platform
 /pkg/server/ @grafana/backend-platform
 /pkg/services/annotations/ @grafana/backend-platform
-/pkg/services/apikey/ @grafana/backend-platform
+/pkg/services/apikey/ @grafana/grafana-authnz-team
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/backend-platform
@@ -356,7 +357,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/admin/ @grafana/grafana-authnz-team
 /public/app/features/auth-config/ @grafana/grafana-authnz-team
 /public/app/features/annotations/ @grafana/grafana-frontend-platform
-/public/app/features/api-keys/ @grafana/grafana-frontend-platform
+/public/app/features/api-keys/ @grafana/grafana-authnz-team
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
@@ -516,7 +517,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mssql/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/mysql/ @grafana/grafana-bi-squad
-/public/app/plugins/datasource/opentsdb/ @grafana/backend-platform
+/public/app/plugins/datasource/opentsdb/ @grafana/observability-metrics
 /public/app/plugins/datasource/postgres/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
@@ -545,6 +546,7 @@ lerna.json @grafana/frontend-ops
 /pkg/services/ldap/ @grafana/grafana-authnz-team
 /pkg/services/login/ @grafana/grafana-authnz-team
 /pkg/services/loginattempt/ @grafana/grafana-authnz-team
+/pkg/services/oauthserver/ @grafana/grafana-authnz-team
 /pkg/services/oauthtoken/ @grafana/grafana-authnz-team
 /pkg/services/serviceaccounts/ @grafana/grafana-authnz-team
 

@@ -269,15 +269,15 @@ type queryDimensions struct {
 }
 
 type queryParameters struct {
-	MetricQueryType  dataquery.CloudWatchMetricsQueryMetricQueryType  `json:"metricQueryType"`
-	MetricEditorMode dataquery.CloudWatchMetricsQueryMetricEditorMode `json:"metricEditorMode"`
-	Dimensions       queryDimensions                                  `json:"dimensions"`
-	Expression       string                                           `json:"expression"`
-	Label            *string                                          `json:"label"`
-	Statistic        string                                           `json:"statistic"`
-	Period           string                                           `json:"period"`
-	MatchExact       bool                                             `json:"matchExact"`
-	MetricName       string                                           `json:"metricName"`
+	MetricQueryType  dataquery.MetricQueryType  `json:"metricQueryType"`
+	MetricEditorMode dataquery.MetricEditorMode `json:"metricEditorMode"`
+	Dimensions       queryDimensions            `json:"dimensions"`
+	Expression       string                     `json:"expression"`
+	Label            *string                    `json:"label"`
+	Statistic        string                     `json:"statistic"`
+	Period           string                     `json:"period"`
+	MatchExact       bool                       `json:"matchExact"`
+	MetricName       string                     `json:"metricName"`
 }
 
 var queryId = "query id"
@@ -286,11 +286,11 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 	t.Helper()
 
 	tsq := struct {
-		Type             string                                           `json:"type"`
-		MetricQueryType  dataquery.CloudWatchMetricsQueryMetricQueryType  `json:"metricQueryType"`
-		MetricEditorMode dataquery.CloudWatchMetricsQueryMetricEditorMode `json:"metricEditorMode"`
-		Namespace        string                                           `json:"namespace"`
-		MetricName       string                                           `json:"metricName"`
+		Type             string                     `json:"type"`
+		MetricQueryType  dataquery.MetricQueryType  `json:"metricQueryType"`
+		MetricEditorMode dataquery.MetricEditorMode `json:"metricEditorMode"`
+		Namespace        string                     `json:"namespace"`
+		MetricName       string                     `json:"metricName"`
 		Dimensions       struct {
 			InstanceID []string `json:"InstanceId,omitempty"`
 		} `json:"dimensions"`
