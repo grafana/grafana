@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Options } from '@grafana/schema/src/raw/composable/alertgroups/panelcfg/x/AlertGroupsPanelCfg_types.gen';
 import { CustomScrollbar } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction } from 'app/features/alerting/unified/state/actions';
@@ -12,7 +13,6 @@ import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/
 import { useDispatch } from 'app/types';
 
 import { AlertGroup } from './AlertGroup';
-import { Options } from './panelcfg.gen';
 import { useFilteredGroups } from './useFilteredGroups';
 
 export const AlertGroupsPanel = (props: PanelProps<Options>) => {

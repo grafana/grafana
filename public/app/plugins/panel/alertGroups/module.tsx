@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { PanelPlugin } from '@grafana/data';
+import { Options } from '@grafana/schema/src/raw/composable/alertgroups/panelcfg/x/AlertGroupsPanelCfg_types.gen';
 import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
 import {
   getAllAlertManagerDataSources,
@@ -8,7 +9,6 @@ import {
 } from 'app/features/alerting/unified/utils/datasource';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(AlertGroupsPanel).setPanelOptions((builder) => {
   return builder

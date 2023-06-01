@@ -6,6 +6,7 @@ import { byTestId } from 'testing-library-selector';
 import { getDefaultTimeRange, LoadingState, PanelProps, FieldConfigSource } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
+import { Options } from '@grafana/schema/src/raw/composable/alertgroups/panelcfg/x/AlertGroupsPanelCfg_types.gen';
 import { fetchAlertGroups } from 'app/features/alerting/unified/api/alertmanager';
 import {
   mockAlertGroup,
@@ -19,7 +20,6 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { configureStore } from 'app/store/configureStore';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { Options } from './panelcfg.gen';
 
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
