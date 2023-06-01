@@ -22,6 +22,7 @@ export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen
 export type {
   AnnotationTarget,
   AnnotationPanelFilter,
+  VariableOption,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -46,6 +47,8 @@ export type {
 export {
   defaultAnnotationTarget,
   defaultAnnotationPanelFilter,
+  VariableRefresh,
+  VariableSort,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,

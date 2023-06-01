@@ -118,6 +118,17 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
  */
 export interface VariableModel {
+  /**
+   * Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
+   */
+  allFormat?: string;
+  /**
+   * Shows current selected variable text/value on the dashboard
+   */
+  current: VariableOption;
+  /**
+   * Data source used to fetch values for a variable
+   */
   datasource?: DataSourceRef;
   /**
    * Description of variable
@@ -136,13 +147,22 @@ export interface VariableModel {
    */
   label?: string;
   /**
+   * Whether multiple values can be selected or not from variable value list
+   */
+  multi?: boolean;
+  /**
    * Name of variable
    */
   name: string;
   /**
-   * TODO: Move this into a separated QueryVariableModel type
+   * Whether multiple values can be selected or not from variable value list
+   */
+  options?: Array<VariableOption>;
+  /**
+   * Query used to fetch values for a variable
    */
   query?: (string | Record<string, unknown>);
+  refresh?: VariableRefresh;
   /**
    * Whether the variable value should be managed by URL query params or not
    */
@@ -155,8 +175,32 @@ export interface VariableModel {
 
 export const defaultVariableModel: Partial<VariableModel> = {
   id: '00000000-0000-0000-0000-000000000000',
+  multi: false,
+  options: [],
   skipUrlSync: false,
 };
+
+/**
+ * Option to be selected in a variable.
+ */
+export interface VariableOption {
+  isNone?: boolean;
+  selected: boolean;
+  text: (string | Array<string>);
+  value: (string | Array<string>);
+}
+
+/**
+ * Options to config when to refresh a variable
+ * 0: Never refresh the variable
+ * 1: Queries the data source every time the dashboard loads.
+ * 2: Queries the data source when the dashboard time range changes.
+ */
+export enum VariableRefresh {
+  never = 0,
+  onDashboardLoad = 1,
+  onTimeRangeChanged = 2,
+}
 
 /**
  * Determine if the variable shows on dashboard
@@ -166,6 +210,27 @@ export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
+}
+
+/**
+ * Sort variable options
+ * Accepted values are:
+ * 0: No sorting
+ * 1: Alphabetical ASC
+ * 2: Alphabetical DESC
+ * 3: Numerical ASC
+ * 4: Numerical DESC
+ * 5: Alphabetical Case Insensitive ASC
+ * 6: Alphabetical Case Insensitive DESC
+ */
+export enum VariableSort {
+  alphabeticalAsc = 1,
+  alphabeticalCaseInsensitiveAsc = 5,
+  alphabeticalCaseInsensitiveDesc = 6,
+  alphabeticalDesc = 2,
+  disabled = 0,
+  numericalAsc = 3,
+  numericalDesc = 4,
 }
 
 /**

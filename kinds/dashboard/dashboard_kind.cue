@@ -202,15 +202,50 @@ lineage: schemas: [{
 			skipUrlSync: bool | *false
 			// Description of variable
 			description?: string
-			// TODO: Move this into a separated QueryVariableModel type
-			query?:      string | {...}
+			// Query used to fetch values for a variable
+			query?: string | {...}
+			// Data source used to fetch values for a variable
 			datasource?: #DataSourceRef
+			// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
+			allFormat?: string
+			// Shows current selected variable text/value on the dashboard
+			current: #VariableOption
+			// Whether multiple values can be selected or not from variable value list
+			multi?: bool | *false
+			// Whether multiple values can be selected or not from variable value list
+			options?: [...#VariableOption]
+			refresh?: #VariableRefresh
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+		// Option to be selected in a variable.
+		#VariableOption: {
+			selected: bool
+			text:     string | [...string]
+			value:    string | [...string]
+			isNone?:  bool
+		} @cuetsy(kind="interface")
+
+		// Options to config when to refresh a variable
+		// 0: Never refresh the variable
+		// 1: Queries the data source every time the dashboard loads. 
+		// 2: Queries the data source when the dashboard time range changes. 
+		#VariableRefresh: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged")
 
 		// Determine if the variable shows on dashboard
 		// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 		#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type")
+
+		// Sort variable options
+		// Accepted values are:
+		// 0: No sorting
+		// 1: Alphabetical ASC
+		// 2: Alphabetical DESC
+		// 3: Numerical ASC
+		// 4: Numerical DESC
+		// 5: Alphabetical Case Insensitive ASC
+		// 6: Alphabetical Case Insensitive DESC
+		#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc")
 
 		// Loading status
 		// Accepted values are "NotStarted" (the request is not started), "Loading" (waiting for response), "Streaming" (pulling continuous data), "Done" (response received successfully) or "Error" (failed request).

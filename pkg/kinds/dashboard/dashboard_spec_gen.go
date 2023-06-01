@@ -119,6 +119,13 @@ const (
 	VariableHideN2 VariableHide = 2
 )
 
+// Defines values for VariableRefresh.
+const (
+	VariableRefreshN0 VariableRefresh = 0
+	VariableRefreshN1 VariableRefresh = 1
+	VariableRefreshN2 VariableRefresh = 2
+)
+
 // Defines values for VariableType.
 const (
 	VariableTypeAdhoc      VariableType = "adhoc"
@@ -775,6 +782,12 @@ type VariableHide int
 // TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
+	// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
+	AllFormat *string `json:"allFormat,omitempty"`
+
+	// Option to be selected in a variable.
+	Current VariableOption `json:"current"`
+
 	// Ref to a DataSource instance
 	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
@@ -791,11 +804,23 @@ type VariableModel struct {
 	// Optional display name
 	Label *string `json:"label,omitempty"`
 
+	// Whether multiple values can be selected or not from variable value list
+	Multi *bool `json:"multi,omitempty"`
+
 	// Name of variable
 	Name string `json:"name"`
 
-	// TODO: Move this into a separated QueryVariableModel type
+	// Whether multiple values can be selected or not from variable value list
+	Options []VariableOption `json:"options,omitempty"`
+
+	// Query used to fetch values for a variable
 	Query *interface{} `json:"query,omitempty"`
+
+	// Options to config when to refresh a variable
+	// 0: Never refresh the variable
+	// 1: Queries the data source every time the dashboard loads.
+	// 2: Queries the data source when the dashboard time range changes.
+	Refresh *VariableRefresh `json:"refresh,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
 	SkipUrlSync bool `json:"skipUrlSync"`
@@ -805,6 +830,20 @@ type VariableModel struct {
 	// TODO this implies some wider pattern/discriminated union, probably?
 	Type VariableType `json:"type"`
 }
+
+// Option to be selected in a variable.
+type VariableOption struct {
+	IsNone   *bool       `json:"isNone,omitempty"`
+	Selected bool        `json:"selected"`
+	Text     interface{} `json:"text"`
+	Value    interface{} `json:"value"`
+}
+
+// Options to config when to refresh a variable
+// 0: Never refresh the variable
+// 1: Queries the data source every time the dashboard loads.
+// 2: Queries the data source when the dashboard time range changes.
+type VariableRefresh int
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
