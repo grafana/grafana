@@ -15,7 +15,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
-import { isLogsQuery } from './queryUtils';
+import { isLogsQuery, isQueryWithDistinct } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
@@ -173,7 +173,8 @@ function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: nu
 
 export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
-  const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
+  const [instantQueries, nonInstantQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
+  const [distinctQueries, normalQueries] = partition(nonInstantQueries, (query) => isQueryWithDistinct(query.expr));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
@@ -221,6 +222,12 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
   if (instantQueries.length) {
     requests.push({
       request: { ...request, targets: instantQueries },
+      partition: [request.range],
+    });
+  }
+  if (distinctQueries.length) {
+    requests.push({
+      request: { ...request, targets: distinctQueries },
       partition: [request.range],
     });
   }
