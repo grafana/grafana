@@ -20,8 +20,11 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 		return response.Error(http.StatusForbidden, "Access denied to data source", err)
 	}
-	if errors.Is(err, datasources.ErrDataSourceNotFound) || errors.Is(err, plugincontext.ErrPluginNotFound) {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
+	}
+	if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
