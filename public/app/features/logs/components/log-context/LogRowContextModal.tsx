@@ -192,6 +192,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
     if (open && row && limit) {
+      // also update context query when we fetch new results
+      const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+      setContextQuery(contextQuery);
+
       const rawResults = await Promise.all([
         getRowContext(row, {
           limit: logsSortOrder === LogsSortOrder.Descending ? limit + 1 : limit,
@@ -269,6 +273,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   }, [scrollElement]);
 
   useAsync(async () => {
+    // initially update context query
     const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
     setContextQuery(contextQuery);
   }, [getRowContextQuery, row]);
