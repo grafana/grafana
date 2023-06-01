@@ -40,6 +40,10 @@ const (
 func (addDefaultFields) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
 
+	if true {
+		return nil
+	}
+
 	// NOTE: tried using dashboard.K8sResource here, but that doesn't implement runtime.Object
 	// gvk is available as one of the attributes for branching off the logic per kind
 

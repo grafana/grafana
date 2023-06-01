@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -11,6 +12,7 @@ import {
   VersionsHistoryButtons,
   VersionHistoryComparison,
 } from '../VersionHistory';
+import { K8sResourceHistory, K8sResourceRefs } from '../VersionHistory/K8sResourceHistory';
 
 import { SettingsPageProps } from './types';
 
@@ -164,6 +166,15 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
     return (
       <Page navModel={this.props.sectionNav}>
+        {config.featureToggles.entityStore && <div>
+          <h3>History (from k8s)</h3>
+          <K8sResourceHistory name={this.props.dashboard.uid} />
+
+          <h3>References (from k8s)</h3>
+          <K8sResourceRefs name={this.props.dashboard.uid} />
+        </div>
+        }
+
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (

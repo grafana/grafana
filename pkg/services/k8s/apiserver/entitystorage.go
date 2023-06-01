@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/grafana/kindsys"
@@ -290,13 +289,27 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 				if err != nil {
 					return nil, false, "", err
 				}
-				return ioutil.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
-
+				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
 			}
 
 			streamer := objPtr.(*apihelpers.SubresourceStreamer)
 			streamer.SetInputStream(i)
+			return err
+		case "ref":
+			refs := make(map[string]interface{})
+			refs["TODO"] = "find references"
 
+			i := func(ctx context.Context, apiVersion, acceptHeader string) (stream io.ReadCloser, flush bool, mimeType string, err error) {
+				raw, err := json.Marshal(refs)
+				if err != nil {
+					return nil, false, "", err
+				}
+				fmt.Printf("REFS: %s\n", string(raw))
+				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
+			}
+
+			streamer := objPtr.(*apihelpers.SubresourceStreamer)
+			streamer.SetInputStream(i)
 			return err
 		case "":
 			// this is fine
@@ -326,10 +339,9 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
-	//	fmt.Printf("GET: %s", string(jjj))
 	_, _, err = s.codec.Decode(jjj, nil, objPtr)
 
-	fmt.Printf("GET:%s\n", res.Metadata.Name)
+	fmt.Printf("k8s GET/GOT:%s (rv:%s)\n", res.Metadata.Name, res.Metadata.ResourceVersion)
 	return err
 }
 
@@ -447,6 +459,12 @@ func (s *entityStorage) GuaranteedUpdate(
 					return statusErr
 				}
 			}
+
+			// Hard to debug when we keep trying errors!
+			if true {
+				return err // return the real error
+			}
+
 			if attempt == MaxUpdateAttempts {
 				return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
 			} else {
@@ -461,7 +479,7 @@ func (s *entityStorage) GuaranteedUpdate(
 
 		rsp, err := s.write(ctx, grn, uObj)
 		if err != nil {
-			return err
+			return err // continue???
 		}
 
 		if rsp.Status == entity.WriteEntityResponse_UNCHANGED {
@@ -478,6 +496,7 @@ func (s *entityStorage) GuaranteedUpdate(
 			Object: destination.DeepCopyObject(),
 			Type:   watch.Modified,
 		})
+		return nil
 	}
 	return nil
 }
