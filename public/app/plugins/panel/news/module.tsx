@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
-import config from 'app/core/config';
 
 import { NewsPanel } from './NewsPanel';
+import { DEFAULT_FEED_URL } from './constants';
 import { Options, defaultOptions } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(NewsPanel).setPanelOptions((builder) => {
@@ -11,7 +11,7 @@ export const plugin = new PanelPlugin<Options>(NewsPanel).setPanelOptions((build
       name: 'URL',
       description: 'Supports RSS and Atom feeds',
       settings: {
-        placeholder: config.newsFeedUrl,
+        placeholder: DEFAULT_FEED_URL,
       },
       defaultValue: defaultOptions.feedUrl,
     })

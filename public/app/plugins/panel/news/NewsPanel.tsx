@@ -3,9 +3,9 @@ import React, { useEffect } from 'react';
 import { PanelProps } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
 import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
-import config from 'app/core/config';
 
 import { News } from './component/News';
+import { DEFAULT_FEED_URL } from './constants';
 import { Options } from './panelcfg.gen';
 import { useNewsFeed } from './useNewsFeed';
 
@@ -14,7 +14,7 @@ interface NewsPanelProps extends PanelProps<Options> {}
 export function NewsPanel(props: NewsPanelProps) {
   const {
     width,
-    options: { feedUrl = config.newsFeedUrl, showImage },
+    options: { feedUrl = DEFAULT_FEED_URL, showImage },
   } = props;
 
   const { state, getNews } = useNewsFeed(feedUrl);
