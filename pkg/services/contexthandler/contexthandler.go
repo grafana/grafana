@@ -100,23 +100,19 @@ type ContextHandler struct {
 	GetTime func() time.Time
 }
 
-type reqContextKey = ctxkey.Key
+type ReqContextKey = ctxkey.Key
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
 func FromContext(c context.Context) *contextmodel.ReqContext {
-	if reqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
+	if reqCtx, ok := c.Value(ReqContextKey{}).(*contextmodel.ReqContext); ok {
 		return reqCtx
 	}
 	return nil
 }
 
-// Middleware provides a middleware to initialize the request context.
-func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		mContext := web.FromContext(ctx)
-		_, span := h.tracer.Start(ctx, "Auth - Middleware")
-		defer span.End()
+func (h *ContextHandler) SetupContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		mContext := web.FromContext(req.Context())
 
 		reqContext := &contextmodel.ReqContext{
 			Context: mContext,
@@ -130,8 +126,22 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		// Inject ReqContext into http.Request.Context
-		*r = *r.WithContext(context.WithValue(ctx, reqContextKey{}, reqContext))
-		// store list of possible auth header in context
+		*req = *req.WithContext(context.WithValue(req.Context(), ReqContextKey{}, reqContext))
+
+		next.ServeHTTP(w, req)
+	})
+}
+
+// Middleware provides a middleware to initialize the request context.
+func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		mContext := web.FromContext(ctx)
+		_, span := h.tracer.Start(ctx, "Auth - Middleware")
+		defer span.End()
+
+		reqContext := FromContext(r.Context())
+
 		*reqContext.Req = *reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 
 		traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)

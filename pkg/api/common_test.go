@@ -228,6 +228,7 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 
 	sc.m = web.New()
 	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+	sc.m.Use(getContextHandler(t, cfg).SetupContext)
 	sc.m.Use(getContextHandler(t, cfg).Middleware)
 
 	return sc

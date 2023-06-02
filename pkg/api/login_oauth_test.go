@@ -51,6 +51,7 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 	hs := setupSocialHTTPServerWithConfig(t, cfg)
 
 	m := web.New()
+	m.Use(getContextHandler(t, cfg).SetupContext)
 	m.Use(getContextHandler(t, cfg).Middleware)
 	viewPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
