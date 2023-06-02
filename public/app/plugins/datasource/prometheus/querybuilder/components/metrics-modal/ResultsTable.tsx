@@ -3,7 +3,7 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
@@ -56,9 +56,8 @@ export function ResultsTable(props: ResultsTableProps) {
               textToHighlight={metric.type ?? ''}
               searchWords={state.metaHaystackMatches}
               autoEscape
-              highlightClassName={`${styles.matchHighLight} ${metric.inferred ? styles.italicized : ''}`}
-            />{' '}
-            {inferredType(metric.inferred ?? false)}
+              highlightClassName={styles.matchHighLight}
+            />
           </td>
           <td>
             <Highlighter
@@ -73,24 +72,10 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td className={metric.inferred ? styles.italicized : ''}>
-            {metric.type ?? ''} {inferredType(metric.inferred ?? false)}
-          </td>
+          <td>{metric.type ?? ''}</td>
           <td>{metric.description ?? ''}</td>
         </>
       );
-    }
-  }
-
-  function inferredType(inferred: boolean): JSX.Element | undefined {
-    if (inferred) {
-      return (
-        <Tooltip content={'This metric type has been inferred'} placement="bottom-end">
-          <Icon name="info-circle" size="xs" />
-        </Tooltip>
-      );
-    } else {
-      return undefined;
     }
   }
 
@@ -223,9 +208,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     noResults: css`
       text-align: center;
       color: ${theme.colors.text.secondary};
-    `,
-    italicized: css`
-      font-style: italic;
     `,
   };
 };
