@@ -5,7 +5,18 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, Modal, TagList, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Collapse,
+  getTagColorIndexFromName,
+  Icon,
+  IconButton,
+  LoadingPlaceholder,
+  Modal,
+  TagList,
+  useStyles2,
+} from '@grafana/ui';
 import { AlertmanagerChoice, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -17,9 +28,8 @@ import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAm
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { labelsToTags } from '../../../utils/labels';
 import { makeAMLink } from '../../../utils/misc';
-import { normalizeRoute, RouteInstanceMatch } from '../../../utils/notification-policies';
+import { normalizeRoute, AlertInstanceMatch } from '../../../utils/notification-policies';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
 import { Matchers } from '../../notification-policies/Matchers';
@@ -58,7 +68,7 @@ export const useGetPotentialInstancesByAlertManager = (
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
   const {
-    value: matchingMap = new Map<string, RouteInstanceMatch[]>(),
+    value: matchingMap = new Map<string, AlertInstanceMatch[]>(),
     loading: matchingLoading,
     error: matchingError,
   } = useAsync(async () => {
@@ -223,7 +233,7 @@ export function NotificationPreviewByAlertManager({
         </Stack>
       )}
       <Stack gap={1} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instances]) => {
+        {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
           const route = routesByIdMap.get(routeId);
           const receiver = route?.receiver && receiversByName.get(route.receiver);
           if (!route || !receiver) {
@@ -232,7 +242,7 @@ export function NotificationPreviewByAlertManager({
           return (
             <NotificationRoute
               // TODO Use the whole instance object to display matching labels
-              instances={instances.map((i) => i.labels)}
+              instanceMatches={instanceMatches}
               route={route}
               receiver={receiver}
               key={routeId}
@@ -433,14 +443,14 @@ function NotificationRouteHeader({
 interface NotificationRouteProps {
   route: RouteWithPath;
   receiver: Receiver;
-  instances: Labels[];
+  instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
 }
 
 function NotificationRoute({
   route,
-  instances,
+  instanceMatches,
   receiver,
   routesByIdMap,
   alertManagerSourceName,
@@ -455,7 +465,7 @@ function NotificationRoute({
           route={route}
           receiver={receiver}
           routesByIdMap={routesByIdMap}
-          instancesCount={instances.length}
+          instancesCount={instanceMatches.length}
           alertManagerSourceName={alertManagerSourceName}
           expandRoute={expandRoute}
         />
@@ -468,12 +478,33 @@ function NotificationRoute({
     >
       <Stack gap={1} direction="column">
         <div className={styles.routeInstances}>
-          {instances.map((instance) => {
-            const tags = labelsToTags(instance);
+          {instanceMatches.map((instanceMatch) => {
+            const matchArray = Array.from(instanceMatch.labelsMatch.entries());
+            let matchResult = matchArray.map(([label, matchResult]) => ({
+              label: `${label[0]}=${label[1]}`,
+              match: matchResult.match,
+              colorIndex: matchResult.match ? getTagColorIndexFromName(label[0]) : 9, // 9 is the gray color
+            }));
+
+            const matchingLabels = matchResult.filter((mr) => mr.match);
+            const nonMatchingLabels = matchResult.filter((mr) => !mr.match);
+
             return (
-              <div className={styles.tagListCard} key={JSON.stringify(instance)}>
-                {tags.length > 0 ? (
-                  <TagList tags={tags} className={styles.labelList} />
+              <div className={styles.tagListCard} key={JSON.stringify(instanceMatch.instance)}>
+                {matchArray.length > 0 ? (
+                  <>
+                    <TagList
+                      tags={matchingLabels.map((mr) => mr.label)}
+                      className={styles.labelList}
+                      getColorIndex={(_, index) => matchingLabels[index].colorIndex}
+                    />
+                    <div className={styles.labelSeparator} />
+                    <TagList
+                      tags={nonMatchingLabels.map((mr) => mr.label)}
+                      className={styles.labelList}
+                      getColorIndex={(_, index) => nonMatchingLabels[index].colorIndex}
+                    />
+                  </>
                 ) : (
                   <div className={styles.textMuted}>No labels</div>
                 )}
@@ -537,10 +568,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1;
   `,
   labelList: css`
+    flex: 0 0 fit-content;
     justify-content: flex-start;
   `,
+  labelSeparator: css`
+    width: 2px;
+    background-color: ${theme.colors.border.weak};
+  `,
   tagListCard: css`
-    flex: 1;
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(2)};
+
     position: relative;
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(1)};

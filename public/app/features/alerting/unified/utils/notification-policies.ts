@@ -8,7 +8,7 @@ import {
 
 import { Labels } from '../../../../types/unified-alerting-dto';
 
-import { Label, labelsMatchObjectMatchers, normalizeMatchers } from './matchers';
+import { Label, normalizeMatchers } from './matchers';
 
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 
@@ -36,16 +36,38 @@ function isLabelMatch(matcher: ObjectMatcher, label: Label) {
   return matchFunction(labelValue, matcherValue);
 }
 
+interface LabelMatchResult {
+  match: boolean;
+  matchers: ObjectMatcher[];
+}
+
 interface MatchingResult {
   matches: boolean;
   details: Map<ObjectMatcher, Label[]>;
+  labelsMatch: Map<Label, LabelMatchResult>;
 }
+
 // check if every matcher returns "true" for the set of labels
 function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult {
   const details = new Map<ObjectMatcher, Label[]>();
 
+  // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
+  // So we cannot use empty array of matchers as an indicator of no match
+  const labelsMatch = new Map<Label, { match: boolean; matchers: ObjectMatcher[] }>(
+    labels.map((label) => [label, { match: false, matchers: [] }])
+  );
+
   const matches = matchers.every((matcher) => {
     const matchingLabels = labels.filter((label) => isLabelMatch(matcher, label));
+
+    matchingLabels.forEach((label) => {
+      const labelMatch = labelsMatch.get(label);
+      // The condition is just to satisfy TS. The map should have all the labels due to the previous map initialization
+      if (labelMatch) {
+        labelMatch.match = true;
+        labelMatch.matchers.push(matcher);
+      }
+    });
 
     if (matchingLabels.length === 0) {
       return false;
@@ -55,33 +77,31 @@ function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult
     return matchingLabels.length > 0;
   });
 
-  return { matches, details };
+  return { matches, details, labelsMatch };
 }
 
-export interface RouteInstanceMatch {
-  route: RouteWithID;
-  labels: Labels;
+export interface AlertInstanceMatch {
+  instance: Labels;
   matchDetails: Map<ObjectMatcher, Labels>;
+  labelsMatch: Map<Label, LabelMatchResult>;
 }
 
 export interface RouteMatchResult<T extends Route> {
   route: T;
   details: Map<ObjectMatcher, Label[]>;
+  labelsMatch: Map<Label, LabelMatchResult>;
 }
+
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
 
 // If the current node is not a match, return nothing
 // const normalizedMatchers = normalizeMatchers(root);
 // Normalization should have happened earlier in the code
-// if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
 function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<RouteMatchResult<T>> {
   let matches: Array<RouteMatchResult<T>> = [];
 
   // If the current node is not a match, return nothing
-  if (!root.object_matchers || !labelsMatchObjectMatchers(root.object_matchers, labels)) {
-    return [];
-  }
   const matchResult = matchLabels(root.object_matchers ?? [], labels);
   if (!matchResult.matches) {
     return [];
@@ -104,7 +124,7 @@ function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<Ro
 
   // If no child nodes were matches, the current node itself is a match.
   if (matches.length === 0) {
-    matches.push({ route: root, details: matchResult.details });
+    matches.push({ route: root, details: matchResult.details, labelsMatch: matchResult.labelsMatch });
   }
 
   return matches;

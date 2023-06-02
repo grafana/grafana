@@ -7,7 +7,7 @@ import {
   findMatchingAlertGroups,
   findMatchingRoutes,
   normalizeRoute,
-  RouteInstanceMatch,
+  AlertInstanceMatch,
 } from './utils/notification-policies';
 
 const routeGroupsMatcher = {
@@ -27,14 +27,14 @@ const routeGroupsMatcher = {
     return routeGroupsMap;
   },
 
-  matchInstancesToRoute(routeTree: RouteWithID, instancesToMatch: Labels[]): Map<string, RouteInstanceMatch[]> {
-    const result = new Map<string, RouteInstanceMatch[]>();
+  matchInstancesToRoute(routeTree: RouteWithID, instancesToMatch: Labels[]): Map<string, AlertInstanceMatch[]> {
+    const result = new Map<string, AlertInstanceMatch[]>();
 
     const normalizedRootRoute = normalizeRoute(routeTree);
 
     instancesToMatch.forEach((instance) => {
       const matchingRoutes = findMatchingRoutes(normalizedRootRoute, Object.entries(instance));
-      matchingRoutes.forEach(({ route, details }) => {
+      matchingRoutes.forEach(({ route, details, labelsMatch }) => {
         // Only to convert Label[] to Labels[] - needs better approach
         const matchDetails = new Map(
           Array.from(details.entries()).map(([matcher, labels]) => [matcher, Object.fromEntries(labels)])
@@ -42,9 +42,9 @@ const routeGroupsMatcher = {
 
         const currentRoute = result.get(route.id);
         if (currentRoute) {
-          currentRoute.push({ route, labels: instance, matchDetails });
+          currentRoute.push({ instance, matchDetails, labelsMatch });
         } else {
-          result.set(route.id, [{ route, labels: instance, matchDetails }]);
+          result.set(route.id, [{ instance, matchDetails, labelsMatch }]);
         }
       });
     });
