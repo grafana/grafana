@@ -56,9 +56,6 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const { nodes } = useCategorizeFrames(frames);
   const [open, toggleOpen] = useToggle(false);
 
-  console.log('NodeGraph - withTraceView', withTraceView);
-  console.log('NodeGraph - open', open);
-
   const toggled = () => {
     toggleOpen();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
