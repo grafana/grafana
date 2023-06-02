@@ -242,7 +242,9 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
         </div>
       )}
       <Modal.ButtonRow>
-        <Button variant="secondary">Close</Button>
+        <Button variant="secondary" onClick={dismissModal}>
+          Close
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
