@@ -145,7 +145,7 @@ func main() {
 }
 
 func die(errs ...error) {
-	if len(errs) != 0 {
+	if len(errs) > 0 && errs[0] != nil {
 		for _, err := range errs {
 			fmt.Fprint(os.Stderr, err, "\n")
 		}
