@@ -99,7 +99,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			continue
 		}
 
-		if pluginDef.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
+		if pluginDef.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 

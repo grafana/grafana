@@ -44,7 +44,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -58,7 +58,7 @@ func TestFinder_Find(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							State:      plugins.AlphaRelease,
+							State:      plugins.ReleaseStateAlpha,
 							Backend:    true,
 							Executable: "test",
 						},
@@ -75,7 +75,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Parent",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -97,7 +97,7 @@ func TestFinder_Find(t *testing.T) {
 						{
 							JSONData: plugins.JSONData{
 								ID:   "test-app",
-								Type: plugins.DataSource,
+								Type: plugins.TypeDataSource,
 								Name: "Child",
 								Info: plugins.Info{
 									Author: plugins.InfoLink{
@@ -127,7 +127,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.App,
+							Type: plugins.TypeApp,
 							Name: "Test App",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -186,7 +186,7 @@ func TestFinder_Find(t *testing.T) {
 				Primary: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
-						Type: plugins.DataSource,
+						Type: plugins.TypeDataSource,
 						Name: "Parent",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -208,7 +208,7 @@ func TestFinder_Find(t *testing.T) {
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Child",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -232,7 +232,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -245,7 +245,7 @@ func TestFinder_Find(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							State:   plugins.AlphaRelease,
+							State:   plugins.ReleaseStateAlpha,
 							Backend: true,
 						},
 						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "invalid-v1-signature/plugin")),

@@ -133,7 +133,7 @@ func Test_validatePluginJSON(t *testing.T) {
 			args: args{
 				data: JSONData{
 					ID:   "grafana-plugin-id",
-					Type: DataSource,
+					Type: TypeDataSource,
 				},
 			},
 		},
@@ -141,7 +141,7 @@ func Test_validatePluginJSON(t *testing.T) {
 			name: "Invalid plugin ID",
 			args: args{
 				data: JSONData{
-					Type: Panel,
+					Type: TypePanel,
 				},
 			},
 			err: ErrInvalidPluginJSON,

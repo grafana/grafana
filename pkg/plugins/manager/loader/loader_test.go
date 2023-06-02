@@ -70,7 +70,7 @@ func TestLoader_Load(t *testing.T) {
 	}{
 		{
 			name:        "Load a Core plugin",
-			class:       plugins.Core,
+			class:       plugins.ClassCore,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
@@ -113,14 +113,14 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL: "public/app/plugins/datasource/cloudwatch",
 
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
-					Signature: plugins.SignatureInternal,
-					Class:     plugins.Core,
+					Signature: plugins.SignatureStatusInternal,
+					Class:     plugins.ClassCore,
 				},
 			},
 		},
 		{
 			name:        "Load a Bundled plugin",
-			class:       plugins.Bundled,
+			class:       plugins.ClassBundled,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/valid-v2-signature"},
 			want: []*plugins.Plugin{
@@ -153,14 +153,14 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL:       "public/plugins/test-datasource",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
 					Signature:     "valid",
-					SignatureType: plugins.GrafanaSignature,
+					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
-					Class:         plugins.Bundled,
+					Class:         plugins.ClassBundled,
 				},
 			},
 		}, {
 			name:        "Load plugin with symbolic links",
-			class:       plugins.External,
+			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
 			want: []*plugins.Plugin{
@@ -225,18 +225,18 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 					},
-					Class:         plugins.External,
+					Class:         plugins.ClassExternal,
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/includes-symlinks")),
 					Signature:     "valid",
-					SignatureType: plugins.GrafanaSignature,
+					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
 				},
 			},
 		}, {
 			name:  "Load an unsigned plugin (development)",
-			class: plugins.External,
+			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				DevMode: true,
 			},
@@ -263,9 +263,9 @@ func TestLoader_Load(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 						Backend: true,
-						State:   plugins.AlphaRelease,
+						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.External,
+					Class:     plugins.ClassExternal,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
@@ -274,7 +274,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 		}, {
 			name:        "Load an unsigned plugin (production)",
-			class:       plugins.External,
+			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
@@ -287,7 +287,7 @@ func TestLoader_Load(t *testing.T) {
 		},
 		{
 			name:  "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
-			class: plugins.External,
+			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
@@ -314,19 +314,19 @@ func TestLoader_Load(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 						Backend: true,
-						State:   plugins.AlphaRelease,
+						State:   plugins.ReleaseStateAlpha,
 					},
-					Class:     plugins.External,
+					Class:     plugins.ClassExternal,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
-					Signature: plugins.SignatureUnsigned,
+					Signature: plugins.SignatureStatusUnsigned,
 				},
 			},
 		},
 		{
 			name:        "Load a plugin with v1 manifest should return signatureInvalid",
-			class:       plugins.External,
+			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
@@ -339,7 +339,7 @@ func TestLoader_Load(t *testing.T) {
 		},
 		{
 			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
-			class: plugins.External,
+			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
@@ -354,7 +354,7 @@ func TestLoader_Load(t *testing.T) {
 		},
 		{
 			name:  "Load a plugin with manifest which has a file not found in plugin folder",
-			class: plugins.External,
+			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
@@ -369,7 +369,7 @@ func TestLoader_Load(t *testing.T) {
 		},
 		{
 			name:  "Load a plugin with file which is missing from the manifest",
-			class: plugins.External,
+			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
@@ -384,7 +384,7 @@ func TestLoader_Load(t *testing.T) {
 		},
 		{
 			name:  "Load an app with includes",
-			class: plugins.External,
+			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-app"},
 			},
@@ -424,8 +424,8 @@ func TestLoader_Load(t *testing.T) {
 				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app-with-includes")),
-					Class:         plugins.External,
-					Signature:     plugins.SignatureUnsigned,
+					Class:         plugins.ClassExternal,
+					Signature:     plugins.SignatureStatusUnsigned,
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
 				},
@@ -513,8 +513,8 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 				},
 			},
 			FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/cdn/plugin")),
-			Class:     plugins.Bundled,
-			Signature: plugins.SignatureValid,
+			Class:     plugins.ClassBundled,
+			Signature: plugins.SignatureStatusValid,
 			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
 			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
 		}}
@@ -522,14 +522,14 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 		l := newLoader(cfg)
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.Bundled
+				return plugins.ClassBundled
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return pluginPaths
 			},
 			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
 				return plugins.Signature{
-					Status: plugins.SignatureValid,
+					Status: plugins.SignatureStatusValid,
 				}, true
 			},
 		})
@@ -646,9 +646,9 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 							},
 							Backend:    true,
 							Executable: "test",
-							State:      plugins.AlphaRelease,
+							State:      plugins.ReleaseStateAlpha,
 						},
-						Class:         plugins.External,
+						Class:         plugins.ClassExternal,
 						Module:        "plugins/test-datasource/module",
 						BaseURL:       "public/plugins/test-datasource",
 						FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin")),
@@ -684,7 +684,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 
 				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.External
+						return plugins.ClassExternal
 					},
 					PluginURIsFunc: func(ctx context.Context) []string {
 						return tt.pluginPaths
@@ -771,8 +771,8 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						Backend: false,
 					},
 					FS:            mustNewStaticFSForTests(t, pluginDir),
-					Class:         plugins.External,
-					Signature:     plugins.SignatureValid,
+					Class:         plugins.ClassExternal,
+					Signature:     plugins.SignatureStatusValid,
 					SignatureType: plugins.PrivateSignature,
 					SignatureOrg:  "gabrielmabille",
 					Module:        "plugins/test-app/module",
@@ -799,7 +799,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return tt.pluginPaths
@@ -852,14 +852,14 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 						},
 						Version: "1.0.0",
 					},
-					State:        plugins.AlphaRelease,
+					State:        plugins.ReleaseStateAlpha,
 					Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}},
 					Backend:      true,
 					Executable:   "test",
 				},
 				FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
-				Class:         plugins.External,
-				Signature:     plugins.SignatureValid,
+				Class:         plugins.ClassExternal,
+				Signature:     plugins.SignatureStatusValid,
 				SignatureType: plugins.PrivateSignature,
 				SignatureOrg:  "Will Browne",
 				Module:        "plugins/test-datasource/module",
@@ -877,7 +877,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return paths
@@ -942,9 +942,9 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					Backend: false,
 				},
 				FS:            mustNewStaticFSForTests(t, pluginDir),
-				Class:         plugins.External,
-				Signature:     plugins.SignatureValid,
-				SignatureType: plugins.GrafanaSignature,
+				Class:         plugins.ClassExternal,
+				Signature:     plugins.SignatureStatusValid,
+				SignatureType: plugins.SignatureTypeGrafana,
 				SignatureOrg:  "Grafana Labs",
 				Module:        "plugins/test-app/module",
 				BaseURL:       "public/plugins/test-app",
@@ -961,7 +961,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{pluginDir, pluginDir}
@@ -1032,9 +1032,9 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 					Backend: false,
 				},
 				FS:            mustNewStaticFSForTests(t, pluginDir1),
-				Class:         plugins.External,
-				Signature:     plugins.SignatureValid,
-				SignatureType: plugins.GrafanaSignature,
+				Class:         plugins.ClassExternal,
+				Signature:     plugins.SignatureStatusValid,
+				SignatureType: plugins.SignatureTypeGrafana,
 				SignatureOrg:  "Grafana Labs",
 				Module:        "plugins/test-app/module",
 				BaseURL:       "public/plugins/test-app",
@@ -1060,7 +1060,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{pluginDir1, pluginDir2}
@@ -1109,10 +1109,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		Module:        "plugins/test-datasource/module",
 		BaseURL:       "public/plugins/test-datasource",
 		FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
-		Signature:     plugins.SignatureValid,
-		SignatureType: plugins.GrafanaSignature,
+		Signature:     plugins.SignatureStatusValid,
+		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
-		Class:         plugins.External,
+		Class:         plugins.ClassExternal,
 	}
 
 	child := &plugins.Plugin{
@@ -1141,10 +1141,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		Module:        "plugins/test-panel/module",
 		BaseURL:       "public/plugins/test-panel",
 		FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
-		Signature:     plugins.SignatureValid,
-		SignatureType: plugins.GrafanaSignature,
+		Signature:     plugins.SignatureStatusValid,
+		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
-		Class:         plugins.External,
+		Class:         plugins.ClassExternal,
 	}
 
 	parent.Children = []*plugins.Plugin{child}
@@ -1162,7 +1162,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{"../testdata/nested-plugins"}
@@ -1185,7 +1185,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
 			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
-					return plugins.External
+					return plugins.ClassExternal
 				},
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return []string{"../testdata/nested-plugins"}
@@ -1281,10 +1281,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			BaseURL:       "public/plugins/myorgid-simple-app",
 			FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
-			Signature:     plugins.SignatureValid,
-			SignatureType: plugins.GrafanaSignature,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
 			SignatureOrg:  "Grafana Labs",
-			Class:         plugins.External,
+			Class:         plugins.ClassExternal,
 		}
 
 		child := &plugins.Plugin{
@@ -1319,10 +1319,10 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			BaseURL:         "public/plugins/myorgid-simple-app",
 			FS:              mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
-			Signature:       plugins.SignatureValid,
-			SignatureType:   plugins.GrafanaSignature,
+			Signature:       plugins.SignatureStatusValid,
+			SignatureType:   plugins.SignatureTypeGrafana,
 			SignatureOrg:    "Grafana Labs",
-			Class:           plugins.External,
+			Class:           plugins.ClassExternal,
 		}
 
 		parent.Children = []*plugins.Plugin{child}
@@ -1339,7 +1339,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
 				return []string{"../testdata/app-with-child"}
@@ -1367,10 +1367,10 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				Type: plugins.App,
+				Type: plugins.TypeApp,
 				ID:   "testdata-app",
 			},
-			Class:   plugins.Core,
+			Class:   plugins.ClassCore,
 			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
 			BaseURL: "public/app/plugins/app/testdata-app",
 		}
