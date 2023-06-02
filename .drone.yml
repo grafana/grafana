@@ -239,9 +239,9 @@ steps:
   image: grafana/build-container:1.7.4
   name: lint-frontend
 - commands:
-  - yarn run i18n:extract || sh -c 'echo "Extraction failed. Make sure that you have
-    no dynamic translation phrases, such as 't(`preferences.theme.${themeID}`, themeName)'
-    and that no translation key is used twice.";false'
+  - yarn run i18n:extract || (echo "Extraction failed. Make sure that you have no
+    dynamic translation phrases, such as 't(`preferences.theme.${themeID}`, themeName)'
+    and that no translation key is used twice." && false)
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
     ]; then\n                echo $file_diff\n                echo Translation extraction
     has not been committed. Please run 'yarn i18n:extract', commit the changes and
@@ -1311,9 +1311,9 @@ steps:
   image: grafana/build-container:1.7.4
   name: lint-frontend
 - commands:
-  - yarn run i18n:extract || sh -c 'echo "Extraction failed. Make sure that you have
-    no dynamic translation phrases, such as 't(`preferences.theme.${themeID}`, themeName)'
-    and that no translation key is used twice.";false'
+  - yarn run i18n:extract || (echo "Extraction failed. Make sure that you have no
+    dynamic translation phrases, such as 't(`preferences.theme.${themeID}`, themeName)'
+    and that no translation key is used twice." && false)
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
     ]; then\n                echo $file_diff\n                echo Translation extraction
     has not been committed. Please run 'yarn i18n:extract', commit the changes and
@@ -7240,6 +7240,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 13d06a53f48d4c976733307490ed3fba983eeb5125d35de81f44d56b35b51b98
+hmac: b3c40d8ad7cea5dafeee35a7ea1822975a98a047cbe7175acc9532faf1a42560
 
 ...

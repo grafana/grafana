@@ -789,7 +789,7 @@ def verify_i18n_step():
             "yarn-install",
         ],
         "commands": [
-            "yarn run i18n:extract || sh -c 'echo \"{}\";false'".format(extract_error_message),
+            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff -- locales --stat)
