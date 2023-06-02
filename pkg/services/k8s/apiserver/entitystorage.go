@@ -147,7 +147,7 @@ func (s *entityStorage) write(ctx context.Context, grn *entity.GRN, uObj *unstru
 func getItems(listObj runtime.Object) ([]runtime.Object, error) {
 	out := make([]runtime.Object, 0)
 
-	switch list := listObj.(type) {
+	switch list := listObj.DeepCopyObject().(type) {
 	case *kindsv1.GrafanaResourceDefinitionList:
 	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
 	case *unstructured.UnstructuredList:
@@ -174,7 +174,7 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		return err
 	}
 
-	uObj, ok := obj.(*unstructured.Unstructured)
+	uObj, ok := obj.DeepCopyObject().(*unstructured.Unstructured)
 	if !ok {
 		return fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
@@ -393,7 +393,8 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
-	_, _, err = s.codec.Decode(jjj, nil, objPtr)
+	o := objPtr.(*apihelpers.ObjectWrapper)
+	_, _, err = s.codec.Decode(jjj, nil, o.Object)
 
 	fmt.Printf("k8s GET/GOT:%s (rv:%s)\n", res.Metadata.Name, res.Metadata.ResourceVersion)
 	return err
@@ -423,7 +424,9 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		return err
 	}
 
-	u := listObj.(*unstructured.UnstructuredList)
+	w := listObj.(*apihelpers.ObjectWrapper)
+	u := w.Object.(*unstructured.UnstructuredList)
+
 	u.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   s.gr.Group,
 		Version: "v1", // List version?
@@ -463,6 +466,15 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		// u.SetContinue(rsp.NextPageToken)
 		fmt.Printf("CONTINUE: %s\n", rsp.NextPageToken)
 	}
+
+	//tableconvertor := rest.NewDefaultTableConvertor(s.gr)
+	//t, err := tableconvertor.ConvertToTable(ctx, u, &metav1.TableOptions{IncludeObject: metav1.IncludeObject})
+	//if err != nil {
+	//	return err
+	//}
+
+	//w.SetObject(t)
+
 	return nil
 }
 
@@ -523,7 +535,8 @@ func (s *entityStorage) GuaranteedUpdate(
 			}
 		}
 
-		uObj, ok := updatedObj.(*unstructured.Unstructured)
+		w := updatedObj.(*apihelpers.ObjectWrapper)
+		uObj, ok := w.Object.(*unstructured.Unstructured)
 		if !ok {
 			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
 		}
@@ -537,8 +550,10 @@ func (s *entityStorage) GuaranteedUpdate(
 			return nil // destination is already set
 		}
 
+		w = destination.(*apihelpers.ObjectWrapper)
+
 		// get the thing we just wrote
-		err = s.Get(ctx, key, storage.GetOptions{}, destination)
+		err = s.Get(ctx, key, storage.GetOptions{}, w.Object)
 		if err != nil {
 			return err
 		}
