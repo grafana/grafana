@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -152,6 +153,7 @@ type StandardExport struct {
 	orgService                org.Service
 	datasourceService         datasources.DataSourceService
 	store                     entity.EntityStoreServer
+	preferenceService         pref.Service
 
 	// updated with mutex
 	exportJob Job
@@ -159,7 +161,8 @@ type StandardExport struct {
 
 func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
 	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service, orgService org.Service,
-	datasourceService datasources.DataSourceService, store entity.EntityStoreServer) ExportService {
+	datasourceService datasources.DataSourceService, store entity.EntityStoreServer,
+	preferenceService pref.Service) ExportService {
 	if false { // !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
@@ -171,6 +174,7 @@ func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.Graf
 		playlistService:           playlistService,
 		orgService:                orgService,
 		datasourceService:         datasourceService,
+		preferenceService:         preferenceService,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
 		store:                     store,
@@ -226,7 +230,8 @@ func (ex *StandardExport) HandleRequestExport(c *contextmodel.ReqContext) respon
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
 	case "entityStore":
-		job, err = startEntityStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService, ex.store, ex.dashboardsnapshotsService)
+		job, err = startEntityStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService,
+			ex.store, ex.dashboardsnapshotsService, ex.preferenceService)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {

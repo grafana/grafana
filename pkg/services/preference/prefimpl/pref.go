@@ -3,11 +3,14 @@ package prefimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,12 +18,16 @@ type Service struct {
 	store    store
 	cfg      *setting.Cfg
 	features *featuremgmt.FeatureManager
+
+	// SQLX (if we don't have both, this could be removed)
+	db *session.SessionDB
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
 	service := &Service{
 		cfg:      cfg,
 		features: features,
+		db:       db.GetSqlxSession(),
 	}
 	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		service.store = &sqlxStore{
@@ -234,6 +241,76 @@ func (s *Service) GetDefaults() *pref.Preference {
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
+}
+
+// Export into preferences shape
+func (s *Service) GetPreferences(ctx context.Context, orgId int64) ([]preferences.K8sResource, error) {
+	type pquery struct {
+		UserID           int64                    `db:"user_id"`
+		TeamUID          *string                  `db:"team_uid"`
+		HomeDashboardUID *string                  `db:"home_dashboard_uid"`
+		Timezone         string                   `db:"timezone"`
+		WeekStart        string                   `db:"week_start"`
+		Theme            string                   `db:"theme"`
+		Created          time.Time                `db:"created"`
+		Updated          time.Time                `db:"updated"`
+		JSONData         *pref.PreferenceJSONData `db:"json_data"`
+	}
+
+	results := make([]preferences.K8sResource, 0)
+	found := make([]pquery, 0)
+	// TODO, join team_uid and user uid
+	err := s.db.Select(ctx, &found, `SELECT 
+		team.uid as team_uid,
+		preferences.user_id as user_id,
+		dashboard.uid as home_dashboard_uid,
+		preferences.timezone,
+		preferences.theme,
+		preferences.created,
+		preferences.updated,
+		preferences.week_start,
+		preferences.json_data
+	FROM preferences 
+	LEFT JOIN dashboard ON preferences.home_dashboard_id = dashboard.id
+	LEFT JOIN team ON preferences.team_id = team.id
+	LEFT JOIN user ON preferences.user_id = user.id
+	WHERE preferences.org_id=?;`, orgId)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range found {
+		uid := fmt.Sprintf("user-%d", p.UserID)
+		if p.TeamUID != nil {
+			uid = fmt.Sprintf("team-%s", *p.TeamUID)
+		}
+		res := preferences.NewK8sResource(uid, &preferences.Spec{
+			HomeDashboardUID: p.HomeDashboardUID,
+		})
+
+		if p.WeekStart != "" {
+			res.Spec.WeekStart = &p.WeekStart
+		}
+		if p.Theme != "" {
+			res.Spec.Theme = &p.Theme
+		}
+
+		if p.JSONData != nil {
+			if p.JSONData.Language != "" {
+				res.Spec.Language = &p.JSONData.Language
+			}
+			if p.JSONData.QueryHistory.HomeTab != "" {
+				res.Spec.QueryHistory = &preferences.QueryHistoryPreference{
+					HomeTab: &p.JSONData.QueryHistory.HomeTab,
+				}
+			}
+			if len(p.JSONData.CookiePreferences) > 0 {
+				// ??????
+				res.Spec.CookiePreferences = &preferences.CookiePreferences{}
+			}
+		}
+		results = append(results, res)
+	}
+	return results, nil
 }
 
 func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error) {

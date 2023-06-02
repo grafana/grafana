@@ -2,6 +2,8 @@ package pref
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/kinds/preferences"
 )
 
 type Service interface {
@@ -11,4 +13,7 @@ type Service interface {
 	Patch(context.Context, *PatchPreferenceCommand) error
 	GetDefaults() *Preference
 	DeleteByUser(context.Context, int64) error
+
+	// k8s exporter
+	GetPreferences(ctx context.Context, orgId int64) ([]preferences.K8sResource, error)
 }
