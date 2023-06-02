@@ -17,7 +17,6 @@ export interface Props {
   /** Small version only shows the current page and the navigation buttons. */
   showSmallVersion?: boolean;
   className?: string;
-  ariaAppend?: string;
 }
 
 export const Pagination = ({
@@ -27,7 +26,6 @@ export const Pagination = ({
   hideWhenSinglePage,
   showSmallVersion,
   className,
-  ariaAppend,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const pageLengthToCondense = showSmallVersion ? 1 : 8;
@@ -104,7 +102,7 @@ export const Pagination = ({
       <ol>
         <li className={styles.item}>
           <Button
-            aria-label={`previous ${ariaAppend}`}
+            aria-label={`previous page`}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage - 1)}
@@ -116,7 +114,7 @@ export const Pagination = ({
         {pageButtons}
         <li className={styles.item}>
           <Button
-            aria-label={`next ${ariaAppend}`}
+            aria-label={`next page`}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}
