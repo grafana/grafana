@@ -110,6 +110,7 @@ Alpha features might be changed or removed without prior notice.
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                      |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
+| `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 
 ## Development feature toggles
 

@@ -535,5 +535,12 @@ var (
 			State:        FeatureStateAlpha,
 			Owner:        grafanaUserEssentialsSquad,
 		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
