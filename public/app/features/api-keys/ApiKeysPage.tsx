@@ -211,41 +211,37 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
 
   return (
     <Modal title="Migration summary" isOpen={true} closeOnBackdropClick={true} onDismiss={dismissModal}>
-      <div style={styles.migrationSummary}>
-        {data.FailedApikeyIDs.length !== 0 && (
+      {data.FailedApikeyIDs.length === 0 && <div style={styles.migrationSummary}>Migration Completed!</div>}
+      {data.FailedApikeyIDs.length !== 0 && (
+        <div style={styles.migrationSummary}>
           <p>
             Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
             assured, all of your API keys are fully functional and operational. It might have been that the database was
             saturated. Please try again or contact support.
           </p>
-        )}
-        <hr />
-        <p>
-          <strong>Total: </strong>
-          {data.Total}
-        </p>
-        <p>
-          <strong>Migrated: </strong>
-          {data.Migrated}
-        </p>
-
-        {data.FailedApikeyIDs.length !== 0 && (
-          <div>
-            <p>
-              <strong>Failed: </strong>
-              {data.Failed}
-            </p>
-            <p>
-              <strong>Failed Api Key IDs: </strong>
-              {data.FailedApikeyIDs.join(', ')}
-            </p>
-            <p>
-              <strong>Failed Details: </strong>
-              {data.FailedDetails.join(', ')}
-            </p>
-          </div>
-        )}
-      </div>
+          <hr />
+          <p>
+            <strong>Total: </strong>
+            {data.Total}
+          </p>
+          <p>
+            <strong>Migrated: </strong>
+            {data.Migrated}
+          </p>
+          <p>
+            <strong>Failed: </strong>
+            {data.Failed}
+          </p>
+          <p>
+            <strong>Failed Api Key IDs: </strong>
+            {data.FailedApikeyIDs.join(', ')}
+          </p>
+          <p>
+            <strong>Failed Details: </strong>
+            {data.FailedDetails.join(', ')}
+          </p>
+        </div>
+      )}
     </Modal>
   );
 };
