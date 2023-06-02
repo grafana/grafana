@@ -680,7 +680,8 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		dashStore, err := dashboardstore.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
 		require.NoError(t, err)
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db, localcache.ProvideService()), db, features, localcache.ProvideService())
+		cache := localcache.ProvideService()
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db, cache), db, features, cache)
 
 		var maximumTagsLength int64 = 60
 		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: features}
