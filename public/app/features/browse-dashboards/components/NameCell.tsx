@@ -56,19 +56,17 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
     <>
       <Indent level={level} />
 
-      <div className={styles.buttonContainer}>
-        {item.kind === 'folder' ? (
-          <IconButton
-            size={CHEVRON_SIZE}
-            className={styles.button}
-            onClick={isOpen && !childrenByParentUID[item.uid] ? undefined : () => onFolderClick(item.uid, !isOpen)}
-            name={getChevronIcon()}
-            ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
-          />
-        ) : (
-          <span className={styles.folderButtonSpacer} />
-        )}
-      </div>
+      {item.kind === 'folder' ? (
+        <IconButton
+          size={CHEVRON_SIZE}
+          className={styles.button}
+          onClick={isOpen && !childrenByParentUID[item.uid] ? undefined : () => onFolderClick(item.uid, !isOpen)}
+          name={getChevronIcon()}
+          ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+        />
+      ) : (
+        <span className={styles.folderButtonSpacer} />
+      )}
       <Span variant="body" truncate>
         {item.url ? (
           <Link href={item.url} className={styles.link}>
@@ -86,14 +84,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css({
       height: getSvgSize(CHEVRON_SIZE),
+      marginRight: theme.spacing(1),
       width: getSvgSize(CHEVRON_SIZE),
-    }),
-    buttonContainer: css({
-      alignItems: 'center',
-      display: 'flex',
-      justifyContent: 'center',
-      height: getSvgSize(CHEVRON_SIZE),
-      marginRight: theme.spacing(0.5),
     }),
     emptyText: css({
       // needed for text to truncate correctly
@@ -101,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     // Should be the same size as the <IconButton /> so Dashboard name is aligned to Folder name siblings
     folderButtonSpacer: css({
-      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(0.5)})`,
+      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(1)})`,
     }),
     link: css({
       '&:hover': {
