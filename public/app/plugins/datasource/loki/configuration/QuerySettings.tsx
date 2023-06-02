@@ -63,7 +63,7 @@ export const QuerySettings = (props: Props) => {
                 tooltip={
                   <div>
                     {
-                      'Predefined operations are used as initial state for your queries. They are useful, if you want to unpack, parse or format all log lines. Currently we support only log operations starting with |. For example: | unpack | line_format {{.message}}.'
+                      'Predefined operations are used as an initial state for your queries. They are useful, if you want to unpack, parse or format all log lines. Currently we support only log operations starting with |. For example: | unpack | line_format "{{.message}}".'
                     }
                   </div>
                 }
