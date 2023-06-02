@@ -115,10 +115,6 @@ const (
 	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
-	// FlagInternationalization
-	// Enables internationalization
-	FlagInternationalization = "internationalization"
-
 	// FlagTopnav
 	// Enables new top navigation and page layouts
 	FlagTopnav = "topnav"
