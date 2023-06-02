@@ -78,6 +78,7 @@ func main() {
 		err := verifyKind(kind, name, "core", latestRegistryDir)
 		if err != nil {
 			errs = append(errs, err)
+			continue
 		}
 
 		corek = append(corek, kind)
@@ -97,26 +98,22 @@ func main() {
 
 			si, err := kindsys.FindSchemaInterface(kind.Def().Properties.SchemaInterface)
 			if err != nil {
-				die(err)
+				errs = append(errs, err)
+				continue
 			}
 
 			name := strings.ToLower(fmt.Sprintf("%s/%s", strings.TrimSuffix(kind.Lineage().Name(), si.Name()), si.Name()))
 			err = verifyKind(kind, name, "composable", latestRegistryDir)
 			if err != nil {
 				errs = append(errs, err)
+				continue
 			}
 
 			compok = append(compok, kind)
 		}
 	}
 
-	if len(errs) > 0 {
-		for _, err := range errs {
-			fmt.Fprint(os.Stderr, err, "\n")
-		}
-		fmt.Println("Run `go run verify-kinds.go <kind name> <kind name>` to run the script on a limited set of kinds.")
-		os.Exit(1)
-	}
+	die(errs...)
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		os.Exit(0)
@@ -147,9 +144,11 @@ func main() {
 	}
 }
 
-func die(err error) {
-	if err != nil {
-		fmt.Fprint(os.Stderr, err, "\n")
+func die(errs ...error) {
+	if len(errs) != 0 {
+		for _, err := range errs {
+			fmt.Fprint(os.Stderr, err, "\n")
+		}
 		fmt.Println("Run `go run verify-kinds.go <kind name> <kind name>` to run the script on a limited set of kinds.")
 		os.Exit(1)
 	}
