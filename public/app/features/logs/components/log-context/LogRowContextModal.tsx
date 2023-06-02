@@ -12,17 +12,19 @@ import {
   LogsDedupStrategy,
   LogsSortOrder,
   SelectableValue,
-  rangeUtil,
+  dateTime,
+  TimeRange,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { useDispatch } from 'app/types';
 
+import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
 import { LoadMoreOptions, LogContextButtons } from './LogContextButtons';
@@ -154,25 +156,48 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
-    const allRows = [...before, row, ...after].sort((a, b) => a.timeEpochMs - b.timeEpochMs);
-    const first = allRows[0];
-    const last = allRows[allRows.length - 1];
-    return rangeUtil.convertRawToRange(
-      {
-        from: first.timeUtc,
-        to: last.timeUtc,
+    const allRows = sortLogRows([...before, row, ...after], LogsSortOrder.Ascending);
+    const fromMs = allRows[0].timeEpochMs;
+    let toMs = allRows[allRows.length - 1].timeEpochMs;
+    // In case we have a lot of logs and from and to have same millisecond
+    // we add 1 millisecond to toMs to make sure we have a range
+    if (fromMs === toMs) {
+      toMs += 1;
+    }
+    const from = dateTime(fromMs);
+    const to = dateTime(toMs);
+
+    const range: TimeRange = {
+      from,
+      to,
+      raw: {
+        from,
+        to,
       },
-      'utc'
-    );
+    };
+    return range;
   }, [context, row]);
 
   const onChangeLimitOption = (option: SelectableValue<number>) => {
     setLoadMoreOption(option);
-    setLimit(option.value!);
+    if (option.value) {
+      setLimit(option.value);
+      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+        datasourceType: row.datasourceType,
+        logRowUid: row.uid,
+        new_limit: option.value,
+      });
+    }
+  };
+
+  const updateContextQuery = async () => {
+    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+    setContextQuery(contextQuery);
   };
 
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
     if (open && row && limit) {
+      await updateContextQuery();
       const rawResults = await Promise.all([
         getRowContext(row, {
           limit: logsSortOrder === LogsSortOrder.Descending ? limit + 1 : limit,
@@ -249,10 +274,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   }, [scrollElement]);
 
-  useAsync(async () => {
-    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
-    setContextQuery(contextQuery);
-  }, [getRowContextQuery, row]);
+  useAsync(updateContextQuery, [getRowContextQuery, row]);
 
   return (
     <Modal

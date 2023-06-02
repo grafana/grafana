@@ -28,6 +28,12 @@ func Test_query(t *testing.T) {
 		resp := ds.query(context.Background(), pCtx, *dataQuery)
 		require.Nil(t, resp.Error)
 		require.Equal(t, 2, len(resp.Frames))
+
+		// The order of the frames is not guaranteed, so we normalize it
+		if resp.Frames[0].Fields[0].Name == "level" {
+			resp.Frames[1], resp.Frames[0] = resp.Frames[0], resp.Frames[1]
+		}
+
 		require.Equal(t, "time", resp.Frames[0].Fields[0].Name)
 		require.Equal(t, data.NewField("level", nil, []int64{0, 1, 2}), resp.Frames[1].Fields[0])
 	})
@@ -289,7 +295,7 @@ func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, 
 	panic("implement me")
 }
 
-func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
+func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},
@@ -305,7 +311,7 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID string, label
 	}, nil
 }
 
-func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
+func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
 	f.Args = []interface{}{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{

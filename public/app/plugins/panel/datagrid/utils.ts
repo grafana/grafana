@@ -77,6 +77,11 @@ export async function updateSnapshot(
   updateData?: (frames: DataFrame[]) => Promise<boolean>
 ): Promise<boolean> {
   if (updateData && isDatagridEnabled()) {
+    for (let i = 0; i < frame.fields.length; i++) {
+      delete frame.fields[i].config.displayName;
+      delete frame.fields[i].config.displayNameFromDS;
+    }
+
     return await updateData([frame]);
   }
 
@@ -266,7 +271,7 @@ export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => 
         transition: background-color 200ms;
         cursor: pointer;
         :hover {
-          background-color: ${theme.colors.secondary.shade};
+          background-color: ${theme.colors.background.secondary};
         }
       }
       input {

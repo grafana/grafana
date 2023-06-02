@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
 
-import { isDataSourceMatch, getDataSourceCompareFn } from './utils';
+import { isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
 
 describe('isDataSourceMatch', () => {
   const dataSourceInstanceSettings = { uid: 'a' } as DataSourceInstanceSettings;
@@ -91,5 +91,41 @@ describe('getDataSouceCompareFn', () => {
       { uid: 'f', name: 'f', meta: { builtIn: false } },
       { uid: 'a', name: 'a', meta: { builtIn: true } },
     ] as DataSourceInstanceSettings[]);
+  });
+});
+
+describe('matchDataSourceWithSearch', () => {
+  let dataSource: DataSourceInstanceSettings;
+
+  beforeEach(() => {
+    dataSource = {
+      name: 'My SQL DB',
+    } as DataSourceInstanceSettings;
+  });
+
+  it('should return true when the search term matches the data source name', () => {
+    const searchTerm = 'My SQL';
+    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
+  });
+
+  it('should return true when the search term matches part of the data source name', () => {
+    const searchTerm = 'SQL';
+    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
+  });
+
+  it('should return false when the search term does not match the data source name', () => {
+    const searchTerm = 'Oracle';
+    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(false);
+  });
+
+  it('should return true when the search term is empty', () => {
+    const searchTerm = '';
+    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
+  });
+
+  it('should ignore case when matching the search term', () => {
+    dataSource.name = 'PostgreSQL DB';
+    const searchTerm = 'postgre';
+    expect(matchDataSourceWithSearch(dataSource, searchTerm)).toBe(true);
   });
 });

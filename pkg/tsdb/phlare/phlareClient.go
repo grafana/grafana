@@ -90,13 +90,14 @@ func (c *PhlareClient) GetSeries(ctx context.Context, profileTypeID string, labe
 	}, nil
 }
 
-func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error) {
+func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	req := &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
 			ProfileTypeID: profileTypeID,
 			LabelSelector: labelSelector,
 			Start:         start,
 			End:           end,
+			MaxNodes:      maxNodes,
 		},
 	}
 

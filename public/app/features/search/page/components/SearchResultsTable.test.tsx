@@ -53,7 +53,7 @@ describe('SearchResultsTable', () => {
       jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
     });
 
-    it('shows the table with the correct accessible label', () => {
+    it('shows the table with the correct accessible label', async () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -66,7 +66,8 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
-      expect(screen.getByRole('table', { name: 'Search results table' })).toBeInTheDocument();
+      const table = await screen.findByRole('table', { name: 'Search results table' });
+      expect(table).toBeInTheDocument();
     });
 
     it('has the correct row headers', async () => {
@@ -82,12 +83,13 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
+      await screen.findByRole('table');
       expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Tags' })).toBeInTheDocument();
     });
 
-    it('displays the data correctly in the table', () => {
+    it('displays the data correctly in the table', async () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -100,6 +102,7 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
+      await screen.findByRole('table');
 
       const rows = screen.getAllByRole('row');
 
@@ -134,7 +137,7 @@ describe('SearchResultsTable', () => {
       jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockEmptySearchResult);
     });
 
-    it('shows a "No data" message', () => {
+    it('shows a "No data" message', async () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -147,8 +150,9 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
+      const noData = await screen.findByText('No data');
+      expect(noData).toBeInTheDocument();
       expect(screen.queryByRole('table', { name: 'Search results table' })).not.toBeInTheDocument();
-      expect(screen.getByText('No data')).toBeInTheDocument();
     });
   });
 });

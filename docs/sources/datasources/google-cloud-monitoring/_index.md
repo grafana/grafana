@@ -24,7 +24,9 @@ weight: 350
 Grafana ships with built-in support for Google Cloud Monitoring.
 This topic describes queries, templates, variables, and other configuration specific to the Google Cloud Monitoring data source.
 
-> **Note:** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
+{{% admonition type="note" %}}
+Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
+{{% /admonition %}}
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -15,14 +15,13 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  onOpenMenu?: () => void;
 }
 
-const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
-
-export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
-
+  const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
   // Capture the pointer to keep the widget visible while dragging
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.setPointerCapture(e.pointerId);
@@ -64,6 +63,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           placement="bottom"
           menuButtonClass={styles.menuButton}
           onVisibleChange={setMenuOpen}
+          onOpenMenu={onOpenMenu}
         />
       )}
     </div>

@@ -10,8 +10,7 @@ var (
 // instead of the default list of intervals
 func SetAutoTimeGrain(intervalMs int64, timeGrains []int64) (string, error) {
 	autoInterval := FindClosestAllowedIntervalMS(intervalMs, timeGrains)
-	tg := &TimeGrain{}
-	autoTimeGrain, err := tg.createISO8601DurationFromIntervalMS(autoInterval)
+	autoTimeGrain, err := CreateISO8601DurationFromIntervalMS(autoInterval)
 	if err != nil {
 		return "", err
 	}

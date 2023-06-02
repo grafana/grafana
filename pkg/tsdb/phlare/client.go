@@ -10,7 +10,7 @@ type ProfilingClient interface {
 	LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error)
 	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
-	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64) (*ProfileResponse, error)
+	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }
 
 type ProfileType struct {

@@ -65,7 +65,8 @@ export type Dimensions = Record<string, (string | Array<string>)>;
  */
 export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   /**
-   * To be deprecated. Use label
+   * Deprecated: use label
+   * @deprecated use label
    */
   alias?: string;
   /**
@@ -275,6 +276,10 @@ export interface LogGroup {
 
 /**
  * Shape of a CloudWatch Annotation query
+ */
+/**
+ * TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
+ * #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
  */
 export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
   /**

@@ -32,7 +32,7 @@ describe('browse-dashboards BrowseView', () => {
   const HEIGHT = 600;
 
   it('expands and collapses a folder', async () => {
-    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item.uid);
@@ -43,7 +43,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks items when selected', async () => {
-    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
 
     const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashbdD.item.uid));
     expect(checkbox).not.toBeChecked();
@@ -53,7 +53,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks all descendants when a folder is selected', async () => {
-    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -72,7 +72,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('checks descendants loaded after a folder is selected', async () => {
-    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     // First expand then click folderA
@@ -94,7 +94,7 @@ describe('browse-dashboards BrowseView', () => {
   });
 
   it('unchecks ancestors when unselecting an item', async () => {
-    render(<BrowseView folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    render(<BrowseView canSelect folderUID={undefined} width={WIDTH} height={HEIGHT} />);
     await screen.findByText(folderA.item.title);
 
     await expandFolder(folderA.item.uid);
@@ -115,6 +115,26 @@ describe('browse-dashboards BrowseView', () => {
 
     const grandparentCheckbox = screen.queryByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
     expect(grandparentCheckbox).not.toBeChecked();
+  });
+
+  it('shows indeterminate checkboxes when a descendant is selected', async () => {
+    render(<BrowseView canSelect={true} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    await expandFolder(folderA.item.uid);
+    await expandFolder(folderA_folderB.item.uid);
+
+    await clickCheckbox(folderA_folderB_dashbdB.item.uid);
+
+    const parentCheckbox = screen.queryByTestId(
+      selectors.pages.BrowseDashbards.table.checkbox(folderA_folderB.item.uid)
+    );
+    expect(parentCheckbox).not.toBeChecked();
+    expect(parentCheckbox).toBePartiallyChecked();
+
+    const grandparentCheckbox = screen.queryByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
+    expect(grandparentCheckbox).not.toBeChecked();
+    expect(grandparentCheckbox).toBePartiallyChecked();
   });
 });
 

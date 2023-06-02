@@ -9,6 +9,14 @@ import { configureStore } from 'app/store/configureStore';
 
 import { PanelDataErrorView } from './PanelDataErrorView';
 
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => undefined,
+    };
+  },
+}));
+
 describe('PanelDataErrorView', () => {
   it('show No data when there is no data', () => {
     renderWithProps();

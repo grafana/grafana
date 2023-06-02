@@ -22,12 +22,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "database_metrics",
-			Description: "Add Prometheus metrics for database tables",
-			State:       FeatureStateStable,
-			Owner:       hostedGrafanaTeam,
-		},
-		{
 			Name:         "live-service-web-worker",
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			State:        FeatureStateAlpha,
@@ -56,15 +50,16 @@ var (
 		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
 			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
-			State:           FeatureStateAlpha,
+			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
@@ -93,8 +88,9 @@ var (
 		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
-			State:        FeatureStateBeta,
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // turned on by default
 			Owner:        grafanaExploreSquad,
 		},
 		{
@@ -109,13 +105,6 @@ var (
 			Description: "Correlations page",
 			State:       FeatureStateBeta,
 			Owner:       grafanaExploreSquad,
-		},
-		{
-			Name:        "cloudWatchDynamicLabels",
-			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -196,13 +185,6 @@ var (
 			State:       FeatureStateStable,
 			Expression:  "true", // turned on by default
 			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
 			Name:        "topnav",
@@ -288,12 +270,6 @@ var (
 			Description: "Show trace ids for requests",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:        "datasourceOnboarding",
-			Description: "Enable data source onboarding page",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:         "emptyDashboardPage",
@@ -454,6 +430,14 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingNotificationsPoliciesMatchingInstances",
+			Description:  "Enables the preview of matching instances for notification policies",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			State:       FeatureStateAlpha,
@@ -517,17 +501,18 @@ var (
 		},
 		{
 			Name:         "advancedDataSourcePicker",
-			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
-			State:        FeatureStateAlpha,
+			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:         "opensearchDetectVersion",
-			Description:  "Enable version detection in OpenSearch",
-			State:        FeatureStateAlpha,
+			Name:         "faroDatasourceSelector",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
+			State:        FeatureStateBeta,
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        appO11ySquad,
 		},
 		{
 			Name:         "enableDatagridEditing",
@@ -535,6 +520,27 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "dataSourcePageHeader",
+			Description:  "Apply new pageHeader UI in data source edit page",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        enterpriseDatasourcesSquad,
+		},
+		{
+			Name:         "extraThemes",
+			Description:  "Enables extra themes",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaUserEssentialsSquad,
+		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 	}
 )

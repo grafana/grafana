@@ -7,6 +7,8 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import {
   PublicDashboard,
   PublicDashboardSettings,
+  SessionDashboard,
+  SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -42,7 +44,7 @@ const getConfigError = (err: unknown) => ({ error: isFetchError(err) && err.stat
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
   baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
-  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
+  tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard', 'UsersWithActiveSessions', 'ActiveUserDashboards'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
@@ -83,23 +85,30 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: (result, error, { dashboard }) => [{ type: 'PublicDashboard', id: dashboard.uid }],
     }),
-    updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    updatePublicDashboard: builder.mutation<
+      PublicDashboard,
+      { dashboard: Partial<DashboardModel>; payload: Partial<PublicDashboard> }
+    >({
       query: (params) => ({
         url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
-        method: 'PUT',
+        method: 'PATCH',
         data: params.payload,
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
 
-        // Update runtime meta flag
-        dashboard.updateMeta({
-          publicDashboardUid: data.uid,
-          publicDashboardEnabled: data.isEnabled,
-        });
+        if (dashboard.updateMeta) {
+          dashboard.updateMeta({
+            publicDashboardUid: data.uid,
+            publicDashboardEnabled: data.isEnabled,
+          });
+        }
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { payload }) => [
+        { type: 'PublicDashboard', id: payload.dashboardUid },
+        'AuditTablePublicDashboard',
+      ],
     }),
     addRecipient: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
       query: () => ({
@@ -115,6 +124,18 @@ export const publicDashboardApi = createApi({
       query: () => ({
         url: '',
       }),
+    }),
+    getActiveUsers: builder.query<SessionUser[], void>({
+      query: () => ({
+        url: '/',
+      }),
+      providesTags: ['UsersWithActiveSessions'],
+    }),
+    getActiveUserDashboards: builder.query<SessionDashboard[], string>({
+      query: () => ({
+        url: '',
+      }),
+      providesTags: (result, _, email) => [{ type: 'ActiveUserDashboards', id: email }],
     }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
@@ -139,6 +160,8 @@ export const publicDashboardApi = createApi({
       invalidatesTags: (result, error, { dashboardUid }) => [
         { type: 'PublicDashboard', id: dashboardUid },
         'AuditTablePublicDashboard',
+        'UsersWithActiveSessions',
+        'ActiveUserDashboards',
       ],
     }),
   }),
@@ -153,4 +176,6 @@ export const {
   useAddRecipientMutation,
   useDeleteRecipientMutation,
   useReshareAccessToRecipientMutation,
+  useGetActiveUsersQuery,
+  useGetActiveUserDashboardsQuery,
 } = publicDashboardApi;

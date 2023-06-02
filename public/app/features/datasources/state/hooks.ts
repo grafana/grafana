@@ -1,10 +1,12 @@
 import { useContext, useEffect } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings, NavModelItem } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModel, NavModelItem } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -127,10 +129,24 @@ export const useDataSourceSettings = () => {
 };
 
 export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | null) => {
-  const dataSource = useDataSource(dataSourceId);
   const { plugin, loadError, loading } = useDataSourceSettings();
+  const dataSource = useDataSource(dataSourceId);
+  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSourceId);
+  const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = dsi?.type === 'alertmanager';
+  const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
+
+  const datasourcePlugin = useGetSingle(dataSource.type);
   const navIndex = useSelector((state) => state.navIndex);
   const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
+  let pageNav: NavModel = {
+    node: {
+      text: 'Data Source Nav Node',
+    },
+    main: {
+      text: 'Data Source Nav Node',
+    },
+  };
 
   if (loadError) {
     const node: NavModelItem = {
@@ -139,17 +155,36 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
       icon: 'exclamation-triangle',
     };
 
-    return {
+    pageNav = {
       node: node,
       main: node,
     };
   }
 
   if (loading || !plugin) {
-    return getNavModel(navIndex, navIndexId, getDataSourceLoadingNav('settings'));
+    pageNav = getNavModel(navIndex, navIndexId, getDataSourceLoadingNav('settings'));
   }
 
-  return getNavModel(navIndex, navIndexId, getDataSourceNav(buildNavModel(dataSource, plugin), pageId || 'settings'));
+  if (plugin) {
+    pageNav = getNavModel(
+      navIndex,
+      navIndexId,
+      getDataSourceNav(buildNavModel(dataSource, plugin), pageId || 'settings')
+    );
+  }
+
+  return {
+    node: pageNav.node,
+    main: {
+      ...pageNav.main,
+      text: dataSource.name,
+      dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
+      active: true,
+    },
+    dataSourceHeader: {
+      alertingSupported,
+    },
+  };
 };
 
 export const useDataSourceRights = (uid: string): DataSourceRights => {
