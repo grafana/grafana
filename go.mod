@@ -19,8 +19,6 @@ replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-
 // hoist a replace statement.
 replace k8s.io/client-go => k8s.io/client-go v0.25.3
 
-replace github.com/grafana/thema => github.com/grafana/thema v0.0.0-20230522134738-f27f2316eda9
-
 require k8s.io/apimachinery v0.26.2
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
@@ -207,7 +205,7 @@ require (
 	github.com/rs/cors v1.9.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/encoding v0.3.6 // indirect
-	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -267,7 +265,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
-	github.com/grafana/thema v0.0.0-20230524160113-4e9d6e28a640
+	github.com/grafana/thema v0.0.0-20230601172625-e3eaca4d36bd
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
