@@ -79,8 +79,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
-	switch query.QueryType {
-	case string(dataquery.TempoQueryTypeTraceId):
+	if query.QueryType == string(dataquery.TempoQueryTypeTraceId) {
 		return s.getTrace(ctx, pCtx, query)
 	}
 

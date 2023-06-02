@@ -16,7 +16,7 @@ import { SearchStreamingState } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { createTableFrameFromTraceQlQuery } from './resultTransformer';
 import { TempoJsonData, TempoQuery } from './types';
-export async function getLiveStreamKey(query: TempoQuery): Promise<string> {
+export async function getLiveStreamKey(): Promise<string> {
   return uuidv4();
 }
 
@@ -31,7 +31,7 @@ export function doTempoChannelStream(
   let frames: DataFrame[] | undefined = undefined;
   let state: LoadingState = LoadingState.NotStarted;
 
-  return defer(() => getLiveStreamKey(query)).pipe(
+  return defer(() => getLiveStreamKey()).pipe(
     mergeMap((key) => {
       return getGrafanaLiveSrv()
         .getStream<MutableDataFrame>({
