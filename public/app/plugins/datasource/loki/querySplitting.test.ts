@@ -223,8 +223,8 @@ describe('runSplitQuery()', () => {
         range,
       });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant + 1x Distinct, 8 requests.
-        expect(datasource.runQuery).toHaveBeenCalledTimes(8);
+        // 3 days, 3 chunks, 3x Logs + 3x Metric + (1x Instant | Distinct), 7 requests.
+        expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
     });
   });

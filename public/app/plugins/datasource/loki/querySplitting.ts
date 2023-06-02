@@ -171,10 +171,13 @@ function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: nu
   };
 }
 
+function querySupporstSplitting(query: LokiQuery) {
+  return query.queryType !== LokiQueryType.Instant && !isQueryWithDistinct(query.expr);
+}
+
 export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
-  const [instantQueries, nonInstantQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
-  const [distinctQueries, normalQueries] = partition(nonInstantQueries, (query) => isQueryWithDistinct(query.expr));
+  const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupporstSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
@@ -219,15 +222,9 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     }
   }
 
-  if (instantQueries.length) {
+  if (nonSplittingQueries.length) {
     requests.push({
-      request: { ...request, targets: instantQueries },
-      partition: [request.range],
-    });
-  }
-  if (distinctQueries.length) {
-    requests.push({
-      request: { ...request, targets: distinctQueries },
+      request: { ...request, targets: nonSplittingQueries },
       partition: [request.range],
     });
   }
