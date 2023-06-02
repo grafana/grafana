@@ -1,39 +1,68 @@
 import {
   type PluginExtension,
   PluginExtensionTypes,
-  PluginExtensionLink,
-  PluginExtensionLinkConfig,
+  type PluginExtensionLink,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionComponent,
 } from '@grafana/data';
 
 import type { PluginExtensionRegistry } from './types';
-import { isPluginExtensionLinkConfig, deepFreeze, logWarning, generateExtensionId, getEventHelpers } from './utils';
-import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
+import {
+  isPluginExtensionLinkConfig,
+  getReadOnlyProxy,
+  logWarning,
+  generateExtensionId,
+  getEventHelpers,
+  isPluginExtensionComponentConfig,
+} from './utils';
+import {
+  assertIsReactComponent,
+  assertIsNotPromise,
+  assertLinkPathIsValid,
+  assertStringProps,
+  isPromise,
+} from './validators';
 
 type GetExtensions = ({
   context,
   extensionPointId,
+  limitPerPlugin,
   registry,
 }: {
   context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
+  limitPerPlugin?: number;
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
 // Returns with a list of plugin extensions for the given extension point
-export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, registry }) => {
-  const frozenContext = context ? deepFreeze(context) : {};
+export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
+  const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];
+  const extensionsByPlugin: Record<string, number> = {};
 
   for (const registryItem of registryItems) {
     try {
       const extensionConfig = registryItem.config;
+      const { pluginId } = registryItem;
 
+      // Only limit if the `limitPerPlugin` is set
+      if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
+        continue;
+      }
+
+      if (extensionsByPlugin[pluginId] === undefined) {
+        extensionsByPlugin[pluginId] = 0;
+      }
+
+      // LINK
       if (isPluginExtensionLinkConfig(extensionConfig)) {
+        // Run the configure() function with the current context, and apply the ovverides
         const overrides = getLinkExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
 
-        // Hide (configure() has returned `undefined`)
+        // configure() returned an `undefined` -> hide the extension
         if (extensionConfig.configure && overrides === undefined) {
           continue;
         }
@@ -51,6 +80,25 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
         };
 
         extensions.push(extension);
+        extensionsByPlugin[pluginId] += 1;
+      }
+
+      // COMPONENT
+      if (isPluginExtensionComponentConfig(extensionConfig)) {
+        assertIsReactComponent(extensionConfig.component);
+
+        const extension: PluginExtensionComponent = {
+          id: generateExtensionId(registryItem.pluginId, extensionConfig),
+          type: PluginExtensionTypes.component,
+          pluginId: registryItem.pluginId,
+
+          title: extensionConfig.title,
+          description: extensionConfig.description,
+          component: extensionConfig.component,
+        };
+
+        extensions.push(extension);
+        extensionsByPlugin[pluginId] += 1;
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -108,14 +156,14 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
 function getLinkExtensionOnClick(
   config: PluginExtensionLinkConfig,
   context?: object
-): ((event: React.MouseEvent) => void) | undefined {
+): ((event?: React.MouseEvent) => void) | undefined {
   const { onClick } = config;
 
   if (!onClick) {
     return;
   }
 
-  return function onClickExtensionLink(event: React.MouseEvent) {
+  return function onClickExtensionLink(event?: React.MouseEvent) {
     try {
       const result = onClick(event, getEventHelpers(context));
 

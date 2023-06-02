@@ -69,12 +69,6 @@ func TestSecureSocksProxyEnabledOnDS(t *testing.T) {
 			},
 			{
 				instanceSettings: &backend.AppInstanceSettings{
-					JSONData: []byte("{ \"enableSecureSocksProxy\": \"nonbool\" }"),
-				},
-				enabled: false,
-			},
-			{
-				instanceSettings: &backend.AppInstanceSettings{
 					JSONData: []byte("{ \"enableSecureSocksProxy\": false }"),
 				},
 				enabled: false,

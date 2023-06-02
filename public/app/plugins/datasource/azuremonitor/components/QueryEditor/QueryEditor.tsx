@@ -18,6 +18,7 @@ import LogsQueryEditor from '../LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
 import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
+import TracesQueryEditor from '../TracesQueryEditor';
 
 import usePreparedQuery from './usePreparedQuery';
 
@@ -71,7 +72,7 @@ const QueryEditor = ({
         <>
           <Space v={2} />
           <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
-            {errorMessage}
+            {errorMessage instanceof Error ? errorMessage.message : errorMessage}
           </Alert>
         </>
       )}
@@ -122,6 +123,18 @@ const EditorForQueryType = ({
     case AzureQueryType.AzureResourceGraph:
       return (
         <ArgQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
+
+    case AzureQueryType.AzureTraces:
+      return (
+        <TracesQueryEditor
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}

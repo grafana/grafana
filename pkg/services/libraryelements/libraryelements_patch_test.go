@@ -24,7 +24,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolder(t, sc, "NewFolder")
 			cmd := model.PatchLibraryElementCommand{
 				FolderID: newFolder.ID,
 				Name:     "Panel - New name",
@@ -89,7 +89,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolder(t, sc, "NewFolder")
 			cmd := model.PatchLibraryElementCommand{
 				FolderID: newFolder.ID,
 				Kind:     int64(model.PanelElement),
@@ -325,7 +325,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolder(t, sc, "NewFolder")
 			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)

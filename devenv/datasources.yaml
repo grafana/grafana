@@ -124,10 +124,11 @@ datasources:
 
   - name: gdev-elasticsearch
     type: elasticsearch
+    uid: gdev-elasticsearch
     access: proxy
-    database: "[logs-]YYYY.MM.DD"
     url: http://localhost:9200
     jsonData:
+      index: "[logs-]YYYY.MM.DD"
       interval: Daily
       timeField: "@timestamp"
       logLevelField: level
@@ -136,9 +137,9 @@ datasources:
   - name: gdev-elasticsearch-filebeat
     type: elasticsearch
     access: proxy
-    database: "[filebeat-]YYYY.MM.DD"
     url: http://localhost:9200
     jsonData:
+      index: "[filebeat-]YYYY.MM.DD"
       interval: Daily
       timeField: "@timestamp"
       timeInterval: "10s"
@@ -148,9 +149,9 @@ datasources:
   - name: gdev-elasticsearch-metricbeat
     type: elasticsearch
     access: proxy
-    database: "[metricbeat-]YYYY.MM.DD"
     url: http://localhost:9200
     jsonData:
+      index: "[metricbeat-]YYYY.MM.DD"
       interval: Daily
       timeField: "@timestamp"
       timeInterval: "10s"

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { Alert, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
@@ -47,11 +47,8 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
-
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
 
       <ElasticDetails value={options} onChange={onOptionsChange} />
 

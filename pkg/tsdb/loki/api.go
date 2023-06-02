@@ -148,7 +148,7 @@ func readLokiError(body io.ReadCloser) error {
 	return makeLokiError(bytes)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
 	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	}
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
-	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false})
+	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false, Dataplane: responseOpts.metricDataplane})
 
 	if res.Error != nil {
 		return nil, res.Error

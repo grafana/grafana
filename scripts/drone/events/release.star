@@ -13,6 +13,7 @@ load(
     "build_plugins_step",
     "build_storybook_step",
     "clone_enterprise_step",
+    "cloudsdk_image",
     "compile_build_cmd",
     "copy_packages_for_docker_step",
     "download_grabpl_step",
@@ -141,7 +142,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     environment = {"EDITION": "oss"}
 
-    services = integration_test_services(edition = "oss")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = [
@@ -202,7 +203,10 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
 
     # We don't need to run integration tests at release time since they have
@@ -211,20 +215,10 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         integration_test_steps = []
         volumes = []
 
-    windows_pipeline = pipeline(
-        name = "{}-oss-windows".format(ver_mode),
-        edition = "oss",
-        trigger = trigger,
-        steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
-        platform = "windows",
-        depends_on = [
-            "{}-oss-build-e2e-publish".format(ver_mode),
-            "{}-oss-test-frontend".format(ver_mode),
-            "{}-oss-test-backend".format(ver_mode),
-        ],
-        environment = environment,
-    )
-
+    windows_pipeline_dependencies = [
+        "{}-oss-build-e2e-publish".format(ver_mode),
+        "{}-oss-test-frontend".format(ver_mode),
+    ]
     pipelines = [
         pipeline(
             name = "{}-oss-build-e2e-publish".format(ver_mode),
@@ -257,6 +251,16 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
             volumes = volumes,
         ))
 
+    windows_pipeline = pipeline(
+        name = "{}-oss-windows".format(ver_mode),
+        edition = "oss",
+        trigger = trigger,
+        steps = get_windows_steps(edition = "oss", ver_mode = ver_mode),
+        platform = "windows",
+        depends_on = windows_pipeline_dependencies,
+        environment = environment,
+    )
+
     pipelines.append(windows_pipeline)
 
     return pipelines
@@ -282,7 +286,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     environment = {"EDITION": "enterprise"}
 
-    services = integration_test_services(edition = "enterprise")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = [
@@ -353,7 +357,8 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -555,17 +560,54 @@ def publish_artifacts_step(mode):
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
             "ENTERPRISE2_SECURITY_PREFIX": from_secret("enterprise2_security_prefix"),
             "SECURITY_DEST_BUCKET": from_secret("security_dest_bucket"),
-            "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
         "commands": [
-            "./bin/build artifacts publish {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
+            "./bin/build artifacts packages {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
                 security,
             ),
         ],
         "depends_on": ["compile-build-cmd"],
     }
 
+def publish_static_assets_step():
+    return {
+        "name": "publish-static-assets",
+        "image": publish_image,
+        "environment": {
+            "GCP_KEY": from_secret("gcp_key"),
+            "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
+            "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
+        },
+        "commands": [
+            "./bin/build artifacts static-assets --tag ${DRONE_TAG}",
+        ],
+        "depends_on": ["compile-build-cmd"],
+    }
+
+def publish_storybook_step():
+    return {
+        "name": "publish-storybook",
+        "image": publish_image,
+        "environment": {
+            "GCP_KEY": from_secret("gcp_key"),
+            "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
+        },
+        "commands": [
+            "./bin/build artifacts storybook --tag ${DRONE_TAG}",
+        ],
+        "depends_on": ["compile-build-cmd"],
+    }
+
 def publish_artifacts_pipelines(mode):
+    """Published artifacts after they've been stored and tested in prerelease buckets.
+
+    Args:
+      mode: public or security.
+        Defaults to ''.
+
+    Returns:
+      List of Drone pipelines.
+    """
     trigger = {
         "event": ["promote"],
         "target": [mode],
@@ -573,7 +615,10 @@ def publish_artifacts_pipelines(mode):
     steps = [
         compile_build_cmd(),
         publish_artifacts_step(mode),
+        publish_static_assets_step(),
     ]
+    if mode != "security":
+        steps.extend([publish_storybook_step()])
 
     return [
         pipeline(
@@ -694,11 +739,10 @@ def integration_test_pipelines():
     }
     pipelines = []
     volumes = integration_test_services_volumes()
-    oss_integration_test_steps = [
+    integration_test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
-    ]
-    enterprise_integration_test_steps = oss_integration_test_steps + [
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
@@ -708,7 +752,7 @@ def integration_test_pipelines():
         name = "integration-tests-oss",
         edition = "oss",
         trigger = trigger,
-        services = integration_test_services(edition = "oss"),
+        services = integration_test_services(),
         steps = [
                     download_grabpl_step(),
                     identify_runner_step(),
@@ -716,7 +760,7 @@ def integration_test_pipelines():
                     verify_gen_jsonnet_step(),
                     wire_install_step(),
                 ] +
-                oss_integration_test_steps,
+                integration_test_steps,
         environment = {"EDITION": "oss"},
         volumes = volumes,
     ))
@@ -725,7 +769,7 @@ def integration_test_pipelines():
         name = "integration-tests-enterprise",
         edition = "enterprise",
         trigger = trigger,
-        services = integration_test_services(edition = "enterprise"),
+        services = integration_test_services(),
         steps = [
                     download_grabpl_step(),
                     identify_runner_step(),
@@ -744,9 +788,51 @@ def integration_test_pipelines():
                 [
                     wire_install_step(),
                 ] +
-                enterprise_integration_test_steps,
+                integration_test_steps,
         environment = {"EDITION": "enterprise"},
         volumes = volumes,
     ))
 
     return pipelines
+
+def verify_release_pipeline(
+        name = "verify-prerelease-assets",
+        bucket = from_secret(prerelease_bucket),
+        gcp_key = from_secret("gcp_key"),
+        version = "${DRONE_TAG}",
+        trigger = release_trigger,
+        depends_on = [
+            "release-oss-build-e2e-publish",
+            "release-enterprise-build-e2e-publish",
+            "release-enterprise2-build-e2e-publish",
+            "release-oss-windows",
+            "release-enterprise-windows",
+        ]):
+    """
+    Runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release process.
+
+    Returns:
+      A single Drone pipeline that runs the script.
+    """
+    step = {
+        "name": "gsutil-stat",
+        "depends_on": ["clone"],
+        "image": cloudsdk_image,
+        "environment": {
+            "BUCKET": bucket,
+            "GCP_KEY": gcp_key,
+        },
+        "commands": [
+            "apt-get update && apt-get install -yq gettext",
+            "printenv GCP_KEY | base64 -d > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
+            "./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat".format(version),
+        ],
+    }
+    return pipeline(
+        depends_on = depends_on,
+        name = name,
+        edition = "all",
+        trigger = trigger,
+        steps = [step],
+    )

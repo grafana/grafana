@@ -31,10 +31,6 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setType(variableQuery.type);
     setLabel(variableQuery.label || '');
     setStream(variableQuery.stream || '');
-
-    if (variableQuery.label) {
-      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    }
   }, [query]);
 
   useEffect(() => {

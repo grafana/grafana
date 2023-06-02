@@ -327,9 +327,16 @@ export function addFilterAsLabelFilter(
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    // we now unescape all escaped values again, because we are using backticks which can handle those cases.
-    // we also don't care about the operator here, because we need to unescape for both, regex and equal.
-    const labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
+    let labelFilter = '';
+    // For < and >, if the value is number, we don't add quotes around it and use it as number
+    if (!Number.isNaN(Number(filter.value)) && (filter.op === '<' || filter.op === '>')) {
+      labelFilter = ` | ${filter.label}${filter.op}${Number(filter.value)}`;
+    } else {
+      // we now unescape all escaped values again, because we are using backticks which can handle those cases.
+      // we also don't care about the operator here, because we need to unescape for both, regex and equal.
+      labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
+    }
+
     newQuery += start + labelFilter + end;
     prev = match.to;
   }

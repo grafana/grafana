@@ -37,15 +37,6 @@
   border-color: $alert-warning-bg;
 }
 
-.page-alert-list {
-  z-index: 8000;
-  min-width: 400px;
-  max-width: 600px;
-  position: fixed;
-  right: 10px;
-  top: 60px;
-}
-
 .alert-close {
   padding: 0 0 0 $space-md;
   border: none;

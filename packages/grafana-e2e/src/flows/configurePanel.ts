@@ -1,7 +1,6 @@
 import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
 
-import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { TimeRangeConfig } from './setTimeRange';
 
@@ -34,6 +33,7 @@ interface ConfigurePanelOptional {
   panelTitle?: string;
   timeRange?: TimeRangeConfig;
   visualizationName?: string;
+  timeout?: number;
 }
 
 interface ConfigurePanelRequired {
@@ -80,6 +80,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       timeRange,
       visitDashboardAtStart,
       visualizationName,
+      timeout,
     } = fullConfig;
 
     if (visitDashboardAtStart) {
@@ -111,10 +112,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
-      selectOption({
-        container: e2e.components.DataSourcePicker.container(),
-        optionText: dataSourceName,
-      });
+      e2e.components.DataSourcePicker.container().click().type(`${dataSourceName}{downArrow}{enter}`);
     }
 
     // @todo instead wait for '@pluginModule' if not already loaded
@@ -141,7 +139,6 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
     if (queriesForm) {
       queriesForm(fullConfig);
-      e2e().wait('@chartData');
 
       // Wait for a possible complex visualization to render (or something related, as this isn't necessary on the dashboard page)
       // Can't assert that its HTML changed because a new query could produce the same results
@@ -158,10 +155,8 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     // Avoid annotations flakiness
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
-    e2e().wait('@chartData');
-
     // Wait for RxJS
-    e2e().wait(500);
+    e2e().wait(timeout ?? e2e.config().defaultCommandTimeout);
 
     if (matchScreenshot) {
       let visualization;

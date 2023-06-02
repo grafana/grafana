@@ -308,7 +308,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
             csv = csv + config.delimiter;
           }
 
-          const v = fields[j].values.get(i);
+          const v = fields[j].values[i];
           if (v !== null) {
             csv = csv + writers[j](v);
           }

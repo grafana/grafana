@@ -56,9 +56,6 @@ export const SupportBundlesCreateUnconnected = ({
   return (
     <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
-        <Page.OldNavOnly>
-          <h3 className="page-sub-heading">Create support bundle</h3>
-        </Page.OldNavOnly>
         {loadCollectorsError && <Alert title={loadCollectorsError} severity="error" />}
         {createBundleError && <Alert title={createBundleError} severity="error" />}
         {!!collectors.length && (

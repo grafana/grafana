@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
@@ -67,7 +68,7 @@ const DroneSideDisplay = ({ data }: CanvasElementProps<DroneSideConfig, DroneSid
   );
 };
 
-export const droneSideItem: CanvasElementItem<any, any> = {
+export const droneSideItem: CanvasElementItem = {
   id: 'droneSide',
   name: 'Drone Side',
   description: 'Drone Side',

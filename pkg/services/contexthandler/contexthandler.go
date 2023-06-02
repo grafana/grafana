@@ -125,7 +125,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
-			SkipCache:      false,
+			SkipDSCache:    false,
 			Logger:         log.New("context"),
 		}
 
@@ -150,8 +150,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
-				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
+				reqContext.UserToken = identity.SessionToken
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
@@ -237,13 +237,20 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 		return false
 	}
 
+	httpReqCopy := &http.Request{}
+	if reqContext.Req != nil && reqContext.Req.Header != nil {
+		// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
+		httpReqCopy.Header = reqContext.Req.Header.Clone()
+		httpReqCopy.RemoteAddr = reqContext.Req.RemoteAddr
+	}
+
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				reqContext.Logger.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := h.anonSessionService.TagSession(context.Background(), reqContext.Req); err != nil {
+		if err := h.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
 			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
@@ -481,8 +488,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
 		reqContext.Logger.Warn("failed to look up session from cookie", "error", err)
-		if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
-			// Burn the cookie in case of invalid, expired or missing token
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			// Burn the cookie in case of invalid or revoked token
 			reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		}
 

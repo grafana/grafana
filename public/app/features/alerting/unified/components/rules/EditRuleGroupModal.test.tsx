@@ -60,7 +60,7 @@ describe('EditGroupModal', () => {
     const namespace = mockCombinedRuleNamespace({
       name: 'my-alerts',
       rulesSource: mockDataSource(),
-      groups: [{ name: 'default-group', interval: '90s', rules: [] }],
+      groups: [{ name: 'default-group', interval: '90s', rules: [], totals: {} }],
     });
 
     const group = namespace.groups[0];
@@ -100,7 +100,9 @@ describe('EditGroupModal component on cloud alert rules', () => {
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
       rulesSource: promDsSettings,
-      groups: [{ name: 'default-group', interval: '90s', rules: [alertingRule, recordingRule1, recordingRule2] }],
+      groups: [
+        { name: 'default-group', interval: '90s', rules: [alertingRule, recordingRule1, recordingRule2], totals: {} },
+      ],
     });
 
     const group = promNs.groups[0];
@@ -121,7 +123,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
     const promNs = mockCombinedRuleNamespace({
       name: 'prometheus-ns',
       rulesSource: promDsSettings,
-      groups: [{ name: 'default-group', interval: '90s', rules: [recordingRule1, recordingRule2] }],
+      groups: [{ name: 'default-group', interval: '90s', rules: [recordingRule1, recordingRule2], totals: {} }],
     });
 
     const group = promNs.groups[0];
@@ -154,6 +156,7 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
             rulerRule: mockRulerAlertingRule({ alert: 'high-memory' }),
           }),
         ],
+        totals: {},
       },
     ],
   };

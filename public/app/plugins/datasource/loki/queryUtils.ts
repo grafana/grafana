@@ -17,7 +17,9 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
+  Distinct,
 } from '@grafana/lezer-logql';
+import { DataQuery } from '@grafana/schema';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -175,9 +177,9 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
-export function getParserFromQuery(query: string) {
+export function getParserFromQuery(query: string): string | undefined {
   const tree = parser.parse(query);
-  let logParser;
+  let logParser: string | undefined = undefined;
   tree.iterate({
     enter: (node: SyntaxNode): false | void => {
       if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
@@ -217,6 +219,7 @@ export function isQueryWithLabelFormat(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LabelFormatExpr) {
         queryWithLabelFormat = true;
+        return false;
       }
     },
   });
@@ -259,10 +262,10 @@ export function isQueryWithLabelFilter(query: string): boolean {
   let hasLabelFilter = false;
 
   tree.iterate({
-    enter: ({ type, node }): false | void => {
+    enter: ({ type }): false | void => {
       if (type.id === LabelFilter) {
         hasLabelFilter = true;
-        return;
+        return false;
       }
     },
   });
@@ -278,12 +281,26 @@ export function isQueryWithLineFilter(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LineFilter) {
         queryWithLineFilter = true;
-        return;
+        return false;
       }
     },
   });
 
   return queryWithLineFilter;
+}
+
+export function isQueryWithDistinct(query: string): boolean {
+  let hasDistinct = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === Distinct) {
+        hasDistinct = true;
+        return false;
+      }
+    },
+  });
+  return hasDistinct;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {
@@ -304,3 +321,20 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
 
   return queries.length > 0;
 }
+
+export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
+  if (!query) {
+    return false;
+  }
+
+  const lokiQuery = query as LokiQuery;
+  return lokiQuery.expr !== undefined;
+};
+
+export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefined => {
+  if (!query || !isLokiQuery(query)) {
+    return undefined;
+  }
+
+  return query;
+};

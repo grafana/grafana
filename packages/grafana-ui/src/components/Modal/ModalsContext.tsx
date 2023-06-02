@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-interface ModalsContextState {
+export interface ModalsContextState {
   component: React.ComponentType<any> | null;
   props: any;
   showModal: <T>(component: React.ComponentType<T>, props: T) => void;

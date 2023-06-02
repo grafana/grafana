@@ -1,0 +1,283 @@
+import { Props, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
+import { AutoSaveField } from './AutoSaveField';
+import { Basic } from './AutoSaveField.story.tsx';
+
+# AutoSaveField
+
+Used for form inputs that should save its content automatically.
+
+---
+
+In this documentation you can find:
+
+1. [Usage](#usage)
+1. [Variants](#variants)
+1. [Accessibility](#accessibility)
+1. [Content](#content)
+1. [Formatting](#formatting)
+1. [Behaviours](#behaviours)
+1. [Props table](#propstable)
+1. [Related](#related)
+
+<br />
+<br />
+
+## <a name="usage"/> Usage
+
+<br />
+
+### **Do's**
+
+- Use in **low-impact** areas within Grafana (examples: team name, display name)
+- Include helper text to tell users of the new behaviour for recently modified elements
+
+<br />
+
+### **Dont's**
+
+- Do not use if high-impact situations (e.g. saving/changing passwords)
+  <br />
+  <br />
+
+## <a name="variants"/>Variants
+
+### 1. Text:
+
+- The `Input` component allows saving the value of a string.
+- This is the main component thought to work as an `AutoSaveField` child.
+
+```jsx
+<AutoSaveField
+  onFinishChange={customRequest}
+  //Complete field args if needed
+>
+  {(onChange) => (
+    <Input
+      value={inputTextValue}
+      onChange={(e) => {
+        onChange(e.currentTarget.value);
+        //Complete code if needed
+      }}
+    />
+  )}
+</AutoSaveField>
+```
+
+### 2. TextArea:
+
+The `TextArea` component allows saving a multi-line text.
+
+```jsx
+<AutoSaveField
+  onFinishChange={customRequest}
+  //Complete field args if needed
+>
+  {(onChange) => (
+    <TextArea
+      value={textAreaValue}
+      onChange={(e) => {
+        onChange(e.currentTarget.value);
+        //Complete code if needed
+      }}
+    />
+  )}
+</AutoSaveField>
+```
+
+### 3. Checkbox:
+
+The `Checkbox` component allows saving a specific value by ticking or not the checkbox input.
+
+```jsx
+<AutoSaveField
+  onFinishChange={customRequest}
+  //Complete field args if needed
+>
+  {(onChange) => (
+    <Checkbox
+      value={checkBoxTest}
+      onChange={(e) => {
+        onChange(e.currentTarget.value);
+        //Complete code if needed
+      }}
+    />
+  )}
+</AutoSaveField>
+```
+
+### 4. Switch:
+
+The `Switch` component allows saving a specific value turning the switch input on or off.
+
+```jsx
+<AutoSaveField
+  onFinishChange={customRequest}
+  //Complete field args if needed
+>
+  {(onChange) => (
+    <Switch
+      value={switchTest}
+      onChange={(e) => {
+        onChange(e.currentTarget.value);
+        //Complete code if needed
+      }}
+    />
+  )}
+</AutoSaveField>
+```
+
+### 5. RadioButtonGroup:
+
+The `RadioButtonGroup` component allows saving a specific value selecting the corresponding `RadioButton`.
+
+```jsx
+<AutoSaveField
+  onFinishChange={customRequest}
+  //Complete field args if needed
+>
+  {(onChange) => (
+    <RadioButtonGroup
+      options={radioButtonOptions}
+      value={currentOption}
+      onChange={(value) => {
+        onChange(value);
+        //Complete code if needed
+      }}
+    />
+  )}
+</AutoSaveField>
+```
+
+### 6. Select:
+
+The `Select` component allows saving a specific value selected from a list of options.
+
+```jsx
+<AutoSaveField
+  onFinishChange={customRequest}
+  //Complete field args if needed
+>
+  {(onChange) => (
+    <Select
+      loadOptions={optionsList}
+      value={option}
+      onChange={(value) => {
+        onChange(value);
+        //Complete code if needed
+      }}
+    />
+  )}
+</AutoSaveField>
+```
+
+<br />
+<br />
+
+## <a name="accessibility"/>Accessibility
+
+`AutoSaveField` has inherited the accessibility properties of both the `Field` and the `Input` component it is comprised of.
+Apart from that, the `InlineToast`, used to show the success of the request, has an [aria-live](https://www.w3.org/TR/wai-aria/#aria-live) property set to polite, so assistive technologies will notify users of updates but generally do not interrupt the current task.
+
+<br />
+<br />
+
+## <a name="content"/>Content
+
+<br />
+
+### Main elements
+
+<br />
+
+1. **Label:** the AutoSaveField must be accompanied with labels that should be clear and descriptive.
+2. **Input element:** this component must have an input as a child. There is a list of tested components in the ‘Variants’ section.
+3. **InlineToast:** when the input value is successfully saved, a toast notification with the text ‘Saved!’ will appear next to the proper field.
+4. **Error message:** this element will appear when the request fails. This message can be customized by the user or be the response of the request.
+   <br />
+
+### Optional elements:
+
+- **Description:** used to inform the user the value of this input will be saved automatically. _This is a tentative requirement until users become familiar with this pattern_
+  <br />
+  <br />
+
+## <a name="formatting"/>Formatting
+
+<br />
+
+### Anatomy
+
+The `AutoSaveField`component is comprised of:
+
+- A slot for form elements (e.g text input, checkbox, dropdown etc)
+- Inline toast notification: used to indicate temporal status near fields/components, such as a Saved! indicator next to a field, or a little Copied! indicator above a button
+- Inline validation
+- Helper text: used to inform the user the value of this input will be save automatically
+- Custom error message
+
+{' '}
+
+<Preview>
+  <Basic />
+</Preview>
+<br />
+
+### Placement
+
+Placement for the `InlineToast` is dependent on the amount space around the field:
+
+- When there is space, the inline toast notification displays directly to the right of the field it corresponds with.
+- If there is not enough space (e.g. on mobile) the inline toast notification is displayed beneath the field it corresponds to and overlaps the content below it. As the inline toast only displays for a few seconds, this will have no impact on the legibility of the content beneath it.
+- If the field errors and the inline validation is displayed, space will be created to persistently hold the inline validation error message until the issue has been addressed and the message goes away.
+  <br />
+  <br />
+
+## <a name="behaviours"/>Behaviours
+
+As the data is changed (for instance typing into a text input), the `AutoSaveField` attempts to save that new data, displaying first a spinner to indicate the loading state and then either an `InlineToast` with the text “Saved!” to indicate the data has been successfully saved or an error message to convey that the save has not been successful.
+
+<br />
+
+### Common behaviour
+
+_**What triggers the auto-save action?**_\
+A change on the input, such as after typing a text or selecting a new option. The request will be triggered after waiting 600 milliseconds from the last change (debouncing).
+
+_**What can be expected from the request?**_
+
+1. The request is customized by the user working with the AutoSaveInput.
+1. This request can finish successfully or with an error:\
+   2.1. **Success:** \
+   2.1.1. An InlineToast with the text ‘Saved!’ will be shown. \
+   2.1.2. It will automatically disappear after a short period of time. \
+   2.1.3. It will place itself on the bottom of the input in case the screen is not wide enough to be placed on its right. \
+   2.2. **Error:** \
+   2.2.1. An error message will be shown. It can be a custom error message or the one from the request response.
+
+<br />
+
+### Specific behaviour
+
+1. **Loading state:** shows a spinner while making the request: \
+   This is specific of the `Input` component
+1. **Invalid prop:** shows a red border on the input: \
+   This is specific of the `Input`, `TextArea` and `Select` components.
+   <br />
+   <br />
+
+## <a name="propstable"/>Props table
+
+<ArgsTable of={AutoSaveField} />
+
+## <a name="related"/>Related
+
+Links to related components:
+
+- [Field](/docs/forms-field--horizontal-layout)
+- [InlineToast](/docs/inlinetoast--inline-toast)
+- [Input](/docs/forms-input--simple)
+- [TextArea](/docs/forms-textarea--basic)
+- [Checkbox](/docs/forms-checkbox--basic)
+- [RadioButtonGroup](/docs/forms-radiobuttongroup--radio-buttons)
+- [Switch](/docs/forms-switch--controlled)
+- [Select](/docs/forms-select--basic)

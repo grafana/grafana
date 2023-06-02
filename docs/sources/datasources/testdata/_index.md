@@ -33,11 +33,10 @@ To configure basic settings for the data source, complete the following steps:
 
     The **Settings** tab of the data source is displayed. The data source doesn't provide any settings beyond the most basic options common to all data sources:
 
-        | Name        | Description                                                              |
-
+    | Name        | Description                                                              |
     | ----------- | ------------------------------------------------------------------------ |
-    | **Name** | Sets the name you use to refer to the data source in panels and queries. |
-    | **Default** | Defines whether this data source is pre-selected for new panels. |
+    | **Name**    | Sets the name you use to refer to the data source in panels and queries. |
+    | **Default** | Defines whether this data source is pre-selected for new panels.         |
 
 ## Create mock data
 

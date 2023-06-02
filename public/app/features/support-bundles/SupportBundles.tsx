@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -59,13 +58,11 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
     contextSrv.isGrafanaAdmin
   );
 
-  const actions = config.featureToggles.topnav && hasAccess ? NewBundleButton : undefined;
+  const actions = hasAccess ? NewBundleButton : undefined;
 
   return (
     <Page navId="support-bundles" subTitle={subTitle} actions={actions}>
       <Page.Contents isLoading={isLoading}>
-        {!config.featureToggles.topnav && hasAccess && NewBundleButton}
-
         <table className="filter-table form-inline">
           <thead>
             <tr>

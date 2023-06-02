@@ -124,7 +124,7 @@ function getAlignmentFactor(field: Field, displayValue: DisplayValue, rowIndex: 
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display!(field.values.get(i));
+      const nextDisplayValue = field.display!(field.values[i]);
       if (nextDisplayValue.text.length > alignmentFactor.text.length) {
         alignmentFactor.text = displayValue.text;
       }

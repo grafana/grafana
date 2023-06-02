@@ -3,11 +3,19 @@ import { defaultsDeep } from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { ArrayVector, FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { FieldType, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { PanelDataErrorView } from './PanelDataErrorView';
+
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => undefined,
+    };
+  },
+}));
 
 describe('PanelDataErrorView', () => {
   it('show No data when there is no data', () => {
@@ -28,7 +36,7 @@ describe('PanelDataErrorView', () => {
                 name: 'time',
                 type: FieldType.time,
                 config: {},
-                values: new ArrayVector([]),
+                values: [],
               },
             ],
             length: 0,
@@ -39,7 +47,7 @@ describe('PanelDataErrorView', () => {
                 name: 'value',
                 type: FieldType.number,
                 config: {},
-                values: new ArrayVector([]),
+                values: [],
               },
             ],
             length: 0,
