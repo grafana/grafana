@@ -194,9 +194,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // Fallback to classic query support
-    const resp = this.classicQuery(request);
-    resp.subscribe((r) => console.log(r));
-    return resp;
+    return this.classicQuery(request);
   }
 
   getQueryDisplayText(query: InfluxQuery) {
