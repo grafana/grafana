@@ -41,9 +41,6 @@ export function initializeI18n(language: string) {
     .use(loadTranslations)
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
-      // initialized used in grafana-ui
-      initialized: true,
-
       lng: validLanguage,
 
       // We don't bundle any translations, we load them async

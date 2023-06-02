@@ -14,9 +14,9 @@ import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // esli
 // Creates a default, english i18next instance when running outside of grafana.
 // we don't support changing the locale of grafana ui when outside of Grafana
 function initI18n() {
-  if (!i18next.options.initialized) {
+  // resources is undefined by default and set either by grafana app.ts or here
+  if (typeof i18next.options.resources !== 'object') {
     i18next.use(initReactI18next).init({
-      initialized: true,
       resources: {},
       returnEmptyString: false,
       lng: 'en-US', // this should be the locale of the phrases in our source JSX
