@@ -38,7 +38,7 @@ import { StoreState, useDispatch } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
-import { useCorrelations } from '../correlations/useCorrelations';
+import { CorrelationData, useCorrelations } from '../correlations/useCorrelations';
 import { getTimeZone } from '../profile/state/selectors';
 
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -116,18 +116,37 @@ interface ExploreState {
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
 
-const UseCorrelations = ({ exploreId, datasourceUID }: { exploreId: ExploreId; datasourceUID: string }) => {
+const UseCorrelations = ({
+  exploreId,
+  datasourceUID,
+  queryDatasources,
+}: {
+  exploreId: ExploreId;
+  datasourceUID: string;
+  queryDatasources: string[];
+}) => {
   const dispatch = useDispatch();
   const {
     getAllFromSourceUIDInfo: { execute: fetchCorrelations },
   } = useCorrelations();
 
   useEffect(() => {
-    // logic to decide whether to refetch them or not
-    fetchCorrelations({ sourceUID: datasourceUID }).then((correlationsData) => {
-      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlationsData.correlations || [] }));
-    });
-  }, [datasourceUID, dispatch, exploreId, fetchCorrelations]);
+    if (datasourceUID === MIXED_DATASOURCE_NAME) {
+      const corrPromises = queryDatasources.map((queryDSUid) => fetchCorrelations({ sourceUID: queryDSUid }));
+      Promise.all(corrPromises).then((correlationsResponses) => {
+        const correlations = correlationsResponses.map((correlationResponse) => correlationResponse.correlations);
+        let correlationsAll: CorrelationData[] = [];
+        correlations.forEach((correlationGrp) => {
+          correlationsAll = correlationsAll.concat(correlationGrp);
+        });
+        dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlationsAll }));
+      });
+    } else {
+      fetchCorrelations({ sourceUID: datasourceUID }).then((correlationsData) => {
+        dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlationsData.correlations || [] }));
+      });
+    }
+  }, [datasourceUID, dispatch, exploreId, fetchCorrelations, queryDatasources]);
 
   return null;
 };
@@ -459,6 +478,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       timeZone,
       isFromCompactUrl,
       showLogsSample,
+      queries,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -485,7 +505,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
         {config.featureToggles.correlations && datasourceInstance?.uid && (
-          <UseCorrelations exploreId={exploreId} datasourceUID={datasourceInstance.uid} />
+          <UseCorrelations
+            exploreId={exploreId}
+            datasourceUID={datasourceInstance.uid}
+            queryDatasources={
+              queries.map((query) => query.datasource?.uid).filter((query): query is string => !!query) || []
+            }
+          />
         )}
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {isFromCompactUrl ? this.renderCompactUrlWarning() : null}
