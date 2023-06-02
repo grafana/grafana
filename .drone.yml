@@ -241,9 +241,9 @@ steps:
 - commands:
   - yarn run i18n:extract
   - "\n            file_diff=$(git diff --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo \"Translation extraction has not been committed.
-    Please commit the changes and push again.\"\n                exit 1\n            fi\n
-    \           "
+    ]; then\n                echo $file_diff\n                echo \"Translation extraction
+    has not been committed. Please commit the changes and push again.\"\n                exit
+    1\n            fi\n            "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -1311,9 +1311,9 @@ steps:
 - commands:
   - yarn run i18n:extract
   - "\n            file_diff=$(git diff --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo \"Translation extraction has not been committed.
-    Please commit the changes and push again.\"\n                exit 1\n            fi\n
-    \           "
+    ]; then\n                echo $file_diff\n                echo \"Translation extraction
+    has not been committed. Please commit the changes and push again.\"\n                exit
+    1\n            fi\n            "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -7236,6 +7236,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: fbde9ae014cbfd67f733345075e6fe83ecd0d98604b7e048ae852787e4b134bf
+hmac: e082dbed7d5f33d1ded758573b873018696ce1b0d9fe3725e27739362cd9e848
 
 ...
