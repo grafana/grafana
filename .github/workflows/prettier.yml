@@ -1,0 +1,17 @@
+name: "pr-docs"
+on:
+  pull_request:
+    paths: ["docs/sources/**"]
+jobs:
+  lint-docs:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v3"
+      - uses: "EPMatt/reviewdog-action-prettier@v1"
+        with:
+          fail_on_error: true
+          filter_mode: "nofilter"
+          github_token: "${{ secrets.github_token }}"
+          level: "info"
+          prettier_flags: "docs/sources"
+          reporter: "github-pr-review"

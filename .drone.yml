@@ -1063,14 +1063,6 @@ steps:
   image: grafana/build-container:1.7.4
   name: codespell
 - commands:
-  - yarn run prettier:checkDocs
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
-  name: lint-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
@@ -1173,14 +1165,6 @@ steps:
   - rm words_to_ignore.txt
   image: grafana/build-container:1.7.4
   name: codespell
-- commands:
-  - yarn run prettier:checkDocs
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
-  name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
@@ -7216,6 +7200,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d1a589fd39357048aa2b6595181f98d17545e184121774b729553e9165464480
+hmac: 051eb4103df3f8320622e8e6fcc6acfaca3ff0f52f5ca7e1206868db93c0f689
 
 ...

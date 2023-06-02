@@ -30,7 +30,6 @@ def docs_pipelines(ver_mode, trigger):
         identify_runner_step(),
         yarn_install_step(),
         codespell_step(),
-        lint_docs(),
         build_docs_website_step(),
     ]
 
@@ -42,21 +41,6 @@ def docs_pipelines(ver_mode, trigger):
         steps = steps,
         environment = environment,
     )
-
-def lint_docs():
-    return {
-        "name": "lint-docs",
-        "image": build_image,
-        "depends_on": [
-            "yarn-install",
-        ],
-        "environment": {
-            "NODE_OPTIONS": "--max_old_space_size=8192",
-        },
-        "commands": [
-            "yarn run prettier:checkDocs",
-        ],
-    }
 
 def trigger_docs_main():
     return {
