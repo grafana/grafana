@@ -634,7 +634,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-direction: row;
       justify-content: space-between;
       overflow-x: scroll;
-      height: calc(100vh - 150px);
+      max-height: calc(100vh - 150px);
     `,
     logRows: css`
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
