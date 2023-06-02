@@ -102,7 +102,7 @@ When you create a panel, Grafana automatically selects the default data source.
 1. Click the **Query** tab.
 1. Click the **Data source** drop-down menu and select a data source.
 
-   If you're creating a totally new dashboard, you'll be prompted to select a data source when you add the first panel.
+   If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
 
 1. Click **Query options** to configure the maximum number of data points you need.
    For more information about query options, refer to [Query options]({{< relref "#query-options" >}}).
