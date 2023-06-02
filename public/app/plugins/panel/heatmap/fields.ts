@@ -20,7 +20,7 @@ import {
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
-import { CellValues, PanelOptions } from './types';
+import { CellValues, Options } from './types';
 import { boundedMinMax } from './utils';
 
 export interface HeatmapData {
@@ -57,7 +57,7 @@ export interface HeatmapData {
 export function prepareHeatmapData(
   frames: DataFrame[],
   annotations: DataFrame[] | undefined,
-  options: PanelOptions,
+  options: Options,
   theme: GrafanaTheme2,
   getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
 ): HeatmapData {
@@ -128,7 +128,7 @@ export function prepareHeatmapData(
 const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
-  options: PanelOptions,
+  options: Options,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
@@ -164,7 +164,7 @@ const getSparseHeatmapData = (
 const getDenseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
-  options: PanelOptions,
+  options: Options,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells) {

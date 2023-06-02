@@ -1,56 +1,26 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Table, useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Table, TableSortByFieldState, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL, TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { SelectedView, TableData } from '../types';
+import { TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
   app: CoreApp;
   totalLevels: number;
-  selectedView: SelectedView;
-  search: string;
-  setSearch: (search: string) => void;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
-  setRangeMin: (range: number) => void;
-  setRangeMax: (range: number) => void;
+  onSymbolClick: (symbol: string) => void;
 };
 
-const FlameGraphTopTableContainer = ({
-  data,
-  app,
-  totalLevels,
-  selectedView,
-  search,
-  setSearch,
-  setTopLevelIndex,
-  setSelectedBarIndex,
-  setRangeMin,
-  setRangeMax,
-}: Props) => {
+const FlameGraphTopTableContainer = ({ data, app, totalLevels, onSymbolClick }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const onSymbolClick = (symbol: string) => {
-    if (search === symbol) {
-      setSearch('');
-    } else {
-      setSearch(symbol);
-      // Reset selected level in flamegraph when selecting row in top table
-      setTopLevelIndex(0);
-      setSelectedBarIndex(0);
-      setRangeMin(0);
-      setRangeMax(1);
-    }
-  };
-
-  const initialSortBy = [{ displayName: 'Self', desc: true }];
+  const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
   return (
     <div className={styles.topTableContainer} data-testid="topTable">
@@ -61,7 +31,24 @@ const FlameGraphTopTableContainer = ({
           }
 
           const frame = buildTableDataFrame(data, width, onSymbolClick);
-          return <Table initialSortBy={initialSortBy} data={frame} width={width} height={height} />;
+          return (
+            <Table
+              initialSortBy={sort}
+              onSortByChange={(s) => {
+                if (s && s.length) {
+                  reportInteraction('grafana_flamegraph_table_sort_selected', {
+                    app,
+                    grafana_version: config.buildInfo.version,
+                    sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
+                  });
+                }
+                setSort(s);
+              }}
+              data={frame}
+              width={width}
+              height={height}
+            />
+          );
         }}
       </AutoSizer>
     </div>

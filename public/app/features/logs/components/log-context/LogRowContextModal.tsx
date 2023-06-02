@@ -20,8 +20,8 @@ import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
-import { SETTINGS_KEYS } from 'app/features/explore/utils/logs';
 import { useDispatch } from 'app/types';
 
 import { sortLogRows } from '../../utils';
@@ -190,8 +190,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   };
 
+  const updateContextQuery = async () => {
+    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+    setContextQuery(contextQuery);
+  };
+
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
     if (open && row && limit) {
+      await updateContextQuery();
       const rawResults = await Promise.all([
         getRowContext(row, {
           limit: logsSortOrder === LogsSortOrder.Descending ? limit + 1 : limit,
@@ -268,10 +274,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   }, [scrollElement]);
 
-  useAsync(async () => {
-    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
-    setContextQuery(contextQuery);
-  }, [getRowContextQuery, row]);
+  useAsync(updateContextQuery, [getRowContextQuery, row]);
 
   return (
     <Modal

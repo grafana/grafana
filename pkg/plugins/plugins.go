@@ -51,6 +51,8 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
+	AngularDetected bool
+
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
@@ -80,6 +82,8 @@ type PluginDTO struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
+
+	AngularDetected bool
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -424,6 +428,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
+		AngularDetected:   p.AngularDetected,
 	}
 }
 

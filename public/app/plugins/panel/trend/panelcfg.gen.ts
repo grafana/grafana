@@ -15,7 +15,7 @@ export const PanelCfgModelVersion = Object.freeze([0, 0]);
 /**
  * Identical to timeseries... except it does not have timezone settings
  */
-export interface PanelOptions {
+export interface Options {
   legend: common.VizLegendOptions;
   tooltip: common.VizTooltipOptions;
   /**
@@ -24,4 +24,4 @@ export interface PanelOptions {
   xField?: string;
 }
 
-export interface PanelFieldConfig extends common.GraphFieldConfig {}
+export interface FieldConfig extends common.GraphFieldConfig {}
