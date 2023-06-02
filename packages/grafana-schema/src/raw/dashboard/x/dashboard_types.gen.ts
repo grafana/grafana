@@ -474,6 +474,10 @@ export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
 
 /**
  * Supported value mapping types
+ * ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+ * RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+ * RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+ * SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
  */
 export enum MappingType {
   RangeToText = 'range',
@@ -483,47 +487,77 @@ export enum MappingType {
 }
 
 /**
- * Maps text values to a color or different display text
+ * Maps text values to a color or different display text and color.
+ * For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
  */
 export interface ValueMap {
+  /**
+   * Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
+   */
   options: Record<string, ValueMappingResult>;
   type: MappingType.ValueToText;
 }
 
 /**
- * Maps numeric ranges to a color or different display text
+ * Maps numerical ranges to a display text and color.
+ * For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
  */
 export interface RangeMap {
+  /**
+   * Range to match against and the result to apply when the value is within the range
+   */
   options: {
     /**
-     * to and from are `number | null` in current ts, really not sure what to do
+     * Min value of the range. It can be null which means -Infinity
      */
     from: number;
+    /**
+     * Max value of the range. It can be null which means +Infinity
+     */
     to: number;
+    /**
+     * Config to apply when the value is within the range
+     */
     result: ValueMappingResult;
   };
   type: MappingType.RangeToText;
 }
 
 /**
- * Maps regular expressions to replacement text and a color
+ * Maps regular expressions to replacement text and a color.
+ * For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
  */
 export interface RegexMap {
+  /**
+   * Regular expression to match against and the result to apply when the value matches the regex
+   */
   options: {
+    /**
+     * Regular expression to match against
+     */
     pattern: string;
+    /**
+     * Config to apply when the value matches the regex
+     */
     result: ValueMappingResult;
   };
   type: MappingType.RegexToText;
 }
 
 /**
- * Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
- * and color
+ * Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+ * See SpecialValueMatch to see the list of special values.
+ * For example, you can configure a special value mapping so that null values appear as N/A.
  */
 export interface SpecialValueMap {
   options: {
-    match: ('true' | 'false');
-    pattern: string;
+    /**
+     * Special value to match against
+     */
+    match: SpecialValueMatch;
+    /**
+     * Config to apply when the value matches the special value
+     */
     result: ValueMappingResult;
   };
   type: MappingType.SpecialValue;
@@ -542,12 +576,24 @@ export enum SpecialValueMatch {
 }
 
 /**
- * Result used as replacement text and color for RegexMap and SpecialValueMap
+ * Result used as replacement with text and color when the value matches
  */
 export interface ValueMappingResult {
+  /**
+   * Text to use when the value matches
+   */
   color?: string;
+  /**
+   * Icon to display when the value matches. Only specific visualizations.
+   */
   icon?: string;
+  /**
+   * Position in the mapping array. Only used internally.
+   */
   index?: number;
+  /**
+   * Text to display when the value matches
+   */
   text?: string;
 }
 

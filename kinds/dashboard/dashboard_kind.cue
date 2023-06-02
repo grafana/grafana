@@ -364,56 +364,76 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
-		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview) @grafana(TSVeneer="type")
 
 		// Supported value mapping types
+		// ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+		// RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+		// RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+		// SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 		#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @grafanamaturity(NeedsExpertReview)
 
-		// Maps text values to a color or different display text
+		// Maps text values to a color or different display text and color. 
+		// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 		#ValueMap: {
 			type: #MappingType & "value"
+			// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 			options: [string]: #ValueMappingResult
 		} @cuetsy(kind="interface")
 
-		// Maps numeric ranges to a color or different display text
+		// Maps numerical ranges to a display text and color. 
+		// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 		#RangeMap: {
 			type: #MappingType & "range"
+			// Range to match against and the result to apply when the value is within the range
 			options: {
-				// to and from are `number | null` in current ts, really not sure what to do
-				from:   float64 @grafanamaturity(NeedsExpertReview)
-				to:     float64 @grafanamaturity(NeedsExpertReview)
+				// Min value of the range. It can be null which means -Infinity
+				from: float64
+				// Max value of the range. It can be null which means +Infinity
+				to: float64
+				// Config to apply when the value is within the range
+				result: #ValueMappingResult
+			}
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+		// Maps regular expressions to replacement text and a color. 
+		// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+		#RegexMap: {
+			type: #MappingType & "regex"
+			// Regular expression to match against and the result to apply when the value matches the regex
+			options: {
+				// Regular expression to match against
+				pattern: string
+				// Config to apply when the value matches the regex
 				result: #ValueMappingResult
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-		// Maps regular expressions to replacement text and a color
-		#RegexMap: {
-			type: #MappingType & "regex"
-			options: {
-				pattern: string
-				result:  #ValueMappingResult
-			}
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
-
-		// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
-		// and color
+		// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. 
+		// See SpecialValueMatch to see the list of special values. 
+		// For example, you can configure a special value mapping so that null values appear as N/A.
 		#SpecialValueMap: {
 			type: #MappingType & "special"
 			options: {
-				match:   "true" | "false"
-				pattern: string
-				result:  #ValueMappingResult
+				// Special value to match against
+				match: #SpecialValueMatch
+				// Config to apply when the value matches the special value
+				result: #ValueMappingResult
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 		// Special value types supported by the SpecialValueMap
 		#SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNan|Empty")
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		#ValueMappingResult: {
-			text?:  string
+			// Text to display when the value matches
+			text?: string
+			// Text to use when the value matches
 			color?: string
-			icon?:  string
+			// Icon to display when the value matches. Only specific visualizations.
+			icon?: string
+			// Position in the mapping array. Only used internally.
 			index?: int32
 		} @cuetsy(kind="interface")
 
@@ -658,7 +678,7 @@ lineage: schemas: [{
 			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
 			// Name of template variable to repeat for.
 			repeat?: string @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// Support for legacy graph and heatmap panels.
 		#GraphPanel: {

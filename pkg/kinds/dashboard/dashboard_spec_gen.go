@@ -103,18 +103,22 @@ const (
 	SpecStyleLight SpecStyle = "light"
 )
 
-// Defines values for SpecialValueMapOptionsMatch.
-const (
-	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
-	SpecialValueMapOptionsMatchTrue  SpecialValueMapOptionsMatch = "true"
-)
-
 // Defines values for SpecialValueMapType.
 const (
 	SpecialValueMapTypeRange   SpecialValueMapType = "range"
 	SpecialValueMapTypeRegex   SpecialValueMapType = "regex"
 	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
 	SpecialValueMapTypeValue   SpecialValueMapType = "value"
+)
+
+// Defines values for SpecialValueMatch.
+const (
+	SpecialValueMatchEmpty   SpecialValueMatch = "empty"
+	SpecialValueMatchFalse   SpecialValueMatch = "false"
+	SpecialValueMatchNan     SpecialValueMatch = "nan"
+	SpecialValueMatchNull    SpecialValueMatch = "null"
+	SpecialValueMatchNullNan SpecialValueMatch = "null+nan"
+	SpecialValueMatchTrue    SpecialValueMatch = "true"
 )
 
 // Defines values for ThresholdsMode.
@@ -451,6 +455,10 @@ type LibraryPanelRef struct {
 }
 
 // Supported value mapping types
+// ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 type MappingType string
 
 // MatcherConfig defines model for MatcherConfig.
@@ -553,15 +561,19 @@ type Panel struct {
 // TODO this is probably optional
 type PanelRepeatDirection string
 
-// Maps numeric ranges to a color or different display text
+// Maps numerical ranges to a display text and color.
+// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 type RangeMap struct {
+	// Range to match against and the result to apply when the value is within the range
 	Options struct {
-		// From to and from are `number | null` in current ts, really not sure what to do
+		// Min value of the range. It can be null which means -Infinity
 		From float64 `json:"from"`
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
-		To     float64            `json:"to"`
+
+		// Max value of the range. It can be null which means +Infinity
+		To float64 `json:"to"`
 	} `json:"options"`
 	Type RangeMapType `json:"type"`
 }
@@ -569,12 +581,15 @@ type RangeMap struct {
 // RangeMapType defines model for RangeMap.Type.
 type RangeMapType string
 
-// Maps regular expressions to replacement text and a color
+// Maps regular expressions to replacement text and a color.
+// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 type RegexMap struct {
+	// Regular expression to match against and the result to apply when the value matches the regex
 	Options struct {
+		// Regular expression to match against
 		Pattern string `json:"pattern"`
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
 	Type RegexMapType `json:"type"`
@@ -759,24 +774,25 @@ type Spec struct {
 // Default value: dark.
 type SpecStyle string
 
-// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
-// and color
+// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+// See SpecialValueMatch to see the list of special values.
+// For example, you can configure a special value mapping so that null values appear as N/A.
 type SpecialValueMap struct {
 	Options struct {
-		Match   SpecialValueMapOptionsMatch `json:"match"`
-		Pattern string                      `json:"pattern"`
+		// Special value types supported by the SpecialValueMap
+		Match SpecialValueMatch `json:"match"`
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
 	Type SpecialValueMapType `json:"type"`
 }
 
-// SpecialValueMapOptionsMatch defines model for SpecialValueMap.Options.Match.
-type SpecialValueMapOptionsMatch string
-
 // SpecialValueMapType defines model for SpecialValueMap.Type.
 type SpecialValueMapType string
+
+// Special value types supported by the SpecialValueMap
+type SpecialValueMatch string
 
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go
@@ -810,8 +826,10 @@ type ThresholdsConfig struct {
 // Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
 
-// Maps text values to a color or different display text
+// Maps text values to a color or different display text and color.
+// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 type ValueMap struct {
+	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	Options map[string]ValueMappingResult `json:"options"`
 	Type    ValueMapType                  `json:"type"`
 }
@@ -819,12 +837,19 @@ type ValueMap struct {
 // ValueMapType defines model for ValueMap.Type.
 type ValueMapType string
 
-// Result used as replacement text and color for RegexMap and SpecialValueMap
+// Result used as replacement with text and color when the value matches
 type ValueMappingResult struct {
+	// Text to use when the value matches
 	Color *string `json:"color,omitempty"`
-	Icon  *string `json:"icon,omitempty"`
-	Index *int32  `json:"index,omitempty"`
-	Text  *string `json:"text,omitempty"`
+
+	// Icon to display when the value matches. Only specific visualizations.
+	Icon *string `json:"icon,omitempty"`
+
+	// Position in the mapping array. Only used internally.
+	Index *int32 `json:"index,omitempty"`
+
+	// Text to display when the value matches
+	Text *string `json:"text,omitempty"`
 }
 
 // Determine if the variable shows on dashboard

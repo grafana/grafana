@@ -273,52 +273,59 @@ Allow to transform the visual representation of specific data values in a visual
 
 ### RangeMap
 
-Maps numeric ranges to a color or different display text
+Maps numerical ranges to a display text and color.
+For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 
-| Property  | Type               | Required | Default | Description |
-|-----------|--------------------|----------|---------|-------------|
-| `options` | [object](#options) | **Yes**  |         |             |
-| `type`    | string             | **Yes**  |         |             |
+| Property  | Type               | Required | Default | Description                                                                       |
+|-----------|--------------------|----------|---------|-----------------------------------------------------------------------------------|
+| `options` | [object](#options) | **Yes**  |         | Range to match against and the result to apply when the value is within the range |
+| `type`    | string             | **Yes**  |         |                                                                                   |
 
 ### Options
 
-| Property | Type                                      | Required | Default | Description                                                                    |
-|----------|-------------------------------------------|----------|---------|--------------------------------------------------------------------------------|
-| `from`   | number                                    | **Yes**  |         | to and from are `number &#124; null` in current ts, really not sure what to do |
-| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement text and color for RegexMap and SpecialValueMap     |
-| `to`     | number                                    | **Yes**  |         |                                                                                |
+Range to match against and the result to apply when the value is within the range
+
+| Property | Type                                      | Required | Default | Description                                                           |
+|----------|-------------------------------------------|----------|---------|-----------------------------------------------------------------------|
+| `from`   | number                                    | **Yes**  |         | Min value of the range. It can be null which means -Infinity          |
+| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches |
+| `to`     | number                                    | **Yes**  |         | Max value of the range. It can be null which means +Infinity          |
 
 ### ValueMappingResult
 
-Result used as replacement text and color for RegexMap and SpecialValueMap
+Result used as replacement with text and color when the value matches
 
-| Property | Type    | Required | Default | Description |
-|----------|---------|----------|---------|-------------|
-| `color`  | string  | No       |         |             |
-| `icon`   | string  | No       |         |             |
-| `index`  | integer | No       |         |             |
-| `text`   | string  | No       |         |             |
+| Property | Type    | Required | Default | Description                                                           |
+|----------|---------|----------|---------|-----------------------------------------------------------------------|
+| `color`  | string  | No       |         | Text to use when the value matches                                    |
+| `icon`   | string  | No       |         | Icon to display when the value matches. Only specific visualizations. |
+| `index`  | integer | No       |         | Position in the mapping array. Only used internally.                  |
+| `text`   | string  | No       |         | Text to display when the value matches                                |
 
 ### RegexMap
 
-Maps regular expressions to replacement text and a color
+Maps regular expressions to replacement text and a color.
+For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 
-| Property  | Type               | Required | Default | Description |
-|-----------|--------------------|----------|---------|-------------|
-| `options` | [object](#options) | **Yes**  |         |             |
-| `type`    | string             | **Yes**  |         |             |
+| Property  | Type               | Required | Default | Description                                                                                  |
+|-----------|--------------------|----------|---------|----------------------------------------------------------------------------------------------|
+| `options` | [object](#options) | **Yes**  |         | Regular expression to match against and the result to apply when the value matches the regex |
+| `type`    | string             | **Yes**  |         |                                                                                              |
 
 ### Options
 
-| Property  | Type                                      | Required | Default | Description                                                                |
-|-----------|-------------------------------------------|----------|---------|----------------------------------------------------------------------------|
-| `pattern` | string                                    | **Yes**  |         |                                                                            |
-| `result`  | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement text and color for RegexMap and SpecialValueMap |
+Regular expression to match against and the result to apply when the value matches the regex
+
+| Property  | Type                                      | Required | Default | Description                                                           |
+|-----------|-------------------------------------------|----------|---------|-----------------------------------------------------------------------|
+| `pattern` | string                                    | **Yes**  |         | Regular expression to match against                                   |
+| `result`  | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches |
 
 ### SpecialValueMap
 
-Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
-and color
+Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+See SpecialValueMatch to see the list of special values.
+For example, you can configure a special value mapping so that null values appear as N/A.
 
 | Property  | Type               | Required | Default | Description |
 |-----------|--------------------|----------|---------|-------------|
@@ -327,20 +334,20 @@ and color
 
 ### Options
 
-| Property  | Type                                      | Required | Default | Description                                                                |
-|-----------|-------------------------------------------|----------|---------|----------------------------------------------------------------------------|
-| `match`   | string                                    | **Yes**  |         | Possible values are: `true`, `false`.                                      |
-| `pattern` | string                                    | **Yes**  |         |                                                                            |
-| `result`  | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement text and color for RegexMap and SpecialValueMap |
+| Property | Type                                      | Required | Default | Description                                                                                                                        |
+|----------|-------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------|
+| `match`  | string                                    | **Yes**  |         | Special value types supported by the SpecialValueMap<br/>Possible values are: `true`, `false`, `null`, `nan`, `null+nan`, `empty`. |
+| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches                                                              |
 
 ### ValueMap
 
-Maps text values to a color or different display text
+Maps text values to a color or different display text and color.
+For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 
-| Property  | Type                                                 | Required | Default | Description |
-|-----------|------------------------------------------------------|----------|---------|-------------|
-| `options` | map[string][ValueMappingResult](#valuemappingresult) | **Yes**  |         |             |
-| `type`    | string                                               | **Yes**  |         |             |
+| Property  | Type                                                 | Required | Default | Description                                                                                                   |
+|-----------|------------------------------------------------------|----------|---------|---------------------------------------------------------------------------------------------------------------|
+| `options` | map[string][ValueMappingResult](#valuemappingresult) | **Yes**  |         | Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } } |
+| `type`    | string                                               | **Yes**  |         |                                                                                                               |
 
 ### Custom
 
@@ -469,26 +476,29 @@ Dashboard panels are the basic visualization building blocks.
 
 ### RangeMap
 
-Maps numeric ranges to a color or different display text
+Maps numerical ranges to a display text and color.
+For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 
-| Property  | Type                | Required | Default | Description |
-|-----------|---------------------|----------|---------|-------------|
-| `options` | [options](#options) | **Yes**  |         |             |
-| `type`    | string              | **Yes**  |         |             |
+| Property  | Type                | Required | Default | Description                                                                       |
+|-----------|---------------------|----------|---------|-----------------------------------------------------------------------------------|
+| `options` | [options](#options) | **Yes**  |         | Range to match against and the result to apply when the value is within the range |
+| `type`    | string              | **Yes**  |         |                                                                                   |
 
 ### RegexMap
 
-Maps regular expressions to replacement text and a color
+Maps regular expressions to replacement text and a color.
+For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 
-| Property  | Type                | Required | Default | Description |
-|-----------|---------------------|----------|---------|-------------|
-| `options` | [options](#options) | **Yes**  |         |             |
-| `type`    | string              | **Yes**  |         |             |
+| Property  | Type                | Required | Default | Description                                                                                  |
+|-----------|---------------------|----------|---------|----------------------------------------------------------------------------------------------|
+| `options` | [options](#options) | **Yes**  |         | Regular expression to match against and the result to apply when the value matches the regex |
+| `type`    | string              | **Yes**  |         |                                                                                              |
 
 ### SpecialValueMap
 
-Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
-and color
+Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+See SpecialValueMatch to see the list of special values.
+For example, you can configure a special value mapping so that null values appear as N/A.
 
 | Property  | Type                | Required | Default | Description |
 |-----------|---------------------|----------|---------|-------------|
