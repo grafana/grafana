@@ -2218,7 +2218,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of features to enable, separated by space.
 
 ### FEATURE_TOGGLE_NAME = false 
   
