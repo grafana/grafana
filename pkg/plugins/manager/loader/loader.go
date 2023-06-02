@@ -75,7 +75,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 }
 
 func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	var loadedPlugins []*plugins.Plugin
+	loadedPlugins := make([]*plugins.Plugin, 0, len(found))
 
 	for _, p := range found {
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
@@ -123,7 +123,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	}
 
 	// validate signatures
-	verifiedPlugins := make([]*plugins.Plugin, 0)
+	verifiedPlugins := make([]*plugins.Plugin, 0, len(loadedPlugins))
 	for _, plugin := range loadedPlugins {
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
@@ -175,7 +175,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	}
 
 	// initialize plugins
-	initializedPlugins := make([]*plugins.Plugin, 0)
+	initializedPlugins := make([]*plugins.Plugin, 0, len(verifiedPlugins))
 	for _, p := range verifiedPlugins {
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
@@ -340,7 +340,7 @@ func defaultLogoPath(pluginType plugins.Type) string {
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {
-	errs := make([]*plugins.Error, 0)
+	errs := make([]*plugins.Error, 0, len(l.errs))
 	for _, err := range l.errs {
 		errs = append(errs, &plugins.Error{
 			PluginID:  err.PluginID,
