@@ -345,96 +345,112 @@ lineage: schemas: [{
 		// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 		#Threshold: {
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-			// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-			value?: number @grafanamaturity(NeedsExpertReview)
+			// Nulls currently appear here when serializing -Infinity to JSON.
+			value: number @grafanamaturity(NeedsExpertReview)
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
-			// Threshold index, an old property that is not needed an should only appear in older dashboards
-			index?: int32 @grafanamaturity(NeedsExpertReview)
-			// TODO docs
-			// TODO are the values here enumerable into a disjunction?
-			// Some seem to be listed in typescript comment
-			state?: string @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-		// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
-		#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+		// Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
+		#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum",memberNames="Absolute|Percentage")
 
+		// Thresholds configuration for the panel
 		#ThresholdsConfig: {
-			mode: #ThresholdsMode @grafanamaturity(NeedsExpertReview)
+			// Thresholds mode.
+			mode: #ThresholdsMode
 
 			// Must be sorted by 'value', first value is always -Infinity
 			steps: [...#Threshold] @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
-		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview) @grafana(TSVeneer="type")
 
 		// Supported value mapping types
+		// ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+		// RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+		// RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+		// SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 		#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @grafanamaturity(NeedsExpertReview)
 
-		// Maps text values to a color or different display text
+		// Maps text values to a color or different display text and color. 
+		// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 		#ValueMap: {
 			type: #MappingType & "value"
+			// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 			options: [string]: #ValueMappingResult
 		} @cuetsy(kind="interface")
 
-		// Maps numeric ranges to a color or different display text
+		// Maps numerical ranges to a display text and color. 
+		// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 		#RangeMap: {
 			type: #MappingType & "range"
+			// Range to match against and the result to apply when the value is within the range
 			options: {
-				// to and from are `number | null` in current ts, really not sure what to do
-				from:   float64 @grafanamaturity(NeedsExpertReview)
-				to:     float64 @grafanamaturity(NeedsExpertReview)
+				// Min value of the range. It can be null which means -Infinity
+				from: float64
+				// Max value of the range. It can be null which means +Infinity
+				to: float64
+				// Config to apply when the value is within the range
+				result: #ValueMappingResult
+			}
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+		// Maps regular expressions to replacement text and a color. 
+		// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+		#RegexMap: {
+			type: #MappingType & "regex"
+			// Regular expression to match against and the result to apply when the value matches the regex
+			options: {
+				// Regular expression to match against
+				pattern: string
+				// Config to apply when the value matches the regex
 				result: #ValueMappingResult
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-		// Maps regular expressions to replacement text and a color
-		#RegexMap: {
-			type: #MappingType & "regex"
-			options: {
-				pattern: string
-				result:  #ValueMappingResult
-			}
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
-
-		// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
-		// and color
+		// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. 
+		// See SpecialValueMatch to see the list of special values. 
+		// For example, you can configure a special value mapping so that null values appear as N/A.
 		#SpecialValueMap: {
 			type: #MappingType & "special"
 			options: {
-				match:   "true" | "false"
-				pattern: string
-				result:  #ValueMappingResult
+				// Special value to match against
+				match: #SpecialValueMatch
+				// Config to apply when the value matches the special value
+				result: #ValueMappingResult
 			}
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 		// Special value types supported by the SpecialValueMap
 		#SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNan|Empty")
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		#ValueMappingResult: {
-			text?:  string
+			// Text to display when the value matches
+			text?: string
+			// Text to use when the value matches
 			color?: string
-			icon?:  string
+			// Icon to display when the value matches. Only specific visualizations.
+			icon?: string
+			// Position in the mapping array. Only used internally.
 			index?: int32
 		} @cuetsy(kind="interface")
 
-		// TODO docs
+		// Transformations allow to manipulate data returned by a query before the system applies a visualization. 
+		// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, 
+		// use the output of one transformation as the input to another transformation, etc.
 		#DataTransformerConfig: {
-			@grafana(TSVeneer="type")
-
 			// Unique identifier of transformer
 			id: string
 			// Disabled transformations are skipped
 			disabled?: bool
-			// Optional frame matcher.  When missing it will be applied to all results
+			// Optional frame matcher. When missing it will be applied to all results
 			filter?: #MatcherConfig
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// 0 for no shared crosshair or tooltip (default).
 		// 1 for shared crosshair.
@@ -482,16 +498,16 @@ lineage: schemas: [{
 
 		// Dashboard panels are the basic visualization building blocks. 
 		#Panel: {
-			// The panel plugin type id. May not be empty.
+			// The panel plugin type id. This is used to find the plugin to display the panel.
 			type: string & strings.MinRunes(1) @grafanamaturity(NeedsExpertReview)
 
-			// TODO docs
+			// Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
 			id?: uint32 @grafanamaturity(NeedsExpertReview)
 
-			// FIXME this almost certainly has to be changed in favor of scuemata versions
+			// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 			pluginVersion?: string @grafanamaturity(NeedsExpertReview)
 
-			// TODO docs
+			// Tags for the panel.
 			tags?: [...string] @grafanamaturity(NeedsExpertReview)
 
 			// TODO docs
@@ -499,39 +515,42 @@ lineage: schemas: [{
 
 			// Panel title.
 			title?: string @grafanamaturity(NeedsExpertReview)
-			// Description.
+
+			// Panel description.
 			description?: string @grafanamaturity(NeedsExpertReview)
+
 			// Whether to display the panel without a background.
 			transparent: bool | *false @grafanamaturity(NeedsExpertReview)
+
 			// The datasource used in all targets.
 			datasource?: {
 				type?: string
 				uid?:  string
 			} @grafanamaturity(NeedsExpertReview)
+
 			// Grid position.
 			gridPos?: #GridPos
+
 			// Panel links.
-			// TODO fill this out - seems there are a couple variants?
 			links?: [...#DashboardLink] @grafanamaturity(NeedsExpertReview)
 
 			// Name of template variable to repeat for.
 			repeat?: string @grafanamaturity(NeedsExpertReview)
+
 			// Direction to repeat in if 'repeat' is set.
 			// "h" for horizontal, "v" for vertical.
 			// TODO this is probably optional
 			repeatDirection: *"h" | "v" @grafanamaturity(NeedsExpertReview)
+
 			// Id of the repeating panel.
 			repeatPanelId?: int64 @grafanamaturity(NeedsExpertReview)
 
 			// The maximum number of data points that the panel queries are retrieving.
 			maxDataPoints?: number
 
-			// TODO docs - seems to be an old field from old dashboard alerts?
-			thresholds?: [...] @grafanamaturity(NeedsExpertReview)
-
-			// TODO docs
-			timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
-
+			// List of transformations that are applied to the panel data before rendering.
+			// When there are multiple transformations, Grafana applies them in the order they are listed. 
+			// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
 			transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
 			// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
@@ -567,7 +586,9 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		#FieldConfigSource: {
+			// Defaults are the options applied to all fields.
 			defaults: #FieldConfig
+			// Overrides are the options applied to specific fields overriding the defaults.
 			overrides: [...{
 				matcher: #MatcherConfig
 				properties: [...#DynamicConfigValue]
@@ -579,9 +600,13 @@ lineage: schemas: [{
 			uid:  string
 		} @cuetsy(kind="interface")
 
+		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
-			id:       string | *"" @grafanamaturity(NeedsExpertReview)
-			options?: _            @grafanamaturity(NeedsExpertReview)
+			// The matcher id. This is used to find the matcher implementation from registry.
+			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// The matcher options. This is specific to the matcher implementation.
+			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		#DynamicConfigValue: {
@@ -589,6 +614,9 @@ lineage: schemas: [{
 			value?: _            @grafanamaturity(NeedsExpertReview)
 		}
 
+		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. 
+		// Each column within this structure is called a field. A field can represent a single time series or table column.
+		// Field options allow you to change how the data is displayed in your visualizations.
 		#FieldConfig: {
 			// The display value for this field.  This supports template variables blank is auto
 			displayName?: string @grafanamaturity(NeedsExpertReview)
@@ -607,19 +635,33 @@ lineage: schemas: [{
 			// may be used to update the results
 			path?: string @grafanamaturity(NeedsExpertReview)
 
-			// True if data source can write a value to the path.  Auth/authz are supported separately
+			// True if data source can write a value to the path. Auth/authz are supported separately
 			writeable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// True if data source field supports ad-hoc filters
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
-			// Numeric Options
+			// Unit a field should use. The unit you select is applied to all fields except time.
+			// You can use the units ID availables in Grafana or a custom unit.
+			// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+			// As custom unit, you can use the following formats:
+			// `suffix:<suffix>` for custom unit that should go after value.
+			// `prefix:<prefix>` for custom unit that should go before value.
+			// `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
+			// `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
+			// `count:<unit>` for a custom count unit.
+			// `currency:<unit>` for custom a currency unit.
 			unit?: string @grafanamaturity(NeedsExpertReview)
 
-			// Significant digits (for display)
+			// Specify the number of decimals Grafana includes in the rendered value. 
+			// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. 
+			// For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+			// To display all decimals, set the unit to `String`.
 			decimals?: number @grafanamaturity(NeedsExpertReview)
 
+			// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 			min?: number @grafanamaturity(NeedsExpertReview)
+			// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 			max?: number @grafanamaturity(NeedsExpertReview)
 
 			// Convert input values into a display string
@@ -630,9 +672,6 @@ lineage: schemas: [{
 
 			// Panel color configuration
 			color?: #FieldColor
-
-			// Used when reducing field values
-			//   nullValueMode?: NullValueMode
 
 			// The behavior when clicking on a result
 			links?: [...] @grafanamaturity(NeedsExpertReview)
@@ -647,24 +686,38 @@ lineage: schemas: [{
 
 		// Row panel
 		#RowPanel: {
-			type:      "row"         @grafanamaturity(NeedsExpertReview)
-			collapsed: bool | *false @grafanamaturity(NeedsExpertReview)
-			title?:    string        @grafanamaturity(NeedsExpertReview)
+			// The panel type
+			type: "row" @grafanamaturity(NeedsExpertReview)
 
-			// Name of default datasource.
+			// Whether this row should be collapsed or not.
+			collapsed: bool | *false @grafanamaturity(NeedsExpertReview)
+
+			// Row title
+			title?: string @grafanamaturity(NeedsExpertReview)
+
+			// Name of default datasource for the row
 			datasource?: {
+				// Data source type
 				type?: string @grafanamaturity(NeedsExpertReview)
-				uid?:  string @grafanamaturity(NeedsExpertReview)
+				// Data source unique identifier
+				uid?: string @grafanamaturity(NeedsExpertReview)
 			} @grafanamaturity(NeedsExpertReview)
 
+			// Row grid position
 			gridPos?: #GridPos
-			id:       uint32 @grafanamaturity(NeedsExpertReview)
+
+			// Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
+			id: uint32 @grafanamaturity(NeedsExpertReview)
+
+			// List of panels in the row
 			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
+
 			// Name of template variable to repeat for.
 			repeat?: string @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-		// Support for legacy graph and heatmap panels.
+		// Support for legacy graph panel.
+		// @deprecated this a deprecated panel type
 		#GraphPanel: {
 			type: "graph" @grafanamaturity(NeedsExpertReview)
 			// @deprecated this is part of deprecated graph panel
@@ -676,6 +729,8 @@ lineage: schemas: [{
 			...
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
+		// Support for legacy heatmap panel.
+		// @deprecated this a deprecated panel type
 		#HeatmapPanel: {
 			type: "heatmap" @grafanamaturity(NeedsExpertReview)
 			...

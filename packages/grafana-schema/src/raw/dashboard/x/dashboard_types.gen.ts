@@ -435,31 +435,27 @@ export interface Threshold {
    */
   color: string;
   /**
-   * Threshold index, an old property that is not needed an should only appear in older dashboards
-   */
-  index?: number;
-  /**
-   * TODO docs
-   * TODO are the values here enumerable into a disjunction?
-   * Some seem to be listed in typescript comment
-   */
-  state?: string;
-  /**
    * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-   * FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
+   * Nulls currently appear here when serializing -Infinity to JSON.
    */
-  value?: number;
+  value: number;
 }
 
 /**
- * Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+ * Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
  */
 export enum ThresholdsMode {
   Absolute = 'absolute',
   Percentage = 'percentage',
 }
 
+/**
+ * Thresholds configuration for the panel
+ */
 export interface ThresholdsConfig {
+  /**
+   * Thresholds mode.
+   */
   mode: ThresholdsMode;
   /**
    * Must be sorted by 'value', first value is always -Infinity
@@ -478,6 +474,10 @@ export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
 
 /**
  * Supported value mapping types
+ * ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+ * RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+ * RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+ * SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
  */
 export enum MappingType {
   RangeToText = 'range',
@@ -487,47 +487,77 @@ export enum MappingType {
 }
 
 /**
- * Maps text values to a color or different display text
+ * Maps text values to a color or different display text and color.
+ * For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
  */
 export interface ValueMap {
+  /**
+   * Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
+   */
   options: Record<string, ValueMappingResult>;
   type: MappingType.ValueToText;
 }
 
 /**
- * Maps numeric ranges to a color or different display text
+ * Maps numerical ranges to a display text and color.
+ * For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
  */
 export interface RangeMap {
+  /**
+   * Range to match against and the result to apply when the value is within the range
+   */
   options: {
     /**
-     * to and from are `number | null` in current ts, really not sure what to do
+     * Min value of the range. It can be null which means -Infinity
      */
     from: number;
+    /**
+     * Max value of the range. It can be null which means +Infinity
+     */
     to: number;
+    /**
+     * Config to apply when the value is within the range
+     */
     result: ValueMappingResult;
   };
   type: MappingType.RangeToText;
 }
 
 /**
- * Maps regular expressions to replacement text and a color
+ * Maps regular expressions to replacement text and a color.
+ * For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
  */
 export interface RegexMap {
+  /**
+   * Regular expression to match against and the result to apply when the value matches the regex
+   */
   options: {
+    /**
+     * Regular expression to match against
+     */
     pattern: string;
+    /**
+     * Config to apply when the value matches the regex
+     */
     result: ValueMappingResult;
   };
   type: MappingType.RegexToText;
 }
 
 /**
- * Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
- * and color
+ * Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+ * See SpecialValueMatch to see the list of special values.
+ * For example, you can configure a special value mapping so that null values appear as N/A.
  */
 export interface SpecialValueMap {
   options: {
-    match: ('true' | 'false');
-    pattern: string;
+    /**
+     * Special value to match against
+     */
+    match: SpecialValueMatch;
+    /**
+     * Config to apply when the value matches the special value
+     */
     result: ValueMappingResult;
   };
   type: MappingType.SpecialValue;
@@ -546,17 +576,31 @@ export enum SpecialValueMatch {
 }
 
 /**
- * Result used as replacement text and color for RegexMap and SpecialValueMap
+ * Result used as replacement with text and color when the value matches
  */
 export interface ValueMappingResult {
+  /**
+   * Text to use when the value matches
+   */
   color?: string;
+  /**
+   * Icon to display when the value matches. Only specific visualizations.
+   */
   icon?: string;
+  /**
+   * Position in the mapping array. Only used internally.
+   */
   index?: number;
+  /**
+   * Text to display when the value matches
+   */
   text?: string;
 }
 
 /**
- * TODO docs
+ * Transformations allow to manipulate data returned by a query before the system applies a visualization.
+ * Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
+ * use the output of one transformation as the input to another transformation, etc.
  */
 export interface DataTransformerConfig {
   /**
@@ -564,7 +608,7 @@ export interface DataTransformerConfig {
    */
   disabled?: boolean;
   /**
-   * Optional frame matcher.  When missing it will be applied to all results
+   * Optional frame matcher. When missing it will be applied to all results
    */
   filter?: MatcherConfig;
   /**
@@ -603,7 +647,7 @@ export interface Panel {
     uid?: string;
   };
   /**
-   * Description.
+   * Panel description.
    */
   description?: string;
   fieldConfig: FieldConfigSource;
@@ -612,7 +656,7 @@ export interface Panel {
    */
   gridPos?: GridPos;
   /**
-   * TODO docs
+   * Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
    */
   id?: number;
   /**
@@ -628,7 +672,6 @@ export interface Panel {
   libraryPanel?: LibraryPanelRef;
   /**
    * Panel links.
-   * TODO fill this out - seems there are a couple variants?
    */
   links?: Array<DashboardLink>;
   /**
@@ -641,7 +684,7 @@ export interface Panel {
    */
   options: Record<string, unknown>;
   /**
-   * FIXME this almost certainly has to be changed in favor of scuemata versions
+   * The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
    */
   pluginVersion?: string;
   /**
@@ -659,17 +702,13 @@ export interface Panel {
    */
   repeatPanelId?: number;
   /**
-   * TODO docs
+   * Tags for the panel.
    */
   tags?: Array<string>;
   /**
    * TODO docs
    */
   targets?: Array<Record<string, unknown>>;
-  /**
-   * TODO docs - seems to be an old field from old dashboard alerts?
-   */
-  thresholds?: Array<unknown>;
   /**
    * Overrides the relative time range for individual panels,
    * which causes them to be different than what is selected in
@@ -682,10 +721,6 @@ export interface Panel {
    */
   timeFrom?: string;
   /**
-   * TODO docs
-   */
-  timeRegions?: Array<unknown>;
-  /**
    * Overrides the time range for individual panels by shifting its start and end relative to the time picker.
    * For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
    * Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
@@ -696,13 +731,18 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
+  /**
+   * List of transformations that are applied to the panel data before rendering.
+   * When there are multiple transformations, Grafana applies them in the order they are listed.
+   * Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
+   */
   transformations: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
   transparent: boolean;
   /**
-   * The panel plugin type id. May not be empty.
+   * The panel plugin type id. This is used to find the plugin to display the panel.
    */
   type: string;
 }
@@ -712,14 +752,18 @@ export const defaultPanel: Partial<Panel> = {
   repeatDirection: 'h',
   tags: [],
   targets: [],
-  thresholds: [],
-  timeRegions: [],
   transformations: [],
   transparent: false,
 };
 
 export interface FieldConfigSource {
+  /**
+   * Defaults are the options applied to all fields.
+   */
   defaults: FieldConfig;
+  /**
+   * Overrides are the options applied to specific fields overriding the defaults.
+   */
   overrides: Array<{
     matcher: MatcherConfig;
     properties: Array<{
@@ -738,8 +782,18 @@ export interface LibraryPanelRef {
   uid: string;
 }
 
+/**
+ * Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+ * It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+ */
 export interface MatcherConfig {
+  /**
+   * The matcher id. This is used to find the matcher implementation from registry.
+   */
   id: string;
+  /**
+   * The matcher options. This is specific to the matcher implementation.
+   */
   options?: unknown;
 }
 
@@ -747,6 +801,11 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
   id: '',
 };
 
+/**
+ * The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+ * Each column within this structure is called a field. A field can represent a single time series or table column.
+ * Field options allow you to change how the data is displayed in your visualizations.
+ */
 export interface FieldConfig {
   /**
    * Panel color configuration
@@ -758,7 +817,10 @@ export interface FieldConfig {
    */
   custom?: Record<string, unknown>;
   /**
-   * Significant digits (for display)
+   * Specify the number of decimals Grafana includes in the rendered value.
+   * If you leave this field blank, Grafana automatically truncates the number of decimals based on the value.
+   * For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+   * To display all decimals, set the unit to `String`.
    */
   decimals?: number;
   /**
@@ -786,7 +848,13 @@ export interface FieldConfig {
    * Convert input values into a display string
    */
   mappings?: Array<ValueMapping>;
+  /**
+   * The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+   */
   max?: number;
+  /**
+   * The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+   */
   min?: number;
   /**
    * Alternative to empty string
@@ -805,11 +873,20 @@ export interface FieldConfig {
    */
   thresholds?: ThresholdsConfig;
   /**
-   * Numeric Options
+   * Unit a field should use. The unit you select is applied to all fields except time.
+   * You can use the units ID availables in Grafana or a custom unit.
+   * Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+   * As custom unit, you can use the following formats:
+   * `suffix:<suffix>` for custom unit that should go after value.
+   * `prefix:<prefix>` for custom unit that should go before value.
+   * `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
+   * `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
+   * `count:<unit>` for a custom count unit.
+   * `currency:<unit>` for custom a currency unit.
    */
   unit?: string;
   /**
-   * True if data source can write a value to the path.  Auth/authz are supported separately
+   * True if data source can write a value to the path. Auth/authz are supported separately
    */
   writeable?: boolean;
 }
@@ -823,22 +900,46 @@ export const defaultFieldConfig: Partial<FieldConfig> = {
  * Row panel
  */
 export interface RowPanel {
+  /**
+   * Whether this row should be collapsed or not.
+   */
   collapsed: boolean;
   /**
-   * Name of default datasource.
+   * Name of default datasource for the row
    */
   datasource?: {
+    /**
+     * Data source type
+     */
     type?: string;
+    /**
+     * Data source unique identifier
+     */
     uid?: string;
   };
+  /**
+   * Row grid position
+   */
   gridPos?: GridPos;
+  /**
+   * Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
+   */
   id: number;
+  /**
+   * List of panels in the row
+   */
   panels: Array<(Panel | GraphPanel | HeatmapPanel)>;
   /**
    * Name of template variable to repeat for.
    */
   repeat?: string;
+  /**
+   * Row title
+   */
   title?: string;
+  /**
+   * The panel type
+   */
   type: 'row';
 }
 
@@ -848,7 +949,8 @@ export const defaultRowPanel: Partial<RowPanel> = {
 };
 
 /**
- * Support for legacy graph and heatmap panels.
+ * Support for legacy graph panel.
+ * @deprecated this a deprecated panel type
  */
 export interface GraphPanel {
   /**
@@ -862,6 +964,10 @@ export interface GraphPanel {
   type: 'graph';
 }
 
+/**
+ * Support for legacy heatmap panel.
+ * @deprecated this a deprecated panel type
+ */
 export interface HeatmapPanel {
   type: 'heatmap';
 }
