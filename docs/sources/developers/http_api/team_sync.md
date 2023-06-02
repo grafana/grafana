@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/external_group_sync/
-  - ../../http_api/team_sync/
+  - ./external_group_sync/
 canonical: /docs/grafana/latest/developers/http_api/team_sync/
 description: Grafana Team Sync HTTP API
 keywords:
