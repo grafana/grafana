@@ -61,7 +61,7 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db, localcache.ProvideService())
 	if !cachingOn {
-		folderStore.DisableCaching()
+		folderStore.disableCaching()
 	}
 	cfg := setting.NewCfg()
 

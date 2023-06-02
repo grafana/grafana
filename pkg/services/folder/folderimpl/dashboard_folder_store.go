@@ -29,7 +29,7 @@ func ProvideDashboardFolderStore(sqlStore db.DB, cacheService *localcache.CacheS
 	return &DashboardFolderStoreImpl{store: sqlStore, cacheService: cacheService, caching: true}
 }
 
-func (d *DashboardFolderStoreImpl) DisableCaching() {
+func (d *DashboardFolderStoreImpl) disableCaching() {
 	d.caching = false
 }
 
