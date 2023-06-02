@@ -116,10 +116,8 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
         return false;
       });
 
-      // missing type
-      const hasNoType = !m.type;
-
-      return matchesSelectedType || (hasNoType && state.includeNullMetadata);
+      // when a user filters for type, only return metrics with defined types
+      return matchesSelectedType;
     });
   }
 
