@@ -11,9 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-// CACHING is a global variable that can be set to false to disable CACHING (used for benchmarks)
-var CACHING = true
-
 const (
 	CACHING_FOLDER_BY_UID_PREFIX   = "folderByUID"
 	CACHING_FOLDER_BY_TITLE_PREFIX = "folderByTitle"
@@ -24,11 +21,16 @@ const (
 // It fetches folders from the dashboard DB table
 type DashboardFolderStoreImpl struct {
 	store        db.DB
+	caching      bool
 	cacheService *localcache.CacheService
 }
 
 func ProvideDashboardFolderStore(sqlStore db.DB, cacheService *localcache.CacheService) *DashboardFolderStoreImpl {
-	return &DashboardFolderStoreImpl{store: sqlStore, cacheService: cacheService}
+	return &DashboardFolderStoreImpl{store: sqlStore, cacheService: cacheService, caching: true}
+}
+
+func (d *DashboardFolderStoreImpl) DisableCaching() {
+	d.caching = false
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
@@ -110,7 +112,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 }
 
 func (d *DashboardFolderStoreImpl) withCaching(cacheKey string, f func() (*folder.Folder, error)) (*folder.Folder, error) {
-	if !CACHING {
+	if !d.caching {
 		return f()
 	}
 

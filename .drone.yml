@@ -427,6 +427,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -1597,6 +1602,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 - commands:
   - ./bin/build verify-drone
   depends_on:

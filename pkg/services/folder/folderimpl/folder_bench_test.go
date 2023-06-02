@@ -48,10 +48,13 @@ func BenchmarkFolderService_GetRootChildren_10000_1_CachingOn(b *testing.B) {
 	benchmarkFolderService_GetChildren(b, 10000, "", 1, true)
 }
 
-func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, overrideCaching bool) (*Service, user.SignedInUser) {
+func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideConcurrencyFactor int, cachingOn bool) (*Service, user.SignedInUser) {
 	db := sqlstore.InitTestDB(b)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db, localcache.ProvideService())
+	if !cachingOn {
+		folderStore.DisableCaching()
+	}
 	cfg := setting.NewCfg()
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
@@ -62,16 +65,8 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-	origConcurrencyFactor := concurrencyFactor
-	concurrencyFactor = overrideConcurrencyFactor
-
-	origCaching := CACHING
-	CACHING = overrideCaching
-
 	b.Cleanup(func() {
 		guardian.New = origNewGuardian
-		concurrencyFactor = origConcurrencyFactor
-		CACHING = origCaching
 	})
 
 	serviceWithFlagOn := &Service{
@@ -85,6 +80,7 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 		db:                   db,
 		accessControl:        acimpl.ProvideAccessControl(cfg),
 		registry:             make(map[string]folder.RegistryService),
+		concurrencyFactor:    overrideConcurrencyFactor,
 	}
 
 	var orgID = int64(1)
