@@ -48,7 +48,7 @@ Server-side expressions only support data source queries for backend data source
 
 Data source queries, when used with expressions, are executed by the expression engine. When it does this, it restructures data to be either one time series or one number per data frame. So for example if using a data source that returns multiple series on one frame in the table view, you might notice it looks different when executed with expressions.
 
-Currently, the only non-time series format (number) is supported when using data frames and you have a table response that returns a data frame with no time, string columns, and one number column:
+Currently, the only non-time series format (number) is supported when you're using data frames and you have a table response that returns a data frame with no time, string columns, and one number column:
 
 | Loc | Host | Avg_CPU |
 | --- | ---- | ------- |
