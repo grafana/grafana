@@ -383,7 +383,9 @@ type FieldConfig struct {
 	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
-	Path       *string           `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// Thresholds configuration for the panel
 	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
 	// Numeric Options
@@ -791,29 +793,21 @@ type Threshold struct {
 	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 	Color string `json:"color"`
 
-	// Threshold index, an old property that is not needed an should only appear in older dashboards
-	Index *int32 `json:"index,omitempty"`
-
-	// TODO docs
-	// TODO are the values here enumerable into a disjunction?
-	// Some seem to be listed in typescript comment
-	State *string `json:"state,omitempty"`
-
 	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-	Value *float32 `json:"value,omitempty"`
+	// Nulls currently appear here when serializing -Infinity to JSON.
+	Value float32 `json:"value"`
 }
 
-// ThresholdsConfig defines model for ThresholdsConfig.
+// Thresholds configuration for the panel
 type ThresholdsConfig struct {
-	// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+	// Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
 	Mode ThresholdsMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []Threshold `json:"steps"`
 }
 
-// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+// Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
 
 // Maps text values to a color or different display text

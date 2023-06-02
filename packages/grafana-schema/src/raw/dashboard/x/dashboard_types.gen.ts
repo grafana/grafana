@@ -435,31 +435,27 @@ export interface Threshold {
    */
   color: string;
   /**
-   * Threshold index, an old property that is not needed an should only appear in older dashboards
-   */
-  index?: number;
-  /**
-   * TODO docs
-   * TODO are the values here enumerable into a disjunction?
-   * Some seem to be listed in typescript comment
-   */
-  state?: string;
-  /**
    * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-   * FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
+   * Nulls currently appear here when serializing -Infinity to JSON.
    */
-  value?: number;
+  value: number;
 }
 
 /**
- * Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+ * Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
  */
 export enum ThresholdsMode {
   Absolute = 'absolute',
   Percentage = 'percentage',
 }
 
+/**
+ * Thresholds configuration for the panel
+ */
 export interface ThresholdsConfig {
+  /**
+   * Thresholds mode.
+   */
   mode: ThresholdsMode;
   /**
    * Must be sorted by 'value', first value is always -Infinity

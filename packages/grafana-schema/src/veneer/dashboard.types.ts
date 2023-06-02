@@ -25,6 +25,7 @@ export interface VariableModel extends Omit<raw.VariableModel, 'hide' | 'descrip
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations'> {
   panels?: Array<Panel | raw.RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
   annotations?: AnnotationContainer;
+  thresholds?: ThresholdsConfig;
   templating?: {
     list?: VariableModel[];
   };
@@ -38,6 +39,16 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery>
 
 export interface AnnotationContainer extends Omit<raw.AnnotationContainer, 'list'> {
   list?: AnnotationQuery[]; // use the version from this file
+}
+
+export interface Threshold extends Omit<raw.Threshold, 'value'> {
+  // Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
+  // Nulls currently appear here when serializing -Infinity to JSON.
+  value: number | null;
+}
+
+export interface ThresholdsConfig extends Omit<raw.ThresholdsConfig, 'steps'> {
+  steps: Threshold[];
 }
 
 export interface FieldConfig<TOptions = Record<string, unknown>> extends raw.FieldConfig {
@@ -70,3 +81,4 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = raw.defaultMatcherCo
 export const defaultAnnotationQuery: Partial<AnnotationQuery> = raw.defaultAnnotationQuery as AnnotationQuery;
 export const defaultAnnotationContainer: Partial<AnnotationContainer> =
   raw.defaultAnnotationContainer as AnnotationContainer;
+export const defaultThresholdsConfig: Partial<ThresholdsConfig> = raw.defaultThresholdsConfig as ThresholdsConfig;

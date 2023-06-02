@@ -345,27 +345,23 @@ lineage: schemas: [{
 		// They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 		#Threshold: {
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-			// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-			value?: number @grafanamaturity(NeedsExpertReview)
+			// Nulls currently appear here when serializing -Infinity to JSON.
+			value: number @grafanamaturity(NeedsExpertReview)
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
-			// Threshold index, an old property that is not needed an should only appear in older dashboards
-			index?: int32 @grafanamaturity(NeedsExpertReview)
-			// TODO docs
-			// TODO are the values here enumerable into a disjunction?
-			// Some seem to be listed in typescript comment
-			state?: string @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-		// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
-		#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+		// Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
+		#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum",memberNames="Absolute|Percentage")
 
+		// Thresholds configuration for the panel
 		#ThresholdsConfig: {
-			mode: #ThresholdsMode @grafanamaturity(NeedsExpertReview)
+			// Thresholds mode.
+			mode: #ThresholdsMode
 
 			// Must be sorted by 'value', first value is always -Infinity
 			steps: [...#Threshold] @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
 		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
