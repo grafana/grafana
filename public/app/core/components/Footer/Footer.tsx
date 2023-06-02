@@ -14,12 +14,11 @@ export interface FooterLink {
 }
 
 export let getFooterLinks = (): FooterLink[] => {
-  const txt = 'help';
   return [
     {
       target: '_blank',
       id: 'documentation',
-      text: t(`nav.${txt}/documentation`, 'Documentation'),
+      text: t(`nav.help/documentation`, 'Documentation'),
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
     },
