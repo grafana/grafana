@@ -34,15 +34,11 @@ jobs:
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_BOT_APP_PEM }}
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
       - name: "Clone website-sync Action"
-        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
-        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
-        # GitHub administrator to update the organization secret.
-        # The IT helpdesk can update the organization secret.
-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
 
       - name: "Publish to kind registry (next)"
         uses: "./.github/actions/website-sync"
@@ -51,10 +47,6 @@ jobs:
           repository: "grafana/kind-registry"
           branch: "main"
           host: "github.com"
-          # PUBLISH_TO_KIND_REGISTRY_TOKEN is a fine-grained GitHub Personal Access Token that expires.
-          # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
-          # GitHub administrator to update the organization secret.
-          # The IT helpdesk can update the organization secret.
-          github_pat: "grafanabot:${{ steps.generate_token.outputs.token }}"
+          github_pat: "${{ steps.generate_token.outputs.token }}"
           source_folder: ".github/workflows/scripts/kinds/next"
           target_folder: "grafana/next"
