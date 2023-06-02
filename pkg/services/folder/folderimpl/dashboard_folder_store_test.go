@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,7 +35,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
 		var folder1, folder2 *dashboards.Dashboard
 		sqlStore = db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
+		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, 0, "prod")
 		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, "prod")
 		folder1 = insertTestFolder(t, dashboardStore, title, orgId, 0, "prod")
@@ -51,7 +50,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	t.Run("GetFolderByUID", func(t *testing.T) {
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
+		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, 0, "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, "prod")
 
@@ -75,7 +74,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	t.Run("GetFolderByID", func(t *testing.T) {
 		var orgId int64 = 1
 		sqlStore := db.InitTestDB(t)
-		folderStore := ProvideDashboardFolderStore(sqlStore, localcache.ProvideService())
+		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder := insertTestFolder(t, dashboardStore, "TEST", orgId, 0, "prod")
 		dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.ID, "prod")
 

@@ -330,7 +330,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	cache := localcache.ProvideService()
-	folderStore := ProvideDashboardFolderStore(db, cache)
+	folderStore := ProvideDashboardFolderStore(db)
 
 	cfg := setting.NewCfg()
 

@@ -40,6 +40,7 @@ type Service struct {
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
 	cacheService         *localcache.CacheService
+	caching              bool
 	concurrencyFactor    int
 
 	// bus is currently used to publish event in case of title change
@@ -73,6 +74,7 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 		cacheService:         cacheService,
 		concurrencyFactor:    DEFAULT_CONCURRENCY,
+		caching:              true,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -184,7 +186,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	if err := concurrency.ForEachJob(ctx, len(children), s.concurrencyFactor, func(ctx context.Context, i int) error {
 		f := children[i]
 		// fetch folder from dashboard store
-		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
+		dashFolder, err := s.getFolderByUID(ctx, f.OrgID, f.UID)
 		if err != nil {
 			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
 			return nil
@@ -223,20 +225,35 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 	return s.store.GetParents(ctx, q)
 }
 
+// getFolderByID returns a folder by ID from the dashboard folder store.
+// It caches the result for 5 minutes. It should only be used for the operations that can tolerate stale data.
+// For the operations that require up-to-date data, use s.dashboardFolderStore.GetFolderByID instead.
 func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
 		return &folder.GeneralFolder, nil
 	}
 
-	return s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
+	return s.withCaching(get_folder_by_id_cache_key(orgID, id), func() (*folder.Folder, error) {
+		return s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
+	})
 }
 
+// getFolderByUID returns a folder by UID from the dashboard folder store.
+// It caches the result for 5 minutes. It should only be used for the operations that can tolerate stale data.
+// For the operations that require up-to-date data, use s.dashboardFolderStore.GetFolderByUID instead.
 func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
+	return s.withCaching(get_folder_by_uid_cache_key(orgID, uid), func() (*folder.Folder, error) {
+		return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
+	})
 }
 
+// getFolderByTitle returns a folder by title from the dashboard folder store.
+// It caches the result for 5 minutes. It should only be used for the operations that can tolerate stale data.
+// For the operations that require up-to-date data, use s.dashboardFolderStore.GetFolderByTitle instead.
 func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
+	return s.withCaching(get_folder_by_title_cache_key(orgID, title), func() (*folder.Folder, error) {
+		return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
+	})
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -433,6 +450,12 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
 		}
 	}
+
+	// clear cache from obsolete entries
+	s.cacheService.Delete(get_folder_by_uid_cache_key(dashFolder.OrgID, dashFolder.UID))
+	s.cacheService.Delete(get_folder_by_title_cache_key(dashFolder.OrgID, dashFolder.Title))
+	s.cacheService.Delete(get_folder_by_id_cache_key(dashFolder.OrgID, dashFolder.ID))
+
 	return foldr, nil
 }
 
@@ -477,7 +500,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			subfolders, err := s.nestedFolderDelete(ctx, cmd)
-
 			if err != nil {
 				logger.Error("the delete folder on folder table failed with err: ", "error", err)
 				return err
@@ -486,7 +508,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		}
 
 		for _, folder := range result {
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
+			dashFolder, err := s.getFolderByUID(ctx, cmd.OrgID, folder)
 			if err != nil {
 				return err
 			}
@@ -917,6 +939,29 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.registry[r.Kind()] = r
 
 	return nil
+}
+
+func (s *Service) withCaching(cacheKey string, f func() (*folder.Folder, error)) (*folder.Folder, error) {
+	if !s.caching {
+		return f()
+	}
+
+	if v, ok := s.cacheService.Get(cacheKey); ok {
+		f := v.(*folder.Folder)
+		s.log.Debug("cache hit", "key", cacheKey, "version", f.Version)
+		return f, nil
+	}
+
+	res, err := f()
+	s.log.Debug("cache miss", "key", cacheKey, "err", err)
+	if err != nil {
+		return nil, err
+	}
+
+	s.cacheService.Set(get_folder_by_title_cache_key(res.OrgID, res.Title), res, 0)
+	s.cacheService.Set(get_folder_by_uid_cache_key(res.OrgID, res.UID), res, 0)
+	s.cacheService.Set(get_folder_by_id_cache_key(res.OrgID, res.ID), res, 0)
+	return res, nil
 }
 
 func get_folder_by_uid_cache_key(orgID int64, uid string) string {
