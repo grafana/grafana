@@ -240,7 +240,7 @@ steps:
   name: lint-frontend
 - commands:
   - yarn run i18n:extract || (echo "Extraction failed. Make sure that you have no
-    dynamic translation phrases, such as 't(\`preferences.theme.\$\${themeID}\`, themeName)'
+    dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)'
     and that no translation key is used twice." && false)
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
     ]; then\n                echo $file_diff\n                echo Translation extraction
@@ -1312,7 +1312,7 @@ steps:
   name: lint-frontend
 - commands:
   - yarn run i18n:extract || (echo "Extraction failed. Make sure that you have no
-    dynamic translation phrases, such as 't(\`preferences.theme.\$\${themeID}\`, themeName)'
+    dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)'
     and that no translation key is used twice." && false)
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
     ]; then\n                echo $file_diff\n                echo Translation extraction
@@ -7240,6 +7240,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 082e19d5e0113caa16bca04833b210ecef51cf65cdff08eae6d149e850610445
+hmac: dfcadbdaf8dff9ceff4304ea6736ec457342c785bde8032c5e2a6d6428a61f5a
 
 ...

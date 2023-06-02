@@ -780,7 +780,7 @@ def lint_frontend_step():
     }
 
 def verify_i18n_step():
-    extract_error_message = "Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$\\${themeID}\\`, themeName)' and that no translation key is used twice."
+    extract_error_message = "Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice."
     uncommited_error_message = "Translation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
