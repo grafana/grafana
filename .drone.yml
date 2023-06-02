@@ -240,12 +240,12 @@ steps:
   name: lint-frontend
 - commands:
   - yarn run i18n:extract || sh -c 'echo "Extraction failed. Make sure that you have
-    no dynamic translation phrases, such as 't(`prefernces.theme.${themeID}`, themeName)'
+    no dynamic translation phrases, such as 't(`preferences.theme.${themeID}`, themeName)'
     and that no translation key is used twice.";false'
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo \"Translation extraction
+    ]; then\n                echo $file_diff\n                echo Translation extraction
     has not been committed. Please run 'yarn i18n:extract', commit the changes and
-    push again.\"\n                exit 1\n            fi\n            "
+    push again.\n                exit 1\n            fi\n            "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -1312,12 +1312,12 @@ steps:
   name: lint-frontend
 - commands:
   - yarn run i18n:extract || sh -c 'echo "Extraction failed. Make sure that you have
-    no dynamic translation phrases, such as 't(`prefernces.theme.${themeID}`, themeName)'
+    no dynamic translation phrases, such as 't(`preferences.theme.${themeID}`, themeName)'
     and that no translation key is used twice.";false'
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo \"Translation extraction
+    ]; then\n                echo $file_diff\n                echo Translation extraction
     has not been committed. Please run 'yarn i18n:extract', commit the changes and
-    push again.\"\n                exit 1\n            fi\n            "
+    push again.\n                exit 1\n            fi\n            "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -7240,6 +7240,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: dfbcf4ac35e2116a12faae95f1de7d8b5f9e21979d3b244cd84c0a0d9b86c8a1
+hmac: 13d06a53f48d4c976733307490ed3fba983eeb5125d35de81f44d56b35b51b98
 
 ...
