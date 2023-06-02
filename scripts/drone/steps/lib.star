@@ -780,14 +780,16 @@ def lint_frontend_step():
     }
 
 def verify_i18n_step():
+    extract_error_message = "Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(`prefernces.theme.$\{themeID\}`, themeName)' and that no translation key is used twice."
+
     return {
         "name": "verify-i18n",
         "image": build_image,
-        "depends_on": [
+        "depends_on": [true
             "yarn-install",
         ],
         "commands": [
-            "yarn run i18n:extract",
+            "yarn run i18n:extract || sh -c 'echo "{}";false".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff -- locales --stat)
