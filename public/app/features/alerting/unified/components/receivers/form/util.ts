@@ -29,7 +29,7 @@ export function normalizeFormValues(
       ...item,
       settings: {
         ...item.settings,
-        http_config: normalizeHTTPConfig(item.settings.http_config),
+        http_config: item.settings?.http_config ? normalizeHTTPConfig(item.settings?.http_config) : undefined,
       },
     })),
   };
