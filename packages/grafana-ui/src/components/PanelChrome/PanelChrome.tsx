@@ -55,7 +55,7 @@ export interface PanelChromeProps {
   leftItems?: ReactNode[];
   actions?: ReactNode;
   collapsible?: boolean;
-  collapsed?: boolean;
+  isOpen?: boolean;
   displayMode?: 'default' | 'transparent';
   onCancelQuery?: () => void;
   /**
@@ -80,7 +80,7 @@ export function PanelChrome({
   title = '',
   description = '',
   collapsible = false,
-  collapsed = false,
+  isOpen,
   displayMode = collapsible ? 'transparent' : 'default',
   onToggle,
   titleItems,
@@ -126,7 +126,7 @@ export function PanelChrome({
 
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
-  const [open, toggleOpen] = useToggle(collapsed ? false : true);
+  const [open, toggleOpen] = useToggle(isOpen ? true : false);
 
   const toggle = () => {
     toggleOpen();
