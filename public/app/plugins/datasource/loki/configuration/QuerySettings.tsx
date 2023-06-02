@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { config } from '@grafana/runtime';
-import { LegacyForms } from '@grafana/ui';
+import { Badge, LegacyForms } from '@grafana/ui';
 
 const { FormField } = LegacyForms;
 
@@ -67,6 +67,12 @@ export const QuerySettings = (props: Props) => {
                     }
                   </div>
                 }
+              />
+              <Badge
+                text="Experimental"
+                color="orange"
+                icon="exclamation-triangle"
+                tooltip="Predefined operations is an experimental feature that may change in the future."
               />
             </div>
           </div>
