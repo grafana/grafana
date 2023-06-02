@@ -792,6 +792,7 @@ def verify_i18n_step():
             '''
             file_diff=$(git diff --stat)
             if [ -n "$file_diff" ]; then
+                echo $file_diff
                 echo "Translation extraction has not been committed. Please commit the changes and push again."
                 exit 1
             fi
