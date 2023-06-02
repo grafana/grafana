@@ -88,8 +88,8 @@ describe('DashboardModel', () => {
           },
           {
             type: 'singlestat',
-            legend: true,
             // @ts-expect-error
+            legend: true,
             thresholds: '10,20,30',
             colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
@@ -1334,8 +1334,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'singlestat',
-            legend: true,
             // @ts-expect-error
+            legend: true,
             thresholds: '10,20,30',
             colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
@@ -1396,8 +1396,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'singlestat',
-            legend: true,
             // @ts-expect-error
+            legend: true,
             thresholds: '10,20,30',
             colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
