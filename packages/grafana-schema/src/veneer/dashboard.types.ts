@@ -46,7 +46,7 @@ export interface AnnotationContainer extends Omit<raw.AnnotationContainer, 'list
 }
 
 export interface Threshold extends Omit<raw.Threshold, 'value'> {
-  // Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
+  // Value represents a lower bound of a threshold. This triggers a visual change in the dashboard when a graphed value is within the bounds of a threshold.
   // Nulls currently appear here when serializing -Infinity to JSON.
   value: number | null;
 }
