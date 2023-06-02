@@ -586,7 +586,9 @@ lineage: schemas: [{
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		#FieldConfigSource: {
+			// Defaults are the options applied to all fields.
 			defaults: #FieldConfig
+			// Overrides are the options applied to specific fields overriding the defaults.
 			overrides: [...{
 				matcher: #MatcherConfig
 				properties: [...#DynamicConfigValue]
@@ -598,10 +600,13 @@ lineage: schemas: [{
 			uid:  string
 		} @cuetsy(kind="interface")
 
-		// Optional frame matcher. When missing it will be applied to all results
+		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		#MatcherConfig: {
-			id:       string | *"" @grafanamaturity(NeedsExpertReview)
-			options?: _            @grafanamaturity(NeedsExpertReview)
+			// The matcher id. This is used to find the matcher implementation from registry.
+			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// The matcher options. This is specific to the matcher implementation.
+			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		#DynamicConfigValue: {
@@ -609,6 +614,9 @@ lineage: schemas: [{
 			value?: _            @grafanamaturity(NeedsExpertReview)
 		}
 
+		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. 
+		// Each column within this structure is called a field. A field can represent a single time series or table column.
+		// Field options allow you to change how the data is displayed in your visualizations.
 		#FieldConfig: {
 			// The display value for this field.  This supports template variables blank is auto
 			displayName?: string @grafanamaturity(NeedsExpertReview)
@@ -627,19 +635,33 @@ lineage: schemas: [{
 			// may be used to update the results
 			path?: string @grafanamaturity(NeedsExpertReview)
 
-			// True if data source can write a value to the path.  Auth/authz are supported separately
+			// True if data source can write a value to the path. Auth/authz are supported separately
 			writeable?: bool @grafanamaturity(NeedsExpertReview)
 
 			// True if data source field supports ad-hoc filters
 			filterable?: bool @grafanamaturity(NeedsExpertReview)
 
-			// Numeric Options
+			// Unit a field should use. The unit you select is applied to all fields except time.
+			// You can use the units ID availables in Grafana or a custom unit.
+			// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+			// As custom unit, you can use the following formats:
+			// `suffix:<suffix>` for custom unit that should go after value.
+			// `prefix:<prefix>` for custom unit that should go before value.
+			// `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
+			// `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
+			// `count:<unit>` for a custom count unit.
+			// `currency:<unit>` for custom a currency unit.
 			unit?: string @grafanamaturity(NeedsExpertReview)
 
-			// Significant digits (for display)
+			// Specify the number of decimals Grafana includes in the rendered value. 
+			// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value. 
+			// For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+			// To display all decimals, set the unit to `String`.
 			decimals?: number @grafanamaturity(NeedsExpertReview)
 
+			// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 			min?: number @grafanamaturity(NeedsExpertReview)
+			// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 			max?: number @grafanamaturity(NeedsExpertReview)
 
 			// Convert input values into a display string
@@ -650,9 +672,6 @@ lineage: schemas: [{
 
 			// Panel color configuration
 			color?: #FieldColor
-
-			// Used when reducing field values
-			//   nullValueMode?: NullValueMode
 
 			// The behavior when clicking on a result
 			links?: [...] @grafanamaturity(NeedsExpertReview)
@@ -667,24 +686,38 @@ lineage: schemas: [{
 
 		// Row panel
 		#RowPanel: {
-			type:      "row"         @grafanamaturity(NeedsExpertReview)
-			collapsed: bool | *false @grafanamaturity(NeedsExpertReview)
-			title?:    string        @grafanamaturity(NeedsExpertReview)
+			// The panel type
+			type: "row" @grafanamaturity(NeedsExpertReview)
 
-			// Name of default datasource.
+			// Whether this row should be collapsed or not.
+			collapsed: bool | *false @grafanamaturity(NeedsExpertReview)
+
+			// Row title
+			title?: string @grafanamaturity(NeedsExpertReview)
+
+			// Name of default datasource for the row
 			datasource?: {
+				// Data source type
 				type?: string @grafanamaturity(NeedsExpertReview)
-				uid?:  string @grafanamaturity(NeedsExpertReview)
+				// Data source unique identifier
+				uid?: string @grafanamaturity(NeedsExpertReview)
 			} @grafanamaturity(NeedsExpertReview)
 
+			// Row grid position
 			gridPos?: #GridPos
-			id:       uint32 @grafanamaturity(NeedsExpertReview)
+
+			// Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
+			id: uint32 @grafanamaturity(NeedsExpertReview)
+
+			// List of panels in the row
 			panels: [...(#Panel | #GraphPanel | #HeatmapPanel)] @grafanamaturity(NeedsExpertReview)
+
 			// Name of template variable to repeat for.
 			repeat?: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-		// Support for legacy graph and heatmap panels.
+		// Support for legacy graph panel.
+		// @deprecated this a deprecated panel type
 		#GraphPanel: {
 			type: "graph" @grafanamaturity(NeedsExpertReview)
 			// @deprecated this is part of deprecated graph panel
@@ -696,6 +729,8 @@ lineage: schemas: [{
 			...
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
+		// Support for legacy heatmap panel.
+		// @deprecated this a deprecated panel type
 		#HeatmapPanel: {
 			type: "heatmap" @grafanamaturity(NeedsExpertReview)
 			...

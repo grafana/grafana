@@ -281,7 +281,8 @@ type DataTransformerConfig struct {
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 
-	// Optional frame matcher. When missing it will be applied to all results
+	// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+	// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 	Filter *MatcherConfig `json:"filter,omitempty"`
 
 	// Unique identifier of transformer
@@ -350,7 +351,9 @@ type FieldColorModeId string
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 type FieldColorSeriesByMode string
 
-// FieldConfig defines model for FieldConfig.
+// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+// Each column within this structure is called a field. A field can represent a single time series or table column.
+// Field options allow you to change how the data is displayed in your visualizations.
 type FieldConfig struct {
 	// Map a field to a color.
 	Color *FieldColor `json:"color,omitempty"`
@@ -359,7 +362,10 @@ type FieldConfig struct {
 	// in panel plugin schemas.
 	Custom map[string]interface{} `json:"custom,omitempty"`
 
-	// Significant digits (for display)
+	// Specify the number of decimals Grafana includes in the rendered value.
+	// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value.
+	// For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+	// To display all decimals, set the unit to `String`.
 	Decimals *float32 `json:"decimals,omitempty"`
 
 	// Human readable field metadata
@@ -380,8 +386,12 @@ type FieldConfig struct {
 
 	// Convert input values into a display string
 	Mappings []interface{} `json:"mappings,omitempty"`
-	Max      *float32      `json:"max,omitempty"`
-	Min      *float32      `json:"min,omitempty"`
+
+	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+	Max *float32 `json:"max,omitempty"`
+
+	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+	Min *float32 `json:"min,omitempty"`
 
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
@@ -396,24 +406,40 @@ type FieldConfig struct {
 	// Thresholds configuration for the panel
 	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
-	// Numeric Options
+	// Unit a field should use. The unit you select is applied to all fields except time.
+	// You can use the units ID availables in Grafana or a custom unit.
+	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+	// As custom unit, you can use the following formats:
+	// `suffix:<suffix>` for custom unit that should go after value.
+	// `prefix:<prefix>` for custom unit that should go before value.
+	// `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
+	// `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
+	// `count:<unit>` for a custom count unit.
+	// `currency:<unit>` for custom a currency unit.
 	Unit *string `json:"unit,omitempty"`
 
-	// True if data source can write a value to the path.  Auth/authz are supported separately
+	// True if data source can write a value to the path. Auth/authz are supported separately
 	Writeable *bool `json:"writeable,omitempty"`
 }
 
 // FieldConfigSource defines model for FieldConfigSource.
 type FieldConfigSource struct {
-	Defaults  FieldConfig `json:"defaults"`
+	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+	// Each column within this structure is called a field. A field can represent a single time series or table column.
+	// Field options allow you to change how the data is displayed in your visualizations.
+	Defaults FieldConfig `json:"defaults"`
+
+	// Overrides are the options applied to specific fields overriding the defaults.
 	Overrides []struct {
-		// Optional frame matcher. When missing it will be applied to all results
+		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		Matcher    MatcherConfig        `json:"matcher"`
 		Properties []DynamicConfigValue `json:"properties"`
 	} `json:"overrides"`
 }
 
-// Support for legacy graph and heatmap panels.
+// Support for legacy graph panel.
+// @deprecated this a deprecated panel type
 type GraphPanel struct {
 	// @deprecated this is part of deprecated graph panel
 	Legend *struct {
@@ -445,7 +471,8 @@ type GridPos struct {
 	Y int `json:"y"`
 }
 
-// HeatmapPanel defines model for HeatmapPanel.
+// Support for legacy heatmap panel.
+// @deprecated this a deprecated panel type
 type HeatmapPanel struct {
 	Type HeatmapPanelType `json:"type"`
 }
@@ -466,9 +493,13 @@ type LibraryPanelRef struct {
 // SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 type MappingType string
 
-// Optional frame matcher. When missing it will be applied to all results
+// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 type MatcherConfig struct {
-	Id      string       `json:"id"`
+	// The matcher id. This is used to find the matcher implementation from registry.
+	Id string `json:"id"`
+
+	// The matcher options. This is specific to the matcher implementation.
 	Options *interface{} `json:"options,omitempty"`
 }
 
@@ -602,26 +633,38 @@ type RegexMapType string
 
 // Row panel
 type RowPanel struct {
+	// Whether this row should be collapsed or not.
 	Collapsed bool `json:"collapsed"`
 
-	// Name of default datasource.
+	// Name of default datasource for the row
 	Datasource *struct {
+		// Data source type
 		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
+
+		// Data source unique identifier
+		Uid *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
 
 	// Position and dimensions of a panel in the grid
-	GridPos *GridPos      `json:"gridPos,omitempty"`
-	Id      int           `json:"id"`
-	Panels  []interface{} `json:"panels"`
+	GridPos *GridPos `json:"gridPos,omitempty"`
+
+	// Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
+	Id int `json:"id"`
+
+	// List of panels in the row
+	Panels []interface{} `json:"panels"`
 
 	// Name of template variable to repeat for.
-	Repeat *string      `json:"repeat,omitempty"`
-	Title  *string      `json:"title,omitempty"`
-	Type   RowPanelType `json:"type"`
+	Repeat *string `json:"repeat,omitempty"`
+
+	// Row title
+	Title *string `json:"title,omitempty"`
+
+	// The panel type
+	Type RowPanelType `json:"type"`
 }
 
-// RowPanelType defines model for RowPanel.Type.
+// The panel type
 type RowPanelType string
 
 // A dashboard snapshot shares an interactive dashboard publicly.
