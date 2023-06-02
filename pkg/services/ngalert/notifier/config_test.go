@@ -98,7 +98,7 @@ func TestPersistTemplates(t *testing.T) {
 
 			// Given we use a temporary directory in tests, we need to prepend the expected paths with it.
 			for i, p := range tt.expectedPaths {
-				tt.expectedPaths[i] = filepath.Join(dir, p)
+				tt.expectedPaths[i] = p
 			}
 
 			require.Equal(t, tt.expectedError, persistErr)

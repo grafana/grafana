@@ -53,6 +53,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		revision.cfg.TemplateFiles = map[string]string{}
 	}
 	revision.cfg.TemplateFiles[tmpl.Name] = tmpl.Template
+	revision.cfg.AlertmanagerConfig.Templates = append(revision.cfg.AlertmanagerConfig.Templates, tmpl.Name)
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
