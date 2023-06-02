@@ -71,7 +71,7 @@ server_admin_only = true
 public_keys = ""
 ```
 
-> **Note**: By default, only server admins can generate and view a support bundle. The `server_admin_only` option can be used to widen this access to organization admins. 
+> **Note**: By default, only server admins can generate and view a support bundle. The `server_admin_only` option can be used to widen this access to organization admins.
 
 ## Encrypting a support bundle
 
