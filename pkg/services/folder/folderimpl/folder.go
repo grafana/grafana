@@ -534,9 +534,9 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 		return toFolderError(err)
 	}
 
-	s.cacheService.Delete(fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_UID_PREFIX, dashFolder.OrgID, dashFolder.UID))
-	s.cacheService.Delete(fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_TITLE_PREFIX, dashFolder.OrgID, dashFolder.Title))
-	s.cacheService.Delete(fmt.Sprintf("%s-%d-%d", CACHING_FOLDER_BY_ID_PREFIX, dashFolder.OrgID, dashFolder.ID))
+	s.cacheService.Delete(get_folder_by_uid_cache_key(dashFolder.OrgID, dashFolder.UID))
+	s.cacheService.Delete(get_folder_by_title_cache_key(dashFolder.OrgID, dashFolder.Title))
+	s.cacheService.Delete(get_folder_by_id_cache_key(dashFolder.OrgID, dashFolder.ID))
 	return nil
 }
 
@@ -917,4 +917,16 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.registry[r.Kind()] = r
 
 	return nil
+}
+
+func get_folder_by_uid_cache_key(orgID int64, uid string) string {
+	return fmt.Sprintf("folderByUID-%d-%s", orgID, uid)
+}
+
+func get_folder_by_title_cache_key(orgID int64, title string) string {
+	return fmt.Sprintf("folderByTitle-%d-%s", orgID, title)
+}
+
+func get_folder_by_id_cache_key(orgID int64, id int64) string {
+	return fmt.Sprintf("folderByID-%d-%d", orgID, id)
 }

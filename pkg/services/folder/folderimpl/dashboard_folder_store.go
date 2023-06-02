@@ -2,19 +2,12 @@ package folderimpl
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-)
-
-const (
-	CACHING_FOLDER_BY_UID_PREFIX   = "folderByUID"
-	CACHING_FOLDER_BY_TITLE_PREFIX = "folderByTitle"
-	CACHING_FOLDER_BY_ID_PREFIX    = "folderByID"
 )
 
 // DashboardStore implements the FolderStore interface
@@ -23,10 +16,11 @@ type DashboardFolderStoreImpl struct {
 	store        db.DB
 	caching      bool
 	cacheService *localcache.CacheService
+	log          log.Logger
 }
 
 func ProvideDashboardFolderStore(sqlStore db.DB, cacheService *localcache.CacheService) *DashboardFolderStoreImpl {
-	return &DashboardFolderStoreImpl{store: sqlStore, cacheService: cacheService, caching: true}
+	return &DashboardFolderStoreImpl{store: sqlStore, cacheService: cacheService, caching: true, log: log.New("dashboard.folder")}
 }
 
 func (d *DashboardFolderStoreImpl) disableCaching() {
@@ -38,7 +32,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 		return nil, dashboards.ErrFolderTitleEmpty
 	}
 
-	cacheKey := fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_TITLE_PREFIX, orgID, title)
+	cacheKey := get_folder_by_title_cache_key(orgID, title)
 	return d.withCaching(cacheKey, func() (*folder.Folder, error) {
 		// there is a unique constraint on org_id, folder_id, title
 		// there are no nested folders so the parent folder id is always 0
@@ -60,7 +54,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByTitle(ctx context.Context, orgID i
 }
 
 func (d *DashboardFolderStoreImpl) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
-	cacheKey := fmt.Sprintf("%s-%d-%d", CACHING_FOLDER_BY_ID_PREFIX, orgID, id)
+	cacheKey := get_folder_by_id_cache_key(orgID, id)
 	return d.withCaching(cacheKey, func() (*folder.Folder, error) {
 		dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
 		err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -87,7 +81,7 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 		return nil, dashboards.ErrDashboardIdentifierNotSet
 	}
 
-	cacheKey := fmt.Sprintf("%s-%d-%s", CACHING_FOLDER_BY_UID_PREFIX, orgID, uid)
+	cacheKey := get_folder_by_uid_cache_key(orgID, uid)
 	return d.withCaching(cacheKey, func() (*folder.Folder, error) {
 		dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
 		err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -117,14 +111,18 @@ func (d *DashboardFolderStoreImpl) withCaching(cacheKey string, f func() (*folde
 	}
 
 	if f, ok := d.cacheService.Get(cacheKey); ok {
+		d.log.Debug("cache hit", "key", cacheKey)
 		return f.(*folder.Folder), nil
 	}
 
 	res, err := f()
+	d.log.Debug("cache miss", "key", cacheKey, "err", err)
 	if err != nil {
 		return nil, err
 	}
 
-	d.cacheService.Set(cacheKey, res, time.Second*5)
+	d.cacheService.Set(get_folder_by_title_cache_key(res.OrgID, res.Title), res, 0)
+	d.cacheService.Set(get_folder_by_uid_cache_key(res.OrgID, res.UID), res, 0)
+	d.cacheService.Set(get_folder_by_id_cache_key(res.OrgID, res.ID), res, 0)
 	return res, nil
 }
