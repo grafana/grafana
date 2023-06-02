@@ -12,6 +12,8 @@ import {
 
 import { SampleUnit } from '../types';
 
+import { mergeSubtrees } from './treeTransforms';
+
 export type LevelItem = { start: number; itemIndexes: number[]; children: LevelItem[]; parents?: LevelItem[] };
 
 /**
@@ -119,20 +121,26 @@ export class FlameGraphDataContainer {
     return this.levelField.values[index];
   }
 
-  getValue(index: number) {
-    return this.valueField.values[index];
+  getValue(index: number | number[]) {
+    let indexArray: number[] = typeof index === 'number' ? [index] : index;
+    return indexArray.reduce((acc, index) => {
+      return acc + this.valueField.values[index];
+    }, 0);
   }
 
-  getValueDisplay(index: number) {
-    return this.valueDisplayProcessor(this.valueField.values[index]);
+  getValueDisplay(index: number | number[]) {
+    return this.valueDisplayProcessor(this.getValue(index));
   }
 
-  getSelf(index: number) {
-    return this.selfField.values[index];
+  getSelf(index: number | number[]) {
+    let indexArray: number[] = typeof index === 'number' ? [index] : index;
+    return indexArray.reduce((acc, index) => {
+      return acc + this.selfField.values[index];
+    }, 0);
   }
 
-  getSelfDisplay(index: number) {
-    return this.valueDisplayProcessor(this.selfField.values[index]);
+  getSelfDisplay(index: number | number[]) {
+    return this.valueDisplayProcessor(this.getSelf(index));
   }
 
   getUniqueLabels() {
@@ -161,9 +169,7 @@ export class FlameGraphDataContainer {
   }
 
   getCallersTree(label: string) {
-    this.initLevels();
-
-    const nodes = this.uniqueLabelsMap![label];
+    const nodes = this.getNodesWithLabel(label);
     if (nodes?.length <= 1) {
       return nodes && nodes[0];
     }
@@ -180,8 +186,18 @@ export class FlameGraphDataContainer {
   }
 
   getCalleesTree(label: string) {
+    const nodes = this.getNodesWithLabel(label);
+
+    if (!nodes?.length) {
+      return [];
+    }
+
+    return mergeSubtrees(nodes, this);
+  }
+
+  getNodesWithLabel(label: string) {
     this.initLevels();
-    return undefined;
+    return this.uniqueLabelsMap![label];
   }
 
   private initLevels() {

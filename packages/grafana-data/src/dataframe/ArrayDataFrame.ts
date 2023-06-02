@@ -21,7 +21,8 @@ export class ArrayDataFrame<T = any> implements DataFrame {
 }
 
 /**
- * arrayToDataFrame will convert any array into a DataFrame
+ * arrayToDataFrame will convert any array into a DataFrame. Source can be either an object keyed by field names or it
+ * can be array of values that will be converted into frame with single field with TIME_SERIES_VALUE_FIELD_NAME as name.
  *
  * @public
  */

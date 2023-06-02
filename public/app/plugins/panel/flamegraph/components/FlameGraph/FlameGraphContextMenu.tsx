@@ -8,9 +8,10 @@ type Props = {
   itemData: ClickedItemData;
   onMenuItemClick: () => void;
   onItemFocus: (itemIndex: number) => void;
+  onSandwich: (itemIndex: number) => void;
 };
 
-const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus }: Props) => {
+const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandwich }: Props) => {
   function renderItems() {
     return (
       <>
@@ -29,6 +30,14 @@ const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus }: Props
             navigator.clipboard.writeText(itemData.label).then(() => {
               onMenuItemClick();
             });
+          }}
+        />
+        <MenuItem
+          label="Sandwich view"
+          icon={'align-center-v'}
+          onClick={() => {
+            onSandwich(itemData.itemIndex);
+            onMenuItemClick();
           }}
         />
       </>

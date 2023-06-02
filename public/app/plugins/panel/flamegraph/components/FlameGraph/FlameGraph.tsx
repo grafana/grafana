@@ -42,6 +42,8 @@ type Props = {
   onItemFocused: (itemIndex: number) => void;
   focusedItemIndex?: number;
   textAlign: TextAlign;
+  sandwichItem?: string;
+  onSandwich: (label: string) => void;
 };
 
 const FlameGraph = ({
@@ -54,9 +56,14 @@ const FlameGraph = ({
   onItemFocused,
   focusedItemIndex,
   textAlign,
+  onSandwich,
+  sandwichItem,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const totalTicks = data.getValue(0);
+
+  const levels = sandwichItem ? data.getCalleesTree(sandwichItem) : data.getLevels();
+  const totalTicks = data.getValue(levels[0][0].itemIndexes);
+  console.log({ levels, totalTicks, data });
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
@@ -65,7 +72,7 @@ const FlameGraph = ({
 
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
-  useFlameRender(graphRef, data, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
+  useFlameRender(graphRef, data, levels, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
 
   const onGraphClick = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
@@ -74,6 +81,7 @@ const FlameGraph = ({
       const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
         { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
         data,
+        levels,
         pixelsPerTick,
         totalTicks,
         rangeMin
@@ -81,7 +89,7 @@ const FlameGraph = ({
 
       // if clicking on a block in the canvas
       if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-        const item = data.getLevels()[levelIndex][barIndex];
+        const item = levels[levelIndex][barIndex];
         setClickedItemData({
           posY: e.clientY,
           posX: e.clientX,
@@ -94,7 +102,7 @@ const FlameGraph = ({
         setClickedItemData(undefined);
       }
     },
-    [data, rangeMin, rangeMax, totalTicks]
+    [data, rangeMin, rangeMax, totalTicks, levels]
   );
 
   const onGraphMouseMove = useCallback(
@@ -105,6 +113,7 @@ const FlameGraph = ({
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
           { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
           data,
+          levels,
           pixelsPerTick,
           totalTicks,
           rangeMin
@@ -120,11 +129,11 @@ const FlameGraph = ({
             tooltipRef.current.style.right = 'auto';
           }
 
-          setTooltipItem(data.getLevels()[levelIndex][barIndex]);
+          setTooltipItem(levels[levelIndex][barIndex]);
         }
       }
     },
-    [data, rangeMin, rangeMax, totalTicks, clickedItemData]
+    [data, rangeMin, rangeMax, totalTicks, clickedItemData, levels]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -167,6 +176,10 @@ const FlameGraph = ({
             setRangeMax((clickedItemData.start + data.getValue(clickedItemData.itemIndex)) / totalTicks);
             onItemFocused(itemIndex);
           }}
+          onSandwich={(itemIndex) => {
+            const label = data.getLabel(itemIndex);
+            onSandwich(label);
+          }}
         />
       )}
     </div>
@@ -191,12 +204,13 @@ const convertPixelCoordinatesToBarCoordinates = (
   // position relative to the start of the graph
   pos: { x: number; y: number },
   data: FlameGraphDataContainer,
+  levels: LevelItem[][],
   pixelsPerTick: number,
   totalTicks: number,
   rangeMin: number
 ) => {
   const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-  const barIndex = getBarIndex(pos.x, data, data.getLevels()[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  const barIndex = getBarIndex(pos.x, data, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
   return { levelIndex, barIndex };
 };
 
@@ -220,7 +234,7 @@ const getBarIndex = (
       const midIndex = (start + end) >> 1;
       const startOfBar = getBarX(level[midIndex].start, totalTicks, rangeMin, pixelsPerTick);
       const startOfNextBar = getBarX(
-        level[midIndex].start + data.getValue(level[midIndex].itemIndexes[0]),
+        level[midIndex].start + data.getValue(level[midIndex].itemIndexes),
         totalTicks,
         rangeMin,
         pixelsPerTick

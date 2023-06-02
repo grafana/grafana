@@ -1,86 +1,73 @@
-import { createDataFrame } from '@grafana/data';
+import { arrayToDataFrame } from '@grafana/data';
 
-type TreeNode = {
-  label: string;
-  level: number;
-  value: number;
-  start: number;
-  self: number;
-  children: TreeNode[];
-};
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
-export function textToTree(text: string) {
+export function textToDataContainer(text: string) {
   const levels = text.split('\n');
+
+  if (levels.length === 0) {
+    return undefined;
+  }
+
   if (levels[0] === '') {
     levels.shift();
   }
 
-  const margin = levels[0].indexOf('[');
-  const root: TreeNode = {
-    label: 'root',
-    level: 0,
-    value: levels[0].length - margin,
-    start: 0,
-    self: levels[0].length - margin,
-    children: [],
-  };
+  const dfValues: Array<{ level: number; value: number; label: string; self: number }> = [];
+  const dfSorted: Array<{ level: number; value: number; label: string; self: number }> = [];
+  const leftMargin = levels[0].indexOf('[');
 
-  let prevLevel = [root];
+  let itemLevels: LevelItem[][] = [];
   const re = /\[(\d)[^\[]*]/g;
   let match;
 
   for (let i = 0; i < levels.length; i++) {
-    const newLevel = [];
     while ((match = re.exec(levels[i])) !== null) {
-      const node: TreeNode = {
-        label: match[1],
-        level: i + 1,
+      const currentNodeValue = match[0].length;
+      dfValues.push({
         value: match[0].length,
-        start: match.index - margin,
+        label: match[1],
         self: match[0].length,
+        level: i,
+      });
+
+      const node: LevelItem = {
+        itemIndexes: [dfValues.length - 1],
+        start: match.index - leftMargin,
         children: [],
       };
 
-      newLevel.push(node);
+      itemLevels[i] = itemLevels[i] || [];
+      itemLevels[i].push(node);
+      const prevLevel = itemLevels[i - 1];
 
-      for (const n of prevLevel) {
-        if (n.start + n.value > node.start) {
-          n.children.push(node);
-          n.self = n.self - node.value;
-          break;
+      if (prevLevel) {
+        for (const n of prevLevel) {
+          const nRow = dfValues[n.itemIndexes[0]];
+          const value = nRow.value;
+          if (n.start + value > node.start) {
+            n.children.push(node);
+            nRow.self = nRow.self - currentNodeValue;
+            break;
+          }
         }
       }
     }
-    prevLevel = newLevel;
   }
 
-  return root;
-}
+  const root = itemLevels[0][0];
 
-type Field<T = number> = { name: string; values: T[] };
-
-export function treeToDataFrame(root: TreeNode) {
-  const levelField: Field = { name: 'level', values: [] };
-  const valueField: Field = { name: 'value', values: [] };
-  const labelField: Field<string> = { name: 'label', values: [] };
-  const selfField: Field<number> = { name: 'self', values: [] };
-
-  let stack = [root];
-
+  const stack = [root];
   while (stack.length) {
     const node = stack.shift()!;
-    levelField.values.push(node.level);
-    valueField.values.push(node.value);
-    labelField.values.push(node.label);
-    selfField.values.push(node.self);
-    stack = [...node.children, ...stack];
+    const index = node.itemIndexes[0];
+    dfSorted.push(dfValues[index]);
+    node.itemIndexes = [dfSorted.length - 1];
+    if (node.children) {
+      stack.unshift(...node.children);
+    }
   }
 
-  return createDataFrame({
-    fields: [levelField, valueField, selfField, labelField],
-  });
-}
-
-export function frameFromText(text: string) {
-  return treeToDataFrame(textToTree(text));
+  const df = arrayToDataFrame(dfSorted);
+  return new FlameGraphDataContainer(df);
 }

@@ -28,6 +28,8 @@ const FlameGraphContainer = (props: Props) => {
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
+  // This is a label of the item because in sandwitch view we group all items by label and present a merged graph
+  const [sandwichItem, setSandwichItem] = useState<string>();
 
   const theme = useTheme2();
 
@@ -72,6 +74,7 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMin(0);
               setRangeMax(1);
               setFocusedItemIndex(undefined);
+              setSandwichItem(undefined);
             }}
             textAlign={textAlign}
             onTextAlignChange={setTextAlign}
@@ -110,6 +113,10 @@ const FlameGraphContainer = (props: Props) => {
                 onItemFocused={(itemIndex) => setFocusedItemIndex(itemIndex)}
                 focusedItemIndex={focusedItemIndex}
                 textAlign={textAlign}
+                sandwichItem={sandwichItem}
+                onSandwich={(label: string) => {
+                  setSandwichItem(label);
+                }}
               />
             )}
           </div>

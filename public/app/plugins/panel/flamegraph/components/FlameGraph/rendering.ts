@@ -20,6 +20,7 @@ const ufuzzy = new uFuzzy();
 export function useFlameRender(
   canvasRef: RefObject<HTMLCanvasElement>,
   data: FlameGraphDataContainer,
+  levels: LevelItem[][],
   wrapperWidth: number,
   rangeMin: number,
   rangeMax: number,
@@ -44,7 +45,7 @@ export function useFlameRender(
     return undefined;
   }, [search, data]);
 
-  const ctx = useSetupCanvas(canvasRef, wrapperWidth, data.getLevels().length);
+  const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
 
   useEffect(() => {
     if (!ctx) {
@@ -52,11 +53,11 @@ export function useFlameRender(
     }
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    const totalTicks = data.getValue(0);
+    const totalTicks = data.getValue(levels[0][0].itemIndexes);
     const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
 
-    for (let levelIndex = 0; levelIndex < data.getLevels().length; levelIndex++) {
-      const level = data.getLevels()[levelIndex];
+    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
+      const level = levels[levelIndex];
       // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
       // sometimes we collapse multiple bars into single rect.
       const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
@@ -66,7 +67,7 @@ export function useFlameRender(
         renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, levelIndex, focusedLevel, foundLabels, textAlign);
       }
     }
-  }, [ctx, data, wrapperWidth, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
+  }, [ctx, data, levels, wrapperWidth, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
@@ -120,7 +121,7 @@ export function getRectDimensionsForLevel(
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
     const item = level[barIndex];
     const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = data.getValue(item.itemIndexes[0]);
+    let curBarTicks = data.getValue(item.itemIndexes);
 
     // merge very small blocks into big "collapsed" ones for performance
     const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
@@ -128,14 +129,14 @@ export function getRectDimensionsForLevel(
       while (
         barIndex < level.length - 1 &&
         item.start + curBarTicks === level[barIndex + 1].start &&
-        data.getValue(level[barIndex + 1].itemIndexes[0]) * pixelsPerTick <= COLLAPSE_THRESHOLD
+        data.getValue(level[barIndex + 1].itemIndexes) * pixelsPerTick <= COLLAPSE_THRESHOLD
       ) {
         barIndex += 1;
-        curBarTicks += data.getValue(level[barIndex].itemIndexes[0]);
+        curBarTicks += data.getValue(level[barIndex].itemIndexes);
       }
     }
 
-    const displayValue = data.getValueDisplay(item.itemIndexes[0]);
+    const displayValue = data.getValueDisplay(item.itemIndexes);
     let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
