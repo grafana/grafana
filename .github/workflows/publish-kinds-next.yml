@@ -1,15 +1,10 @@
 name: "publish-kinds-next"
 
-# Temporary - for tests
 on:
   push:
     branches:
-      - "agnestoulet/kind-registry"
-# on:
-#   push:
-#     branches:
-#       - "main"
-#   workflow_dispatch:
+      - "main"
+  workflow_dispatch:
 
 jobs:
   main:
