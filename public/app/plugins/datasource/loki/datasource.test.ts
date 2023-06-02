@@ -1159,7 +1159,7 @@ describe('applyTemplateVariables', () => {
       testVariable: { text: 'foo', value: 'foo' },
     };
 
-    it('should not interpolate __interval variables for interpolation', () => {
+    it('should not interpolate __interval variables', () => {
       const templateSrvMock = {
         getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
         replace: jest.fn((a: string, ...rest: unknown[]) => a),
@@ -1191,7 +1191,7 @@ describe('applyTemplateVariables', () => {
       );
     });
 
-    it('should not interpolate __range variables for interpolation', () => {
+    it('should not interpolate __range variables', () => {
       const templateSrvMock = {
         getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
         replace: jest.fn((a: string, ...rest: unknown[]) => a),
