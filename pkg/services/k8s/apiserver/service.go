@@ -33,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -222,7 +223,9 @@ func (s *service) start(ctx context.Context) error {
 		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
 		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
 		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
-		prepared.GenericAPIServer.Handler.ServeHTTP(c.Resp, req)
+
+		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
 
 	go func() {
