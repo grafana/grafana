@@ -104,7 +104,7 @@ const PublicDashboardCard = ({ pd }: { pd: ListPublicDashboardResponse }) => {
         {hasWritePermissions && (
           <DeletePublicDashboardButton
             fill="text"
-            icon="power"
+            icon="trash-alt"
             variant="secondary"
             publicDashboard={pd}
             tooltip="Revoke public dashboard url"

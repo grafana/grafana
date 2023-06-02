@@ -67,7 +67,7 @@ export const ConfirmModal = ({
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmationText?.localeCompare(event.currentTarget.value) !== 0);
+    setDisabled(confirmationText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
   };
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export const ConfirmModal = ({
         {confirmationText ? (
           <div className={styles.modalConfirmationInput}>
             <HorizontalGroup>
-              <Input placeholder={`Type ${confirmationText} to confirm`} onChange={onConfirmationTextChange} />
+              <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
             </HorizontalGroup>
           </div>
         ) : null}

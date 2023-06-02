@@ -15,6 +15,7 @@ import {
   TagList,
   useStyles2,
   VerticalGroup,
+  InlineField,
 } from '@grafana/ui';
 
 import { getGrafanaStorage } from './storage';
@@ -94,9 +95,9 @@ export function RootView({ root, onPathChange }: Props) {
   return (
     <div>
       <div className="page-action-bar">
-        <div className="gf-form gf-form--grow">
+        <InlineField grow>
           <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        </InlineField>
         <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
           Add Root
         </Button>

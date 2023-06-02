@@ -114,15 +114,6 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
-    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
-    "new-dashboard": "Neues Dashboard",
-    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
-    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
-    "viewAll": "Alle anzeigen",
-    "welcome": "Willkommen bei Grafana Dashboards!"
-  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
@@ -518,6 +509,15 @@
       "copy-button": "In Zwischenablage kopieren"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zeitzone"
@@ -533,10 +533,7 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "dark-label": "Dunkel",
-      "default-label": "Standard",
-      "light-label": "Hell",
-      "system-label": "System"
+      "default-label": "Standard"
     },
     "title": "Einstellungen"
   },
