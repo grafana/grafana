@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -212,50 +211,56 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		e.broadcaster(e.status)
 	}
 
+	// TODO.. query lookup
+	orgIDs := []int64{1}
+
 	// Playlists
 	what = entity.StandardKindPlaylist
 	e.status.Count[what] = 0
-	rowUser.OrgID = 1
-	rowUser.UserID = 1
-	res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
-		OrgId: rowUser.OrgID, // TODO... all or orgs
-		Limit: 5000,
-	})
-	if err != nil {
-		e.status.Status = "error: " + err.Error()
-		return
-	}
-	for _, item := range res {
-		playlist, err := e.playlistService.Get(ctx, &playlist.GetPlaylistByUidQuery{
-			UID:   item.UID,
-			OrgId: rowUser.OrgID,
+
+	for _, orgId := range orgIDs {
+		rowUser.OrgID = orgId
+		rowUser.UserID = 1
+		res, err := e.playlistService.Search(ctx, &playlist.GetPlaylistsQuery{
+			OrgId: orgId,
+			Limit: 5000,
 		})
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
+		for _, item := range res {
+			rowUser.OrgID = orgId
+			rowUser.UserID = 1
 
-		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
-			GRN: &entity.GRN{
-				UID:  playlist.Uid,
-				Kind: entity.StandardKindPlaylist,
-			},
-			Body:    prettyJSON(playlist),
-			Comment: "export from playlists",
-		})
-		if err != nil {
-			e.status.Status = "error: " + err.Error()
-			return
+			playlist, err := e.playlistService.Get(ctx, &playlist.GetPlaylistByUidQuery{
+				UID:   item.UID,
+				OrgId: orgId,
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+
+			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+				GRN: &entity.GRN{
+					UID:  playlist.Uid,
+					Kind: entity.StandardKindPlaylist,
+				},
+				Body:    prettyJSON(playlist),
+				Comment: "export from playlists",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("PLAYLIST: %s", playlist.Uid)
+			e.broadcaster(e.status)
 		}
-		e.status.Changed = time.Now().UnixMilli()
-		e.status.Index++
-		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("PLAYLIST: %s", playlist.Uid)
-		e.broadcaster(e.status)
 	}
-
-	// TODO.. query lookup
-	orgIDs := []int64{1}
 
 	// Load access policies
 	what = "accesspolicies"
@@ -276,7 +281,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		for _, policy := range policies {
 			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 				GRN: &entity.GRN{
-					UID:  uuid.NewString(),
+					UID:  policy.Metadata.Name,
 					Kind: "accesspolicy",
 				},
 				Body:    prettyJSON(policy.Spec),
@@ -296,7 +301,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 
 	// Load snapshots
-	what = "snapshot"
+	what = entity.StandardKindSnapshot
 	for _, orgId := range orgIDs {
 		rowUser.OrgID = orgId
 		rowUser.UserID = 1
@@ -389,10 +394,10 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		team := team.NewK8sResource(info.UID, &team.Spec{
 			Name: info.Name,
 		})
-		team.Metadata.Namespace = orgIdToNamespace(info.OrgID)
 		if info.Email != "" {
 			team.Spec.Email = &info.Email
 		}
+		rowUser.OrgID = info.OrgID
 		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  info.UID,
@@ -414,9 +419,10 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 
 	// Load snapshots
-	what = "librarypanels"
+	what = "librarypanel"
 	e.status.Last = "starting library panels"
 	for _, orgId := range orgIDs {
+		rowUser.OrgID = orgId
 		type libraryPanelInfo struct {
 			FolderUID   *string `db:"folder_uid"`
 			FolderID    int64   `db:"folder_id"`
@@ -457,7 +463,6 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			res := librarypanel.NewK8sResource(panel.UID, &librarypanel.Spec{
 				Name: panel.Name,
 			})
-			res.Metadata.Namespace = orgIdToNamespace(orgId)
 			res.Metadata.CreationTimestamp = v1.NewTime(panel.Created)
 			res.Metadata.SetUpdatedTimestamp(&panel.Updated)
 			if panel.CreatedBy > 0 {
@@ -481,7 +486,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 				GRN: &entity.GRN{
 					UID:  panel.UID,
-					Kind: "libraypanel",
+					Kind: what,
 				},
 				Body:    prettyJSON(res.Spec),
 				Meta:    prettyJSON(res.Metadata),
@@ -558,11 +563,4 @@ func (e *entityStoreJob) getConfig() ExportConfig {
 	defer e.statusMu.Unlock()
 
 	return e.cfg
-}
-
-func orgIdToNamespace(orgId int64) string {
-	if orgId > 1 {
-		return fmt.Sprintf("org-%d", orgId)
-	}
-	return "default"
 }

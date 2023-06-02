@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 	"time"
@@ -57,7 +58,7 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 			return policies, err
 		}
 
-		key := info.RoleUID + "/" + info.Scope
+		key := safeUIDFromFor(info.RoleUID, info.Scope)
 		if key != prevKey {
 			created = info.Created
 			updated = info.Updated
@@ -74,7 +75,7 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 			}
 
 			// TODO?? UID from hash?
-			p := accesspolicy.NewK8sResource("", &accesspolicy.Spec{
+			p := accesspolicy.NewK8sResource(key, &accesspolicy.Spec{
 				Role: accesspolicy.RoleRef{
 					Kind:  accesspolicy.RoleRefKindRole,
 					Name:  info.RoleUID,
@@ -148,6 +149,15 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 		policies = append(policies, *current)
 	}
 	return policies, err
+}
+
+func safeUIDFromFor(role string, scope string) string {
+	h := sha256.New()
+	_, _ = h.Write([]byte(role))
+	_, _ = h.Write([]byte("/"))
+	_, _ = h.Write([]byte(scope))
+	bs := h.Sum(nil)
+	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }
 
 func getKind(input string) string {

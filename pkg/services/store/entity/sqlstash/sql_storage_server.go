@@ -424,6 +424,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			delete(meta.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 		} */
 		meta.ResourceVersion = fmt.Sprintf("%d", versionInfo.Version)
+		meta.Namespace = orgIdToNamespace(grn.TenantId)
 
 		meta.SetFolder(r.Folder)
 
