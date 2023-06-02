@@ -585,6 +585,9 @@ lineage: schemas: [{
 			fieldConfig: #FieldConfigSource
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
+		// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results. 
+		// Each column within this structure is called a field. A field can represent a single time series or table column.
+		// Field options allow you to change how the data is displayed in your visualizations.
 		#FieldConfigSource: {
 			// Defaults are the options applied to all fields.
 			defaults: #FieldConfig
@@ -595,9 +598,14 @@ lineage: schemas: [{
 			}] @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
+		// A library panel is a reusable panel that you can use in any dashboard. 
+		// When you make a change to a library panel, that change propagates to all instances of where the panel is used. 
+		// Library panels streamline reuse of panels across multiple dashboards.
 		#LibraryPanelRef: {
+			// Libary panel name
 			name: string
-			uid:  string
+			// Library panel uid
+			uid: string
 		} @cuetsy(kind="interface")
 
 		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.

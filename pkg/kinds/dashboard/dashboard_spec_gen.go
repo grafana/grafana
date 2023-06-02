@@ -422,7 +422,9 @@ type FieldConfig struct {
 	Writeable *bool `json:"writeable,omitempty"`
 }
 
-// FieldConfigSource defines model for FieldConfigSource.
+// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+// Each column within this structure is called a field. A field can represent a single time series or table column.
+// Field options allow you to change how the data is displayed in your visualizations.
 type FieldConfigSource struct {
 	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
 	// Each column within this structure is called a field. A field can represent a single time series or table column.
@@ -480,10 +482,15 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
-// LibraryPanelRef defines model for LibraryPanelRef.
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
 type LibraryPanelRef struct {
+	// Libary panel name
 	Name string `json:"name"`
-	Uid  string `json:"uid"`
+
+	// Library panel uid
+	Uid string `json:"uid"`
 }
 
 // Supported value mapping types
@@ -512,7 +519,11 @@ type Panel struct {
 	} `json:"datasource,omitempty"`
 
 	// Panel description.
-	Description *string           `json:"description,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+	// Each column within this structure is called a field. A field can represent a single time series or table column.
+	// Field options allow you to change how the data is displayed in your visualizations.
 	FieldConfig FieldConfigSource `json:"fieldConfig"`
 
 	// Position and dimensions of a panel in the grid
@@ -525,7 +536,11 @@ type Panel struct {
 	// This value must be formatted as a number followed by a valid time
 	// identifier like: "40s", "3d", etc.
 	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
-	Interval     *string          `json:"interval,omitempty"`
+	Interval *string `json:"interval,omitempty"`
+
+	// A library panel is a reusable panel that you can use in any dashboard.
+	// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+	// Library panels streamline reuse of panels across multiple dashboards.
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.

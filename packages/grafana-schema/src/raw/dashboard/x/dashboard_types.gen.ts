@@ -756,6 +756,11 @@ export const defaultPanel: Partial<Panel> = {
   transparent: false,
 };
 
+/**
+ * The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+ * Each column within this structure is called a field. A field can represent a single time series or table column.
+ * Field options allow you to change how the data is displayed in your visualizations.
+ */
 export interface FieldConfigSource {
   /**
    * Defaults are the options applied to all fields.
@@ -777,8 +782,19 @@ export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
   overrides: [],
 };
 
+/**
+ * A library panel is a reusable panel that you can use in any dashboard.
+ * When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+ * Library panels streamline reuse of panels across multiple dashboards.
+ */
 export interface LibraryPanelRef {
+  /**
+   * Libary panel name
+   */
   name: string;
+  /**
+   * Library panel uid
+   */
   uid: string;
 }
 
