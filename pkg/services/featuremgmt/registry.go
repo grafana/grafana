@@ -59,6 +59,7 @@ var (
 			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
@@ -184,13 +185,6 @@ var (
 			State:       FeatureStateStable,
 			Expression:  "true", // turned on by default
 			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
 			Name:        "topnav",

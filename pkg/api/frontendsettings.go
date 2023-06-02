@@ -123,6 +123,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExploreEnabled:                      setting.ExploreEnabled,
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,
+		NewsFeedEnabled:                     setting.NewsFeedEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
 		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
@@ -148,7 +149,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		TrustedTypesDefaultPolicyEnabled:    trustedTypesDefaultPolicyEnabled,
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
-		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled,
+		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
@@ -179,7 +180,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
 			Expiry:          hs.License.Expiry(),
 			StateInfo:       hs.License.StateInfo(),
-			LicenseUrl:      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
+			LicenseUrl:      hs.License.LicenseURL(hasAccess(licensing.PageAccess)),
 			Edition:         hs.License.Edition(),
 			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
