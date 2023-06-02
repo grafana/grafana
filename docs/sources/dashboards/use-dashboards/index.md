@@ -31,7 +31,7 @@ The following image and descriptions highlight all dashboard features.
 
 - (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
 - (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder.
-- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel via link or snapshot. You can also export the dashboard definition from the share modal.
+- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
 - (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics]({{< relref "../assess-dashboard-usage/" >}}).
