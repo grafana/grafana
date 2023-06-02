@@ -14,6 +14,10 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+)
 
 docs_paths = {
     "include": [
@@ -52,9 +56,11 @@ def lint_docs():
         ],
         "environment": {
             "NODE_OPTIONS": "--max_old_space_size=8192",
+            "REVIEWDOG_GITHUB_API_TOKEN": from_secret("github_token"),
         },
         "commands": [
-            "yarn run prettier:checkDocs",
+            "go install github.com/reviewdog/reviewdog/cmd/reviewdog@latest",
+            "prettier --write 2>&1 docs/sources | reviewdog '--efm=%E[%trror] %f: %m (%l:%c)' --efm=%C[error]%r --efm=%Z[error]%r --efm=%-G%r --fail-on-error  --filter-mode=nofilter --level=info --name=prettier --reporter=local",
         ],
     }
 

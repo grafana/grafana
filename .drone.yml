@@ -1063,11 +1063,16 @@ steps:
   image: grafana/build-container:1.7.4
   name: codespell
 - commands:
-  - yarn run prettier:checkDocs
+  - go install github.com/reviewdog/reviewdog/cmd/reviewdog@latest
+  - 'prettier --write 2>&1 docs/sources | reviewdog ''--efm=%E[%trror] %f: %m (%l:%c)''
+    --efm=%C[error]%r --efm=%Z[error]%r --efm=%-G%r --fail-on-error  --filter-mode=nofilter
+    --level=info --name=prettier --reporter=local'
   depends_on:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
+    REVIEWDOG_GITHUB_API_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.7.4
   name: lint-docs
 - commands:
@@ -1174,11 +1179,16 @@ steps:
   image: grafana/build-container:1.7.4
   name: codespell
 - commands:
-  - yarn run prettier:checkDocs
+  - go install github.com/reviewdog/reviewdog/cmd/reviewdog@latest
+  - 'prettier --write 2>&1 docs/sources | reviewdog ''--efm=%E[%trror] %f: %m (%l:%c)''
+    --efm=%C[error]%r --efm=%Z[error]%r --efm=%-G%r --fail-on-error  --filter-mode=nofilter
+    --level=info --name=prettier --reporter=local'
   depends_on:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
+    REVIEWDOG_GITHUB_API_TOKEN:
+      from_secret: github_token
   image: grafana/build-container:1.7.4
   name: lint-docs
 - commands:
@@ -7216,6 +7226,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d1a589fd39357048aa2b6595181f98d17545e184121774b729553e9165464480
+hmac: d57799d74605b15287d71ea34dc19e002f05dd7cd7132f2ddf22b6dd8217dd87
 
 ...
