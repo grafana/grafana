@@ -144,14 +144,14 @@ To speed up the time it takes to review your plugin:
 
 1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
-<<<<<<< HEAD
-1. Click **Submit Plugin**.
-=======
+   <<<<<<< HEAD
+1. # Click **Submit Plugin**.
 1. Click **Submit Plugin**. The Create Plugin Submission dialog appears.
 
    {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 
->>>>>>> d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
+> > > > > > > d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
+
 1. Enter the information requested by the form.
    - **OS & Architecture:**
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
@@ -162,18 +162,19 @@ To speed up the time it takes to review your plugin:
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
    - The remaining questions help us determine the [signature level]({{< relref "./sign-a-plugin#plugin-signature-levels" >}}) for your plugin.
 1. Click **Submit**.
-<<<<<<< HEAD
+   <<<<<<< HEAD
    After you have submitted your plugin, we run an automated validation to make sure it adheres to our guidelines.
    Once your submission passes the validation, it's placed in a review queue.
 
 All submissions are manually inspected by a plugin reviewer.
 For every new plugin, we perform a manual review that includes the following checks:
 =======
-   After you submit your plugin, we run an automated validation to make sure it adheres to our guidelines.
-   Once your submission passes the validation, it's placed in a review queue.
-   All submissions are manually inspected by a plugin reviewer.
-   For every new plugin, we perform a manual review that includes the following checks:
->>>>>>> d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
+After you submit your plugin, we run an automated validation to make sure it adheres to our guidelines.
+Once your submission passes the validation, it's placed in a review queue.
+All submissions are manually inspected by a plugin reviewer.
+For every new plugin, we perform a manual review that includes the following checks:
+
+> > > > > > > d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
 
 - **Code review:** For quality and security purposes, we review the source code for the plugin.
   If you're unable to make the source code publicly available, let us know in a comment on your plugin submission.
@@ -187,12 +188,11 @@ To submit an **update** for an already published plugin:
 
 1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
-<<<<<<< HEAD
-1. Click **Submit Update** for the plugin you want to update.
-=======
+   <<<<<<< HEAD
+1. # Click **Submit Update** for the plugin you want to update.
 1. Click **Submit Update** for the plugin you want to update. The Create Plugin Submission dialog appears.
    {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
->>>>>>> d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
+   > > > > > > > d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
 1. Enter the information requested by the form.
    - **OS & Architecture:**
      - Select **Single** if your plugin archive contains binaries for multiple architectures.
@@ -202,8 +202,8 @@ To submit an **update** for an already published plugin:
    - **Source Code URL:** A URL that points to a public git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
 1. Click **Submit**.
-<<<<<<< HEAD
-=======
+   <<<<<<< HEAD
+   =======
 
 ## Frequently asked questions
 
@@ -249,4 +249,4 @@ To submit an **update** for an already published plugin:
 - Using a tag or branch: `https://github.com/grafana/clock-panel/tree/v2.1.3`
 - Using a tag or branch and the code is in a subdirectory (important for mono repos): `https://github.com/grafana/clock-panel/tree/v2.1.3/plugin/` (here, the plugin contains the plugin code)
 - Using the latest main or master branch commit: `https://github.com/grafana/clock-panel/` (not recommended, it's better to pass a tag or branch)
->>>>>>> d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
+  > > > > > > > d6ba522c3c (Docs: Plugin doc review changes from chunk 1-B with corrected set of files (#67164))
