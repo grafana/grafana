@@ -237,7 +237,7 @@ export const promTypes: PromFilterOption[] = [
 
 export const placeholders = {
   browse: 'Search metrics by name',
-  metadataSearchSwitch: 'Include search with type and description',
+  metadataSearchSwitch: 'Include type and description in metric name search',
   type: 'Filter by type',
   includeNullMetadata: 'Include results with no metadata',
   setUseBackend: 'Enable regex search',
