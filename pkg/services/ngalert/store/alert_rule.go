@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -230,13 +231,13 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 	})
 }
 
-// CountAlertRulesInFolder is a handler for retrieving the number of alert rules of
+// CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountAlertRulesInFolder(ctx context.Context, query *ngmodels.CountAlertRulesQuery) (int64, error) {
+func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", query.OrgID).Where("namespace_uid = ?", query.NamespaceUID)
+		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID)
 		count, err = q.Count()
 		return err
 	})
@@ -493,6 +494,32 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		return nil
 	})
 }
+
+// DeleteInFolder deletes the rules contained in a given folder along with their associated data.
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folderUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	uids := make([]string, 0, len(rules))
+	for _, tgt := range rules {
+		if tgt != nil {
+			uids = append(uids, tgt.UID)
+		}
+	}
+
+	if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Kind returns the name of the alert rule type of entity.
+func (st DBstore) Kind() string { return entity.StandardKindAlertRule }
 
 // GenerateNewAlertRuleUID generates a unique UID for a rule.
 // This is set as a variable so that the tests can override it.

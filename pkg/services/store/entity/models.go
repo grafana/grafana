@@ -42,6 +42,10 @@ const (
 	// the kind may need to change to better encapsulate { targets:[], transforms:[] }
 	StandardKindQuery = "query"
 
+	// KindAlertRule is not a real kind. It's used to refer to alert rules, for instance
+	// in the folder registry service.
+	StandardKindAlertRule = "alertrule"
+
 	//----------------------------------------
 	// References are referenced from objects
 	//----------------------------------------
