@@ -5,9 +5,11 @@ import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
 export type GetPluginExtensions<T = PluginExtension> = ({
   extensionPointId,
   context,
+  limitPerPlugin,
 }: {
   extensionPointId: string;
   context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
 }) => {
   extensions: T[];
 };
