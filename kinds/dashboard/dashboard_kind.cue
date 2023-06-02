@@ -437,20 +437,20 @@ lineage: schemas: [{
 			index?: int32
 		} @cuetsy(kind="interface")
 
-		// TODO docs
+		// Transformations allow to manipulate data returned by a query before the system applies a visualization. 
+		// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, 
+		// use the output of one transformation as the input to another transformation, etc.
 		#DataTransformerConfig: {
-			@grafana(TSVeneer="type")
-
 			// Unique identifier of transformer
 			id: string
 			// Disabled transformations are skipped
 			disabled?: bool
-			// Optional frame matcher.  When missing it will be applied to all results
+			// Optional frame matcher. When missing it will be applied to all results
 			filter?: #MatcherConfig
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// 0 for no shared crosshair or tooltip (default).
 		// 1 for shared crosshair.
@@ -548,6 +548,9 @@ lineage: schemas: [{
 			// TODO docs
 			timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
 
+			// List of transformations that are applied to the panel data before rendering.
+			// When there are multiple transformations, Grafana applies them in the order they are listed. 
+			// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
 			transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
 			// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
@@ -595,6 +598,7 @@ lineage: schemas: [{
 			uid:  string
 		} @cuetsy(kind="interface")
 
+		// Optional frame matcher. When missing it will be applied to all results
 		#MatcherConfig: {
 			id:       string | *"" @grafanamaturity(NeedsExpertReview)
 			options?: _            @grafanamaturity(NeedsExpertReview)

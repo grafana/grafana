@@ -598,7 +598,9 @@ export interface ValueMappingResult {
 }
 
 /**
- * TODO docs
+ * Transformations allow to manipulate data returned by a query before the system applies a visualization.
+ * Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
+ * use the output of one transformation as the input to another transformation, etc.
  */
 export interface DataTransformerConfig {
   /**
@@ -606,7 +608,7 @@ export interface DataTransformerConfig {
    */
   disabled?: boolean;
   /**
-   * Optional frame matcher.  When missing it will be applied to all results
+   * Optional frame matcher. When missing it will be applied to all results
    */
   filter?: MatcherConfig;
   /**
@@ -738,6 +740,11 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
+  /**
+   * List of transformations that are applied to the panel data before rendering.
+   * When there are multiple transformations, Grafana applies them in the order they are listed.
+   * Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
+   */
   transformations: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
@@ -780,6 +787,9 @@ export interface LibraryPanelRef {
   uid: string;
 }
 
+/**
+ * Optional frame matcher. When missing it will be applied to all results
+ */
 export interface MatcherConfig {
   id: string;
   options?: unknown;

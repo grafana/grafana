@@ -274,11 +274,15 @@ type DataSourceRef struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// TODO docs
+// Transformations allow to manipulate data returned by a query before the system applies a visualization.
+// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
+// use the output of one transformation as the input to another transformation, etc.
 type DataTransformerConfig struct {
 	// Disabled transformations are skipped
-	Disabled *bool          `json:"disabled,omitempty"`
-	Filter   *MatcherConfig `json:"filter,omitempty"`
+	Disabled *bool `json:"disabled,omitempty"`
+
+	// Optional frame matcher. When missing it will be applied to all results
+	Filter *MatcherConfig `json:"filter,omitempty"`
 
 	// Unique identifier of transformer
 	Id string `json:"id"`
@@ -403,6 +407,7 @@ type FieldConfig struct {
 type FieldConfigSource struct {
 	Defaults  FieldConfig `json:"defaults"`
 	Overrides []struct {
+		// Optional frame matcher. When missing it will be applied to all results
 		Matcher    MatcherConfig        `json:"matcher"`
 		Properties []DynamicConfigValue `json:"properties"`
 	} `json:"overrides"`
@@ -461,7 +466,7 @@ type LibraryPanelRef struct {
 // SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 type MappingType string
 
-// MatcherConfig defines model for MatcherConfig.
+// Optional frame matcher. When missing it will be applied to all results
 type MatcherConfig struct {
 	Id      string       `json:"id"`
 	Options *interface{} `json:"options,omitempty"`
@@ -546,7 +551,11 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string                 `json:"title,omitempty"`
+	Title *string `json:"title,omitempty"`
+
+	// List of transformations that are applied to the panel data before rendering.
+	// When there are multiple transformations, Grafana applies them in the order they are listed.
+	// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
 	Transformations []DataTransformerConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
