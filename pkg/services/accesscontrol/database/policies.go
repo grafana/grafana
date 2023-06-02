@@ -10,9 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/util"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB, resolver accesscontrol.ScopeAttributeResolverFunc) ([]accesspolicy.Resource, error) {
+func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB, resolver accesscontrol.ScopeAttributeResolverFunc) ([]accesspolicy.K8sResource, error) {
 	type permissionInfo struct {
 		RoleUID  string
 		RoleName string
@@ -22,8 +23,8 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 		Updated  time.Time
 	}
 	info := &permissionInfo{}
-	policies := make([]accesspolicy.Resource, 0)
-	current := &accesspolicy.Resource{}
+	policies := make([]accesspolicy.K8sResource, 0)
+	current := &accesspolicy.K8sResource{Spec: &accesspolicy.Spec{}}
 	prevKey := ""
 	rows, err := sql.Query(ctx, `SELECT 
 		role.uid as role_uid,
@@ -72,24 +73,29 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 				return policies, fmt.Errorf("expected three part scope")
 			}
 
-			current = &accesspolicy.Resource{
-				Metadata: accesspolicy.Metadata{
-					CreationTimestamp: created,
-					UpdateTimestamp:   updated,
+			// TODO?? UID from hash?
+			p := accesspolicy.NewK8sResource("", &accesspolicy.Spec{
+				Role: accesspolicy.RoleRef{
+					Kind:  accesspolicy.RoleRefKindRole,
+					Name:  info.RoleUID,
+					Xname: info.RoleName,
 				},
-				Spec: accesspolicy.Spec{
-					Role: accesspolicy.RoleRef{
-						Kind:  accesspolicy.RoleRefKindRole,
-						Name:  info.RoleUID,
-						Xname: info.RoleName,
-					},
-					Scope: accesspolicy.ResourceRef{
-						Kind: getKind(scope[0]),
-						Name: scope[2],
-					},
-					Rules: make([]accesspolicy.AccessRule, 0),
+				Scope: accesspolicy.ResourceRef{
+					Kind: getKind(scope[0]),
+					Name: scope[2],
 				},
+				Rules: make([]accesspolicy.AccessRule, 0),
+			})
+			p.Metadata.CreationTimestamp = v1.NewTime(created)
+			p.Metadata.SetUpdatedTimestamp(&updated)
+			if orgID > 1 {
+				p.Metadata.Namespace = fmt.Sprintf("org-%d", orgID)
+			} else {
+				p.Metadata.Namespace = "default"
 			}
+
+			current = &p
+
 			// When the value is not a UID, set the prefix to $ -- an invalid name
 			if scope[1] != "uid" {
 				current.Spec.Scope.Name = fmt.Sprintf("$%s:%s", scope[1], scope[2])
@@ -109,11 +115,11 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 
 		if info.Created.Before(created) {
 			created = info.Created
-			current.Metadata.CreationTimestamp = created
+			current.Metadata.CreationTimestamp = v1.NewTime(created)
 		}
 		if info.Updated.After(updated) {
 			updated = info.Updated
-			current.Metadata.UpdateTimestamp = updated
+			current.Metadata.SetUpdatedTimestamp(&updated)
 		}
 
 		action := strings.Split(info.Action, ":")

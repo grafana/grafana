@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/user"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ Job = new(entityStoreJob)
@@ -316,6 +318,9 @@ func (e *entityStoreJob) start(ctx context.Context) {
 				ExternalURL: dto.ExternalURL,
 				Expires:     dto.Expires.UnixMilli(),
 			}
+
+			//			team.Metadata.Namespace = orgIdToNamespace(info.OrgID)
+
 			rowUser.OrgID = dto.OrgID
 			rowUser.UserID = dto.UserID
 
@@ -384,14 +389,14 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		team := team.NewK8sResource(info.UID, &team.Spec{
 			Name: info.Name,
 		})
-		team.Metadata.Namespace = "default" // TODO >> based on orgid
+		team.Metadata.Namespace = orgIdToNamespace(info.OrgID)
 		if info.Email != "" {
 			team.Spec.Email = &info.Email
 		}
 		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
-				UID:  uuid.NewString(),
-				Kind: "accesspolicy",
+				UID:  info.UID,
+				Kind: "team",
 			},
 			Body:    prettyJSON(team.Spec),
 			Meta:    prettyJSON(team.Metadata),
@@ -407,6 +412,93 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		e.status.Last = fmt.Sprintf("TEAM: %s", team.Spec.Name)
 		e.broadcaster(e.status)
 	}
+
+	// Load snapshots
+	what = "librarypanels"
+	e.status.Last = "starting library panels"
+	for _, orgId := range orgIDs {
+		type libraryPanelInfo struct {
+			FolderUID   *string `db:"folder_uid"`
+			FolderID    int64   `db:"folder_id"`
+			UID         string
+			Name        string
+			Description string
+			Model       []byte
+			Created     time.Time
+			CreatedBy   int64 `db:"created_by"`
+			Updated     time.Time
+			UpdatedBy   int64 `db:"updated_by"`
+		}
+		info := []libraryPanelInfo{}
+
+		e.status.Status = fmt.Sprintf("loading panels for: %d", orgId)
+		e.broadcaster(e.status)
+		err = e.sess.Select(ctx, &info, `SELECT 
+			dashboard.uid as folder_uid,
+			library_element.folder_id as folder_id, 
+			library_element.uid, 
+			library_element.name, 
+			library_element.description, 
+			library_element.model, 
+			library_element.created, 
+			library_element.created_by, 
+			library_element.updated, 
+			library_element.updated_by 
+		FROM library_element 
+		LEFT JOIN dashboard ON dashboard.id =library_element.folder_id
+		WHERE library_element.org_id=?
+		`, orgId)
+		if err != nil {
+			e.status.Status = "library panel error: " + err.Error()
+			return
+		}
+
+		for _, panel := range info {
+			res := librarypanel.NewK8sResource(panel.UID, &librarypanel.Spec{
+				Name: panel.Name,
+			})
+			res.Metadata.Namespace = orgIdToNamespace(orgId)
+			res.Metadata.CreationTimestamp = v1.NewTime(panel.Created)
+			res.Metadata.SetUpdatedTimestamp(&panel.Updated)
+			if panel.CreatedBy > 0 {
+				res.Metadata.SetCreatedBy(fmt.Sprintf("user:%d:", panel.CreatedBy))
+			}
+			if panel.UpdatedBy > 0 {
+				res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d:", panel.UpdatedBy))
+			}
+			if panel.FolderUID != nil {
+				res.Metadata.SetFolder(*panel.FolderUID)
+			}
+
+			err = json.Unmarshal(panel.Model, &res.Spec.Model)
+			if err != nil {
+				e.status.Status = "library panel error: " + err.Error()
+				return
+			}
+			delete(res.Spec.Model, "uid")
+			delete(res.Spec.Model, "version")
+
+			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+				GRN: &entity.GRN{
+					UID:  panel.UID,
+					Kind: "libraypanel",
+				},
+				Body:    prettyJSON(res.Spec),
+				Meta:    prettyJSON(res.Metadata),
+				Comment: "export from sql",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("LIBRARY PANEL: %s", res.Spec.Name)
+			e.broadcaster(e.status)
+		}
+	}
+
 }
 
 type dashInfo struct {
@@ -466,4 +558,11 @@ func (e *entityStoreJob) getConfig() ExportConfig {
 	defer e.statusMu.Unlock()
 
 	return e.cfg
+}
+
+func orgIdToNamespace(orgId int64) string {
+	if orgId > 1 {
+		return fmt.Sprintf("org-%d", orgId)
+	}
+	return "default"
 }
