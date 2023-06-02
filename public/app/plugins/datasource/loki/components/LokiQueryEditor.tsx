@@ -42,7 +42,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const previousTimerange = usePrevious(timerange);
 
   const query = getQueryWithDefaults(props.query);
-  if (config.featureToggles.lokiPredefinedOperations && !query.expr) {
+  if (config.featureToggles.lokiPredefinedOperations && !query.expr && predefinedOperations) {
     query.expr = `{} ${predefinedOperations}`;
   }
   const previousQuery = usePrevious(query.expr);
