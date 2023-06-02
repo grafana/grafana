@@ -38,7 +38,7 @@ jobs:
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
       - name: "Clone website-sync Action"
-        run: "git clone --single-branch --no-tags --depth 1 -b master https://${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
 
       - name: "Publish to kind registry (next)"
         uses: "./.github/actions/website-sync"
