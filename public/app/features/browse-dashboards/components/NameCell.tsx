@@ -1,15 +1,19 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Link, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
-import { Span, TextModifier } from '@grafana/ui/src/unstable';
+import { Span } from '@grafana/ui/src/unstable';
 
+import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeItem } from '../types';
 
 import { Indent } from './Indent';
+
+const CHEVRON_SIZE = 'md';
 
 type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
@@ -18,36 +22,53 @@ type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
 export function NameCell({ row: { original: data }, onFolderClick }: NameCellProps) {
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
+  const childrenByParentUID = useChildrenByParentUIDState();
 
   if (item.kind === 'ui') {
     return (
       <>
         <Indent level={level} />
         <span className={styles.folderButtonSpacer} />
-        <em>
-          <TextModifier color="secondary">{item.uiKind === 'empty-folder' ? 'No items' : 'Loading...'}</TextModifier>
-        </em>
+        {item.uiKind === 'empty-folder' ? (
+          <em className={styles.emptyText}>
+            <Span variant="body" color="secondary" truncate>
+              No items
+            </Span>
+          </em>
+        ) : (
+          <Skeleton width={200} />
+        )}
       </>
     );
   }
 
-  const chevronIcon = isOpen ? 'angle-down' : 'angle-right';
+  // we change the icon to a spinner here instead of actually using the <Spinner /> component
+  // conditionally rendering <Spinner /> here would lose focus on the button and break keyboard a11y
+  const getChevronIcon = () => {
+    if (isOpen) {
+      return !childrenByParentUID[item.uid] ? 'fa fa-spinner' : 'angle-down';
+    } else {
+      return 'angle-right';
+    }
+  };
 
   return (
     <>
       <Indent level={level} />
 
-      {item.kind === 'folder' ? (
-        <IconButton
-          size="md"
-          onClick={() => onFolderClick(item.uid, !isOpen)}
-          name={chevronIcon}
-          ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
-        />
-      ) : (
-        <span className={styles.folderButtonSpacer} />
-      )}
-
+      <div className={styles.buttonContainer}>
+        {item.kind === 'folder' ? (
+          <IconButton
+            size={CHEVRON_SIZE}
+            className={styles.button}
+            onClick={isOpen && !childrenByParentUID[item.uid] ? undefined : () => onFolderClick(item.uid, !isOpen)}
+            name={getChevronIcon()}
+            ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+          />
+        ) : (
+          <span className={styles.folderButtonSpacer} />
+        )}
+      </div>
       <Span variant="body" truncate>
         {item.url ? (
           <Link href={item.url} className={styles.link}>
@@ -63,14 +84,32 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    button: css({
+      height: getSvgSize(CHEVRON_SIZE),
+      width: getSvgSize(CHEVRON_SIZE),
+    }),
+    buttonContainer: css({
+      alignItems: 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      height: getSvgSize(CHEVRON_SIZE),
+      marginRight: theme.spacing(0.5),
+    }),
+    emptyText: css({
+      // needed for text to truncate correctly
+      overflow: 'hidden',
+    }),
     // Should be the same size as the <IconButton /> so Dashboard name is aligned to Folder name siblings
     folderButtonSpacer: css({
-      paddingLeft: `calc(${getSvgSize('md')}px + ${theme.spacing(0.5)})`,
+      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(0.5)})`,
     }),
     link: css({
       '&:hover': {
         textDecoration: 'underline',
       },
+    }),
+    spinner: css({
+      marginRight: theme.spacing(0.5),
     }),
   };
 };
