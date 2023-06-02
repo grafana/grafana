@@ -21,7 +21,7 @@ export default function CheckboxCell({
 
   if (item.kind === 'ui') {
     if (item.uiKind === 'pagination-placeholder') {
-      return <Checkbox disabled />;
+      return <Checkbox disabled value={false} />;
     } else {
       return <span className={styles.checkboxSpacer} />;
     }
