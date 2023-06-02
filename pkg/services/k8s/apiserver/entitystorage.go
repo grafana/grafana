@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 
@@ -278,7 +279,6 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
 	case grafanaApiServerKinds.GroupName:
 		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
-		break
 	default:
 		listObj = &unstructured.UnstructuredList{}
 	}
@@ -417,8 +417,9 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	}
 
 	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
-		Kind:     []string{strings.TrimSuffix(s.gr.Resource, "s")}, // dashboards >> dashboard
-		WithBody: true,
+		Kind:       []string{strings.TrimSuffix(s.gr.Resource, "s")}, // dashboards >> dashboard
+		WithBody:   true,
+		WithLabels: true,
 	})
 	if err != nil {
 		return err
@@ -426,6 +427,49 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 
 	w := listObj.(*apihelpers.ObjectWrapper)
 	u := w.Object.(*unstructured.UnstructuredList)
+
+	if true {
+		table := metav1.Table{}
+		table.Kind = "Table"
+		table.APIVersion = "meta.k8s.io/v1"
+		table.ResourceVersion = "1" // the largest ???
+		table.ColumnDefinitions = []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name", Description: "The k8s object name"},
+			{Name: "Title", Type: "string", Description: "The object title"},
+			{Name: "Tags", Type: "tags", Description: "tags"},
+			{Name: "Folder", Type: "string", Description: "Folder UID"},
+			{Name: "Updated At", Type: "date", Description: "When the object was created"},
+		}
+
+		for _, r := range rsp.Results {
+			rowmeta := &metav1.PartialObjectMetadata{}
+			err = json.Unmarshal(r.Meta, &rowmeta.ObjectMeta)
+			if err != nil {
+				return err
+			}
+
+			var tags []string
+			for k, v := range r.Labels {
+				if v == "" {
+					tags = append(tags, k)
+				}
+			}
+
+			table.Rows = append(table.Rows, metav1.TableRow{
+				Cells: []interface{}{
+					r.GRN.UID,
+					r.Name, // title
+					tags,
+					r.Folder,
+					time.UnixMilli(r.UpdatedAt).Format(time.RFC3339),
+				},
+				Object: runtime.RawExtension{Object: rowmeta},
+			})
+		}
+
+		w.SetObject(&table)
+		return nil
+	}
 
 	u.SetGroupVersionKind(schema.GroupVersionKind{
 		Group:   s.gr.Group,
