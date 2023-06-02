@@ -248,7 +248,5 @@ export const repeatIntervalValidator = (repeatInterval: string, groupInterval: s
 
   const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
 
-  return (
-    !isRepeatLowerThanGroupDuration || `Invalid value. Repeat interval should be higher or equal to Group interval`
-  );
+  return isRepeatLowerThanGroupDuration ? 'Repeat interval should be higher or equal to Group interval' : true;
 };
