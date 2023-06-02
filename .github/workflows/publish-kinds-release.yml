@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync:
+  main:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"

@@ -1,14 +1,11 @@
 name: "verify-kinds"
 
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  sync:
+  main:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
