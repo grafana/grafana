@@ -47,6 +47,6 @@ jobs:
           repository: "grafana/kind-registry"
           branch: "main"
           host: "github.com"
-          github_pat: "${{ steps.generate_token.outputs.token }}"
+          github_pat: "grafana-delivery-bot:${{ steps.generate_token.outputs.token }}"
           source_folder: ".github/workflows/scripts/kinds/next"
           target_folder: "grafana/next"
