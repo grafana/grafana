@@ -815,8 +815,9 @@ export class LokiDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
-    // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars || {};
+    // We want to interpolate these variables on backend because we support using them in
+    // alerting/ML queries and we want to have consistent interpolation for all queries
+    const { __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 
