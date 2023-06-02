@@ -74,7 +74,6 @@ export const TimePickerFooter = (props: Props) => {
         <div className={style.spacer} />
         <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
           <Trans i18nKey="time-picker.footer.change-settings-button">Change time settings</Trans>
-          <Trans i18nKey="time-picker.footer.change-settings-button">Change time settings... Not</Trans>
         </Button>
       </section>
       {isEditing ? (
