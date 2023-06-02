@@ -4,12 +4,12 @@ import React from 'react';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
-import { TextLink } from './TextLink';
-import mdx from './TextLink.mdx';
+import { Link } from './Link';
+import mdx from './Link.mdx';
 
 const meta: Meta = {
-  title: 'General/TextLink',
-  component: TextLink,
+  title: 'General/Link',
+  component: Link,
   parameters: {
     docs: {
       page: mdx,
@@ -37,7 +37,7 @@ const meta: Meta = {
         undefined,
       ],
     },
-    externalLink: { control: 'boolean' },
+    external: { control: 'boolean' },
     inline: { control: 'boolean' },
   },
 };
@@ -46,35 +46,37 @@ export const Example: StoryFn = () => {
   return (
     <VerticalGroup>
       <StoryExample name="">
-        <TextLink href="/">Go to home</TextLink>
+        <Link href="https://google.es" icon="external-link-alt">
+          This is an external link
+        </Link>
+      </StoryExample>
+      <StoryExample name="">
+        <Link href="/">This is an internal link</Link>
       </StoryExample>
     </VerticalGroup>
   );
 };
+
 Example.parameters = {
   controls: {
     exclude: ['variant', 'weight', 'textAlignment', 'truncate', 'color', 'children'],
   },
 };
-
 export const Basic: StoryFn = (args) => {
   return (
     <div>
-      <TextLink href="https://google.es" icon="external-link-alt" {...args}>
-        This is an external link
-      </TextLink>
-      <TextLink href="/" {...args}>
-        This is an internal link
-      </TextLink>
+      <Link href={args.href} {...args}>
+        Go to home
+      </Link>
     </div>
   );
 };
-
 Basic.args = {
-  variant: 'span',
+  variant: 'bodySmall',
   weight: 'light',
   color: undefined,
   inline: true,
+  href: '/',
 };
 
 export default meta;

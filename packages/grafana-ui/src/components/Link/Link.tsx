@@ -14,10 +14,10 @@ export interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
   /** Color to use for text */
   color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info';
   /** If the link will redirect users to a page in or out Grafana */
-  externalLink?: boolean;
-  /** Specify the icon name to be used */
+  external?: boolean;
+  /** Specify the icon name to be used when the link is not an inline element. If this is undefined but the link is external and not inline, the link icon will be shown. */
   icon?: IconName;
-  /** To clarify if the link is a block of if it is part of a bigger text */
+  /** True if the element should be displayed inline with surrounding text, false if it should be displayed as a block */
   inline?: boolean;
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
@@ -29,23 +29,23 @@ export interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
 /**
  * @alpha
  */
-export const TextLink = forwardRef<HTMLAnchorElement, Props>(
-  ({ href, color, externalLink = false, inline, variant, weight, icon, children, ...rest }, ref) => {
+export const Link = forwardRef<HTMLAnchorElement, Props>(
+  ({ href, color = 'link', external = false, inline, variant, weight, icon, children, ...rest }, ref) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 
     const theme = useTheme2();
     const styles = getLinkStyles(theme, variant, weight, color, inline);
 
-    return externalLink ? (
+    return external ? (
+      <a href={validUrl} target="_blank" rel="noreferrer" {...rest} className={styles}>
+        {children}
+        {icon && !inline && <Icon name={icon} />}
+      </a>
+    ) : (
       <RouterLink ref={ref} to={validUrl} {...rest} className={styles}>
         {children}
         {icon && !inline && <Icon name={icon} />}
       </RouterLink>
-    ) : (
-      <a href={validUrl} target="_blank" rel="noreferrer" className={styles}>
-        {children}
-        {icon && !inline && <Icon name={icon} />}
-      </a>
     );
   }
 );
@@ -113,4 +113,4 @@ const customColor = (color: Props['color'], theme: GrafanaTheme2): string | unde
   }
 };
 
-TextLink.displayName = 'TextLink';
+Link.displayName = 'Link';

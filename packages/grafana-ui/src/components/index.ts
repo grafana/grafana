@@ -203,7 +203,7 @@ export { Button, LinkButton, type ButtonVariant, ButtonGroup, type ButtonProps, 
 export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { TextLink } from './Link/TextLink';
+export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
