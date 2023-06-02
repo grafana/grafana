@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 // import { locationService } from '@grafana/runtime';
-import { InlineField, InlineSwitch, VerticalGroup, Modal } from '@grafana/ui';
+import { InlineField, InlineSwitch, VerticalGroup, Modal, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -216,8 +216,7 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
         <div style={styles.migrationSummary}>
           <p>
             Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
-            assured, all of your API keys are fully functional and operational. It might have been that the database was
-            saturated. Please try again or contact support.
+            assured, all of your API keys are fully functional and operational. Please try again or contact support.
           </p>
           <hr />
           <p>
@@ -242,6 +241,9 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
           </p>
         </div>
       )}
+      <Modal.ButtonRow>
+        <Button variant="secondary">Close</Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 };
