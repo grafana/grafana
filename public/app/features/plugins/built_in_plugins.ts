@@ -102,7 +102,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/azuremonitor/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
-  'app/plugins/datasource/grafana-pyroscope/module': pyroscopePlugin,
+  'app/plugins/datasource/grafana-pyroscope-datasource/module': pyroscopePlugin,
   'app/plugins/datasource/parca/module': parcaPlugin,
 
   'app/plugins/panel/text/module': textPanel,

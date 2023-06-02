@@ -186,6 +186,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     clearPreviewData();
     if (type === RuleFormType.cloudRecording) {
       const expr = getValues('expression');
+
+      if (!recordingRuleDefaultDatasource) {
+        return;
+      }
+
       const datasourceUid =
         (editingExistingRule && getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid) ||
         recordingRuleDefaultDatasource.uid;

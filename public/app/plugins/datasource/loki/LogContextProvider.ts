@@ -15,6 +15,10 @@ import {
   LogRowContextOptions,
 } from '@grafana/data';
 import { Labels } from '@grafana/schema';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import store from 'app/core/store';
+import { dispatch } from 'app/store/store';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
@@ -23,6 +27,12 @@ import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import { getParserFromQuery, getStreamSelectorsFromQuery, isQueryWithParser } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+
+export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
+export type PreservedLabels = {
+  removedLabels: string[];
+  selectedExtractedLabels: string[];
+};
 
 export class LogContextProvider {
   datasource: LokiDatasource;
@@ -40,9 +50,7 @@ export class LogContextProvider {
     // This happens only on initial load, when user haven't applied any filters yet
     // We need to get the initial filters from the row labels
     if (this.appliedContextFilters.length === 0) {
-      const filters = (await this.getInitContextFiltersFromLabels(row.labels, origQuery)).filter(
-        (filter) => filter.enabled
-      );
+      const filters = (await this.getInitContextFilters(row.labels, origQuery)).filter((filter) => filter.enabled);
       this.appliedContextFilters = filters;
     }
 
@@ -208,11 +216,13 @@ export class LogContextProvider {
     return expr;
   };
 
-  getInitContextFiltersFromLabels = async (labels: Labels, query?: LokiQuery) => {
+  getInitContextFilters = async (labels: Labels, query?: LokiQuery) => {
     if (!query || isEmpty(labels)) {
       return [];
     }
 
+    // 1. First we need to get all labels from the log row's label
+    // and correctly set parsed and not parsed labels
     let allLabels: string[] = [];
     if (!isQueryWithParser(query.expr).queryWithParser) {
       // If there is no parser, we use getLabelKeys because it has better caching
@@ -239,6 +249,44 @@ export class LogContextProvider {
       contextFilters.push(filter);
     });
 
-    return contextFilters;
+    // Secondly we check for preserved labels and update enabled state of filters based on that
+    let preservedLabels: undefined | PreservedLabels = undefined;
+    try {
+      preservedLabels = JSON.parse(store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS));
+      // Do nothing when error occurs
+    } catch (e) {}
+
+    if (!preservedLabels) {
+      // If we don't have preservedLabels, we return contextFilters as they are
+      return contextFilters;
+    } else {
+      // Otherwise, we need to update filters based on preserved labels
+      let arePreservedLabelsUsed = false;
+      const newContextFilters = contextFilters.map((contextFilter) => {
+        // We checked for undefined above
+        if (preservedLabels!.removedLabels.includes(contextFilter.label)) {
+          arePreservedLabelsUsed = true;
+          return { ...contextFilter, enabled: false };
+        }
+        // We checked for undefined above
+        if (preservedLabels!.selectedExtractedLabels.includes(contextFilter.label)) {
+          arePreservedLabelsUsed = true;
+          return { ...contextFilter, enabled: true };
+        }
+        return { ...contextFilter };
+      });
+
+      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
+      if (!isAtLeastOneRealLabelEnabled) {
+        // If we end up with no real labels enabled, we need to reset the init filters
+        return contextFilters;
+      } else {
+        // Otherwise use new filters
+        if (arePreservedLabelsUsed) {
+          dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
+        }
+        return newContextFilters;
+      }
+    }
   };
 }

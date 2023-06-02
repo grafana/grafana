@@ -19,8 +19,8 @@ export const deleteDashboard = createAsyncThunk('browseDashboards/deleteDashboar
 
 export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', async (folderUID: string) => {
   return getBackendSrv().delete(`/api/folders/${folderUID}`, undefined, {
-    // TODO: Once backend returns alert rule counts, set this back to true
-    // when this is merged https://github.com/grafana/grafana/pull/67259
+    // TODO: Revisit this field when this permissions issue is resolved
+    // https://github.com/grafana/grafana-enterprise/issues/5144
     params: { forceDeleteRules: false },
   });
 });
@@ -40,12 +40,5 @@ export const moveDashboard = createAsyncThunk(
       message: '',
       ...options,
     });
-  }
-);
-
-export const moveFolder = createAsyncThunk(
-  'browseDashboards/moveFolder',
-  async ({ folderUID, destinationUID }: { folderUID: string; destinationUID: string }) => {
-    return getBackendSrv().post(`/api/folders/${folderUID}/move`, { parentUID: destinationUID });
   }
 );

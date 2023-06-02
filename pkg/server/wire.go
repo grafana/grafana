@@ -85,6 +85,8 @@ import (
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -354,6 +356,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	supportbundlesimpl.ProvideService,
+	oasimpl.ProvideService,
+	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	modules.WireSet,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,

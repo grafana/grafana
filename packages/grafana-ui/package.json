@@ -113,7 +113,7 @@
     "uuid": "9.0.0"
   },
   "devDependencies": {
-    "@babel/core": "7.21.8",
+    "@babel/core": "7.22.1",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-node-resolve": "15.0.1",
@@ -166,7 +166,7 @@
     "common-tags": "1.8.2",
     "css-loader": "6.7.3",
     "csstype": "3.1.1",
-    "esbuild": "0.16.17",
+    "esbuild": "0.17.19",
     "expose-loader": "4.0.0",
     "mock-raf": "1.0.1",
     "process": "^0.11.10",
@@ -181,7 +181,7 @@
     "rollup-plugin-svg-import": "^1.6.0",
     "sass-loader": "13.2.0",
     "storybook": "7.0.10",
-    "storybook-addon-turbo-build": "1.1.0",
+    "storybook-addon-turbo-build": "2.0.1",
     "storybook-dark-mode": "3.0.0",
     "style-loader": "3.3.1",
     "typescript": "4.8.4",

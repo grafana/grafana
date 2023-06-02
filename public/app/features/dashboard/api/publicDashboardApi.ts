@@ -85,23 +85,30 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: (result, error, { dashboard }) => [{ type: 'PublicDashboard', id: dashboard.uid }],
     }),
-    updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    updatePublicDashboard: builder.mutation<
+      PublicDashboard,
+      { dashboard: Partial<DashboardModel>; payload: Partial<PublicDashboard> }
+    >({
       query: (params) => ({
         url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
-        method: 'PUT',
+        method: 'PATCH',
         data: params.payload,
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
 
-        // Update runtime meta flag
-        dashboard.updateMeta({
-          publicDashboardUid: data.uid,
-          publicDashboardEnabled: data.isEnabled,
-        });
+        if (dashboard.updateMeta) {
+          dashboard.updateMeta({
+            publicDashboardUid: data.uid,
+            publicDashboardEnabled: data.isEnabled,
+          });
+        }
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { payload }) => [
+        { type: 'PublicDashboard', id: payload.dashboardUid },
+        'AuditTablePublicDashboard',
+      ],
     }),
     addRecipient: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
       query: () => ({

@@ -4,7 +4,7 @@ import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { LayoutModes } from '@grafana/data';
-import { setAngularLoader, config } from '@grafana/runtime';
+import { setAngularLoader, config, setPluginExtensionGetter } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
@@ -71,6 +71,7 @@ describe('<EditDataSourcePage>', () => {
   beforeEach(() => {
     // @ts-ignore
     api.getDataSourceByIdOrUid = jest.fn().mockResolvedValue(dataSource);
+    setPluginExtensionGetter(jest.fn().mockReturnValue({ extensions: [] }));
 
     store = configureStore({
       dataSourceSettings,
@@ -116,9 +117,8 @@ describe('<EditDataSourcePage>', () => {
     await waitFor(() => {
       // Buttons
       expect(screen.queryByRole('button', { name: /Delete/i })).toBeVisible();
-      expect(screen.queryByRole('button', { name: /Save (.*) test/i })).toBeVisible();
       expect(screen.queryByRole('link', { name: /Build a dashboard/i })).toBeVisible();
-      expect(screen.queryAllByRole('link', { name: /Explore/i })).toHaveLength(1);
+      expect(screen.queryAllByRole('link', { name: /Explore data/i })).toHaveLength(1);
     });
   });
 });

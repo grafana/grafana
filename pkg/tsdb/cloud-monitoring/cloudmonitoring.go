@@ -82,7 +82,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +336,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -637,8 +637,8 @@ func addConfigData(frames data.Frames, dl string, unit string, period string) da
 	return frames
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

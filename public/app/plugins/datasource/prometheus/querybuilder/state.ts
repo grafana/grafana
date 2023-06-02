@@ -46,7 +46,8 @@ export function getQueryWithDefaults(
     result = { ...query, editorMode: getDefaultEditorMode(query.expr, defaultEditor) };
   }
 
-  if (query.expr == null) {
+  // default query expr is now empty string, set in getDefaultQuery
+  if (query.expr === '') {
     result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
   }
 

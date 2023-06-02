@@ -59,6 +59,7 @@ var (
 			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
@@ -184,13 +185,6 @@ var (
 			State:       FeatureStateStable,
 			Expression:  "true", // turned on by default
 			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
 			Name:        "topnav",
@@ -436,6 +430,14 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingNotificationsPoliciesMatchingInstances",
+			Description:  "Enables the preview of matching instances for notification policies",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			State:       FeatureStateAlpha,
@@ -507,7 +509,7 @@ var (
 		},
 		{
 			Name:         "faroDatasourceSelector",
-			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability ",
+			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 			Owner:        appO11ySquad,
@@ -520,11 +522,25 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
+			Name:         "dataSourcePageHeader",
+			Description:  "Apply new pageHeader UI in data source edit page",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        enterpriseDatasourcesSquad,
+		},
+		{
 			Name:         "extraThemes",
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
 			Owner:        grafanaUserEssentialsSquad,
+		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 	}
 )

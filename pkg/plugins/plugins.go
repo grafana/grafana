@@ -57,6 +57,9 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 type PluginDTO struct {
@@ -84,6 +87,9 @@ type PluginDTO struct {
 	BaseURL string
 
 	AngularDetected bool
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -436,6 +442,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
+		Alias:             p.Alias,
 	}
 }
 

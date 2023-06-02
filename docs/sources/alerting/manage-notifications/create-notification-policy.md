@@ -16,23 +16,17 @@ weight: 300
 
 # Manage notification policies
 
-Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more nested policies. Each policy, except for the default policy, can also match specific alert labels. Each alert is evaluated by the default policy and subsequently by each nested policy. If the **Continue matching subsequent sibling nodes** option is enabled for a nested policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
+Notification policies determine how alerts are routed to contact points.
 
-You can configure Grafana managed notification policies as well as notification policies for an external Alertmanager data source.
+Policies have a tree structure, where each policy can have one or more nested policies. Each policy, except for the default policy, can also match specific alert labels.
 
-## Grouping
+Each alert is evaluated by the default policy and subsequently by each nested policy.
 
-Grouping is a new and key concept of Grafana Alerting that categorizes alert notifications of similar nature into a single funnel. This allows you to properly route alert notifications during larger outages when many parts of a system fail at once causing a high number of alerts to fire simultaneously.
+If the **Continue matching subsequent sibling nodes** option is enabled for a nested policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the nested policies. A default policy governs any alert that does not match a nested policy.
 
-For example, suppose you have 100 services connected to a database in different environments. These services are differentiated by the label `env=environmentname`. An alert rule is in place to monitor whether your services can reach the database named `alertname=DatabaseUnreachable`.
+You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
-When a network partition occurs, half of your services can no longer reach the database. As a result, 50 different alerts (assuming half of your services) are fired. For this situation, you want to receive a single-page notification (as opposed to 50) with a list of the environments that are affected.
-
-You can configure grouping to be `group_by: [alertname]` (take note that the `env` label is omitted). With this configuration in place, Grafana sends a single compact notification that has all the affected environments for this alert rule.
-
-{{% admonition type="note" %}}
-Grafana also has a special label named `...` that you can use to group all alerts by all labels (effectively disabling grouping), therefore each alert will go into its own group. It is different from the default of `group_by: null` where **all** alerts go into a single group.
-{{% /admonition %}}
+For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies/index.md" >}}).
 
 ## Edit default notification policy
 
@@ -57,7 +51,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. To add a top level specific policy, go to the Specific routing section and click **+ New specific policy**.
+1. To add a top level specific policy, go to the Specific routing section and click **+New specific policy**.
 1. In the Matching labels section, add one or more rules for matching alert labels.
 1. In the **Contact point** dropdown, select the contact point to send notification to if alert matches only this specific policy and not any of the nested policies.
 1. Optionally, enable **Continue matching subsequent sibling nodes** to continue matching sibling policies even after the alert matched the current policy. When this option is enabled, you can get more than one notification for one alert.
@@ -70,7 +64,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification policies**.
 1. Expand the specific policy you want to update.
-1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-specific-policy).
+1. Click **+ Add nested policy**, then add the details using information in [Add new specific policy](#add-new-nested-policy).
 1. Click **Save policy** to save your changes.
 
 ## Edit specific policy
@@ -78,7 +72,7 @@ Before Grafana v8.2, the configuration of the embedded Alertmanager was shared a
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies**.
 1. Find the policy you want to edit, then click **Edit**.
-1. Make any changes using instructions in [Add new specific policy](#add-new-specific-policy).
+1. Make any changes using instructions in [Add new specific policy](#add-new-nested-policy).
 1. Click **Save policy**.
 
 ## Searching for policies
