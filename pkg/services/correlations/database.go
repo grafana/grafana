@@ -247,6 +247,10 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	}
 
 	tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return GetCorrelationsResponseBody{}, err
+	}
+
 	totalCount, _ := count.Get(tag)
 	result.TotalCount = totalCount
 
