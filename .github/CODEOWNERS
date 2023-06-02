@@ -104,7 +104,6 @@
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
-/pkg/services/featuremgmt/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
@@ -558,6 +557,7 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
+/pkg/services/featuremgmt/ @grafana/backend-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
