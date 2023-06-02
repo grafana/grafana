@@ -34,7 +34,7 @@ describe('NodeGraphContainer', () => {
       />
     );
 
-    expect(container.firstChild?.childNodes.length).toBe(2);
+    expect(container.firstChild?.firstChild?.childNodes.length).toBe(3);
     expect(container.querySelector('svg')).toBeInTheDocument();
     await screen.findByLabelText(/Node: tempo-querier/);
   });

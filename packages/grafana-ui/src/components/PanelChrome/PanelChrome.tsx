@@ -126,7 +126,7 @@ export function PanelChrome({
 
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
-  const [open, toggleOpen] = useToggle(isOpen ? true : false);
+  const [open, toggleOpen] = useToggle(isOpen ?? true);
 
   const toggle = () => {
     toggleOpen();
@@ -134,9 +134,6 @@ export function PanelChrome({
   };
 
   const headerContent = (
-    // TODO: figure out how to render this inline with the Collapse header
-    // We need to figure out where we want to display actions
-    // Some components like Graph have actions in top right corner and it that case we want them to be in line with the title
     <>
       {title && !collapsible && (
         <h6 title={title} className={styles.title}>

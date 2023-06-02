@@ -2567,6 +2567,9 @@ exports[`better eslint`] = {
     "public/app/features/explore/Logs/LogsMetaRow.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/explore/NodeGraph/NodeGraphContainer.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/explore/QueryRows.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],

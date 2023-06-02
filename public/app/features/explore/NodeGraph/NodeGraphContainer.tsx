@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useToggle, useWindowSize } from 'react-use';
+import { useToggle, useWindowSize, useMeasure } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
+import { PanelChrome } from '@grafana/ui/src/components/PanelChrome/PanelChrome';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
@@ -54,6 +55,10 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   const { nodes } = useCategorizeFrames(frames);
   const [open, toggleOpen] = useToggle(false);
+
+  console.log('NodeGraph - withTraceView', withTraceView);
+  console.log('NodeGraph - open', open);
+
   const toggled = () => {
     toggleOpen();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
@@ -73,35 +78,41 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       setTop(top);
     }
   }, [containerRef]);
-  const height = windowHeight - top - 32;
+  const height = Math.max(600, windowHeight - top);
 
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
       <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
-    ) : null;
+    ) : (
+      ''
+    );
+
+  const [measureRef, { width: measureWidth }] = useMeasure<HTMLDivElement>();
+
+  // Merging refs since we are using window size for height and div size for width
+  const refs = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (node !== null) {
+        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        measureRef(node);
+      }
+    },
+    [measureRef]
+  );
 
   return (
-    <Collapse
-      label={<span>Node graph{countWarning} </span>}
-      collapsible={withTraceView}
-      // We allow collapsing this only when it is shown together with trace view.
-      isOpen={withTraceView ? open : true}
-      onToggle={withTraceView ? () => toggled() : undefined}
-    >
-      <div
-        ref={containerRef}
-        style={
-          withTraceView
-            ? { height: 500 }
-            : {
-                minHeight: 600,
-                height,
-              }
-        }
+    <div ref={refs}>
+      <PanelChrome
+        title={`Node graph${countWarning}`}
+        width={measureWidth}
+        height={withTraceView ? 500 : height}
+        isOpen={withTraceView ? open : true}
+        collapsible={withTraceView}
+        onToggle={withTraceView ? () => toggled() : undefined}
       >
-        <NodeGraph dataFrames={frames} getLinks={getLinks} />
-      </div>
-    </Collapse>
+        {() => <NodeGraph dataFrames={frames} getLinks={getLinks} />}
+      </PanelChrome>
+    </div>
   );
 }
 
