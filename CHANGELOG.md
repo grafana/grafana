@@ -1,3 +1,272 @@
+<!-- 10.0.0-preview START -->
+
+# 10.0.0-preview (2023-05-31)
+
+### Features and enhancements
+
+- **Query History:** Remove migration. [#67470](https://github.com/grafana/grafana/issues/67470), [@Elfo404](https://github.com/Elfo404)
+- **Alerting:** Implement template testing endpoint. [#67450](https://github.com/grafana/grafana/issues/67450), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Trace View:** Export trace button . [#67368](https://github.com/grafana/grafana/issues/67368), [@adrapereira](https://github.com/adrapereira)
+- **Alerting:** Update grafana/alerting to 4f09f51. [#67329](https://github.com/grafana/grafana/issues/67329), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Cloudwatch:** Add FraudDetector namespace with metrics and dimensions. [#67318](https://github.com/grafana/grafana/issues/67318), [@ffje](https://github.com/ffje)
+- **Timeseries:** Migrate legend hideFrom. [#67305](https://github.com/grafana/grafana/issues/67305), [@adela-almasan](https://github.com/adela-almasan)
+- **CloudWatch:** Deprecate dynamic labels feature toggle, remove support for Alias in frontend. [#67222](https://github.com/grafana/grafana/issues/67222), [@fridgepoet](https://github.com/fridgepoet)
+- **Docs:** Create documentation for enterprise caching HTTP API. [#67169](https://github.com/grafana/grafana/issues/67169), [@mmandrus](https://github.com/mmandrus)
+- **Cloudwatch Logs:** Update Cheatsheet. [#67161](https://github.com/grafana/grafana/issues/67161), [@sarahzinger](https://github.com/sarahzinger)
+- **Alerting:** Add alert instance picker. [#67138](https://github.com/grafana/grafana/issues/67138), [@VikaCep](https://github.com/VikaCep)
+- **Loki:** Enable dataplane-compliant metric data by default. [#67137](https://github.com/grafana/grafana/issues/67137), [@gabor](https://github.com/gabor)
+- **Loki:** Enable new log context query editor. [#67131](https://github.com/grafana/grafana/issues/67131), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Elasticsearch:** Deprecate index setting for annotation queries. [#67046](https://github.com/grafana/grafana/issues/67046), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Search:** Preserves search filters when navigating to another page. [#67021](https://github.com/grafana/grafana/issues/67021), [@khushijain21](https://github.com/khushijain21)
+- **PanelContext:** Add functionality to update data from panel. [#66993](https://github.com/grafana/grafana/issues/66993), [@torkelo](https://github.com/torkelo)
+- **Phlare:** Support both Phlare and Pyroscope backends and rename to Grafana Pyroscope. [#66989](https://github.com/grafana/grafana/issues/66989), [@aocenas](https://github.com/aocenas)
+- **Packaging:** Added deprecation warnings when running `grafana-cli` or `grafana-server`; the `grafana` command should be used instead. [#66976](https://github.com/grafana/grafana/issues/66976), [@kminehart](https://github.com/kminehart)
+- **Elasticsearch:** Update required database version to 7.16. [#66928](https://github.com/grafana/grafana/issues/66928), [@gabor](https://github.com/gabor)
+- **Alert:** Redesign with tinted background . [#66918](https://github.com/grafana/grafana/issues/66918), [@torkelo](https://github.com/torkelo)
+- **Auth:** Make GitHub auth's allowed_organizations be case insensitive. [#66879](https://github.com/grafana/grafana/issues/66879), [@consideRatio](https://github.com/consideRatio)
+- **Elasticsearch:** Deprecate the usage of the database field in provisioning. [#66828](https://github.com/grafana/grafana/issues/66828), [@gwdawson](https://github.com/gwdawson)
+- **CSRF middleware:** Add flag to skip login cookie check. [#66806](https://github.com/grafana/grafana/issues/66806), [@PoorlyDefinedBehaviour](https://github.com/PoorlyDefinedBehaviour)
+- **Alerting:** Use URLs in image annotations. [#66804](https://github.com/grafana/grafana/issues/66804), [@santihernandezc](https://github.com/santihernandezc)
+- **AppRootPage:** Reduce flickering while loading plugin. [#66799](https://github.com/grafana/grafana/issues/66799), [@torkelo](https://github.com/torkelo)
+- **Alerting:** Make Loki & Prometheus instant vector by default. [#66797](https://github.com/grafana/grafana/issues/66797), [@gillesdemey](https://github.com/gillesdemey)
+- **Log Context:** Add button to open the context query in a split view. [#66777](https://github.com/grafana/grafana/issues/66777), [@svennergr](https://github.com/svennergr)
+- **APIkeys:** Add metrics for apikey endpoints. [#66732](https://github.com/grafana/grafana/issues/66732), [@eleijonmarck](https://github.com/eleijonmarck)
+- **ServeFromSubPath:** Redirect to URL with subpath when subpath missing. [#66724](https://github.com/grafana/grafana/issues/66724), [@torkelo](https://github.com/torkelo)
+- **RBAC:** Remove the option to disable RBAC and add automated permission migrations for instances that had RBAC disabled. [#66652](https://github.com/grafana/grafana/issues/66652), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Plugins:** Remove secure socks proxy feature toggle. [#66611](https://github.com/grafana/grafana/issues/66611), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Alerting:** Loki-based alert state history modal. [#66595](https://github.com/grafana/grafana/issues/66595), [@konrad147](https://github.com/konrad147)
+- **Explore:** Promote exploreMixedDatasource feature toggle to beta. [#66552](https://github.com/grafana/grafana/issues/66552), [@ifrost](https://github.com/ifrost)
+- **Chore:** Clean up NavModel interface. [#66548](https://github.com/grafana/grafana/issues/66548), [@ashharrison90](https://github.com/ashharrison90)
+- **Alerting:** Scheduler use rule fingerprint instead of version. [#66531](https://github.com/grafana/grafana/issues/66531), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **CloudWatch:** Deprecate dynamic labels feature toggle, remove support for Alias in backend. [#66494](https://github.com/grafana/grafana/issues/66494), [@fridgepoet](https://github.com/fridgepoet)
+- **RBAC:** Make access control metadata for folders work with nested folders. [#66464](https://github.com/grafana/grafana/issues/66464), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Tracing:** Add links to documentation in config pages. [#66442](https://github.com/grafana/grafana/issues/66442), [@joey-grafana](https://github.com/joey-grafana)
+- **Loki:** Always display log context toggle. [#66379](https://github.com/grafana/grafana/issues/66379), [@matyax](https://github.com/matyax)
+- **Datagrid Panel:** Edit data within your dashboards. [#66353](https://github.com/grafana/grafana/issues/66353), [@mdvictor](https://github.com/mdvictor)
+- **Annotations:** Support filtering the target panels. [#66325](https://github.com/grafana/grafana/issues/66325), [@ryantxu](https://github.com/ryantxu)
+- **Alerting:** Use default page size of 5000 when querying Loki for state history. [#66315](https://github.com/grafana/grafana/issues/66315), [@alexweav](https://github.com/alexweav)
+- **GrafanaData:** Remove obsolete logs exports. [#66271](https://github.com/grafana/grafana/issues/66271), [@gabor](https://github.com/gabor)
+- **Alerting:** Update legacy alerting warning. [#66269](https://github.com/grafana/grafana/issues/66269), [@armandgrillet](https://github.com/armandgrillet)
+- **GrafanaUI:** Remove obsolete logs exports. [#66268](https://github.com/grafana/grafana/issues/66268), [@gabor](https://github.com/gabor)
+- **Explore:** Remove deprecated DataSourceWithLogsVolumeSupport. [#66266](https://github.com/grafana/grafana/issues/66266), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Chore:** Upgrade Go to 1.20.3. [#66264](https://github.com/grafana/grafana/issues/66264), [@sakjur](https://github.com/sakjur)
+- **Design System:** Set TextArea to display: block in order to remove spacing below. [#66262](https://github.com/grafana/grafana/issues/66262), [@L-M-K-B](https://github.com/L-M-K-B)
+- **Elasticsearch:** Add feature toggle to disable running queries trough backend. [#66260](https://github.com/grafana/grafana/issues/66260), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Correlations:** Add transformation editor. [#66217](https://github.com/grafana/grafana/issues/66217), [@gelicia](https://github.com/gelicia)
+- **Logs Navigation:** Scroll to first log when using pagination. [#66214](https://github.com/grafana/grafana/issues/66214), [@matyax](https://github.com/matyax)
+- **Search:** Add clear search button to the input bar. [#66204](https://github.com/grafana/grafana/issues/66204), [@khushijain21](https://github.com/khushijain21)
+- **Visualizations:** Choose color based on series name. [#66197](https://github.com/grafana/grafana/issues/66197), [@lukepalmer](https://github.com/lukepalmer)
+- **FieldValues:** Use plain arrays instead of Vector (part 1 of 2). [#66187](https://github.com/grafana/grafana/issues/66187), [@ryantxu](https://github.com/ryantxu)
+- **Users:** Enable case insensitive login by default. [#66134](https://github.com/grafana/grafana/issues/66134), [@Jguer](https://github.com/Jguer)
+- **Loki Query Editor:** Increase autocomplete suggestions window with to 50%. [#66041](https://github.com/grafana/grafana/issues/66041), [@matyax](https://github.com/matyax)
+- **Instrumentation:** Add support for instrumenting database queries. [#66022](https://github.com/grafana/grafana/issues/66022), [@bergquist](https://github.com/bergquist)
+- **Loki:** Add feature flag to enable dataplane-compliant metric frames. [#66017](https://github.com/grafana/grafana/issues/66017), [@gabor](https://github.com/gabor)
+- **Tempo:** Encode IDs as hexadecimal when downloading traces. [#66001](https://github.com/grafana/grafana/issues/66001), [@kousikmitra](https://github.com/kousikmitra)
+- **Cloudwatch:** Add missing AWS/IVS namespace metrics. [#65985](https://github.com/grafana/grafana/issues/65985), [@idastambuk](https://github.com/idastambuk)
+- **Alerting:** Remove and revert flag alertingBigTransactions. [#65976](https://github.com/grafana/grafana/issues/65976), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Attach hash of instance labels to state history log lines. [#65968](https://github.com/grafana/grafana/issues/65968), [@alexweav](https://github.com/alexweav)
+- **API keys:** Add deprecation to api keys. [#65948](https://github.com/grafana/grafana/issues/65948), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Logs:** Redesign and improve LogContext. [#65939](https://github.com/grafana/grafana/issues/65939), [@svennergr](https://github.com/svennergr)
+- **Loki:** Remove alpha feature toggle lokiDataframeApi. [#65918](https://github.com/grafana/grafana/issues/65918), [@gabor](https://github.com/gabor)
+- **Packaging:** Remove chkconfig dependency. [#65887](https://github.com/grafana/grafana/issues/65887), [@DanCech](https://github.com/DanCech)
+- **Explore:** Run test datasource default selection when mounted. [#65864](https://github.com/grafana/grafana/issues/65864), [@gelicia](https://github.com/gelicia)
+- **Service Accounts:** Allow unsetting token expiry date. [#65862](https://github.com/grafana/grafana/issues/65862), [@kousikmitra](https://github.com/kousikmitra)
+- **SQL Datasources:** Update Max Connection and Max Idle Connection Defaults to 100 and add auto mode. [#65834](https://github.com/grafana/grafana/issues/65834), [@codeincarnate](https://github.com/codeincarnate)
+- **DashlistPanel:** Add options to include time range and variable values. [#65757](https://github.com/grafana/grafana/issues/65757), [@VictorColomb](https://github.com/VictorColomb)
+- **Alerting:** Add endpoint to revert to a previous alertmanager configuration. [#65751](https://github.com/grafana/grafana/issues/65751), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Document state history config options in default and sample configuration files. [#65748](https://github.com/grafana/grafana/issues/65748), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Choose a previous valid AM configuration in case of error. [#65746](https://github.com/grafana/grafana/issues/65746), [@VikaCep](https://github.com/VikaCep)
+- **Traces:** Span filtering. [#65725](https://github.com/grafana/grafana/issues/65725), [@joey-grafana](https://github.com/joey-grafana)
+- **Caching:** Refactor enterprise query caching middleware to a wire service. [#65616](https://github.com/grafana/grafana/issues/65616), [@mmandrus](https://github.com/mmandrus)
+- **Alerting:** Implement template preview for Grafana AlertManager. [#65530](https://github.com/grafana/grafana/issues/65530), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Dropdown:** Stop Dropdown accepting a function as children. [#65467](https://github.com/grafana/grafana/issues/65467), [@ashharrison90](https://github.com/ashharrison90)
+- **GrafanaDS:** Add support for annotation time regions. [#65462](https://github.com/grafana/grafana/issues/65462), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Add support for running HA using Redis. [#65267](https://github.com/grafana/grafana/issues/65267), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **Tempo:** Add kind to TraceQL intrinsics. [#65111](https://github.com/grafana/grafana/issues/65111), [@adrapereira](https://github.com/adrapereira)
+- **Feature:** Trusted Types support. [#64975](https://github.com/grafana/grafana/issues/64975), [@KristianGrafana](https://github.com/KristianGrafana)
+- **AzureMonitor:** Application Insights Traces. [#64859](https://github.com/grafana/grafana/issues/64859), [@aangelisc](https://github.com/aangelisc)
+- **Chore:** Remove deprecated dashboardId from panel query runner. [#64786](https://github.com/grafana/grafana/issues/64786), [@ryantxu](https://github.com/ryantxu)
+- **DataFrame:** Handle nanosecond-precision timestamp fields. [#64529](https://github.com/grafana/grafana/issues/64529), [@gabor](https://github.com/gabor)
+- **EditDataSources:** Add EditDataSourceActions to EditDataSourcePages. [#64487](https://github.com/grafana/grafana/issues/64487), [@mikkancso](https://github.com/mikkancso)
+- **Chore:** Upgrade to react 18. [#64428](https://github.com/grafana/grafana/issues/64428), [@ashharrison90](https://github.com/ashharrison90)
+- **Canvas:** Connection properties based on data. [#64360](https://github.com/grafana/grafana/issues/64360), [@adela-almasan](https://github.com/adela-almasan)
+- **Explore:** Align multiple log volumes. [#64356](https://github.com/grafana/grafana/issues/64356), [@ifrost](https://github.com/ifrost)
+- **Explore:** Clear live logs. [#64237](https://github.com/grafana/grafana/issues/64237), [@abdulhdr1](https://github.com/abdulhdr1)
+- **TimeSeries:** Explicitly add transformer when timeseries-long exists. [#64092](https://github.com/grafana/grafana/issues/64092), [@ryantxu](https://github.com/ryantxu)
+- **SAML:** Configuration UI. [#64054](https://github.com/grafana/grafana/issues/64054), [@alexanderzobnin](https://github.com/alexanderzobnin)
+- **Alerting:** Use configured headers for external alertmanager. [#63819](https://github.com/grafana/grafana/issues/63819), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+- **Prometheus:** Incremental querying option for `to: now` dashboards. [#62932](https://github.com/grafana/grafana/issues/62932), [@leeoniya](https://github.com/leeoniya)
+- **Dashboard:** Add series color shades. [#61300](https://github.com/grafana/grafana/issues/61300), [@jkraml-staffbase](https://github.com/jkraml-staffbase)
+
+### Bug fixes
+
+- **TimeSeries:** Fix leading null-fill for missing intervals. [#67570](https://github.com/grafana/grafana/issues/67570), [@leeoniya](https://github.com/leeoniya)
+- **Pyroscope:** Fix autodetection in case of using Phlare backend. [#67536](https://github.com/grafana/grafana/issues/67536), [@aocenas](https://github.com/aocenas)
+- **Dashboard:** Revert fixed header shown on mobile devices in the new panel header. [#67510](https://github.com/grafana/grafana/issues/67510), [@axelavargas](https://github.com/axelavargas)
+- **PostgreSQL:** Fix tls certificate issue by downgrading lib/pq. [#67372](https://github.com/grafana/grafana/issues/67372), [@zoltanbedi](https://github.com/zoltanbedi)
+- **Alerting:** Fix misleading status code in provisioning API. [#67331](https://github.com/grafana/grafana/issues/67331), [@usommerl](https://github.com/usommerl)
+- **Explore:** Update table min height . [#67321](https://github.com/grafana/grafana/issues/67321), [@adrapereira](https://github.com/adrapereira)
+- **Provisioning:** Fix provisioning issues with legacy alerting and data source permissions. [#67308](https://github.com/grafana/grafana/issues/67308), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Proxy:** Improve header handling for reverse proxy. [#67279](https://github.com/grafana/grafana/issues/67279), [@sakjur](https://github.com/sakjur)
+- **Loki:** Fix log samples using `instant` queries. [#67271](https://github.com/grafana/grafana/issues/67271), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Fix panic when reparenting receivers to groups following an attempted rename via Provisioning. [#67167](https://github.com/grafana/grafana/issues/67167), [@alexweav](https://github.com/alexweav)
+- **Loki:** Fix incorrect evaluation of real and extracted labels in context. [#67112](https://github.com/grafana/grafana/issues/67112), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Cloudwatch Logs:** Clarify Cloudwatch Logs Limits. [#67072](https://github.com/grafana/grafana/issues/67072), [@sarahzinger](https://github.com/sarahzinger)
+- **Rendering:** Fix panel rendered count on error. [#67027](https://github.com/grafana/grafana/issues/67027), [@AgnesToulet](https://github.com/AgnesToulet)
+- **Elasticsearch:** Fix processing of duplicated metric types and field. [#66973](https://github.com/grafana/grafana/issues/66973), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Plugins:** Fix width for README pages with tables. [#66872](https://github.com/grafana/grafana/issues/66872), [@andresmgot](https://github.com/andresmgot)
+- **Tempo:** TraceQL query builder QoL improvements. [#66865](https://github.com/grafana/grafana/issues/66865), [@adrapereira](https://github.com/adrapereira)
+- **Expressions/threshold:** Fix incorrect thresholds args length. [#66859](https://github.com/grafana/grafana/issues/66859), [@gillesdemey](https://github.com/gillesdemey)
+- **Panel Header Fix:** Implement new Panel Header on Angular Panels . [#66826](https://github.com/grafana/grafana/issues/66826), [@axelavargas](https://github.com/axelavargas)
+- **Elasticsearch:** Handle multiple annotation structures. [#66762](https://github.com/grafana/grafana/issues/66762), [@gabor](https://github.com/gabor)
+- **Alerting:** Fix share URL for Prometheus rules on subpath. [#66752](https://github.com/grafana/grafana/issues/66752), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix DatasourceUID and RefID missing for DatasourceNoData alerts. [#66733](https://github.com/grafana/grafana/issues/66733), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Plugins:** Fix plugin catalog filtering. [#66663](https://github.com/grafana/grafana/issues/66663), [@leventebalogh](https://github.com/leventebalogh)
+- **Navigation:** Redirect to root page when switching organization. [#66655](https://github.com/grafana/grafana/issues/66655), [@ashharrison90](https://github.com/ashharrison90)
+- **Trace View:** Update the queryType to traceql for checking if same trace when clicking span link. [#66645](https://github.com/grafana/grafana/issues/66645), [@ericmustin](https://github.com/ericmustin)
+- **Explore:** Fix using data source line limit when opening logs sample in split view. [#66601](https://github.com/grafana/grafana/issues/66601), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Fix ad hoc filters when used with number and > and < operators. [#66579](https://github.com/grafana/grafana/issues/66579), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Dashboards:** Fix broken internal data links. [#66567](https://github.com/grafana/grafana/issues/66567), [@ifrost](https://github.com/ifrost)
+- **Google Cloud Monitoring:** Fix project variable. [#66524](https://github.com/grafana/grafana/issues/66524), [@asimpson](https://github.com/asimpson)
+- **Azure Monitor:** Fix bug that was not showing resources for certain locations. [#66502](https://github.com/grafana/grafana/issues/66502), [@alyssabull](https://github.com/alyssabull)
+- **Plugins:** Fs: Add option to access unallowed files in dev mode. [#66492](https://github.com/grafana/grafana/issues/66492), [@xnyo](https://github.com/xnyo)
+- **Dashboard:** New panel in a dashboard is not deleted after "Discard"-ing changes in Panel Edit. [#66476](https://github.com/grafana/grafana/issues/66476), [@polibb](https://github.com/polibb)
+- **InfluxDB:** Fix querying with hardcoded retention policy. [#66466](https://github.com/grafana/grafana/issues/66466), [@itsmylife](https://github.com/itsmylife)
+- **Alerting:** Hide mute timing actions when dealing with vanilla prometheus. [#66457](https://github.com/grafana/grafana/issues/66457), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix creating a recording rule when having multiple datasources. [#66415](https://github.com/grafana/grafana/issues/66415), [@VikaCep](https://github.com/VikaCep)
+- **AccessControl:** Allow editors to access GET /api/datasources. [#66343](https://github.com/grafana/grafana/issues/66343), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Table Panel:** Fix panel migration for options cell type. [#66305](https://github.com/grafana/grafana/issues/66305), [@ryantxu](https://github.com/ryantxu)
+- **Navigation:** Scrolled hamburger menu links now navigate correctly in Safari. [#66261](https://github.com/grafana/grafana/issues/66261), [@ashharrison90](https://github.com/ashharrison90)
+- **Cloudwatch:** Fix ui bug in template variable editor. [#66207](https://github.com/grafana/grafana/issues/66207), [@iSatVeerSingh](https://github.com/iSatVeerSingh)
+- **Annotations:** Improve get tags query performance. [#66182](https://github.com/grafana/grafana/issues/66182), [@papagian](https://github.com/papagian)
+- **Query Splitting:** Fix for handling queries with no requestId. [#66161](https://github.com/grafana/grafana/issues/66161), [@domasx2](https://github.com/domasx2)
+- **Cloudwatch:** Pass refId from query for expression queries. [#66147](https://github.com/grafana/grafana/issues/66147), [@idastambuk](https://github.com/idastambuk)
+- **Alerting:** Fix explore link in alert detail view. [#66106](https://github.com/grafana/grafana/issues/66106), [@gillesdemey](https://github.com/gillesdemey)
+- **Plugins:** Skip instrumenting plugin build info for core and bundled plugins. [#66105](https://github.com/grafana/grafana/issues/66105), [@wbrowne](https://github.com/wbrowne)
+- **Alerting:** Fix silences preview. [#66000](https://github.com/grafana/grafana/issues/66000), [@konrad147](https://github.com/konrad147)
+- **Fix:** DataLinks from data sources override user defined data link. [#65996](https://github.com/grafana/grafana/issues/65996), [@axelavargas](https://github.com/axelavargas)
+- **Auth:** Remove the session cookie only if it's invalid or revoked. [#65984](https://github.com/grafana/grafana/issues/65984), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Transformations:** Improve UX and fix refId issues. [#65982](https://github.com/grafana/grafana/issues/65982), [@torkelo](https://github.com/torkelo)
+- **SQL Datasources:** Fix variable throwing error if query returns no data. [#65937](https://github.com/grafana/grafana/issues/65937), [@mdvictor](https://github.com/mdvictor)
+- **Annotations:** Ignore unique constraint violations for tags. [#65935](https://github.com/grafana/grafana/issues/65935), [@sakjur](https://github.com/sakjur)
+- **PluginExtensions:** Fixed issue with incorrect type being exposed when configuring an extension. [#65910](https://github.com/grafana/grafana/issues/65910), [@mckn](https://github.com/mckn)
+- **Annotation List:** Fix panel not updating when variable is changed. [#65899](https://github.com/grafana/grafana/issues/65899), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **Table:** Fix migrations from old angular table for cell color modes . [#65760](https://github.com/grafana/grafana/issues/65760), [@torkelo](https://github.com/torkelo)
+- **PieChart:** Show long labels properly. [#65699](https://github.com/grafana/grafana/issues/65699), [@mdvictor](https://github.com/mdvictor)
+- **Library panels:** Ensure pagination controls are always correctly displayed. [#65283](https://github.com/grafana/grafana/issues/65283), [@ashharrison90](https://github.com/ashharrison90)
+- **Catalog:** Show install error with incompatible version. [#65059](https://github.com/grafana/grafana/issues/65059), [@andresmgot](https://github.com/andresmgot)
+- **XYChart:** Add all dataset columns in tooltip. [#65027](https://github.com/grafana/grafana/issues/65027), [@mdvictor](https://github.com/mdvictor)
+- **Alerting:** Use a completely isolated context for state history writes. [#64989](https://github.com/grafana/grafana/issues/64989), [@alexweav](https://github.com/alexweav)
+- **Utils:** Reimplement util.GetRandomString to avoid modulo bias. [#64481](https://github.com/grafana/grafana/issues/64481), [@DanCech](https://github.com/DanCech)
+- **Reports:** Add empty UID to not found dashboard. (Enterprise)
+
+### Breaking changes
+
+The deprecated `plugin:build` command in the Grafana Toolkit have been removed in this release. The replacement [`create-plugin`](https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/) tool is recommended for plugin development.
+Issue [#67485](https://github.com/grafana/grafana/issues/67485)
+
+The deprecated `package:build`, `node-version-check` and `toolkit:build` commands in the Grafana Toolkit have been removed in this release. Issue [#67475](https://github.com/grafana/grafana/issues/67475)
+
+The deprecated `plugin:github-publish` command in the Grafana Toolkit have been removed in this release. Issue [#67471](https://github.com/grafana/grafana/issues/67471)
+
+The `/query-history/migrate` endpoint has been removed and query history entries will not be automatically migrated when switching from local storage to remote storage. Issue [#67470](https://github.com/grafana/grafana/issues/67470)
+
+The deprecated `plugin:ci-build`, `plugin:ci-package`, `plugin:ci-report`, `plugin:update-circleci` and `plugin:bundle-managed` commands in the Grafana Toolkit have been removed in this release. Issue [#67212](https://github.com/grafana/grafana/issues/67212)
+
+The data-format used by the Loki data source for metric (graph producing) queries was changed to be compliant with the recommended Grafana format. The change is very small, we do not expect it to cause problems: for instant-queries the dataframe-type changed from `timeseries-multi` to `numeric-multi`, the dataframe-name attribute is not used anymore. If you are affected by this, you can revert back to the old format by setting the feature flag `lokiMetricDataplane` to `false`. We recommend migrating to the new format, because the feature-flag will be removed at some point in the future. Issue [#67137](https://github.com/grafana/grafana/issues/67137)
+
+The deprecated `plugin:sign` command in the Grafana Toolkit have been removed in this release. The replacement `sign-plugin` tool is recommended for [plugin signing](https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin). Issue [#67130](https://github.com/grafana/grafana/issues/67130)
+
+The deprecated `plugin:test` and `plugin:dev` commands in the Grafana Toolkit have been removed in this release. Issue [#67125](https://github.com/grafana/grafana/issues/67125)
+
+The type signature of the `testDatasource()` method on the `DataSourceWithBackend` class [has changed](https://github.com/grafana/grafana/pull/67014/files/a5608dc4f27ab4459e725b22ff60b8fc05390c08#diff-c58fc1a09e9b9b17e5f45efbfb646273e69145f7687facb134440da4edafc745R263), the returned Promise is now typed stricter, which is probably going to cause type-errors while building plugins against the latest Grafana versions.
+
+````typescript
+// Before
+abstract testDatasource(): Promise<any>;
+
+// After
+abstract testDatasource(): Promise<TestDataSourceResponse>;
+``` Issue [#67014](https://github.com/grafana/grafana/issues/67014)
+
+Grafana requires an Elasticsearch version of 7.16 or newer. If you use an older Elasticsearch version, you will get warnings in the query editor and on the datasource configuration page. Issue [#66928](https://github.com/grafana/grafana/issues/66928)
+
+The deprecated `plugin:create` and `component:create` commands in the Grafana Toolkit have been removed in this release. The replacement `create-plugin` tool is recommended for [scaffolding new plugins](https://grafana.github.io/plugin-tools/docs/creating-a-plugin) and a migration guide for moving from the toolkit is available [here](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit). Issue [#66729](https://github.com/grafana/grafana/issues/66729)
+
+We've removed some now unused properties from the `NavModel` interface. Issue [#66548](https://github.com/grafana/grafana/issues/66548)
+
+`default` named retention policies won't be used to query. Users who have a `default` named retention policy in their `influxdb` database, have to rename it to something else. Having `default` named retention policy is not breaking anything. We will make sure to use the actual default retention policy under the hood. To change the hardcoded retention policy in the `dashboard.json`, users must they select the right retention policy from dropdown and save the panel/dashboard. Issue [#66466](https://github.com/grafana/grafana/issues/66466)
+
+We removed previously deprecated components from `@grafana/data` : `getLogLevel`, `getLogLevelFromKey`, `addLogLevelToSeries`, `LogsParser`, `LogsParsers`, `calculateFieldStats`, `calculateLogsLabelStats`, `calculateStats`, `getParser`, `sortInAscendingOrder`, `sortInDescendingOrder`, `sortLogsResult`, `sortLogRows`, `checkLogsError`, `escapeUnescapedString`. Issue [#66271](https://github.com/grafana/grafana/issues/66271)
+
+We removed previously deprecated components from `@grafana/ui` : `LogLabels`, `LogMessageAnsi`, `LogRows`, `getLogRowStyles`.
+ Issue [#66268](https://github.com/grafana/grafana/issues/66268)
+
+We removed previously deprecated `DataSourceWithLogsVolumeSupport` that  was replaced with `DataSourceWithSupplementaryQueriesSupport`. Both APIs are for internal use only. Issue [#66266](https://github.com/grafana/grafana/issues/66266)
+
+Additional functions (map/filter/forEach/iterator) have been added to the root Vector interface. Any code using vectors will continue to work unchanged, but in the rare case that you have implemented Vector directly, it be missing these functions.  The easiest fix is to extend [FunctionalVector](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/vector/FunctionalVector.ts).
+
+The `ArrayVector` class now extends the native JavaScript `Array` and gains all of its prototype/instance methods as a result. Issue [#66187](https://github.com/grafana/grafana/issues/66187)
+
+We've removed the ability for functions to be passed as children to the `Dropdown` component. Previously, this was used to access the `isOpen` state of the dropdown. This can be now be achieved with the `onVisibleChange` prop.
+
+Before:
+````
+
+return (
+<Dropdown overlay={MenuActions} placement="bottom-end">
+{(isOpen) =>
+<ToolbarButton iconOnly icon="plus" isOpen={isOpen} aria-label="New" />
+}
+</Dropdown>
+);
+
+```
+
+After:
+```
+
+const [isOpen, setIsOpen] = useState(false);
+
+...
+
+return (
+<Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setIsOpen}>
+<ToolbarButton iconOnly icon="plus" isOpen={isOpen} aria-label="New" />
+</Dropdown>
+);
+
+````Issue [#65467](https://github.com/grafana/grafana/issues/65467)
+
+(relevant for plugin developers) The deprecated internal `dashboardId` is now removed from the request context.  For usage tracking use the `dashboardUid`
+
+
+ Issue [#64786](https://github.com/grafana/grafana/issues/64786)
+
+Grafana has been upgraded to React 18 and now leverages the new React client rendering API. Plugin authors in particular should be aware, as there could be unintended side effects due to the changes around automatic batching of state updates and consistent `useEffect` timings. Be sure to test your plugins and reference the React 18 upgrade docs here: https://react.dev/blog/2022/03/08/react-18-upgrade-guide Issue [#64428](https://github.com/grafana/grafana/issues/64428)
+
+### Deprecations
+
+For Elasticsearch annotation queries we are deprecating index field. Possibility to customise index for newly created annotations has already been removed in version 2.6.0 and since then we supported updating of index only for queries that customised index before 2.6.0. For users who would like to specify index for annotation queries we recommend to create a new Elasticsearch data source with specified index, and use that data source for annotations. Issue [#67046](https://github.com/grafana/grafana/issues/67046)
+
+Scripts, systemd unit files and etc should stop using the `grafana-cli` and `grafana-server` programs, and instead use the `grafana` program. Uses of `grafana-server` should become `grafana server`, and uses of `grafana-cli` should become `grafana cli`. Issue [#66976](https://github.com/grafana/grafana/issues/66976)
+
+The `database` field has been deprecated in the Elasticsearch datasource provisioning files, please use the `index` field in `jsonData` instead. Issue [#66828](https://github.com/grafana/grafana/issues/66828)
+
+### Plugin development fixes & changes
+
+- **Toolkit:** Remove deprecated `plugin:build`. [#67485](https://github.com/grafana/grafana/issues/67485), [@academo](https://github.com/academo)
+- **Toolkit:** Remove deprecated `package:build`, `node-version-check` and `toolkit:build` commands. [#67475](https://github.com/grafana/grafana/issues/67475), [@academo](https://github.com/academo)
+- **Toolkit:** Remove deprecated `plugin:github-publish` command. [#67471](https://github.com/grafana/grafana/issues/67471), [@academo](https://github.com/academo)
+- **GrafanaUI:** Add indeterminate state to Checkbox. [#67312](https://github.com/grafana/grafana/issues/67312), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **Toolkit:** Remove `plugin:ci-build` `plugin:ci-package` `plugin:ci-report` and related files. [#67212](https://github.com/grafana/grafana/issues/67212), [@academo](https://github.com/academo)
+- **Toolkit:** Remove deprecated `plugin:sign` command. [#67130](https://github.com/grafana/grafana/issues/67130), [@academo](https://github.com/academo)
+- **Toolkit:** Remove `plugin:dev` and `plugin:test`. [#67125](https://github.com/grafana/grafana/issues/67125), [@academo](https://github.com/academo)
+- **Datasource:** Overhaul plugin error handling and action buttons. [#67014](https://github.com/grafana/grafana/issues/67014), [@sasklacz](https://github.com/sasklacz)
+- **Toolkit:** Remove plugin:create and component:create commands. [#66729](https://github.com/grafana/grafana/issues/66729), [@academo](https://github.com/academo)
+- **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
+
+<!-- 10.0.0-preview END -->
 <!-- 9.5.2 START -->
 
 # 9.5.2 (2023-05-03)
@@ -2343,7 +2612,7 @@ await selectOptionInTest(selectEl, 'Option 2');
 import { select } from 'react-select-event';
 // ...test usage
 await select(selectEl, 'Option 2', { container: document.body });
-```
+````
 
 Issue [#50442](https://github.com/grafana/grafana/issues/50442)
 

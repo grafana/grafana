@@ -187,13 +187,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
-		},
-		{
 			Name:        "topnav",
 			Description: "Enables new top navigation and page layouts",
 			State:       FeatureStateStable,
@@ -541,6 +534,13 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
 			Owner:        grafanaUserEssentialsSquad,
+		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 	}
 )
