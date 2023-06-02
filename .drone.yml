@@ -240,7 +240,7 @@ steps:
   name: lint-frontend
 - commands:
   - yarn run i18n:extract
-  - "\n            file_diff=$(git diff --stat)\n            if [ -n \"$file_diff\"
+  - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
     ]; then\n                echo $file_diff\n                echo \"Translation extraction
     has not been committed. Please commit the changes and push again.\"\n                exit
     1\n            fi\n            "
@@ -1310,7 +1310,7 @@ steps:
   name: lint-frontend
 - commands:
   - yarn run i18n:extract
-  - "\n            file_diff=$(git diff --stat)\n            if [ -n \"$file_diff\"
+  - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
     ]; then\n                echo $file_diff\n                echo \"Translation extraction
     has not been committed. Please commit the changes and push again.\"\n                exit
     1\n            fi\n            "
@@ -7236,6 +7236,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: e082dbed7d5f33d1ded758573b873018696ce1b0d9fe3725e27739362cd9e848
+hmac: 6943f17f121e842960457afee3c26d3ad863591015a23dffa8509a7156dbe0af
 
 ...

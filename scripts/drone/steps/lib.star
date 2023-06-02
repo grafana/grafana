@@ -790,7 +790,7 @@ def verify_i18n_step():
             "yarn run i18n:extract",
             # Verify that translation extraction has been committed
             '''
-            file_diff=$(git diff --stat)
+            file_diff=$(git diff -- locales --stat)
             if [ -n "$file_diff" ]; then
                 echo $file_diff
                 echo "Translation extraction has not been committed. Please commit the changes and push again."
