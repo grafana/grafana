@@ -14,13 +14,16 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
     return loaded;
   }
 
-  const meta = config.panels[id];
+  const meta = config.panels[id] || Object.values(config.panels).find((p) => p.alias === id);
 
   if (!meta) {
     throw new Error(`Plugin ${id} not found`);
   }
 
   promiseCache[id] = getPanelPlugin(meta);
+  if (id !== meta.type) {
+    promiseCache[meta.type] = promiseCache[id];
+  }
 
   return promiseCache[id];
 }
