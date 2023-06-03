@@ -428,7 +428,8 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	w := listObj.(*apihelpers.ObjectWrapper)
 	u := w.Object.(*unstructured.UnstructuredList)
 
-	if true {
+	outputMediaType, ok := apihelpers.OutputMediaTypeFrom(ctx)
+	if ok && outputMediaType.Convert != nil && outputMediaType.Convert.Kind == "Table" {
 		table := metav1.Table{}
 		table.Kind = "Table"
 		table.APIVersion = "meta.k8s.io/v1"
