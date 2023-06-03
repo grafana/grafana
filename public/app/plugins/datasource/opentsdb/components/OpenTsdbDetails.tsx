@@ -2,8 +2,8 @@ import React, { SyntheticEvent } from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { useUniqueId } from 'app/hooks/useUniqueId';
 
-import { useUniqueId } from '../../influxdb/components/useUniqueId';
 import { OpenTsdbOptions } from '../types';
 
 const { Select, Input } = LegacyForms;

@@ -3,7 +3,7 @@ import React, { PropsWithChildren, ReactElement } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
+import { useUniqueId } from 'app/hooks/useUniqueId';
 
 interface VariableSelectFieldProps<T> {
   name: string;

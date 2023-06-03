@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
+import { useUniqueId } from 'app/hooks/useUniqueId';
 
 export interface Props {
   children: React.ReactNode | (({ isInView }: { isInView: boolean }) => React.ReactNode);
