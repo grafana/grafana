@@ -11,11 +11,11 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { ListPublicDashboardResponse } from '../../types';
+import { PublicDashboardListResponse } from '../../types';
 
 import { PublicDashboardListTable } from './PublicDashboardListTable';
 
-const publicDashboardListResponse: ListPublicDashboardResponse[] = [
+const publicDashboardListResponse: PublicDashboardListResponse[] = [
   {
     uid: 'SdZwuCZVz',
     accessToken: 'beeaf92f6ab3467f80b2be922c7741ab',
@@ -32,7 +32,7 @@ const publicDashboardListResponse: ListPublicDashboardResponse[] = [
   },
 ];
 
-const orphanedDashboardListResponse: ListPublicDashboardResponse[] = [
+const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
   {
     uid: 'SdZwuCZVz2',
     accessToken: 'beeaf92f6ab3467f80b2be922c7741ab',
@@ -164,7 +164,7 @@ describe('Orphaned public dashboard', () => {
   });
 });
 
-const renderPublicDashboardItemCorrectly = (pd: ListPublicDashboardResponse, idx: number, hasWriteAccess: boolean) => {
+const renderPublicDashboardItemCorrectly = (pd: PublicDashboardListResponse, idx: number, hasWriteAccess: boolean) => {
   const isOrphaned = !pd.dashboardUid;
 
   const cardItems = screen.getAllByRole('listitem');

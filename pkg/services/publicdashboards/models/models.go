@@ -108,11 +108,12 @@ func (pd PublicDashboard) TableName() string {
 }
 
 type PublicDashboardListQuery struct {
-	OrgID int64
-	Query string
-	Page  int
-	Limit int
-	User  *user.SignedInUser
+	OrgID  int64
+	Query  string
+	Page   int
+	Limit  int
+	Offset int
+	User   *user.SignedInUser
 }
 
 type PublicDashboardListResponseWithPagination struct {

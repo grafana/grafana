@@ -92,10 +92,10 @@ func (api *Api) RegisterAPIEndpoints() {
 func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
-		perPage = 1000
+		perPage = 50
 	}
-	page := c.QueryInt("page")
 
+	page := c.QueryInt("page")
 	if page < 1 {
 		page = 1
 	}

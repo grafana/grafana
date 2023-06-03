@@ -278,17 +278,22 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 
 // FindAllWithPagination Returns a list of public dashboards by orgId
 func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+	query.Offset = query.Limit * (query.Page - 1)
 	resp, err := pd.store.FindAllWithPagination(ctx, query)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: %w", err)
 	}
 
+	filteredPubdashes, err := pd.filterDashboardsByPermissions(ctx, query.User, resp.PublicDashboards)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.PublicDashboards = filteredPubdashes
 	resp.Page = query.Page
 	resp.PerPage = query.Limit
-	filteredPubdashes, err := pd.filterDashboardsByPermissions(ctx, query.User, resp.PublicDashboards)
-	resp.PublicDashboards = filteredPubdashes
 
-	return resp, err
+	return resp, nil
 }
 
 func (pd *PublicDashboardServiceImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
