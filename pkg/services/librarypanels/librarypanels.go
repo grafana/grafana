@@ -10,21 +10,29 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister,
-	libraryElementService libraryelements.Service) *LibraryPanelService {
-	return &LibraryPanelService{
+	libraryElementService libraryelements.LibraryElementService) (*LibraryPanelService, error) {
+	lps := LibraryPanelService{
 		Cfg:                   cfg,
 		SQLStore:              sqlStore,
 		RouteRegister:         routeRegister,
 		LibraryElementService: libraryElementService,
 		log:                   log.New("library-panels"),
 	}
+
+	if err := libraryElementService.FolderService.RegisterService(lps); err != nil {
+		return nil, err
+	}
+
+	return &lps, nil
 }
 
 // Service is a service for operating on library panels.
@@ -43,7 +51,7 @@ type LibraryPanelService struct {
 	Cfg                   *setting.Cfg
 	SQLStore              db.DB
 	RouteRegister         routing.RouteRegister
-	LibraryElementService libraryelements.Service
+	LibraryElementService libraryelements.LibraryElementService
 	log                   log.Logger
 }
 
@@ -106,7 +114,7 @@ func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Contex
 	return importLibraryPanelsRecursively(c, lps.LibraryElementService, signedInUser, libraryPanels, panels, folderID)
 }
 
-func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func importLibraryPanelsRecursively(c context.Context, service libraryelements.LibraryElementService, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -171,3 +179,24 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 
 	return nil
 }
+
+func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+	var count int64
+	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		folder, err := lps.LibraryElementService.FolderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
+		if err != nil {
+			return err
+		}
+
+		q := sess.Table("library_element").Where("org_id = ?", u.OrgID).
+			Where("folder_id = ?", folder.ID).Where("kind = ?", int64(model.PanelElement))
+		count, err = q.Count()
+		return err
+	})
+}
+
+func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
+	return nil
+}
+
+func (lps LibraryPanelService) Kind() string { return entity.StandardKindLibraryPanel }
