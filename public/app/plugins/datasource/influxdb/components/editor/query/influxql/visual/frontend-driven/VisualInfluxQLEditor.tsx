@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, TypedVariableModel } from '@grafana/data/src';
-import { getTemplateSrv } from '@grafana/runtime/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui/src';
 import { useUniqueId } from 'app/hooks/useUniqueId';
 
@@ -26,14 +25,16 @@ import {
 } from '../../../../../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../../../../../types';
 import { DEFAULT_RESULT_FORMAT } from '../../../../constants';
-
-import { FormatAsSection } from './FormatAsSection';
-import { FromSection } from './FromSection';
-import { InputSection } from './InputSection';
-import { OrderByTimeSection } from './OrderByTimeSection';
-import { PartListSection } from './PartListSection';
-import { TagsSection } from './TagsSection';
-import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from './partListUtils';
+import { filterTags } from '../../utils/filterTags';
+import { withTemplateVariableOptions } from '../../utils/withTemplateVariableOptions';
+import { wrapPure, wrapRegex } from '../../utils/wrapper';
+import { FormatAsSection } from '../shared/FormatAsSection';
+import { FromSection } from '../shared/FromSection';
+import { InputSection } from '../shared/InputSection';
+import { OrderByTimeSection } from '../shared/OrderByTimeSection';
+import { PartListSection } from '../shared/PartListSection';
+import { TagsSection } from '../shared/TagsSection';
+import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../shared/partListUtils';
 
 type Props = {
   query: InfluxQuery;
@@ -41,43 +42,6 @@ type Props = {
   onRunQuery: () => void;
   datasource: InfluxDatasource;
 };
-
-function wrapRegex(v: TypedVariableModel): string {
-  return `/^$${v.name}$/`;
-}
-
-function wrapPure(v: TypedVariableModel): string {
-  return `$${v.name}`;
-}
-
-function getTemplateVariableOptions(wrapper: (v: TypedVariableModel) => string) {
-  return (
-    getTemplateSrv()
-      .getVariables()
-      // we make them regex-params, i'm not 100% sure why.
-      // probably because this way multi-value variables work ok too.
-      .map(wrapper)
-  );
-}
-
-// helper function to make it easy to call this from the widget-render-code
-function withTemplateVariableOptions(
-  optionsPromise: Promise<string[]>,
-  wrapper: (v: TypedVariableModel) => string,
-  filter?: string
-): Promise<string[]> {
-  let templateVariableOptions = getTemplateVariableOptions(wrapper);
-  if (filter) {
-    templateVariableOptions = templateVariableOptions.filter((tvo) => tvo.indexOf(filter) > -1);
-  }
-  return optionsPromise.then((options) => [...templateVariableOptions, ...options]);
-}
-
-// it is possible to add fields into the `InfluxQueryTag` structures, and they do work,
-// but in some cases, when we do metadata queries, we have to remove them from the queries.
-function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQueryTag[] {
-  return parts.filter((t) => t.key.endsWith('::tag') || allTagKeys.has(t.key + '::tag'));
-}
 
 export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const uniqueId = useUniqueId();
@@ -163,7 +127,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
           measurement={measurement}
           getPolicyOptions={() =>
             withTemplateVariableOptions(
-              allTagKeys.then((keys) => getAllPolicies(datasource)),
+              allTagKeys.then(() => getAllPolicies(datasource)),
               wrapPure
             )
           }

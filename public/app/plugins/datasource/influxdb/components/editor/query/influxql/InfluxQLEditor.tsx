@@ -6,9 +6,9 @@ import { buildRawQuery } from '../../../../queryUtils';
 import { InfluxQuery } from '../../../../types';
 
 import { QueryEditorModeSwitcher } from './QueryEditorModeSwitcher';
-import { InfluxQlMigratedEditor } from './backend-driven/InfluxQlMigratedEditor';
-import { RawInfluxQLEditor } from './frontend-driven/RawInfluxQLEditor';
-import { VisualInfluxQLEditor } from './frontend-driven/VisualInfluxQLEditor/VisualInfluxQLEditor';
+import { RawInfluxQLEditor } from './code/RawInfluxQLEditor';
+import { VisualInfluxQLMigratedEditor } from './visual/backend-driven/VisualInfluxQLMigratedEditor';
+import { VisualInfluxQLEditor } from './visual/frontend-driven/VisualInfluxQLEditor';
 
 type Props = {
   backendMigration: boolean;
@@ -19,15 +19,24 @@ type Props = {
 };
 
 export const InfluxQlEditor = ({ backendMigration, datasource, query, onRunQuery, onChange }: Props) => {
-  return backendMigration ? (
-    <InfluxQlMigratedEditor query={query} onChange={onChange} onRunQuery={onRunQuery} datasource={datasource} />
-  ) : (
+  return (
     <div className={css({ display: 'flex' })}>
       <div className={css({ flexGrow: 1 })}>
         {query.rawQuery ? (
           <RawInfluxQLEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />
         ) : (
-          <VisualInfluxQLEditor query={query} onChange={onChange} onRunQuery={onRunQuery} datasource={datasource} />
+          <>
+            {backendMigration ? (
+              <VisualInfluxQLMigratedEditor
+                query={query}
+                onChange={onChange}
+                onRunQuery={onRunQuery}
+                datasource={datasource}
+              />
+            ) : (
+              <VisualInfluxQLEditor query={query} onChange={onChange} onRunQuery={onRunQuery} datasource={datasource} />
+            )}
+          </>
         )}
       </div>
       <QueryEditorModeSwitcher

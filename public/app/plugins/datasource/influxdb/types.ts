@@ -77,3 +77,5 @@ export interface InfluxQuery extends DataQuery {
   textEditor?: boolean;
   adhocFilters?: AdHocVariableFilter[];
 }
+
+export type MetadataQueryType = 'TAG_KEYS' | 'TAG_VALUES' | 'MEASUREMENTS' | 'FIELDS' | 'RETENTION_POLICIES';

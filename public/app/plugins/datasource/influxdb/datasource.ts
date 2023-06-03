@@ -60,7 +60,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -310,6 +310,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
       tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
     };
+  }
+
+  async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
+    return lastValueFrom(
+      super.query({
+        targets: [target],
+      } as DataQueryRequest)
+    ).then((rsp) => {
+      if (rsp.data?.length) {
+        return frameToMetricFindValue(rsp.data[0]);
+      }
+      return [];
+    });
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
