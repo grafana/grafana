@@ -69,12 +69,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
 
-		floatField := data.NewField("value", labels, []*float64{
+		floatField := data.NewField("Value", labels, []*float64{
 			util.Pointer(222.0), util.Pointer(222.0), nil,
 		})
 		floatField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
 		floatFrame := data.NewFrame("cpu.mean { datacenter: America }",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
@@ -85,12 +85,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
 		string_test := "/usr/path"
-		stringField := data.NewField("value", labels, []*string{
+		stringField := data.NewField("Value", labels, []*string{
 			nil, &string_test, &string_test,
 		})
 		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path { datacenter: America }"}
 		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
@@ -102,12 +102,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		bool_true := true
 		bool_false := false
-		boolField := data.NewField("value", labels, []*bool{
+		boolField := data.NewField("Value", labels, []*bool{
 			nil, &bool_false, &bool_true,
 		})
 		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive { datacenter: America }"}
 		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
@@ -156,7 +156,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		var queries []Query
 		queries = append(queries, Query{RefID: "metricFindQuery"})
-		newField := data.NewField("value", nil, []string{
+		newField := data.NewField("Value", nil, []string{
 			"cpu", "disk", "logs",
 		})
 		testFrame := data.NewFrame("cpu",
@@ -195,7 +195,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		var queries []Query
 		queries = append(queries, Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
-		newField := data.NewField("value", nil, []string{
+		newField := data.NewField("Value", nil, []string{
 			"cpu-total", "cpu0", "cpu1",
 		})
 		testFrame := data.NewFrame("cpu",
@@ -295,12 +295,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		query := &Query{}
 
-		newField := data.NewField("value", nil, []*float64{
+		newField := data.NewField("Value", nil, []*float64{
 			util.Pointer(50.0), nil, util.Pointer(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
 					time.Date(1970, 1, 1, 0, 0, 0, 101000000, time.UTC),
@@ -344,12 +344,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		query := &Query{}
 
-		newField := data.NewField("value", nil, []*float64{
+		newField := data.NewField("Value", nil, []*float64{
 			util.Pointer(50.0), util.Pointer(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
 					time.Date(1970, 1, 1, 0, 0, 0, 102000000, time.UTC),
@@ -397,12 +397,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := &Query{Alias: "series alias"}
 		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
 		require.Nil(t, err)
-		newField := data.NewField("value", labels, []*float64{
+		newField := data.NewField("Value", labels, []*float64{
 			util.Pointer(222.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "series alias"}
 		testFrame := data.NewFrame("series alias",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 				}),
@@ -438,7 +438,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 			name = "alias sum"
 			testFrame.Name = name
-			newField = data.NewField("value", labels, []*float64{
+			newField = data.NewField("Value", labels, []*float64{
 				util.Pointer(333.0),
 			})
 			testFrame.Fields[1] = newField
@@ -452,7 +452,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			frame = result.Responses["A"]
 			name = "alias America"
 			testFrame.Name = name
-			newField = data.NewField("value", labels, []*float64{
+			newField = data.NewField("Value", labels, []*float64{
 				util.Pointer(222.0),
 			})
 			testFrame.Fields[1] = newField
@@ -466,7 +466,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			frame = result.Responses["A"]
 			name = "alias America/America"
 			testFrame.Name = name
-			newField = data.NewField("value", labels, []*float64{
+			newField = data.NewField("Value", labels, []*float64{
 				util.Pointer(222.0),
 			})
 			testFrame.Fields[1] = newField
@@ -662,12 +662,12 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		queries = append(queries, *queryB)
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
-		newField := data.NewField("value", labels, []*float64{
+		newField := data.NewField("Value", labels, []*float64{
 			util.Pointer(222.0), util.Pointer(222.0), nil,
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
 		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
-			data.NewField("time", nil,
+			data.NewField("Time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
@@ -751,10 +751,10 @@ func TestResponseParser_Parse(t *testing.T) {
 				]
 			}]}]}`,
 			f: func(t *testing.T, got *backend.QueryDataResponse) {
-				newField := data.NewField("value", nil, []*float64{nil, nil, util.Pointer(52.0)})
+				newField := data.NewField("Value", nil, []*float64{nil, nil, util.Pointer(52.0)})
 				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 				testFrame := data.NewFrame("cpu.mean",
-					data.NewField("time", nil,
+					data.NewField("Time", nil,
 						[]time.Time{
 							time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
 							time.Date(1970, 1, 1, 0, 0, 0, 101000000, time.UTC),
@@ -778,10 +778,10 @@ func TestResponseParser_Parse(t *testing.T) {
 				]
 			}]}]}`,
 			f: func(t *testing.T, got *backend.QueryDataResponse) {
-				newField := data.NewField("value", nil, []*float64{nil, nil, nil})
+				newField := data.NewField("Value", nil, []*float64{nil, nil, nil})
 				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 				testFrame := data.NewFrame("cpu.mean",
-					data.NewField("time", nil,
+					data.NewField("Time", nil,
 						[]time.Time{
 							time.Date(1970, 1, 1, 0, 0, 0, 100000000, time.UTC),
 							time.Date(1970, 1, 1, 0, 0, 0, 101000000, time.UTC),
