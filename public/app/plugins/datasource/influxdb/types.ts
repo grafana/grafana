@@ -6,7 +6,7 @@ export enum InfluxVersion {
 }
 
 export interface InfluxOptions extends DataSourceJsonData {
-  version?: InfluxVersion;
+  version: InfluxVersion;
 
   timeInterval?: string;
   httpMode?: string;

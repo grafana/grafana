@@ -29,8 +29,8 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationEditor } from './components/AnnotationEditor';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
+import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
+import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import { getAllPolicies } from './influxQLMetadataQuery';
 import InfluxQueryModel from './influx_query_model';
@@ -56,6 +56,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   isFlux: boolean;
   isProxyAccess: boolean;
   retentionPolicies: string[];
+  languageVersion: InfluxVersion;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -80,6 +81,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
+    this.languageVersion = settingsData.version;
     this.isProxyAccess = instanceSettings.access === 'proxy';
     this.retentionPolicies = [];
 
