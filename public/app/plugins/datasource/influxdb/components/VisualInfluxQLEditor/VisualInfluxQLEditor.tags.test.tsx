@@ -6,7 +6,7 @@ import InfluxDatasource from '../../datasource';
 import * as mockedMeta from '../../influxQLMetadataQuery';
 import { InfluxQuery } from '../../types';
 
-import { Editor } from './Editor';
+import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
 jest.mock('../../influxQLMetadataQuery', () => {
   return {
@@ -124,7 +124,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     const datasource: InfluxDatasource = {
       metricFindQuery: () => Promise.resolve([]),
     } as unknown as InfluxDatasource;
-    render(<Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />);
+    render(<VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />);
 
     await waitFor(() => {});
 

@@ -79,7 +79,7 @@ function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQue
   return parts.filter((t) => t.key.endsWith('::tag') || allTagKeys.has(t.key + '::tag'));
 }
 
-export const Editor = (props: Props): JSX.Element => {
+export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const uniqueId = useUniqueId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;

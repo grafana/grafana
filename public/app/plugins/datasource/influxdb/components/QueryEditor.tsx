@@ -10,7 +10,7 @@ import { InfluxOptions, InfluxQuery } from '../types';
 import { FluxQueryEditor } from './FluxQueryEditor';
 import { QueryEditorModeSwitcher } from './QueryEditorModeSwitcher';
 import { RawInfluxQLEditor } from './RawInfluxQLEditor';
-import { Editor as VisualInfluxQLEditor } from './VisualInfluxQLEditor/Editor';
+import { VisualInfluxQLEditor } from './VisualInfluxQLEditor/VisualInfluxQLEditor';
 
 type Props = QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions>;
 
