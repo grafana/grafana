@@ -371,7 +371,7 @@ Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
-For Postgres, use either `disable`, `require` or `verify-full`.
+For Postgres, use use any [valid LIBPQ-SSL-SSLMODE](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.disable, require, verify-full, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
