@@ -36,8 +36,10 @@ The following topics are covered in this guide:
 ## Go further
 
 Learn more about additional tools and see plugin type examples.
+
 ### User interface creation
->>>>>>> 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
+
+> > > > > > > 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
 
 Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
 

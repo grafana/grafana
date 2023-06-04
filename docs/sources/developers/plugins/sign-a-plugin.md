@@ -15,10 +15,11 @@ To make your plugin publicly available outside of your organization, sign your p
 <<<<<<< HEAD
 For more information on how to install a public plugin, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management#install-a-plugin" >}}).
 
-If you intend to only use the plugin within your organization, you can to sign it under a _private_ [signature level](#plugin-signature-levels).
-=======
+# If you intend to only use the plugin within your organization, you can to sign it under a _private_ [signature level](#plugin-signature-levels).
+
 If you intend to only use the plugin within your organization, sign it under a _private_ [signature level](#plugin-signature-levels).
->>>>>>> 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
+
+> > > > > > > 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
 
 ## Generate an API key
 
@@ -37,14 +38,15 @@ To verify ownership of your plugin, generate an API key that you'll use every ti
 Public plugins need to be reviewed by the Grafana team before you can sign them.
 
 <<<<<<< HEAD
+
 1. Submit your plugin for [review]({{< relref "package-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
 2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
-3. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
-=======
-1. Submit your plugin for [review]({{< relref "publish-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
-1. If we approve your plugin, you're granted a plugin signature level. You need this signature level to proceed.
-1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin:
->>>>>>> 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
+3. # In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
+4. Submit your plugin for [review]({{< relref "publish-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
+5. If we approve your plugin, you're granted a plugin signature level. You need this signature level to proceed.
+6. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin:
+
+   > > > > > > > 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
 
    ```bash
    export GRAFANA_API_KEY=<YOUR_API_KEY>

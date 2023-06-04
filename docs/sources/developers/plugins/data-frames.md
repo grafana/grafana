@@ -184,7 +184,9 @@ Dimensions: 5 fields by 2 rows
 ```
 
 <<<<<<< HEAD
+
 > **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility Grafana has introduced a transformation that you can use to convert from the wide to the long format. For usage information, refer to the [Prepare time series-transformation]({{< relref "../../panels-visualizations/query-transform-data/transform-data/#prepare-time-series" >}}).
+
 ## Technical references
 
 The concept of a data frame in Grafana is borrowed from data analysis tools like the [R programming language](https://www.r-project.org), and [Pandas](https://pandas.pydata.org/). Other technical references are provided below.
