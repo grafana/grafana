@@ -41,7 +41,7 @@ Learn more about additional tools and see plugin type examples.
 
 ### User interface creation
 
-Explore the many UI components in our [Grafana UI library](/ui).
+Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
 
 ### Plugin examples
 

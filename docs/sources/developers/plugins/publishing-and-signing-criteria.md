@@ -8,13 +8,11 @@ Grafana plugins must adhere to the Grafana Labs [Plugin Policy](https://grafana.
 
 > **Important:** Grafana Labs reserves the right to decline or remove any plugin at its discretion. Failure to comply with publishing and signing criteria may result in immediate removal from the Grafana plugin catalog.
 
-<<<<<<< HEAD
-
 ## Commercial
 
 - Usage of 3rd party software or dependencies within the plugin must be licensed for the intended use. For example, using open source dependencies must be credited/licensed; embedding logos or trademarks;
 
-# Grafana Labs reserves the right to decline or remove any plugin at its discretion. Failure to comply with publishing and signing criteria may result in immediate removal from the Grafana plugin catalog.
+> **Note:** Grafana Labs reserves the right to decline or remove any plugin at its discretion. Failure to comply with publishing and signing criteria may result in immediate removal from the Grafana plugin catalog.
 
 ## Plugin licensing
 
@@ -28,5 +26,3 @@ Plugins must be licensed under one of the following AGPL compliant licenses for 
 - MIT
 
 If contributing a plugin on behalf of an organization, be sure to seek guidance from your legal team.
-
-> > > > > > > 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))

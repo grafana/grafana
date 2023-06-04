@@ -5,11 +5,18 @@ title: Sign a plugin
 # Sign a plugin
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
 
 > # **Important:** Future versions of Grafana will require all plugins to be signed.
 >
 > Grafana requires all plugins to be signed so that we can verify their authenticity with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}).
+
+All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed. By [default]({{< relref "../../administration/plugin-management#allow-unsigned-plugins" >}}), Grafana **requires** all plugins to be signed in order for them to be loaded.
+
+> > > > > > > # 13be068919 (Docs: Plugin doc review for chunk 1-A (#67070))
+> > > > > > >
+> > > > > > > Grafana requires all plugins to be signed so that we can verify their authenticity with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}).
 
 All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed. By [default]({{< relref "../../administration/plugin-management#allow-unsigned-plugins" >}}), Grafana **requires** all plugins to be signed in order for them to be loaded.
 
