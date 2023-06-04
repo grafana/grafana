@@ -405,7 +405,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn)
-			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, *elementService)
+			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOn)
 			require.NoError(t, err)
 
 			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOn", createCmd)
@@ -479,7 +479,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff)
-			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, *elementService)
+			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOff)
 			require.NoError(t, err)
 
 			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOff", createCmd)

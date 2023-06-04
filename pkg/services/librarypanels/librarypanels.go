@@ -19,16 +19,17 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister,
-	libraryElementService libraryelements.LibraryElementService) (*LibraryPanelService, error) {
+	libraryElementService libraryelements.Service, folderService folder.Service) (*LibraryPanelService, error) {
 	lps := LibraryPanelService{
 		Cfg:                   cfg,
 		SQLStore:              sqlStore,
 		RouteRegister:         routeRegister,
 		LibraryElementService: libraryElementService,
+		FolderService:         folderService,
 		log:                   log.New("library-panels"),
 	}
 
-	if err := libraryElementService.FolderService.RegisterService(lps); err != nil {
+	if err := folderService.RegisterService(lps); err != nil {
 		return nil, err
 	}
 
@@ -51,7 +52,8 @@ type LibraryPanelService struct {
 	Cfg                   *setting.Cfg
 	SQLStore              db.DB
 	RouteRegister         routing.RouteRegister
-	LibraryElementService libraryelements.LibraryElementService
+	LibraryElementService libraryelements.Service
+	FolderService         folder.Service
 	log                   log.Logger
 }
 
@@ -114,7 +116,7 @@ func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Contex
 	return importLibraryPanelsRecursively(c, lps.LibraryElementService, signedInUser, libraryPanels, panels, folderID)
 }
 
-func importLibraryPanelsRecursively(c context.Context, service libraryelements.LibraryElementService, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -183,7 +185,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.L
 func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		folder, err := lps.LibraryElementService.FolderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
+		folder, err := lps.FolderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
 		if err != nil {
 			return err
 		}
