@@ -18,17 +18,17 @@ type MetadataQueryOptions = {
 
 export const runMetadataQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
   const { type, datasource, scopedVars, measurement, retentionPolicy, tags, withKey, withMeasurementFilter } = options;
-  const query = buildMetadataQuery(
+  const query = buildMetadataQuery({
     type,
-    datasource.templateSrv,
     scopedVars,
-    datasource.database,
     measurement,
     retentionPolicy,
     tags,
     withKey,
-    withMeasurementFilter
-  );
+    withMeasurementFilter,
+    templateService: datasource.templateSrv,
+    database: datasource.database,
+  });
   const policy = retentionPolicy ? datasource.templateSrv.replace(retentionPolicy, {}, 'regex') : '';
   const target: InfluxQuery = {
     query,

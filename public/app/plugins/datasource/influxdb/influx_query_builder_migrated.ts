@@ -6,18 +6,29 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { InfluxQueryTag, MetadataQueryType } from './types';
 
-export const buildMetadataQuery = (
-  type: MetadataQueryType,
-  templateService: TemplateSrv,
-  scopedVars?: ScopedVars,
-  database?: string,
-  measurement?: string,
-  retentionPolicy?: string,
-  tags?: InfluxQueryTag[],
-  withKey?: string,
-  withMeasurementFilter?: string
-): string => {
+export const buildMetadataQuery = (params: {
+  type: MetadataQueryType;
+  templateService: TemplateSrv;
+  scopedVars?: ScopedVars;
+  database?: string;
+  measurement?: string;
+  retentionPolicy?: string;
+  tags?: InfluxQueryTag[];
+  withKey?: string;
+  withMeasurementFilter?: string;
+}): string => {
   let query = '';
+  let {
+    type,
+    templateService,
+    scopedVars,
+    database,
+    measurement,
+    retentionPolicy,
+    tags,
+    withKey,
+    withMeasurementFilter,
+  } = params;
 
   switch (type) {
     case 'RETENTION_POLICIES':
@@ -40,74 +51,78 @@ export const buildMetadataQuery = (
       return 'SHOW FIELD KEYS FROM ' + measurement;
     case 'TAG_KEYS':
       query = 'SHOW TAG KEYS';
+      break;
     case 'TAG_VALUES':
       query = 'SHOW TAG VALUES';
+      break;
     case 'MEASUREMENTS':
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
         // we do a case-insensitive regex-based lookup
         query += ' WITH MEASUREMENT =~ /(?i)' + escapeRegex(withMeasurementFilter) + '/';
       }
+      break;
     default:
-      if (measurement) {
-        if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-          measurement = '"' + measurement + '"';
-        }
-
-        if (retentionPolicy && retentionPolicy !== 'default') {
-          retentionPolicy = '"' + retentionPolicy + '"';
-          measurement = retentionPolicy + '.' + measurement;
-        }
-
-        if (measurement !== '') {
-          query += ' FROM ' + measurement;
-        }
-      }
-
-      if (withKey) {
-        let keyIdentifier = withKey;
-
-        if (keyIdentifier.endsWith('::tag')) {
-          keyIdentifier = keyIdentifier.slice(0, -5);
-        }
-
-        query += ' WITH KEY = "' + keyIdentifier + '"';
-      }
-
-      if (tags && tags.length > 0) {
-        const whereConditions = reduce<InfluxQueryTag, string[]>(
-          tags,
-          (memo, tag) => {
-            // do not add a condition for the key we want to explore for
-            if (tag.key && tag.key === withKey) {
-              return memo;
-            }
-
-            // value operators not supported in these types of queries
-            if (tag.operator === '>' || tag.operator === '<') {
-              return memo;
-            }
-
-            memo.push(renderTagCondition(tag, memo.length, templateService, scopedVars, true));
-            return memo;
-          },
-          []
-        );
-
-        if (whereConditions.length > 0) {
-          query += ' WHERE ' + whereConditions.join(' ');
-        }
-      }
-
-      if (type === 'MEASUREMENTS') {
-        query += ' LIMIT 100';
-        //Solve issue #2524 by limiting the number of measurements returned
-        //LIMIT must be after WITH MEASUREMENT and WHERE clauses
-        //This also could be used for TAG KEYS and TAG VALUES, if desired
-      }
-
       return query;
   }
+  if (measurement) {
+    if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+      measurement = '"' + measurement + '"';
+    }
+
+    if (retentionPolicy && retentionPolicy !== 'default') {
+      retentionPolicy = '"' + retentionPolicy + '"';
+      measurement = retentionPolicy + '.' + measurement;
+    }
+
+    if (measurement !== '') {
+      query += ' FROM ' + measurement;
+    }
+  }
+
+  if (withKey) {
+    let keyIdentifier = withKey;
+
+    if (keyIdentifier.endsWith('::tag')) {
+      keyIdentifier = keyIdentifier.slice(0, -5);
+    }
+
+    query += ' WITH KEY = "' + keyIdentifier + '"';
+  }
+
+  if (tags && tags.length > 0) {
+    const whereConditions = reduce<InfluxQueryTag, string[]>(
+      tags,
+      (memo, tag) => {
+        // do not add a condition for the key we want to explore for
+        if (tag.key && tag.key === withKey) {
+          return memo;
+        }
+
+        // value operators not supported in these types of queries
+        if (tag.operator === '>' || tag.operator === '<') {
+          return memo;
+        }
+
+        memo.push(renderTagCondition(tag, memo.length, templateService, scopedVars, true));
+        return memo;
+      },
+      []
+    );
+
+    if (whereConditions.length > 0) {
+      query += ' WHERE ' + whereConditions.join(' ');
+    }
+  }
+
+  if (type === 'MEASUREMENTS') {
+    query += ' LIMIT 100';
+    //Solve issue #2524 by limiting the number of measurements returned
+    //LIMIT must be after WITH MEASUREMENT and WHERE clauses
+    //This also could be used for TAG KEYS and TAG VALUES, if desired
+  }
+
+  return query;
 };
 
 // A merge of query_builder/renderTagCondition and influx_query_model/renderTagCondition
@@ -143,8 +158,7 @@ export function renderTagCondition(
   if (operator !== '=~' && operator !== '!~') {
     if (interpolate) {
       value = templateSrv.replace(value, scopedVars);
-    }
-    if (operator !== '>' && operator !== '<') {
+    } else if (operator !== '>' && operator !== '<') {
       value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
     }
   } else if (interpolate) {

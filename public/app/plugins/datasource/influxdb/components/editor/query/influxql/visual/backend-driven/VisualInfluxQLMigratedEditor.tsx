@@ -1,16 +1,21 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { SegmentSection } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui/src';
 
 import InfluxDatasource from '../../../../../../datasource';
-import { InfluxQuery } from '../../../../../../types';
+import { InfluxQuery, InfluxQueryTag } from '../../../../../../types';
 import { useAllMeasurementsForTags } from '../../hooks/useAllMeasurementsForTags';
 import { useAllTagKeys } from '../../hooks/useAllTagKeys';
 import { useRetentionPolicies } from '../../hooks/useRetentionPolicies';
+import { useTagKeys } from '../../hooks/useTagKeys';
+import { useTagValues } from '../../hooks/useTagValues';
 import { filterTags } from '../../utils/filterTags';
 import { withTemplateVariableOptions } from '../../utils/withTemplateVariableOptions';
 import { wrapPure, wrapRegex } from '../../utils/wrapper';
 import { FromSection } from '../shared/FromSection';
+import { TagsSection } from '../shared/TagsSection';
 
 type Props = {
   query: InfluxQuery;
@@ -20,9 +25,12 @@ type Props = {
 };
 
 export const VisualInfluxQLMigratedEditor = ({ datasource, query, onRunQuery, onChange }: Props) => {
+  const styles = useStyles2(getStyles);
   const { retentionPolicies } = useRetentionPolicies(datasource);
   const { allTagKeys } = useAllTagKeys(datasource, query.policy, query.measurement);
+  const { getTagKeys } = useTagKeys(allTagKeys, query.tags);
   const { getAllMeasurementsForTags } = useAllMeasurementsForTags(datasource);
+  const { getTagValues } = useTagValues(datasource, query);
 
   const onAppliedChange = (newQuery: InfluxQuery) => {
     onChange(newQuery);
@@ -33,6 +41,14 @@ export const VisualInfluxQLMigratedEditor = ({ datasource, query, onRunQuery, on
       ...query,
       policy,
       measurement,
+    });
+  };
+
+  const handleTagsSectionChange = (tags: InfluxQueryTag[]) => {
+    // we set empty-arrays to undefined
+    onAppliedChange({
+      ...query,
+      tags: tags.length === 0 ? undefined : tags,
     });
   };
 
@@ -54,23 +70,31 @@ export const VisualInfluxQLMigratedEditor = ({ datasource, query, onRunQuery, on
           }
           onChange={handleFromSectionChange}
         />
-        {/*<InlineLabel width="auto" className={styles.inlineLabel}>*/}
-        {/*  WHERE*/}
-        {/*</InlineLabel>*/}
-        {/*<TagsSection*/}
-        {/*  tags={query.tags ?? []}*/}
-        {/*  onChange={handleTagsSectionChange}*/}
-        {/*  getTagKeyOptions={getTagKeys}*/}
-        {/*  getTagValueOptions={(key: string) =>*/}
-        {/*    withTemplateVariableOptions(*/}
-        {/*      allTagKeys.then((keys) =>*/}
-        {/*        getTagValues(key, measurement, policy, filterTags(query.tags ?? [], keys), datasource)*/}
-        {/*      ),*/}
-        {/*      wrapRegex*/}
-        {/*    )*/}
-        {/*  }*/}
-        {/*/>*/}
+        <InlineLabel width="auto" className={styles.inlineLabel}>
+          WHERE
+        </InlineLabel>
+        <TagsSection
+          tags={query.tags ?? []}
+          onChange={handleTagsSectionChange}
+          getTagKeyOptions={getTagKeys}
+          getTagValueOptions={(key) =>
+            withTemplateVariableOptions(
+              allTagKeys.then((keys) =>
+                getTagValues(key, filterTags(query.tags ?? [], keys) /*, query.measurement, query.policy*/)
+              ),
+              wrapRegex
+            )
+          }
+        />
       </SegmentSection>
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    inlineLabel: css`
+      color: ${theme.colors.primary.text};
+    `,
+  };
+}
