@@ -197,8 +197,8 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 	})
 }
 
-func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
-	return nil
+func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+	return lps.LibraryElementService.DeleteLibraryElementsInFolder(ctx, user, folderUID)
 }
 
 func (lps LibraryPanelService) Kind() string { return entity.StandardKindLibraryPanel }
