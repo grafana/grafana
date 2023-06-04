@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -28,10 +29,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -356,13 +361,29 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	}
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll}},
 	}}
 	createCmd := folder.CreateFolderCommand{
 		OrgID:        orgID,
 		ParentUID:    "",
 		SignedInUser: &signedInUser,
 	}
+
+	libraryElementCmd := model.CreateLibraryElementCommand{
+		Model: []byte(`
+		{
+		  "datasource": "${DS_GDEV-TESTDATA}",
+		  "id": 1,
+		  "title": "Text - Library Panel",
+		  "type": "text",
+		  "description": "A description"
+		}
+	`),
+		Kind: int64(model.PanelElement),
+	}
+	routeRegister := routing.NewRouteRegister()
 
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
@@ -371,12 +392,20 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		depth := 5
 		t.Run("With nested folder feature flag on", func(t *testing.T) {
 			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanSaveValue: true,
+				CanViewValue: true,
+				CanEditValue: true,
+			})
 
 			dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, ac, dashSrv)
+			require.NoError(t, err)
+
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn)
+			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, *elementService)
 			require.NoError(t, err)
 
 			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOn", createCmd)
@@ -390,6 +419,13 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 
+			libraryElementCmd.FolderID = parent.ID
+			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
+			require.NoError(t, err)
+			libraryElementCmd.FolderID = subfolder.ID
+			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
+			require.NoError(t, err)
+
 			countCmd := folder.GetDescendantCountsQuery{
 				UID:          &ancestorUIDs[0],
 				OrgID:        orgID,
@@ -397,9 +433,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			}
 			m, err := serviceWithFlagOn.GetDescendantCounts(context.Background(), &countCmd)
 			require.NoError(t, err)
-			require.Equal(t, int64(depth-1), m["folder"])
-			require.Equal(t, int64(2), m["dashboard"])
-			require.Equal(t, int64(2), m["alertrule"])
+			require.Equal(t, int64(depth-1), m[entity.StandardKindFolder])
+			require.Equal(t, int64(2), m[entity.StandardKindDashboard])
+			require.Equal(t, int64(2), m[entity.StandardKindAlertRule])
+			require.Equal(t, int64(2), m[entity.StandardKindLibraryPanel])
 
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
@@ -428,13 +465,21 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			}
 
 			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanSaveValue: true,
+				CanViewValue: true,
+				CanEditValue: true,
+			})
 
 			dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff,
 				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, ac, dashSrv)
+			require.NoError(t, err)
+
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff)
+			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, *elementService)
 			require.NoError(t, err)
 
 			ancestorUIDs := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "getDescendantCountsOff", createCmd)
@@ -448,6 +493,13 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			_ = createRule(t, alertStore, parent.UID, "parent alert")
 			_ = createRule(t, alertStore, subfolder.UID, "sub alert")
 
+			libraryElementCmd.FolderID = parent.ID
+			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
+			require.NoError(t, err)
+			libraryElementCmd.FolderID = subfolder.ID
+			_, err = lps.LibraryElementService.CreateElement(context.Background(), &signedInUser, libraryElementCmd)
+			require.NoError(t, err)
+
 			countCmd := folder.GetDescendantCountsQuery{
 				UID:          &ancestorUIDs[0],
 				OrgID:        orgID,
@@ -455,9 +507,10 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			}
 			m, err := serviceWithFlagOff.GetDescendantCounts(context.Background(), &countCmd)
 			require.NoError(t, err)
-			require.Equal(t, int64(0), m["folder"])
-			require.Equal(t, int64(1), m["dashboard"])
-			require.Equal(t, int64(1), m["alertrule"])
+			require.Equal(t, int64(0), m[entity.StandardKindFolder])
+			require.Equal(t, int64(1), m[entity.StandardKindDashboard])
+			require.Equal(t, int64(1), m[entity.StandardKindAlertRule])
+			require.Equal(t, int64(1), m[entity.StandardKindLibraryPanel])
 
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
