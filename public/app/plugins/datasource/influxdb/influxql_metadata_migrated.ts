@@ -38,3 +38,56 @@ export const runMetadataQuery = async (options: MetadataQueryOptions): Promise<A
   };
   return datasource.runMetadataQuery(target);
 };
+
+export async function getAllPolicies(datasource: InfluxDatasource): Promise<string[]> {
+  const data = await runMetadataQuery({ type: 'RETENTION_POLICIES', datasource });
+  return data.map((item) => item.text);
+}
+
+export async function getAllMeasurementsForTags(
+  datasource: InfluxDatasource,
+  tags: InfluxQueryTag[],
+  withMeasurementFilter?: string
+): Promise<string[]> {
+  const data = await runMetadataQuery({ type: 'MEASUREMENTS', datasource, tags, withMeasurementFilter });
+  return data.map((item) => item.text);
+}
+
+export async function getTagKeysForMeasurementAndTags(
+  datasource: InfluxDatasource,
+  tags: InfluxQueryTag[],
+  measurement?: string,
+  retentionPolicy?: string
+): Promise<string[]> {
+  const data = await runMetadataQuery({ type: 'TAG_KEYS', datasource, measurement, retentionPolicy });
+  return data.map((item) => item.text);
+}
+
+export async function getTagValues(
+  datasource: InfluxDatasource,
+  tags: InfluxQueryTag[],
+  tagKey: string,
+  measurement?: string,
+  retentionPolicy?: string
+): Promise<string[]> {
+  if (tagKey.endsWith('::field')) {
+    return [];
+  }
+  const data = await runMetadataQuery({
+    type: 'TAG_VALUES',
+    withKey: tagKey,
+    datasource,
+    measurement,
+    retentionPolicy,
+  });
+  return data.map((item) => item.text);
+}
+
+export async function getFieldKeysForMeasurement(
+  datasource: InfluxDatasource,
+  measurement: string,
+  retentionPolicy?: string
+): Promise<string[]> {
+  const data = await runMetadataQuery({ type: 'FIELDS', datasource, measurement, retentionPolicy });
+  return data.map((item) => item.text);
+}
