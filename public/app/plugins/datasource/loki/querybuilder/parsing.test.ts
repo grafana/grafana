@@ -76,6 +76,21 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with line filters and escaped characters', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} |= "\\"line"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.LineContains, params: ['\\"line'] }],
+      })
+    );
+  });
+
   it('returns error for query with ip matching line filter', () => {
     const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16") | logfmt');
     expect(context).toEqual(
@@ -320,7 +335,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with with decolorize and other operations', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | logfmt | decolorize | __error__="')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | logfmt | decolorize | __error__=""')).toEqual(
       noErrors({
         labels: [
           {
