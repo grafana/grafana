@@ -58,10 +58,9 @@ func ProvideServiceAccountsService(
 		userService,
 		orgService,
 	)
-	log := log.New("serviceaccounts")
 	s := &ServiceAccountsService{
 		store:         serviceAccountsStore,
-		log:           log,
+		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
 	}
 

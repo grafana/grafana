@@ -266,6 +266,9 @@ func (srv *ProvisioningSrv) RouteGetAlertRules(c *contextmodel.ReqContext) respo
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
 	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgID, UID)
 	if err != nil {
+		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
+			return response.Empty(http.StatusNotFound)
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ProvisionedAlertRuleFromAlertRule(rule, provenace))

@@ -1,4 +1,4 @@
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { createLogRow } from './__mocks__/logRow';
@@ -17,7 +17,7 @@ describe('logParser', () => {
               name: 'labels',
               type: FieldType.other,
               config: {},
-              values: new ArrayVector([{ place: 'luna', source: 'data' }]),
+              values: [{ place: 'luna', source: 'data' }],
             },
           ],
         }),
@@ -39,7 +39,7 @@ describe('logParser', () => {
               name: 'labels',
               type: FieldType.string,
               config: {},
-              values: new ArrayVector([{ place: 'luna', source: 'data' }]),
+              values: [{ place: 'luna', source: 'data' }],
             },
           ],
         }),
@@ -60,7 +60,7 @@ describe('logParser', () => {
               name: 'id',
               type: FieldType.string,
               config: {},
-              values: new ArrayVector(['1659620138401000000_8b1f7688_']),
+              values: ['1659620138401000000_8b1f7688_'],
             },
           ],
         }),
@@ -129,7 +129,7 @@ describe('logParser', () => {
           config: { links: [] },
           name: 'Line',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
+          values: ['a', 'b'],
         },
         title: 'test',
         target: '_self',
@@ -163,7 +163,7 @@ describe('logParser', () => {
           config: { links: [] },
           name: 'Line',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
+          values: ['a', 'b'],
         },
         title: 'test',
         target: '_self',
@@ -186,12 +186,12 @@ const testStringField = {
   name: 'test_field_string',
   type: FieldType.string,
   config: {},
-  values: new ArrayVector(['abc']),
+  values: ['abc'],
 };
 
 const testFieldWithNullValue = {
   name: 'test_field_null',
   type: FieldType.string,
   config: {},
-  values: new ArrayVector([null]),
+  values: [null],
 };

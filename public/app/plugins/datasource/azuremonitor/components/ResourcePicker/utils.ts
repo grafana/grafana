@@ -169,6 +169,17 @@ export function setResources(
       },
     };
   }
+  if (type === 'traces') {
+    // Resource URI for Traces
+    return {
+      ...query,
+      azureTraces: {
+        ...query.azureTraces,
+        resources: resourcesToStrings(resources).filter((resource) => resource !== ''),
+      },
+    };
+  }
+
   // Resource object for metrics
   const parsedResource = resources.length ? parseResourceDetails(resources[0]) : {};
   return {

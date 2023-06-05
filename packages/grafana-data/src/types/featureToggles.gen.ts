@@ -20,7 +20,6 @@
 export interface FeatureToggles {
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  database_metrics?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
@@ -31,11 +30,9 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  k8s?: boolean;
   exploreMixedDatasource?: boolean;
-  newTraceView?: boolean;
+  newTraceViewHeader?: boolean;
   correlations?: boolean;
-  cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
@@ -48,7 +45,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
-  internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
@@ -62,7 +58,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
-  datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -83,19 +78,25 @@ export interface FeatureToggles {
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
+  dataplaneFrontendFallback?: boolean;
+  disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
+  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
-  disableSSEDataplane?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
-  dataplaneFrontendFallback?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
-  opensearchDetectVersion?: boolean;
+  faroDatasourceSelector?: boolean;
+  enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
+  extraThemes?: boolean;
+  lokiPredefinedOperations?: boolean;
+  pluginsFrontendSandbox?: boolean;
 }

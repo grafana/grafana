@@ -214,6 +214,7 @@ func ProvideService(cfg *setting.Cfg,
 				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
 				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 

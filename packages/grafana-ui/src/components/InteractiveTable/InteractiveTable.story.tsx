@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useMemo } from 'react';
 
 import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
@@ -9,7 +9,7 @@ import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
 
-const meta: ComponentMeta<typeof InteractiveTable> = {
+const meta: Meta<typeof InteractiveTable> = {
   title: 'Experimental/InteractiveTable',
   component: InteractiveTable,
   decorators: [withCenteredStory],
@@ -31,7 +31,7 @@ interface TableData {
   noheader?: string;
 }
 
-export const Basic: ComponentStory<typeof InteractiveTable> = (args) => {
+export const Basic: StoryFn<typeof InteractiveTable> = (args) => {
   const columns = useMemo<Array<Column<TableData>>>(
     () => [
       { id: 'header2', header: 'With missing values', sortType: 'number', disableGrow: true },
@@ -64,7 +64,7 @@ const ExpandedCell = ({ description }: WithRowExpansionData) => {
   return <p>{description}</p>;
 };
 
-export const WithRowExpansion: ComponentStory<typeof InteractiveTable> = (args) => {
+export const WithRowExpansion: StoryFn<typeof InteractiveTable> = (args) => {
   const tableData: WithRowExpansionData[] = [
     {
       datasource: 'Prometheus',
@@ -115,7 +115,7 @@ const RepoCell = ({
   );
 };
 
-export const WithCustomCell: ComponentStory<typeof InteractiveTable> = (args) => {
+export const WithCustomCell: StoryFn<typeof InteractiveTable> = (args) => {
   const tableData: WithCustomCellData[] = [
     {
       datasource: 'Prometheus',

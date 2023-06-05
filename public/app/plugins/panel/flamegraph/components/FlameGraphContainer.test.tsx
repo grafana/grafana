@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CoreApp, MutableDataFrame } from '@grafana/data';
+import { CoreApp, createDataFrame } from '@grafana/data';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
@@ -23,7 +23,7 @@ describe('FlameGraphContainer', () => {
   Object.defineProperty(HTMLElement.prototype, 'clientWidth', { value: 500 });
 
   const FlameGraphContainerWithProps = () => {
-    const flameGraphData = new MutableDataFrame(data);
+    const flameGraphData = createDataFrame(data);
     flameGraphData.meta = {
       custom: {
         ProfileTypeID: 'cpu:foo:bar',

@@ -41,8 +41,7 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 			continue
 		}
 
-		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
+		if !hasAccess(ac.EvalPermission(pluginaccesscontrol.ActionAppAccess, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID))) {
 			continue
 		}
 
@@ -205,9 +204,9 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			})
 		case navtree.NavIDMonitoring:
 			treeRoot.AddSection(&navtree.NavLink{
-				Text:       "Monitoring",
+				Text:       "Observability",
 				Id:         navtree.NavIDMonitoring,
-				SubTitle:   "Monitoring and infrastructure apps",
+				SubTitle:   "Observability and infrastructure apps",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightMonitoring,
 				Children:   []*navtree.NavLink{appLink},
@@ -238,9 +237,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID string) func(include *plugins.Includes) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
-		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) &&
-			!s.accessControl.IsDisabled() && include.RequiresRBACAction()
-		if useRBAC && !hasAccess(ac.ReqHasRole(include.Role), ac.EvalPermission(include.Action)) {
+		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
+		if useRBAC && !hasAccess(ac.EvalPermission(include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)
@@ -255,7 +253,9 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppConfig = map[string]NavigationAppConfig{
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"},
-		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Synthetics"},
+		"grafana-app-observability-app":    {SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application (preview)"},
+		"grafana-kowalski-app":             {SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Frontend"},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDMonitoring, SortWeight: 4, Text: "Synthetics"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
@@ -283,7 +283,16 @@ func (s *ServiceImpl) readNavigationSettings() {
 			}
 		}
 
-		s.navigationAppConfig[pluginId] = *appCfg
+		// Only apply the new values, don't completely overwrite the entry if it exists
+		if entry, ok := s.navigationAppConfig[pluginId]; ok {
+			entry.SectionID = appCfg.SectionID
+			if appCfg.SortWeight != 0 {
+				entry.SortWeight = appCfg.SortWeight
+			}
+			s.navigationAppConfig[pluginId] = entry
+		} else {
+			s.navigationAppConfig[pluginId] = *appCfg
+		}
 	}
 
 	for _, key := range appStandalonePages.Keys() {

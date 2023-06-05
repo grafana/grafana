@@ -22,15 +22,16 @@ import (
 )
 
 const (
-	ClientAPIKey    = "auth.client.api-key" // #nosec G101
-	ClientAnonymous = "auth.client.anonymous"
-	ClientBasic     = "auth.client.basic"
-	ClientJWT       = "auth.client.jwt"
-	ClientRender    = "auth.client.render"
-	ClientSession   = "auth.client.session"
-	ClientForm      = "auth.client.form"
-	ClientProxy     = "auth.client.proxy"
-	ClientSAML      = "auth.client.saml"
+	ClientAPIKey      = "auth.client.api-key" // #nosec G101
+	ClientAnonymous   = "auth.client.anonymous"
+	ClientBasic       = "auth.client.basic"
+	ClientJWT         = "auth.client.jwt"
+	ClientExtendedJWT = "auth.client.extended-jwt"
+	ClientRender      = "auth.client.render"
+	ClientSession     = "auth.client.session"
+	ClientForm        = "auth.client.form"
+	ClientProxy       = "auth.client.proxy"
+	ClientSAML        = "auth.client.saml"
 )
 
 const (
@@ -261,23 +262,21 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	u := &user.SignedInUser{
-		UserID:             0,
-		OrgID:              i.OrgID,
-		OrgName:            i.OrgName,
-		OrgRole:            i.Role(),
-		ExternalAuthModule: i.AuthModule,
-		ExternalAuthID:     i.AuthID,
-		Login:              i.Login,
-		Name:               i.Name,
-		Email:              i.Email,
-		OrgCount:           i.OrgCount,
-		IsGrafanaAdmin:     isGrafanaAdmin,
-		IsAnonymous:        i.IsAnonymous,
-		IsDisabled:         i.IsDisabled,
-		HelpFlags1:         i.HelpFlags1,
-		LastSeenAt:         i.LastSeenAt,
-		Teams:              i.Teams,
-		Permissions:        i.Permissions,
+		UserID:         0,
+		OrgID:          i.OrgID,
+		OrgName:        i.OrgName,
+		OrgRole:        i.Role(),
+		Login:          i.Login,
+		Name:           i.Name,
+		Email:          i.Email,
+		OrgCount:       i.OrgCount,
+		IsGrafanaAdmin: isGrafanaAdmin,
+		IsAnonymous:    i.IsAnonymous,
+		IsDisabled:     i.IsDisabled,
+		HelpFlags1:     i.HelpFlags1,
+		LastSeenAt:     i.LastSeenAt,
+		Teams:          i.Teams,
+		Permissions:    i.Permissions,
 	}
 
 	namespace, id := i.NamespacedID()

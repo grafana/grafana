@@ -96,5 +96,4 @@ export const RICH_HISTORY_SETTING_KEYS = {
   starredTabAsFirstTab: 'grafana.explore.richHistory.starredTabAsFirstTab',
   activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
-  migrated: 'grafana.explore.richHistory.migrated',
 };

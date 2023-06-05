@@ -9,7 +9,10 @@ import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
 import { createLokiDatasource, getMockFrames } from './mocks';
 import { runSplitQuery } from './querySplitting';
+import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryType } from './types';
+
+jest.mock('./tracking');
 
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
@@ -60,15 +63,36 @@ describe('runSplitQuery()', () => {
     beforeAll(() => {
       jest.spyOn(logsTimeSplit, 'splitTimeRange').mockReturnValue([]);
       jest.spyOn(metricTimeSplit, 'splitTimeRange').mockReturnValue([]);
+      jest.mocked(trackGroupedQueries).mockClear();
+      jest.useFakeTimers().setSystemTime(new Date('Wed May 17 2023 17:20:12 GMT+0200'));
     });
     afterAll(() => {
       jest.mocked(logsTimeSplit.splitTimeRange).mockRestore();
       jest.mocked(metricTimeSplit.splitTimeRange).mockRestore();
+      jest.useRealTimers();
     });
     test('Ignores hidden queries', async () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         expect(logsTimeSplit.splitTimeRange).toHaveBeenCalled();
         expect(metricTimeSplit.splitTimeRange).not.toHaveBeenCalled();
+        expect(trackGroupedQueries).toHaveBeenCalledTimes(1);
+        expect(trackGroupedQueries).toHaveBeenCalledWith(
+          {
+            data: [],
+            state: LoadingState.Done,
+          },
+          [
+            {
+              partition: [],
+              request: {
+                ...request,
+                targets: request.targets.filter((query) => !query.hide),
+              },
+            },
+          ],
+          request,
+          new Date()
+        );
       });
     });
   });
@@ -161,6 +185,19 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
+    test('Groups queries using distinct', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"} | distinct field', refId: 'A' },
+          { expr: 'count_over_time({c="d"} | distinct something [1m])', refId: 'B' },
+        ],
+        range,
+      });
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        // Queries using distinct are omitted from splitting
+        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+      });
+    });
     test('Respects maxLines of logs queries', async () => {
       const { logFrameA } = getMockFrames();
       const request = getQueryOptions<LokiQuery>({
@@ -178,17 +215,18 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(4);
       });
     });
-    test('Groups multiple queries into logs, queries, and instant', async () => {
+    test('Groups multiple queries into logs, queries, instant, and distinct', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [
           { expr: 'count_over_time({a="b"}[1m])', refId: 'A', queryType: LokiQueryType.Instant },
           { expr: '{c="d"}', refId: 'B' },
           { expr: 'count_over_time({c="d"}[1m])', refId: 'C' },
+          { expr: 'count_over_time({c="d"} | distinct id [1m])', refId: 'D' },
         ],
         range,
       });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant, 7 requests.
+        // 3 days, 3 chunks, 3x Logs + 3x Metric + (1x Instant | Distinct), 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
     });

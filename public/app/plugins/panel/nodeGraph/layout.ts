@@ -196,8 +196,8 @@ function gridLayout(
 
   if (sort) {
     nodes.sort((node1, node2) => {
-      const val1 = sort!.field.values.get(node1.dataFrameRowIndex);
-      const val2 = sort!.field.values.get(node2.dataFrameRowIndex);
+      const val1 = sort!.field.values[node1.dataFrameRowIndex];
+      const val2 = sort!.field.values[node2.dataFrameRowIndex];
 
       // Let's pretend we don't care about type of the stats for a while (they can be strings)
       return sort!.ascending ? val1 - val2 : val2 - val1;

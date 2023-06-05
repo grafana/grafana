@@ -26,9 +26,11 @@ You can create and manage recording rules for an external Grafana Mimir or Loki 
 
   - **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
-  - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](https://grafana.com/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
+  - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
-> **Note:** If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
+{{% admonition type="note" %}}
+If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
+{{% /admonition %}}
 
 ## Add a Grafana Mimir or Loki managed recording rule
 
@@ -43,7 +45,7 @@ To create a Grafana Mimir or Loki managed recording rule
    - Select your Loki or Prometheus data source.
    - Enter a PromQL or LogQL query.
 1. In Step 3, add the namespace and the group.
-   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click Add new and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}}).
+   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click Add new and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group" >}}).
    - From the **Group** dropdown, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one.
 1. In Step 4, add the custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
@@ -63,9 +65,9 @@ To create a Grafana Mimir or Loki managed recording rule
 1. In Step 3, add evaluation behavior.
    - Enter a valid **For** duration. The expression has to be true for this long for the alert to be fired.
 1. In Step 4, add additional metadata associated with the rule.
-   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click Add new and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}}).
+   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click Add new and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group" >}}).
    - From the **Group** dropdown, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label/" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
 1. In Step 5, add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .

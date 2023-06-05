@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
+import { safeStringifyValue } from 'app/core/utils/explore';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 export type FieldDef = {
@@ -69,9 +70,14 @@ export const getDataframeFields = memoizeOne(
       .filter((field, index) => !shouldRemoveField(field, index, row))
       .map((field) => {
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
+        const fieldVal = field.values[row.rowIndex];
+        const outputVal =
+          typeof fieldVal === 'string' || typeof fieldVal === 'number'
+            ? fieldVal.toString()
+            : safeStringifyValue(fieldVal);
         return {
           keys: [field.name],
-          values: [field.values.get(row.rowIndex).toString()],
+          values: [outputVal],
           links: links,
           fieldIndex: field.index,
         };
@@ -82,7 +88,7 @@ export const getDataframeFields = memoizeOne(
 function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   // Remove field if it is:
   // "labels" field that is in Loki used to store all labels
-  if (field.name === 'labels' && field.type === FieldType.other) {
+  if (field.name === 'labels' && field.type === FieldType.other && (field.config.links?.length || 0) === 0) {
     return true;
   }
   // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
@@ -93,7 +99,7 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (
     field.name === firstTimeField?.name &&
     field.type === FieldType.time &&
-    field.values.get(0) === firstTimeField.values.get(0)
+    field.values[0] === firstTimeField.values[0]
   ) {
     return true;
   }
@@ -102,7 +108,7 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
     return true;
   }
   // field that has empty value (we want to keep 0 or empty string)
-  if (field.values.get(row.rowIndex) == null) {
+  if (field.values[row.rowIndex] == null) {
     return true;
   }
   return false;

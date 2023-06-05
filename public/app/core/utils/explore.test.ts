@@ -2,9 +2,9 @@ import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
+import { ExploreId } from 'app/types';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
-import { ExploreId } from '../../types';
 
 import {
   buildQueryTransaction,
@@ -488,5 +488,11 @@ describe('generateEmptyQuery', () => {
     expect(query.datasource?.uid).toBe('ds1');
     expect(query.datasource?.type).toBe('loki');
     expect(query.refId).toBe('B');
+  });
+
+  it('should generate a query with a unique refId', async () => {
+    const query = await generateEmptyQuery([{ refId: 'A' }], 2);
+
+    expect(query.refId).not.toBe('A');
   });
 });
