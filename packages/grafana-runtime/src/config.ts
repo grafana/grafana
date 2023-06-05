@@ -62,6 +62,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
+  newsFeedEnabled = true;
   ldapEnabled = false;
   jwtHeaderName = '';
   jwtUrlLogin = false;
@@ -130,7 +131,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = { minInterval: '', alertStateHistoryBackend: undefined };
+  unifiedAlerting = {
+    minInterval: '',
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
+  };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {

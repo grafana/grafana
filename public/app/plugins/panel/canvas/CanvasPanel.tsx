@@ -9,8 +9,8 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
-import { InlineEdit } from './InlineEdit';
-import { SetBackground } from './SetBackground';
+import { SetBackground } from './components/SetBackground';
+import { InlineEdit } from './editor/inline/InlineEdit';
 import { Options } from './models.gen';
 import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
 
@@ -90,11 +90,6 @@ export class CanvasPanel extends Component<Props, State> {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
           this.scene.clearCurrentSelection();
-          this.scene.load(
-            this.props.options.root,
-            this.props.options.inlineEditing,
-            this.props.options.showAdvancedTypes
-          );
         }
       })
     );

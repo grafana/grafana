@@ -19,18 +19,18 @@ func TestIsGreaterThanOrEqual(t *testing.T) {
 		{newVersion: "9.0.0", stableVersion: "8.0.0", expected: true},
 		{newVersion: "6.0.0", stableVersion: "6.0.0", expected: true},
 		{newVersion: "7.0.0", stableVersion: "8.0.0", expected: false},
-		{newVersion: "8.5.0-beta1", stableVersion: "8.0.0", expected: true},
-		{newVersion: "8.5.0", stableVersion: "8.5.0-beta1", expected: true},
+		{newVersion: "8.5.0-preview1", stableVersion: "8.0.0", expected: true},
+		{newVersion: "8.5.0", stableVersion: "8.5.0-preview1", expected: true},
 		{newVersion: "9.0.0.1", stableVersion: "9.0.0", expected: true},
 		{newVersion: "9.0.0.2", stableVersion: "9.0.0.1", expected: true},
 		{newVersion: "9.1.0", stableVersion: "9.0.0.1", expected: true},
-		{newVersion: "9.1-0-beta1", stableVersion: "9.0.0.1", expected: true},
+		{newVersion: "9.1-0-preview1", stableVersion: "9.0.0.1", expected: true},
 		{newVersion: "9.0.0.1", stableVersion: "9.0.1.1", expected: false},
 		{newVersion: "9.0.1.1", stableVersion: "9.0.0.1", expected: true},
 		{newVersion: "9.0.0.1", stableVersion: "9.0.0.1", expected: true},
 		{newVersion: "7.0.0.1", stableVersion: "8.0.0", expected: false},
-		{newVersion: "9.1-0-beta1", stableVersion: "9.1-0-beta2", expected: false},
-		{newVersion: "9.1-0-beta3", stableVersion: "9.1-0-beta2", expected: true},
+		{newVersion: "9.1-0-preview1", stableVersion: "9.1-0-preview2", expected: false},
+		{newVersion: "9.1-0-preview3", stableVersion: "9.1-0-preview2", expected: true},
 	}
 
 	for _, tc := range testCases {

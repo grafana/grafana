@@ -289,7 +289,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             onToggle={() => warningsToggle(spanID)}
           />
         )}
-        {stackTraces && stackTraces.length && (
+        {stackTraces?.length ? (
           <AccordianText
             label="Stack trace"
             data={stackTraces}
@@ -316,7 +316,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             }}
             onToggle={() => stackTracesToggle(spanID)}
           />
-        )}
+        ) : null}
         {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}

@@ -5,7 +5,8 @@ keywords:
   - alerting
   - guide
   - fundamentals
-title: Label matchers
+title: How label matching works
+menuTitle: Label matchers
 weight: 117
 ---
 

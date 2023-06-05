@@ -53,16 +53,7 @@ func loadGP(ctx *cue.Context) cue.Value {
 
 // PermittedCUEImports returns the list of import paths that may be used in a
 // plugin's grafanaplugin cue package.
-//
-// TODO probably move this into kindsys
-func PermittedCUEImports() []string {
-	return []string{
-		"github.com/grafana/thema",
-		"github.com/grafana/kindsys",
-		"github.com/grafana/grafana/pkg/plugins/pfs",
-		"github.com/grafana/grafana/packages/grafana-schema/src/common",
-	}
-}
+var PermittedCUEImports = cuectx.PermittedCUEImports
 
 func importAllowed(path string) bool {
 	for _, p := range PermittedCUEImports() {
@@ -205,7 +196,13 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	})
 	bi.Files = append(bi.Files, f)
 
-	gpi := ctx.BuildInstance(bi).Unify(gpv)
+	gpi := ctx.BuildInstance(bi)
+	// Temporary hack while we figure out what in the elasticsearch lineage turns
+	// this into an endless loop in thema, and why unifying twice is anything other
+	// than a total no-op.
+	if pp.Properties.Id != "elasticsearch" {
+		gpi = gpi.Unify(gpv)
+	}
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
 const (
@@ -30,10 +29,22 @@ type AzRoute struct {
 	Headers map[string]string
 }
 
+type AzureSettings struct {
+	AzureMonitorSettings
+	AzureClientSettings
+}
+
 type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
+}
+
+type AzureClientSettings struct {
+	AzureAuthType string
+	CloudName     string
+	TenantId      string
+	ClientId      string
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
@@ -215,7 +226,7 @@ type TracesJSONQuery struct {
 		Resources []string `json:"resources"`
 
 		// Specifies the format results should be returned as.
-		ResultFormat *dataquery.AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat"`
+		ResultFormat *string `json:"resultFormat"`
 
 		// Types of events to filter by.
 		TraceTypes []string `json:"traceTypes"`

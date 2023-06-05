@@ -1,22 +1,21 @@
 import { isNumber, isString } from 'lodash';
 
 import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
-
-import appEvents from '../../../core/app_events';
 import {
+  defaultElementItems,
   advancedElementItems,
   CanvasElementItem,
-  CanvasElementOptions,
   canvasElementRegistry,
-  defaultElementItems,
+  CanvasElementOptions,
   TextConfig,
-} from '../../../features/canvas';
-import { notFoundItem } from '../../../features/canvas/elements/notFound';
-import { ElementState } from '../../../features/canvas/runtime/element';
-import { FrameState } from '../../../features/canvas/runtime/frame';
-import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
-import { DimensionContext } from '../../../features/dimensions';
+} from 'app/features/canvas';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
+import { DimensionContext } from 'app/features/dimensions';
 
 import { AnchorPoint, ConnectionState } from './types';
 

@@ -45,7 +45,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
-  internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
@@ -82,6 +81,7 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
+  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -95,5 +95,7 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
+  lokiPredefinedOperations?: boolean;
 }

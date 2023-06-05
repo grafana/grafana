@@ -3,7 +3,6 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, useStyles2 } from '@grafana/ui';
-import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
 
 import { TempoJsonData } from '../types';
 
@@ -14,13 +13,6 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">TraceID query</h3>
-
-      <div className={styles.infoText}>
-        Modify how TraceID queries are run
-        <DocsLinkButton hrefSuffix="tempo/#traceid-query" />
-      </div>
-
       <InlineField
         label="Use time range in query"
         tooltip="The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. Default: disabled"

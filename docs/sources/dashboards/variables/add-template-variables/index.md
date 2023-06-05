@@ -255,13 +255,13 @@ Grafana has two built-in time range variables: `$__from` and `$__to`. They are c
 This special formatting syntax is only available in Grafana 7.1.2+
 {{% /admonition %}}
 
-| Syntax                   | Example result           | Description                                                                                               |
-| ------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                    |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339                                                                    |
-| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                         |
-| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                        |
-| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character |
+| Syntax                   | Example result           | Description                                                                                                                                                      |
+| ------------------------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `${__from}`              | 1594671549254            | Unix millisecond epoch                                                                                                                                           |
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339                                                                                                                           |
+| `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339                                                                                                                                                |
+| `${__from:date:seconds}` | 1594671549               | Unix seconds epoch                                                                                                                                               |
+| `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) that does not include the `:` character. Uses browser time. Use `:date` or `:date:iso` for UTC |
 
 The syntax above also works with `${__to}`.
 
@@ -591,7 +591,7 @@ This feature is available in Grafana 7.4+.
 
 Using named capture groups, you can capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable drop-down list to contain a friendly name for each value that can be selected.
 
-For example, when querying the `node_hwmon_chip_names` Prometheus metric, the `chip_name` is a lot friendlier that the `chip` value. So the following variable query result:
+For example, when querying the `node_hwmon_chip_names` Prometheus metric, the `chip_name` is a lot friendlier than the `chip` value. So the following variable query result:
 
 ```text
 node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_0",chip_name="enp216s0f0np0"} 1

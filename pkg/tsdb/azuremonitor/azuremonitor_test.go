@@ -113,7 +113,7 @@ type fakeInstance struct {
 	settings types.AzureMonitorSettings
 }
 
-func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	return types.DatasourceInfo{
 		Cloud:    f.cloud,
 		Routes:   f.routes,
@@ -122,7 +122,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 	}, nil
 }
 
-func (f *fakeInstance) Do(pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (f *fakeInstance) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
 	return nil
 }
 
