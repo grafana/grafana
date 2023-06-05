@@ -542,5 +542,12 @@ var (
 			State:        FeatureStateAlpha,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:         "pluginsFrontendSandbox",
+			Description:  "Enables the plugins frontend sandbox",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )
