@@ -1,16 +1,18 @@
 import { DataFrame, PanelData, Field, getFieldDisplayName, ReducerID } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
+  ResourceDimensionConfig,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
+  ColorDimensionConfig,
+  ScalarDimensionConfig,
+} from '@grafana/schema';
+import {
   getColorDimension,
   getScaledDimension,
   getTextDimension,
   getResourceDimension,
-  ColorDimensionConfig,
   DimensionSupplier,
-  ResourceDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
-  ScalarDimensionConfig,
 } from 'app/features/dimensions';
 
 import { getScalarDimension } from './scalar';

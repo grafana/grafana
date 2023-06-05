@@ -136,9 +136,14 @@ class GraphElement {
 
     if (!this.panel.legend.show) {
       if (this.legendElem.hasChildNodes()) {
-        this.legendElemRoot.unmount();
+        this.legendElemRoot.render(null);
       }
-      this.renderPanel();
+      // we need to wait for react to finish rendering the legend before we can render the graph
+      // this is a slightly worse version of the `renderCallback` logic we use below
+      // the problem here is there's nothing to pass a `renderCallback` to since we don't want to render the legend at all.
+      setTimeout(() => {
+        this.renderPanel();
+      });
       return;
     }
 
@@ -155,13 +160,13 @@ class GraphElement {
       onToggleSort: this.ctrl.onToggleSort,
       onColorChange: this.ctrl.onColorChange,
       onToggleAxis: this.ctrl.onToggleAxis,
+      renderCallback: this.renderPanel.bind(this),
     };
 
     const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
 
     // render callback isn't supported in react 18+, see: https://github.com/reactwg/react-18/discussions/5
     this.legendElemRoot.render(legendReactElem);
-    requestIdleCallback(() => this.renderPanel());
   }
 
   onGraphHover(evt: LegacyGraphHoverEventPayload | DataHoverPayload) {

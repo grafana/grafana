@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -137,6 +138,14 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		// clear plugin error if a pre-existing error has since been resolved
 		delete(l.errs, plugin.ID)
 
+		// Hardcoded alias changes
+		switch plugin.ID {
+		case "grafana-pyroscope": // rebranding
+			plugin.Alias = "phlare"
+		case "debug": // panel plugin used for testing
+			plugin.Alias = "debugX"
+		}
+
 		// verify module.js exists for SystemJS to load.
 		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
@@ -150,6 +159,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 				if err := f.Close(); err != nil {
 					l.log.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
 				}
+			}
+		}
+
+		// Detect angular for external plugins
+		if plugin.IsExternalPlugin() {
+			var err error
+			plugin.AngularDetected, err = angulardetector.Inspect(plugin)
+			if err != nil {
+				l.log.Warn("could not inspect plugin for angular", "pluginID", plugin.ID, "err", err)
 			}
 		}
 

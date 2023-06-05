@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -329,127 +328,6 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, paths)
 	})
-}
-
-func TestFinder_validatePluginJSON(t *testing.T) {
-	type args struct {
-		data plugins.JSONData
-	}
-	tests := []struct {
-		name string
-		args args
-		err  error
-	}{
-		{
-			name: "Valid case",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: plugins.DataSource,
-				},
-			},
-		},
-		{
-			name: "Invalid plugin ID",
-			args: args{
-				data: plugins.JSONData{
-					Type: plugins.Panel,
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-		{
-			name: "Invalid plugin type",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: "test",
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := validatePluginJSON(tt.args.data); !errors.Is(err, tt.err) {
-				t.Errorf("validatePluginJSON() = %v, want %v", err, tt.err)
-			}
-		})
-	}
-}
-
-func TestFinder_readPluginJSON(t *testing.T) {
-	tests := []struct {
-		name       string
-		pluginPath string
-		expected   plugins.JSONData
-		err        error
-	}{
-		{
-			name:       "Valid plugin",
-			pluginPath: "../../testdata/test-app/plugin.json",
-			expected: plugins.JSONData{
-				ID:   "test-app",
-				Type: "app",
-				Name: "Test App",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Test Inc.",
-						URL:  "http://test.com",
-					},
-					Description: "Official Grafana Test App & Dashboard bundle",
-					Version:     "1.0.0",
-					Links: []plugins.InfoLink{
-						{Name: "Project site", URL: "http://project.com"},
-						{Name: "License & Terms", URL: "http://license.com"},
-					},
-					Logos: plugins.Logos{
-						Small: "img/logo_small.png",
-						Large: "img/logo_large.png",
-					},
-					Screenshots: []plugins.Screenshots{
-						{Path: "img/screenshot1.png", Name: "img1"},
-						{Path: "img/screenshot2.png", Name: "img2"},
-					},
-					Updated: "2015-02-10",
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "3.x.x",
-					Plugins: []plugins.Dependency{
-						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
-					},
-				},
-				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
-				},
-				Backend: false,
-			},
-		},
-		{
-			name:       "Invalid plugin JSON",
-			pluginPath: "../../testdata/invalid-plugin-json/plugin.json",
-			err:        ErrInvalidPluginJSON,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reader, err := os.Open(tt.pluginPath)
-			require.NoError(t, err)
-			got, err := ReadPluginJSON(reader)
-			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
-			}
-			if !cmp.Equal(got, tt.expected) {
-				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected))
-			}
-			require.NoError(t, reader.Close())
-		})
-	}
 }
 
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {

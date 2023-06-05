@@ -18,6 +18,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) star.Service {
 		return &Service{
 			store: &sqlxStore{
 				sess: db.GetSqlxSession(),
+				db:   db,
 			},
 		}
 	}

@@ -7,17 +7,17 @@ import Selecto from 'selecto';
 
 import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
-import { Portal, stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
-  DimensionContext,
   ResourceDimensionConfig,
   ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-} from 'app/features/dimensions';
+} from '@grafana/schema';
+import { Portal, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { DimensionContext } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
   getResourceDimensionFromData,
@@ -25,10 +25,10 @@ import {
   getScaleDimensionFromData,
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
-import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
-import { CanvasTooltip } from 'app/plugins/panel/canvas/CanvasTooltip';
-import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
-import { Connections } from 'app/plugins/panel/canvas/Connections';
+import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
+import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
+import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/components/connections/ConnectionAnchors';
+import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import appEvents from '../../../core/app_events';
@@ -643,8 +643,8 @@ export class Scene {
 
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
-    const canShowElementTooltip =
-      !this.isEditingEnabled && this.tooltip?.element && this.tooltip.element.data.links?.length > 0;
+    const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>

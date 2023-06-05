@@ -24,7 +24,7 @@ const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   };
 };
 
-const formatValueName = (name: string): string => {
+export const formatValueName = (name: string): string => {
   if (name.includes(InstantQueryRefIdIndex)) {
     return name.replace(InstantQueryRefIdIndex, '');
   }

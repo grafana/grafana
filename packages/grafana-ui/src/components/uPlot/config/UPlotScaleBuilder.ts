@@ -173,6 +173,12 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           let absMin = Math.abs(dataMin!);
           let absMax = Math.abs(dataMax!);
           let max = Math.max(absMin, absMax);
+
+          // flat 0
+          if (max === 0) {
+            max = 80;
+          }
+
           dataMin = -max;
           dataMax = max;
         }

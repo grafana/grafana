@@ -22,6 +22,7 @@ jest.mock('app/core/store', () => {
     getBool() {
       return true;
     },
+    delete() {},
   };
 });
 
@@ -47,7 +48,7 @@ const setupProps = (): LokiContextUiProps => {
 };
 
 const mockLogContextProvider = {
-  getInitContextFiltersFromLabels: jest.fn().mockImplementation(() =>
+  getInitContextFilters: jest.fn().mockImplementation(() =>
     Promise.resolve([
       { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
       { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
@@ -97,7 +98,7 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
   });
 
@@ -105,7 +106,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[0], 'label1="value1"');
@@ -115,7 +116,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[1], 'label3="value3"');
@@ -126,7 +127,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
     await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3="value3"');
@@ -204,6 +205,35 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
       expect(screen.queryByText('Refine the search')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should revert to original query when revert button clicked', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    render(<LokiContextUi {...newProps} />);
+    // In initial query, label3 is not selected
+    await waitFor(() => {
+      expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
+    });
+
+    // We select parsed label and label3="value3" should appear
+    const parsedLabelsInput = screen.getAllByRole('combobox')[1];
+    await userEvent.click(parsedLabelsInput);
+    await userEvent.type(parsedLabelsInput, '{enter}');
+    expect(screen.getByText('label3="value3"')).toBeInTheDocument();
+
+    // We click on revert button and label3="value3" should disappear
+    const revertButton = screen.getByTestId('revert-button');
+    await userEvent.click(revertButton);
+    await waitFor(() => {
+      expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
     });
   });
 });

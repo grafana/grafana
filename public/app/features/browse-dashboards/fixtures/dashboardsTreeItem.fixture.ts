@@ -12,7 +12,8 @@ export function wellFormedEmptyFolder(
 
   return {
     item: {
-      kind: 'ui-empty-folder',
+      kind: 'ui',
+      uiKind: 'empty-folder',
       uid: random.guid(),
     },
     level: 0,
@@ -48,12 +49,14 @@ export function wellFormedFolder(
   itemPartial?: Partial<DashboardViewItem>
 ): DashboardsTreeItem<DashboardViewItem> {
   const random = Chance(seed);
+  const uid = random.guid();
 
   return {
     item: {
       kind: 'folder',
       title: random.sentence({ words: 3 }),
-      uid: random.guid(),
+      uid,
+      url: `/dashboards/f/${uid}`,
       ...itemPartial,
     },
     level: 0,

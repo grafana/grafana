@@ -45,7 +45,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
-  internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
@@ -59,7 +58,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
-  datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -83,6 +81,7 @@ export interface FeatureToggles {
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
+  alertingNotificationsPoliciesMatchingInstances?: boolean;
   alertStateHistoryLokiPrimary?: boolean;
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
@@ -94,6 +93,10 @@ export interface FeatureToggles {
   authenticationConfigUI?: boolean;
   pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
-  opensearchDetectVersion?: boolean;
+  faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
+  extraThemes?: boolean;
+  lokiPredefinedOperations?: boolean;
+  pluginsFrontendSandbox?: boolean;
 }

@@ -12,7 +12,7 @@ export interface PromVisualQuery {
   // metrics modal additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
-  excludeNullMetadata?: boolean;
+  includeNullMetadata?: boolean;
   fullMetaSearch?: boolean;
 }
 

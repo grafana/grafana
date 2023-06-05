@@ -6,7 +6,7 @@ import Highlighter from 'react-highlight-words';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { AsyncSelect, Button, FormatOptionLabelMeta, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Button, FormatOptionLabelMeta, Icon, useStyles2 } from '@grafana/ui';
 import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -15,6 +15,7 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricsModal } from './metrics-modal/MetricsModal';
+import { tracking } from './metrics-modal/state/helpers';
 
 // We are matching words split with space
 const splitSeparator = ' ';
@@ -81,24 +82,6 @@ export function MetricSelect({
     [styles.highlight]
   );
 
-  const formatLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
-    return labelsFilters.map((label) => {
-      return `,${label.label}="${label.value}"`;
-    });
-  };
-
-  /**
-   * Transform queryString and any currently set label filters into label_values() string
-   */
-  const queryAndFilterToLabelValuesString = (
-    queryString: string,
-    labelsFilters: QueryBuilderLabelFilter[] | undefined
-  ): string => {
-    return `label_values({__name__=~".*${queryString}"${
-      labelsFilters ? formatLabelFilters(labelsFilters).join() : ''
-    }},__name__)`;
-  };
-
   /**
    * Reformat the query string and label filters to return all valid results for current query editor state
    */
@@ -108,7 +91,7 @@ export function MetricSelect({
   ): string => {
     const queryString = regexifyLabelValuesQueryString(query);
 
-    return queryAndFilterToLabelValuesString(queryString, labelsFilters);
+    return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
   };
 
   /**
@@ -137,6 +120,7 @@ export function MetricSelect({
     (query: string) => getMetricLabels(query),
     datasource.getDebounceTimeInMilliseconds()
   );
+
   // No type found for the common select props so typing as any
   // https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Select/SelectBase.tsx/#L212-L263
   // eslint-disable-next-line
@@ -149,6 +133,8 @@ export function MetricSelect({
       return (
         <div
           {...props.innerProps}
+          ref={props.innerRef}
+          className={`${styles.customOptionWidth} metric-encyclopedia-open`}
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {
@@ -157,19 +143,20 @@ export function MetricSelect({
           }}
         >
           {
-            <div className={`${styles.customOption} ${isFocused}`}>
+            <div className={`${styles.customOption} ${isFocused} metric-encyclopedia-open`}>
               <div>
-                <div>{option.label}</div>
-                <div className={styles.customOptionDesc}>{option.description}</div>
+                <div className="metric-encyclopedia-open">{option.label}</div>
+                <div className={`${styles.customOptionDesc} metric-encyclopedia-open`}>{option.description}</div>
               </div>
               <Button
-                variant="primary"
-                fill="outline"
+                fill="text"
                 size="sm"
+                variant="secondary"
                 onClick={() => setState({ ...state, metricsModalOpen: true })}
-                icon="book"
+                className="metric-encyclopedia-open"
               >
                 Open
+                <Icon name="arrow-right" />
               </Button>
             </div>
           }
@@ -213,15 +200,16 @@ export function MetricSelect({
                 metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
               }
 
-              if (config.featureToggles.prometheusMetricEncyclopedia) {
+              if (prometheusMetricEncyclopedia) {
                 // pass the initial metrics, possibly filtered by labels into the Metrics Modal
                 const metricsModalOption: SelectableValue[] = [
                   {
                     value: 'BrowseMetrics',
-                    label: 'Browse metrics',
+                    label: 'Metrics explorer',
                     description: 'Browse and filter metrics and metadata with a fuzzy search',
                   },
                 ];
+                // pass the initial metrics into the Metrics Modal
                 setState({
                   metrics: [...metricsModalOption, ...metrics],
                   isLoading: undefined,
@@ -238,13 +226,14 @@ export function MetricSelect({
               if (value) {
                 // if there is no metric and the m.e. is enabled, open the modal
                 if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
+                  tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
                   setState({ ...state, metricsModalOpen: true });
                 } else {
                   onChange({ ...query, metric: value });
                 }
               }
             }}
-            components={{ Option: CustomOption }}
+            components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
           />
         </EditorField>
       </EditorFieldGroup>
@@ -269,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     cursor: pointer;
     :hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
     }
   `,
   customOptionlabel: css`
@@ -281,6 +270,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     opacity: 50%;
   `,
   focus: css`
-    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
+    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
+  `,
+  customOptionWidth: css`
+    min-width: 400px;
   `,
 });
+
+export const formatPrometheusLabelFiltersToString = (
+  queryString: string,
+  labelsFilters: QueryBuilderLabelFilter[] | undefined
+): string => {
+  const filterArray = labelsFilters ? formatPrometheusLabelFilters(labelsFilters) : [];
+
+  return `label_values({__name__=~".*${queryString}"${filterArray ? filterArray.join('') : ''}},__name__)`;
+};
+
+export const formatPrometheusLabelFilters = (labelsFilters: QueryBuilderLabelFilter[]): string[] => {
+  return labelsFilters.map((label) => {
+    return `,${label.label}="${label.value}"`;
+  });
+};

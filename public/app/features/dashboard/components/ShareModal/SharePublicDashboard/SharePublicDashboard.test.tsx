@@ -175,7 +175,7 @@ describe('SharePublic - New config setup', () => {
   it('renders when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard();
 
-    await screen.findByText('Welcome to public dashboards alpha!');
+    await screen.findByText('Welcome to public dashboards public preview!');
     expect(screen.getByText('Generate public URL')).toBeInTheDocument();
 
     expect(screen.queryByTestId(selectors.WillBePublicCheckbox)).toBeInTheDocument();
@@ -306,7 +306,7 @@ describe('SharePublic - Report interactions', () => {
     jest.clearAllMocks();
     server.use(getExistentPublicDashboardResponse());
     server.use(
-      rest.put('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
+      rest.patch('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
         res(
           ctx.status(200),
           ctx.json({

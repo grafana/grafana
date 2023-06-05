@@ -48,7 +48,7 @@ export class DashboardLoaderSrv {
     } else if (type === 'public') {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
-        .then((result: any) => {
+        .then((result) => {
           return result;
         })
         .catch((e) => {
@@ -73,7 +73,7 @@ export class DashboardLoaderSrv {
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
-        .then((result: any) => {
+        .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
@@ -114,7 +114,7 @@ export class DashboardLoaderSrv {
             dashboard: result.data,
           };
         },
-        (err: any) => {
+        (err) => {
           console.error('Script dashboard error ' + err);
           appEvents.emit(AppEvents.alertError, [
             'Script Error',
@@ -142,7 +142,7 @@ export class DashboardLoaderSrv {
       return Promise.reject('expecting path parameter');
     }
 
-    const queryParams: { [key: string]: any } = {};
+    const queryParams: { [key: string]: string } = {};
 
     params.forEach((value, key) => {
       queryParams[key] = value;
