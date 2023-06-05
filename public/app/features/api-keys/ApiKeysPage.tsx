@@ -51,14 +51,14 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 interface State {
-  migrationSummaryVisible: boolean;
+  showMigrationResult: boolean;
 }
 
 export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      migrationSummaryVisible: false,
+      showMigrationResult: false,
     };
   }
 
@@ -88,9 +88,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onMigrateApiKeys = async () => {
     try {
-      this.props.migrateAll();
+      await this.props.migrateAll();
       this.setState({
-        migrationSummaryVisible: true,
+        showMigrationResult: true,
       });
     } catch (err) {
       console.error(err);
@@ -98,7 +98,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   dismissModal = async () => {
-    this.setState({ migrationSummaryVisible: false });
+    this.setState({ showMigrationResult: false });
   };
 
   render() {
@@ -151,9 +151,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
           </>
         </Page.Contents>
         <MigrationSummary
-          visible={this.state.migrationSummaryVisible}
+          visible={this.state.showMigrationResult}
           data={migrationResult}
-          dismissModal={this.dismissModal}
+          onDismiss={this.dismissModal}
         />
       </Page>
     );
@@ -162,7 +162,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 export type MigrationSummaryProps = {
   visible: boolean;
   data: ApikeyMigrationResult;
-  dismissModal: () => void;
+  onDismiss: () => void;
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
@@ -180,15 +180,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
 };
 
-export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, dismissModal }) => {
+export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
   if (!visible) {
     return null;
   }
 
   return (
-    <Modal title="Migration summary" isOpen={true} closeOnBackdropClick={true} onDismiss={dismissModal}>
-      {data.FailedApikeyIDs.length === 0 && <div style={styles.migrationSummary}>Migration Completed!</div>}
-      {data.FailedApikeyIDs.length !== 0 && (
+    <Modal title="Migration summary" isOpen={true} closeOnBackdropClick={true} onDismiss={onDismiss}>
+      {data.failedApikeyIDs.length === 0 && <div style={styles.migrationSummary}>Migration Completed!</div>}
+      {data.failedApikeyIDs.length !== 0 && (
         <div style={styles.migrationSummary}>
           <p>
             Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
@@ -197,28 +197,28 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
           <hr />
           <p>
             <strong>Total: </strong>
-            {data.Total}
+            {data.total}
           </p>
           <p>
             <strong>Migrated: </strong>
-            {data.Migrated}
+            {data.migrated}
           </p>
           <p>
             <strong>Failed: </strong>
-            {data.Failed}
+            {data.failed}
           </p>
           <p>
             <strong>Failed Api Key IDs: </strong>
-            {data.FailedApikeyIDs.join(', ')}
+            {data.failedApikeyIDs.join(', ')}
           </p>
           <p>
             <strong>Failed Details: </strong>
-            {data.FailedDetails.join(', ')}
+            {data.failedDetails.join(', ')}
           </p>
         </div>
       )}
       <Modal.ButtonRow>
-        <Button variant="secondary" onClick={dismissModal}>
+        <Button variant="secondary" onClick={onDismiss}>
           Close
         </Button>
       </Modal.ButtonRow>

@@ -16,11 +16,11 @@ export interface ApiKey extends WithAccessControlMetadata {
 }
 
 export interface ApikeyMigrationResult {
-  Total: number;
-  Migrated: number;
-  Failed: number;
-  FailedApikeyIDs: number[];
-  FailedDetails: string[];
+  total: number;
+  migrated: number;
+  failed: number;
+  failedApikeyIDs: number[];
+  failedDetails: string[];
 }
 
 export interface ApiKeysState {
