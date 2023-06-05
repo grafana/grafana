@@ -35,7 +35,7 @@ export async function setMetrics(
   metricsData = initialMetrics?.map((m: string) => {
     const metricData = buildMetricData(m, datasource);
 
-    const metaDataString = `${m}¦${metricData.type}¦${metricData.description}`;
+    const metaDataString = `${m}¦${metricData.description}`;
 
     nameHaystackDictionaryData[m] = metricData;
     metaHaystackDictionaryData[metaDataString] = metricData;
@@ -250,7 +250,7 @@ export const promTypes: PromFilterOption[] = [
 
 export const placeholders = {
   browse: 'Search metrics by name',
-  metadataSearchSwitch: 'Include type and description in metric name search',
+  metadataSearchSwitch: 'Include description in metric name search',
   type: 'Filter by type',
   includeNullMetadata: 'Include results with no metadata',
   setUseBackend: 'Enable regex search',
