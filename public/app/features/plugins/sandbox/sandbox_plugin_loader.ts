@@ -2,7 +2,6 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { GrafanaPlugin, PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -21,7 +20,7 @@ type PluginFactoryFunction = (...args: CompartmentDependencyModule[]) => {
 };
 
 // Loads near membrane custom formatter for near membrane proxy objects.
-if (config.buildInfo.env === 'development') {
+if (process.env.NODE_ENV !== 'production') {
   require('./custom_formatter');
 }
 

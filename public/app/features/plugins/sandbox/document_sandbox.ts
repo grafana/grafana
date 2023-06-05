@@ -11,7 +11,7 @@ export function getSafeSandboxDomElement(element: Element): Element {
     return getSandboxMockBody();
   }
 
-  // allow acces to the head
+  // allow access to the head
   // the condition redundancy is intentional
   if (nodeName === 'head' || element === document.head) {
     return element;
