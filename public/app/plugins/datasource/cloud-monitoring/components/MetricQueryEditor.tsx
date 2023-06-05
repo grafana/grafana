@@ -73,6 +73,7 @@ function Editor({
         refId: query.refId,
         datasource: query.datasource,
         queryType: QueryType.TIME_SERIES_LIST,
+        intervalMs: query.intervalMs,
         timeSeriesList: defaultTimeSeriesList(datasource),
       });
     }
@@ -81,6 +82,7 @@ function Editor({
         refId: query.refId,
         datasource: query.datasource,
         queryType: QueryType.TIME_SERIES_QUERY,
+        intervalMs: query.intervalMs,
         timeSeriesQuery: defaultTimeSeriesQuery(datasource),
       });
     }
