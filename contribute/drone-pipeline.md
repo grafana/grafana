@@ -2,7 +2,7 @@
 
 _Only people in the Grafana organization can make changes to the Drone pipeline_
 
-The Drone pipelines are built with [Starlark](https://github.com/bazelbuild/starlark), a language which is similar to Python.
+The Drone pipelines are built with [Starlark](https://github.com/bazelbuild/starlark), a language which is similar to Python. The Starlark files are located in [`scripts/drone`](https://github.com/grafana/grafana/tree/main/scripts/drone).
 
 ## Setup
 - Set environment variables `DRONE_SERVER` and `DRONE_TOKEN`, which can be found on your [Drone account](https://drone.grafana.net/account). These are used to verify that onyl Grafana employees can make changes to the pipelines.
