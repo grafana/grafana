@@ -20,7 +20,7 @@ describe('NodeGraphContainer', () => {
     );
 
     // Make sure we only show header in the collapsible
-    expect(container.firstChild?.childNodes.length).toBe(1);
+    expect(container.firstChild?.firstChild?.childNodes.length).toBe(1);
   });
 
   it('shows the graph if not with trace view', async () => {
