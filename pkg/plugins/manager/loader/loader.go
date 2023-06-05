@@ -138,6 +138,14 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		// clear plugin error if a pre-existing error has since been resolved
 		delete(l.errs, plugin.ID)
 
+		// Hardcoded alias changes
+		switch plugin.ID {
+		case "grafana-pyroscope": // rebranding
+			plugin.Alias = "phlare"
+		case "debug": // panel plugin used for testing
+			plugin.Alias = "debugX"
+		}
+
 		// verify module.js exists for SystemJS to load.
 		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {

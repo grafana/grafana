@@ -19,13 +19,13 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
 
-  if (item.kind === 'ui-empty-folder') {
+  if (item.kind === 'ui') {
     return (
       <>
         <Indent level={level} />
         <span className={styles.folderButtonSpacer} />
         <em>
-          <TextModifier color="secondary">No items</TextModifier>
+          <TextModifier color="secondary">{item.uiKind === 'empty-folder' ? 'No items' : 'Loading...'}</TextModifier>
         </em>
       </>
     );

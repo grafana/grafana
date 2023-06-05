@@ -59,6 +59,7 @@ var (
 			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
@@ -186,18 +187,11 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
-		},
-		{
 			Name:        "topnav",
 			Description: "Enables new top navigation and page layouts",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:        "grpcServer",
@@ -436,6 +430,14 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingNotificationsPoliciesMatchingInstances",
+			Description:  "Enables the preview of matching instances for notification policies",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			State:       FeatureStateAlpha,
@@ -531,7 +533,21 @@ var (
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
-			Owner:        grafanaUserEssentialsSquad,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "pluginsFrontendSandbox",
+			Description:  "Enables the plugins frontend sandbox",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

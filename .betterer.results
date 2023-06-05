@@ -322,7 +322,8 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-data/src/types/app.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-data/src/types/config.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2498,6 +2499,9 @@ exports[`better eslint`] = {
     "public/app/features/datasources/components/DataSourceTypeCard.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
+    "public/app/features/datasources/components/EditDataSource.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/datasources/state/actions.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -2980,6 +2984,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"],
       [0, 0, 0, "Do not use any type assertions.", "8"]
+    ],
+    "public/app/features/plugins/sandbox/sandbox_plugin_loader.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/plugins/sql/components/visual-query-builder/AwesomeQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3627,98 +3635,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
-    "public/app/plugins/datasource/azuremonitor/__mocks__/query_ctrl.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_log_analytics/__mocks__/schema.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_log_analytics/azure_log_analytics_datasource.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_log_analytics/azure_log_analytics_datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_log_analytics/response_parser.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Do not use any type assertions.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
-    ],
     "public/app/plugins/datasource/azuremonitor/azure_monitor/azure_monitor_datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_monitor/response_parser.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_resource_graph/azure_resource_graph_datasource.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/azure_resource_graph/azure_resource_graph_datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/LogsQueryEditor/QueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/MonitorConfig.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/azuremonitor/components/QueryEditor/QueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/datasource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/log_analytics/querystring_builder.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/time_grain_converter.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/types/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/azuremonitor/utils/common.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/azuremonitor/utils/messageFromError.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4225,39 +4154,34 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/influxdb/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Do not use any type assertions.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Do not use any type assertions.", "16"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
-      [0, 0, 0, "Do not use any type assertions.", "21"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "25"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "32"]
+      [0, 0, 0, "Do not use any type assertions.", "27"]
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

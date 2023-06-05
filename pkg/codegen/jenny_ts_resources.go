@@ -2,8 +2,10 @@ package codegen
 
 import (
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema/encoding/typescript"
 )
 
@@ -25,6 +27,10 @@ func (j TSResourceJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	f, err := typescript.GenerateTypes(sfg.Schema, &typescript.TypeConfig{
 		RootName: sfg.Name,
 		Group:    sfg.IsGroup,
+		CuetsyConfig: &cuetsy.Config{
+			Export:       true,
+			ImportMapper: cuectx.MapCUEImportToTS,
+		},
 	})
 	if err != nil {
 		return nil, err

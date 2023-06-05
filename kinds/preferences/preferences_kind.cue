@@ -1,6 +1,7 @@
 package kind
 
 name:        "Preferences"
+pluralName:  "Preferences"
 maturity:    "merged"
 description: "The user or team frontend preferences"
 

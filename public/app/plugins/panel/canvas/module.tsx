@@ -18,9 +18,9 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
 
   builder.addBooleanSwitch({
     path: 'showAdvancedTypes',
-    name: 'Show advanced element types',
-    description: '',
-    defaultValue: false,
+    name: 'Experimental element types',
+    description: 'Enable selection of experimental element types',
+    defaultValue: true,
   });
 };
 
