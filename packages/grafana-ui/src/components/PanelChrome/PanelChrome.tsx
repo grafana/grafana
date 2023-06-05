@@ -100,7 +100,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const hasHeader = !hoverHeader;
+  const hasHeader = !hoverHeader && !collapsible;
 
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = 'show-on-hover';
@@ -194,7 +194,7 @@ export function PanelChrome({
         </>
       )}
 
-      {hasHeader && !collapsible && (
+      {hasHeader && (
         <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
           {statusMessage && (
             <div className={dragClassCancel}>
