@@ -25,7 +25,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `featureHighlights`                              | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
 | `exploreMixedDatasource`                         | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`                         | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
-| `internationalization`                           | Enables internationalization                                                                                                                                                                        | Yes                |
 | `topnav`                                         | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
 | `newPanelChromeUI`                               | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 | Yes                |
@@ -111,7 +110,7 @@ Alpha features might be changed or removed without prior notice.
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                      |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
-| `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
+| `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 
 ## Development feature toggles
 
