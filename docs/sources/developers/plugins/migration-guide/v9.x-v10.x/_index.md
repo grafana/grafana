@@ -23,7 +23,7 @@ Although these updates bring many significant benefits, there's a potential for 
 
 - Review the React 18 [upgrade docs](https://react.dev/blog/2022/03/08/react-18-upgrade-guide).
 - Test your plugins against one of the latest [grafana-dev docker images](https://hub.docker.com/r/grafana/grafana-dev/tags?page=1) (for example, [this one](https://hub.docker.com/layers/grafana/grafana-dev/10.0.0-111404pre/images/sha256-ac78acf54b44bd2ce7e68b796b1df47030da7f35e53b02bc3eec3f4de05f780f?context=explore)).
-- If your plugin is affected, add a comment to the [forum discussion](https://community.grafana.com/t/grafana-10-is-upgrading-to-react-18/86051). Reach out and ask for help, or tap into the expertise of the Grafana community.
+- If your plugin is affected, add a comment to the [forum discussion](https://community.grafana.com/t/grafana-10-is-upgrading-to-react-18/86051). Be sure to communicate with us so we are aware of the issue and can provide help.
 
 ## Data frame field values are now just arrays
 
