@@ -8,10 +8,6 @@ description: Describes how to use organizations to isolate dashboard to users an
 keywords:
   - organizations
   - dashboards
-labels:
-  products:
-    - enterprise
-    - oss
 menuTitle: Manage organizations
 title: Manage organizations
 weight: 200

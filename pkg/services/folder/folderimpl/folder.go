@@ -484,8 +484,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return dashboards.ErrFolderAccessDenied
 			}
 
-			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
-				return err
+			if cmd.ForceDeleteRules {
+				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
+					return err
+				}
 			}
 
 			err = s.legacyDelete(ctx, cmd, dashFolder)
@@ -499,9 +501,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, UID); err != nil {
+		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
 			return err
 		}
 	}
@@ -885,11 +887,6 @@ func toFolderError(err error) error {
 func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-
-	_, ok := s.registry[r.Kind()]
-	if ok {
-		return folder.ErrTargetRegistrySrvConflict.Errorf("target registry service: %s already exists", r.Kind())
-	}
 
 	s.registry[r.Kind()] = r
 

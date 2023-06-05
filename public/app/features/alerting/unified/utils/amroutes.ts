@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
 
@@ -232,4 +233,28 @@ export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
     const [name, operator, value] = matcher;
     return `${name}${operator}${value}`;
   });
+};
+
+export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
+  if (repeatInterval.length === 0) {
+    return true;
+  }
+
+  const validRepeatInterval = promDurationValidator(repeatInterval);
+  const validGroupInterval = promDurationValidator(groupInterval);
+
+  if (validRepeatInterval !== true) {
+    return validRepeatInterval;
+  }
+
+  if (validGroupInterval !== true) {
+    return validGroupInterval;
+  }
+
+  const repeatDuration = safeParseDurationstr(repeatInterval);
+  const groupDuration = safeParseDurationstr(groupInterval);
+
+  const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
+
+  return isRepeatLowerThanGroupDuration ? 'Repeat interval should be higher or equal to Group interval' : true;
 };
