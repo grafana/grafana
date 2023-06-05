@@ -18,7 +18,7 @@ export let getFooterLinks = (): FooterLink[] => {
     {
       target: '_blank',
       id: 'documentation',
-      text: t('nav.help/documentation', 'Documentation 123'),
+      text: t('nav.help/documentation', 'Documentation'),
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
     },
