@@ -795,7 +795,7 @@ def verify_i18n_step():
             file_diff=$(git diff -- locales --stat)
             if [ -n "$file_diff" ]; then
                 echo $file_diff
-                echo {}
+                echo \"{}\"
                 exit 1
             fi
             '''.format(uncommited_error_message),
