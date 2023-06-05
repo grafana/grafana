@@ -35,6 +35,7 @@ export const LoginPage = () => {
           changePassword,
           skipPasswordChange,
           isChangingPassword,
+          showDefaultPasswordWarning,
         }) => (
           <>
             {!isChangingPassword && (
@@ -63,7 +64,11 @@ export const LoginPage = () => {
             )}
             {isChangingPassword && (
               <InnerBox>
-                <ChangePassword onSubmit={changePassword} onSkip={() => skipPasswordChange()} />
+                <ChangePassword
+                  showDefaultPasswordWarning={showDefaultPasswordWarning}
+                  onSubmit={changePassword}
+                  onSkip={() => skipPasswordChange()}
+                />
               </InnerBox>
             )}
           </>
