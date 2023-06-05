@@ -67,7 +67,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
               className={styles.chevron}
               ref={chevronRef}
               onClick={() => {
-                if (isOpen && !childrenByParentUID[item.uid]) {
+                if (!isOpen && !childrenByParentUID[item.uid]) {
                   setShouldRestoreFocus(true);
                 }
                 onFolderClick(item.uid, !isOpen);
