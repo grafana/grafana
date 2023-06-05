@@ -135,7 +135,7 @@ export function PanelChrome({
 
   const headerContent = (
     <>
-      {title && !collapsible && (
+      {title && (
         <h6 title={title} className={styles.title}>
           {title}
         </h6>
@@ -194,7 +194,7 @@ export function PanelChrome({
         </>
       )}
 
-      {hasHeader && (
+      {hasHeader && !collapsible && (
         <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
           {statusMessage && (
             <div className={dragClassCancel}>
