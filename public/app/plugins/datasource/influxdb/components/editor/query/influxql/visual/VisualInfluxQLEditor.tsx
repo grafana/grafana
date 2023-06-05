@@ -4,14 +4,14 @@ import React, { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui/src';
 
-import { useUniqueId } from '../../../../../../../../../hooks/useUniqueId';
-import InfluxDatasource from '../../../../../../datasource';
+import { useUniqueId } from '../../../../../../../../hooks/useUniqueId';
+import InfluxDatasource from '../../../../../datasource';
 import {
   getAllMeasurementsForTags,
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
   getTagValues,
-} from '../../../../../../influxql_metadata_migrated';
+} from '../../../../../influxql_metadata_migrated';
 import {
   addNewGroupByPart,
   addNewSelectPart,
@@ -20,20 +20,21 @@ import {
   normalizeQuery,
   removeGroupByPart,
   removeSelectPart,
-} from '../../../../../../queryUtils';
-import { InfluxQuery, InfluxQueryTag } from '../../../../../../types';
-import { DEFAULT_RESULT_FORMAT } from '../../../../constants';
-import { useRetentionPolicies } from '../../hooks/useRetentionPolicies';
-import { filterTags } from '../../utils/filterTags';
-import { withTemplateVariableOptions } from '../../utils/withTemplateVariableOptions';
-import { wrapPure, wrapRegex } from '../../utils/wrapper';
-import { FormatAsSection } from '../shared/FormatAsSection';
-import { FromSection } from '../shared/FromSection';
-import { InputSection } from '../shared/InputSection';
-import { OrderByTimeSection } from '../shared/OrderByTimeSection';
-import { PartListSection } from '../shared/PartListSection';
-import { TagsSection } from '../shared/TagsSection';
-import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../shared/partListUtils';
+} from '../../../../../queryUtils';
+import { InfluxQuery, InfluxQueryTag } from '../../../../../types';
+import { DEFAULT_RESULT_FORMAT } from '../../../constants';
+import { useRetentionPolicies } from '../hooks/useRetentionPolicies';
+import { filterTags } from '../utils/filterTags';
+import { withTemplateVariableOptions } from '../utils/withTemplateVariableOptions';
+import { wrapPure, wrapRegex } from '../utils/wrapper';
+
+import { FormatAsSection } from './shared/FormatAsSection';
+import { FromSection } from './shared/FromSection';
+import { InputSection } from './shared/InputSection';
+import { OrderByTimeSection } from './shared/OrderByTimeSection';
+import { PartListSection } from './shared/PartListSection';
+import { TagsSection } from './shared/TagsSection';
+import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from './shared/partListUtils';
 
 type Props = {
   query: InfluxQuery;
@@ -42,7 +43,7 @@ type Props = {
   datasource: InfluxDatasource;
 };
 
-export const VisualInfluxQLMigratedEditor = (props: Props) => {
+export const VisualInfluxQLEditor = (props: Props) => {
   const uniqueId = useUniqueId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;

@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data/src';
-import config from 'app/core/config';
 
 import InfluxDatasource from '../../../datasource';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from '../../../types';
@@ -11,7 +10,7 @@ import { InfluxQlEditor } from './influxql/InfluxQLEditor';
 
 type Props = QueryEditorProps<InfluxDatasource, InfluxQuery, InfluxOptions>;
 
-export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range, data }: Props): JSX.Element => {
+export const QueryEditor = ({ query, onChange, onRunQuery, datasource }: Props): JSX.Element => {
   switch (datasource.languageVersion) {
     case InfluxVersion.Flux:
       return (
@@ -20,15 +19,7 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range, da
         </div>
       );
     case InfluxVersion.InfluxQL:
-      return (
-        <InfluxQlEditor
-          onRunQuery={onRunQuery}
-          query={query}
-          onChange={onChange}
-          datasource={datasource}
-          backendMigration={!!config.featureToggles.influxdbBackendMigration}
-        />
-      );
+      return <InfluxQlEditor onRunQuery={onRunQuery} query={query} onChange={onChange} datasource={datasource} />;
     default:
       return <>Unknown InfluxDB Query Language</>;
   }
