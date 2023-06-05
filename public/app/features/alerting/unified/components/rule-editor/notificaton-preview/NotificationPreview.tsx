@@ -1,20 +1,11 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { compact } from 'lodash';
 import pluralize from 'pluralize';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  getTagColorIndexFromName,
-  Icon,
-  LoadingPlaceholder,
-  Modal,
-  TagList,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, getTagColorIndexFromName, LoadingPlaceholder, TagList, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -26,12 +17,14 @@ import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAm
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { makeAMLink } from '../../../utils/misc';
-import { normalizeRoute, AlertInstanceMatch } from '../../../utils/notification-policies';
+import { AlertInstanceMatch, normalizeRoute } from '../../../utils/notification-policies';
 import { CollapseToggle } from '../../CollapseToggle';
 import { MetaText } from '../../MetaText';
 import { Spacer } from '../../Spacer';
-import { Matchers } from '../../notification-policies/Matchers';
+
+import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
+import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
+import { getRoutesByIdMap, RouteWithPath } from './route';
 
 export const useGetPotentialInstancesByAlertManager = (
   alertManagerSourceName: string,
@@ -154,7 +147,7 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
   return (
     <Stack direction="column" gap={2}>
       <div className={styles.routePreviewHeaderRow}>
-        <h4 className={styles.marginBottom(0)}>{NOTIFICATION_PREVIEW_TITLE}</h4>
+        <h4 className={styles.previewHeader}>{NOTIFICATION_PREVIEW_TITLE}</h4>
         <div className={styles.button}>
           <Button icon="sync" variant="secondary" type="button" onClick={onPreview}>
             Preview routing
@@ -253,124 +246,6 @@ export function NotificationPreviewByAlertManager({
       </Stack>
     </div>
   ) : null;
-}
-
-function thereAreNoMatchers(route: RouteWithID) {
-  return route.object_matchers?.length === 0;
-}
-
-function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithPath }) {
-  const styles = useStyles2(getStyles);
-  const routePathIds = route.path?.slice(1) ?? [];
-  const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
-
-  return (
-    <div className={styles.policyPathWrapper}>
-      <div className={styles.defaultPolicy}>Default policy</div>
-      {routePathObjects.map((pathRoute, index) => {
-        return (
-          <div key={pathRoute.id}>
-            <div className={styles.policyInPath(index, index === routePathObjects.length - 1)}>
-              {thereAreNoMatchers(pathRoute) ? (
-                <div className={styles.textMuted}>No matchers</div>
-              ) : (
-                <Matchers matchers={pathRoute.object_matchers ?? []} />
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function NotificationRouteDetailsModal({
-  onClose,
-  route,
-  receiver,
-  routesByIdMap,
-  alertManagerSourceName,
-}: {
-  onClose: () => void;
-  route: RouteWithPath;
-  receiver: Receiver;
-  routesByIdMap: Map<string, RouteWithPath>;
-  alertManagerSourceName: string;
-}) {
-  const styles = useStyles2(getStyles);
-  const isDefault = isDefaultPolicy(route);
-
-  return (
-    <Modal
-      className={styles.detailsModal}
-      isOpen={true}
-      title="Alert routing details"
-      onDismiss={onClose}
-      onClickBackdrop={onClose}
-    >
-      <Stack gap={0} direction="column">
-        <div className={cx(styles.textMuted, styles.marginBottom(2))}>
-          Preview how this alert will be routed while firing.
-        </div>
-        <div className={cx(styles.marginBottom(2))}>Policy routing</div>
-        {!isDefault ? (
-          <>
-            <div className={cx(styles.textMuted, styles.marginBottom(1))}>Matching labels</div>
-            <NotificationPolicyMatchers route={route} />
-          </>
-        ) : (
-          <div className={styles.textMuted}>Default policy</div>
-        )}
-        <div className={styles.separator(4)} />
-        {!isDefault && (
-          <>
-            <div className={cx(styles.textMuted, styles.marginBottom(1))}>Notification policy path</div>
-            <PolicyPath route={route} routesByIdMap={routesByIdMap} />
-          </>
-        )}
-        <div className={styles.separator(4)} />
-        <div className={styles.contactPoint}>
-          <Stack gap={1} direction="row" alignItems="center">
-            Contact point:
-            <span className={styles.textMuted}>{receiver.name}</span>
-          </Stack>
-          <Stack gap={1} direction="row" alignItems="center">
-            <a
-              href={makeAMLink(
-                `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                alertManagerSourceName
-              )}
-              className={styles.link}
-              target="_blank"
-              rel="noreferrer"
-            >
-              See details <Icon name="external-link-alt" />
-            </a>
-          </Stack>
-        </div>
-        <div className={styles.button}>
-          <Button variant="primary" type="button" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </Stack>
-    </Modal>
-  );
-}
-
-function isDefaultPolicy(route: RouteWithPath) {
-  return route.path?.length === 0;
-}
-
-function NotificationPolicyMatchers({ route }: { route: RouteWithPath }) {
-  const styles = useStyles2(getStyles);
-  if (isDefaultPolicy(route)) {
-    return <div className={styles.defaultPolicy}>Default policy</div>;
-  } else if (thereAreNoMatchers(route)) {
-    return <div className={styles.textMuted}>No matchers</div>;
-  } else {
-    return <Matchers matchers={route.object_matchers ?? []} />;
-  }
 }
 
 function NotificationRouteHeader({
@@ -509,23 +384,6 @@ function NotificationRoute({
   );
 }
 
-interface RouteWithPath extends RouteWithID {
-  path: string[]; // path from root route to this route
-}
-
-// we traverse the whole tree and we create a map with <id , RouteWithPath>
-function getRoutesByIdMap(rootRoute: RouteWithID): Map<string, RouteWithPath> {
-  const map = new Map<string, RouteWithPath>();
-
-  function addRoutesToMap(route: RouteWithID, path: string[] = []) {
-    map.set(route.id, { ...route, path: path });
-    route.routes?.forEach((r) => addRoutesToMap(r, [...path, route.id]));
-  }
-
-  addRoutesToMap(rootRoute, []);
-  return map;
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css`
     width: auto;
@@ -539,6 +397,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.secondary};
     justify-content: center;
     font-size: ${theme.typography.size.sm};
+  `,
+  previewHeader: css`
+    margin: 0;
   `,
   routePreviewHeaderRow: css`
     display: flex;
@@ -595,16 +456,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border-left: solid 1px ${theme.colors.border.weak};
     }
   `,
-
-  detailsModal: css`
-    max-width: 560px;
-  `,
   button: css`
     justify-content: flex-end;
     display: flex;
-  `,
-  separator: (units: number) => css`
-    margin-top: ${theme.spacing(units)};
   `,
   verticalBar: css`
     width: 1px;
@@ -639,67 +493,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: flex-start;
     flex-wrap: wrap;
   `,
-  policyPathWrapper: css`
-    display: flex;
-    flex-direction: column;
-    margin-top: ${theme.spacing(1)};
-  `,
   policyPathItemMatchers: css`
     display: flex;
     flex-direction: row;
     gap: ${theme.spacing(1)};
-  `,
-  defaultPolicy: css`
-    padding: ${theme.spacing(0.5)};
-    background: ${theme.colors.background.secondary};
-    width: fit-content;
-  `,
-  policyInPath: (index = 0, higlight = false) => css`
-    margin-left: ${30 + index * 30}px;
-    padding: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(1)};
-    border: solid 1px ${theme.colors.border.weak};
-    background: ${theme.colors.background.secondary};
-    width: fit-content;
-    position: relative;
-
-    ${
-      higlight &&
-      css`
-        border: solid 1px ${theme.colors.info.border};
-      `
-    },
-    &:before {
-      content: '';
-      position: absolute;
-      height: calc(100% - 10px);
-      width: ${theme.spacing(1)};
-      border-left: solid 1px ${theme.colors.border.weak};
-      border-bottom: solid 1px ${theme.colors.border.weak};
-      margin-top: ${theme.spacing(-2)};
-      margin-left: -17px;
-    }
-  }
-  `,
-  contactPoint: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  link: css`
-    display: block;
-    color: ${theme.colors.text.link};
   `,
   img: css`
     margin-left: ${theme.spacing(2)};
     width: ${theme.spacing(3)};
     height: ${theme.spacing(3)};
     margin-right: ${theme.spacing(1)};
-  `,
-  marginBottom: (units: number) => css`
-    margin-bottom: ${theme.spacing(theme.spacing(units))};
   `,
 });
