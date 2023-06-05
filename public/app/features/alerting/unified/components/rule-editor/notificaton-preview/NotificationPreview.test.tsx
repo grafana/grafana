@@ -142,7 +142,7 @@ describe('NotificationPreview', () => {
     expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
     expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
 
-    const matchingPoliciesElements = ui.routeButton.queryAll();
+    const matchingPoliciesElements = ui.route.queryAll();
     expect(matchingPoliciesElements).toHaveLength(1);
     expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
   });
@@ -178,7 +178,7 @@ describe('NotificationPreview', () => {
 
     expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
 
-    const matchingPoliciesElements = ui.routeButton.queryAll();
+    const matchingPoliciesElements = ui.route.queryAll();
     expect(matchingPoliciesElements).toHaveLength(2);
     expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
     expect(matchingPoliciesElements[1]).toHaveTextContent(/tomato = red/);
