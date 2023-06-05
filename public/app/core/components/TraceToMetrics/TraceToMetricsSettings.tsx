@@ -7,10 +7,11 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
-import { DocsLinkButton } from '../DocsLinkButton';
+import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 
 export interface TraceToMetricsOptions {
@@ -37,13 +38,6 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to metrics</h3>
-
-      <div className={styles.infoText}>
-        Navigate from a trace span to the selected data source&apos;s metrics
-        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-metrics`} />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField
           tooltip="The Prometheus data source the trace is going to navigate to"
@@ -216,6 +210,25 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
+export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to metrics"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's metrics."
+          suffix={`${options.type}/#trace-to-metrics`}
+          feature="trace to metrics"
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToMetricsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
     padding-bottom: ${theme.spacing(2)};
@@ -226,6 +239,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: baseline;
   `,
   queryRow: css`
+    label: queryRow;
     display: flex;
+    flex-flow: wrap;
   `,
 });
