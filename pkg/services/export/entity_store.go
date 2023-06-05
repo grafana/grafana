@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
@@ -40,6 +41,7 @@ type entityStoreJob struct {
 	playlistService    playlist.Service
 	store              entity.EntityStoreServer
 	dashboardsnapshots dashboardsnapshots.Service
+	preferenceService  pref.Service
 }
 
 func startEntityStoreJob(ctx context.Context,
@@ -49,6 +51,7 @@ func startEntityStoreJob(ctx context.Context,
 	playlistService playlist.Service,
 	store entity.EntityStoreServer,
 	dashboardsnapshots dashboardsnapshots.Service,
+	preferenceService pref.Service,
 ) (Job, error) {
 	job := &entityStoreJob{
 		logger:      log.New("export_to_object_store_job"),
@@ -66,6 +69,7 @@ func startEntityStoreJob(ctx context.Context,
 		playlistService:    playlistService,
 		store:              store,
 		dashboardsnapshots: dashboardsnapshots,
+		preferenceService:  preferenceService,
 	}
 
 	broadcaster(job.status)
@@ -296,6 +300,40 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			e.status.Index++
 			e.status.Count[what] += 1
 			e.status.Last = fmt.Sprintf("ROLE: %s", policy.Spec.Role.Xname)
+			e.broadcaster(e.status)
+		}
+	}
+
+	// Playlists
+	what = entity.StandardKindPreferences
+	e.status.Count[what] = 0
+
+	for _, orgId := range orgIDs {
+		rowUser.OrgID = orgId
+		rowUser.UserID = 1
+		res, err := e.preferenceService.GetPreferences(ctx, orgId)
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+		for _, p := range res {
+			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
+				GRN: &entity.GRN{
+					UID:  p.Metadata.Name,
+					Kind: what,
+				},
+				Meta:    prettyJSON(p.Metadata),
+				Body:    prettyJSON(p.Spec),
+				Comment: "export from snapshtts",
+			})
+			if err != nil {
+				e.status.Status = "error: " + err.Error()
+				return
+			}
+			e.status.Changed = time.Now().UnixMilli()
+			e.status.Index++
+			e.status.Count[what] += 1
+			e.status.Last = fmt.Sprintf("PREFERENCES: %s", p.Metadata.Name)
 			e.broadcaster(e.status)
 		}
 	}
