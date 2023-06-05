@@ -191,7 +191,7 @@ var (
 			Description: "Enables new top navigation and page layouts",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:        "grpcServer",
@@ -533,7 +533,7 @@ var (
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
-			Owner:        grafanaUserEssentialsSquad,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "lokiPredefinedOperations",
