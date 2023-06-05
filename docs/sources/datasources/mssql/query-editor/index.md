@@ -94,6 +94,8 @@ In the **Dataset** dropdown, select the MS SQL database to query.
 Grafana populates the dropdown with the databases that the configured user can access.
 When you select a dataset, Grafana populates the **Table** dropdown with available tables.
 
+We don't include `tempdb`,`model`,`msdb`,`master` databases in the query editor dropdown.
+
 ### Select columns and aggregation functions (SELECT)
 
 Select a column from the **Column** dropdown to include it in the data.
