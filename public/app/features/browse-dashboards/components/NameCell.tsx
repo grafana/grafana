@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Link, useStyles2 } from '@grafana/ui';
+import { IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Span } from '@grafana/ui/src/unstable';
 
@@ -23,6 +23,17 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
+  const chevronRef = useRef<HTMLButtonElement>(null);
+  const isLoading = isOpen && !childrenByParentUID[item.uid];
+  const [shouldRestoreFocus, setShouldRestoreFocus] = useState(false);
+
+  // restore focus back to the original button when loading is complete
+  useEffect(() => {
+    if (!isLoading && chevronRef.current && shouldRestoreFocus) {
+      chevronRef.current.focus();
+      setShouldRestoreFocus(false);
+    }
+  }, [isLoading, shouldRestoreFocus]);
 
   if (item.kind === 'ui') {
     return (
@@ -42,36 +53,28 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
     );
   }
 
-  // we change the icon to a spinner here instead of actually using the <Spinner /> component
-  // conditionally rendering <Spinner /> here would lose focus on the button and break keyboard a11y
-  const getIcon = () => {
-    if (isOpen) {
-      return !childrenByParentUID[item.uid] ? 'fa fa-spinner' : 'angle-down';
-    } else {
-      return 'angle-right';
-    }
-  };
-
-  const getTooltip = () => {
-    if (isOpen) {
-      return !childrenByParentUID[item.uid] ? 'Fetching folder contents...' : 'Collapse folder';
-    } else {
-      return 'Expand folder';
-    }
-  };
-
   return (
     <>
       <Indent level={level} />
 
       {item.kind === 'folder' ? (
-        <IconButton
-          size={CHEVRON_SIZE}
-          className={styles.button}
-          onClick={isOpen && !childrenByParentUID[item.uid] ? undefined : () => onFolderClick(item.uid, !isOpen)}
-          name={getIcon()}
-          tooltip={getTooltip()}
-        />
+        <>
+          {isLoading ? (
+            <Spinner className={styles.chevron} />
+          ) : (
+            <IconButton
+              size={CHEVRON_SIZE}
+              className={styles.chevron}
+              ref={chevronRef}
+              onClick={() => {
+                setShouldRestoreFocus(true);
+                onFolderClick(item.uid, !isOpen);
+              }}
+              name={isOpen ? 'angle-down' : 'angle-right'}
+              tooltip={isOpen ? 'Collapse folder' : 'Expand folder'}
+            />
+          )}
+        </>
       ) : (
         <span className={styles.folderButtonSpacer} />
       )}
@@ -90,8 +93,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    button: css({
-      height: getSvgSize(CHEVRON_SIZE),
+    chevron: css({
       marginRight: theme.spacing(1),
       width: getSvgSize(CHEVRON_SIZE),
     }),
@@ -107,9 +109,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         textDecoration: 'underline',
       },
-    }),
-    spinner: css({
-      marginRight: theme.spacing(0.5),
     }),
   };
 };
