@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+import React, { ComponentProps } from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -43,7 +43,7 @@ const props = {
       { text: 'Prometheus', value: null }, // default datasource
       { text: 'Loki', value: { type: 'loki-ds', uid: 'abc' } },
     ],
-  },
+  } as ComponentProps<typeof AdHocVariableEditor>['extended'],
   variable: adHocBuilder().withId('adhoc').withRootStateKey('key').withName('adhoc').build(),
   onPropChange: jest.fn(),
 
