@@ -103,6 +103,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
         title={`Node graph${countWarning}`}
         width={measureWidth}
         height={withTraceView ? 500 : height}
+        padding="none"
         isOpen={withTraceView ? open : true}
         collapsible={withTraceView}
         onToggle={withTraceView ? () => toggled() : undefined}
