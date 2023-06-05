@@ -139,7 +139,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getTagValues).toHaveBeenCalledTimes(1);
-    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][3]).toStrictEqual(ONLY_TAGS);
+    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the FROM/cpudata button
     await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
