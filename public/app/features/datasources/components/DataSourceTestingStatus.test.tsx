@@ -1,7 +1,8 @@
-import { locationService } from '@grafana/runtime';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Router } from 'react-router-dom';
+
+import { locationService } from '@grafana/runtime';
 
 import { getMockDataSource, getMockDataSourceSettingsState } from '../__mocks__';
 
