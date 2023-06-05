@@ -84,6 +84,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
+  const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
   let shouldStop = false;
   let subquerySubsciption: Subscription | null = null;
@@ -126,6 +127,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse);
+        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -151,6 +153,44 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   });
 
   return response;
+}
+
+function updateLoadingFrame(
+  response: DataQueryResponse,
+  request: DataQueryRequest<LokiQuery>,
+  partition: TimeRange[],
+  requestN: number
+): DataQueryResponse {
+  if (isLogsQuery(request.targets[0].expr) || isLogsVolumeRequest(request)) {
+    return response;
+  }
+  const loadingFrameName = 'loki-splitting-progress';
+  response.data = response.data.filter((frame) => frame.name !== loadingFrameName);
+
+  if (requestN <= 1) {
+    return response;
+  }
+
+  const loadingFrame = new ArrayDataFrame([
+    {
+      time: partition[0].from.valueOf(),
+      timeEnd: partition[requestN - 2].to.valueOf(),
+      isRegion: true,
+      color: 'rgba(120, 120, 120, 0.1)',
+    },
+  ]);
+  loadingFrame.name = loadingFrameName;
+  loadingFrame.meta = {
+    dataTopic: DataTopic.Annotations,
+  };
+
+  response.data.push(loadingFrame);
+
+  return response;
+}
+
+function isLogsVolumeRequest(request: DataQueryRequest<LokiQuery>): boolean {
+  return request.targets.some((target) => target.refId.startsWith('log-volume'));
 }
 
 function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: number, requestN: number) {
