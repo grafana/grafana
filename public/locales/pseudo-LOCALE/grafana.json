@@ -114,15 +114,6 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Pľęäşę čőŉŧäčŧ yőūř äđmįŉįşŧřäŧőř ŧő čőŉƒįģūřę đäŧä şőūřčęş.",
-    "explanation": "Ŧő vįşūäľįžę yőūř đäŧä, yőū'ľľ ŉęęđ ŧő čőŉŉęčŧ įŧ ƒįřşŧ.",
-    "new-dashboard": "Ńęŵ đäşĥþőäřđ",
-    "preferred": "Cőŉŉęčŧ yőūř přęƒęřřęđ đäŧä şőūřčę:",
-    "sampleData": "Øř şęŧ ūp ä ŉęŵ đäşĥþőäřđ ŵįŧĥ şämpľę đäŧä",
-    "viewAll": "Vįęŵ äľľ",
-    "welcome": "Ŵęľčőmę ŧő Ğřäƒäŉä đäşĥþőäřđş!"
-  },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
@@ -518,6 +509,15 @@
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Đäřĸ",
+        "light-label": "Ŀįģĥŧ",
+        "system-label": "Ŝyşŧęm přęƒęřęŉčę"
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Ŧįmęžőŉę"
@@ -529,14 +529,11 @@
       "home-dashboard-placeholder": "Đęƒäūľŧ đäşĥþőäřđ",
       "locale-label": "Ŀäŉģūäģę",
       "locale-placeholder": "Cĥőőşę ľäŉģūäģę",
-      "theme-label": "ŮĨ Ŧĥęmę",
+      "theme-label": "Ĩŉŧęřƒäčę ŧĥęmę",
       "week-start-label": "Ŵęęĸ şŧäřŧ"
     },
     "theme": {
-      "dark-label": "Đäřĸ",
-      "default-label": "Đęƒäūľŧ",
-      "light-label": "Ŀįģĥŧ",
-      "system-label": "Ŝyşŧęm"
+      "default-label": "Đęƒäūľŧ"
     },
     "title": "Přęƒęřęŉčęş"
   },

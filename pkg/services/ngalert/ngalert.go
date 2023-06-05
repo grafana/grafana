@@ -67,6 +67,7 @@ func ProvideService(
 	annotationsRepo annotations.Repository,
 	pluginsStore plugins.Store,
 	tracer tracing.Tracer,
+	ruleStore *store.DBstore,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -92,6 +93,7 @@ func ProvideService(
 		annotationsRepo:      annotationsRepo,
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
+		store:                ruleStore,
 	}
 
 	if ng.IsDisabled() {
@@ -149,25 +151,16 @@ func (ng *AlertNG) init() error {
 	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
-	store := &store.DBstore{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		FeatureToggles:   ng.FeatureToggles,
-		SQLStore:         ng.SQLStore,
-		Logger:           ng.Log,
-		FolderService:    ng.folderService,
-		AccessControl:    ng.accesscontrol,
-		DashboardService: ng.dashboardService,
-	}
-	ng.store = store
+	ng.store.Logger = ng.Log
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, store, store, ng.KVStore, store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
+	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
 	if err != nil {
 		return err
 	}
 
-	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
+	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
 	if err != nil {
 		return err
 	}
@@ -186,7 +179,7 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
+	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
@@ -205,7 +198,7 @@ func (ng *AlertNG) init() error {
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
-		RuleStore:            store,
+		RuleStore:            ng.store,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
@@ -221,7 +214,7 @@ func (ng *AlertNG) init() error {
 	cfg := state.ManagerCfg{
 		Metrics:              ng.Metrics.GetStateMetrics(),
 		ExternalURL:          appUrl,
-		InstanceStore:        store,
+		InstanceStore:        ng.store,
 		Images:               ng.imageService,
 		Clock:                clk,
 		Historian:            history,
@@ -232,18 +225,18 @@ func (ng *AlertNG) init() error {
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
-		subscribeToFolderChanges(ng.Log, ng.bus, store)
+		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
 	}
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(store, store, store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
-	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.dashboardService, ng.QuotaService, store,
+	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log)
+	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
+	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
@@ -254,11 +247,11 @@ func (ng *AlertNG) init() error {
 		RouteRegister:        ng.RouteRegister,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
-		TransactionManager:   store,
-		RuleStore:            store,
-		AlertingStore:        store,
-		AdminConfigStore:     store,
-		ProvenanceStore:      store,
+		TransactionManager:   ng.store,
+		RuleStore:            ng.store,
+		AlertingStore:        ng.store,
+		AdminConfigStore:     ng.store,
+		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
 		AccessControl:        ng.accesscontrol,

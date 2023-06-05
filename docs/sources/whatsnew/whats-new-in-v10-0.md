@@ -197,7 +197,7 @@ _Generally available in all editions of Grafana._
 
 You can now query multiple data sources simultaneously in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
 
-The "Mixed" data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source or Enterprise, you can disable this feature using the `exploreMixedDatasource` feature toggle.
+If you’re using Grafana Open Source or Enterprise, you can disable this feature using the `exploreMixedDatasource` feature toggle.
 
 ## Public dashboards
 
@@ -310,7 +310,7 @@ To try it out, enable the `newTraceViewHeader` feature toggle. This feature is e
 
 _Generally available in all editions of Grafana._
 
-We've started the work to migrate to OpenTelemetry in Grafana version 8.4; now we're removing OpenTracing and, for those who still have it configured, replacing it under the hood with OpenTelemetry. These changes are backwards compatible, so you don't need to change anything the feature will continue working as it did before.
+We've started the work to migrate to OpenTelemetry in Grafana version 8.4; now we're removing OpenTracing and, for those who still have it configured, replacing it under the hood with OpenTelemetry. These changes are backwards compatible, so you don't need to change anything and the feature will continue working as it did before.
 
 ## Data sources
 

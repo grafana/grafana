@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,11 +28,14 @@ interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
+  canSelect: boolean;
   isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
-  canSelect: boolean;
+
+  isItemLoaded: (itemIndex: number) => boolean;
+  requestLoadMore: (startIndex: number, endIndex: number) => void;
 }
 
 const HEADER_HEIGHT = 35;
@@ -45,9 +49,21 @@ export function DashboardsTree({
   onFolderClick,
   onAllSelectionChange,
   onItemSelectionChange,
+  isItemLoaded,
+  requestLoadMore,
   canSelect = false,
 }: DashboardsTreeProps) {
+  const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
+    // especially after a refetch after a move/delete.
+    // Clear that cache, and check if we need to trigger another load
+    if (infiniteLoaderRef.current) {
+      infiniteLoaderRef.current.resetloadMoreItemsCache(true);
+    }
+  }, [items]);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
@@ -97,6 +113,20 @@ export function DashboardsTree({
     [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
   );
 
+  const handleIsItemLoaded = useCallback(
+    (itemIndex: number) => {
+      return isItemLoaded(itemIndex);
+    },
+    [isItemLoaded]
+  );
+
+  const handleLoadMore = useCallback(
+    (startIndex: number, endIndex: number) => {
+      requestLoadMore(startIndex, endIndex);
+    },
+    [requestLoadMore]
+  );
+
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">
       {headerGroups.map((headerGroup) => {
@@ -120,15 +150,26 @@ export function DashboardsTree({
       })}
 
       <div {...getTableBodyProps()}>
-        <List
-          height={height - HEADER_HEIGHT}
-          width={width}
+        <InfiniteLoader
+          ref={infiniteLoaderRef}
           itemCount={items.length}
-          itemData={virtualData}
-          itemSize={ROW_HEIGHT}
+          isItemLoaded={handleIsItemLoaded}
+          loadMoreItems={handleLoadMore}
         >
-          {VirtualListRow}
-        </List>
+          {({ onItemsRendered, ref }) => (
+            <List
+              ref={ref}
+              height={height - HEADER_HEIGHT}
+              width={width}
+              itemCount={items.length}
+              itemData={virtualData}
+              itemSize={ROW_HEIGHT}
+              onItemsRendered={onItemsRendered}
+            >
+              {VirtualListRow}
+            </List>
+          )}
+        </InfiniteLoader>
       </div>
     </div>
   );
