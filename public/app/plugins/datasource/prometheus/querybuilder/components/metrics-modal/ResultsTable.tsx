@@ -90,7 +90,7 @@ export function ResultsTable(props: ResultsTableProps) {
       message = 'There are no metrics found. Try to expand your label filters.';
     }
 
-    if (state.fuzzySearchQuery) {
+    if (state.fuzzySearchQuery || state.selectedTypes.length > 0) {
       message = 'There are no metrics found. Try to expand your search and filters.';
     }
 
@@ -151,7 +151,7 @@ export function ResultsTable(props: ResultsTableProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
+  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.1);
 
   return {
     table: css`
