@@ -9,3 +9,11 @@ export interface AuthProviderInfo {
 }
 
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
+
+interface MigrationResult {
+  Total: number;
+  Migrated: number;
+  Failed: number;
+  FailedApikeyIDs: number[];
+  FailedDetails: string[];
+}

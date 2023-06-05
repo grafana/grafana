@@ -2,12 +2,11 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
-// import { locationService } from '@grafana/runtime';
 import { InlineField, InlineSwitch, VerticalGroup, Modal, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { AccessControlAction, ApiKey, StoreState } from 'app/types';
+import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
 
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
@@ -28,6 +27,7 @@ function mapStateToProps(state: StoreState) {
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
     canCreate: canCreate,
+    migrationResult: state.apiKeys.migrationResult,
   };
 }
 
@@ -51,22 +51,14 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 interface State {
-  operationSummaryVisible: boolean;
-  operationSummaryData: MigrationResult;
+  migrationSummaryVisible: boolean;
 }
 
 export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      operationSummaryVisible: false,
-      operationSummaryData: {
-        Total: 0,
-        Migrated: 0,
-        Failed: 0,
-        FailedApikeyIDs: [0],
-        FailedDetails: [],
-      },
+      migrationSummaryVisible: false,
     };
   }
 
@@ -96,13 +88,9 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onMigrateApiKeys = async () => {
     try {
-      const response = await this.props.migrateAll();
-      this.setState((prevState: State) => {
-        return {
-          ...prevState,
-          operationSummaryVisible: true,
-          operationSummaryData: response,
-        };
+      this.props.migrateAll();
+      this.setState({
+        migrationSummaryVisible: true,
       });
     } catch (err) {
       console.error(err);
@@ -110,12 +98,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   dismissModal = async () => {
-    this.setState((prevState: State) => {
-      return {
-        ...prevState,
-        operationSummaryVisible: false,
-      };
-    });
+    this.setState({ migrationSummaryVisible: false });
   };
 
   render() {
@@ -128,6 +111,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpired,
       includeExpiredDisabled,
       canCreate,
+      migrationResult,
     } = this.props;
 
     if (!hasFetched) {
@@ -167,25 +151,17 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
           </>
         </Page.Contents>
         <MigrationSummary
-          visible={this.state.operationSummaryVisible}
-          data={this.state.operationSummaryData}
+          visible={this.state.migrationSummaryVisible}
+          data={migrationResult}
           dismissModal={this.dismissModal}
         />
       </Page>
     );
   }
 }
-interface MigrationResult {
-  Total: number;
-  Migrated: number;
-  Failed: number;
-  FailedApikeyIDs: number[];
-  FailedDetails: string[];
-}
-
 export type MigrationSummaryProps = {
   visible: boolean;
-  data: MigrationResult;
+  data: ApikeyMigrationResult;
   dismissModal: () => void;
 };
 
