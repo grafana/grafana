@@ -66,9 +66,11 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
 
   const description = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!);
 
-  if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
-    type += ' (histogram)';
-  }
+  ['histogram', 'summary'].forEach((t) => {
+    if (description?.toLowerCase().includes(t) && type !== t) {
+      type += ` (${t})`;
+    }
+  });
 
   const metricData: MetricData = {
     value: metric,
