@@ -7,7 +7,7 @@ import { LokiQuery, LokiQueryType } from '../../types';
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 
 describe('LokiQueryBuilderOptions', () => {
-  it('Can change query type', async () => {
+  it('can change query type', async () => {
     const { props } = setup();
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
@@ -21,7 +21,7 @@ describe('LokiQueryBuilderOptions', () => {
     });
   });
 
-  it('Can change legend format', async () => {
+  it('can change legend format', async () => {
     const { props } = setup();
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
@@ -33,6 +33,58 @@ describe('LokiQueryBuilderOptions', () => {
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
       legendFormat: 'asd',
+    });
+  });
+
+  it('can change line limit to valid value', async () => {
+    const { props } = setup();
+    props.query.expr = '{foo="bar"}';
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+
+    const element = screen.getByLabelText('Line limit');
+    await userEvent.type(element, '10');
+    await userEvent.keyboard('{enter}');
+
+    expect(props.onChange).toHaveBeenCalledWith({
+      ...props.query,
+      maxLines: 10,
+    });
+  });
+
+  it('does not change line limit to invalid numeric value', async () => {
+    const { props } = setup();
+    // We need to start with some value to be able to change it
+    props.query.maxLines = 10;
+    props.query.expr = '{foo="bar"}';
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+
+    const element = screen.getByLabelText('Line limit');
+    await userEvent.type(element, '-10');
+    await userEvent.keyboard('{enter}');
+
+    expect(props.onChange).toHaveBeenCalledWith({
+      ...props.query,
+      maxLines: undefined,
+    });
+  });
+
+  it('does not change line limit to invalid text value', async () => {
+    const { props } = setup();
+    // We need to start with some value to be able to change it
+    props.query.maxLines = 10;
+    props.query.expr = '{foo="bar"}';
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+
+    const element = screen.getByLabelText('Line limit');
+    await userEvent.type(element, 'asd');
+    await userEvent.keyboard('{enter}');
+
+    expect(props.onChange).toHaveBeenCalledWith({
+      ...props.query,
+      maxLines: undefined,
     });
   });
 });

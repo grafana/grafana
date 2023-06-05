@@ -90,6 +90,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           {showMaxLines && (
             <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
               <AutoSizeInput
+                id="loki-query-editor-line-limit"
                 className="width-4"
                 placeholder={maxLines.toString()}
                 type="number"
