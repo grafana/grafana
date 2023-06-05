@@ -70,11 +70,25 @@ export class SQLSearcher implements GrafanaSearcher {
       throw new Error('facets not supported!');
     }
 
+    if (query.from !== undefined) {
+      if (!query.limit) {
+        throw new Error('Must specify non-zero limit parameter when using from');
+      }
+
+      if ((query.from / query.limit) % 1 !== 0) {
+        throw new Error('From parameter must be a multiple of limit');
+      }
+    }
+
+    const limit = query.limit ?? (query.from !== undefined ? 1 : DEFAULT_MAX_VALUES);
+    const page = query.from !== undefined ? query.from / limit : undefined;
+
     const q = await this.composeQuery(
       {
-        limit: query.limit ?? DEFAULT_MAX_VALUES, // default 1k max values
+        limit: limit,
         tag: query.tags,
         sort: query.sort,
+        page,
       },
       query
     );
