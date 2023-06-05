@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, act, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { InfluxQueryTag } from '../../types';
+import { InfluxQueryTag } from '../../../../../types';
 
 import { TagsSection } from './TagsSection';
 
@@ -74,7 +74,7 @@ const tags: InfluxQueryTag[] = [
   },
 ];
 
-describe('InfluxDB InfluxQL Editor tags section', () => {
+describe('InfluxDB InfluxQL VisualInfluxQLEditor tags section', () => {
   it('should display correct data', () => {
     assertText(tags, 't1=t1_v1ANDt2!=t2_v2ORt3<>t3_v3+');
   });

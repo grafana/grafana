@@ -1,9 +1,9 @@
 import { cx } from '@emotion/css';
 import React from 'react';
 
-import { Input } from '@grafana/ui';
+import { Input } from '@grafana/ui/src';
 
-import { useShadowedState } from '../useShadowedState';
+import { useShadowedState } from '../../hooks/useShadowedState';
 
 import { paddingRightClass } from './styles';
 

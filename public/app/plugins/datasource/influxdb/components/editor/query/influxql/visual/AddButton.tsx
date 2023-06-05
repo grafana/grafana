@@ -1,9 +1,10 @@
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/src';
+
+import { unwrap } from '../utils/unwrap';
 
 import { Seg } from './Seg';
-import { unwrap } from './unwrap';
 
 type Props = {
   loadOptions: () => Promise<SelectableValue[]>;

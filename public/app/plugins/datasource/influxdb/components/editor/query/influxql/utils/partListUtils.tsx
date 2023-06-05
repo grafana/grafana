@@ -1,11 +1,11 @@
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data/src';
 import { QueryPartDef } from 'app/features/alerting/state/query_part';
 
-import InfluxQueryModel from '../../influx_query_model';
-import queryPart from '../../query_part';
-import { InfluxQuery, InfluxQueryPart } from '../../types';
+import InfluxQueryModel from '../../../../../influx_query_model';
+import queryPart from '../../../../../query_part';
+import { InfluxQuery, InfluxQueryPart } from '../../../../../types';
+import { PartParams } from '../visual/PartListSection';
 
-import { PartParams } from './PartListSection';
 import { toSelectableValue } from './toSelectableValue';
 import { unwrap } from './unwrap';
 

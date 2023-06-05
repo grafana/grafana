@@ -1,7 +1,8 @@
 import React from 'react';
 
+import { toSelectableValue } from '../utils/toSelectableValue';
+
 import { Seg } from './Seg';
-import { toSelectableValue } from './toSelectableValue';
 
 // we use the value "default" as a magic-value, it means
 // we use the default retention-policy.

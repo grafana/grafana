@@ -1,7 +1,7 @@
 import { buildMetadataQuery } from './influxql_query_builder';
 import { templateSrvStub as templateService } from './specs/mocks';
 
-describe('influx-query-builder', () => {
+describe('influxql-query-builder', () => {
   describe('RETENTION_POLICIES', () => {
     it('should build retention policies query', () => {
       const query = buildMetadataQuery({
