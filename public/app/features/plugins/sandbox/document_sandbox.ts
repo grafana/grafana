@@ -1,3 +1,5 @@
+import { forbiddenElements } from './constants';
+
 export function getSandboxDocument(pluginId: string): Document {
   const newDoc = new DOMParser().parseFromString(
     `<!DOCTYPE html>
@@ -12,18 +14,27 @@ export function getSandboxDocument(pluginId: string): Document {
 
 export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
 
-export function fabricateMockElement(nodeName: string, sandboxDocument: Document): Element {
-  switch (nodeName.toLowerCase()) {
-    case 'body':
-      return getSandboxMockBody();
-    case 'head':
-      return sandboxDocument.head;
-    case 'html':
-      return sandboxDocument.documentElement;
+export function getSafeSandboxDomElement(element: Element): Element {
+  const nodeName = Reflect.get(element, 'nodeName');
+
+  // we don't allow plugins to get the document.body directly. They get a sandboxed version.
+  // the condition redundancy is intentional
+  if (nodeName === 'body' || element === document.body) {
+    return getSandboxMockBody();
   }
-  const element = sandboxDocument.createElement(nodeName.toLowerCase());
-  element.setAttribute('id', 'grafana-plugin-sandbox');
-  return element;
+
+  if (forbiddenElements.includes(nodeName)) {
+    throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
+  }
+
+  // allow elements inside the sandbox or the sandbox body
+  if (isDomElementInsideSandbox(element)) {
+    return element;
+  }
+
+  const mockElement = document.createElement(nodeName);
+  mockElement.setAttribute('id', 'grafana-plugin-sandbox');
+  return mockElement;
 }
 
 export function isDomElement(obj: unknown): obj is Element {
@@ -44,11 +55,12 @@ export function isDomElement(obj: unknown): obj is Element {
  *
  * This is necessary for some specific cases such as modifying the style atribute of an element
  */
-export function markDomElementAsALiveTarget(el: Element, mark: symbol) {
+export function markDomElementStyleAsALiveTarget(el: Element, mark: symbol) {
   if (
+    // only HTMLElement's (extends Element) have a style attribute
     el instanceof HTMLElement &&
-    // isDomElementInsideSandbox(el) &&
-    //@ts-ignore
+    // do not define it twice
+    //@ts-ignore - our types are out of date
     !Object.hasOwn(el.style, mark)
   ) {
     Reflect.defineProperty(el.style, mark, {});
@@ -57,7 +69,7 @@ export function markDomElementAsALiveTarget(el: Element, mark: symbol) {
 
 /*
  * An element is considered to be inside the sandbox if:
- * - is not part of the document
+ * - is not part of the document (detached)
  * - is inside a div[data-plugin-sandbox]
  *
  */
@@ -71,6 +83,9 @@ export function getSandboxMockBody(): Element {
   if (!sandboxBody) {
     sandboxBody = document.createElement('div');
     sandboxBody.setAttribute('id', 'grafana-plugin-sandbox-body');
+
+    // the following dataset redundancy is intentional
+    sandboxBody.setAttribute('data-plugin-sandbox', 'true');
     sandboxBody.dataset.pluginSandbox = 'sandboxed-plugin';
 
     sandboxBody.style.width = '100%';

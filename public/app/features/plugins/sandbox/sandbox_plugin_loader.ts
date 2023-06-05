@@ -7,7 +7,12 @@ import { config } from '@grafana/runtime';
 import { getPluginSettings } from '../pluginSettings';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
-import { getSandboxMockBody, isDomElement, markDomElementAsALiveTarget, SANDBOX_LIVE_VALUE } from './document_sandbox';
+import {
+  getSafeSandboxDomElement,
+  isDomElement,
+  markDomElementStyleAsALiveTarget,
+  SANDBOX_LIVE_VALUE,
+} from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 
 type CompartmentDependencyModule = unknown;
@@ -39,14 +44,9 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
 
   function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
     if (isDomElement(originalValue)) {
-      markDomElementAsALiveTarget(originalValue, SANDBOX_LIVE_VALUE);
-      switch (originalValue.nodeName.toLowerCase()) {
-        case 'body':
-          return getSandboxMockBody();
-        // return document.body;
-        default:
-          return originalValue;
-      }
+      const element = getSafeSandboxDomElement(originalValue);
+      // the element.style attribute should be a live target to work in chrome
+      markDomElementStyleAsALiveTarget(element, SANDBOX_LIVE_VALUE);
     }
     const distortion = generalDistortionMap.get(originalValue);
     if (distortion) {

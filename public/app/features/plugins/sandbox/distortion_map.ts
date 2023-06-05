@@ -1,5 +1,6 @@
 import { cloneDeep } from 'lodash';
 
+import { forbiddenElements } from './constants';
 import { isFunction } from './utils';
 
 /**
@@ -52,7 +53,6 @@ import { isFunction } from './utils';
  *
  * The code in this file defines that generalDistortionMap.
  */
-const forbiddenElements = ['script', 'iframe'];
 
 type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown) => unknown>;
 const generalDistortionMap: DistortionMap = new Map();
