@@ -90,16 +90,15 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span
-            className={cx('log-row-menu', styles.rowMenu, {
-              [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-            })}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <span className={cx('log-row-menu', styles.rowMenu)} onClick={(e) => e.stopPropagation()}>
             {shouldShowContextToggle && (
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-              </Tooltip>
+              <IconButton
+                tooltip="Show context"
+                tooltipPlacement="top"
+                size="md"
+                name="gf-show-context"
+                onClick={this.onShowContextClick}
+              />
             )}
             <Tooltip placement="top" content={'Copy'}>
               <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
