@@ -111,6 +111,7 @@ Alpha features might be changed or removed without prior notice.
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
+| `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
 
 ## Development feature toggles
 

@@ -1,12 +1,11 @@
-import React from 'react';
+import React, { useId } from 'react';
 
-import { TextArea, InlineFormLabel, Input, Select, HorizontalGroup } from '@grafana/ui';
+import { HorizontalGroup, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui';
 
 import { InfluxQuery } from '../types';
 
-import { RESULT_FORMATS, DEFAULT_RESULT_FORMAT } from './constants';
+import { DEFAULT_RESULT_FORMAT, RESULT_FORMATS } from './constants';
 import { useShadowedState } from './useShadowedState';
-import { useUniqueId } from './useUniqueId';
 
 type Props = {
   query: InfluxQuery;
@@ -20,8 +19,8 @@ type Props = {
 export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
   const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
-  const aliasElementId = useUniqueId();
-  const selectElementId = useUniqueId();
+  const aliasElementId = useId();
+  const selectElementId = useId();
 
   const resultFormat = query.resultFormat ?? DEFAULT_RESULT_FORMAT;
 
